@@ -1,0 +1,82 @@
+<UserControl x:Class="Optimizer.App.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Optimizer.App.Services"
+             Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="{StaticResource PagePadding}">
+            <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Settings_Title}" Margin="0,0,0,16" />
+
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Appearance}" Margin="0,0,0,8" />
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="LocalLanguage24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Language}" />
+                </ui:CardControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="{l:Tr Lang_En}" GroupName="Lang" IsChecked="{Binding IsEnglish, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="en" Margin="0,0,16,0" />
+                    <RadioButton Content="{l:Tr Lang_De}" GroupName="Lang" IsChecked="{Binding IsGerman, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="de" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="DarkTheme24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Theme}" />
+                </ui:CardControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="ThemeSystem" Content="{l:Tr Theme_System}" GroupName="Theme" Checked="Theme_Checked" Tag="System" Margin="0,0,16,0" />
+                    <RadioButton x:Name="ThemeLight" Content="{l:Tr Theme_Light}" GroupName="Theme" Checked="Theme_Checked" Tag="Light" Margin="0,0,16,0" />
+                    <RadioButton x:Name="ThemeDark" Content="{l:Tr Theme_Dark}" GroupName="Theme" Checked="Theme_Checked" Tag="Dark" />
+                </StackPanel>
+            </ui:CardControl>
+
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Expert}" />
+            <ui:CardControl Padding="{StaticResource CardPadding}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Expert}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_ExpertHint}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ExpertMode}" />
+            </ui:CardControl>
+
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="VirusTotal" />
+            <ui:Card Padding="16,12">
+                <StackPanel>
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Vt_SettingsHint}" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <ui:PasswordBox x:Name="VtKey" PlaceholderText="{l:Tr Vt_KeyPlaceholder}" MinWidth="320" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr Common_Save}" Click="SaveKey_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr Common_Remove}" Appearance="Transparent" Click="RemoveKey_Click" />
+                    </WrapPanel>
+                    <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Margin="0,8,0,0"
+                                  Text="{l:Tr Vt_Configured}" Visibility="{Binding VirusTotalConfigured, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </ui:Card>
+
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Diagnostics}" />
+            <ui:Card Padding="16,12">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body" Appearance="Secondary" Text="{l:Tr Settings_Logs}" />
+                    <TextBlock Style="{StaticResource Mono}" Text="{Binding LogFile}" Margin="0,4,0,8" />
+                    <ui:TextBlock FontTypography="Body" Appearance="Secondary" Text="{l:Tr Settings_Data}" />
+                    <TextBlock Style="{StaticResource Mono}" Text="{Binding DataFolder}" Margin="0,4,0,0" />
+                </StackPanel>
+            </ui:Card>
+
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_About}" />
+            <ui:Card Padding="16,12">
+                <ui:TextBlock FontTypography="Body" Text="{Binding AboutText}" TextWrapping="Wrap" />
+            </ui:Card>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

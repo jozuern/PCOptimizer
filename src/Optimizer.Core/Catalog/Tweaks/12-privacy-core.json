@@ -1,0 +1,844 @@
+{
+  "tweaks": [
+    {
+      "id": "privacy.advertisingIdOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo",
+          "name": "DisabledByGroupPolicy",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.tailoredExperiencesOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableTailoredExperiencesWithDiagnosticData",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "scope": "user"
+    },
+    {
+      "id": "privacy.feedbackNotificationsOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "DoNotShowFeedbackNotifications",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.diagnosticLogsLimited",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "LimitDiagnosticLogCollection",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "LimitDumpCollection",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system"
+      ]
+    },
+    {
+      "id": "privacy.inkingTypingOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitInkCollection",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitTextCollection",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
+          "name": "HarvestContacts",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\input\\Settings",
+          "name": "InsightsEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-textinput",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.onlineSpeechOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\InputPersonalization",
+          "name": "AllowInputPersonalization",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.webSearchOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "DisableSearchBoxSuggestions",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "scope": "user"
+    },
+    {
+      "id": "privacy.searchHighlightsOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "EnableDynamicContentInWSB",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+      ]
+    },
+    {
+      "id": "privacy.cloudSearchOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "AllowCloudSearch",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.cloudClipboardOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "AllowCrossDeviceClipboard",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+      ]
+    },
+    {
+      "id": "privacy.suggestionsOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338389Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338393Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-353694Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-353696Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-310093Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SystemPaneSuggestionsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SoftLandingEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_IrisRecommendations",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "scope": "user"
+    },
+    {
+      "id": "privacy.onlineTipsOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "AllowOnlineTips",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-settings"
+      ]
+    },
+    {
+      "id": "privacy.appLaunchTrackingOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_TrackProgs",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "scope": "user"
+    },
+    {
+      "id": "privacy.languageListOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\International\\User Profile",
+          "name": "HttpAcceptLanguageOptOut",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "scope": "user"
+    },
+    {
+      "id": "privacy.findMyDeviceOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\FindMyDevice",
+          "name": "AllowFindMyDevice",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
+      ]
+    },
+    {
+      "id": "privacy.errorReportingOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting",
+          "name": "Disabled",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-errorreporting",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.ceipOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\SQMClient\\Windows",
+          "name": "CEIPEnable",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.appCompatTelemetryOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppCompat",
+          "name": "AITEnable",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppCompat",
+          "name": "DisableInventory",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.handwritingSharingOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\TabletPC",
+          "name": "PreventHandwritingDataSharing",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\HandwritingErrorReports",
+          "name": "PreventHandwritingErrorReports",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.appPersonalDataOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessAccountInfo",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessContacts",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessCalendar",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessCallHistory",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessEmail",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessMessaging",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessTasks",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsGetDiagnosticInfo",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+      ]
+    },
+    {
+      "id": "privacy.settingsSyncOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\SettingSync",
+          "name": "DisableSettingSync",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\SettingSync",
+          "name": "DisableSettingSyncUserOverride",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.messageSyncOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Messaging",
+          "name": "AllowMessageSync",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-messaging",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.phoneLinkOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableMmx",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.crossDeviceOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableCdp",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.mapsTrafficOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Maps",
+          "name": "AutoDownloadAndUpdateMapData",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Maps",
+          "name": "AllowUntriggeredNetworkTrafficOnSettingsPage",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-maps",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.clipboardHistoryOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "AllowClipboardHistory",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+      ]
+    }
+  ]
+}

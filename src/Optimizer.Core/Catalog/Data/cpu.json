@@ -1,0 +1,29 @@
+{
+  "_comment": "CPU catalog data. Thresholds and model lists are corrected here, never in code.",
+  "microcodeRules": [
+    {
+      "id": "A.raptorlake",
+      "vendor": "intel",
+      "family": 6,
+      "models": [ 183, 191 ],
+      "nameRegex": "i[579]-1[34]\\d{3}(K|KF|KS|F)?\\b",
+      "minRevision": "0x12F",
+      "critical": true,
+      "sources": [ "https://community.intel.com/t5/Processors/Intel-Core-13th-and-14th-Gen-Desktop-Instability-Root-Cause/m-p/1633442" ]
+    },
+    {
+      "id": "A.arrowlake",
+      "vendor": "intel",
+      "family": 6,
+      "models": [ 198 ],
+      "nameRegex": "Ultra [579] 2\\d5(K|KF|F|T)?\\b",
+      "minRevision": "0x114",
+      "critical": false,
+      "sources": [ "https://www.elevenforum.com/t/field-update-1-of-2-intel-core-ultra-200s-series-performance-status.31640/latest" ]
+    }
+  ],
+  "x3dMultiCcdModels": [ "7900X3D", "7950X3D", "9900X3D", "9950X3D" ],
+  "x3dSymmetricDualModels": [ "9950X3D2" ],
+  "x3dSingleCcdModels": [ "5600X3D", "5700X3D", "5800X3D", "7600X3D", "7800X3D", "9800X3D", "9850X3D" ],
+  "x3dAsymmetryFactor": 2.0
+}

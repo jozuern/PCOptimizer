@@ -1,0 +1,116 @@
+{
+  "tweaks": [
+    {
+      "id": "nvidia.lowLatencyOn",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "gpuVendor": [
+          "nvidia"
+        ]
+      },
+      "actions": [
+        {
+          "type": "nvidiaDrs",
+          "profile": "global",
+          "settingId": 8102046,
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+      ]
+    },
+    {
+      "id": "nvidia.shaderCacheUnlimited",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "gpuVendor": [
+          "nvidia"
+        ]
+      },
+      "actions": [
+        {
+          "type": "nvidiaDrs",
+          "profile": "global",
+          "settingId": 11306135,
+          "value": 4294967295
+        }
+      ],
+      "sources": [
+        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+      ]
+    },
+    {
+      "id": "nvidia.textureFilteringPerformance",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "fps"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "gpuVendor": [
+          "nvidia"
+        ]
+      },
+      "actions": [
+        {
+          "type": "nvidiaDrs",
+          "profile": "global",
+          "settingId": 13510289,
+          "value": 20
+        }
+      ],
+      "sources": [
+        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+      ]
+    },
+    {
+      "id": "nvidia.preferMaxPerformance",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "lows"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "gpuVendor": [
+          "nvidia"
+        ]
+      },
+      "actions": [
+        {
+          "type": "nvidiaDrs",
+          "profile": "global",
+          "settingId": 274197361,
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+      ]
+    }
+  ]
+}

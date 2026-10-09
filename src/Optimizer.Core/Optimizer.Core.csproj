@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <RootNamespace>Optimizer.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.12" />
+    <!-- Opt-in sensor readings on the Health page (MPL-2.0). Uses the PawnIO driver for CPU sensors when installed. -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Catalog data and explanation pages ship inside the assembly (plan v4 §3, §4.12). -->
+    <EmbeddedResource Include="Catalog\Data\*.json" LogicalName="Catalog.Data.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Catalog\Docs\en\*.md" LogicalName="Catalog.Docs.en.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Catalog\Docs\de\*.md" LogicalName="Catalog.Docs.de.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Catalog\Tweaks\*.json" LogicalName="Catalog.Tweaks.%(Filename)%(Extension)" />
+    <!-- PresentMon 2.6.0 (MIT, Intel-signed), SHA-256 checked when extracted (Tools/PresentMon.cs). -->
+    <EmbeddedResource Include="Tools\Vendor\PresentMon-2.6.0-x64.exe" LogicalName="Tools.PresentMon.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Optimizer.Core.Tests" />
+  </ItemGroup>
+
+</Project>

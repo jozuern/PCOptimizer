@@ -1,0 +1,811 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_Title" xml:space="preserve"><value>PCOptimizer</value></data>
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Overview</value></data>
+  <data name="Nav_Advisor" xml:space="preserve"><value>BIOS &amp; hardware</value></data>
+  <data name="Nav_Hardware" xml:space="preserve"><value>System info</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Scan_Running" xml:space="preserve"><value>Scanning your PC</value></data>
+  <data name="Scan_Probe" xml:space="preserve"><value>Reading: {0}</value></data>
+  <data name="Scan_Again" xml:space="preserve"><value>Scan again</value></data>
+  <data name="Scan_Done" xml:space="preserve"><value>Last scan: {0}</value></data>
+  <data name="Dash_Score" xml:space="preserve"><value>Gaming Readiness</value></data>
+  <data name="Dash_ScoreHint" xml:space="preserve"><value>Based only on detected problems, weighted by gaming impact. Tweaks never add points.</value></data>
+  <data name="Dash_Findings" xml:space="preserve"><value>Findings</value></data>
+  <data name="Dash_Problems" xml:space="preserve"><value>Problems found: {0}</value></data>
+  <data name="Dash_NoProblems" xml:space="preserve"><value>No problems found</value></data>
+  <data name="Dash_ShowAll" xml:space="preserve"><value>Show passed checks</value></data>
+  <data name="Dash_GameAccess" xml:space="preserve"><value>Game access</value></data>
+  <data name="Dash_GameAccessHint" xml:space="preserve"><value>What kernel anti-cheats check before a game starts. Not part of the impact rating.</value></data>
+  <data name="Dash_YourPc" xml:space="preserve"><value>Your PC</value></data>
+  <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; hardware advisor</value></data>
+  <data name="Advisor_Hint" xml:space="preserve"><value>Things only you can change: BIOS settings, slots, firmware updates. Each item explains how.</value></data>
+  <data name="Details_Empty" xml:space="preserve"><value>Select an item to see what we found, why it matters and how to fix it.</value></data>
+  <data name="Hw_Title" xml:space="preserve"><value>System info</value></data>
+  <data name="Hw_Hint" xml:space="preserve"><value>Everything the scanner read. Nothing was changed.</value></data>
+  <data name="Hw_Os" xml:space="preserve"><value>Windows</value></data>
+  <data name="Hw_Cpu" xml:space="preserve"><value>Processor</value></data>
+  <data name="Hw_Gpu" xml:space="preserve"><value>Graphics</value></data>
+  <data name="Hw_Memory" xml:space="preserve"><value>Memory</value></data>
+  <data name="Hw_Displays" xml:space="preserve"><value>Displays</value></data>
+  <data name="Hw_Firmware" xml:space="preserve"><value>Firmware &amp; security</value></data>
+  <data name="Hw_Power" xml:space="preserve"><value>Power</value></data>
+  <data name="Hw_Storage" xml:space="preserve"><value>Storage</value></data>
+  <data name="Hw_Network" xml:space="preserve"><value>Network</value></data>
+  <data name="Hw_Software" xml:space="preserve"><value>Games &amp; anti-cheat</value></data>
+  <data name="Hw_Errors" xml:space="preserve"><value>Probe errors</value></data>
+  <data name="Banner_ReadOnly" xml:space="preserve"><value>Read-only version: this build only scans and explains. It does not change anything on your PC.</value></data>
+  <data name="Banner_NotValidated" xml:space="preserve"><value>Windows build {0} is newer than the builds this version was validated on. Checks run normally but some may be inaccurate.</value></data>
+  <data name="Banner_Insider" xml:space="preserve"><value>Windows Insider build detected ({0}).</value></data>
+  <data name="Banner_Managed" xml:space="preserve"><value>This PC is managed by an organization (domain, Entra ID or MDM). Policies may override settings.</value></data>
+  <data name="Banner_SeparateAdmin" xml:space="preserve"><value>The app runs as {0}, but {1} is signed in. User settings belong to {1}.</value></data>
+  <data name="Banner_NotElevated" xml:space="preserve"><value>Running without administrator rights. Some values (for example TPM) show as unknown.</value></data>
+  <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home and Pro no longer receive updates since 13 October 2026. Update to 25H2 or 26H2.</value></data>
+  <data name="Gate_Title" xml:space="preserve"><value>Windows version not supported</value></data>
+  <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer needs Windows 11 24H2 (build 26100) or newer. This PC runs build {0}. Please update Windows first. Nothing was changed.</value></data>
+  <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer supports x64 PCs only. ARM64 PCs are not supported. Nothing was changed.</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_Logs" xml:space="preserve"><value>Log file</value></data>
+  <data name="Settings_About" xml:space="preserve"><value>About</value></data>
+  <data name="About_Text" xml:space="preserve"><value>Version {0}. No telemetry. Network requests only for features you start.</value></data>
+  <data name="Theme_Dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Theme_Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Lang_En" xml:space="preserve"><value>English</value></data>
+  <data name="Lang_De" xml:space="preserve"><value>Deutsch</value></data>
+  <data name="Impact_Tooltip" xml:space="preserve"><value>Gaming impact {0} of 5</value></data>
+  <data name="Impact_Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="Sum_Cpu" xml:space="preserve"><value>Processor</value></data>
+  <data name="Sum_Gpu" xml:space="preserve"><value>Graphics</value></data>
+  <data name="Sum_Memory" xml:space="preserve"><value>Memory</value></data>
+  <data name="Sum_Displays" xml:space="preserve"><value>Displays</value></data>
+  <data name="Sum_Windows" xml:space="preserve"><value>Windows</value></data>
+  <data name="Sum_Board" xml:space="preserve"><value>Mainboard</value></data>
+  <data name="Dash_Title" xml:space="preserve"><value>Overview</value></data>
+  <data name="Details_More" xml:space="preserve"><value>Details</value></data>
+  <data name="Advisor_Items" xml:space="preserve"><value>Manual checks</value></data>
+  <data name="Col_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Col_Impact" xml:space="preserve"><value>Impact</value></data>
+  <data name="Col_Item" xml:space="preserve"><value>Item</value></data>
+  <data name="Col_Effect" xml:space="preserve"><value>Effect</value></data>
+  <data name="Theme_System" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
+  <data name="Verdict_Good" xml:space="preserve"><value>Well configured</value></data>
+  <data name="Verdict_Fair" xml:space="preserve"><value>Some issues worth fixing</value></data>
+  <data name="Verdict_Poor" xml:space="preserve"><value>Significant issues found</value></data>
+  <data name="Count_Problems" xml:space="preserve"><value>problems</value></data>
+  <data name="Count_Advisor" xml:space="preserve"><value>manual checks</value></data>
+  <data name="Count_Passed" xml:space="preserve"><value>passed</value></data>
+  <data name="Note_Info" xml:space="preserve"><value>Note</value></data>
+  <data name="Note_Warning" xml:space="preserve"><value>Attention</value></data>
+  <data name="Headline_Scanning" xml:space="preserve"><value>Scanning</value></data>
+  <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
+  <data name="LastScan" xml:space="preserve"><value>Last scan {0}</value></data>
+  <data name="Scan_Idle" xml:space="preserve"><value>Ready</value></data>
+  <data name="Empty_List" xml:space="preserve"><value>Nothing to do here. Turn on “Show passed checks” to see every check.</value></data>
+  <data name="Nav_Tweaks" xml:space="preserve"><value>Tweaks</value></data>
+  <data name="Nav_Changes" xml:space="preserve"><value>Changes</value></data>
+  <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
+  <data name="Tweaks_Hint" xml:space="preserve"><value>Every change shows exactly what it does and can be undone. Recommended items fit this PC.</value></data>
+  <data name="Tweaks_All" xml:space="preserve"><value>All</value></data>
+  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks, {1} on, {2} recommended for this PC</value></data>
+  <data name="Tweaks_OnlyRecommended" xml:space="preserve"><value>Only recommended</value></data>
+  <data name="Tweak_TurnOn" xml:space="preserve"><value>Turn on</value></data>
+  <data name="Tweak_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Tweak_Reapply" xml:space="preserve"><value>Apply again</value></data>
+  <data name="Fix_Apply" xml:space="preserve"><value>Fix</value></data>
+  <data name="Col_State" xml:space="preserve"><value>State</value></data>
+  <data name="Col_Action" xml:space="preserve"><value></value></data>
+  <data name="Result_Applied" xml:space="preserve"><value>Applied: {0}</value></data>
+  <data name="Result_AppliedRestart" xml:space="preserve"><value>Applied: {0}. Restart Windows to finish.</value></data>
+  <data name="Result_AppliedSignOut" xml:space="preserve"><value>Applied: {0}. Sign out and in again to finish.</value></data>
+  <data name="Result_Ineffective" xml:space="preserve"><value>Applied, but Windows does not use the new value: {0}</value></data>
+  <data name="Result_NothingToDo" xml:space="preserve"><value>Nothing to change, the setting is already in place.</value></data>
+  <data name="Result_Failed" xml:space="preserve"><value>Not applied. Nothing was left half-changed. Reason: {0}</value></data>
+  <data name="Result_Undone" xml:space="preserve"><value>Undone: {0}</value></data>
+  <data name="Result_UndoneSkipped" xml:space="preserve"><value>Undone: {0}. {1} value(s) had already been changed by Windows and were left as they are.</value></data>
+  <data name="Result_UndoAll" xml:space="preserve"><value>{0} change(s) undone.</value></data>
+  <data name="Changes_Title" xml:space="preserve"><value>Changes</value></data>
+  <data name="Changes_Hint" xml:space="preserve"><value>Everything this app changed, with the original values it keeps. Undo restores them.</value></data>
+  <data name="Changes_Applied" xml:space="preserve"><value>Active changes</value></data>
+  <data name="Changes_Empty" xml:space="preserve"><value>No changes yet.</value></data>
+  <data name="Changes_UndoAll" xml:space="preserve"><value>Undo all</value></data>
+  <data name="Changes_Entries" xml:space="preserve"><value>{0} value(s)</value></data>
+  <data name="Changes_Safety" xml:space="preserve"><value>Safety net</value></data>
+  <data name="Changes_RestorePoints" xml:space="preserve"><value>System Protection</value></data>
+  <data name="Changes_EnableRp" xml:space="preserve"><value>Turn on (5 % of the drive)</value></data>
+  <data name="Changes_Backups" xml:space="preserve"><value>Backup folder</value></data>
+  <data name="Changes_Log" xml:space="preserve"><value>Change log (this session)</value></data>
+  <data name="Changes_LogEmpty" xml:space="preserve"><value>No changes in this session.</value></data>
+  <data name="Rp_On" xml:space="preserve"><value>On. A restore point is created before the first change of each session.</value></data>
+  <data name="Rp_Off" xml:space="preserve"><value>Off. Without it, no restore point can be created. The app's own backup still works.</value></data>
+  <data name="Rp_Unknown" xml:space="preserve"><value>Unknown (needs administrator rights).</value></data>
+  <data name="Banner_Drift" xml:space="preserve"><value>{0} change(s) were reset by Windows, usually by an update. See Changes to apply them again.</value></data>
+  <data name="Banner_Restart" xml:space="preserve"><value>{0} change(s) take effect after a restart.</value></data>
+  <data name="Settings_Expert" xml:space="preserve"><value>Expert mode</value></data>
+  <data name="Settings_ExpertHint" xml:space="preserve"><value>Shows changes that trade security for performance or edit the boot configuration. They are never recommended automatically.</value></data>
+  <data name="Settings_Data" xml:space="preserve"><value>Data folder</value></data>
+  <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Turn on Expert mode?</value></data>
+  <data name="Expert_ConfirmText" xml:space="preserve"><value>Expert changes can weaken Windows security (for example memory integrity or Spectre protection) or change how Windows starts. Some anti-cheats refuse to run without these protections. Every change is backed up and explained, but read each one before you apply it.</value></data>
+  <data name="Confirm_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Confirm_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Confirm_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Confirm_Changes" xml:space="preserve"><value>Exact changes</value></data>
+  <data name="Confirm_Target" xml:space="preserve"><value>Target</value></data>
+  <data name="Confirm_Now" xml:space="preserve"><value>Now</value></data>
+  <data name="Confirm_New" xml:space="preserve"><value>New</value></data>
+  <data name="Confirm_Restore" xml:space="preserve"><value>Restored</value></data>
+  <data name="Confirm_AntiCheatAck" xml:space="preserve"><value>I understand that games using this anti-cheat may not start.</value></data>
+  <data name="Confirm_Backup" xml:space="preserve"><value>The original values are saved before anything changes.</value></data>
+  <data name="Rp_AskTitle" xml:space="preserve"><value>System Protection is off</value></data>
+  <data name="Rp_AskText" xml:space="preserve"><value>Windows cannot create a restore point because System Protection is off for the system drive. The app's own backup still restores every value it changes. Turn System Protection on now?</value></data>
+  <data name="Rp_Enable" xml:space="preserve"><value>Turn on and continue</value></data>
+  <data name="Rp_Continue" xml:space="preserve"><value>Continue without</value></data>
+  <data name="UndoAll_Title" xml:space="preserve"><value>Undo all changes?</value></data>
+  <data name="UndoAll_Text" xml:space="preserve"><value>{0} change(s) will be undone. Values Windows has changed since are left as they are.</value></data>
+  <data name="Sum_Modules" xml:space="preserve"><value>modules</value></data>
+  <data name="Busy" xml:space="preserve"><value>Working</value></data>
+  <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start PCOptimizer as administrator to apply or undo them.</value></data>
+  <data name="Nav_Network" xml:space="preserve">
+    <value>Graphics &amp; network</value>
+  </data>
+  <data name="Nav_Debloat" xml:space="preserve">
+    <value>Debloat</value>
+  </data>
+  <data name="Nav_Cleanup" xml:space="preserve">
+    <value>Cleanup</value>
+  </data>
+  <data name="Nav_Startup" xml:space="preserve">
+    <value>Startup</value>
+  </data>
+  <data name="Nav_Services" xml:space="preserve">
+    <value>Services &amp; tasks</value>
+  </data>
+  <data name="Nav_Apps" xml:space="preserve">
+    <value>Apps &amp; drivers</value>
+  </data>
+  <data name="Nav_Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Nav_Health" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Common_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Impact_Short" xml:space="preserve">
+    <value>Impact {0} of 5</value>
+  </data>
+  <data name="Tweak_AlreadyOn" xml:space="preserve">
+    <value>set outside this app</value>
+  </data>
+  <data name="Tweak_NoBackup" xml:space="preserve">
+    <value>This setting was not changed by this app, so there is nothing to undo.</value>
+  </data>
+  <data name="Rec_Section" xml:space="preserve">
+    <value>Recommended for this PC</value>
+  </data>
+  <data name="Rec_Title" xml:space="preserve">
+    <value>Apply recommended</value>
+  </data>
+  <data name="Rec_Button" xml:space="preserve">
+    <value>Apply recommended ({0})</value>
+  </data>
+  <data name="Rec_Intro" xml:space="preserve">
+    <value>Fixes for detected problems and the tweaks whose conditions match this PC. Only safe and fully reversible changes; everything is shown before it is applied.</value>
+  </data>
+  <data name="Rec_Empty" xml:space="preserve">
+    <value>Nothing to recommend right now.</value>
+  </data>
+  <data name="Rec_None" xml:space="preserve">
+    <value>There is nothing recommended to apply.</value>
+  </data>
+  <data name="Rec_ExcludedTitle" xml:space="preserve">
+    <value>Not included, apply them one by one if you want them</value>
+  </data>
+  <data name="Rec_Fixes" xml:space="preserve">
+    <value>Fixes: {0}</value>
+  </data>
+  <data name="Rec_Matches" xml:space="preserve">
+    <value>Matches this PC</value>
+  </data>
+  <data name="Rec_Count" xml:space="preserve">
+    <value>{0} changes</value>
+  </data>
+  <data name="Result_Batch" xml:space="preserve">
+    <value>{0} applied, {1} failed, {2} skipped.</value>
+  </data>
+  <data name="Net_Title" xml:space="preserve">
+    <value>Graphics &amp; network</value>
+  </data>
+  <data name="Net_Hint" xml:space="preserve">
+    <value>Graphics driver settings, per-game profiles, DNS and device interrupts.</value>
+  </data>
+  <data name="Net_NvidiaGlobal" xml:space="preserve">
+    <value>NVIDIA driver settings</value>
+  </data>
+  <data name="Net_GameProfiles" xml:space="preserve">
+    <value>NVIDIA profiles per game</value>
+  </data>
+  <data name="Net_GameProfilesHint" xml:space="preserve">
+    <value>"Prefer maximum performance" only for the games you choose. Detected from your game libraries.</value>
+  </data>
+  <data name="Net_NoGames" xml:space="preserve">
+    <value>No games with a known executable were found.</value>
+  </data>
+  <data name="Net_Dns" xml:space="preserve">
+    <value>DNS</value>
+  </data>
+  <data name="Net_DnsHint" xml:space="preserve">
+    <value>Current IPv4 DNS servers of the active adapters. DNS only affects how fast names are looked up, not your ping in games.</value>
+  </data>
+  <data name="Net_NoDns" xml:space="preserve">
+    <value>No DNS servers found.</value>
+  </data>
+  <data name="Net_Benchmark" xml:space="preserve">
+    <value>DNS benchmark</value>
+  </data>
+  <data name="Net_BenchmarkHint" xml:space="preserve">
+    <value>Sends 20 small DNS queries to each server (your current ones, Cloudflare, Google, Quad9) and measures the response time. Runs only when you start it.</value>
+  </data>
+  <data name="Net_RunBenchmark" xml:space="preserve">
+    <value>Run test</value>
+  </data>
+  <data name="Net_Testing" xml:space="preserve">
+    <value>Testing {0}</value>
+  </data>
+  <data name="Net_BenchmarkDone" xml:space="preserve">
+    <value>Done. Median response time, best time, answered queries.</value>
+  </data>
+  <data name="Net_NoAnswer" xml:space="preserve">
+    <value>No answer</value>
+  </data>
+  <data name="Net_CurrentServer" xml:space="preserve">
+    <value>Current server {0}</value>
+  </data>
+  <data name="Net_Devices" xml:space="preserve">
+    <value>Device interrupts (Expert)</value>
+  </data>
+  <data name="Net_DevicesHint" xml:space="preserve">
+    <value>MSI mode and interrupt affinity per device. Disputed, boot-critical, and only worth trying with a before and after benchmark.</value>
+  </data>
+  <data name="Debloat_Title" xml:space="preserve">
+    <value>Debloat</value>
+  </data>
+  <data name="Debloat_Hint" xml:space="preserve">
+    <value>Preinstalled apps you can remove. Only apps from a reviewed list are offered; parts of Windows and apps that games need are never offered.</value>
+  </data>
+  <data name="Debloat_NotUndoable" xml:space="preserve">
+    <value>Removing an app cannot be undone by this app. The list of removed apps keeps a Microsoft Store link to install each one again.</value>
+  </data>
+  <data name="Debloat_Empty" xml:space="preserve">
+    <value>None of the apps on the list are installed.</value>
+  </data>
+  <data name="Debloat_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Debloat_ConfirmTitle" xml:space="preserve">
+    <value>Remove {0}?</value>
+  </data>
+  <data name="Debloat_ConfirmText" xml:space="preserve">
+    <value>{0}
+
+The app is removed for all users and new accounts. You can install it again from the Microsoft Store.</value>
+  </data>
+  <data name="Debloat_Removed" xml:space="preserve">
+    <value>{0} was removed.</value>
+  </data>
+  <data name="Debloat_RemovedTitle" xml:space="preserve">
+    <value>Removed apps</value>
+  </data>
+  <data name="Debloat_RemovedEmpty" xml:space="preserve">
+    <value>No apps were removed with this app.</value>
+  </data>
+  <data name="Debloat_Reinstall" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="Debloat_OneDriveTitle" xml:space="preserve">
+    <value>Uninstall OneDrive</value>
+  </data>
+  <data name="Debloat_OneDriveInstalled" xml:space="preserve">
+    <value>Installed. Folder: {0}</value>
+  </data>
+  <data name="Debloat_OneDriveNotSignedIn" xml:space="preserve">
+    <value>not signed in</value>
+  </data>
+  <data name="Debloat_OneDriveMissing" xml:space="preserve">
+    <value>OneDrive is not installed.</value>
+  </data>
+  <data name="Debloat_OneDriveConfirm" xml:space="preserve">
+    <value>OneDrive is uninstalled for your account. Files in your OneDrive folder stay on this PC; sync stops. You can install it again with winget (Microsoft.OneDrive).</value>
+  </data>
+  <data name="Debloat_OneDriveStarted" xml:space="preserve">
+    <value>OneDrive uninstall started.</value>
+  </data>
+  <data name="Debloat_Uninstall" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="Debloat_EdgeText" xml:space="preserve">
+    <value>Microsoft Edge is not removed by this app: Windows and many apps use its WebView2 component. In the European Economic Area you can uninstall Edge in Settings &gt; Apps &gt; Installed apps. To stop using it, set another default browser in Settings &gt; Apps &gt; Default apps.</value>
+  </data>
+  <data name="Cleanup_Title" xml:space="preserve">
+    <value>Cleanup</value>
+  </data>
+  <data name="Cleanup_Hint" xml:space="preserve">
+    <value>Temporary files and caches with their size. Nothing is deleted until you choose it. Files in use and links to other folders are always skipped.</value>
+  </data>
+  <data name="Cleanup_Size" xml:space="preserve">
+    <value>{0}, {1} files</value>
+  </data>
+  <data name="Cleanup_Total" xml:space="preserve">
+    <value>Selected: {0}</value>
+  </data>
+  <data name="Cleanup_Clean" xml:space="preserve">
+    <value>Clean selected</value>
+  </data>
+  <data name="Cleanup_ConfirmTitle" xml:space="preserve">
+    <value>Delete these files?</value>
+  </data>
+  <data name="Cleanup_ConfirmText" xml:space="preserve">
+    <value>{0}
+
+The files are deleted permanently. Files in use are skipped.</value>
+  </data>
+  <data name="Cleanup_Done" xml:space="preserve">
+    <value>{0} freed. {1} files were in use and skipped.</value>
+  </data>
+  <data name="Cleanup_More" xml:space="preserve">
+    <value>More cleanup</value>
+  </data>
+  <data name="Cleanup_ComponentTitle" xml:space="preserve">
+    <value>Superseded Windows components</value>
+  </data>
+  <data name="Cleanup_ComponentHint" xml:space="preserve">
+    <value>Removes old versions of updated Windows components (DISM StartComponentCleanup). Takes several minutes. Afterwards, installed updates can no longer be uninstalled.</value>
+  </data>
+  <data name="Cleanup_ComponentText" xml:space="preserve">
+    <value>Windows removes old component versions. Updates installed so far can no longer be uninstalled afterwards. This can take several minutes.</value>
+  </data>
+  <data name="Cleanup_DoTitle" xml:space="preserve">
+    <value>Delivery Optimization cache</value>
+  </data>
+  <data name="Cleanup_DoHint" xml:space="preserve">
+    <value>Update files Windows keeps to share with other PCs. Safe to delete; Windows downloads again what it needs.</value>
+  </data>
+  <data name="Cleanup_Run" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="Tools_Running" xml:space="preserve">
+    <value>Running. This can take a while.</value>
+  </data>
+  <data name="Tools_Done" xml:space="preserve">
+    <value>Done.</value>
+  </data>
+  <data name="Startup_Title" xml:space="preserve">
+    <value>Startup</value>
+  </data>
+  <data name="Startup_Hint" xml:space="preserve">
+    <value>Everything that starts with Windows: startup programs, scheduled tasks, services, drivers, Explorer extensions and sign-in entries. Switching off works like Task Manager and can be undone.</value>
+  </data>
+  <data name="Startup_AllKinds" xml:space="preserve">
+    <value>All locations</value>
+  </data>
+  <data name="Startup_HideMicrosoft" xml:space="preserve">
+    <value>Hide Windows entries</value>
+  </data>
+  <data name="Startup_Summary" xml:space="preserve">
+    <value>{0} entries, {1} programs from other vendors at sign-in, {2} need attention (unsigned or unusual).</value>
+  </data>
+  <data name="Startup_NoPublisher" xml:space="preserve">
+    <value>No publisher</value>
+  </data>
+  <data name="Startup_ReadOnly" xml:space="preserve">
+    <value>Listed only</value>
+  </data>
+  <data name="Vt_Check" xml:space="preserve">
+    <value>Check with VirusTotal</value>
+  </data>
+  <data name="Vt_Hint" xml:space="preserve">
+    <value>VirusTotal: only the file hashes of entries not signed by Microsoft are sent, with your own API key from Settings. The free key allows 4 lookups per minute.</value>
+  </data>
+  <data name="Vt_NoKey" xml:space="preserve">
+    <value>Add your VirusTotal API key in Settings first.</value>
+  </data>
+  <data name="Vt_Progress" xml:space="preserve">
+    <value>Checking {0} of {1}</value>
+  </data>
+  <data name="Vt_Done" xml:space="preserve">
+    <value>VirusTotal check finished.</value>
+  </data>
+  <data name="Vt_Stopped" xml:space="preserve">
+    <value>VirusTotal check stopped.</value>
+  </data>
+  <data name="Vt_SettingsHint" xml:space="preserve">
+    <value>Optional. With your own free API key from virustotal.com, the Startup page can look up file hashes. The key is stored encrypted for your Windows account.</value>
+  </data>
+  <data name="Vt_KeyPlaceholder" xml:space="preserve">
+    <value>VirusTotal API key</value>
+  </data>
+  <data name="Vt_Configured" xml:space="preserve">
+    <value>A key is saved.</value>
+  </data>
+  <data name="Svc_Title" xml:space="preserve">
+    <value>Services &amp; tasks</value>
+  </data>
+  <data name="Svc_Hint" xml:space="preserve">
+    <value>Start types of services and the scheduled tasks on this PC. Every change shows its exact effect and can be undone.</value>
+  </data>
+  <data name="Svc_TabServices" xml:space="preserve">
+    <value>Services</value>
+  </data>
+  <data name="Svc_TabTasks" xml:space="preserve">
+    <value>Scheduled tasks</value>
+  </data>
+  <data name="Svc_Search" xml:space="preserve">
+    <value>Search services</value>
+  </data>
+  <data name="Svc_ShowWindows" xml:space="preserve">
+    <value>Show all Windows services</value>
+  </data>
+  <data name="Svc_Rules" xml:space="preserve">
+    <value>Windows services are read-only unless the app explains them, and then only Manual is offered. Services from other vendors can be set to Manual or Disabled.</value>
+  </data>
+  <data name="Svc_ReadOnly" xml:space="preserve">
+    <value>Not changed here</value>
+  </data>
+  <data name="Svc_Warn" xml:space="preserve">
+    <value>See the note before changing</value>
+  </data>
+  <data name="Svc_Running" xml:space="preserve">
+    <value>running</value>
+  </data>
+  <data name="Svc_Stopped" xml:space="preserve">
+    <value>stopped</value>
+  </data>
+  <data name="Task_ShowMicrosoft" xml:space="preserve">
+    <value>Show Windows tasks</value>
+  </data>
+  <data name="Task_Hint" xml:space="preserve">
+    <value>Tasks from other vendors are often updaters and telemetry. Switching one off keeps it, so it can be switched on again.</value>
+  </data>
+  <data name="Task_AtLogon" xml:space="preserve">
+    <value>At sign-in</value>
+  </data>
+  <data name="Task_AtBoot" xml:space="preserve">
+    <value>At startup</value>
+  </data>
+  <data name="Task_Other" xml:space="preserve">
+    <value>On a schedule or event</value>
+  </data>
+  <data name="Apps_Title" xml:space="preserve">
+    <value>Apps &amp; drivers</value>
+  </data>
+  <data name="Apps_Hint" xml:space="preserve">
+    <value>Common gaming apps and tools, installed with winget from their official sources. Drivers below show their age and where to get updates.</value>
+  </data>
+  <data name="Apps_NoWinget" xml:space="preserve">
+    <value>winget (App Installer) was not found. Install "App Installer" from the Microsoft Store.</value>
+  </data>
+  <data name="Apps_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Apps_Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="Apps_Installing" xml:space="preserve">
+    <value>Installing</value>
+  </data>
+  <data name="Apps_StartedForUser" xml:space="preserve">
+    <value>Started for your account. Run the scan again when it is done.</value>
+  </data>
+  <data name="Apps_Failed" xml:space="preserve">
+    <value>Install failed (winget code {0}).</value>
+  </data>
+  <data name="Drv_Title" xml:space="preserve">
+    <value>Drivers</value>
+  </data>
+  <data name="Drv_Hint" xml:space="preserve">
+    <value>Graphics, network, audio, storage and chipset drivers. The app never installs drivers; it links to the manufacturer.</value>
+  </data>
+  <data name="Drv_Update" xml:space="preserve">
+    <value>Get update</value>
+  </data>
+  <data name="Drv_AgeDays" xml:space="preserve">
+    <value>{0} days old</value>
+  </data>
+  <data name="DrvClass_DISPLAY" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="DrvClass_NET" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="DrvClass_MEDIA" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="DrvClass_SCSIADAPTER" xml:space="preserve">
+    <value>Storage controller</value>
+  </data>
+  <data name="DrvClass_HDC" xml:space="preserve">
+    <value>Storage controller</value>
+  </data>
+  <data name="DrvClass_BLUETOOTH" xml:space="preserve">
+    <value>Bluetooth</value>
+  </data>
+  <data name="DrvClass_SYSTEM" xml:space="preserve">
+    <value>Chipset and system</value>
+  </data>
+  <data name="Tools_Title" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Tools_Hint" xml:space="preserve">
+    <value>Storage analyzer, Windows features, Windows Update repair and quick fixes.</value>
+  </data>
+  <data name="Storage_Title" xml:space="preserve">
+    <value>Storage analyzer</value>
+  </data>
+  <data name="Storage_Hint" xml:space="preserve">
+    <value>Finds the largest files and folders and duplicate files. Windows, program and game folders are never offered for deletion. Deleted files go to the Recycle Bin.</value>
+  </data>
+  <data name="Storage_Scan" xml:space="preserve">
+    <value>Analyze</value>
+  </data>
+  <data name="Storage_Progress" xml:space="preserve">
+    <value>{0} files, {1}</value>
+  </data>
+  <data name="Storage_Done" xml:space="preserve">
+    <value>{0} files, {1} analyzed. Duplicates: {2} can be freed.</value>
+  </data>
+  <data name="Storage_Truncated" xml:space="preserve">
+    <value>Stopped after 3 million files.</value>
+  </data>
+  <data name="Storage_Stopped" xml:space="preserve">
+    <value>Analysis stopped.</value>
+  </data>
+  <data name="Storage_Largest" xml:space="preserve">
+    <value>Largest files</value>
+  </data>
+  <data name="Storage_Folders" xml:space="preserve">
+    <value>Largest folders</value>
+  </data>
+  <data name="Storage_Duplicates" xml:space="preserve">
+    <value>Duplicate files</value>
+  </data>
+  <data name="Storage_Files" xml:space="preserve">
+    <value>{0} files</value>
+  </data>
+  <data name="Storage_DuplicateOf" xml:space="preserve">
+    <value>{0} identical copies; the first one is kept</value>
+  </data>
+  <data name="Storage_Recycle" xml:space="preserve">
+    <value>Move selected to Recycle Bin</value>
+  </data>
+  <data name="Storage_RecycleTitle" xml:space="preserve">
+    <value>Move to the Recycle Bin?</value>
+  </data>
+  <data name="Storage_RecycleText" xml:space="preserve">
+    <value>{0} files:
+{1}</value>
+  </data>
+  <data name="Storage_Recycled" xml:space="preserve">
+    <value>{0} files moved to the Recycle Bin, {1} failed.</value>
+  </data>
+  <data name="Feat_Title" xml:space="preserve">
+    <value>Windows features</value>
+  </data>
+  <data name="Feat_Hint" xml:space="preserve">
+    <value>Optional parts of Windows. Most changes need a restart and can be undone.</value>
+  </data>
+  <data name="Feat_RecommendOff" xml:space="preserve">
+    <value>Recommended off.</value>
+  </data>
+  <data name="Feat_Hypervisor" xml:space="preserve">
+    <value>Starts the Windows hypervisor when on.</value>
+  </data>
+  <data name="Repair_Title" xml:space="preserve">
+    <value>Windows Update repair</value>
+  </data>
+  <data name="Repair_Hint" xml:space="preserve">
+    <value>Resets the Windows Update components when updates keep failing: stops the update services, renames the update cache folders (nothing is deleted) and starts the services again.</value>
+  </data>
+  <data name="Repair_Run" xml:space="preserve">
+    <value>Repair</value>
+  </data>
+  <data name="Repair_Text" xml:space="preserve">
+    <value>The update services stop for a moment and the update cache is rebuilt. Downloads start over and the update history in Settings may be empty afterwards. Restart the PC when it is done.</value>
+  </data>
+  <data name="Repair_Done" xml:space="preserve">
+    <value>Windows Update components were reset. Restart the PC.</value>
+  </data>
+  <data name="Repair_Partial" xml:space="preserve">
+    <value>Some steps failed. Restart the PC and try again.</value>
+  </data>
+  <data name="Quick_Title" xml:space="preserve">
+    <value>Quick fixes</value>
+  </data>
+  <data name="Quick_Dns" xml:space="preserve">
+    <value>Flush DNS cache</value>
+  </data>
+  <data name="Quick_DnsHint" xml:space="preserve">
+    <value>Clears cached name lookups, for example when a website or game server moved.</value>
+  </data>
+  <data name="Quick_DnsFlushed" xml:space="preserve">
+    <value>DNS cache flushed.</value>
+  </data>
+  <data name="Quick_Explorer" xml:space="preserve">
+    <value>Restart Explorer</value>
+  </data>
+  <data name="Quick_ExplorerHint" xml:space="preserve">
+    <value>Fixes a frozen taskbar or Start menu without signing out.</value>
+  </data>
+  <data name="Quick_ExplorerRestarted" xml:space="preserve">
+    <value>Explorer restarted.</value>
+  </data>
+  <data name="Quick_ExplorerManual" xml:space="preserve">
+    <value>Explorer was closed but could not be started again. Press Ctrl + Shift + Esc and run "explorer".</value>
+  </data>
+  <data name="Quick_Winsock" xml:space="preserve">
+    <value>Reset network sockets (Winsock)</value>
+  </data>
+  <data name="Quick_WinsockHint" xml:space="preserve">
+    <value>Repairs broken network connections caused by faulty network add-ons. Needs a restart.</value>
+  </data>
+  <data name="Quick_WinsockTitle" xml:space="preserve">
+    <value>Reset Winsock?</value>
+  </data>
+  <data name="Quick_WinsockText" xml:space="preserve">
+    <value>Resets the Windows network socket catalog. Some VPN or security programs may need to be reinstalled afterwards. A restart is required.</value>
+  </data>
+  <data name="Quick_WinsockDone" xml:space="preserve">
+    <value>Winsock reset. Restart the PC.</value>
+  </data>
+  <data name="Health_Title" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="Health_Hint" xml:space="preserve">
+    <value>Checks under load and repair tools: throttling, frame rate benchmark, system files, drives and live sensors.</value>
+  </data>
+  <data name="Throttle_Title" xml:space="preserve">
+    <value>Throttle check</value>
+  </data>
+  <data name="Throttle_Hint" xml:space="preserve">
+    <value>Start the check, then play a demanding game. The app samples the processor and graphics card limits once per second. Nothing is changed.</value>
+  </data>
+  <data name="Throttle_Start" xml:space="preserve">
+    <value>Start check</value>
+  </data>
+  <data name="Throttle_Sample" xml:space="preserve">
+    <value>{0} samples, processor limit {1} %, processor use {2} %, GPU {3}</value>
+  </data>
+  <data name="Throttle_TooShort" xml:space="preserve">
+    <value>Too few samples. Measure at least 10 seconds while playing.</value>
+  </data>
+  <data name="Throttle_Result" xml:space="preserve">
+    <value>Last check {0}: {1} samples. Processor busy {2} %, limited {3} % of busy time. Graphics card at temperature limit {4} %, at power limit {5} %. {6}</value>
+  </data>
+  <data name="Throttle_Verdict_Ok" xml:space="preserve">
+    <value>No throttling found.</value>
+  </data>
+  <data name="Throttle_Verdict_Bad" xml:space="preserve">
+    <value>Throttling found; see the finding on the Overview page.</value>
+  </data>
+  <data name="Bench_Title" xml:space="preserve">
+    <value>Frame rate benchmark</value>
+  </data>
+  <data name="Bench_Hint" xml:space="preserve">
+    <value>Measures frame times with Intel PresentMon. Capture at least three runs before (A) and three after (B) a change, in the same scene. A change only counts when the ranges of the runs do not overlap.</value>
+  </data>
+  <data name="Bench_Before" xml:space="preserve">
+    <value>Capture A (before)</value>
+  </data>
+  <data name="Bench_After" xml:space="preserve">
+    <value>Capture B (after)</value>
+  </data>
+  <data name="Bench_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Bench_Capturing" xml:space="preserve">
+    <value>Capturing {0} for {1} seconds. Keep playing.</value>
+  </data>
+  <data name="Bench_NoFrames" xml:space="preserve">
+    <value>No frames captured. Is the game running and in front?</value>
+  </data>
+  <data name="Bench_Done" xml:space="preserve">
+    <value>Run saved.</value>
+  </data>
+  <data name="Bench_NeedRuns" xml:space="preserve">
+    <value>Capture at least {0} runs for A and for B to compare.</value>
+  </data>
+  <data name="Bench_NoDifference" xml:space="preserve">
+    <value>No measurable difference: the runs overlap (A {0} FPS, B {1} FPS on average).</value>
+  </data>
+  <data name="Bench_Better" xml:space="preserve">
+    <value>B is {0} % faster (A {1} FPS, B {2} FPS on average).</value>
+  </data>
+  <data name="Bench_Worse" xml:space="preserve">
+    <value>B is {0} % slower (A {1} FPS, B {2} FPS on average).</value>
+  </data>
+  <data name="Health_SystemFiles" xml:space="preserve">
+    <value>System files</value>
+  </data>
+  <data name="Health_SystemFilesHint" xml:space="preserve">
+    <value>Check and repair Windows system files. Run DISM RestoreHealth first if SFC cannot repair everything, then SFC again.</value>
+  </data>
+  <data name="Health_Sfc" xml:space="preserve">
+    <value>Run SFC</value>
+  </data>
+  <data name="Health_DismScan" xml:space="preserve">
+    <value>DISM ScanHealth</value>
+  </data>
+  <data name="Health_DismRestore" xml:space="preserve">
+    <value>DISM RestoreHealth</value>
+  </data>
+  <data name="Health_ExitCode" xml:space="preserve">
+    <value>Finished with exit code {0}.</value>
+  </data>
+  <data name="Health_Stopped" xml:space="preserve">
+    <value>Stopped.</value>
+  </data>
+  <data name="Health_Disks" xml:space="preserve">
+    <value>Drives</value>
+  </data>
+  <data name="Health_CountersNeedAdmin" xml:space="preserve">
+    <value>Details need administrator rights.</value>
+  </data>
+  <data name="Sensors_Title" xml:space="preserve">
+    <value>Sensors</value>
+  </data>
+  <data name="Sensors_Hint" xml:space="preserve">
+    <value>Live temperatures, clocks, load and fans (LibreHardwareMonitor). Off until you switch it on. Processor and mainboard sensors need the signed PawnIO driver.</value>
+  </data>
+  <data name="Sensors_PawnIoOn" xml:space="preserve">
+    <value>PawnIO driver is installed.</value>
+  </data>
+  <data name="Sensors_PawnIoOff" xml:space="preserve">
+    <value>PawnIO driver is not installed: processor and mainboard sensors are not available.</value>
+  </data>
+  <data name="Sensors_InstallPawnIo" xml:space="preserve">
+    <value>Install PawnIO</value>
+  </data>
+  <data name="Sensors_PawnIoTitle" xml:space="preserve">
+    <value>Install PawnIO?</value>
+  </data>
+  <data name="Sensors_PawnIoText" xml:space="preserve">
+    <value>PawnIO is a signed kernel driver that lets sensor tools read processor and mainboard sensors. It is installed with winget (namazso.PawnIO) and can be uninstalled in Settings &gt; Apps.</value>
+  </data>
+  <data name="SensorType_Temperature" xml:space="preserve">
+    <value>temperature</value>
+  </data>
+  <data name="SensorType_Load" xml:space="preserve">
+    <value>load</value>
+  </data>
+  <data name="SensorType_Clock" xml:space="preserve">
+    <value>clock</value>
+  </data>
+  <data name="SensorType_Power" xml:space="preserve">
+    <value>power</value>
+  </data>
+  <data name="SensorType_Fan" xml:space="preserve">
+    <value>fan</value>
+  </data>
+  <data name="Feat_NeedsAdmin" xml:space="preserve">
+    <value>Listing Windows features needs administrator rights.</value>
+  </data>
+  <data name="Feat_None" xml:space="preserve">
+    <value>No optional features from the list exist on this Windows edition.</value>
+  </data>
+</root>

@@ -1,0 +1,174 @@
+{
+  "tweaks": [
+    {
+      "id": "network.nicPowerSavingOff",
+      "category": "Network",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "nicProperty",
+          "media": "ethernet",
+          "properties": {
+            "*EEE": "0",
+            "EEELinkAdvertisement": "0",
+            "EEE": "0",
+            "AdvancedEEE": "0",
+            "GreenEthernet": "0",
+            "PowerSavingMode": "0",
+            "AutoPowerSaveModeEnabled": "0",
+            "SipsEnabled": "0",
+            "ULPMode": "0",
+            "*SelectiveSuspend": "0"
+          }
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords",
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-power-management"
+      ]
+    },
+    {
+      "id": "network.nicAllowPowerOffOff",
+      "category": "Network",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "formFactor": "desktop"
+      },
+      "actions": [
+        {
+          "type": "nicProperty",
+          "media": "ethernet",
+          "dwords": {
+            "PnPCapabilities": 24
+          }
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/networking/power-management-on-network-adapter"
+      ]
+    },
+    {
+      "id": "network.interruptModerationOff",
+      "category": "Expert",
+      "impact": {
+        "gaming": 1,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "expert",
+      "actions": [
+        {
+          "type": "nicProperty",
+          "media": "ethernet",
+          "properties": {
+            "*InterruptModeration": "0"
+          }
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords",
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/interrupt-moderation"
+      ]
+    },
+    {
+      "id": "network.dns.cloudflare",
+      "docs": "network.dnsServers",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "1.1.1.1,1.0.0.1"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.google",
+        "network.dns.quad9"
+      ],
+      "sources": [
+        "https://developers.cloudflare.com/1.1.1.1/ip-addresses/",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    },
+    {
+      "id": "network.dns.google",
+      "docs": "network.dnsServers",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "8.8.8.8,8.8.4.4"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.cloudflare",
+        "network.dns.quad9"
+      ],
+      "sources": [
+        "https://developers.google.com/speed/public-dns/docs/using",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    },
+    {
+      "id": "network.dns.quad9",
+      "docs": "network.dnsServers",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "9.9.9.9,149.112.112.112"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.cloudflare",
+        "network.dns.google"
+      ],
+      "sources": [
+        "https://www.quad9.net/service/service-addresses-and-features/",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    }
+  ]
+}

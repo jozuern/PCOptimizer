@@ -1,0 +1,629 @@
+{
+  "_comment": "Service explanations for the services manager. protected = never changed here; manualOk = can be set to Manual; warn = can be changed, the note says what stops working. Unknown Microsoft services are read-only; unknown third-party services can be set to Manual.",
+  "services": [
+    {
+      "name": "RpcSs",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "RpcEptMapper",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "DcomLaunch",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "LSM",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "BrokerInfrastructure",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "SamSs",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "EventLog",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "PlugPlay",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Power",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "ProfSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Schedule",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Winmgmt",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "CryptSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Dhcp",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Dnscache",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "nsi",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "BFE",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "mpssvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "WinDefend",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "SecurityHealthService",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "wscsvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "AudioSrv",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "AudioEndpointBuilder",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "UserManager",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "CoreMessagingRegistrar",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "SystemEventsBroker",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "StateRepository",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "TimeBrokerSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "gpsvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "wuauserv",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "WaaSMedicSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "TrustedInstaller",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "msiserver",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "AppXSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "ClipSVC",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "TokenBroker",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "camsvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "netprofm",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "NlaSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "LanmanWorkstation",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "KeyIso",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "VaultSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "DeviceInstall",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "DsmSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "BITS",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "UsoSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Appinfo",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "AppIDSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "EventSystem",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "FontCache",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "ShellHWDetection",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Themes",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "TextInputManagementService",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "WlanSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Wcmsvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "WinHttpAutoProxySvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "mpsdrv",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "Sense",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "WdNisSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "TabletInputService",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "InstallService",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "DispBrokerDesktopSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "DisplayEnhancementService",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "CDPSvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "webthreatdefsvc",
+      "mode": "protected",
+      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
+      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+    },
+    {
+      "name": "vgc",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "vgk",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "EasyAntiCheat",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "EasyAntiCheat_EOS",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "BEService",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "FACEIT",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "EAAntiCheatService",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
+      "name": "MapsBroker",
+      "mode": "manualOk",
+      "en": "Downloaded Maps Manager: updates offline maps for the Maps app.",
+      "de": "Verwaltung heruntergeladener Karten: aktualisiert Offlinekarten der Karten-App."
+    },
+    {
+      "name": "PcaSvc",
+      "mode": "manualOk",
+      "en": "Program Compatibility Assistant: watches old programs for known compatibility problems.",
+      "de": "Programmkompatibilitäts-Assistent: überwacht ältere Programme auf bekannte Kompatibilitätsprobleme."
+    },
+    {
+      "name": "TrkWks",
+      "mode": "manualOk",
+      "en": "Distributed Link Tracking Client: keeps shortcuts working when files move between NTFS volumes on a network.",
+      "de": "Überwachung verteilter Verknüpfungen (Client): hält Verknüpfungen funktionsfähig, wenn Dateien zwischen NTFS-Volumes im Netzwerk wandern."
+    },
+    {
+      "name": "Spooler",
+      "mode": "warn",
+      "en": "Print Spooler: needed for printing, including \"Print to PDF\".",
+      "de": "Druckwarteschlange: zum Drucken nötig, auch für „Microsoft Print to PDF“."
+    },
+    {
+      "name": "Fax",
+      "mode": "manualOk",
+      "en": "Fax service.",
+      "de": "Faxdienst."
+    },
+    {
+      "name": "WSearch",
+      "mode": "warn",
+      "en": "Windows Search indexing. Set to Manual, searching files in Explorer and Start becomes slow.",
+      "de": "Windows-Suchindizierung. Auf Manuell wird die Dateisuche in Explorer und Start langsam."
+    },
+    {
+      "name": "dmwappushservice",
+      "mode": "manualOk",
+      "en": "Device Management WAP Push routing, used for device management and diagnostics messages.",
+      "de": "Routing für WAP-Push-Nachrichten der Geräteverwaltung, für Verwaltungs- und Diagnosenachrichten."
+    },
+    {
+      "name": "RetailDemo",
+      "mode": "manualOk",
+      "en": "Retail Demo service for store display PCs.",
+      "de": "Einzelhandelsdemo-Dienst für Ausstellungs-PCs."
+    },
+    {
+      "name": "lfsvc",
+      "mode": "manualOk",
+      "en": "Geolocation service: provides the location to apps that you allowed.",
+      "de": "Geolocation-Dienst: liefert den Standort an Apps, denen du es erlaubt hast."
+    },
+    {
+      "name": "WpcMonSvc",
+      "mode": "manualOk",
+      "en": "Parental Controls: enforces Microsoft Family settings.",
+      "de": "Jugendschutz: setzt Einstellungen von Microsoft Family durch."
+    },
+    {
+      "name": "wisvc",
+      "mode": "manualOk",
+      "en": "Windows Insider service: needed only in the Insider program.",
+      "de": "Windows-Insider-Dienst: nur im Insider-Programm nötig."
+    },
+    {
+      "name": "PhoneSvc",
+      "mode": "manualOk",
+      "en": "Phone service: telephony state for Phone Link and cellular devices.",
+      "de": "Telefondienst: Telefoniestatus für Smartphone-Link und Mobilfunkgeräte."
+    },
+    {
+      "name": "SharedAccess",
+      "mode": "warn",
+      "en": "Internet Connection Sharing: needed for the mobile hotspot.",
+      "de": "Gemeinsame Nutzung der Internetverbindung: für den mobilen Hotspot nötig."
+    },
+    {
+      "name": "iphlpsvc",
+      "mode": "warn",
+      "en": "IP Helper: IPv6 transition (Teredo). Xbox party chat and some multiplayer games need it.",
+      "de": "IP-Hilfsdienst: IPv6-Übergang (Teredo). Xbox-Party-Chat und manche Mehrspielerspiele brauchen ihn."
+    },
+    {
+      "name": "WbioSrvc",
+      "mode": "warn",
+      "en": "Windows Biometric Service: needed for Windows Hello fingerprint and face sign-in.",
+      "de": "Windows-Biometriedienst: für die Anmeldung mit Fingerabdruck und Gesicht (Windows Hello) nötig."
+    },
+    {
+      "name": "SCardSvr",
+      "mode": "manualOk",
+      "en": "Smart Card: needed only with smart card readers.",
+      "de": "Smartcard: nur mit Smartcard-Lesern nötig."
+    },
+    {
+      "name": "stisvc",
+      "mode": "warn",
+      "en": "Windows Image Acquisition: needed for scanners and some webcams.",
+      "de": "Windows-Bilderfassung: für Scanner und manche Webcams nötig."
+    },
+    {
+      "name": "seclogon",
+      "mode": "manualOk",
+      "en": "Secondary Logon: \"Run as different user\".",
+      "de": "Sekundäre Anmeldung: „Als anderer Benutzer ausführen“."
+    },
+    {
+      "name": "bthserv",
+      "mode": "warn",
+      "en": "Bluetooth Support Service: needed for Bluetooth controllers, headsets and mice.",
+      "de": "Bluetooth-Unterstützungsdienst: für Bluetooth-Controller, Headsets und Mäuse nötig."
+    },
+    {
+      "name": "XblAuthManager",
+      "mode": "warn",
+      "en": "Xbox Live Auth Manager: sign-in for Xbox and Game Pass games.",
+      "de": "Xbox Live-Authentifizierungs-Manager: Anmeldung für Xbox- und Game-Pass-Spiele."
+    },
+    {
+      "name": "XblGameSave",
+      "mode": "warn",
+      "en": "Xbox Live Game Save: cloud saves of Xbox and Game Pass games.",
+      "de": "Xbox Live-Spielspeicherung: Cloud-Spielstände von Xbox- und Game-Pass-Spielen."
+    },
+    {
+      "name": "XboxNetApiSvc",
+      "mode": "warn",
+      "en": "Xbox Live Networking Service: multiplayer connectivity for Xbox games.",
+      "de": "Xbox Live-Netzwerkdienst: Mehrspielerverbindungen für Xbox-Spiele."
+    },
+    {
+      "name": "XboxGipSvc",
+      "mode": "warn",
+      "en": "Xbox Accessory Management: firmware and settings for Xbox controllers.",
+      "de": "Xbox-Zubehörverwaltung: Firmware und Einstellungen für Xbox-Controller."
+    },
+    {
+      "name": "DiagTrack",
+      "mode": "manualOk",
+      "en": "Connected User Experiences and Telemetry: sends diagnostic data. See the telemetry tweak.",
+      "de": "Benutzererfahrung und Telemetrie im verbundenen Modus: sendet Diagnosedaten. Siehe den Telemetrie-Tweak."
+    },
+    {
+      "name": "SysMain",
+      "mode": "warn",
+      "en": "SysMain (Superfetch): preloads frequently used programs. See the SysMain tweak.",
+      "de": "SysMain (Superfetch): lädt häufig genutzte Programme vor. Siehe den SysMain-Tweak."
+    },
+    {
+      "name": "edgeupdate",
+      "mode": "manualOk",
+      "en": "Microsoft Edge Update: also runs as a scheduled task, so Manual keeps Edge updated.",
+      "de": "Microsoft Edge Update: läuft auch als geplante Aufgabe, Edge bleibt auf Manuell aktuell."
+    },
+    {
+      "name": "edgeupdatem",
+      "mode": "manualOk",
+      "en": "Microsoft Edge Update (on demand).",
+      "de": "Microsoft Edge Update (bei Bedarf)."
+    },
+    {
+      "name": "gupdate",
+      "mode": "manualOk",
+      "en": "Google Update: also runs as a scheduled task, so Manual keeps Chrome updated.",
+      "de": "Google Update: läuft auch als geplante Aufgabe, Chrome bleibt auf Manuell aktuell."
+    },
+    {
+      "name": "gupdatem",
+      "mode": "manualOk",
+      "en": "Google Update (on demand).",
+      "de": "Google Update (bei Bedarf)."
+    },
+    {
+      "name": "Steam Client Service",
+      "mode": "protected",
+      "en": "Steam Client Service: Steam starts it when needed for installs and anti-cheat.",
+      "de": "Steam-Clientdienst: Steam startet ihn bei Bedarf für Installationen und Anti-Cheat."
+    },
+    {
+      "name": "NVDisplay.ContainerLocalSystem",
+      "mode": "protected",
+      "en": "NVIDIA Display Container: needed for the NVIDIA Control Panel and display settings.",
+      "de": "NVIDIA Display Container: für die NVIDIA Systemsteuerung und Anzeigeeinstellungen nötig."
+    },
+    {
+      "name": "AMD External Events Utility",
+      "mode": "protected",
+      "en": "AMD External Events Utility: needed for FreeSync and display features of AMD Software.",
+      "de": "AMD External Events Utility: für FreeSync und Anzeigefunktionen von AMD Software nötig."
+    }
+  ]
+}

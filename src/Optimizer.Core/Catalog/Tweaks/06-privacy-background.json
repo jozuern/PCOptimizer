@@ -1,0 +1,276 @@
+{
+  "_comment": "Several entries are derived from Chris Titus Tech WinUtil (MIT); see docs/THIRD-PARTY-NOTICES.md.",
+  "tweaks": [
+    {
+      "id": "privacy.telemetryOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "AllowTelemetry",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "service",
+          "name": "DiagTrack",
+          "startType": "disabled"
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Autochk\\Proxy",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector",
+          "enabled": false
+        }
+      ],
+      "blockedWhen": [
+        {
+          "fact": "os.insider",
+          "eq": true,
+          "reasonKey": "block.insiderTelemetry"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization",
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "privacy.activityHistoryOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableActivityFeed",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "PublishUserActivities",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "UploadUserActivities",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "privacy.consumerFeaturesOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsConsumerFeatures",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "privacy.locationOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location",
+          "name": "Value",
+          "kind": "string",
+          "value": "Deny"
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "privacy.wpbtOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+          "name": "DisableWpbtExecution",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "background.backgroundAppsOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "fps"
+        ]
+      },
+      "risk": "moderate",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications",
+          "name": "GlobalUserDisabled",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "background.aiOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableAIDataAnalysis",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai"
+      ]
+    },
+    {
+      "id": "background.widgetsOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Dsh",
+          "name": "AllowNewsAndInterests",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-newsandinterests"
+      ]
+    }
+  ]
+}

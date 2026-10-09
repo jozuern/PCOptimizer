@@ -1,0 +1,20 @@
+{
+  "_comment": "BIOS menu paths per board vendor and platform. verified=false until checked against the vendor manual.",
+  "vendorAliases": { "ASUSTeK": "ASUS", "ASUS": "ASUS", "Micro-Star": "MSI", "MSI": "MSI", "Gigabyte": "Gigabyte", "GIGA-BYTE": "Gigabyte", "ASRock": "ASRock" },
+  "menus": [
+    { "vendor": "ASUS", "platform": "intel", "setting": "xmp", "path": "Ai Tweaker > Ai Overclock Tuner > XMP I", "profileName": "XMP", "verified": false },
+    { "vendor": "ASUS", "platform": "amd-am4", "setting": "xmp", "path": "Ai Tweaker > Ai Overclock Tuner > D.O.C.P", "profileName": "D.O.C.P", "verified": false },
+    { "vendor": "ASUS", "platform": "amd-am5", "setting": "xmp", "path": "Ai Tweaker > Ai Overclock Tuner > EXPO I", "profileName": "EXPO", "verified": false },
+    { "vendor": "MSI", "platform": "intel", "setting": "xmp", "path": "OC > Extreme Memory Profile (XMP)", "profileName": "XMP", "verified": false },
+    { "vendor": "MSI", "platform": "amd-am4", "setting": "xmp", "path": "OC > A-XMP", "profileName": "A-XMP", "verified": false },
+    { "vendor": "MSI", "platform": "amd-am5", "setting": "xmp", "path": "OC > Extended Memory Profile (EXPO)", "profileName": "EXPO", "verified": false },
+    { "vendor": "Gigabyte", "platform": "intel", "setting": "xmp", "path": "Tweaker > Extreme Memory Profile (X.M.P.)", "profileName": "XMP", "verified": false },
+    { "vendor": "Gigabyte", "platform": "amd-am5", "setting": "xmp", "path": "Tweaker > Extended Memory Profile (EXPO)", "profileName": "EXPO", "verified": false },
+    { "vendor": "ASRock", "platform": "intel", "setting": "xmp", "path": "OC Tweaker > DRAM Configuration > Load XMP Setting", "profileName": "XMP", "verified": false },
+    { "vendor": "ASRock", "platform": "amd-am5", "setting": "xmp", "path": "OC Tweaker > DRAM Profile Configuration > EXPO", "profileName": "EXPO", "verified": false },
+    { "vendor": "ASUS", "platform": "*", "setting": "rebar", "path": "Advanced > PCI Subsystem Settings > Above 4G Decoding = Enabled, Re-Size BAR Support = Auto", "profileName": "Re-Size BAR", "verified": false },
+    { "vendor": "MSI", "platform": "*", "setting": "rebar", "path": "Settings > Advanced > PCI Subsystem Settings > Above 4G memory/Crypto Currency mining = Enabled, Re-Size BAR Support = Enabled", "profileName": "Re-Size BAR", "verified": false },
+    { "vendor": "Gigabyte", "platform": "*", "setting": "rebar", "path": "Settings > IO Ports > Above 4G Decoding = Enabled, Re-Size BAR Support = Auto", "profileName": "Re-Size BAR", "verified": false },
+    { "vendor": "ASRock", "platform": "*", "setting": "rebar", "path": "Advanced > Chipset Configuration > Above 4G Decoding = Enabled, C.A.M. (Clever Access Memory) = Enabled", "profileName": "C.A.M.", "verified": false }
+  ]
+}

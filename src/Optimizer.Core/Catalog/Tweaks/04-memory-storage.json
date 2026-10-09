@@ -1,0 +1,216 @@
+{
+  "tweaks": [
+    {
+      "id": "memory.compressionOff",
+      "category": "Memory",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "appliesTo": {
+        "when": {
+          "fact": "memory.totalGb",
+          "gte": 16
+        }
+      },
+      "actions": [
+        {
+          "type": "memoryCompression",
+          "enabled": false
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/powershell/module/mmagent/disable-mmagent"
+      ]
+    },
+    {
+      "id": "memory.sysmainOff",
+      "category": "Memory",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "fact": "storage.ssdOnly",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "service",
+          "name": "SysMain",
+          "startType": "disabled"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/powershell/module/mmagent/disable-mmagent"
+      ]
+    },
+    {
+      "id": "memory.pagefileSystemManaged",
+      "category": "Memory",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+          "name": "PagingFiles",
+          "kind": "multiString",
+          "value": [
+            "?:\\pagefile.sys"
+          ]
+        }
+      ],
+      "recommendWhen": {
+        "any": [
+          {
+            "fact": "pagefile.disabled",
+            "eq": true
+          },
+          {
+            "fact": "pagefile.maxMb",
+            "lt": 4096
+          }
+        ]
+      },
+      "sources": [
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/introduction-to-the-page-file"
+      ],
+      "recommendReasonKey": "rec.pagefile"
+    },
+    {
+      "id": "storage.trimOn",
+      "category": "Storage",
+      "impact": {
+        "gaming": 1,
+        "basis": "measured",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+          "name": "DisableDeleteNotification",
+          "kind": "dword",
+          "value": 0,
+          "missingMeans": 0
+        }
+      ],
+      "recommendWhen": {
+        "fact": "finding.F18.trim.problem",
+        "eq": true
+      },
+      "fixes": [
+        "F18.trim"
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+      ],
+      "recommendReasonKey": "rec.trimOff"
+    },
+    {
+      "id": "storage.lastAccessOff",
+      "category": "Storage",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+          "name": "NtfsDisableLastAccessUpdate",
+          "kind": "dword",
+          "value": "0x80000001"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+      ]
+    },
+    {
+      "id": "storage.8dot3Off",
+      "category": "Storage",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+          "name": "NtfsDisable8dot3NameCreation",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+      ]
+    },
+    {
+      "id": "storage.storageSenseOn",
+      "category": "Storage",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy",
+          "name": "01",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/manage-drive-space-with-storage-sense-654f6ada-7bfc-45e5-966b-e24aded96ad5"
+      ],
+      "recommendReasonKey": "rec.lowDiskSpace",
+      "recommendWhen": {
+        "fact": "finding.F17.lowDiskSpace.problem",
+        "eq": true
+      }
+    }
+  ]
+}

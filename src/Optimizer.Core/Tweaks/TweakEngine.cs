@@ -1,0 +1,444 @@
+using System.Text.Json;
+using Optimizer.Core.Actions;
+using Optimizer.Core.Backup;
+using Optimizer.Core.Logging;
+
+namespace Optimizer.Core.Tweaks;
+
+/// <summary>Plan v4 §4.2.</summary>
+public enum TweakState
+{
+    Applied,
+    NotApplied,
+    Partial,
+    NotApplicable,
+    Unsupported,
+    AppliedIneffective,
+    RevertedByWindows,
+    EnforcedByPolicy,
+    PendingRestart,
+}
+
+/// <summary>A reason that prevents applying, as a label key plus values for the text.</summary>
+public sealed record Block(string ReasonKey, string? Detail = null, bool CanOverride = false);
+
+public sealed record TweakStatus(
+    TweakDefinition Tweak,
+    TweakState State,
+    int Impact,
+    IReadOnlyList<string> Effects,
+    string? ImpactReasonKey,
+    bool Recommended,
+    IReadOnlyList<Block> Blocks,
+    bool HasBackup)
+{
+    public bool IsOn => State is TweakState.Applied or TweakState.PendingRestart or TweakState.AppliedIneffective or TweakState.Partial;
+}
+
+public sealed class ApplyOptions
+{
+    /// <summary>Expert mode is on (required for Expert and boot-critical tweaks).</summary>
+    public bool ExpertMode { get; init; }
+
+    /// <summary>The user confirmed the anti-cheat warning for this tweak.</summary>
+    public bool AcknowledgeAntiCheat { get; init; }
+
+    /// <summary>The user chose to continue although no restore point could be created.</summary>
+    public bool ContinueWithoutRestorePoint { get; init; }
+}
+
+public enum ApplyOutcome { Applied, AppliedIneffective, Blocked, NeedsRestorePointDecision, Failed, NothingToDo }
+
+public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine> Changes, string? Error = null, IReadOnlyList<Block>? Blocks = null);
+
+public sealed record BatchItemResult(TweakDefinition Tweak, ApplyResult Result);
+
+public sealed record RevertResult(bool Success, IReadOnlyList<string> AlreadyRevertedByWindows, IReadOnlyList<string> Errors);
+
+/// <summary>
+/// Detect -> preflight -> restore point -> backup (first-original) -> apply with per-tweak rollback -> verify -> log
+/// (plan v4 §4.3). Undo restores originals unless Windows already changed the value (feature-update-aware, §4.4).
+/// </summary>
+public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild)
+{
+    public const string RestorePointFrequencyTweak = "system.restorePointFrequency";
+
+    private bool _restorePointDone;
+
+    public ActionContext Context => ctx;
+    public BackupStore Store => store;
+
+    // ---------------- detection ----------------
+
+    public IReadOnlyList<TweakStatus> DetectAll(IEnumerable<TweakDefinition> tweaks, Facts facts)
+    {
+        var list = tweaks.ToList();
+        var first = list.Select(t => (t, state: DetectState(t, facts))).ToList();
+        var applied = first.Where(x => x.state is TweakState.Applied or TweakState.PendingRestart).Select(x => x.t.Id).ToHashSet();
+        return first.Select(x => BuildStatus(x.t, x.state, facts, applied)).ToList();
+    }
+
+    public TweakStatus Detect(TweakDefinition t, Facts facts, IReadOnlySet<string>? appliedIds = null) =>
+        BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>());
+
+    private TweakStatus BuildStatus(TweakDefinition t, TweakState state, Facts facts, IReadOnlySet<string> applied)
+    {
+        var (impact, effects, reason) = ImpactFor(t, facts);
+        // Expert mode is a UI filter, not a reason to show a tweak as blocked; the anti-cheat warning is kept.
+        var blocks = Preflight(t, facts, applied, new ApplyOptions { ExpertMode = true });
+        var recommended = state is TweakState.NotApplied or TweakState.Partial or TweakState.RevertedByWindows
+                          && t.RecommendWhen?.Evaluate(facts) == true && blocks.Count == 0;
+        return new TweakStatus(t, state, impact, effects, reason, recommended, blocks, store.Get(t.Id) is not null);
+    }
+
+    public TweakState DetectState(TweakDefinition t, Facts facts)
+    {
+        if (!AppliesTo(t, facts)) return TweakState.NotApplicable;
+        var actions = Expand(t);
+        var states = actions.Select(a => SafeState(a)).ToList();
+        var supported = states.Where(s => s != ActionState.Unsupported).ToList();
+        if (supported.Count == 0) return TweakState.Unsupported;
+
+        var appliedCount = supported.Count(s => s == ActionState.Applied);
+        var state = appliedCount == supported.Count ? TweakState.Applied : appliedCount == 0 ? TweakState.NotApplied : TweakState.Partial;
+
+        var backup = store.Get(t.Id);
+        if (backup is not null)
+        {
+            if (state == TweakState.Applied && backup.PendingRestartSince is { } since && LastBoot() < since) return TweakState.PendingRestart;
+            // We applied it, now it is gone: a feature update or another tool reset it (drift, plan v4 §4.10).
+            if (state != TweakState.Applied) return TweakState.RevertedByWindows;
+        }
+        else if (state != TweakState.Applied && facts.Get("device.managed") is true && actions.OfType<RegistryAction>().Any(a => IsPolicyPath(a.Path) && a.Read(ctx) is { Existed: true }))
+        {
+            return TweakState.EnforcedByPolicy;
+        }
+        return state;
+    }
+
+    private ActionState SafeState(TweakAction a)
+    {
+        try
+        {
+            return a.State(ctx);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("engine", $"state of {a.TargetKey} unreadable: {ex.Message}");
+            return ActionState.Unsupported;
+        }
+    }
+
+    public static bool AppliesTo(TweakDefinition t, Facts facts)
+    {
+        var a = t.AppliesTo;
+        var build = facts.Get("os.build") as int? ?? 0;
+        if (build != 0 && (build < a.MinBuild || (a.MaxBuild is { } max && build > max))) return false;
+        if (a.CpuVendor is { Count: > 0 } cpus && facts.Get("cpu.vendor") is string cpu && !cpus.Contains(cpu, StringComparer.OrdinalIgnoreCase)) return false;
+        if (a.GpuVendor is { Count: > 0 } gpus && !gpus.Any(g => facts.Get($"gpu.has{char.ToUpperInvariant(g[0])}{g[1..]}") is true)) return false;
+        if (a.FormFactor == "desktop" && facts.Get("system.laptop") is true) return false;
+        if (a.FormFactor == "laptop" && facts.Get("system.laptop") is false) return false;
+        return a.When?.Evaluate(facts) ?? true;
+    }
+
+    public static (int Impact, IReadOnlyList<string> Effects, string? ReasonKey) ImpactFor(TweakDefinition t, Facts facts)
+    {
+        foreach (var o in t.ImpactOverrides)
+            if (o.When.Evaluate(facts)) return (o.Gaming, o.Effect ?? t.Impact.Effect, o.ReasonKey);
+        return (t.Impact.Gaming, t.Impact.Effect, null);
+    }
+
+    private static bool IsPolicyPath(string path) => path.Contains(@"\Policies\", StringComparison.OrdinalIgnoreCase);
+
+    // ---------------- preflight / guard rules ----------------
+
+    public List<Block> Preflight(TweakDefinition t, Facts facts, IReadOnlySet<string> applied, ApplyOptions options)
+    {
+        var blocks = new List<Block>();
+        if (!AppliesTo(t, facts)) blocks.Add(new Block("block.notApplicable"));
+        foreach (var c in t.BlockedWhen.Where(c => c.Evaluate(facts)))
+            blocks.Add(new Block(c.ReasonKey ?? "block.guardRule"));
+        if (t.AntiCheatSensitive && facts.Get("anticheat.strict") is true && !options.AcknowledgeAntiCheat)
+            blocks.Add(new Block("block.antiCheat", facts.Get("anticheat.strictNames") as string, CanOverride: true));
+        if (t.EffectiveRisk == Risk.Expert && !options.ExpertMode) blocks.Add(new Block("block.expertMode", CanOverride: true));
+        foreach (var other in t.ConflictsWith.Where(applied.Contains)) blocks.Add(new Block("block.conflict", other));
+        foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
+        if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
+        return blocks;
+    }
+
+    // ---------------- preview ----------------
+
+    public IReadOnlyList<ChangeLine> Preview(TweakDefinition t) =>
+        Expand(t).Select(a =>
+        {
+            try
+            {
+                return a.Change(ctx);
+            }
+            catch (Exception ex)
+            {
+                return new ChangeLine(a.TargetKey, "(unreadable)", ex.Message);
+            }
+        }).ToList();
+
+    // ---------------- apply ----------------
+
+    /// <summary>
+    /// "Apply recommended": applies each batch-safe tweak in order with the normal pipeline (one restore point for the
+    /// whole batch, per-tweak rollback). Stops early only when the restore point decision is needed.
+    /// </summary>
+    public async Task<IReadOnlyList<BatchItemResult>> ApplyBatchAsync(IEnumerable<TweakDefinition> tweaks, Facts facts, IReadOnlySet<string> applied,
+        ApplyOptions options, IProgress<TweakDefinition>? progress = null)
+    {
+        var results = new List<BatchItemResult>();
+        var nowApplied = new HashSet<string>(applied);
+        foreach (var t in tweaks)
+        {
+            if (!t.IsBatchSafe)
+            {
+                results.Add(new BatchItemResult(t, new ApplyResult(ApplyOutcome.Blocked, [], Blocks: [new Block("block.notBatchSafe")])));
+                continue;
+            }
+            progress?.Report(t);
+            var r = await ApplyAsync(t, facts, nowApplied, options);
+            results.Add(new BatchItemResult(t, r));
+            if (r.Outcome == ApplyOutcome.NeedsRestorePointDecision) break;
+            if (r.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective) nowApplied.Add(t.Id);
+        }
+        return results;
+    }
+
+    public async Task<ApplyResult> ApplyAsync(TweakDefinition t, Facts facts, IReadOnlySet<string> applied, ApplyOptions options)
+    {
+        var blocks = Preflight(t, facts, applied, options);
+        if (blocks.Count > 0) return new ApplyResult(ApplyOutcome.Blocked, [], Blocks: blocks);
+
+        var actions = Expand(t);
+        var changes = Preview(t);
+        if (actions.All(a => SafeState(a) != ActionState.NotApplied)) return new ApplyResult(ApplyOutcome.NothingToDo, changes);
+
+        // Safety net: one restore point per session before the first change (secondary to the JSON backup).
+        if (!_restorePointDone && t.Id != RestorePointFrequencyTweak)
+        {
+            var ok = await EnsureRestorePointAsync(facts);
+            if (!ok && !options.ContinueWithoutRestorePoint) return new ApplyResult(ApplyOutcome.NeedsRestorePointDecision, changes);
+            _restorePointDone = true;
+        }
+
+        var backup = store.Get(t.Id) ?? new TweakBackup
+        {
+            TweakId = t.Id,
+            WindowsBuild = windowsBuild,
+            AppVersion = appVersion,
+            CatalogVersion = TweakCatalog.Version,
+        };
+
+        // Exports before boot-critical or power-plan changes.
+        try
+        {
+            if (actions.Any(a => a.IsBootCritical))
+            {
+                var file = Path.Combine(ctx.ExportFolder, $"bcd-{DateTime.Now:yyyyMMdd-HHmmss}.bcd");
+                ctx.Bcd.Export(file);
+                backup.Exports.Add(file);
+            }
+            if (actions.Any(a => a is PowerSettingAction or PowerSchemeAction))
+            {
+                var scheme = ctx.Power.ActiveScheme();
+                var file = Path.Combine(ctx.ExportFolder, $"power-{scheme}-{DateTime.Now:yyyyMMdd-HHmmss}.pow");
+                ctx.Power.Export(scheme, file);
+                backup.Exports.Add(file);
+            }
+        }
+        catch (Exception ex)
+        {
+            return Fail(t, changes, $"Export before change failed: {ex.Message}");
+        }
+
+        // First-original rule: an entry is written once and never overwritten by a later apply.
+        var before = new Dictionary<string, StoredValue>();
+        foreach (var a in actions)
+        {
+            var current = a.Read(ctx);
+            if (current is null) continue;
+            before[a.TargetKey] = current;
+            if (backup.Entry(a.TargetKey) is null)
+                backup.Entries.Add(new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+        }
+        if (TweakCatalog.Current.Get(t.Id) is null) backup.Definition ??= JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
+        store.Save(backup); // persisted before the first write, so a crash mid-way still has the originals
+
+        // Apply in order; on failure roll back what this run changed (per-tweak transaction).
+        var done = new List<TweakAction>();
+        foreach (var a in actions.Where(a => before.ContainsKey(a.TargetKey)))
+        {
+            try
+            {
+                a.Apply(ctx);
+                done.Add(a);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("engine", $"{t.Id}: {a.TargetKey} failed, rolling back {done.Count} action(s)", ex);
+                foreach (var undo in Enumerable.Reverse(done))
+                {
+                    try
+                    {
+                        undo.Restore(ctx, before[undo.TargetKey]);
+                    }
+                    catch (Exception rex)
+                    {
+                        Log.Error("engine", $"rollback of {undo.TargetKey} failed", rex);
+                    }
+                }
+                // Remove entries this run added if nothing of this tweak remains applied.
+                if (backup.Entries.All(e => before.TryGetValue(e.TargetKey, out var b) && b.SameAs(e.Original)))
+                    store.Archive(t.Id);
+                return Fail(t, changes, ex.Message);
+            }
+        }
+
+        foreach (var a in done)
+            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.Read(ctx);
+        backup.LastApplied = DateTimeOffset.Now;
+        if (t.Restart || t.Verify == "afterRestart") backup.PendingRestartSince = DateTimeOffset.Now;
+        store.Save(backup);
+
+        foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { line.Before, line.After });
+
+        // Verify: re-read every action. "afterRestart" tweaks are confirmed on the next scan after a reboot.
+        var ineffective = t.Verify != "afterRestart" && done.Any(a => SafeState(a) != ActionState.Applied);
+        return new ApplyResult(ineffective ? ApplyOutcome.AppliedIneffective : ApplyOutcome.Applied, changes);
+    }
+
+    private ApplyResult Fail(TweakDefinition t, IReadOnlyList<ChangeLine> changes, string error)
+    {
+        Log.Error("engine", $"{t.Id}: apply failed: {error}");
+        return new ApplyResult(ApplyOutcome.Failed, changes, error);
+    }
+
+    private async Task<bool> EnsureRestorePointAsync(Facts facts)
+    {
+        if (restorePoints.IsEnabled() != true) return false;
+        // Lift the 24 h limit through a normal, backed-up tweak, so undo puts the original value back.
+        if (TweakCatalog.Current.Get(RestorePointFrequencyTweak) is { } freq)
+            await ApplyAsync(freq, facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true });
+        return await restorePoints.CreateAsync($"PCOptimizer {DateTime.Now:yyyy-MM-dd HH:mm}");
+    }
+
+    // ---------------- undo ----------------
+
+    public RevertResult Revert(TweakDefinition t)
+    {
+        var backup = store.Get(t.Id);
+        if (backup is null) return new RevertResult(true, [], []);
+        var skipped = new List<string>();
+        var errors = new List<string>();
+        foreach (var a in Enumerable.Reverse(Expand(t)))
+        {
+            if (backup.Entry(a.TargetKey) is not { } entry) continue;
+            try
+            {
+                // Feature-update-aware: if the value is no longer what we applied, Windows (or the user) changed it: leave it.
+                if (entry.Applied is { } appliedValue && !a.IsStillApplied(ctx, appliedValue))
+                {
+                    skipped.Add(entry.Description);
+                    continue;
+                }
+                a.Restore(ctx, entry.Original);
+                Log.Info("change", $"{t.Id}: undo {entry.Description}", new { restored = entry.Original.Display });
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"{entry.Description}: {ex.Message}");
+                Log.Error("engine", $"undo {t.Id} {a.TargetKey} failed", ex);
+            }
+        }
+        if (errors.Count == 0) store.Archive(t.Id);
+        return new RevertResult(errors.Count == 0, skipped, errors);
+    }
+
+    /// <summary>Undoes every backed-up change: catalog tweaks and runtime tweaks (from their stored definition).</summary>
+    public IReadOnlyList<(TweakDefinition Tweak, RevertResult Result)> RevertAll()
+    {
+        var results = new List<(TweakDefinition, RevertResult)>();
+        foreach (var b in store.All())
+            if (Resolve(b.TweakId) is { Reversibility: Reversibility.Reversible } t)
+                results.Add((t, Revert(t)));
+        return results;
+    }
+
+    /// <summary>The definition of a tweak id: the catalog entry, or the one stored with the backup of a runtime tweak.</summary>
+    public TweakDefinition? Resolve(string id)
+    {
+        if (TweakCatalog.Current.Get(id) is { } t) return t;
+        if (store.Get(id)?.Definition is not { } json) return null;
+        try
+        {
+            return JsonSerializer.Deserialize<TweakDefinition>(json, TweakCatalog.JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            Log.Warn("engine", $"stored definition of {id} unreadable: {ex.Message}");
+            return null;
+        }
+    }
+
+    // ---------------- helpers ----------------
+
+    /// <summary>
+    /// Expands per-adapter templates: "{nic}" registry paths and DNS actions into one action per active network
+    /// interface, NIC property templates into one action per physical adapter of the requested media.
+    /// </summary>
+    public IReadOnlyList<TweakAction> Expand(TweakDefinition t)
+    {
+        var list = new List<TweakAction>();
+        IReadOnlyList<NicAdapter>? adapters = null;
+        foreach (var a in t.Actions)
+        {
+            switch (a)
+            {
+                case RegistryAction r when r.Path.Contains("{nic}", StringComparison.Ordinal):
+                    foreach (var id in ctx.NetworkInterfaceIds)
+                        list.Add(new RegistryAction
+                        {
+                            Hive = r.Hive, Path = r.Path.Replace("{nic}", id), Name = r.Name, Kind = r.Kind, Value = r.Value, Delete = r.Delete,
+                            Notify = r.Notify, MissingMeans = r.MissingMeans, RemoveKeyOnUndo = r.RemoveKeyOnUndo?.Replace("{nic}", id),
+                        });
+                    break;
+                case DnsAction d when d.InterfaceGuid == "{nic}":
+                    foreach (var id in ctx.NetworkInterfaceIds)
+                        list.Add(new DnsAction { InterfaceGuid = id, Servers = d.Servers });
+                    break;
+                case NicPropertyAction n when n.Adapter is null:
+                    adapters ??= SafeAdapters();
+                    foreach (var adapter in adapters.Where(x => n.Media switch { "ethernet" => !x.IsWifi, "wifi" => x.IsWifi, _ => true }))
+                    {
+                        if (n.InterfaceGuid is { } only && !string.Equals(only, adapter.InterfaceGuid, StringComparison.OrdinalIgnoreCase)) continue;
+                        list.Add(new NicPropertyAction { Properties = n.Properties, Dwords = n.Dwords, Media = n.Media, InterfaceGuid = n.InterfaceGuid, Adapter = adapter });
+                    }
+                    break;
+                default:
+                    list.Add(a);
+                    break;
+            }
+        }
+        return list;
+    }
+
+    private IReadOnlyList<NicAdapter> SafeAdapters()
+    {
+        try
+        {
+            return NicAdapters.Enumerate(ctx.Registry);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("engine", $"network adapters unreadable: {ex.Message}");
+            return [];
+        }
+    }
+
+    private static DateTimeOffset LastBoot() => DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64);
+}

@@ -1,0 +1,131 @@
+{
+  "_comment": "Optional features offered on the Tools page. Features that do not exist on this edition are hidden. hypervisor = starts the Windows hypervisor when on.",
+  "features": [
+    {
+      "name": "Microsoft-Hyper-V-All",
+      "title": "Hyper-V",
+      "titleDe": "Hyper-V",
+      "hypervisor": true,
+      "recommend": null,
+      "en": "Virtual machines with Hyper-V Manager. Starts the Windows hypervisor at boot, which other virtualization programs then have to share.",
+      "de": "Virtuelle Maschinen mit dem Hyper-V-Manager. Startet beim Booten den Windows-Hypervisor, den andere Virtualisierungsprogramme dann mitnutzen müssen."
+    },
+    {
+      "name": "VirtualMachinePlatform",
+      "title": "Virtual Machine Platform",
+      "titleDe": "VM-Plattform",
+      "hypervisor": true,
+      "recommend": null,
+      "en": "Needed by WSL 2 and Android emulators that use the Windows hypervisor. Starts the hypervisor at boot.",
+      "de": "Nötig für WSL 2 und Android-Emulatoren, die den Windows-Hypervisor nutzen. Startet beim Booten den Hypervisor."
+    },
+    {
+      "name": "HypervisorPlatform",
+      "title": "Windows Hypervisor Platform",
+      "titleDe": "Windows-Hypervisorplattform",
+      "hypervisor": true,
+      "recommend": null,
+      "en": "Lets third-party virtualization programs (for example VMware, VirtualBox, emulators) run on the Windows hypervisor.",
+      "de": "Lässt Virtualisierungsprogramme anderer Hersteller (zum Beispiel VMware, VirtualBox, Emulatoren) auf dem Windows-Hypervisor laufen."
+    },
+    {
+      "name": "Microsoft-Windows-Subsystem-Linux",
+      "title": "Windows Subsystem for Linux",
+      "titleDe": "Windows-Subsystem für Linux",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Runs Linux tools on Windows. WSL 2 also needs the Virtual Machine Platform.",
+      "de": "Führt Linux-Werkzeuge unter Windows aus. WSL 2 braucht zusätzlich die VM-Plattform."
+    },
+    {
+      "name": "Containers-DisposableClientVM",
+      "title": "Windows Sandbox",
+      "titleDe": "Windows-Sandbox",
+      "hypervisor": true,
+      "recommend": null,
+      "en": "A disposable, isolated desktop for testing programs. Pro and higher; starts the hypervisor.",
+      "de": "Ein isolierter Wegwerf-Desktop zum Testen von Programmen. Ab Pro; startet den Hypervisor."
+    },
+    {
+      "name": "NetFx3",
+      "title": ".NET Framework 3.5",
+      "titleDe": ".NET Framework 3.5",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Runtime for older programs and games. Turn it on when a program asks for it; it is downloaded through Windows Update.",
+      "de": "Laufzeitumgebung für ältere Programme und Spiele. Schalte sie ein, wenn ein Programm danach fragt; sie wird über Windows Update geladen."
+    },
+    {
+      "name": "DirectPlay",
+      "title": "DirectPlay",
+      "titleDe": "DirectPlay",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Network component of very old games (around 2000 to 2008). Windows offers to install it when such a game needs it.",
+      "de": "Netzwerkkomponente sehr alter Spiele (etwa 2000 bis 2008). Windows bietet die Installation an, wenn ein solches Spiel sie braucht."
+    },
+    {
+      "name": "SMB1Protocol",
+      "title": "SMB 1.0 file sharing",
+      "titleDe": "SMB-1.0-Dateifreigabe",
+      "hypervisor": false,
+      "recommend": "off",
+      "en": "Outdated file sharing protocol with known security problems. Only very old NAS drives need it. Keep it off.",
+      "de": "Veraltetes Dateifreigabeprotokoll mit bekannten Sicherheitsproblemen. Nur sehr alte NAS-Laufwerke brauchen es. Lass es aus."
+    },
+    {
+      "name": "MicrosoftWindowsPowerShellV2Root",
+      "title": "Windows PowerShell 2.0",
+      "titleDe": "Windows PowerShell 2.0",
+      "hypervisor": false,
+      "recommend": "off",
+      "en": "Old PowerShell version without current security features. Microsoft removes it from current Windows versions.",
+      "de": "Alte PowerShell-Version ohne aktuelle Sicherheitsfunktionen. Microsoft entfernt sie aus aktuellen Windows-Versionen."
+    },
+    {
+      "name": "Printing-PrintToPDFServices-Features",
+      "title": "Microsoft Print to PDF",
+      "titleDe": "Microsoft Print to PDF",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Virtual printer that saves any document as a PDF.",
+      "de": "Virtueller Drucker, der jedes Dokument als PDF speichert."
+    },
+    {
+      "name": "WindowsMediaPlayer",
+      "title": "Windows Media Player Legacy",
+      "titleDe": "Windows Media Player (Legacy)",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "The classic Windows Media Player. The new Media Player app is separate.",
+      "de": "Der klassische Windows Media Player. Die neue App Medienwiedergabe ist davon getrennt."
+    },
+    {
+      "name": "Recall",
+      "title": "Recall",
+      "titleDe": "Recall",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Saves snapshots of your screen so you can search what you saw (Copilot+ PCs only).",
+      "de": "Speichert Momentaufnahmen deines Bildschirms, damit du durchsuchen kannst, was du gesehen hast (nur Copilot+ PCs)."
+    },
+    {
+      "name": "TelnetClient",
+      "title": "Telnet Client",
+      "titleDe": "Telnet-Client",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Command-line client for the unencrypted Telnet protocol, used for network tests.",
+      "de": "Befehlszeilenclient für das unverschlüsselte Telnet-Protokoll, für Netzwerktests."
+    },
+    {
+      "name": "WorkFolders-Client",
+      "title": "Work Folders",
+      "titleDe": "Arbeitsordner",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Syncs files with a company Work Folders server.",
+      "de": "Synchronisiert Dateien mit einem Arbeitsordner-Server einer Firma."
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+{
+  "tweaks": [
+    {
+      "id": "gpu.hags",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "latency"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "gpu.supportsFrameGeneration",
+            "eq": true
+          },
+          "gaming": 3,
+          "effect": [
+            "prerequisite"
+          ],
+          "reasonKey": "impact.hagsFrameGen"
+        }
+      ],
+      "risk": "safe",
+      "restart": true,
+      "verify": "afterRestart",
+      "appliesTo": {
+        "when": {
+          "fact": "gpu.supportsHags",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+          "name": "HwSchMode",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "recommendWhen": {
+        "fact": "gpu.supportsFrameGeneration",
+        "eq": true
+      },
+      "sources": [
+        "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/"
+      ],
+      "recommendReasonKey": "rec.frameGeneration"
+    },
+    {
+      "id": "gpu.windowedOptimizations",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "appliesTo": {
+        "when": {
+          "fact": "gpu.hasDiscrete",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registryToken",
+          "hive": "user",
+          "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+          "name": "DirectXUserGlobalSettings",
+          "token": "SwapEffectUpgradeEnable",
+          "value": "1"
+        }
+      ],
+      "recommendWhen": {
+        "all": [
+          {
+            "fact": "gpu.hasDiscrete",
+            "eq": true
+          },
+          {
+            "fact": "display.autoHdr",
+            "eq": false
+          }
+        ]
+      },
+      "sources": [
+        "https://devblogs.microsoft.com/directx/optimizations-for-windowed-games-in-windows-11/",
+        "https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952"
+      ],
+      "recommendReasonKey": "rec.windowedFlip"
+    },
+    {
+      "id": "gpu.gameMode",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\GameBar",
+          "name": "AutoGameModeEnabled",
+          "kind": "dword",
+          "value": 1,
+          "missingMeans": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\GameBar",
+          "name": "AllowAutoGameMode",
+          "kind": "dword",
+          "value": 1,
+          "missingMeans": 1
+        }
+      ],
+      "recommendWhen": {
+        "fact": "os.build",
+        "gte": 26100
+      },
+      "sources": [
+        "https://www.elevenforum.com/t/turn-on-or-off-game-mode-in-windows-11.1447/"
+      ],
+      "recommendReasonKey": "rec.gameModeOff"
+    },
+    {
+      "id": "gpu.gameDvrOff",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "gamedvr.backgroundRecording",
+            "eq": true
+          },
+          "gaming": 2,
+          "effect": [
+            "fps",
+            "stutter"
+          ],
+          "reasonKey": "impact.backgroundRecording"
+        }
+      ],
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_Enabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+          "name": "AppCaptureEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+          "name": "HistoricalCaptureEnabled",
+          "kind": "dword",
+          "value": 0,
+          "missingMeans": 0
+        }
+      ],
+      "recommendWhen": {
+        "fact": "gamedvr.backgroundRecording",
+        "eq": true
+      },
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ],
+      "recommendReasonKey": "rec.backgroundRecording"
+    },
+    {
+      "id": "gpu.fullscreenOptimizationsOff",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_FSEBehaviorMode",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_HonorUserFSEBehaviorMode",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_FSEBehavior",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_DXGIHonorFSEWindowsCompatible",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://devblogs.microsoft.com/directx/demystifying-full-screen-optimizations/"
+      ]
+    },
+    {
+      "id": "gpu.mpoOff",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+          "name": "DisableOverlays",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://www.guru3d.com/publish/comments/geforce-56603-whql-driver-download/page-17",
+        "https://www.techpowerup.com/forums/goto/post?id=5552960"
+      ]
+    }
+  ]
+}

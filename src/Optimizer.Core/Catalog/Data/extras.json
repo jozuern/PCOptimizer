@@ -1,0 +1,76 @@
+{
+  "_comment": "Detection lists for advisor checks. verified=false entries are best-known names; an absent name produces 'not found' wording, never a hard problem.",
+  "overlayProcesses": [
+    {
+      "process": "Discord",
+      "name": "Discord (overlay may be on)"
+    },
+    {
+      "process": "NVIDIA Overlay",
+      "name": "NVIDIA App / GeForce Experience overlay"
+    },
+    {
+      "process": "RTSS",
+      "name": "RivaTuner Statistics Server"
+    },
+    {
+      "process": "MSIAfterburner",
+      "name": "MSI Afterburner"
+    },
+    {
+      "process": "overwolf",
+      "name": "Overwolf"
+    },
+    {
+      "process": "Medal",
+      "name": "Medal.tv"
+    },
+    {
+      "process": "obs64",
+      "name": "OBS Studio"
+    },
+    {
+      "process": "XboxPcAppFT",
+      "name": "Xbox app"
+    },
+    {
+      "process": "GameBar",
+      "name": "Xbox Game Bar"
+    }
+  ],
+  "serviceGroups": {
+    "intelDtt": {
+      "services": [
+        "esifsvc",
+        "ipfsvc",
+        "ipf_uf"
+      ],
+      "verified": false
+    },
+    "amdChipset": {
+      "services": [
+        "amdgpio2",
+        "amdi2c",
+        "amdpsp",
+        "AmdPPM",
+        "amd3dvcache",
+        "amd3dvcacheSvc"
+      ],
+      "verified": false
+    },
+    "amdVcacheOptimizer": {
+      "services": [
+        "amd3dvcache",
+        "amd3dvcacheSvc"
+      ],
+      "verified": false
+    }
+  },
+  "apoCpus": {
+    "_comment": "Intel Application Optimization: verified models per plan v4 (14th gen K desktop i7/i9, Core Ultra 200S K). Source: Intel APO game list and press coverage.",
+    "regex": "(i[79]-14\\d{3}K|Ultra [79] 2[68]5K)",
+    "sources": [
+      "https://www.kitguru.net/components/cpu/joao-silva/intel-apo-receives-12-new-game-profiles-core-ultra-200k-series-now-supported/"
+    ]
+  }
+}

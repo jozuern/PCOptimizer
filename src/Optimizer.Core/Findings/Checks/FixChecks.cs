@@ -1,0 +1,193 @@
+using Optimizer.Core.Actions;
+using Optimizer.Core.Catalog;
+using Optimizer.Core.Hardware;
+using Optimizer.Core.Platform;
+using Optimizer.Core.Tweaks;
+
+namespace Optimizer.Core.Findings.Checks;
+
+/// <summary>Fixes that depend on this PC's exact values (display mode, game paths) are built at scan time.</summary>
+public static class RuntimeFixes
+{
+    public const string RefreshRateDoc = "fix.refreshRate";
+    public const string GpuPreferenceDoc = "fix.gpuPreference";
+
+    public static TweakDefinition RefreshRate(DisplayInfo d) => new()
+    {
+        Id = $"fix.refreshRate.{d.GdiName.TrimStart('\\', '.')}",
+        Docs = RefreshRateDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 5, Basis = "measured", Effect = ["fps", "latency"] },
+        Risk = Risk.Safe,
+        Hidden = true,
+        Actions =
+        [
+            new DisplayModeAction { GdiName = d.GdiName, Width = d.Width, Height = d.Height, RefreshHz = d.MaxOfferedRefreshAtCurrentResolution },
+        ],
+        Fixes = [RefreshRateCheck.Id],
+        Sources = ["https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexw"],
+    };
+
+    public const string NvidiaGlobalDoc = "fix.nvidiaGlobal";
+    public const string PowerModeDoc = "fix.powerMode";
+    public const string EthernetAutoDoc = "fix.ethernetAuto";
+
+    public static IReadOnlyList<string> DocIds => [RefreshRateDoc, GpuPreferenceDoc, NvidiaGlobalDoc, PowerModeDoc, EthernetAutoDoc];
+
+    /// <summary>Removes the global profile's own values for the given settings, so the driver defaults apply again.</summary>
+    public static TweakDefinition NvidiaGlobalReset(IEnumerable<uint> settings) => new()
+    {
+        Id = "fix.nvidiaGlobal",
+        Docs = NvidiaGlobalDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 4, Basis = "measured", Effect = ["fps", "latency"] },
+        Risk = Risk.Safe,
+        Hidden = true,
+        Actions = settings.Select(id => (TweakAction)new NvidiaDrsAction { Profile = "global", SettingId = id, Value = null }).ToList(),
+        Fixes = [NvidiaGlobalCheck.Id],
+        Sources = ["https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"],
+    };
+
+    /// <summary>Power mode "Best performance" while plugged in.</summary>
+    public static TweakDefinition PowerModeBestPerformance() => new()
+    {
+        Id = "fix.powerMode",
+        Docs = PowerModeDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 3, Basis = "measured", Effect = ["fps"] },
+        Risk = Risk.Safe,
+        Hidden = true,
+        Actions = [new PowerModeAction { Overlay = FirmwareExtras.OverlayBestPerformance }],
+        Fixes = [PowerModeCheck.Id],
+        Sources = ["https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/customize-power-slider"],
+    };
+
+    /// <summary>Sets one Ethernet adapter's speed back to auto-negotiation.</summary>
+    public static TweakDefinition EthernetAuto(NicDetail nic) => new()
+    {
+        Id = $"fix.ethernetAuto.{nic.Id.Trim('{', '}').ToLowerInvariant()}",
+        Docs = EthernetAutoDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 1, Basis = "measured", Effect = ["latency"] },
+        Risk = Risk.Safe,
+        Hidden = true,
+        Actions = [new NicPropertyAction { Properties = new(StringComparer.OrdinalIgnoreCase) { ["*SpeedDuplex"] = "0" }, InterfaceGuid = nic.Id, Media = "ethernet" }],
+        Fixes = [EthernetSpeedCheck.Id],
+        Sources = ["https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords"],
+    };
+
+    public static TweakDefinition GpuPreference(IEnumerable<InstalledGame> games) => new()
+    {
+        Id = "fix.gpuPreference",
+        Docs = GpuPreferenceDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 5, Basis = "measured", Effect = ["fps"] },
+        Risk = Risk.Safe,
+        Scope = TweakScope.User,
+        Hidden = true,
+        Actions = games.Where(g => g.Executable is not null)
+            .Select(g => (TweakAction)new RegistryTokenAction
+            {
+                Hive = Hive.User,
+                Path = @"Software\Microsoft\DirectX\UserGpuPreferences",
+                Name = g.Executable!,
+                Token = "GpuPreference",
+                Value = "2",
+            })
+            .ToList(),
+        Fixes = [GpuPreferenceCheck.Id],
+        Sources = ["https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_6/nf-dxgi1_6-idxgifactory6-enumadapterbygpupreference"],
+    };
+}
+
+/// <summary>
+/// F4: games may run on the integrated GPU (laptops with hybrid graphics, desktops with the iGPU enabled).
+/// Reads the per-app GPU preference (HKU\&lt;user&gt;\...\UserGpuPreferences) for each detected game.
+/// </summary>
+public sealed class GpuPreferenceCheck(IRegistryRoots? registry) : IFindingCheck
+{
+    public const string Id = "F4.gpuPreference";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        if (p.Gpus is null || p.Software is null) yield break;
+        var hybrid = p.Gpus.Any(g => g.Kind == GpuKind.Integrated) && p.Gpus.Any(g => g.Kind == GpuKind.Discrete);
+        if (!hybrid) yield break;
+        var games = p.Software.Games.Where(g => g.Executable is not null).ToList();
+        if (games.Count == 0) yield break;
+        if (registry is null)
+        {
+            yield return new Finding { Id = Id, Kind = FindingKind.Finding, Status = FindingStatus.Unknown, Impact = 5, Effects = [Effect.Fps] };
+            yield break;
+        }
+
+        var missing = new List<InstalledGame>();
+        foreach (var g in games)
+        {
+            var value = RegistryValue.Read(registry, Hive.User, @"Software\Microsoft\DirectX\UserGpuPreferences", g.Executable!);
+            if (!RegistryTokenAction.Parse(value.Data).TryGetValue("GpuPreference", out var pref) || pref != "2") missing.Add(g);
+        }
+
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Finding,
+            Status = missing.Count > 0 ? FindingStatus.Problem : FindingStatus.Ok,
+            Impact = 5,
+            Effects = [Effect.Fps],
+            Facts =
+            [
+                new("fact.gpusDetected", string.Join(", ", p.Gpus.Where(g => g.Kind is GpuKind.Integrated or GpuKind.Discrete).Select(g => $"{g.Name} ({g.Kind})"))),
+                .. missing.Take(12).Select(g => new Fact("fact.gameWithoutPreference", g.Name)),
+            ],
+            Fix = missing.Count > 0 ? RuntimeFixes.GpuPreference(missing) : null,
+            Params = new Dictionary<string, string>
+            {
+                ["count"] = missing.Count.ToString(),
+                ["dgpu"] = p.Gpus.First(g => g.Kind == GpuKind.Discrete).Name,
+            },
+        };
+    }
+}
+
+/// <summary>F21: values left behind by other tweak tools that are ineffective or harmful on 24H2+.</summary>
+public sealed class LeftoverCheck : IFindingCheck
+{
+    public const string Id = "F21.leftovers";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    /// <summary>BCD elements of {current}; set by the app when elevated (bcdedit needs admin rights). Null = unknown.</summary>
+    public static Func<IReadOnlySet<string>?> BcdElements { get; set; } = () => null;
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        var found = new List<Fact>();
+        var overlay = Reg.HklmValue(@"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode");
+        if (overlay is not null) found.Add(new Fact("fact.leftoverValue", $@"HKLM\SOFTWARE\Microsoft\Windows\Dwm\OverlayTestMode = {overlay}"));
+        var bcd = SafeBcd();
+        if (bcd?.Contains("useplatformclock") == true) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
+
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Finding,
+            Status = found.Count > 0 ? FindingStatus.Problem : bcd is null ? FindingStatus.Unknown : FindingStatus.Ok,
+            Impact = 2,
+            Effects = [Effect.Stability, Effect.Latency],
+            Facts = found.Count > 0 ? found : [new Fact("fact.leftoverValue", "@none")],
+        };
+    }
+
+    private static IReadOnlySet<string>? SafeBcd()
+    {
+        try
+        {
+            return BcdElements();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+}

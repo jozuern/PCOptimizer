@@ -1,0 +1,216 @@
+{
+  "tweaks": [
+    {
+      "id": "visual.bestPerformance",
+      "category": "Visual",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "gpu.hasDiscrete",
+            "eq": false
+          },
+          "gaming": 1,
+          "effect": [
+            "fps"
+          ],
+          "reasonKey": "impact.integratedGraphics"
+        }
+      ],
+      "risk": "safe",
+      "scope": "user",
+      "signOut": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
+          "name": "VisualFXSetting",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Desktop",
+          "name": "UserPreferencesMask",
+          "kind": "binary",
+          "value": "9012038010000000"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Desktop\\WindowMetrics",
+          "name": "MinAnimate",
+          "kind": "string",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarAnimations",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ListviewAlphaSelect",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ListviewShadow",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ],
+      "recommendReasonKey": "rec.integratedGraphics",
+      "recommendWhen": {
+        "fact": "gpu.hasDiscrete",
+        "eq": false
+      }
+    },
+    {
+      "id": "visual.transparencyOff",
+      "category": "Visual",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "gpu.hasDiscrete",
+            "eq": false
+          },
+          "gaming": 1,
+          "effect": [
+            "fps"
+          ],
+          "reasonKey": "impact.integratedGraphics"
+        }
+      ],
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+          "name": "EnableTransparency",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic"
+      ],
+      "recommendReasonKey": "rec.integratedGraphics",
+      "recommendWhen": {
+        "fact": "gpu.hasDiscrete",
+        "eq": false
+      }
+    },
+    {
+      "id": "explorer.fileExtensions",
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "HideFileExt",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "explorer.endTask",
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings",
+          "name": "TaskbarEndTask",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "explorer.classicContextMenu",
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "signOut": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+          "name": "",
+          "kind": "string",
+          "value": "",
+          "removeKeyOnUndo": "Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
+        }
+      ],
+      "sources": [
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    }
+  ]
+}

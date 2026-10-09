@@ -1,0 +1,58 @@
+{
+  "_comment": "Kernel anti-cheat signatures (service/driver registration, not running state) and their platform requirements. 'required' blocks games when missing; 'sometimes' is enforced only in some modes or rollout waves. verified=false: signature names to confirm on a PC with the anti-cheat installed.",
+  "antiCheats": [
+    {
+      "id": "vanguard",
+      "name": "Riot Vanguard",
+      "services": [ "vgc", "vgk" ],
+      "blocksVbsOff": true,
+      "verified": true,
+      "required": [ "uefi", "secureBoot", "tpm2" ],
+      "sometimes": [ "hvci", "iommu" ],
+      "sometimesNoteKey": "ac.vanguardOnDemand",
+      "sources": [ "https://support.riotgames.com/riot/performance/vanguard-security-requirements", "https://support.riotgames.com/en-us/riot/support-tools/enabling-iommu" ]
+    },
+    {
+      "id": "faceit",
+      "name": "FACEIT Anti-Cheat",
+      "services": [ "FACEIT", "FACEITService" ],
+      "blocksVbsOff": true,
+      "verified": false,
+      "required": [ "uefi", "secureBoot", "tpm2" ],
+      "sometimes": [ "hvci", "iommu" ],
+      "sometimesNoteKey": "ac.faceitWaves",
+      "sources": [ "https://support.faceit.com/hc/en-us/articles/23117181142556-Windows-Security-Requirements-FAQ" ]
+    },
+    {
+      "id": "javelin",
+      "name": "EA Javelin",
+      "services": [ "EAAntiCheatService" ],
+      "blocksVbsOff": false,
+      "verified": false,
+      "required": [ "uefi", "secureBoot" ],
+      "sometimes": [ "tpm2" ],
+      "sometimesNoteKey": "ac.javelinBf6",
+      "sources": [ "https://www.thesixthaxis.com/2025/08/07/battlefield-6-and-black-ops-7-both-need-secure-boot-and-tpm-2-0-for-pc-anti-cheat/" ]
+    },
+    {
+      "id": "eac",
+      "name": "Easy Anti-Cheat",
+      "services": [ "EasyAntiCheat", "EasyAntiCheat_EOS" ],
+      "blocksVbsOff": false,
+      "verified": true,
+      "required": [],
+      "sometimes": [],
+      "sources": []
+    },
+    {
+      "id": "battleye",
+      "name": "BattlEye",
+      "services": [ "BEService" ],
+      "blocksVbsOff": false,
+      "verified": true,
+      "required": [],
+      "sometimes": [],
+      "sources": []
+    }
+  ]
+}

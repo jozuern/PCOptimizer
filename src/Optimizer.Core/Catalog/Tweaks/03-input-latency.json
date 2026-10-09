@@ -1,0 +1,185 @@
+{
+  "tweaks": [
+    {
+      "id": "input.mouseAccelOff",
+      "category": "Input",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "input"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Mouse",
+          "name": "MouseSpeed",
+          "kind": "string",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Mouse",
+          "name": "MouseThreshold1",
+          "kind": "string",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Mouse",
+          "name": "MouseThreshold2",
+          "kind": "string",
+          "value": "0",
+          "notify": "mouse"
+        }
+      ],
+      "recommendWhen": {
+        "fact": "os.build",
+        "gte": 26100
+      },
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ],
+      "recommendReasonKey": "rec.mouseAccel"
+    },
+    {
+      "id": "latency.mmcss",
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+          "name": "SystemResponsiveness",
+          "kind": "dword",
+          "value": 10
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+          "name": "GPU Priority",
+          "kind": "dword",
+          "value": 8
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+          "name": "Priority",
+          "kind": "dword",
+          "value": 6
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+          "name": "Scheduling Category",
+          "kind": "string",
+          "value": "High"
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+          "name": "SFIO Priority",
+          "kind": "string",
+          "value": "High"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service"
+      ]
+    },
+    {
+      "id": "latency.win32PrioritySeparation",
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
+          "name": "Win32PrioritySeparation",
+          "kind": "dword",
+          "value": 38
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/previous-versions/cc976120(v=technet.10)"
+      ]
+    },
+    {
+      "id": "latency.disableDynamicTick",
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "expert",
+      "bootCritical": true,
+      "restart": true,
+      "verify": "afterRestart",
+      "actions": [
+        {
+          "type": "bcd",
+          "element": "disabledynamictick",
+          "value": "yes"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set"
+      ]
+    },
+    {
+      "id": "latency.globalTimerResolution",
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "expert",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel",
+          "name": "GlobalTimerResolutionRequests",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/timeapi/nf-timeapi-timebeginperiod"
+      ]
+    }
+  ]
+}

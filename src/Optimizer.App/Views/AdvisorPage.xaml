@@ -1,0 +1,20 @@
+<UserControl x:Class="Optimizer.App.Views.AdvisorPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Optimizer.App.Services"
+             Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="{StaticResource PagePadding}">
+            <DockPanel>
+                <CheckBox DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" VerticalAlignment="Top" />
+                <StackPanel>
+                    <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Advisor_Title}" />
+                    <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Advisor_Hint}" />
+                </StackPanel>
+            </DockPanel>
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding AdvisorEmpty, Converter={StaticResource BoolToVisibility}}" />
+            <ItemsControl ItemsSource="{Binding AdvisorItems}" ItemTemplate="{StaticResource FindingRow}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

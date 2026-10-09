@@ -1,0 +1,145 @@
+{
+  "tweaks": [
+    {
+      "id": "network.throttlingIndex",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+          "name": "NetworkThrottlingIndex",
+          "kind": "dword",
+          "value": "0xFFFFFFFF"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service"
+      ]
+    },
+    {
+      "id": "network.nagleOff",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{nic}",
+          "name": "TcpAckFrequency",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{nic}",
+          "name": "TCPNoDelay",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://www.rfc-editor.org/rfc/rfc896"
+      ]
+    },
+    {
+      "id": "network.deliveryOptimizationP2POff",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+          "name": "DODownloadMode",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization-reference",
+        "https://github.com/ChrisTitusTech/winutil"
+      ]
+    },
+    {
+      "id": "network.preferIpv4",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registryBits",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters",
+          "name": "DisabledComponents",
+          "set": 32
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-ipv6-in-windows"
+      ]
+    },
+    {
+      "id": "network.teredoOff",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registryBits",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters",
+          "name": "DisabledComponents",
+          "set": 8
+        }
+      ],
+      "blockedWhen": [
+        {
+          "fact": "xbox.used",
+          "eq": true,
+          "reasonKey": "block.xboxTeredo"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-ipv6-in-windows"
+      ]
+    }
+  ]
+}

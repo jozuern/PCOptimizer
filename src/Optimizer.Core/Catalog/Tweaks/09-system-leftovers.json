@@ -1,0 +1,93 @@
+{
+  "tweaks": [
+    {
+      "id": "system.restorePointFrequency",
+      "category": "System",
+      "hidden": true,
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore",
+          "name": "SystemRestorePointCreationFrequency",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/sr/calling-srsetrestorepoint"
+      ]
+    },
+    {
+      "id": "leftover.overlayTestMode",
+      "category": "Leftovers",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\Dwm",
+          "name": "OverlayTestMode",
+          "kind": "dword",
+          "delete": true
+        }
+      ],
+      "recommendWhen": {
+        "fact": "leftover.overlayTestMode",
+        "eq": true
+      },
+      "fixes": [
+        "F21.leftovers"
+      ],
+      "sources": [
+        "https://forums.guru3d.com/goto/post?id=6305178"
+      ],
+      "recommendReasonKey": "rec.leftover"
+    },
+    {
+      "id": "leftover.usePlatformClock",
+      "category": "Leftovers",
+      "impact": {
+        "gaming": 2,
+        "basis": "situational",
+        "effect": [
+          "latency",
+          "fps"
+        ]
+      },
+      "risk": "expert",
+      "bootCritical": true,
+      "restart": true,
+      "actions": [
+        {
+          "type": "bcd",
+          "element": "useplatformclock",
+          "delete": true,
+          "restoreValue": "yes"
+        }
+      ],
+      "fixes": [
+        "F21.leftovers"
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set"
+      ]
+    }
+  ]
+}

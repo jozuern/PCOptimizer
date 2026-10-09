@@ -1,0 +1,5 @@
+{
+  "_comment": "Drive models known to use SMR (shingled recording): slow sustained writes, poor for game libraries.",
+  "smrModels": [ "WD20EZAZ", "WD40EZAZ", "WD60EZAZ", "WD20EFAX", "WD30EFAX", "WD40EFAX", "WD60EFAX", "ST2000DM008", "ST4000DM004", "ST6000DM003", "ST8000DM004" ],
+  "lowFreeSpaceFraction": 0.10
+}

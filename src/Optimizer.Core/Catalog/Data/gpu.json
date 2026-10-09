@@ -1,0 +1,23 @@
+{
+  "_comment": "GPU catalog data (plan v4: model lists are catalog data, not code). First matching rule wins.",
+  "pciVendors": { "10DE": "nvidia", "1002": "amd", "1022": "amd", "8086": "intel", "1414": "microsoft", "5143": "qualcomm" },
+  "discretePatterns": {
+    "nvidia": ".*",
+    "amd": "\\bRX\\s?\\d|Radeon\\s+(Pro|VII)|FirePro|Instinct",
+    "intel": "Arc(\\(TM\\))?\\s+[AB]\\d{3}|Iris(\\(R\\))?\\s+Xe\\s+MAX"
+  },
+  "virtualPatterns": [ "Parsec", "Virtual Display", "Remote Display", "Meta Virtual", "IddSample", "Hyper-V", "VMware", "VirtualBox", "Citrix", "Spacedesk", "Sunshine" ],
+  "basicPatterns": [ "Microsoft Basic Display Adapter", "Microsoft Basic Render Driver" ],
+  "onCardSwitchVendors": [ "1002", "8086" ],
+  "rebar": [
+    { "vendor": "nvidia", "regex": "RTX\\s*(30|40|50)\\d{2}", "supported": true },
+    { "vendor": "nvidia", "regex": "RTX\\s*20\\d{2}|GTX|TITAN\\s+(RTX|V|X)", "supported": false },
+    { "vendor": "amd", "regex": "RX\\s*(6|7|9)\\d{3}", "supported": true },
+    { "vendor": "amd", "regex": "RX\\s*(4|5)\\d{2}\\b|Vega", "supported": false },
+    { "vendor": "intel", "regex": "Arc(\\(TM\\))?\\s+[AB]\\d{3}", "supported": true, "critical": true }
+  ],
+  "sources": [
+    "https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/",
+    "https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html"
+  ]
+}

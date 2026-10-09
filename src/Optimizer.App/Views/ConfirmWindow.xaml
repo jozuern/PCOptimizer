@@ -1,0 +1,73 @@
+<ui:FluentWindow x:Class="Optimizer.App.Views.ConfirmWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:l="clr-namespace:Optimizer.App.Services"
+                 Width="760" SizeToContent="Height" MaxHeight="820" ResizeMode="NoResize"
+                 WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Grid.Row="0" Title="" ShowMinimize="False" ShowMaximize="False" ShowHelp="False" />
+        <DockPanel Grid.Row="1" Margin="24,8,24,24">
+            <!-- Buttons -->
+            <DockPanel DockPanel.Dock="Bottom" Margin="0,24,0,0" LastChildFill="False">
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
+                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+                <ui:TextBlock DockPanel.Dock="Left" FontTypography="Caption" Appearance="Tertiary" Text="{l:Tr Confirm_Backup}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
+            </DockPanel>
+
+            <StackPanel DockPanel.Dock="Top">
+                <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
+                <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Appearance="Secondary" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <ui:TextBlock x:Name="BadgeText" FontTypography="Caption" Appearance="Secondary" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <ItemsControl x:Name="WarningList" Margin="0,8,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:InfoBar Title="" Message="{Binding}" Severity="Warning" IsOpen="True" IsClosable="False" Margin="0,0,0,4" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <CheckBox x:Name="AntiCheatAck" Content="{l:Tr Confirm_AntiCheatAck}" Margin="0,8,0,0" Visibility="Collapsed"
+                          Checked="AntiCheat_Changed" Unchecked="AntiCheat_Changed" />
+
+                <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Confirm_Changes}" Margin="0,24,0,8" />
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="180" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{l:Tr Confirm_Target}" />
+                    <ui:TextBlock Grid.Column="1" FontTypography="Caption" Appearance="Secondary" Text="{l:Tr Confirm_Now}" />
+                    <ui:TextBlock x:Name="NewHeader" Grid.Column="2" FontTypography="Caption" Appearance="Secondary" />
+                </Grid>
+                <Separator />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="360">
+                <ItemsControl x:Name="ChangeList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" Padding="0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="180" />
+                                        <ColumnDefinition Width="180" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Target}" Style="{StaticResource Mono}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Before}" Style="{StaticResource Mono}" Margin="0,0,12,0" />
+                                    <TextBlock Grid.Column="2" Text="{Binding After}" Style="{StaticResource Mono}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</ui:FluentWindow>

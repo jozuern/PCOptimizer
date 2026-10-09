@@ -1,0 +1,111 @@
+{
+  "tweaks": [
+    {
+      "id": "security.vbsOff",
+      "category": "Expert",
+      "impact": {
+        "gaming": 2,
+        "basis": "situational",
+        "effect": [
+          "fps",
+          "lows"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "cpu.mbec",
+            "eq": false
+          },
+          "gaming": 3,
+          "reasonKey": "impact.noMbec"
+        }
+      ],
+      "risk": "expert",
+      "bootCritical": true,
+      "antiCheatSensitive": true,
+      "restart": true,
+      "verify": "afterRestart",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\DeviceGuard",
+          "name": "EnableVirtualizationBasedSecurity",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity",
+          "name": "Enabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity"
+      ]
+    },
+    {
+      "id": "security.mitigationsOff",
+      "category": "Expert",
+      "impact": {
+        "gaming": 1,
+        "basis": "disputed",
+        "effect": [
+          "fps"
+        ]
+      },
+      "risk": "expert",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+          "name": "FeatureSettingsOverride",
+          "kind": "dword",
+          "value": 3
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+          "name": "FeatureSettingsOverrideMask",
+          "kind": "dword",
+          "value": 3
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/topic/kb4073119-windows-client-guidance-for-it-pros-to-protect-against-silicon-based-microarchitectural-and-speculative-execution-side-channel-vulnerabilities-35820a8a-ae13-1299-88cc-357f104f5b11"
+      ]
+    },
+    {
+      "id": "security.smartScreenOff",
+      "category": "Expert",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "expert",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableSmartScreen",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/"
+      ]
+    }
+  ]
+}

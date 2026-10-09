@@ -1,0 +1,13 @@
+{
+  "_comment": "Part-number decoders > rated speed in MT/s. Unknown part numbers produce Unknown (no advice).",
+  "decoders": [
+    { "brand": "Corsair", "regex": "^CM[A-Z]+\\d+GX[45]M\\d[A-Z]?(\\d{4})[CZ]\\d+", "multiplier": 1 },
+    { "brand": "G.Skill", "regex": "^F[45]-(\\d{4})[CJ]\\d+", "multiplier": 1 },
+    { "brand": "Kingston", "regex": "^(?:KF|HX|KHX)[45]?(\\d{2})[CS]\\d+", "multiplier": 100 },
+    { "brand": "Crucial", "regex": "^(?:BL|BLS|CP)\\d*K?\\d+G(\\d{2})[CS]\\d+", "multiplier": 100 },
+    { "brand": "TeamGroup", "regex": "^T[A-Z0-9]*?\\d+G(\\d{4})[HC]C?\\d+", "multiplier": 1 },
+    { "brand": "Patriot", "regex": "^PV[A-Z]*\\d+G(\\d{3})C\\d+", "multiplier": 10 }
+  ],
+  "channelPatterns": [ "Channel\\s*([A-H])", "CHANNEL\\s*([A-H])", "DIMM_?([A-H])\\d", "DDR\\d_([A-H])\\d" ],
+  "speedToleranceFraction": 0.03
+}

@@ -1,0 +1,230 @@
+{
+  "_comment": "winget catalog (IDs verified in the winget-pkgs repository). scope user = per-user installer, started as the signed-in user. detect = regex on installed program names (empty = cannot be detected reliably).",
+  "apps": [
+    {
+      "id": "Valve.Steam",
+      "name": "Steam",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Steam$",
+      "en": "Valve's game store and launcher.",
+      "de": "Valves Spieleshop und Launcher."
+    },
+    {
+      "id": "EpicGames.EpicGamesLauncher",
+      "name": "Epic Games Launcher",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Epic Games Launcher",
+      "en": "Epic Games Store and launcher, with weekly free games.",
+      "de": "Epic Games Store und Launcher, mit wöchentlichen Gratisspielen."
+    },
+    {
+      "id": "GOG.Galaxy",
+      "name": "GOG Galaxy",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^GOG GALAXY",
+      "en": "GOG launcher for DRM-free games, can show other libraries too.",
+      "de": "GOG-Launcher für DRM-freie Spiele, zeigt auch andere Bibliotheken an."
+    },
+    {
+      "id": "ElectronicArts.EADesktop",
+      "name": "EA app",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^EA app$",
+      "en": "EA's launcher (replaced Origin), needed for EA games.",
+      "de": "EAs Launcher (Nachfolger von Origin), für EA-Spiele nötig."
+    },
+    {
+      "id": "Ubisoft.Connect",
+      "name": "Ubisoft Connect",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Ubisoft Connect",
+      "en": "Ubisoft's launcher, needed for Ubisoft games.",
+      "de": "Ubisofts Launcher, für Ubisoft-Spiele nötig."
+    },
+    {
+      "id": "Blizzard.BattleNet",
+      "name": "Battle.net",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Battle\\.net",
+      "en": "Blizzard and Activision launcher (Call of Duty, Diablo, Overwatch).",
+      "de": "Launcher von Blizzard und Activision (Call of Duty, Diablo, Overwatch)."
+    },
+    {
+      "id": "Discord.Discord",
+      "name": "Discord",
+      "category": "communication",
+      "scope": "user",
+      "detect": "^Discord$",
+      "en": "Voice, video and text chat for gaming communities.",
+      "de": "Sprach-, Video- und Textchat für Gaming-Communitys."
+    },
+    {
+      "id": "TeamSpeakSystems.TeamSpeakClient",
+      "name": "TeamSpeak",
+      "category": "communication",
+      "scope": "machine",
+      "detect": "^TeamSpeak",
+      "en": "Low-latency voice chat on your own or hosted servers.",
+      "de": "Sprachchat mit geringer Latenz auf eigenen oder gemieteten Servern."
+    },
+    {
+      "id": "Guru3D.Afterburner",
+      "name": "MSI Afterburner",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^MSI Afterburner",
+      "en": "Graphics card monitoring, fan curves and frame rate limits (with RivaTuner).",
+      "de": "Überwachung der Grafikkarte, Lüfterkurven und Bildratenlimits (mit RivaTuner)."
+    },
+    {
+      "id": "REALiX.HWiNFO",
+      "name": "HWiNFO",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^HWiNFO",
+      "en": "Detailed hardware information and sensor readings.",
+      "de": "Ausführliche Hardwareinformationen und Sensorwerte."
+    },
+    {
+      "id": "CPUID.CPU-Z",
+      "name": "CPU-Z",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^CPUID CPU-Z",
+      "en": "Processor, mainboard and memory details.",
+      "de": "Details zu Prozessor, Mainboard und Arbeitsspeicher."
+    },
+    {
+      "id": "TechPowerUp.GPU-Z",
+      "name": "GPU-Z",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^TechPowerUp GPU-Z",
+      "en": "Graphics card details, including Resizable BAR and PCIe link.",
+      "de": "Details zur Grafikkarte, auch Resizable BAR und PCIe-Anbindung."
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskInfo",
+      "name": "CrystalDiskInfo",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^CrystalDiskInfo",
+      "en": "Drive health (S.M.A.R.T.) and temperatures.",
+      "de": "Laufwerkszustand (S.M.A.R.T.) und Temperaturen."
+    },
+    {
+      "id": "OBSProject.OBSStudio",
+      "name": "OBS Studio",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^OBS Studio",
+      "en": "Recording and streaming.",
+      "de": "Aufnehmen und Streamen."
+    },
+    {
+      "id": "7zip.7zip",
+      "name": "7-Zip",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^7-Zip",
+      "en": "Archive tool for zip, 7z and rar files.",
+      "de": "Archivprogramm für zip-, 7z- und rar-Dateien."
+    },
+    {
+      "id": "Microsoft.PowerToys",
+      "name": "PowerToys",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^PowerToys",
+      "en": "Microsoft utilities: window layouts, color picker, quick launcher and more.",
+      "de": "Microsoft-Werkzeuge: Fensterlayouts, Farbwähler, Schnellstarter und mehr."
+    },
+    {
+      "id": "Parsec.Parsec",
+      "name": "Parsec",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^Parsec",
+      "en": "Low-latency remote desktop and game streaming.",
+      "de": "Remotedesktop und Spielestreaming mit geringer Latenz."
+    },
+    {
+      "id": "VideoLAN.VLC",
+      "name": "VLC media player",
+      "category": "media",
+      "scope": "machine",
+      "detect": "^VLC media player",
+      "en": "Media player for almost every format.",
+      "de": "Mediaplayer für fast jedes Format."
+    },
+    {
+      "id": "Spotify.Spotify",
+      "name": "Spotify",
+      "category": "media",
+      "scope": "user",
+      "detect": "^Spotify",
+      "en": "Music streaming.",
+      "de": "Musikstreaming."
+    },
+    {
+      "id": "Mozilla.Firefox",
+      "name": "Firefox",
+      "category": "browsers",
+      "scope": "machine",
+      "detect": "^Mozilla Firefox",
+      "en": "Web browser by Mozilla.",
+      "de": "Webbrowser von Mozilla."
+    },
+    {
+      "id": "Google.Chrome",
+      "name": "Google Chrome",
+      "category": "browsers",
+      "scope": "machine",
+      "detect": "^Google Chrome$",
+      "en": "Web browser by Google.",
+      "de": "Webbrowser von Google."
+    },
+    {
+      "id": "Microsoft.DirectX",
+      "name": "DirectX End-User Runtime",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^$",
+      "en": "Legacy DirectX 9 to 11 components (d3dx9, XAudio 2.7) that older games need. Safe to install alongside current DirectX.",
+      "de": "Ältere DirectX-Komponenten (d3dx9, XAudio 2.7), die ältere Spiele brauchen. Kann neben aktuellem DirectX installiert werden."
+    },
+    {
+      "id": "Microsoft.VCRedist.2015+.x64",
+      "name": "Visual C++ Redistributable 2015-2022 (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ (v14|20(15|17|19|22)).*x64",
+      "en": "Runtime libraries most games and programs need.",
+      "de": "Laufzeitbibliotheken, die die meisten Spiele und Programme brauchen."
+    },
+    {
+      "id": "Microsoft.EdgeWebView2Runtime",
+      "name": "WebView2 Runtime",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Edge WebView2",
+      "en": "Web view used by launchers and apps (EA app, Battle.net and others). Do not remove it.",
+      "de": "Webansicht für Launcher und Apps (EA app, Battle.net und andere). Nicht entfernen."
+    },
+    {
+      "id": "namazso.PawnIO",
+      "name": "PawnIO",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^PawnIO",
+      "en": "Signed kernel driver for reading hardware sensors. Needed for the optional sensor readings on the Health page.",
+      "de": "Signierter Kerneltreiber zum Lesen von Hardwaresensoren. Für die optionalen Sensorwerte auf der Seite Zustand nötig."
+    }
+  ]
+}

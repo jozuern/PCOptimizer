@@ -1,0 +1,65 @@
+{
+  "tweaks": [
+    {
+      "id": "services.gamingPreset",
+      "category": "Services",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "service",
+          "name": "MapsBroker",
+          "startType": "manual"
+        },
+        {
+          "type": "service",
+          "name": "PcaSvc",
+          "startType": "manual"
+        },
+        {
+          "type": "service",
+          "name": "TrkWks",
+          "startType": "manual"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+      ]
+    },
+    {
+      "id": "services.spoolerManual",
+      "category": "Services",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "blockedWhen": [
+        {
+          "fact": "printers.count",
+          "gt": 0,
+          "reasonKey": "block.printersInstalled"
+        }
+      ],
+      "actions": [
+        {
+          "type": "service",
+          "name": "Spooler",
+          "startType": "manual"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+      ]
+    }
+  ]
+}

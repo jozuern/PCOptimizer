@@ -1,0 +1,284 @@
+using System.Globalization;
+
+namespace Optimizer.Core.Actions;
+
+/// <summary>Service start type by short name (never display name). Per-user services: use the template name.</summary>
+public sealed class ServiceAction : TweakAction
+{
+    public string Name { get; init; } = "";
+    public ServiceStart StartType { get; init; } = ServiceStart.Manual;
+
+    public override string TargetKey => $"svc:{Name}".ToLowerInvariant();
+    public override string Describe(ActionContext c) => $"Service {Name} (start type)";
+
+    public override StoredValue Desired(ActionContext c) => new(true, "service", StartType.ToString());
+
+    public override StoredValue? Read(ActionContext c) =>
+        c.Services.GetStartType(Name) is { } s ? new StoredValue(true, "service", s.ToString()) : null;
+
+    public override void Apply(ActionContext c) => c.Services.SetStartType(Name, StartType);
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (original.Existed && Enum.TryParse<ServiceStart>(original.Data, out var s)) c.Services.SetStartType(Name, s);
+    }
+}
+
+/// <summary>A power setting on the active scheme, by GUID or powercfg alias (localization-safe, plan v4 §4.9).</summary>
+public sealed class PowerSettingAction : TweakAction
+{
+    public string Subgroup { get; init; } = "";
+    public string Setting { get; init; } = "";
+    public uint? Ac { get; init; }
+    public uint? Dc { get; init; }
+
+    private Guid Sub => PowerAliases.Resolve(Subgroup);
+    private Guid Set => PowerAliases.Resolve(Setting);
+
+    public override string TargetKey => $"pwr:{Sub}:{Set}";
+    public override string Describe(ActionContext c) => $"Power plan {c.Power.ActiveScheme()}: {Setting} ({Subgroup})";
+
+    // Data = "<scheme>;<ac>;<dc>" so undo writes back to the scheme that was changed, even if another plan is active now.
+    private static string Format(Guid scheme, uint? ac, uint? dc) => $"{scheme};{ac?.ToString(CultureInfo.InvariantCulture)};{dc?.ToString(CultureInfo.InvariantCulture)}";
+
+    public override StoredValue Desired(ActionContext c)
+    {
+        var scheme = c.Power.ActiveScheme();
+        return new StoredValue(true, "power", Format(scheme, Ac ?? c.Power.ReadAc(scheme, Sub, Set), Dc ?? c.Power.ReadDc(scheme, Sub, Set)));
+    }
+
+    public override StoredValue? Read(ActionContext c)
+    {
+        var scheme = c.Power.ActiveScheme();
+        var ac = c.Power.ReadAc(scheme, Sub, Set);
+        return ac is null ? null : new StoredValue(true, "power", Format(scheme, ac, c.Power.ReadDc(scheme, Sub, Set)));
+    }
+
+    public override void Apply(ActionContext c)
+    {
+        var scheme = c.Power.ActiveScheme();
+        if (Ac is { } ac) c.Power.WriteAc(scheme, Sub, Set, ac);
+        if (Dc is { } dc) c.Power.WriteDc(scheme, Sub, Set, dc);
+        c.Power.SetActive(scheme); // re-activating applies the new values
+    }
+
+    /// <summary>Compares on the scheme that was changed, not on whatever plan is active now.</summary>
+    public override bool IsStillApplied(ActionContext c, StoredValue applied)
+    {
+        var parts = applied.Data?.Split(';') ?? [];
+        if (parts.Length < 2 || !Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return false;
+        return c.Power.ReadAc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) == parts[1];
+    }
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (!original.Existed || original.Data is null) return;
+        var parts = original.Data.Split(';');
+        if (!Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return;
+        if (uint.TryParse(parts[1], out var ac)) c.Power.WriteAc(scheme, Sub, Set, ac);
+        if (parts.Length > 2 && uint.TryParse(parts[2], out var dc)) c.Power.WriteDc(scheme, Sub, Set, dc);
+        if (c.Power.ActiveScheme() == scheme) c.Power.SetActive(scheme);
+    }
+}
+
+/// <summary>Activates a scheme, optionally creating it first as a copy of a template (e.g. High performance -> "PCOptimizer Gaming").</summary>
+public sealed class PowerSchemeAction : TweakAction
+{
+    /// <summary>Scheme to activate: "balanced", "highPerformance", "powerSaver" or a GUID.</summary>
+    public string? Activate { get; init; }
+
+    /// <summary>Template to duplicate (GUID or alias); the copy gets <see cref="Name"/>.</summary>
+    public string? DuplicateFrom { get; init; }
+
+    public string? Name { get; init; }
+
+    public override string TargetKey => "pwr:activescheme";
+    public override string Describe(ActionContext c) => "Active power plan";
+
+    private Guid? Target(ActionContext c)
+    {
+        if (DuplicateFrom is not null && Name is not null)
+            return c.Power.Schemes().FirstOrDefault(s => s.Name == Name).Id is var id && id != Guid.Empty ? id : null;
+        return Activate is null ? null : PowerAliases.Resolve(Activate);
+    }
+
+    public override StoredValue Desired(ActionContext c) =>
+        new(true, "scheme", Target(c)?.ToString() ?? $"new:{Name}");
+
+    public override StoredValue? Read(ActionContext c) => new(true, "scheme", c.Power.ActiveScheme().ToString());
+
+    public override void Apply(ActionContext c)
+    {
+        var target = Target(c);
+        if (target is null && DuplicateFrom is not null && Name is not null)
+            target = c.Power.Duplicate(PowerAliases.Resolve(DuplicateFrom), Name);
+        if (target is { } t) c.Power.SetActive(t);
+    }
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (Guid.TryParse(original.Data, out var previous) && c.Power.SchemeExists(previous)) c.Power.SetActive(previous);
+        // Schemes this action created are removed again on undo.
+        if (DuplicateFrom is not null && Name is not null)
+            foreach (var s in c.Power.Schemes().Where(s => s.Name == Name && s.Id != c.Power.ActiveScheme()))
+                c.Power.Delete(s.Id);
+    }
+}
+
+/// <summary>A BCD element on {current}. Presence-based (bcdedit values are localized, element names are not). Boot-critical.</summary>
+public sealed class BcdAction : TweakAction
+{
+    public string Element { get; init; } = "";
+    public string? Value { get; init; }
+    public bool Delete { get; init; }
+
+    /// <summary>Value written back on undo when the element existed before (presence is all we can read reliably).</summary>
+    public string RestoreValue { get; init; } = "yes";
+
+    public override bool IsBootCritical => true;
+    public override string TargetKey => $"bcd:{Element}".ToLowerInvariant();
+    public override string Describe(ActionContext c) => $"Boot configuration {{current}}: {Element}";
+
+    public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, "bcd", "set");
+
+    public override StoredValue? Read(ActionContext c) =>
+        c.Bcd.CurrentElements().Contains(Element) ? new StoredValue(true, "bcd", "set") : StoredValue.Missing;
+
+    public override void Apply(ActionContext c)
+    {
+        if (Delete) c.Bcd.Delete(Element);
+        else c.Bcd.Set(Element, Value ?? "yes");
+    }
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (original.Existed) c.Bcd.Set(Element, Delete ? RestoreValue : Value ?? "yes");
+        else c.Bcd.Delete(Element);
+    }
+}
+
+/// <summary>Enables or disables a scheduled task by full path.</summary>
+public sealed class ScheduledTaskAction : TweakAction
+{
+    public string Path { get; init; } = "";
+    public bool Enabled { get; init; }
+
+    public override string TargetKey => $"task:{Path}".ToLowerInvariant();
+    public override string Describe(ActionContext c) => $"Scheduled task {Path}";
+    public override StoredValue Desired(ActionContext c) => new(true, "task", Enabled ? "Enabled" : "Disabled");
+
+    public override StoredValue? Read(ActionContext c) =>
+        c.Tasks.IsEnabled(Path) is { } e ? new StoredValue(true, "task", e ? "Enabled" : "Disabled") : null;
+
+    public override void Apply(ActionContext c) => c.Tasks.SetEnabled(Path, Enabled);
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (original.Existed) c.Tasks.SetEnabled(Path, original.Data == "Enabled");
+    }
+}
+
+/// <summary>Hibernation on/off via powercfg (removes or recreates hiberfil.sys). State read from the registry.</summary>
+public sealed class HibernationAction : TweakAction
+{
+    public bool Enabled { get; init; }
+
+    public override string TargetKey => "power:hibernation";
+    public override string Describe(ActionContext c) => "Hibernation (powercfg /hibernate)";
+    public override StoredValue Desired(ActionContext c) => new(true, "bool", Enabled ? "On" : "Off");
+
+    public override StoredValue? Read(ActionContext c)
+    {
+        var v = RegistryValue.Read(c.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled");
+        return new StoredValue(true, "bool", v is { Existed: true, Data: "0" } ? "Off" : "On");
+    }
+
+    public override void Apply(ActionContext c) => Run(c, Enabled);
+
+    public override void Restore(ActionContext c, StoredValue original) => Run(c, original.Data != "Off");
+
+    private static void Run(ActionContext c, bool on)
+    {
+        var (code, output) = c.Processes.Run("powercfg.exe", on ? "/hibernate on" : "/hibernate off");
+        if (code != 0) throw new InvalidOperationException($"powercfg /hibernate failed ({code}): {output}");
+    }
+}
+
+/// <summary>Memory compression via the MMAgent cmdlets (the documented interface; logged command, plan v4 §2).</summary>
+public sealed class MemoryCompressionAction : TweakAction
+{
+    public bool Enabled { get; init; }
+
+    public override string TargetKey => "mmagent:memorycompression";
+    public override string Describe(ActionContext c) => "Memory compression (MMAgent)";
+    public override StoredValue Desired(ActionContext c) => new(true, "bool", Enabled ? "True" : "False");
+
+    public override StoredValue? Read(ActionContext c)
+    {
+        var (code, output) = c.Processes.Run("powershell.exe", "-NoProfile -NonInteractive -Command \"(Get-MMAgent).MemoryCompression\"");
+        var text = output.Trim();
+        return code == 0 && text is "True" or "False" ? new StoredValue(true, "bool", text) : null;
+    }
+
+    public override void Apply(ActionContext c) => Run(c, Enabled);
+
+    public override void Restore(ActionContext c, StoredValue original) => Run(c, original.Data == "True");
+
+    private static void Run(ActionContext c, bool on)
+    {
+        var verb = on ? "Enable-MMAgent" : "Disable-MMAgent";
+        var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{verb} -MemoryCompression\"");
+        if (code != 0) throw new InvalidOperationException($"{verb} failed ({code}): {output}");
+    }
+}
+
+/// <summary>Display mode (refresh rate) for one display; used by the one-click fix for F1.</summary>
+public sealed class DisplayModeAction : TweakAction
+{
+    public string GdiName { get; init; } = "";
+    public int Width { get; init; }
+    public int Height { get; init; }
+    public int RefreshHz { get; init; }
+
+    public override string TargetKey => $"display:{GdiName}".ToLowerInvariant();
+    public override string Describe(ActionContext c) => $"Display {GdiName}: refresh rate at {Width}×{Height}";
+    public override StoredValue Desired(ActionContext c) => new(true, "hz", RefreshHz.ToString(CultureInfo.InvariantCulture));
+
+    public override StoredValue? Read(ActionContext c) =>
+        c.Displays.CurrentRefresh(GdiName) is { } hz ? new StoredValue(true, "hz", hz.ToString(CultureInfo.InvariantCulture)) : null;
+
+    public override void Apply(ActionContext c) => c.Displays.SetMode(GdiName, Width, Height, RefreshHz);
+
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (int.TryParse(original.Data, out var hz)) c.Displays.SetMode(GdiName, Width, Height, hz);
+    }
+}
+
+/// <summary>powercfg aliases and well-known scheme names -> GUIDs (never localized names).</summary>
+public static class PowerAliases
+{
+    private static readonly Dictionary<string, Guid> Map = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["SUB_PROCESSOR"] = new("54533251-82be-4824-96c1-47b60b740d00"),
+        ["PROCTHROTTLEMAX"] = new("bc5038f7-23e0-4960-96da-33abaf5935ec"),
+        ["PROCTHROTTLEMIN"] = new("893dee8e-2bef-41e0-89c6-b55d0929964c"),
+        ["PERFBOOSTMODE"] = new("be337238-0d82-4146-a960-4f3749d470c7"),
+        ["CPMINCORES"] = new("0cc5b647-c1df-4637-891a-dec35c318583"),
+        ["SUB_USB"] = new("2a737441-1930-4402-8d77-b2bebba308a3"),
+        ["USBSELECTIVESUSPEND"] = new("48e6b7a6-50f5-4782-a5d4-53bb8f07e226"),
+        ["SUB_PCIEXPRESS"] = new("501a4d13-42af-4429-9fd1-a8218c268e20"),
+        ["ASPM"] = new("ee12f906-d277-404b-b6da-e5fa1a576df5"),
+        ["balanced"] = new("381b4222-f694-41f0-9685-ff5bb260df2e"),
+        ["highPerformance"] = new("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"),
+        ["powerSaver"] = new("a1841308-3541-4fab-bc81-f71556f20b4a"),
+        ["ultimatePerformance"] = new("e9a42b02-d5df-448d-aa00-03f14749eb61"),
+    };
+
+    public static Guid Resolve(string aliasOrGuid) =>
+        Map.TryGetValue(aliasOrGuid, out var g) ? g
+        : Guid.TryParse(aliasOrGuid, out var parsed) ? parsed
+        : throw new ArgumentException($"Unknown power alias '{aliasOrGuid}'");
+
+    public static bool IsKnown(string aliasOrGuid) => Map.ContainsKey(aliasOrGuid) || Guid.TryParse(aliasOrGuid, out _);
+}

@@ -1,0 +1,351 @@
+{
+  "_comment": "Removable inbox apps (allowlist). Only these are offered. guard: xbox = blocked while Xbox or Game Pass games are installed; xboxOrX3d = also on dual-CCD X3D CPUs.",
+  "apps": [
+    {
+      "name": "Microsoft.BingNews",
+      "group": "consumer",
+      "guard": null,
+      "en": "Microsoft News app. Shows news from MSN; no other app depends on it.",
+      "de": "Microsoft-News-App. Zeigt Nachrichten von MSN; keine andere App hängt davon ab.",
+      "title": "Microsoft News",
+      "titleDe": "Microsoft News"
+    },
+    {
+      "name": "Microsoft.BingWeather",
+      "group": "consumer",
+      "guard": null,
+      "en": "Weather app. The weather in the taskbar comes from Widgets, not from this app.",
+      "de": "Wetter-App. Das Wetter in der Taskleiste kommt von den Widgets, nicht von dieser App.",
+      "title": "Weather",
+      "titleDe": "Wetter"
+    },
+    {
+      "name": "Microsoft.GetHelp",
+      "group": "consumer",
+      "guard": null,
+      "en": "Get Help app with Microsoft support chat. Some troubleshooters open it.",
+      "de": "App „Hilfe anfordern“ mit Microsoft-Support-Chat. Manche Problembehandlungen öffnen sie.",
+      "title": "Get Help",
+      "titleDe": "Hilfe anfordern"
+    },
+    {
+      "name": "Microsoft.Getstarted",
+      "group": "consumer",
+      "guard": null,
+      "en": "Tips app with introductions to Windows features.",
+      "de": "Tipps-App mit Einführungen in Windows-Funktionen.",
+      "title": "Tips",
+      "titleDe": "Tipps"
+    },
+    {
+      "name": "Microsoft.MicrosoftSolitaireCollection",
+      "group": "consumer",
+      "guard": null,
+      "en": "Solitaire Collection with ads and an optional subscription.",
+      "de": "Solitaire Collection mit Werbung und optionalem Abo.",
+      "title": "Solitaire Collection",
+      "titleDe": "Solitaire Collection"
+    },
+    {
+      "name": "Microsoft.MicrosoftStickyNotes",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Sticky Notes. Notes sync with your Microsoft account and stay online after removal.",
+      "de": "Kurznotizen. Notizen werden mit deinem Microsoft-Konto synchronisiert und bleiben online erhalten.",
+      "title": "Sticky Notes",
+      "titleDe": "Kurznotizen"
+    },
+    {
+      "name": "Microsoft.People",
+      "group": "consumer",
+      "guard": null,
+      "en": "People app (contacts). Mostly replaced by Outlook.",
+      "de": "Kontakte-App. Weitgehend durch Outlook ersetzt.",
+      "title": "People",
+      "titleDe": "Kontakte"
+    },
+    {
+      "name": "Microsoft.PowerAutomateDesktop",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Power Automate for desktop automation flows. Remove it if you do not build flows.",
+      "de": "Power Automate für Desktop-Automatisierungen. Entferne es, wenn du keine Abläufe erstellst.",
+      "title": "Power Automate",
+      "titleDe": "Power Automate"
+    },
+    {
+      "name": "Microsoft.Todos",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Microsoft To Do. Tasks stay in your Microsoft account.",
+      "de": "Microsoft To Do. Aufgaben bleiben in deinem Microsoft-Konto.",
+      "title": "Microsoft To Do",
+      "titleDe": "Microsoft To Do"
+    },
+    {
+      "name": "Microsoft.WindowsAlarms",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Clock app with alarms, timers and focus sessions.",
+      "de": "Uhr-App mit Weckern, Timern und Fokussitzungen.",
+      "title": "Clock",
+      "titleDe": "Uhr"
+    },
+    {
+      "name": "Microsoft.WindowsFeedbackHub",
+      "group": "consumer",
+      "guard": null,
+      "en": "Feedback Hub for sending feedback to Microsoft. Needed for the Windows Insider program.",
+      "de": "Feedback-Hub zum Senden von Feedback an Microsoft. Für das Windows-Insider-Programm nötig.",
+      "title": "Feedback Hub",
+      "titleDe": "Feedback-Hub"
+    },
+    {
+      "name": "Microsoft.WindowsMaps",
+      "group": "consumer",
+      "guard": null,
+      "en": "Maps app with offline maps.",
+      "de": "Karten-App mit Offlinekarten.",
+      "title": "Maps",
+      "titleDe": "Karten"
+    },
+    {
+      "name": "Microsoft.WindowsSoundRecorder",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Sound Recorder.",
+      "de": "Audiorekorder.",
+      "title": "Sound Recorder",
+      "titleDe": "Audiorekorder"
+    },
+    {
+      "name": "Microsoft.ZuneVideo",
+      "group": "media",
+      "guard": null,
+      "en": "Movies & TV app. Other players (Media Player, VLC) play videos too.",
+      "de": "App „Filme & TV“. Andere Player (Medienwiedergabe, VLC) spielen Videos ebenfalls ab.",
+      "title": "Movies & TV",
+      "titleDe": "Filme & TV"
+    },
+    {
+      "name": "Microsoft.ZuneMusic",
+      "group": "media",
+      "guard": null,
+      "en": "Media Player (formerly Groove). It is the default player for music and videos; install another player first.",
+      "de": "Medienwiedergabe (früher Groove). Sie ist der Standardplayer für Musik und Videos; installiere vorher einen anderen Player.",
+      "title": "Media Player",
+      "titleDe": "Medienwiedergabe"
+    },
+    {
+      "name": "MicrosoftCorporationII.QuickAssist",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Quick Assist for remote help. Keep it if someone helps you remotely.",
+      "de": "Remotehilfe. Behalte sie, wenn dir jemand aus der Ferne hilft.",
+      "title": "Quick Assist",
+      "titleDe": "Remotehilfe"
+    },
+    {
+      "name": "Microsoft.MicrosoftOfficeHub",
+      "group": "consumer",
+      "guard": null,
+      "en": "Microsoft 365 app (launcher for Office web apps). Installed Office apps are not affected.",
+      "de": "Microsoft-365-App (Starter für Office im Web). Installierte Office-Apps sind nicht betroffen.",
+      "title": "Microsoft 365",
+      "titleDe": "Microsoft 365"
+    },
+    {
+      "name": "Microsoft.OutlookForWindows",
+      "group": "microsoft",
+      "guard": null,
+      "en": "New Outlook for Windows. Keep it if you use it for mail.",
+      "de": "Neues Outlook für Windows. Behalte es, wenn du es für E-Mails nutzt.",
+      "title": "Outlook (new)",
+      "titleDe": "Outlook (neu)"
+    },
+    {
+      "name": "microsoft.windowscommunicationsapps",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Old Mail and Calendar apps, no longer supported by Microsoft.",
+      "de": "Alte Apps Mail und Kalender, von Microsoft nicht mehr unterstützt.",
+      "title": "Mail and Calendar",
+      "titleDe": "Mail und Kalender"
+    },
+    {
+      "name": "Clipchamp.Clipchamp",
+      "group": "consumer",
+      "guard": null,
+      "en": "Clipchamp video editor.",
+      "de": "Videoeditor Clipchamp.",
+      "title": "Clipchamp",
+      "titleDe": "Clipchamp"
+    },
+    {
+      "name": "Microsoft.549981C3F5F10",
+      "group": "consumer",
+      "guard": null,
+      "en": "Cortana app, discontinued by Microsoft.",
+      "de": "Cortana-App, von Microsoft eingestellt.",
+      "title": "Cortana",
+      "titleDe": "Cortana"
+    },
+    {
+      "name": "MSTeams",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Microsoft Teams (free). Starts with Windows by default.",
+      "de": "Microsoft Teams (kostenlos). Startet standardmäßig mit Windows.",
+      "title": "Microsoft Teams",
+      "titleDe": "Microsoft Teams"
+    },
+    {
+      "name": "MicrosoftTeams",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Older Teams (personal) app.",
+      "de": "Ältere Teams-App (privat).",
+      "title": "Microsoft Teams (personal)",
+      "titleDe": "Microsoft Teams (privat)"
+    },
+    {
+      "name": "Microsoft.Windows.DevHome",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Dev Home for developers, discontinued by Microsoft.",
+      "de": "Dev Home für Entwickler, von Microsoft eingestellt.",
+      "title": "Dev Home",
+      "titleDe": "Dev Home"
+    },
+    {
+      "name": "Microsoft.Copilot",
+      "group": "consumer",
+      "guard": null,
+      "en": "Copilot app. The Copilot key then opens nothing or search.",
+      "de": "Copilot-App. Die Copilot-Taste öffnet danach nichts oder die Suche.",
+      "title": "Copilot",
+      "titleDe": "Copilot"
+    },
+    {
+      "name": "Microsoft.YourPhone",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Phone Link. Keep it if you connect your phone to the PC.",
+      "de": "Smartphone-Link. Behalte ihn, wenn du dein Smartphone mit dem PC verbindest.",
+      "title": "Phone Link",
+      "titleDe": "Smartphone-Link"
+    },
+    {
+      "name": "Microsoft.WindowsCamera",
+      "group": "microsoft",
+      "guard": null,
+      "en": "Camera app. Other apps (Discord, Teams) use the camera without it.",
+      "de": "Kamera-App. Andere Apps (Discord, Teams) nutzen die Kamera auch ohne sie.",
+      "title": "Camera",
+      "titleDe": "Kamera"
+    },
+    {
+      "name": "Microsoft.BingSearch",
+      "group": "consumer",
+      "guard": null,
+      "en": "Bing Search app.",
+      "de": "Bing-Such-App.",
+      "title": "Bing Search",
+      "titleDe": "Bing-Suche"
+    },
+    {
+      "name": "Microsoft.Windows.Ai.Copilot.Provider",
+      "group": "consumer",
+      "guard": null,
+      "en": "Copilot provider used by the old Copilot sidebar.",
+      "de": "Copilot-Anbieter der alten Copilot-Seitenleiste.",
+      "title": "Copilot provider",
+      "titleDe": "Copilot-Anbieter"
+    },
+    {
+      "name": "Microsoft.Xbox.TCUI",
+      "group": "xbox",
+      "guard": "xbox",
+      "en": "Xbox sign-in and friends dialogs used by games. Needed for Xbox and Game Pass games.",
+      "de": "Xbox-Anmelde- und Freundesdialoge für Spiele. Für Xbox- und Game-Pass-Spiele nötig.",
+      "title": "Xbox TCUI",
+      "titleDe": "Xbox TCUI"
+    },
+    {
+      "name": "Microsoft.XboxIdentityProvider",
+      "group": "xbox",
+      "guard": "xbox",
+      "en": "Xbox sign-in for games. Needed for Xbox and Game Pass games, and for some Steam games with Xbox accounts.",
+      "de": "Xbox-Anmeldung für Spiele. Für Xbox- und Game-Pass-Spiele nötig, auch für manche Steam-Spiele mit Xbox-Konto.",
+      "title": "Xbox Identity Provider",
+      "titleDe": "Xbox Identity Provider"
+    },
+    {
+      "name": "Microsoft.XboxGamingOverlay",
+      "group": "xbox",
+      "guard": "xboxOrX3d",
+      "en": "Xbox Game Bar (Windows + G). Needed for Game Mode detection on dual-CCD X3D processors and for Xbox features.",
+      "de": "Xbox Game Bar (Windows + G). Für die Spielerkennung bei X3D-Prozessoren mit zwei CCDs und für Xbox-Funktionen nötig.",
+      "title": "Xbox Game Bar",
+      "titleDe": "Xbox Game Bar"
+    },
+    {
+      "name": "Microsoft.XboxSpeechToTextOverlay",
+      "group": "xbox",
+      "guard": null,
+      "en": "Speech to text overlay for Xbox party chat.",
+      "de": "Sprache-zu-Text-Overlay für den Xbox-Party-Chat.",
+      "title": "Xbox speech to text",
+      "titleDe": "Xbox Sprache zu Text"
+    },
+    {
+      "name": "Microsoft.GamingApp",
+      "group": "xbox",
+      "guard": "xbox",
+      "en": "Xbox app. Needed to install and update Game Pass and Microsoft Store games.",
+      "de": "Xbox-App. Nötig, um Game-Pass- und Microsoft-Store-Spiele zu installieren und zu aktualisieren.",
+      "title": "Xbox app",
+      "titleDe": "Xbox-App"
+    }
+  ],
+  "protected": [
+    "Microsoft.WindowsStore",
+    "Microsoft.StorePurchaseApp",
+    "Microsoft.DesktopAppInstaller",
+    "Microsoft.SecHealthUI",
+    "Microsoft.VCLibs*",
+    "Microsoft.UI.Xaml*",
+    "Microsoft.NET.Native*",
+    "Microsoft.WindowsAppRuntime*",
+    "Microsoft.Services.Store.Engagement",
+    "Microsoft.Windows.ShellExperienceHost",
+    "Microsoft.Windows.StartMenuExperienceHost",
+    "Microsoft.AAD.BrokerPlugin",
+    "Microsoft.AccountsControl",
+    "Microsoft.LockApp",
+    "windows.immersivecontrolpanel",
+    "Microsoft.Windows.CloudExperienceHost",
+    "Microsoft.MicrosoftEdge*",
+    "Microsoft.Edge*",
+    "Microsoft.HEIFImageExtension",
+    "Microsoft.HEVCVideoExtension",
+    "Microsoft.WebMediaExtensions",
+    "Microsoft.VP9VideoExtensions",
+    "Microsoft.WebpImageExtension",
+    "Microsoft.RawImageExtension",
+    "Microsoft.AV1VideoExtension",
+    "Microsoft.ApplicationCompatibilityEnhancements",
+    "Microsoft.WindowsTerminal",
+    "Microsoft.WindowsNotepad",
+    "Microsoft.Paint",
+    "Microsoft.ScreenSketch",
+    "Microsoft.Windows.Photos",
+    "Microsoft.WindowsCalculator",
+    "MicrosoftWindows.Client.*",
+    "NVIDIACorp.NVIDIAControlPanel",
+    "AdvancedMicroDevicesInc*",
+    "AppUp.Intel*",
+    "RealtekSemiconductorCorp.*",
+    "DolbyLaboratories.*"
+  ]
+}

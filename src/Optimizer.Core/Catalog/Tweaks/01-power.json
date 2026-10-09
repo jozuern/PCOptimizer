@@ -1,0 +1,374 @@
+{
+  "tweaks": [
+    {
+      "id": "power.balancedPlan",
+      "category": "Power",
+      "impact": {
+        "gaming": 3,
+        "basis": "measured",
+        "effect": [
+          "fps",
+          "lows"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "powerScheme",
+          "activate": "balanced"
+        }
+      ],
+      "conflictsWith": [
+        "power.gamingPlan",
+        "power.ultimatePlan"
+      ],
+      "recommendWhen": {
+        "fact": "finding.F9.powerSaver.problem",
+        "eq": true
+      },
+      "fixes": [
+        "F9.powerSaver"
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+      ],
+      "recommendReasonKey": "rec.powerSaverPlan"
+    },
+    {
+      "id": "power.gamingPlan",
+      "category": "Power",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "fps",
+          "lows"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "power.personality",
+            "eq": "powersaver"
+          },
+          "gaming": 3,
+          "reasonKey": "impact.fromPowerSaver"
+        }
+      ],
+      "risk": "safe",
+      "appliesTo": {
+        "formFactor": "desktop"
+      },
+      "actions": [
+        {
+          "type": "powerScheme",
+          "duplicateFrom": "highPerformance",
+          "name": "PCOptimizer Gaming"
+        }
+      ],
+      "conflictsWith": [
+        "power.balancedPlan",
+        "power.ultimatePlan"
+      ],
+      "blockedWhen": [
+        {
+          "fact": "cpu.x3dMultiCcd",
+          "eq": true,
+          "reasonKey": "block.x3dBalanced"
+        },
+        {
+          "fact": "power.modernStandby",
+          "eq": true,
+          "reasonKey": "block.modernStandby"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+      ]
+    },
+    {
+      "id": "power.ultimatePlan",
+      "category": "Power",
+      "impact": {
+        "gaming": 1,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "formFactor": "desktop"
+      },
+      "actions": [
+        {
+          "type": "powerScheme",
+          "duplicateFrom": "ultimatePerformance",
+          "name": "PCOptimizer Ultimate"
+        }
+      ],
+      "conflictsWith": [
+        "power.balancedPlan",
+        "power.gamingPlan"
+      ],
+      "blockedWhen": [
+        {
+          "fact": "cpu.x3dMultiCcd",
+          "eq": true,
+          "reasonKey": "block.x3dBalanced"
+        },
+        {
+          "fact": "power.modernStandby",
+          "eq": true,
+          "reasonKey": "block.modernStandby"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+      ]
+    },
+    {
+      "id": "power.turboRestore",
+      "category": "Power",
+      "impact": {
+        "gaming": 5,
+        "basis": "measured",
+        "effect": [
+          "fps",
+          "lows"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "PROCTHROTTLEMAX",
+          "ac": 100
+        },
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "PERFBOOSTMODE",
+          "ac": 2
+        }
+      ],
+      "recommendWhen": {
+        "fact": "finding.F6.turbo.problem",
+        "eq": true
+      },
+      "fixes": [
+        "F6.turbo"
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode"
+      ],
+      "recommendReasonKey": "rec.turboDisabled"
+    },
+    {
+      "id": "power.coreParkingOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 1,
+        "basis": "disputed",
+        "effect": [
+          "lows",
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "CPMINCORES",
+          "ac": 100
+        }
+      ],
+      "blockedWhen": [
+        {
+          "fact": "cpu.x3dMultiCcd",
+          "eq": true,
+          "reasonKey": "block.x3dParking"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
+      ]
+    },
+    {
+      "id": "power.minProcessorState100",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "PROCTHROTTLEMIN",
+          "ac": 100
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
+      ]
+    },
+    {
+      "id": "power.throttlingOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "fps"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "any": [
+              {
+                "fact": "cpu.hybrid",
+                "eq": true
+              },
+              {
+                "fact": "system.laptop",
+                "eq": true
+              }
+            ]
+          },
+          "gaming": 1,
+          "reasonKey": "impact.hybridOrLaptop"
+        }
+      ],
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+          "name": "PowerThrottlingOff",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation"
+      ]
+    },
+    {
+      "id": "power.usbSelectiveSuspendOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_USB",
+          "setting": "USBSELECTIVESUSPEND",
+          "ac": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/usb-selective-suspend"
+      ]
+    },
+    {
+      "id": "power.pcieAspmOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "disputed",
+        "effect": [
+          "latency"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PCIEXPRESS",
+          "setting": "ASPM",
+          "ac": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/pci-express-settings-link-state-power-management"
+      ]
+    },
+    {
+      "id": "power.fastStartupOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "stability"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+          "name": "HiberbootEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/distinguishing-fast-startup-from-wake-from-hibernation"
+      ]
+    },
+    {
+      "id": "power.hibernateOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "hibernation",
+          "enabled": false
+        }
+      ],
+      "blockedWhen": [
+        {
+          "all": [
+            {
+              "fact": "power.modernStandby",
+              "eq": true
+            },
+            {
+              "fact": "system.laptop",
+              "eq": true
+            }
+          ],
+          "reasonKey": "block.modernStandbyHibernate"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options"
+      ]
+    }
+  ]
+}
