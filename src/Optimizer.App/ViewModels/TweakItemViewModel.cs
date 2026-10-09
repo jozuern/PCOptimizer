@@ -60,6 +60,7 @@ public sealed class TweakItemViewModel : InspectorItem
         }
 
         var badges = new List<string>();
+        if (t.Preview) badges.Add(labels.Get(lang, "badge.preview"));
         if (t.EffectiveRisk != Risk.Safe) badges.Add(labels.Get(lang, $"risk.{t.EffectiveRisk}"));
         if (t.Impact.Basis == "disputed") badges.Add(labels.Get(lang, "badge.disputed"));
         if (t.Restart) badges.Add(labels.Get(lang, "badge.restart"));
@@ -111,6 +112,7 @@ public sealed class TweakItemViewModel : InspectorItem
             if (t.Restart) undo.Add(labels.Get(lang, "undo.restart"));
             if (t.SignOut) undo.Add(labels.Get(lang, "undo.signOut"));
             if (t.IsBootCritical) undo.Add(labels.Get(lang, "undo.bootCritical"));
+            if (t.Preview) undo.Add(labels.Get(lang, "preview.warning"));
             return $"# {heading}\n\n" + DocStore.RenderTweak(page, changes, notes, string.Join(" ", undo));
         };
     }

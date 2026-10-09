@@ -43,7 +43,9 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var badges = new List<string> { labels.Get(lang, $"risk.{t.EffectiveRisk}"), labels.Get(lang, $"reversibility.{t.Reversibility}") };
         if (t.Restart) badges.Add(labels.Get(lang, "badge.restart"));
         if (t.SignOut) badges.Add(labels.Get(lang, "badge.signOut"));
+        if (t.Preview) badges.Insert(0, labels.Get(lang, "badge.preview"));
         var warnings = new List<string>();
+        if (t.Preview) warnings.Add(labels.Get(lang, "preview.warning"));
         if (t.IsBootCritical) warnings.Add(labels.Get(lang, "undo.bootCritical"));
         warnings.AddRange(status.Blocks.Where(b => b.ReasonKey is not ("block.antiCheat" or "block.expertMode")).Select(b => labels.Get(lang, b.ReasonKey) + (b.Detail ?? "")));
         if (t.EffectiveRisk == Risk.Expert && !expertMode()) warnings.Add(labels.Get(lang, "block.expertMode"));

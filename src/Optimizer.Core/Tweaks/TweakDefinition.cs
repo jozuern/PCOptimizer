@@ -66,6 +66,12 @@ public sealed class TweakDefinition
     public bool BootCritical { get; init; }
     public bool AntiCheatSensitive { get; init; }
 
+    /// <summary>
+    /// Risky enough that it needs testing on real Windows before it can be called safe, and that testing has not been
+    /// done yet (only the registry sandbox and fakes). Shown as "Preview" and never part of "Apply recommended".
+    /// </summary>
+    public bool Preview { get; init; }
+
     /// <summary>Internal tweaks are not listed (e.g. the restore point frequency the engine sets itself).</summary>
     public bool Hidden { get; init; }
 
@@ -98,9 +104,9 @@ public sealed class TweakDefinition
     public bool IsBootCritical => BootCritical || Actions.Any(a => a.IsBootCritical);
 
     /// <summary>
-    /// May be part of "Apply recommended" (plan v4 §4.3): Safe or Moderate, fully reversible, not boot-critical,
-    /// no anti-cheat sensitivity. Expert items are never included.
+    /// May be part of "Apply recommended": Safe or Moderate, fully reversible, not boot-critical, no anti-cheat
+    /// sensitivity, not a preview. Expert items are never included.
     /// </summary>
     [JsonIgnore]
-    public bool IsBatchSafe => EffectiveRisk != Risk.Expert && Reversibility == Reversibility.Reversible && !IsBootCritical && !AntiCheatSensitive;
+    public bool IsBatchSafe => EffectiveRisk != Risk.Expert && Reversibility == Reversibility.Reversible && !IsBootCritical && !AntiCheatSensitive && !Preview;
 }
