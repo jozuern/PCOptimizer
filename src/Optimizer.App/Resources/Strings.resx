@@ -109,14 +109,14 @@
   <data name="Result_NothingToDo" xml:space="preserve"><value>Nothing to change, the setting is already in place.</value></data>
   <data name="Result_Failed" xml:space="preserve"><value>Not applied. Nothing was left half-changed. Reason: {0}</value></data>
   <data name="Result_Undone" xml:space="preserve"><value>Undone: {0}</value></data>
-  <data name="Result_UndoneSkipped" xml:space="preserve"><value>Undone: {0}. {1} value(s) had already been changed by Windows and were left as they are.</value></data>
-  <data name="Result_UndoAll" xml:space="preserve"><value>{0} change(s) undone.</value></data>
+  <data name="Result_UndoneSkipped" xml:space="preserve"><value>Undone: {0}. Windows had already changed {1} of its values, so those were left as they are.</value></data>
+  <data name="Result_UndoAll" xml:space="preserve"><value>Changes undone: {0}.</value></data>
   <data name="Changes_Title" xml:space="preserve"><value>Changes</value></data>
   <data name="Changes_Hint" xml:space="preserve"><value>Everything this app changed, with the original values it keeps. Undo restores them.</value></data>
   <data name="Changes_Applied" xml:space="preserve"><value>Active changes</value></data>
   <data name="Changes_Empty" xml:space="preserve"><value>No changes yet.</value></data>
   <data name="Changes_UndoAll" xml:space="preserve"><value>Undo all</value></data>
-  <data name="Changes_Entries" xml:space="preserve"><value>{0} value(s)</value></data>
+  <data name="Changes_Entries" xml:space="preserve"><value>Values: {0}</value></data>
   <data name="Changes_Safety" xml:space="preserve"><value>Safety net</value></data>
   <data name="Changes_RestorePoints" xml:space="preserve"><value>System Protection</value></data>
   <data name="Changes_EnableRp" xml:space="preserve"><value>Turn on (5 % of the drive)</value></data>
@@ -126,8 +126,8 @@
   <data name="Rp_On" xml:space="preserve"><value>On. A restore point is created before the first change of each session.</value></data>
   <data name="Rp_Off" xml:space="preserve"><value>Off. Without it, no restore point can be created. The app's own backup still works.</value></data>
   <data name="Rp_Unknown" xml:space="preserve"><value>Unknown (needs administrator rights).</value></data>
-  <data name="Banner_Drift" xml:space="preserve"><value>{0} change(s) were reset by Windows, usually by an update. See Changes to apply them again.</value></data>
-  <data name="Banner_Restart" xml:space="preserve"><value>{0} change(s) take effect after a restart.</value></data>
+  <data name="Banner_Drift" xml:space="preserve"><value>Changes reset by Windows, usually by an update: {0}. See Changes to apply them again.</value></data>
+  <data name="Banner_Restart" xml:space="preserve"><value>Changes that take effect after a restart: {0}.</value></data>
   <data name="Settings_Expert" xml:space="preserve"><value>Expert mode</value></data>
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Shows changes that trade security for performance or edit the boot configuration. They are never recommended automatically.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Data folder</value></data>
@@ -148,7 +148,7 @@
   <data name="Rp_Enable" xml:space="preserve"><value>Turn on and continue</value></data>
   <data name="Rp_Continue" xml:space="preserve"><value>Continue without</value></data>
   <data name="UndoAll_Title" xml:space="preserve"><value>Undo all changes?</value></data>
-  <data name="UndoAll_Text" xml:space="preserve"><value>{0} change(s) will be undone. Values Windows has changed since are left as they are.</value></data>
+  <data name="UndoAll_Text" xml:space="preserve"><value>Changes to undo: {0}. Values Windows has changed since are left as they are.</value></data>
   <data name="Sum_Modules" xml:space="preserve"><value>modules</value></data>
   <data name="Busy" xml:space="preserve"><value>Working</value></data>
   <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start PCOptimizer as administrator to apply or undo them.</value></data>

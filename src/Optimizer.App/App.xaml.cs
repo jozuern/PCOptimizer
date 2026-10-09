@@ -116,7 +116,8 @@ public partial class App : Application
     /// </summary>
     public void ApplyTheme(string theme, bool save = true)
     {
-        var setting = theme is "Light" or "Dark" ? theme : "System";
+        // Case-insensitive so "--theme light" works like "--lang de"; the saved value keeps the canonical spelling.
+        var setting = new[] { "Light", "Dark" }.FirstOrDefault(t => t.Equals(theme, StringComparison.OrdinalIgnoreCase)) ?? "System";
         var dark = setting == "Dark" || (setting == "System" && !SystemUsesLightTheme(_sessionSid));
         ApplicationThemeManager.Apply(dark ? ApplicationTheme.Dark : ApplicationTheme.Light, WindowBackdropType.Mica, true);
         ApplicationAccentColorManager.ApplySystemAccent();

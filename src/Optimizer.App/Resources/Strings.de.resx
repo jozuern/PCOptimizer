@@ -109,14 +109,14 @@
   <data name="Result_NothingToDo" xml:space="preserve"><value>Nichts zu ändern, die Einstellung ist bereits gesetzt.</value></data>
   <data name="Result_Failed" xml:space="preserve"><value>Nicht angewendet. Nichts blieb halb geändert. Grund: {0}</value></data>
   <data name="Result_Undone" xml:space="preserve"><value>Rückgängig gemacht: {0}</value></data>
-  <data name="Result_UndoneSkipped" xml:space="preserve"><value>Rückgängig gemacht: {0}. {1} Wert(e) hatte Windows bereits geändert, sie bleiben wie sie sind.</value></data>
-  <data name="Result_UndoAll" xml:space="preserve"><value>{0} Änderung(en) rückgängig gemacht.</value></data>
+  <data name="Result_UndoneSkipped" xml:space="preserve"><value>Rückgängig gemacht: {0}. Windows hatte {1} der Werte bereits geändert, sie bleiben wie sie sind.</value></data>
+  <data name="Result_UndoAll" xml:space="preserve"><value>Rückgängig gemachte Änderungen: {0}.</value></data>
   <data name="Changes_Title" xml:space="preserve"><value>Änderungen</value></data>
   <data name="Changes_Hint" xml:space="preserve"><value>Alles, was diese App geändert hat, mit den gespeicherten Originalwerten. Rückgängig stellt sie wieder her.</value></data>
   <data name="Changes_Applied" xml:space="preserve"><value>Aktive Änderungen</value></data>
   <data name="Changes_Empty" xml:space="preserve"><value>Noch keine Änderungen.</value></data>
   <data name="Changes_UndoAll" xml:space="preserve"><value>Alles rückgängig</value></data>
-  <data name="Changes_Entries" xml:space="preserve"><value>{0} Wert(e)</value></data>
+  <data name="Changes_Entries" xml:space="preserve"><value>Werte: {0}</value></data>
   <data name="Changes_Safety" xml:space="preserve"><value>Sicherheitsnetz</value></data>
   <data name="Changes_RestorePoints" xml:space="preserve"><value>Computerschutz</value></data>
   <data name="Changes_EnableRp" xml:space="preserve"><value>Einschalten (5 % des Laufwerks)</value></data>
@@ -126,8 +126,8 @@
   <data name="Rp_On" xml:space="preserve"><value>An. Vor der ersten Änderung jeder Sitzung wird ein Wiederherstellungspunkt erstellt.</value></data>
   <data name="Rp_Off" xml:space="preserve"><value>Aus. Ohne ihn kann kein Wiederherstellungspunkt erstellt werden. Die eigene Sicherung der App funktioniert trotzdem.</value></data>
   <data name="Rp_Unknown" xml:space="preserve"><value>Unbekannt (braucht Administratorrechte).</value></data>
-  <data name="Banner_Drift" xml:space="preserve"><value>{0} Änderung(en) hat Windows zurückgesetzt, meist durch ein Update. Unter Änderungen kannst du sie erneut anwenden.</value></data>
-  <data name="Banner_Restart" xml:space="preserve"><value>{0} Änderung(en) wirken nach einem Neustart.</value></data>
+  <data name="Banner_Drift" xml:space="preserve"><value>Von Windows zurückgesetzte Änderungen, meist durch ein Update: {0}. Unter Änderungen kannst du sie erneut anwenden.</value></data>
+  <data name="Banner_Restart" xml:space="preserve"><value>Änderungen, die nach einem Neustart wirken: {0}.</value></data>
   <data name="Settings_Expert" xml:space="preserve"><value>Expertenmodus</value></data>
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Zeigt Änderungen, die Sicherheit gegen Leistung tauschen oder die Startkonfiguration bearbeiten. Sie werden nie automatisch empfohlen.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Datenordner</value></data>
@@ -148,7 +148,7 @@
   <data name="Rp_Enable" xml:space="preserve"><value>Einschalten und fortfahren</value></data>
   <data name="Rp_Continue" xml:space="preserve"><value>Ohne fortfahren</value></data>
   <data name="UndoAll_Title" xml:space="preserve"><value>Alle Änderungen rückgängig machen?</value></data>
-  <data name="UndoAll_Text" xml:space="preserve"><value>{0} Änderung(en) werden rückgängig gemacht. Werte, die Windows seitdem geändert hat, bleiben wie sie sind.</value></data>
+  <data name="UndoAll_Text" xml:space="preserve"><value>Rückgängig zu machende Änderungen: {0}. Werte, die Windows seitdem geändert hat, bleiben wie sie sind.</value></data>
   <data name="Sum_Modules" xml:space="preserve"><value>Module</value></data>
   <data name="Busy" xml:space="preserve"><value>Wird ausgeführt</value></data>
   <data name="Banner_AdminToApply" xml:space="preserve"><value>Änderungen brauchen Administratorrechte. Starte PCOptimizer als Administrator, um sie anzuwenden oder rückgängig zu machen.</value></data>
