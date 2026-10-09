@@ -40,12 +40,12 @@ public static class Recommendations
         {
             if (f.Fix is { } fix)
             {
-                Add(new RecommendedItem(fix, null, f, f.Impact ?? 0));
+                if (Profiles.ProfileView.RuntimeFixAllowed(fix, list)) Add(new RecommendedItem(fix, null, f, f.Impact ?? 0));
                 continue;
             }
-            var catalogFix = list.FirstOrDefault(p => p.Tweak.Fixes.Contains(f.Id) && !p.Status.IsOn && p.Status.Blocks.Count == 0 && !p.WorksAgainst
-                                                      && p.Status.State is not (TweakState.NotApplicable or TweakState.Unsupported));
-            if (catalogFix is not null) Add(new RecommendedItem(catalogFix.Tweak, catalogFix.Tweak.RecommendReasonKey, f, f.Impact ?? catalogFix.Impact));
+            // The plan applies without asking per item, so nothing may block it here (not even missing admin rights).
+            var catalogFix = list.FirstOrDefault(p => p.CanFix(f.Id) && p.Status.Blocks.Count == 0);
+            if (catalogFix is not null) Add(new RecommendedItem(catalogFix.Tweak, catalogFix.ReasonKey ?? catalogFix.Tweak.RecommendReasonKey, f, f.Impact ?? catalogFix.Impact));
         }
 
         foreach (var p in list.Where(p => p.Recommended))

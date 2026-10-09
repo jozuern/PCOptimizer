@@ -15,7 +15,14 @@
     <!-- Release: always elevated (plan v4 §2). Debug: asInvoker so the scanner can be run without UAC during development. -->
     <ApplicationManifest Condition="'$(Configuration)' == 'Release'">app.manifest</ApplicationManifest>
     <ApplicationManifest Condition="'$(Configuration)' != 'Release'">app.debug.manifest</ApplicationManifest>
+    <!-- Exe, taskbar and Alt+Tab icon (16 to 256 px; sources in docs/brand) -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\icon-16.png;Assets\icon-24.png;Assets\icon-32.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Optimizer.Core\Optimizer.Core.csproj" />

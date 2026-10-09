@@ -43,8 +43,8 @@ public sealed class BatteryWearCheck : IFindingCheck
         if (!p.IsLaptop) yield break;
         if (p.Battery is not { } b)
         {
-            // A laptop whose driver gives no capacity data: unknown, never advice.
-            yield return new Finding { Id = Id, Kind = FindingKind.Finding, Status = FindingStatus.Unknown, Impact = 0 };
+            // The battery driver gives no capacity data: nothing to say (listed only with "show passed checks").
+            yield return new Finding { Id = Id, Kind = FindingKind.Finding, Status = FindingStatus.Unsupported, Impact = 0 };
             yield break;
         }
         var health = (int)Math.Round(b.Health * 100);
@@ -65,5 +65,5 @@ public sealed class BatteryWearCheck : IFindingCheck
         };
     }
 
-    private static string Mwh(long mwh) => $"{mwh / 1000.0:0.0} Wh".Replace(',', '.');
+    private static string Mwh(long mwh) => $"{mwh / 1000.0:0.0} Wh";
 }

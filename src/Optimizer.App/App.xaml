@@ -110,6 +110,14 @@
             </DataTemplate>
 
             <!-- Tweak row: switch on the right (on = confirm and apply, off = undo) -->
+            <!-- Profile picker entry (Overview and Tweaks) -->
+            <DataTemplate x:Key="ProfileItem">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="{Binding Icon}" Margin="0,0,8,0" />
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                </StackPanel>
+            </DataTemplate>
+
             <DataTemplate x:Key="TweakRow">
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">

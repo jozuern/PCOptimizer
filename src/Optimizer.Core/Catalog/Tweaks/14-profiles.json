@@ -130,6 +130,9 @@
           "eq": "balanced"
         }
       },
+      "conflictsWith": [
+        "fix.powerMode"
+      ],
       "actions": [
         {
           "type": "powerMode",

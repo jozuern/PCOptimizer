@@ -163,6 +163,45 @@ public class ProfileTests
         Assert.False(ProfileView.For(quiet, S("power.throttlingOff"), new Facts()).Flagged);
     }
 
+    [Fact]
+    public void FixesNeverOverwriteAConflictingChange()
+    {
+        // Quiet power mode applied, profile Gaming: F8 (power mode) is a problem, but its fix would overwrite the quiet
+        // tweak's setting without undoing it. Neither the plan nor the finding row offers it; the quiet tweak is flagged.
+        var gaming = Profiles.Default;
+        var quietMode = TweakCatalog.Current.Get("quiet.powerModeEfficiency")!;
+        var on = new TweakStatus(quietMode, TweakState.Applied, 0, ["none"], null, false, [], true);
+        var fix = RuntimeFixes.PowerModeBestPerformance();
+        var f8 = F("F8.powerMode", impact: 3) with { Fix = fix };
+        var profiled = ProfileView.For(gaming, [on], new Facts());
+        Assert.False(ProfileView.RuntimeFixAllowed(fix, profiled));
+        Assert.Empty(Recommendations.Build(profiled, ProfileView.Findings(gaming, [f8])).Items);
+        Assert.True(profiled.Single().Flagged);
+
+        // Restore processor turbo is blocked by the applied Quiet boost tweak: not offered as F6's fix.
+        var turbo = TweakCatalog.Current.Get("power.turboRestore")!;
+        var blocked = new TweakStatus(turbo, TweakState.NotApplied, 5, ["fps"], null, false, [new Block("block.conflict", "quiet.boostOff")], false);
+        Assert.False(ProfileView.For(gaming, blocked, new Facts()).CanFix("F6.turbo"));
+        // Missing admin rights alone do not hide the fix (applying then asks for them).
+        var notElevated = blocked with { Blocks = [new Block("block.notElevated")] };
+        Assert.True(ProfileView.For(gaming, notElevated, new Facts()).CanFix("F6.turbo"));
+    }
+
+    [Fact]
+    public async Task ConflictsCountWhileThisAppHoldsTheBackup()
+    {
+        // The runtime power mode fix is not in the detected list; its backup still blocks the quiet power mode.
+        using var fx = new EngineFixture();
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true).Set("system.laptop", false).Set("power.personality", "balanced");
+        var options = new ApplyOptions { ContinueWithoutRestorePoint = true, ExpertMode = true };
+        fx.PowerMode.Current = Platform.FirmwareExtras.OverlayBetterBattery;
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(RuntimeFixes.PowerModeBestPerformance(), facts, new HashSet<string>(), options)).Outcome);
+        var quietMode = TweakCatalog.Current.Get("quiet.powerModeEfficiency")!;
+        var r = await fx.Engine.ApplyAsync(quietMode, facts, new HashSet<string>(), options);
+        Assert.Equal(ApplyOutcome.Blocked, r.Outcome);
+        Assert.Contains(r.Blocks!, b => b.ReasonKey == "block.conflict" && b.Detail == "fix.powerMode");
+    }
+
     [Theory]
     [InlineData(true, true, 16, false, "laptopGaming")]
     [InlineData(true, false, 16, false, "office")]
@@ -257,7 +296,7 @@ public class ProfileTests
         Assert.Equal(FindingStatus.Problem, worn.Status);
         Assert.Equal("75", worn.Params["health"]);
         Assert.Equal(FindingStatus.Ok, new BatteryWearCheck().Evaluate(Laptop(true, BatteryHealth.From(60000, 50000)), c).Single().Status);
-        Assert.Equal(FindingStatus.Unknown, new BatteryWearCheck().Evaluate(Laptop(true, null), c).Single().Status);
+        Assert.Equal(FindingStatus.Unsupported, new BatteryWearCheck().Evaluate(Laptop(true, null), c).Single().Status); // no data: no row
         // Implausible driver data is treated as missing.
         Assert.Null(BatteryHealth.From(0, 50000));
         Assert.Null(BatteryHealth.From(50000, 0));

@@ -48,6 +48,8 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             _syncing = false;
         };
         Loaded += (_, _) => Nav.Navigate(typeof(OverviewPage));
+        Loaded += (_, _) => SetTitleBarIcon(System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX);
+        DpiChanged += (_, e) => SetTitleBarIcon(e.NewDpi.DpiScaleX);
         vm.PropertyChanged += OnViewModelChanged;
         PreviewKeyDown += (_, e) =>
         {
@@ -93,5 +95,16 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             B("TextFillColorSecondaryBrush", Brushes.Gray),
             B("SubtleFillColorSecondaryBrush", Brushes.DimGray),
             B("DividerStrokeColorDefaultBrush", Brushes.DimGray));
+    }
+
+    /// <summary>
+    /// Title bar icon: the hand-tuned bitmap for the current scaling (16, 24 or 32 px for a 16 px slot), never a
+    /// scaled-down large icon, which would look blurry at small sizes.
+    /// </summary>
+    private void SetTitleBarIcon(double scale)
+    {
+        var size = scale >= 1.75 ? 32 : scale >= 1.25 ? 24 : 16;
+        var image = new System.Windows.Media.Imaging.BitmapImage(new Uri($"pack://application:,,,/Assets/icon-{size}.png"));
+        TitleIcon.Source = image;
     }
 }

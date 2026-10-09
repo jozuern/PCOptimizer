@@ -175,7 +175,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (t.AntiCheatSensitive && facts.Get("anticheat.strict") is true && !options.AcknowledgeAntiCheat)
             blocks.Add(new Block("block.antiCheat", facts.Get("anticheat.strictNames") as string, CanOverride: true));
         if (t.EffectiveRisk == Risk.Expert && !options.ExpertMode) blocks.Add(new Block("block.expertMode", CanOverride: true));
-        foreach (var other in t.ConflictsWith.Where(applied.Contains)) blocks.Add(new Block("block.conflict", other));
+        // Conflicts: applied now, or changed by this app and not undone (runtime fixes are not in the applied list).
+        foreach (var other in t.ConflictsWith.Where(o => applied.Contains(o) || store.Get(o) is not null)) blocks.Add(new Block("block.conflict", other));
         foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
         if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
         return blocks;

@@ -153,6 +153,9 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<AgainstLine> AgainstProfile { get; } = [];
     public UsageProfile ActiveProfile => _usage;
 
+    /// <summary>Developer switch --profile: use this profile for the session without saving it.</summary>
+    public string? ProfileOverride { get; set; }
+
     public ObservableCollection<FindingItemViewModel> Findings { get; } = [];
     public ObservableCollection<FindingItemViewModel> AdvisorItems { get; } = [];
     public ObservableCollection<TweakItemViewModel> Tweaks { get; } = [];
@@ -361,6 +364,11 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var profiles = _catalog.Profiles;
         _suggested = profiles.Suggest(_facts);
+        if (ProfileOverride is { } forced && profiles.Profiles.FirstOrDefault(p => p.Id == forced && p.IsAvailable(_facts)) is { } chosen)
+        {
+            _usage = chosen;
+            return;
+        }
         if (_settings.Profile is null)
         {
             _usage = _suggested;
@@ -387,10 +395,16 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Picker entries in the current language: the profiles this PC offers (laptop profiles only on laptops).</summary>
     private void BuildProfileOptions()
     {
-        ProfileOptions.Clear();
-        foreach (var p in _catalog.Profiles.Profiles.Where(p => p.IsAvailable(_facts)))
-            ProfileOptions.Add(new ProfileOption(p.Id, ProfileName(p), Loc.Instance[$"ProfileDesc_{p.Id}"],
-                Enum.TryParse<SymbolRegular>(p.Icon, out var icon) ? icon : SymbolRegular.Games24));
+        var options = _catalog.Profiles.Profiles.Where(p => p.IsAvailable(_facts))
+            .Select(p => new ProfileOption(p.Id, ProfileName(p), Loc.Instance[$"ProfileDesc_{p.Id}"],
+                Enum.TryParse<SymbolRegular>(p.Icon, out var icon) ? icon : SymbolRegular.Games24))
+            .ToList();
+        // Replacing the list while a combo box is changing its selection would blank it: only when the entries differ.
+        if (!options.SequenceEqual(ProfileOptions))
+        {
+            ProfileOptions.Clear();
+            foreach (var o in options) ProfileOptions.Add(o);
+        }
         // Set the field directly: the change handler is for user choices.
 #pragma warning disable MVVMTK0034
         _selectedProfile = ProfileOptions.FirstOrDefault(o => o.Id == _usage.Id);
@@ -600,8 +614,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Runtime fix of the finding, or the first catalog tweak that fixes it and is not on yet.</summary>
     private TweakDefinition? FixFor(Finding f) =>
-        f.Fix ?? _profiled.FirstOrDefault(p => p.Tweak.Fixes.Contains(f.Id) && !p.Status.IsOn && p.Status.State != TweakState.NotApplicable && !p.WorksAgainst
-                                               && (ExpertMode || p.Tweak.EffectiveRisk != Risk.Expert))?.Tweak;
+        f.Fix is { } fix
+            ? ProfileView.RuntimeFixAllowed(fix, _profiled) ? fix : null
+            : _profiled.FirstOrDefault(p => p.CanFix(f.Id) && (ExpertMode || p.Tweak.EffectiveRisk != Risk.Expert))?.Tweak;
 
     /// <param name="profileFilter">Tweaks page: only what the active profile rates (unless "Only this profile" is off).</param>
     private IEnumerable<ProfiledTweak> VisibleTweaks(bool profileFilter = true) =>

@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/pcoptimizer-icon-256.png" width="96" alt="PCOptimizer icon"></p>
+
 # PCOptimizer
 
 Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. A single self-contained exe for Windows 11 24H2 or newer, x64 only, in English and German.
@@ -53,7 +55,7 @@ src/Optimizer.Core/   scanner, findings, engine, actions, catalog data (Catalog/
                       debloat, cleanup, startup, services, apps, tools (storage, features, update repair, PresentMon, sensors)
 src/Optimizer.App/    WPF UI (WPF-UI 4.3, CommunityToolkit.Mvvm, Markdig): one page per area, shared change runner
 tests/                xUnit: rule tests with mocked hardware, engine tests in a registry sandbox, docs lint, read-only hardware checks (Category=Hardware)
-docs/                 third-party notices, explanation style guide, notes from real hardware
+docs/                 third-party notices, explanation style guide, notes from real hardware, brand (icon, logo, colors)
 .github/workflows/    CI: build, tests (without Category=Hardware), single-exe publish as a build artifact
 ```
 

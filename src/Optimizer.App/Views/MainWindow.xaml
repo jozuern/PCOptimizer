@@ -5,6 +5,7 @@
                  xmlns:l="clr-namespace:Optimizer.App.Services"
                  xmlns:v="clr-namespace:Optimizer.App.Views"
                  Title="PCOptimizer"
+                 Icon="pack://application:,,,/Assets/app.ico"
                  Width="1440" Height="920" MinWidth="1040" MinHeight="640"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
@@ -16,7 +17,11 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="PCOptimizer" ShowHelp="False" />
+        <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="PCOptimizer" ShowHelp="False">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon x:Name="TitleIcon" Source="pack://application:,,,/Assets/icon-16.png" Width="16" Height="16" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

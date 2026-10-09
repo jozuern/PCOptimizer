@@ -51,16 +51,8 @@
                         </StackPanel>
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" MinWidth="220" Margin="16,0,0,0">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="{Binding Icon}" Margin="0,0,8,0" />
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" ItemTemplate="{StaticResource ProfileItem}"
+                          MinWidth="220" Margin="16,0,0,0" />
             </ui:CardControl>
 
             <!-- Readiness and counts -->

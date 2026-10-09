@@ -91,6 +91,15 @@ public sealed record ProfiledTweak(TweakStatus Status, int Impact, bool Relevant
 
     /// <summary>Lowers the profile's goal (for example costs battery life in the Battery profile).</summary>
     public bool WorksAgainst => Impact < 0;
+
+    /// <summary>
+    /// Can be offered as the fix of a finding: fixes it, is not on yet, applies to this PC, does not work against the
+    /// profile and nothing but missing administrator rights blocks it (a conflict would make the offer fail).
+    /// </summary>
+    public bool CanFix(string findingId) =>
+        Tweak.Fixes.Contains(findingId) && !Status.IsOn && !WorksAgainst
+        && Status.State is not (TweakState.NotApplicable or TweakState.Unsupported)
+        && Status.Blocks.All(b => b.CanOverride || b.ReasonKey == "block.notElevated");
 }
 
 public static class ProfileView
@@ -112,6 +121,10 @@ public static class ProfileView
 
     public static IReadOnlyList<ProfiledTweak> For(UsageProfile profile, IEnumerable<TweakStatus> statuses, Facts facts) =>
         statuses.Select(s => For(profile, s, facts)).ToList();
+
+    /// <summary>A fix built for this PC (runtime) is not offered while a tweak it conflicts with is on.</summary>
+    public static bool RuntimeFixAllowed(TweakDefinition fix, IEnumerable<ProfiledTweak> tweaks) =>
+        !fix.ConflictsWith.Any(id => tweaks.Any(p => p.Tweak.Id == id && p.Status.IsOn));
 
     /// <summary>Same rule as the catalog recommendations: not applied yet and nothing blocks it.</summary>
     private static bool CanRecommend(TweakStatus s) =>

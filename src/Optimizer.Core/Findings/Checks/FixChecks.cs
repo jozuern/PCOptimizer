@@ -59,6 +59,8 @@ public static class RuntimeFixes
         Hidden = true,
         Actions = [new PowerModeAction { Overlay = FirmwareExtras.OverlayBestPerformance }],
         Fixes = [PowerModeCheck.Id],
+        // Same Windows setting as the Quiet profile's power mode: one would silently overwrite the other's backup.
+        ConflictsWith = ["quiet.powerModeEfficiency"],
         Sources = ["https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/customize-power-slider"],
     };
 
