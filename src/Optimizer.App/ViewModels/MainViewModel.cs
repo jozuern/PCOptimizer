@@ -8,6 +8,7 @@ using Optimizer.Core.Findings;
 using Optimizer.Core.Hardware;
 using Optimizer.Core.Logging;
 using Optimizer.Core.Platform;
+using Optimizer.Core.Profiles;
 using Optimizer.Core.Tweaks;
 using Wpf.Ui.Controls;
 
@@ -51,6 +52,12 @@ public sealed record LogLine(string Time, string Text);
 /// <summary>One line of the "Apply recommended" plan: what, why, and its impact.</summary>
 public sealed record RecommendationLine(string Title, string Reason, string ImpactText, bool IsFix);
 
+/// <summary>A usage profile in the picker.</summary>
+public sealed record ProfileOption(string Id, string Name, string Description, SymbolRegular Icon);
+
+/// <summary>A change on this PC that works against the active profile (with Undo when this app made it).</summary>
+public sealed record AgainstLine(string TweakId, string Title, string Reason, bool CanUndo);
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly CatalogData _catalog = CatalogData.Current;
@@ -65,6 +72,13 @@ public sealed partial class MainViewModel : ObservableObject
     private string? _updateNotice;
     private Facts _facts = new();
     private DateTime? _lastScanTime;
+
+    // Usage profile: decides recommendations, impact, "works against" and which findings count (no setting by itself).
+    private UsageProfile _usage = CatalogData.Current.Profiles.Default;
+    private IReadOnlyList<ProfiledTweak> _profiled = [];
+    private IReadOnlyList<Finding> _profiledFindings = [];
+    private UsageProfile? _suggested;
+    private bool _profileAutoSet;
 
     public MainViewModel(AppSettings settings, AppServices services, IDialogs dialogs)
     {
@@ -125,6 +139,19 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _recommendedButtonText = "";
     [ObservableProperty] private bool _hasRecommendations;
     [ObservableProperty] private bool _virusTotalConfigured;
+    [ObservableProperty] private ProfileOption? _selectedProfile;
+    [ObservableProperty] private bool _onlyProfile = true;
+    [ObservableProperty] private string _profileDescription = "";
+    [ObservableProperty] private string? _suggestedProfileText;
+    [ObservableProperty] private string _scoreTitle = "";
+    [ObservableProperty] private string _scoreHint = "";
+    [ObservableProperty] private string? _hiddenFindingsText;
+    [ObservableProperty] private string _recommendationsIntro = "";
+    [ObservableProperty] private bool _hasAgainst;
+
+    public ObservableCollection<ProfileOption> ProfileOptions { get; } = [];
+    public ObservableCollection<AgainstLine> AgainstProfile { get; } = [];
+    public UsageProfile ActiveProfile => _usage;
 
     public ObservableCollection<FindingItemViewModel> Findings { get; } = [];
     public ObservableCollection<FindingItemViewModel> AdvisorItems { get; } = [];
@@ -162,6 +189,34 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnShowPassedChanged(bool value) => Rebuild();
     partial void OnSelectedCategoryChanged(CategoryItem? value) => FillTweaks();
     partial void OnOnlyRecommendedChanged(bool value) => FillTweaks();
+
+    partial void OnOnlyProfileChanged(bool value)
+    {
+        BuildCategories();
+        FillTweaks();
+    }
+
+    /// <summary>The user picked another profile: re-rate everything (nothing on the PC changes).</summary>
+    partial void OnSelectedProfileChanged(ProfileOption? value)
+    {
+        if (value is null || value.Id == _usage.Id) return;
+        _usage = _catalog.Profiles.Get(value.Id);
+        _profileAutoSet = false;
+        _settings.Profile = _usage.Id;
+        _settings.Save();
+        Log.Info("profile", "profile changed", new { profile = _usage.Id });
+        ApplyProfile();
+        Rebuild();
+        Network.Rebuild();
+    }
+
+    [RelayCommand]
+    private void UseSuggestedProfile()
+    {
+        if (_suggested is not null && ProfileOptions.FirstOrDefault(o => o.Id == _suggested.Id) is { } option) SelectedProfile = option;
+    }
+
+    public static string ProfileName(UsageProfile p) => Loc.Instance[$"Profile_{p.Id}"];
 
     partial void OnCurrentPageChanged(Page value)
     {
@@ -279,7 +334,8 @@ public sealed partial class MainViewModel : ObservableObject
             var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
             return (facts, catalog, device);
         });
-        _plan = Optimizer.Core.Tweaks.Recommendations.Build(_tweakStates, _findings);
+        EnsureProfile();
+        ApplyProfile();
         var facts = _facts;
         _drift = await Task.Run(() => engine.CheckDrift(facts));
         foreach (var d in _drift)
@@ -295,6 +351,54 @@ public sealed partial class MainViewModel : ObservableObject
             _settings.LastSeenWindowsVersion = current;
             _settings.Save();
         }
+    }
+
+    /// <summary>
+    /// Picks the active profile after a scan: the saved one if this PC offers it, else (first start) the one that fits
+    /// this PC best, which a banner then mentions once.
+    /// </summary>
+    private void EnsureProfile()
+    {
+        var profiles = _catalog.Profiles;
+        _suggested = profiles.Suggest(_facts);
+        if (_settings.Profile is null)
+        {
+            _usage = _suggested;
+            _profileAutoSet = true;
+            _settings.Profile = _usage.Id;
+            _settings.Save();
+            Log.Info("profile", "profile suggested", new { profile = _usage.Id });
+        }
+        else
+        {
+            // A laptop profile copied to a desktop (or no longer offered) falls back to Gaming for this session only.
+            _usage = profiles.Profiles.FirstOrDefault(p => p.Id == _settings.Profile && p.IsAvailable(_facts)) ?? profiles.Default;
+        }
+    }
+
+    /// <summary>Rates tweaks and findings through the active profile and rebuilds the recommendation plan.</summary>
+    private void ApplyProfile()
+    {
+        _profiled = ProfileView.For(_usage, _tweakStates, _facts);
+        _profiledFindings = ProfileView.Findings(_usage, _findings);
+        _plan = Optimizer.Core.Tweaks.Recommendations.Build(_profiled, _profiledFindings);
+    }
+
+    /// <summary>Picker entries in the current language: the profiles this PC offers (laptop profiles only on laptops).</summary>
+    private void BuildProfileOptions()
+    {
+        ProfileOptions.Clear();
+        foreach (var p in _catalog.Profiles.Profiles.Where(p => p.IsAvailable(_facts)))
+            ProfileOptions.Add(new ProfileOption(p.Id, ProfileName(p), Loc.Instance[$"ProfileDesc_{p.Id}"],
+                Enum.TryParse<SymbolRegular>(p.Icon, out var icon) ? icon : SymbolRegular.Games24));
+        // Set the field directly: the change handler is for user choices.
+#pragma warning disable MVVMTK0034
+        _selectedProfile = ProfileOptions.FirstOrDefault(o => o.Id == _usage.Id);
+#pragma warning restore MVVMTK0034
+        OnPropertyChanged(nameof(SelectedProfile));
+        ProfileDescription = Loc.Instance[$"ProfileDesc_{_usage.Id}"];
+        SuggestedProfileText = _suggested is { } s && s.Id != _usage.Id && Profile is not null ? Loc.Instance.Format("Profile_Suggested", ProfileName(s)) : null;
+        OnPropertyChanged(nameof(ActiveProfile));
     }
 
     /// <summary>Applies every reset change again (one confirmation). Expert changes are left for the Changes page.</summary>
@@ -441,23 +545,29 @@ public sealed partial class MainViewModel : ObservableObject
         var lang = Loc.Instance.Language;
         var selectedKey = SelectedItem?.Key;
 
-        Fill(Findings, _findings.Where(f => f.Kind == FindingKind.Finding), lang);
-        Fill(AdvisorItems, _findings.Where(f => f.Kind == FindingKind.Advisor), lang);
+        BuildProfileOptions();
+        Fill(Findings, _profiledFindings.Where(f => f.Kind == FindingKind.Finding), lang);
+        Fill(AdvisorItems, _profiledFindings.Where(f => f.Kind == FindingKind.Advisor), lang);
         OnPropertyChanged(nameof(FindingsEmpty));
         OnPropertyChanged(nameof(AdvisorEmpty));
-        var access = _findings.FirstOrDefault(f => f.Kind == FindingKind.GameAccess);
+        var access = _profiledFindings.FirstOrDefault(f => f.Kind == FindingKind.GameAccess);
         GameAccess = access is null ? null : new FindingItemViewModel(access, lang);
+        var hidden = ProfileView.HiddenProblems(_usage, _findings);
+        HiddenFindingsText = hidden > 0 ? Loc.Instance.Format("Findings_HiddenByProfile", hidden) : null;
 
-        Score = ReadinessScore.Compute(_findings);
-        var problems = _findings.Count(f => f.IsProblem && f.Kind != FindingKind.GameAccess);
+        // The score counts what matters for the profile, weighted by the profile's impact.
+        Score = ReadinessScore.Compute(_profiledFindings);
+        ScoreTitle = Loc.Instance.Format("Dash_ScoreFor", ProfileName(_usage));
+        ScoreHint = Loc.Instance.Format("Dash_ScoreHintGoal", Labels.Current.Get(lang, $"effect.{_usage.Goal}"));
+        var problems = _profiledFindings.Count(f => f.IsProblem && f.Kind != FindingKind.GameAccess);
         ProblemSummary = problems == 0 ? Loc.Instance["Dash_NoProblems"] : Loc.Instance.Format("Dash_Problems", problems);
         ScoreVerdict = Loc.Instance[Score >= 85 ? "Verdict_Good" : Score >= 60 ? "Verdict_Fair" : "Verdict_Poor"];
         Counts.Clear();
-        var findingProblems = _findings.Count(f => f.IsProblem && f.Kind == FindingKind.Finding);
-        var advisorProblems = _findings.Count(f => f.IsProblem && f.Kind == FindingKind.Advisor);
+        var findingProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Finding);
+        var advisorProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Advisor);
         Counts.Add(new CountItem(findingProblems.ToString(), Loc.Instance["Count_Problems"], findingProblems > 0 ? "Problem" : "Ok"));
         Counts.Add(new CountItem(advisorProblems.ToString(), Loc.Instance["Count_Advisor"], advisorProblems > 0 ? "Problem" : "Ok"));
-        Counts.Add(new CountItem(_findings.Count(f => f.Status == FindingStatus.Ok).ToString(), Loc.Instance["Count_Passed"], "Ok"));
+        Counts.Add(new CountItem(_profiledFindings.Count(f => f.Status == FindingStatus.Ok).ToString(), Loc.Instance["Count_Passed"], "Ok"));
         ScoreStatus = Score >= 85 ? "Ok" : Score >= 60 ? "Problem" : "Critical";
         LastScanText = _lastScanTime is { } t ? Loc.Instance.Format("LastScan", t.ToString("HH:mm")) : "";
         if (Profile is { } prof)
@@ -485,17 +595,19 @@ public sealed partial class MainViewModel : ObservableObject
     {
         target.Clear();
         foreach (var f in source.Where(f => ShowPassed || f.Status is not (FindingStatus.Ok or FindingStatus.Unsupported)))
-            target.Add(new FindingItemViewModel(f, lang, FixFor(f)));
+            target.Add(new FindingItemViewModel(f, lang, FixFor(f), _usage.Goal));
     }
 
     /// <summary>Runtime fix of the finding, or the first catalog tweak that fixes it and is not on yet.</summary>
     private TweakDefinition? FixFor(Finding f) =>
-        f.Fix ?? _tweakStates.FirstOrDefault(s => s.Tweak.Fixes.Contains(f.Id) && !s.IsOn && s.State != TweakState.NotApplicable
-                                                  && (ExpertMode || s.Tweak.EffectiveRisk != Risk.Expert))?.Tweak;
+        f.Fix ?? _profiled.FirstOrDefault(p => p.Tweak.Fixes.Contains(f.Id) && !p.Status.IsOn && p.Status.State != TweakState.NotApplicable && !p.WorksAgainst
+                                               && (ExpertMode || p.Tweak.EffectiveRisk != Risk.Expert))?.Tweak;
 
-    private IEnumerable<TweakStatus> VisibleTweaks() =>
-        _tweakStates.Where(s => ExpertMode || s.Tweak.EffectiveRisk != Risk.Expert || s.HasBackup)
-                    .Where(s => s.State != TweakState.NotApplicable || ShowPassed);
+    /// <param name="profileFilter">Tweaks page: only what the active profile rates (unless "Only this profile" is off).</param>
+    private IEnumerable<ProfiledTweak> VisibleTweaks(bool profileFilter = true) =>
+        _profiled.Where(p => ExpertMode || p.Tweak.EffectiveRisk != Risk.Expert || p.Status.HasBackup)
+                 .Where(p => p.Status.State != TweakState.NotApplicable || ShowPassed)
+                 .Where(p => !profileFilter || !OnlyProfile || p.Relevant);
 
     private void BuildCategories()
     {
@@ -504,7 +616,7 @@ public sealed partial class MainViewModel : ObservableObject
         var selected = SelectedCategory?.Key ?? "";
         Categories.Clear();
         Categories.Add(new CategoryItem("", Loc.Instance["Tweaks_All"], visible.Count));
-        foreach (var g in visible.GroupBy(s => s.Tweak.Category).OrderBy(g => g.Key, StringComparer.Ordinal))
+        foreach (var g in visible.GroupBy(p => p.Tweak.Category).OrderBy(g => g.Key, StringComparer.Ordinal))
             Categories.Add(new CategoryItem(g.Key, Labels.Current.Get(lang, $"category.{g.Key}"), g.Count()));
         // Set the field directly: the change handler would refill the list, which the caller does anyway.
 #pragma warning disable MVVMTK0034
@@ -519,21 +631,22 @@ public sealed partial class MainViewModel : ObservableObject
         var category = SelectedCategory?.Key ?? "";
         Tweaks.Clear();
         var list = VisibleTweaks()
-            .Where(s => category.Length == 0 || s.Tweak.Category == category)
-            .Where(s => !OnlyRecommended || s.Recommended)
-            .OrderByDescending(s => s.Recommended)
-            .ThenByDescending(s => s.Impact)
-            .ThenBy(s => s.Tweak.Category, StringComparer.Ordinal)
+            .Where(p => category.Length == 0 || p.Tweak.Category == category)
+            .Where(p => !OnlyRecommended || p.Recommended)
+            .OrderByDescending(p => p.Recommended)
+            .ThenByDescending(p => p.Flagged) // applied changes that work against the profile stay visible
+            .ThenByDescending(p => p.Impact)
+            .ThenBy(p => p.Tweak.Category, StringComparer.Ordinal)
             .ToList();
-        foreach (var s in list) Tweaks.Add(new TweakItemViewModel(s, lang, _services.Engine, this));
+        foreach (var p in list) Tweaks.Add(new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage));
         var visible = VisibleTweaks().ToList();
-        TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(s => s.IsOn), visible.Count(s => s.Recommended));
+        TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn), visible.Count(p => p.Recommended));
     }
 
     /// <summary>Rows for catalog tweaks shown on other pages (GPU settings, DNS), with the same Expert filter as the Tweaks page.</summary>
     public IEnumerable<TweakItemViewModel> CatalogItems(Func<TweakDefinition, bool> filter) =>
-        VisibleTweaks().Where(s => filter(s.Tweak) && s.State != TweakState.NotApplicable)
-            .Select(s => new TweakItemViewModel(s, Loc.Instance.Language, _services.Engine, this)).ToList();
+        VisibleTweaks(profileFilter: false).Where(p => filter(p.Tweak) && p.Status.State != TweakState.NotApplicable)
+            .Select(p => new TweakItemViewModel(p.Status, Loc.Instance.Language, _services.Engine, this, profiled: p, profile: _usage)).ToList();
 
     private void BuildRecommendations()
     {
@@ -553,6 +666,13 @@ public sealed partial class MainViewModel : ObservableObject
             RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), Loc.Instance.Format("Impact_Short", i.Impact), i.FixesFinding is not null));
         HasRecommendations = _plan.Items.Count > 0;
         RecommendedButtonText = Loc.Instance.Format("Rec_Button", _plan.Items.Count);
+        RecommendationsIntro = Loc.Instance.Format("Rec_IntroProfile", ProfileName(_usage));
+
+        // Changes on this PC that lower the profile's goal (for example a battery drain in the Battery profile).
+        AgainstProfile.Clear();
+        foreach (var p in _profiled.Where(p => p.Flagged).OrderBy(p => p.Impact))
+            AgainstProfile.Add(new AgainstLine(p.Tweak.Id, Runner.Title(p.Tweak), p.ReasonKey is { } k ? Labels.Current.Get(lang, k) : "", p.Status.HasBackup));
+        HasAgainst = AgainstProfile.Count > 0;
     }
 
     public void BuildChanges()
@@ -628,6 +748,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Banners.Add(new Banner(_updateNotice, false));
         }
+        if (_profileAutoSet) Banners.Add(new Banner(Loc.Instance.Format("Profile_AutoSet", ProfileName(_usage)), false));
         var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State == TweakState.PendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));
         var os = Profile.Os;

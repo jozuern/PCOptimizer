@@ -20,7 +20,7 @@ public sealed class TweakCatalog
     public static TweakCatalog Current => Lazy.Value;
 
     /// <summary>Bumped whenever catalog content changes; stored with every backup record.</summary>
-    public const string Version = "2026.10.2";
+    public const string Version = "2026.10.3";
 
     public required IReadOnlyList<TweakDefinition> Tweaks { get; init; }
 

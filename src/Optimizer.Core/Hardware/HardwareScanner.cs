@@ -50,8 +50,10 @@ public sealed class HardwareScanner(CatalogData catalog)
         var network = Run<IReadOnlyList<NetworkAdapterInfo>>("Network", NetworkProbe.Read);
         var software = Run("Software", () => SoftwareProbe.Read(catalog));
         var system = Run("System", SystemProbe.Read);
+        // Null (no battery or no usable driver data) is a valid result, not a probe error.
+        var battery = Run<BatteryHealth>("Battery", () => BatteryProbe.Read()!);
 
-        await Task.WhenAll(elevation, managed, cpu, gpus, memory, displays, firmware, power, storage, network, software, system);
+        await Task.WhenAll(elevation, managed, cpu, gpus, memory, displays, firmware, power, storage, network, software, system, battery);
 
         var gpuList = gpus.Result;
         var extras = await Run("Extras", () => ExtrasProbe.Read(catalog, cpu.Result, gpuList, firmware.Result, displays.Result, elevation.Result?.IsElevated == true,
@@ -73,6 +75,7 @@ public sealed class HardwareScanner(CatalogData catalog)
             Network = network.Result,
             Software = software.Result,
             System = system.Result,
+            Battery = battery.Result,
             Extras = extras,
             ProbeErrors = new Dictionary<string, string>(errors),
         };

@@ -17,11 +17,23 @@
                 <DockPanel>
                     <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}"
                                IsEnabled="{Binding HasRecommendations}" />
-                    <StackPanel Orientation="Horizontal">
-                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="240" />
-                        <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyRecommended}" IsChecked="{Binding OnlyRecommended}" Margin="16,0,0,0" />
-                        <ui:ToggleSwitch Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" Margin="16,0,0,0" />
-                    </StackPanel>
+                    <WrapPanel Orientation="Horizontal">
+                        <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" MinWidth="200" Margin="0,4,16,4"
+                                  ToolTip="{l:Tr Profile_Label}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="{Binding Icon}" Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="220" Margin="0,4,16,4" />
+                        <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyProfile}" IsChecked="{Binding OnlyProfile}" Margin="0,4,16,4" />
+                        <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyRecommended}" IsChecked="{Binding OnlyRecommended}" Margin="0,4,16,4" />
+                        <ui:ToggleSwitch Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" Margin="0,4,0,4" />
+                    </WrapPanel>
                 </DockPanel>
             </ui:Card>
 

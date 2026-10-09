@@ -18,6 +18,9 @@ public sealed class AppSettings
     /// <summary>Windows version seen at the last scan ("26300.9550"), to notice updates.</summary>
     public string? LastSeenWindowsVersion { get; set; }
 
+    /// <summary>Usage profile id ("gaming", "battery", ...); null until the first scan suggests one.</summary>
+    public string? Profile { get; set; }
+
     private static string FilePath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer", "settings.json");
 

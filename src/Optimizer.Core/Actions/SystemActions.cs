@@ -62,21 +62,30 @@ public sealed class PowerSettingAction : TweakAction
         c.Power.SetActive(scheme); // re-activating applies the new values
     }
 
-    /// <summary>Compares on the scheme that was changed, not on whatever plan is active now.</summary>
+    /// <summary>
+    /// Compares on the scheme that was changed, not on whatever plan is active now, and only the values this action
+    /// writes (mains, battery or both).
+    /// </summary>
     public override bool IsStillApplied(ActionContext c, StoredValue applied)
     {
         var parts = applied.Data?.Split(';') ?? [];
-        if (parts.Length < 2 || !Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return false;
-        return c.Power.ReadAc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) == parts[1];
+        if (parts.Length < 3 || !Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return false;
+        if (Ac is not null && c.Power.ReadAc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) != parts[1]) return false;
+        if (Dc is not null && c.Power.ReadDc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) != parts[2]) return false;
+        return true;
     }
 
+    /// <summary>
+    /// Writes back only the values this action changed: a mains-only tweak and a battery-only tweak on the same setting
+    /// (for example processor boost) are undone independently.
+    /// </summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
         if (!original.Existed || original.Data is null) return;
         var parts = original.Data.Split(';');
         if (!Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return;
-        if (uint.TryParse(parts[1], out var ac)) c.Power.WriteAc(scheme, Sub, Set, ac);
-        if (parts.Length > 2 && uint.TryParse(parts[2], out var dc)) c.Power.WriteDc(scheme, Sub, Set, dc);
+        if (Ac is not null && parts.Length > 1 && uint.TryParse(parts[1], out var ac)) c.Power.WriteAc(scheme, Sub, Set, ac);
+        if (Dc is not null && parts.Length > 2 && uint.TryParse(parts[2], out var dc)) c.Power.WriteDc(scheme, Sub, Set, dc);
         if (c.Power.ActiveScheme() == scheme) c.Power.SetActive(scheme);
     }
 }
@@ -291,6 +300,9 @@ public static class PowerAliases
         ["USBSELECTIVESUSPEND"] = new("48e6b7a6-50f5-4782-a5d4-53bb8f07e226"),
         ["SUB_PCIEXPRESS"] = new("501a4d13-42af-4429-9fd1-a8218c268e20"),
         ["ASPM"] = new("ee12f906-d277-404b-b6da-e5fa1a576df5"),
+        // Checked with "powercfg /qh" on Windows 11 26H2 (Balanced defaults in brackets: mains / battery).
+        ["SUB_WIRELESS"] = new("19cbb8fa-5279-450e-9fac-8a3d5fedd0c1"),        // no Windows alias
+        ["WIRELESSPOWERSAVE"] = new("12bbebe6-58d6-4636-95bb-3217ef867c1a"),    // 0 Max performance .. 3 Max saving [0 / 2]
         ["balanced"] = new("381b4222-f694-41f0-9685-ff5bb260df2e"),
         ["highPerformance"] = new("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"),
         ["powerSaver"] = new("a1841308-3541-4fab-bc81-f71556f20b4a"),

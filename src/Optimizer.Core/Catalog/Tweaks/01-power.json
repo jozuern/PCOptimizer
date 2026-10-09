@@ -139,6 +139,7 @@
         ]
       },
       "risk": "safe",
+      "conflictsWith": [ "quiet.boostOff" ],
       "actions": [
         {
           "type": "powerSetting",

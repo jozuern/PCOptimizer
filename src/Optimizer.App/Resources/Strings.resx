@@ -844,4 +844,82 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_RecycleOtherAccount" xml:space="preserve">
     <value>This app runs as a different account ({0}). The files go to that account's Recycle Bin, which you may not be able to open from your own account. Treat this as a permanent delete.</value>
   </data>
+  <data name="Profile_Label" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Profile_Hint" xml:space="preserve">
+    <value>A profile changes nothing by itself. It decides what is recommended, what counts as a problem and what works against your goal.</value>
+  </data>
+  <data name="Profile_gaming" xml:space="preserve">
+    <value>Gaming</value>
+  </data>
+  <data name="Profile_laptopGaming" xml:space="preserve">
+    <value>Laptop gaming</value>
+  </data>
+  <data name="Profile_battery" xml:space="preserve">
+    <value>Battery</value>
+  </data>
+  <data name="Profile_office" xml:space="preserve">
+    <value>Office</value>
+  </data>
+  <data name="Profile_quiet" xml:space="preserve">
+    <value>Quiet and cool</value>
+  </data>
+  <data name="Profile_lowEnd" xml:space="preserve">
+    <value>Older PC</value>
+  </data>
+  <data name="ProfileDesc_gaming" xml:space="preserve">
+    <value>Highest frame rates and lowest latency.</value>
+  </data>
+  <data name="ProfileDesc_laptopGaming" xml:space="preserve">
+    <value>Full speed on the power adapter, without settings that drain the battery on the go.</value>
+  </data>
+  <data name="ProfileDesc_battery" xml:space="preserve">
+    <value>Longest runtime on battery. Most changes only apply on battery.</value>
+  </data>
+  <data name="ProfileDesc_office" xml:space="preserve">
+    <value>Smooth everyday work with fewer interruptions; security and productivity features stay on.</value>
+  </data>
+  <data name="ProfileDesc_quiet" xml:space="preserve">
+    <value>Less heat and fan noise, at the cost of peak performance.</value>
+  </data>
+  <data name="ProfileDesc_lowEnd" xml:space="preserve">
+    <value>Keeps a PC with little memory or a hard disk responsive.</value>
+  </data>
+  <data name="Profile_Suggested" xml:space="preserve">
+    <value>Suggested for this PC: {0}</value>
+  </data>
+  <data name="Profile_UseSuggested" xml:space="preserve">
+    <value>Switch</value>
+  </data>
+  <data name="Profile_AutoSet" xml:space="preserve">
+    <value>The profile was set to {0} to match this PC. You can change it at the top of the Overview.</value>
+  </data>
+  <data name="Findings_HiddenByProfile" xml:space="preserve">
+    <value>Problems that only matter for other profiles: {0}. Switch the profile to see them.</value>
+  </data>
+  <data name="Tweaks_OnlyProfile" xml:space="preserve">
+    <value>Only this profile</value>
+  </data>
+  <data name="Impact_TooltipGoal" xml:space="preserve">
+    <value>Impact on {0}: {1} of 5</value>
+  </data>
+  <data name="Impact_Against" xml:space="preserve">
+    <value>Works against this profile</value>
+  </data>
+  <data name="Rec_IntroProfile" xml:space="preserve">
+    <value>Fixes for problems that matter for the {0} profile, and the changes that fit it on this PC. Only safe and fully reversible changes; everything is shown before it is applied.</value>
+  </data>
+  <data name="Rec_AgainstTitle" xml:space="preserve">
+    <value>Changes on this PC that work against this profile</value>
+  </data>
+  <data name="Rec_AgainstHint" xml:space="preserve">
+    <value>Undo is offered for changes this app made. Others were set by Windows, another tool or you.</value>
+  </data>
+  <data name="Dash_ScoreFor" xml:space="preserve">
+    <value>Readiness: {0}</value>
+  </data>
+  <data name="Dash_ScoreHintGoal" xml:space="preserve">
+    <value>Based only on detected problems, weighted by their impact on {0}. Tweaks never add points.</value>
+  </data>
 </root>

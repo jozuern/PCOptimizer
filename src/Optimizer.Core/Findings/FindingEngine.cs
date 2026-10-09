@@ -52,6 +52,8 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new RebarCheck(),
         new PcieLinkCheck(),
         new MicrocodeCheck(),
+        new OnBatteryCheck(),
+        new BatteryWearCheck(),
         new GameAccessCheck(),
     ];
 

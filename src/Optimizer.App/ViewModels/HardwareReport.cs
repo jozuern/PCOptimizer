@@ -94,6 +94,7 @@ public static class HardwareReport
                 I("Max / min processor state (AC)", $"{pw.MaxProcessorStateAc} % / {pw.MinProcessorStateAc} %"),
                 I("Boost mode (AC)", pw.BoostModeAc), I("Core parking min cores (AC)", pw.CoreParkingMinCoresAc is { } cp ? $"{cp} %" : null),
                 I("On AC", pw.OnAc), I("Energy Saver", pw.EnergySaverOn), I("Modern Standby", pw.ModernStandby), I("Battery", pw.BatteryPercent is { } b ? $"{b} %" : null),
+                I("Battery capacity", p.Battery is { } bh ? $"{bh.FullChargedMwh / 1000.0:0.0} / {bh.DesignedMwh / 1000.0:0.0} Wh ({Math.Round(bh.Health * 100)} %)" : null),
             ]));
         }
 

@@ -1,5 +1,6 @@
 using Optimizer.App.Services;
 using Optimizer.Core.Docs;
+using Optimizer.Core.Profiles;
 using Optimizer.Core.Tweaks;
 
 namespace Optimizer.App.ViewModels;
@@ -11,7 +12,9 @@ public sealed class TweakItemViewModel : InspectorItem
     private bool _switch;
 
     /// <param name="subjectAsTitle">Lists of one kind (games, devices): the subject is the title, the section explains the rest.</param>
-    public TweakItemViewModel(TweakStatus status, string lang, TweakEngine engine, MainViewModel? owner, bool subjectAsTitle = false)
+    /// <param name="profiled">The status seen through the active profile: its impact, recommendation and "works against".</param>
+    public TweakItemViewModel(TweakStatus status, string lang, TweakEngine engine, MainViewModel? owner, bool subjectAsTitle = false,
+        ProfiledTweak? profiled = null, UsageProfile? profile = null)
     {
         _owner = owner;
         Status_ = status;
@@ -33,11 +36,28 @@ public sealed class TweakItemViewModel : InspectorItem
             _ => "Neutral",
         };
 
-        Impact = status.Impact;
-        ImpactText = Loc.Instance.Format("Impact_Short", status.Impact);
-        var reason = status.ImpactReasonKey is { } r ? ". " + labels.Get(lang, r) : "";
-        ImpactTooltip = Loc.Instance.Format("Impact_Tooltip", status.Impact) + reason;
-        EffectsText = string.Join(", ", status.Effects.Select(e => labels.Get(lang, $"effect.{e}")));
+        var impact = profiled?.Impact ?? status.Impact;
+        var goal = profile?.Goal ?? "gaming";
+        var catalogView = profile is null || profile.UsesCatalog;
+        Impact = Math.Max(impact, 0);
+        if (profiled is { WorksAgainst: true })
+        {
+            // Lowers the profile's goal: say so in the detail line and, while it is on, as a warning under the title.
+            var why = profiled.ReasonKey is { } k ? labels.Get(lang, k) : "";
+            ImpactText = Loc.Instance["Impact_Against"];
+            ImpactTooltip = string.IsNullOrEmpty(why) ? ImpactText : $"{ImpactText}: {why}";
+            AgainstNote = profiled.Flagged ? ImpactTooltip : null;
+            EffectsText = "";
+        }
+        else
+        {
+            ImpactText = Loc.Instance.Format("Impact_Short", impact);
+            var reason = catalogView && status.ImpactReasonKey is { } r ? ". " + labels.Get(lang, r) : "";
+            ImpactTooltip = Loc.Instance.Format("Impact_TooltipGoal", labels.Get(lang, $"effect.{goal}"), impact) + reason;
+            EffectsText = catalogView
+                ? string.Join(", ", status.Effects.Select(e => labels.Get(lang, $"effect.{e}")))
+                : impact > 0 ? labels.Get(lang, $"effect.{goal}") : "";
+        }
 
         var badges = new List<string>();
         if (t.EffectiveRisk != Risk.Safe) badges.Add(labels.Get(lang, $"risk.{t.EffectiveRisk}"));
@@ -48,9 +68,10 @@ public sealed class TweakItemViewModel : InspectorItem
         if (t.AntiCheatSensitive) badges.Add(labels.Get(lang, "badge.antiCheat"));
         if (t.Reversibility != Reversibility.Reversible) badges.Add(labels.Get(lang, $"reversibility.{t.Reversibility}"));
         BadgesText = string.Join(", ", badges);
-        IsRecommended = status.Recommended;
-        RecommendedText = status.Recommended
-            ? labels.Get(lang, "badge.recommended") + (t.RecommendReasonKey is { } k ? ": " + labels.Get(lang, k) : "")
+        IsRecommended = profiled?.Recommended ?? status.Recommended;
+        var recReason = profiled is null ? t.RecommendReasonKey : profiled.ReasonKey;
+        RecommendedText = IsRecommended
+            ? labels.Get(lang, "badge.recommended") + (recReason is { } rk ? ": " + labels.Get(lang, rk) : "")
             : null;
 
         // Hard blocks disable the switch; the anti-cheat block can be overridden in the confirmation dialog.
@@ -103,6 +124,10 @@ public sealed class TweakItemViewModel : InspectorItem
     public bool HasBackup { get; }
     public bool CanToggle { get; }
     public string? ToggleNote { get; }
+
+    /// <summary>Shown while the tweak is on and works against the active profile (for example costs battery life).</summary>
+    public string? AgainstNote { get; }
+
     public override string Key => "tweak:" + Tweak.Id;
 
     /// <summary>

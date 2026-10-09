@@ -1,0 +1,236 @@
+{
+  "tweaks": [
+    {
+      "id": "battery.boostOffDc",
+      "category": "Battery",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "formFactor": "laptop"
+      },
+      "conflictsWith": [
+        "quiet.boostOff"
+      ],
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "PERFBOOSTMODE",
+          "dc": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
+      ]
+    },
+    {
+      "id": "battery.wifiPowerSavingDc",
+      "category": "Battery",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "formFactor": "laptop"
+      },
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_WIRELESS",
+          "setting": "WIRELESSPOWERSAVE",
+          "dc": 3
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/archive/blogs/richardsmith/powercfg-useful-if-you-know-the-guids",
+        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options"
+      ]
+    },
+    {
+      "id": "battery.pcieAspmMaxDc",
+      "category": "Battery",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "formFactor": "laptop"
+      },
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PCIEXPRESS",
+          "setting": "ASPM",
+          "dc": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/pci-express-settings-link-state-power-management"
+      ]
+    },
+    {
+      "id": "quiet.boostOff",
+      "category": "Quiet",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "conflictsWith": [
+        "power.turboRestore",
+        "battery.boostOffDc"
+      ],
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_PROCESSOR",
+          "setting": "PERFBOOSTMODE",
+          "ac": 0,
+          "dc": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
+      ]
+    },
+    {
+      "id": "quiet.powerModeEfficiency",
+      "category": "Quiet",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "formFactor": "desktop",
+        "when": {
+          "fact": "power.personality",
+          "eq": "balanced"
+        }
+      },
+      "actions": [
+        {
+          "type": "powerMode",
+          "overlay": "961cc777-2547-4f9d-8174-7d86181b8a7a"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/customize-power-slider"
+      ]
+    },
+    {
+      "id": "office.clipboardHistoryOn",
+      "category": "Productivity",
+      "impact": {
+        "gaming": 0,
+        "basis": "measured",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "conflictsWith": [
+        "privacy.clipboardHistoryOff"
+      ],
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Clipboard",
+          "name": "EnableClipboardHistory",
+          "kind": "dword",
+          "value": 1,
+          "missingMeans": 0
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/clipboard-in-windows-c436501e-985d-1c8d-97ea-fe46ddf338c6",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+      ]
+    },
+    {
+      "id": "office.launchToThisPc",
+      "category": "Productivity",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "LaunchTo",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://www.winhelponline.com/blog/open-file-explorer-downloads-folder-default-windows-10/",
+        "https://www.elevenforum.com/t/change-folder-to-open-file-explorer-to-by-default-in-windows-11.675/"
+      ]
+    },
+    {
+      "id": "background.edgeBoostOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "StartupBoostEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "BackgroundModeEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/startupboostenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/backgroundmodeenabled"
+      ]
+    }
+  ]
+}

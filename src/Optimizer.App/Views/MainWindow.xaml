@@ -48,14 +48,14 @@
                     <StackPanel Margin="16,8,16,12">
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
-                            <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{Binding ScanStatus}" TextWrapping="Wrap" MaxWidth="180" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ScanStatus}" TextWrapping="Wrap" MaxWidth="180" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
-                            <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{l:Tr Busy}" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Busy}" />
                         </StackPanel>
-                        <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding LastScanText}" />
-                        <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Version, StringFormat='PCOptimizer {0}'}" />
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding LastScanText}" />
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Version, StringFormat='PCOptimizer {0}'}" />
                     </StackPanel>
                 </ui:NavigationView.PaneFooter>
             </ui:NavigationView>
@@ -76,7 +76,7 @@
                             <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="20" Margin="0,0,8,0"
                                            Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
                             <ui:TextBlock FontTypography="BodyStrong" Text="{Binding StatusText}" VerticalAlignment="Center" />
-                            <ui:TextBlock FontTypography="Body" Appearance="Secondary" Text="{Binding ImpactText}" Margin="16,0,0,0" VerticalAlignment="Center"
+                            <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ImpactText}" Margin="16,0,0,0" VerticalAlignment="Center"
                                           ToolTip="{Binding ImpactTooltip}" />
                         </StackPanel>
                     </DockPanel>

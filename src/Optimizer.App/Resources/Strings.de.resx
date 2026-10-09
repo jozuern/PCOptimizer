@@ -844,4 +844,82 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_RecycleOtherAccount" xml:space="preserve">
     <value>Diese App läuft unter einem anderen Konto ({0}). Die Dateien landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Betrachte das Löschen als endgültig.</value>
   </data>
+  <data name="Profile_Label" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Profile_Hint" xml:space="preserve">
+    <value>Ein Profil ändert selbst nichts. Es bestimmt, was empfohlen wird, was als Problem zählt und was gegen dein Ziel wirkt.</value>
+  </data>
+  <data name="Profile_gaming" xml:space="preserve">
+    <value>Gaming</value>
+  </data>
+  <data name="Profile_laptopGaming" xml:space="preserve">
+    <value>Laptop-Gaming</value>
+  </data>
+  <data name="Profile_battery" xml:space="preserve">
+    <value>Akku</value>
+  </data>
+  <data name="Profile_office" xml:space="preserve">
+    <value>Büro</value>
+  </data>
+  <data name="Profile_quiet" xml:space="preserve">
+    <value>Leise und kühl</value>
+  </data>
+  <data name="Profile_lowEnd" xml:space="preserve">
+    <value>Älterer PC</value>
+  </data>
+  <data name="ProfileDesc_gaming" xml:space="preserve">
+    <value>Höchste Bildraten und geringste Latenz.</value>
+  </data>
+  <data name="ProfileDesc_laptopGaming" xml:space="preserve">
+    <value>Volle Leistung am Netzteil, ohne Einstellungen, die unterwegs den Akku leeren.</value>
+  </data>
+  <data name="ProfileDesc_battery" xml:space="preserve">
+    <value>Längste Laufzeit im Akkubetrieb. Die meisten Änderungen gelten nur im Akkubetrieb.</value>
+  </data>
+  <data name="ProfileDesc_office" xml:space="preserve">
+    <value>Flüssiges Arbeiten mit weniger Unterbrechungen; Sicherheits- und Produktivitätsfunktionen bleiben an.</value>
+  </data>
+  <data name="ProfileDesc_quiet" xml:space="preserve">
+    <value>Weniger Wärme und Lüfterlärm, auf Kosten der Spitzenleistung.</value>
+  </data>
+  <data name="ProfileDesc_lowEnd" xml:space="preserve">
+    <value>Hält einen PC mit wenig Arbeitsspeicher oder Festplatte reaktionsschnell.</value>
+  </data>
+  <data name="Profile_Suggested" xml:space="preserve">
+    <value>Für diesen PC vorgeschlagen: {0}</value>
+  </data>
+  <data name="Profile_UseSuggested" xml:space="preserve">
+    <value>Wechseln</value>
+  </data>
+  <data name="Profile_AutoSet" xml:space="preserve">
+    <value>Das Profil wurde passend zu diesem PC auf {0} gesetzt. Du kannst es oben in der Übersicht ändern.</value>
+  </data>
+  <data name="Findings_HiddenByProfile" xml:space="preserve">
+    <value>Probleme, die nur für andere Profile zählen: {0}. Wechsle das Profil, um sie zu sehen.</value>
+  </data>
+  <data name="Tweaks_OnlyProfile" xml:space="preserve">
+    <value>Nur dieses Profil</value>
+  </data>
+  <data name="Impact_TooltipGoal" xml:space="preserve">
+    <value>Auswirkung auf {0}: {1} von 5</value>
+  </data>
+  <data name="Impact_Against" xml:space="preserve">
+    <value>Wirkt gegen dieses Profil</value>
+  </data>
+  <data name="Rec_IntroProfile" xml:space="preserve">
+    <value>Behebungen von Problemen, die für das Profil {0} zählen, und die Änderungen, die auf diesem PC dazu passen. Nur sichere, vollständig umkehrbare Änderungen; alles wird vorher angezeigt.</value>
+  </data>
+  <data name="Rec_AgainstTitle" xml:space="preserve">
+    <value>Änderungen auf diesem PC, die gegen dieses Profil wirken</value>
+  </data>
+  <data name="Rec_AgainstHint" xml:space="preserve">
+    <value>Rückgängig gibt es für Änderungen dieser App. Andere hat Windows, ein anderes Tool oder du selbst gesetzt.</value>
+  </data>
+  <data name="Dash_ScoreFor" xml:space="preserve">
+    <value>Bereitschaft: {0}</value>
+  </data>
+  <data name="Dash_ScoreHintGoal" xml:space="preserve">
+    <value>Beruht nur auf erkannten Problemen, gewichtet nach ihrer Auswirkung auf {0}. Tweaks bringen nie Punkte.</value>
+  </data>
 </root>

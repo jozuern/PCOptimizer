@@ -8,7 +8,8 @@ namespace Optimizer.App.ViewModels;
 /// <summary>A finding/advisor item as shown in the list and the inspector, in the current language.</summary>
 public sealed class FindingItemViewModel : InspectorItem
 {
-    public FindingItemViewModel(Finding finding, string lang, TweakDefinition? fix = null)
+    /// <param name="goal">The active profile's goal ("gaming", "battery", ...): names what the impact is measured on.</param>
+    public FindingItemViewModel(Finding finding, string lang, TweakDefinition? fix = null, string goal = "gaming")
     {
         Finding = finding;
         Fix = fix;
@@ -24,7 +25,7 @@ public sealed class FindingItemViewModel : InspectorItem
         var rated = finding.Impact is not null && !finding.Critical && finding.Status != FindingStatus.Unsupported;
         Impact = rated ? Math.Clamp(finding.Impact!.Value, 0, 5) : null;
         ImpactText = Impact is { } i ? Loc.Instance.Format("Impact_Short", i) : "";
-        ImpactTooltip = Impact is { } j ? Loc.Instance.Format("Impact_Tooltip", j) : "";
+        ImpactTooltip = Impact is { } j ? Loc.Instance.Format("Impact_TooltipGoal", labels.Get(lang, $"effect.{goal}"), j) : "";
         FactRows = finding.Facts.Select(f => new SummaryItem(labels.Get(lang, f.LabelKey), labels.Value(lang, f.Value))).ToList();
         CriticalText = finding.Critical ? Loc.Instance["Impact_Critical"] : null;
         MetaText = string.Join(", ", new[] { StatusText, CriticalText ?? ImpactText, EffectsText }.Where(x => !string.IsNullOrEmpty(x)));

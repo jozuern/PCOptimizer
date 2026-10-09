@@ -69,6 +69,8 @@ public partial class App : Application
         }
 
         if (args.Value("--expert") is "on") _settings.ExpertMode = true;
+        // Developer aid for screenshots: start with this profile (not saved unless changed in the app).
+        if (args.Value("--profile") is { } profileId) _settings.Profile = profileId;
         var vm = new MainViewModel(_settings, services, new Dialogs());
         var window = new MainWindow(vm);
         MainWindow = window;

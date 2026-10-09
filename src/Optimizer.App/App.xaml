@@ -125,6 +125,8 @@
                             <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding MetaText}" TextWrapping="Wrap" Margin="0,4,0,0" />
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ToggleNote}" TextWrapping="Wrap"
                                           Margin="0,4,0,0" Visibility="{Binding ToggleNote, Converter={StaticResource NullToVisibility}}" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding AgainstNote}" TextWrapping="Wrap"
+                                          Margin="0,4,0,0" Visibility="{Binding AgainstNote, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </ui:CardControl.Header>
                     <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" />

@@ -18,7 +18,9 @@ public sealed record RecommendationPlan(IReadOnlyList<RecommendedItem> Items, IR
 /// </summary>
 public static class Recommendations
 {
-    public static RecommendationPlan Build(IEnumerable<TweakStatus> statuses, IEnumerable<Finding> findings)
+    /// <param name="tweaks">Tweak states seen through the active profile.</param>
+    /// <param name="findings">Findings as the active profile sees them (<see cref="Profiles.ProfileView.Findings"/>).</param>
+    public static RecommendationPlan Build(IEnumerable<Profiles.ProfiledTweak> tweaks, IEnumerable<Finding> findings)
     {
         var items = new List<RecommendedItem>();
         var excluded = new List<RecommendedItem>();
@@ -30,24 +32,24 @@ public static class Recommendations
             (item.Tweak.IsBatchSafe ? items : excluded).Add(item);
         }
 
-        var statusList = statuses.ToList();
+        var list = tweaks.ToList();
 
-        // Fixes first: they address measured problems on this PC. Runtime fixes are built for this PC; catalog tweaks
-        // name the findings they fix.
-        foreach (var f in findings.Where(f => f.Status == FindingStatus.Problem))
+        // Fixes first: they address measured problems on this PC that matter for the profile. Runtime fixes are built for
+        // this PC; catalog tweaks name the findings they fix (never one that works against the profile).
+        foreach (var f in findings.Where(f => f.Status == FindingStatus.Problem && (f.Critical || f.Impact > 0)))
         {
             if (f.Fix is { } fix)
             {
                 Add(new RecommendedItem(fix, null, f, f.Impact ?? 0));
                 continue;
             }
-            var catalogFix = statusList.FirstOrDefault(s => s.Tweak.Fixes.Contains(f.Id) && !s.IsOn && s.Blocks.Count == 0
-                                                            && s.State is not (TweakState.NotApplicable or TweakState.Unsupported));
+            var catalogFix = list.FirstOrDefault(p => p.Tweak.Fixes.Contains(f.Id) && !p.Status.IsOn && p.Status.Blocks.Count == 0 && !p.WorksAgainst
+                                                      && p.Status.State is not (TweakState.NotApplicable or TweakState.Unsupported));
             if (catalogFix is not null) Add(new RecommendedItem(catalogFix.Tweak, catalogFix.Tweak.RecommendReasonKey, f, f.Impact ?? catalogFix.Impact));
         }
 
-        foreach (var s in statusList.Where(s => s.Recommended))
-            Add(new RecommendedItem(s.Tweak, s.Tweak.RecommendReasonKey, null, s.Impact));
+        foreach (var p in list.Where(p => p.Recommended))
+            Add(new RecommendedItem(p.Tweak, p.ReasonKey, null, p.Impact));
 
         static List<RecommendedItem> Order(IEnumerable<RecommendedItem> list) =>
             list.OrderByDescending(i => i.FixesFinding is not null).ThenByDescending(i => i.Impact).ThenBy(i => i.Tweak.Id, StringComparer.Ordinal).ToList();

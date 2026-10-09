@@ -28,6 +28,7 @@ public sealed class CatalogData
     public required Services.ServiceCatalog Services { get; init; }
     public required Apps.AppCatalog Apps { get; init; }
     public required Tools.FeatureCatalog Features { get; init; }
+    public required Profiles.ProfileCatalog Profiles { get; init; }
 
     public static CatalogData Load() => new()
     {
@@ -35,6 +36,7 @@ public sealed class CatalogData
         Services = Read<Services.ServiceCatalog>("services.json"),
         Apps = Read<Apps.AppCatalog>("apps.json"),
         Features = Read<Tools.FeatureCatalog>("features.json"),
+        Profiles = Read<Profiles.ProfileCatalog>("profiles.json"),
         Gpu = Read<GpuCatalog>("gpu.json"),
         Cpu = Read<CpuCatalog>("cpu.json"),
         Ram = Read<RamCatalog>("ram.json"),

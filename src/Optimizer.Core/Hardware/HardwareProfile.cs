@@ -21,6 +21,9 @@ public sealed record HardwareProfile
     public SoftwareInfo? Software { get; init; }
     public SystemInfo? System { get; init; }
 
+    /// <summary>Battery capacity (design vs. full charge); null without a battery or usable driver data.</summary>
+    public Probes.BatteryHealth? Battery { get; init; }
+
     /// <summary>Data for the M3/M4 checks (NIC capabilities, Wi-Fi band, NVMe links, Secure Boot certificates, NVIDIA state).</summary>
     public HardwareExtras? Extras { get; init; }
 

@@ -1,0 +1,194 @@
+{
+  // Usage profiles. A profile changes no setting by itself: it decides what "Apply recommended" includes, the impact
+  // shown for each tweak and finding (on the profile's goal), which applied changes work against it, and which
+  // findings count for the readiness score.
+  //   usesCatalog: rate tweaks with the catalog's gaming impact and recommendation rules (entries below override).
+  //   tweaks[].impact: -5..5 on the goal; negative = works against the profile (never recommended, flagged when on).
+  //   tweaks[].recommendWhen: {} = always (if not applied and not blocked).
+  //   findings: impact 0-5 on the goal; -1 hides the finding in this profile. Profiles without usesCatalog show only
+  //   the findings listed here.
+  "profiles": [
+    {
+      "id": "gaming",
+      "icon": "Games24",
+      "goal": "gaming",
+      "usesCatalog": true,
+      "excludeCategories": [ "Battery", "Quiet", "Productivity" ],
+      "tweaks": [
+        { "id": "quiet.boostOff", "impact": -4, "reasonKey": "avoid.lessPerformance" },
+        { "id": "quiet.powerModeEfficiency", "impact": -3, "reasonKey": "avoid.lessPerformance" }
+      ],
+      "findings": {
+        "F30.batteryWear": 0
+      }
+    },
+    {
+      "id": "laptopGaming",
+      "icon": "Laptop24",
+      "goal": "gaming",
+      "laptopOnly": true,
+      "suggestWhen": { "all": [ { "fact": "system.laptop", "eq": true }, { "fact": "gpu.hasDiscrete", "eq": true } ] },
+      "suggestPriority": 30,
+      "usesCatalog": true,
+      "excludeCategories": [ "Battery", "Quiet", "Productivity" ],
+      "tweaks": [
+        { "id": "quiet.boostOff", "impact": -4, "reasonKey": "avoid.lessPerformance" },
+        { "id": "power.throttlingOff", "impact": -1, "reasonKey": "avoid.ecoQos" },
+        { "id": "power.hibernateOff", "impact": -1, "reasonKey": "avoid.laptopHibernate" }
+      ],
+      "findings": {
+        "F29.onBattery": 4,
+        "F30.batteryWear": 1
+      }
+    },
+    {
+      "id": "battery",
+      "icon": "Battery524",
+      "goal": "battery",
+      "laptopOnly": true,
+      "tweaks": [
+        { "id": "battery.boostOffDc", "impact": 3, "recommendWhen": {}, "reasonKey": "rec.battery.boost" },
+        { "id": "battery.pcieAspmMaxDc", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.windowsDefault" },
+        { "id": "battery.wifiPowerSavingDc", "impact": 1 },
+        { "id": "power.balancedPlan", "impact": 2, "recommendWhen": { "fact": "power.personality", "eq": "highperformance" }, "reasonKey": "rec.highPerfPlan" },
+        { "id": "background.edgeBoostOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.lessBackground" },
+        { "id": "background.backgroundAppsOff", "impact": 1 },
+        { "id": "background.widgetsOff", "impact": 1 },
+        { "id": "visual.transparencyOff", "impact": 1 },
+        { "id": "quiet.boostOff", "impact": 2 },
+        { "id": "power.throttlingOff", "impact": -3, "reasonKey": "avoid.ecoQos" },
+        { "id": "power.hibernateOff", "impact": -2, "reasonKey": "avoid.laptopHibernate" },
+        { "id": "nvidia.preferMaxPerformance", "impact": -1, "reasonKey": "avoid.gpuClocks" }
+      ],
+      "findings": {
+        "F30.batteryWear": 3,
+        "F11.backgroundCpu": 3,
+        "F5.basicDisplay": 3,
+        "F28.diskHealth": 4,
+        "F16.startupPrograms": 1,
+        "F17.lowDiskSpace": 2,
+        "F21.leftovers": 0,
+        "F22.secureBootCerts": 0,
+        "A.raptorlake": 5,
+        "A.arrowlake": 2
+      }
+    },
+    {
+      "id": "office",
+      "icon": "Briefcase24",
+      "goal": "everyday",
+      "suggestWhen": { "all": [ { "fact": "system.laptop", "eq": true }, { "fact": "gpu.hasDiscrete", "eq": false } ] },
+      "suggestPriority": 20,
+      "tweaks": [
+        { "id": "office.clipboardHistoryOn", "impact": 2, "recommendWhen": {}, "reasonKey": "rec.office.clipboard" },
+        { "id": "explorer.fileExtensions", "impact": 2, "recommendWhen": {}, "reasonKey": "rec.office.extensions" },
+        { "id": "office.launchToThisPc", "impact": 1 },
+        { "id": "explorer.endTask", "impact": 1 },
+        { "id": "explorer.classicContextMenu", "impact": 1 },
+        { "id": "privacy.suggestionsOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.fewerInterruptions" },
+        { "id": "privacy.feedbackNotificationsOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.fewerInterruptions" },
+        { "id": "privacy.consumerFeaturesOff", "impact": 1 },
+        { "id": "background.widgetsOff", "impact": 1 },
+        { "id": "storage.storageSenseOn", "impact": 1, "recommendWhen": { "fact": "finding.F17.lowDiskSpace.problem", "eq": true }, "reasonKey": "rec.lowDiskSpace" },
+        { "id": "privacy.clipboardHistoryOff", "impact": -1, "reasonKey": "avoid.productivity" },
+        { "id": "services.spoolerManual", "impact": -1, "reasonKey": "avoid.printing" },
+        { "id": "memory.compressionOff", "impact": -1, "reasonKey": "avoid.lessRam" },
+        { "id": "security.vbsOff", "impact": -3, "reasonKey": "avoid.security" },
+        { "id": "security.mitigationsOff", "impact": -4, "reasonKey": "avoid.security" },
+        { "id": "security.smartScreenOff", "impact": -3, "reasonKey": "avoid.security" }
+      ],
+      "findings": {
+        "F28.diskHealth": 5,
+        "A.systemHdd": 4,
+        "F13.lowRam": 3,
+        "F17.lowDiskSpace": 3,
+        "F6.turbo": 3,
+        "F5.basicDisplay": 3,
+        "F9.powerSaver": 2,
+        "F16.startupPrograms": 2,
+        "F11.backgroundCpu": 2,
+        "F23.throttling": 2,
+        "F30.batteryWear": 2,
+        "F19.energySaver": 1,
+        "F18.trim": 1,
+        "F21.leftovers": 1,
+        "A.dualChannel": 1,
+        "A.biosAge": 1,
+        "F22.secureBootCerts": 0,
+        "A.raptorlake": 5,
+        "A.arrowlake": 2
+      }
+    },
+    {
+      "id": "quiet",
+      "icon": "WeatherMoon24",
+      "goal": "quiet",
+      "tweaks": [
+        { "id": "quiet.boostOff", "impact": 4, "recommendWhen": {}, "reasonKey": "rec.quiet.boost" },
+        { "id": "quiet.powerModeEfficiency", "impact": 2 },
+        { "id": "power.balancedPlan", "impact": 2, "recommendWhen": { "fact": "power.personality", "eq": "highperformance" }, "reasonKey": "rec.highPerfPlan" },
+        { "id": "battery.boostOffDc", "impact": 1 },
+        { "id": "power.turboRestore", "impact": -3, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
+        { "id": "power.minProcessorState100", "impact": -2, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
+        { "id": "power.ultimatePlan", "impact": -2, "reasonKey": "avoid.moreHeat" },
+        { "id": "power.gamingPlan", "impact": -1, "reasonKey": "avoid.moreHeat" },
+        { "id": "power.coreParkingOff", "impact": -1, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
+        { "id": "power.throttlingOff", "impact": -1, "reasonKey": "avoid.moreHeat" },
+        { "id": "nvidia.preferMaxPerformance", "impact": -2, "reasonKey": "avoid.gpuClocks" }
+      ],
+      "findings": {
+        "F23.throttling": 3,
+        "F11.backgroundCpu": 3,
+        "F28.diskHealth": 3,
+        "F5.basicDisplay": 2,
+        "F17.lowDiskSpace": 1,
+        "F21.leftovers": 0,
+        "F22.secureBootCerts": 0,
+        "A.raptorlake": 5,
+        "A.arrowlake": 2
+      }
+    },
+    {
+      "id": "lowEnd",
+      "icon": "Desktop24",
+      "goal": "everyday",
+      "suggestWhen": { "all": [ { "fact": "gpu.hasDiscrete", "eq": false }, { "any": [ { "fact": "memory.totalGb", "lte": 6 }, { "fact": "finding.A.systemHdd.problem", "eq": true } ] } ] },
+      "suggestPriority": 40,
+      "tweaks": [
+        { "id": "visual.bestPerformance", "impact": 2, "recommendWhen": {}, "reasonKey": "rec.lowEnd.visual" },
+        { "id": "visual.transparencyOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.lowEnd.visual" },
+        { "id": "background.widgetsOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.lessBackground" },
+        { "id": "background.edgeBoostOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.lessBackground" },
+        { "id": "privacy.consumerFeaturesOff", "impact": 1, "recommendWhen": {}, "reasonKey": "rec.lowEnd.noPromoApps" },
+        { "id": "gpu.gameDvrOff", "impact": 1, "recommendWhen": { "fact": "gamedvr.backgroundRecording", "eq": true }, "reasonKey": "rec.lessBackground" },
+        { "id": "memory.pagefileSystemManaged", "impact": 3, "recommendWhen": { "fact": "pagefile.disabled", "eq": true }, "reasonKey": "rec.lowEnd.pagefile" },
+        { "id": "storage.storageSenseOn", "impact": 1, "recommendWhen": { "fact": "finding.F17.lowDiskSpace.problem", "eq": true }, "reasonKey": "rec.lowDiskSpace" },
+        { "id": "background.aiOff", "impact": 1 },
+        { "id": "background.backgroundAppsOff", "impact": 1 },
+        { "id": "memory.compressionOff", "impact": -3, "reasonKey": "avoid.lessRam" },
+        { "id": "memory.sysmainOff", "impact": -2, "reasonKey": "avoid.sysmain" }
+      ],
+      "findings": {
+        "A.systemHdd": 5,
+        "F13.lowRam": 4,
+        "F28.diskHealth": 4,
+        "F17.lowDiskSpace": 3,
+        "F16.startupPrograms": 3,
+        "F11.backgroundCpu": 3,
+        "F6.turbo": 3,
+        "F5.basicDisplay": 3,
+        "F18.trim": 2,
+        "A.dualChannel": 2,
+        "F9.powerSaver": 2,
+        "F23.throttling": 2,
+        "F19.energySaver": 1,
+        "F21.leftovers": 1,
+        "F15.gpuDriverAge": 1,
+        "F30.batteryWear": 1,
+        "F22.secureBootCerts": 0,
+        "A.raptorlake": 5,
+        "A.arrowlake": 2
+      }
+    }
+  ]
+}

@@ -100,7 +100,8 @@ public class M4Tests
         var expert = TweakCatalog.Current.Get("network.interruptModerationOff")!;
         TweakStatus S(TweakDefinition t) => new(t, TweakState.NotApplied, t.Impact.Gaming, [], null, true, [], false);
 
-        var plan = Recommendations.Build([S(safe), S(expert)], [finding]);
+        var gaming = Catalog.CatalogData.Current.Profiles.Default;
+        var plan = Recommendations.Build(Profiles.ProfileView.For(gaming, [S(safe), S(expert)], new Facts()), [finding]);
         Assert.Equal(["fix.powerMode", "gpu.gameMode"], plan.Items.Select(i => i.Tweak.Id));
         Assert.Same(finding, plan.Items[0].FixesFinding);
         Assert.Equal("network.interruptModerationOff", Assert.Single(plan.Excluded).Tweak.Id);
