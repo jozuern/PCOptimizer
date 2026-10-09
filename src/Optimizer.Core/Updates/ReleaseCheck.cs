@@ -77,9 +77,19 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
         string? Url(string name) => assets.EnumerateArray()
             .Where(a => a.ValueKind == JsonValueKind.Object && a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == name)
             .Select(a => a.TryGetProperty("browser_download_url", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null)
-            .FirstOrDefault(u => u is not null && u.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal) && Uri.IsWellFormedUriString(u, UriKind.Absolute));
+            .FirstOrDefault(IsReleaseDownload);
         return Url(ExeAsset) is { } exe && Url(ChecksumAsset) is { } sha ? new ReleaseAssets(exe, sha) : null;
     }
+
+    /// <summary>
+    /// A download link into this repository's releases. The link must already be in canonical form: "../" or encoded
+    /// dots would pass a plain prefix check and then resolve to another repository.
+    /// </summary>
+    public static bool IsReleaseDownload(string? url) =>
+        url is not null && url.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal) &&
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
+        string.Equals(uri.AbsoluteUri, url, StringComparison.Ordinal) && uri.Query.Length == 0 && uri.Fragment.Length == 0 &&
+        !url.Contains("..", StringComparison.Ordinal) && !url.Contains('%') && !url.Contains('\\');
 
     /// <summary>"v1.2.3" or "1.2.3"; anything else (suffixes, four parts) is not a release tag of this app.</summary>
     public static Version? ParseTag(string? tag) =>

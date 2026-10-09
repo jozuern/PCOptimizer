@@ -5,8 +5,8 @@ namespace Optimizer.Core.Logging;
 public enum LogLevel { Debug, Info, Warning, Error }
 
 /// <summary>
-/// Structured JSON-lines log in the data folder's logs (%ProgramData%\PCOptimizer\logs when elevated). Creating that folder is the app's only write in M1.
-/// Logging never throws: a failing log must not break a scan.
+/// Structured JSON-lines log in the data folder's logs (%ProgramData%\PCOptimizer\logs when elevated). Logging never
+/// throws: a failing log must not break a scan.
 /// </summary>
 public static class Log
 {
@@ -17,6 +17,23 @@ public static class Log
         Path.Combine(Platform.DataPaths.Root, "logs");
 
     public static string? CurrentFile => _file;
+
+    /// <summary>
+    /// Whether entries also go to the log file. An elevated process keeps them in memory until the data folder has been
+    /// secured (<see cref="Backup.SecureFolder.PrepareRoot"/>), so no write can follow a planted link.
+    /// </summary>
+    public static bool FileEnabled { get; private set; } = !Platform.DataPaths.ProcessIsElevated;
+
+    /// <summary>Starts writing the log file, including the entries logged so far.</summary>
+    public static void EnableFile()
+    {
+        lock (Gate)
+        {
+            if (FileEnabled) return;
+            FileEnabled = true;
+            foreach (var entry in Session) Append(entry);
+        }
+    }
 
     /// <summary>In-memory copy of this session's entries (shown in the UI and used by tests).</summary>
     public static List<LogEntry> Session { get; } = [];
@@ -39,19 +56,24 @@ public static class Log
         lock (Gate)
         {
             Session.Add(entry);
-            try
+            if (FileEnabled) Append(entry);
+        }
+    }
+
+    private static void Append(LogEntry entry)
+    {
+        try
+        {
+            if (_file is null)
             {
-                if (_file is null)
-                {
-                    System.IO.Directory.CreateDirectory(Directory);
-                    _file = Path.Combine(Directory, $"session-{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}.jsonl");
-                }
-                File.AppendAllText(_file, JsonSerializer.Serialize(entry) + Environment.NewLine);
+                System.IO.Directory.CreateDirectory(Directory);
+                _file = Path.Combine(Directory, $"session-{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}.jsonl");
             }
-            catch
-            {
-                // Not elevated or disk issue: keep the in-memory log only.
-            }
+            File.AppendAllText(_file, JsonSerializer.Serialize(entry) + Environment.NewLine);
+        }
+        catch
+        {
+            // Disk issue: keep the in-memory log only.
         }
     }
 }

@@ -56,17 +56,31 @@ public static class SafeDelete
             throw new IOException($"cannot delete {expected}", new Win32Exception(Marshal.GetLastWin32Error()));
     }
 
+    // Both APIs return the needed size (with the terminating null) when the buffer is too small; paths can be up to
+    // 32767 characters with the \\?\ prefix.
     private static string LongPath(string path)
     {
         var buffer = new char[1024];
-        var length = GetLongPathNameW(path, buffer, (uint)buffer.Length);
-        return length > 0 && length < buffer.Length ? new string(buffer, 0, (int)length) : path;
+        var length = GetLongPathNameW(@"\\?\" + path, buffer, (uint)buffer.Length);
+        if (length >= buffer.Length)
+        {
+            buffer = new char[length];
+            length = GetLongPathNameW(@"\\?\" + path, buffer, (uint)buffer.Length);
+        }
+        if (length == 0 || length >= buffer.Length) return path;
+        var s = new string(buffer, 0, (int)length);
+        return s.StartsWith(@"\\?\", StringComparison.Ordinal) ? s[4..] : s;
     }
 
     private static string FinalPath(SafeFileHandle handle)
     {
         var buffer = new char[1024];
         var length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Length, 0);
+        if (length >= buffer.Length)
+        {
+            buffer = new char[length];
+            length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Length, 0);
+        }
         if (length == 0 || length >= buffer.Length) throw new IOException("cannot read the final path", new Win32Exception(Marshal.GetLastWin32Error()));
         var s = new string(buffer, 0, (int)length);
         if (s.StartsWith(@"\\?\UNC\", StringComparison.Ordinal)) return @"\\" + s[8..];

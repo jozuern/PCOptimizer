@@ -6,7 +6,8 @@ namespace Optimizer.Core.Updates;
 
 public enum UpdateOutcome { Ready, ChecksumMismatch, DownloadFailed, NoAssets }
 
-public sealed record UpdateDownload(UpdateOutcome Outcome, string? FilePath = null);
+/// <param name="Sha256">Hash of the downloaded exe, checked against the release's SHA-256 file.</param>
+public sealed record UpdateDownload(UpdateOutcome Outcome, string? FilePath = null, string? Sha256 = null);
 
 /// <summary>
 /// Self-update after the user confirms it: downloads the release exe and its SHA-256 file from this repository's
@@ -55,7 +56,7 @@ public sealed partial class Updater(HttpMessageHandler? handler = null) : IDispo
                 return new(UpdateOutcome.ChecksumMismatch);
             }
             File.Move(partial, target, overwrite: true);
-            return new(UpdateOutcome.Ready, target);
+            return new(UpdateOutcome.Ready, target, actual);
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException ||
                                    (ex is TaskCanceledException && !ct.IsCancellationRequested))
@@ -87,6 +88,21 @@ public sealed partial class Updater(HttpMessageHandler? handler = null) : IDispo
             File.Move(old, runningExe);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Starts the installed exe only if it still has the checked hash. The exe usually sits in a folder the signed-in
+    /// user can write to (Downloads), and the new process inherits this process's administrator rights without a UAC
+    /// prompt: the file stays open without write or delete sharing from the hash check until the process has started,
+    /// so it cannot be swapped in between. Returns false (nothing started) when the hash differs.
+    /// </summary>
+    public static bool StartVerified(string exe, string sha256, Action<string> start)
+    {
+        using var hold = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var actual = Convert.ToHexString(SHA256.HashData(hold));
+        if (!actual.Equals(sha256, StringComparison.OrdinalIgnoreCase)) return false;
+        start(exe);
+        return true;
     }
 
     /// <summary>After an update: removes the previous exe and the downloaded files.</summary>

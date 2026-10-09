@@ -141,16 +141,53 @@ public static class SecureFolder
     private static readonly SecurityIdentifier System = new(WellKnownSidType.LocalSystemSid, null);
 
     /// <summary>
+    /// Makes the data folder safe before the elevated app writes or reads anything in it (log, settings, backups).
+    /// A standard user can create C:\ProgramData\PCOptimizer before the first elevated start: as a junction (every
+    /// write would land where the link points) or as a real folder with files in it (planted backups and settings,
+    /// and a handle kept open could keep adding files after the permissions change). A link is removed; a folder not
+    /// owned by Administrators or SYSTEM was not created by this app and is deleted, never adopted. Returns false
+    /// when the folder cannot be made safe; the caller must not use it then.
+    /// </summary>
+    public static bool PrepareRoot(string folder)
+    {
+        try
+        {
+            if (Path.Exists(folder))
+            {
+                if ((File.GetAttributes(folder) & FileAttributes.ReparsePoint) != 0)
+                {
+                    Log.Warn("backup", $"{folder} was a link; replaced by a real folder");
+                    Directory.Delete(folder);
+                }
+                else if (!IsOwnedByAdmins(new DirectoryInfo(folder)))
+                {
+                    Log.Warn("backup", $"{folder} was not created by an administrator; deleted");
+                    DeleteTree(folder);
+                }
+            }
+            Lock(folder);
+            var info = new DirectoryInfo(folder);
+            return info.Exists && (info.Attributes & FileAttributes.ReparsePoint) == 0 && IsOwnedByAdmins(info);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            Log.Error("backup", $"data folder {folder} cannot be secured", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Administrators + SYSTEM full control, inheritance from ProgramData removed, for the folder and everything in it.
-    /// A standard user can create C:\ProgramData\PCOptimizer (or its subfolders) before the first elevated run, as a
-    /// junction or with their own permissions: links are removed first, and every existing subfolder and file gets
-    /// the Administrators owner and only the inherited (locked) permissions.
+    /// Links below the folder are removed first, then files and folders that Administrators or SYSTEM do not own
+    /// (put there by another account) are deleted; the rest gets the Administrators owner and only the inherited
+    /// (locked) permissions.
     /// </summary>
     public static void Lock(string folder)
     {
         try
         {
             RemoveLinks(folder);
+            RemoveUntrusted(folder);
             Directory.CreateDirectory(folder);
             var info = new DirectoryInfo(folder);
             var security = new DirectorySecurity();
@@ -214,11 +251,61 @@ public static class SecureFolder
         }
     }
 
-    public static bool IsOwnedByAdmins(string file)
+    /// <summary>
+    /// Deletes files and folders below <paramref name="folder"/> that neither Administrators nor SYSTEM own. Everything
+    /// the elevated app creates is owned by Administrators; anything else was put there by another account and is
+    /// never read (a planted backup could make Undo write chosen registry values as administrator). Call after
+    /// <see cref="RemoveLinks"/>.
+    /// </summary>
+    public static void RemoveUntrusted(string folder)
+    {
+        if (!Directory.Exists(folder)) return;
+        var stack = new Stack<DirectoryInfo>([new DirectoryInfo(folder)]);
+        while (stack.Count > 0)
+        {
+            foreach (var entry in stack.Pop().EnumerateFileSystemInfos("*", new EnumerationOptions { AttributesToSkip = 0, IgnoreInaccessible = true }))
+            {
+                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0) continue; // RemoveLinks handles links
+                if (IsOwnedByAdmins(entry))
+                {
+                    if (entry is DirectoryInfo trusted) stack.Push(trusted);
+                    continue;
+                }
+                Log.Warn("backup", $"removed {entry.FullName}: not created by an administrator");
+                if (entry is DirectoryInfo d)
+                {
+                    DeleteTree(d.FullName);
+                }
+                else
+                {
+                    entry.Attributes = FileAttributes.Normal;
+                    entry.Delete();
+                }
+            }
+        }
+    }
+
+    private static void DeleteTree(string folder)
+    {
+        RemoveLinks(folder);
+        if (!Directory.Exists(folder)) return;
+        foreach (var file in new DirectoryInfo(folder).EnumerateFiles("*", new EnumerationOptions { AttributesToSkip = 0, RecurseSubdirectories = true }))
+            file.Attributes = FileAttributes.Normal;
+        Directory.Delete(folder, recursive: true);
+    }
+
+    public static bool IsOwnedByAdmins(string file) => IsOwnedByAdmins(new FileInfo(file));
+
+    public static bool IsOwnedByAdmins(FileSystemInfo entry)
     {
         try
         {
-            var owner = new FileInfo(file).GetAccessControl().GetOwner(typeof(SecurityIdentifier));
+            var owner = entry switch
+            {
+                DirectoryInfo d => d.GetAccessControl().GetOwner(typeof(SecurityIdentifier)),
+                FileInfo f => f.GetAccessControl().GetOwner(typeof(SecurityIdentifier)),
+                _ => null,
+            };
             return owner == Admins || owner == System;
         }
         catch (Exception)

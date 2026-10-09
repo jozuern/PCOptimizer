@@ -411,7 +411,12 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
             Log.Info("update", "installed, restarting", new { version });
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false });
+            if (!Updater.StartVerified(exe, download.Sha256!, path => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false })?.Dispose()))
+            {
+                Log.Error("update", "the installed exe changed before the restart; not started");
+                ShowResult(Loc.Instance["Update_BadChecksum"]);
+                return;
+            }
             System.Windows.Application.Current.Shutdown();
         }
         finally
@@ -458,6 +463,11 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenLink(string url)
     {
+        if (!DeElevatedLauncher.IsLink(url))
+        {
+            Log.Warn("launcher", $"not a web or Store link, not opened: {url}");
+            return;
+        }
         if (DeElevatedLauncher.Open(url, null, _services.Elevation) == DeElevatedLauncher.Path.Failed) ShowResult(url);
     }
 

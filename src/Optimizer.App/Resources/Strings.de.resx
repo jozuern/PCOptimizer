@@ -45,6 +45,7 @@
   <data name="Banner_SeparateAdmin" xml:space="preserve"><value>Die App läuft als {0}, angemeldet ist aber {1}. Benutzereinstellungen gehören zu {1}.</value></data>
   <data name="Banner_NotElevated" xml:space="preserve"><value>Läuft ohne Administratorrechte. Einige Werte (zum Beispiel TPM) erscheinen als unbekannt.</value></data>
   <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home und Pro erhalten seit dem 13. Oktober 2026 keine Updates mehr. Aktualisiere auf 25H2 oder 26H2.</value></data>
+  <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>Der Datenordner {0} wurde von einem anderen Konto angelegt und lässt sich nicht entfernen. Schließe alle Programme, lösche den Ordner und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
   <data name="Gate_Title" xml:space="preserve"><value>Windows-Version nicht unterstützt</value></data>
   <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer braucht Windows 11 24H2 (Build 26100) oder neuer. Dieser PC nutzt Build {0}. Bitte aktualisiere zuerst Windows. Es wurde nichts verändert.</value></data>
   <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer unterstützt nur x64-PCs. ARM64-PCs werden nicht unterstützt. Es wurde nichts verändert.</value></data>

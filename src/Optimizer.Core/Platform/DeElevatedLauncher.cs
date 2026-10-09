@@ -16,6 +16,14 @@ public static class DeElevatedLauncher
 {
     public enum Path { NotElevated, Shell, ScheduledTask, Failed }
 
+    /// <summary>
+    /// Links the app opens: web pages and Microsoft Store pages. Anything else handed to ShellExecute (a file path, a
+    /// file: or other protocol link) could start a program, so it is refused.
+    /// </summary>
+    public static bool IsLink(string target) =>
+        Uri.TryCreate(target, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == "ms-windows-store");
+
     public static Path Open(string target, string? arguments, ElevationInfo? elevation)
     {
         if (elevation is { IsElevated: false })
