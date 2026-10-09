@@ -24,6 +24,9 @@ We read every memory module from Windows (WMI): part number and the speed the me
 1. Restart into the BIOS (press **Del** or **F2** during start).
 ::: if menuPath
 2. On your {{board}}: **{{menuPath}}**.
+::: if menuUnverified
+   This path is not yet checked against the manual for your board. Menu names differ between boards and BIOS versions, so search for the setting by name if the path does not match.
+:::
 :::
 ::: ifnot menuPath
 2. Look for the memory profile setting: **XMP**, **EXPO**, **D.O.C.P** or **A-XMP**, usually on the overclocking or "Tweaker" page.

@@ -24,6 +24,12 @@
     <Resource Include="Assets\icon-16.png;Assets\icon-24.png;Assets\icon-32.png" />
   </ItemGroup>
 
+  <!-- License texts shown under Settings > About (MIT, BSD, MPL and Apache require them to ship with the exe). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Licenses\*.txt;Licenses\licenses.json" LogicalName="Licenses.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="Licenses.PCOptimizer.txt" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Optimizer.Core\Optimizer.Core.csproj" />
   </ItemGroup>

@@ -73,9 +73,41 @@
                 </StackPanel>
             </ui:Card>
 
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Updates}" />
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="ArrowSync20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Update_AtStart}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Update_Hint}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding CheckForUpdates}" />
+            </ui:CardControl>
+            <ui:Card Padding="16,12">
+                <WrapPanel>
+                    <ui:Button Content="{l:Tr Update_CheckNow}" Command="{Binding CheckUpdatesNowCommand}" Margin="0,0,8,0" />
+                    <ui:Button Content="{l:Tr Update_Open}" Icon="{ui:SymbolIcon Open20}" Appearance="Primary" Command="{Binding OpenReleasePageCommand}" Margin="0,0,8,0"
+                               Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}" />
+                    <ui:TextBlock FontTypography="Body" Appearance="Secondary" Text="{Binding UpdateStatus}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </WrapPanel>
+            </ui:Card>
+
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_About}" />
             <ui:Card Padding="16,12">
-                <ui:TextBlock FontTypography="Body" Text="{Binding AboutText}" TextWrapping="Wrap" />
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body" Text="{Binding AboutText}" TextWrapping="Wrap" />
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr About_License}" Margin="0,4,0,0" />
+                    <WrapPanel Margin="0,12,0,0">
+                        <ui:Button Content="{l:Tr About_Licenses}" Icon="{ui:SymbolIcon DocumentText20}" Click="Licenses_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr About_Privacy}" Icon="{ui:SymbolIcon ShieldCheckmark20}" Appearance="Transparent"
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer/blob/main/docs/PRIVACY.md" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr About_Source}" Icon="{ui:SymbolIcon Code20}" Appearance="Transparent"
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer" />
+                    </WrapPanel>
+                </StackPanel>
             </ui:Card>
         </StackPanel>
     </ScrollViewer>

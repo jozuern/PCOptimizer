@@ -130,6 +130,7 @@ public sealed class RebarCheck : IFindingCheck
                     ["gpu"] = g.Name,
                     ["board"] = $"{p.Firmware?.BoardManufacturer} {p.Firmware?.BoardProduct}".Trim(),
                     ["menuPath"] = menu?.Path ?? "",
+                    ["menuUnverified"] = menu is { Verified: false } ? "yes" : "",
                     ["mbr"] = p.Firmware?.SystemDiskPartitionStyle == PartitionStyle.Mbr ? "yes" : "",
                 },
             };

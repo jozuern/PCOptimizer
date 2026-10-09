@@ -31,6 +31,9 @@ Wir lesen die Größe der Speicherfenster der Grafikkarte (PCI-Speicherressource
 1. Aktualisiere das BIOS auf eine Version mit Resizable-BAR-Unterstützung.
 ::: if menuPath
 2. Auf deinem {{board}}: **{{menuPath}}**.
+::: if menuUnverified
+   Dieser Pfad ist noch nicht mit dem Handbuch deines Mainboards abgeglichen. Menünamen unterscheiden sich je nach Board und BIOS-Version. Passt der Pfad nicht, suche die Einstellung über ihren Namen.
+:::
 :::
 ::: ifnot menuPath
 2. Schalte **Above 4G Decoding** und **Re-Size BAR Support** ein (bei ASRock: C.A.M.).

@@ -1,0 +1,55 @@
+<ui:FluentWindow x:Class="Optimizer.App.Views.LicensesWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:l="clr-namespace:Optimizer.App.Services"
+                 Width="920" Height="640" MinWidth="640" MinHeight="420"
+                 WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Grid.Row="0" Title="" ShowMinimize="False" ShowHelp="False" />
+        <StackPanel Grid.Row="1" Margin="24,8,24,16">
+            <ui:TextBlock FontTypography="Subtitle" Text="{l:Tr Licenses_Title}" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Licenses_Intro}" Margin="0,4,0,0" />
+        </StackPanel>
+        <Grid Grid.Row="2" Margin="24,0,24,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ui:ListView x:Name="ComponentList" Grid.Column="0" SelectionChanged="Component_Changed"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ui:ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="4,6">
+                            <ui:TextBlock FontTypography="Body" Text="{Binding Name}" TextWrapping="Wrap"
+                                          Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <ui:TextBlock FontTypography="Caption" Text="{Binding Subtitle}"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ui:ListView.ItemTemplate>
+            </ui:ListView>
+            <DockPanel Grid.Column="2">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" LastChildFill="True">
+                    <ui:Button x:Name="SourceButton" DockPanel.Dock="Right" Content="{l:Tr About_Source}" Icon="{ui:SymbolIcon Open20}"
+                               Appearance="Transparent" Click="Source_Click" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <ui:TextBlock x:Name="ComponentName" FontTypography="BodyStrong" TextWrapping="Wrap" />
+                        <TextBlock x:Name="ComponentSource" Style="{StaticResource Mono}" />
+                    </StackPanel>
+                </DockPanel>
+                <TextBox x:Name="LicenseText" FontFamily="{StaticResource MonoFont}" FontSize="12" IsReadOnly="True"
+                         TextWrapping="Wrap" TextAlignment="Left" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                         VerticalContentAlignment="Top" />
+            </DockPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

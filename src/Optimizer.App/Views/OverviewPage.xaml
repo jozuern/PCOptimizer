@@ -27,9 +27,13 @@
                             <ui:InfoBar Grid.ColumnSpan="2" Title="" Message="" Severity="{Binding Severity}" IsOpen="True" IsClosable="False" VerticalAlignment="Stretch" />
                             <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="14" VerticalAlignment="Center" Margin="46,12,16,12"
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                            <ui:Button Grid.Column="1" Content="{Binding ActionText}" Command="{Binding Action}" Icon="{ui:SymbolIcon ArrowSync20}"
+                            <ui:Button Grid.Column="1" Content="{Binding ActionText}" Command="{Binding Action}"
                                        VerticalAlignment="Center" Margin="0,8,16,8"
-                                       Visibility="{Binding ActionText, Converter={StaticResource NullToVisibility}}" />
+                                       Visibility="{Binding ActionText, Converter={StaticResource NullToVisibility}}">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="{Binding ActionIcon}" />
+                                </ui:Button.Icon>
+                            </ui:Button>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

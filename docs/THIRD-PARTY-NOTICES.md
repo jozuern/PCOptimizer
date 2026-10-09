@@ -1,20 +1,22 @@
 # Third-party notices
 
-Components shipped in PCOptimizer.exe:
+Components shipped in PCOptimizer.exe. Their full license texts are embedded in the exe and shown under Settings > About > Licenses (source: `src/Optimizer.App/Licenses/`, checked against the restored packages by the test `EveryShippedPackageHasItsLicense`).
 
 | Component | License | Use |
 |---|---|---|
-| WPF-UI 4.3 (lepoco) | MIT | Window chrome, Fluent controls (NavigationView, cards, toggle switches, info bars), theme |
+| WPF-UI 4.3 and WPF-UI.Abstractions 4.3 (lepoco) | MIT | Window chrome, Fluent controls (NavigationView, cards, toggle switches, info bars), theme |
 | CommunityToolkit.Mvvm | MIT | MVVM source generators |
 | Markdig | BSD-2-Clause | Markdown parsing for explanation pages |
 | System.Management | MIT (.NET) | WMI access |
 | LibreHardwareMonitorLib 0.9.6 | MPL-2.0 | Opt-in sensor readings on the Health page. Unmodified; source: https://github.com/LibreHardwareMonitor/LibreHardwareMonitor |
 | DiskInfoToolkit 1.1.2 | MPL-2.0 | Dependency of LibreHardwareMonitorLib (drive sensors). Unmodified; source: https://github.com/Blacktempel/DiskInfoToolkit |
 | RAMSPDToolkit-NDD 1.4.2 | MPL-2.0 | Dependency of LibreHardwareMonitorLib (memory sensors). Unmodified; source: https://github.com/Blacktempel/RAMSPDToolkit |
+| BlackSharp.Core 1.0.7 | MPL-2.0 | Dependency of DiskInfoToolkit and RAMSPDToolkit. Unmodified; source: https://github.com/Blacktempel/BlackSharp |
 | HidSharp 2.6.4 | Apache-2.0 | Dependency of LibreHardwareMonitorLib |
+| System.IO.Ports 10.0.3, System.IO.FileSystem.AccessControl 5.0.0 | MIT (.NET) | Dependencies of LibreHardwareMonitorLib |
 | Mono.Posix.NETStandard 1.0.0 | MIT | Dependency of LibreHardwareMonitorLib |
 | Intel PresentMon 2.6.0 (console, x64) | MIT | Frame time capture for the benchmark. Embedded unmodified, Intel-signed, SHA-256 B2A706BC6AD475749E3B7E3409263AA1E6906D45BDCF993F6DBC0F660188F1AF, checked on extraction. Source: https://github.com/GameTechDev/PresentMon |
-| .NET runtime (self-contained) | MIT | Runtime |
+| .NET runtime and Windows Desktop runtime 10.0.12 (self-contained) | MIT | Runtime, WPF |
 
 Used through Windows or installed only on request, not shipped:
 

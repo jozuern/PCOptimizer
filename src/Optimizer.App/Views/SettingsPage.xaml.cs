@@ -35,6 +35,12 @@ public partial class SettingsPage : UserControl
         VtKey.Password = "";
     }
 
+    private void Licenses_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        new LicensesWindow(url => vm.OpenLinkCommand.Execute(url)) { Owner = Window.GetWindow(this) }.ShowDialog();
+    }
+
     private void RemoveKey_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainViewModel vm) vm.SaveVirusTotalKey(null);

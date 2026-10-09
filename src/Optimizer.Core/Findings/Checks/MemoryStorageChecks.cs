@@ -93,6 +93,7 @@ public sealed class XmpCheck : IFindingCheck
                 ["configured"] = minConfigured?.ToString() ?? "?",
                 ["profileName"] = menu?.ProfileName ?? (first.Type == "DDR5" && p.Cpu?.Vendor == Vendor.Amd ? "EXPO" : "XMP"),
                 ["menuPath"] = menu?.Path ?? "",
+                ["menuUnverified"] = menu is { Verified: false } ? "yes" : "",
                 ["board"] = $"{p.Firmware?.BoardManufacturer} {p.Firmware?.BoardProduct}".Trim(),
             },
         };

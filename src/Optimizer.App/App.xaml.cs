@@ -76,6 +76,8 @@ public partial class App : Application
         ApplyTheme(args.Value("--theme") ?? _settings.Theme, save: false);
         window.Show();
         await vm.ScanAsync();
+        // Opt-in release check (off by default); screenshots stay offline and reproducible.
+        if (args.Value("--screenshot") is null) _ = vm.CheckForUpdatesAsync(atStart: true);
 
         if (args.Value("--screenshot") is { } shot)
         {
@@ -87,6 +89,12 @@ public partial class App : Application
             await Task.Delay(1500); // pages that load their own data (startup, services, apps)
             if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            // Developer aid: show the bottom of long pages (Settings > About).
+            if (args.Value("--scroll") is "end")
+            {
+                foreach (var sv in Descendants<System.Windows.Controls.ScrollViewer>(window)) sv.ScrollToEnd();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            }
             await Task.Delay(400);
             SaveScreenshot(window, shot);
 
@@ -102,6 +110,17 @@ public partial class App : Application
                 await Task.Delay(400);
                 SaveScreenshot(dlg, confirmShot);
                 dlg.Close();
+            }
+
+            // Developer aid: render the Licenses window (Settings > About).
+            if (args.Value("--licenses-shot") is { } licensesShot)
+            {
+                var lic = new LicensesWindow(_ => { }) { Owner = window };
+                lic.Show();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                await Task.Delay(400);
+                SaveScreenshot(lic, licensesShot);
+                lic.Close();
             }
             Shutdown(0);
         }
@@ -226,6 +245,16 @@ public partial class App : Application
         {
             Log.Error("app", "report failed", ex);
             return 1;
+        }
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match) yield return match;
+            foreach (var deeper in Descendants<T>(child)) yield return deeper;
         }
     }
 

@@ -53,7 +53,7 @@
   <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="Settings_Logs" xml:space="preserve"><value>Log file</value></data>
   <data name="Settings_About" xml:space="preserve"><value>About</value></data>
-  <data name="About_Text" xml:space="preserve"><value>Version {0}. No telemetry. Network requests only for features you start.</value></data>
+  <data name="About_Text" xml:space="preserve"><value>Version {0}. No telemetry. Network requests only for features you start or turn on.</value></data>
   <data name="Theme_Dark" xml:space="preserve"><value>Dark</value></data>
   <data name="Theme_Light" xml:space="preserve"><value>Light</value></data>
   <data name="Lang_En" xml:space="preserve"><value>English</value></data>
@@ -922,4 +922,20 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
     <value>Based only on detected problems, weighted by their impact on {0}. Tweaks never add points.</value>
   </data>
+  <data name="About_License" xml:space="preserve"><value>Free for personal and other noncommercial use under the PolyForm Strict License 1.0.0. Changing, redistributing or selling it needs the author's permission. It comes without warranty.</value></data>
+  <data name="About_Licenses" xml:space="preserve"><value>Licenses</value></data>
+  <data name="About_Privacy" xml:space="preserve"><value>Privacy</value></data>
+  <data name="About_Source" xml:space="preserve"><value>Source code</value></data>
+  <data name="Licenses_Title" xml:space="preserve"><value>Licenses</value></data>
+  <data name="Licenses_Intro" xml:space="preserve"><value>The license of PCOptimizer and of every component it ships, with the full texts.</value></data>
+  <data name="Settings_Updates" xml:space="preserve"><value>Updates</value></data>
+  <data name="Update_AtStart" xml:space="preserve"><value>Check for a new version at start</value></data>
+  <data name="Update_Hint" xml:space="preserve"><value>Asks GitHub whether a newer release exists. Nothing is downloaded or installed. The app only links to the release page.</value></data>
+  <data name="Update_CheckNow" xml:space="preserve"><value>Check now</value></data>
+  <data name="Update_Checking" xml:space="preserve"><value>Asking GitHub for the latest release.</value></data>
+  <data name="Update_UpToDate" xml:space="preserve"><value>Version {0} is the latest release.</value></data>
+  <data name="Update_Available" xml:space="preserve"><value>Version {0} is available.</value></data>
+  <data name="Update_NoRelease" xml:space="preserve"><value>No release has been published yet.</value></data>
+  <data name="Update_Error" xml:space="preserve"><value>GitHub could not be reached. Try again later.</value></data>
+  <data name="Update_Open" xml:space="preserve"><value>Open download page</value></data>
 </root>

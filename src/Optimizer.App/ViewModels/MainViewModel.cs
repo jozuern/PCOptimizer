@@ -10,6 +10,7 @@ using Optimizer.Core.Logging;
 using Optimizer.Core.Platform;
 using Optimizer.Core.Profiles;
 using Optimizer.Core.Tweaks;
+using Optimizer.Core.Updates;
 using Wpf.Ui.Controls;
 
 namespace Optimizer.App.ViewModels;
@@ -25,6 +26,8 @@ public sealed record Banner(string Text, bool IsWarning)
     public string? ActionText { get; init; }
 
     public System.Windows.Input.ICommand? Action { get; init; }
+
+    public SymbolRegular ActionIcon { get; init; } = SymbolRegular.ArrowSync20;
 }
 
 public sealed record SummaryItem(string Label, string Value);
@@ -70,6 +73,8 @@ public sealed partial class MainViewModel : ObservableObject
     private RecommendationPlan _plan = new([], []);
     private IReadOnlyList<DriftItem> _drift = [];
     private string? _updateNotice;
+    private ReleaseCheckResult? _release;
+    private bool _releaseChecking;
     private Facts _facts = new();
     private DateTime? _lastScanTime;
 
@@ -86,6 +91,7 @@ public sealed partial class MainViewModel : ObservableObject
         _services = services;
         _dialogs = dialogs;
         _expertMode = settings.ExpertMode;
+        _checkForUpdates = settings.CheckForUpdates;
         Runner = new ChangeRunner(services, dialogs, () => _facts, AppliedIds, () => ExpertMode);
         Runner.Status += (_, text) => ShowResult(text);
         Runner.BusyChanged += (_, busy) => IsBusy = busy;
@@ -131,6 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private CategoryItem? _selectedCategory;
     [ObservableProperty] private bool _onlyRecommended;
     [ObservableProperty] private bool _expertMode;
+    [ObservableProperty] private bool _checkForUpdates;
     [ObservableProperty] private string _restorePointText = "";
     [ObservableProperty] private bool _canEnableRestorePoints;
     [ObservableProperty] private string _tweaksSummary = "";
@@ -252,6 +259,45 @@ public sealed partial class MainViewModel : ObservableObject
         Network.Rebuild();
     }
 
+    partial void OnCheckForUpdatesChanged(bool value)
+    {
+        _settings.CheckForUpdates = value;
+        _settings.Save();
+    }
+
+    public string? UpdateStatus => _releaseChecking ? Loc.Instance["Update_Checking"] : _release?.Status switch
+    {
+        ReleaseCheckStatus.UpToDate => Loc.Instance.Format("Update_UpToDate", Version),
+        ReleaseCheckStatus.NewerAvailable => Loc.Instance.Format("Update_Available", _release.Latest!.ToString(3)),
+        ReleaseCheckStatus.NoRelease => Loc.Instance["Update_NoRelease"],
+        ReleaseCheckStatus.Error => Loc.Instance["Update_Error"],
+        _ => null,
+    };
+
+    public bool UpdateAvailable => _release?.Status == ReleaseCheckStatus.NewerAvailable;
+
+    /// <summary>At start only when the user turned the check on; "Check now" always asks.</summary>
+    public async Task CheckForUpdatesAsync(bool atStart)
+    {
+        if ((atStart && !_settings.CheckForUpdates) || _releaseChecking) return;
+        _releaseChecking = true;
+        OnPropertyChanged(nameof(UpdateStatus));
+        using var check = new ReleaseCheck();
+        _release = await check.CheckAsync(typeof(MainViewModel).Assembly.GetName().Version ?? new Version(0, 0, 0));
+        _releaseChecking = false;
+        Log.Info("update", "release check", new { _release.Status, latest = _release.Latest?.ToString(3) });
+        OnPropertyChanged(nameof(UpdateStatus));
+        OnPropertyChanged(nameof(UpdateAvailable));
+        BuildBanners();
+    }
+
+    [RelayCommand]
+    private Task CheckUpdatesNow() => CheckForUpdatesAsync(atStart: false);
+
+    /// <summary>Only the release page opens (in the browser, de-elevated); the app never downloads or runs an update itself.</summary>
+    [RelayCommand]
+    private void OpenReleasePage() => OpenLink(ReleaseCheck.LatestReleaseUrl);
+
     public void ShowResult(string text)
     {
         ResultText = text;
@@ -268,6 +314,7 @@ public sealed partial class MainViewModel : ObservableObject
         _settings.Save();
         Loc.Instance.SetLanguage(lang);
         OnPropertyChanged(nameof(AboutText));
+        OnPropertyChanged(nameof(UpdateStatus));
     }
 
     [RelayCommand]
@@ -763,6 +810,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Banners.Add(new Banner(_updateNotice, false));
         }
+        if (UpdateAvailable)
+            Banners.Add(new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Open"], Action = OpenReleasePageCommand, ActionIcon = SymbolRegular.Open20 });
         if (_profileAutoSet) Banners.Add(new Banner(Loc.Instance.Format("Profile_AutoSet", ProfileName(_usage)), false));
         var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State == TweakState.PendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));

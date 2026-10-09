@@ -412,6 +412,18 @@ public class AdvisorCheckTests
         Assert.Equal(("baseline", FindingStatus.Info), (noTpm.Variant, noTpm.Status));
         AssertRenders(noTpm);
     }
+
+    [Fact]
+    public void UnverifiedAntiCheatSaysSoOnItsPage()
+    {
+        var javelin = One(new GameAccessCheck(), Ac("javelin", "EA Javelin"));
+        Assert.Equal("yes", javelin.Params["unverified_javelin"]);
+        AssertRenders(javelin);
+        Assert.Contains("not verified yet", DocStore.RenderFinding(DocStore.Get(javelin.Id, "en")!, javelin, Labels.Current));
+
+        var vanguard = One(new GameAccessCheck(), Ac("vanguard", "Riot Vanguard"));
+        Assert.False(vanguard.Params.ContainsKey("unverified_vanguard"));
+    }
 }
 
 /// <summary>The M3/M4 action types against the sandbox registry and fakes.</summary>

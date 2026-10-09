@@ -31,6 +31,9 @@ We read the size of the graphics card's memory windows (PCI memory resources) th
 1. Update the BIOS to a version with Resizable BAR support.
 ::: if menuPath
 2. On your {{board}}: **{{menuPath}}**.
+::: if menuUnverified
+   This path is not yet checked against the manual for your board. Menu names differ between boards and BIOS versions, so search for the setting by name if the path does not match.
+:::
 :::
 ::: ifnot menuPath
 2. Enable **Above 4G Decoding** and **Re-Size BAR Support** (ASRock: C.A.M.).

@@ -24,6 +24,9 @@ Wir lesen jedes Speichermodul aus Windows (WMI): die Teilenummer und die Geschwi
 1. Starte neu ins BIOS (beim Start **Entf** oder **F2** drücken).
 ::: if menuPath
 2. Auf deinem {{board}}: **{{menuPath}}**.
+::: if menuUnverified
+   Dieser Pfad ist noch nicht mit dem Handbuch deines Mainboards abgeglichen. Menünamen unterscheiden sich je nach Board und BIOS-Version. Passt der Pfad nicht, suche die Einstellung über ihren Namen.
+:::
 :::
 ::: ifnot menuPath
 2. Suche die Einstellung für das Speicherprofil: **XMP**, **EXPO**, **D.O.C.P** oder **A-XMP**, meist auf der Übertaktungs- oder „Tweaker“-Seite.

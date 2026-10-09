@@ -29,6 +29,9 @@ Several current anti-cheats only allow play on PCs with a verified boot chain. I
 :::
 ::: if javelin
 **EA Javelin** (Battlefield 6) requires Secure Boot. TPM 2.0 is required for some games, such as Battlefield 6 [3].
+::: if unverified_javelin
+This entry is based on press coverage [3], not on a page from EA, and is not verified yet.
+:::
 :::
 
 ## How we detected it

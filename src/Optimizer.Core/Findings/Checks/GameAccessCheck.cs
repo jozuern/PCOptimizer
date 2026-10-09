@@ -86,7 +86,12 @@ public sealed class GameAccessCheck : IFindingCheck
             ["antiCheats"] = string.Join(", ", installed.Select(a => a.DisplayName)),
             ["mbr"] = fw?.SystemDiskPartitionStyle == PartitionStyle.Mbr ? "yes" : "",
         };
-        foreach (var (presence, _) in signatures) parameters[presence.Id] = "yes";
+        foreach (var (presence, sig) in signatures)
+        {
+            parameters[presence.Id] = "yes";
+            // Catalog entries not yet checked against the vendor's own documentation say so on the page.
+            if (!sig!.Verified) parameters[$"unverified_{presence.Id}"] = "yes";
+        }
         foreach (var part in Parts)
         {
             if (missingRequired.ContainsKey(part) || missingSometimes.ContainsKey(part)) parameters[$"missing_{part}"] = "yes";

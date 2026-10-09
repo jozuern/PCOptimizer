@@ -128,6 +128,10 @@ public class RamTests
         var f = new XmpCheck().Evaluate(p, CatalogData.Current).Single();
         Assert.Equal(FindingStatus.Problem, f.Status);
         Assert.Contains("Ai Overclock Tuner", f.Params["menuPath"]);
+        // bios.json marks the path as not checked against the manual: the page says so.
+        Assert.Equal("yes", f.Params["menuUnverified"]);
+        var md = Optimizer.Core.Docs.DocStore.RenderFinding(Optimizer.Core.Docs.DocStore.Get(f.Id, "en")!, f, Optimizer.Core.Docs.Labels.Current);
+        Assert.Contains("not yet checked against the manual", md);
     }
 
     [Fact]

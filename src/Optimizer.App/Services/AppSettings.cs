@@ -12,6 +12,9 @@ public sealed class AppSettings
     /// <summary>Shows Expert tweaks (security trade-offs, boot configuration). Off by default.</summary>
     public bool ExpertMode { get; set; }
 
+    /// <summary>Opt-in: ask GitHub for the latest release at start. Off by default (no network request unless turned on).</summary>
+    public bool CheckForUpdates { get; set; }
+
     /// <summary>VirusTotal API key, DPAPI-protected for the current user (never stored in clear text).</summary>
     public string? VirusTotalKey { get; set; }
 

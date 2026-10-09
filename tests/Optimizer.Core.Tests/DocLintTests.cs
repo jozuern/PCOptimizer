@@ -40,7 +40,7 @@ public partial class DocLintTests(ITestOutputHelper output)
             offenders.AddRange(BannedTypography(name, visible));
         }
         // The app's own UI text: resource string values and literal text in XAML (comments are for maintainers).
-        var app = AppSourceFolder();
+        var app = RepoPaths.App;
         foreach (var file in Directory.EnumerateFiles(Path.Combine(app, "Resources"), "Strings*.resx"))
             offenders.AddRange(BannedTypography(Path.GetFileName(file),
                 string.Join("\n", XDocument.Load(file).Descendants("data").Select(d => (string?)d.Element("value") ?? ""))));
@@ -59,17 +59,6 @@ public partial class DocLintTests(ITestOutputHelper output)
         char[] banned = ['–', '—', '•', '·', '…'];
         foreach (var c in banned.Where(text.Contains)) yield return $"{name}: U+{(int)c:X4}";
         foreach (Match m in ParenPlural().Matches(text)) yield return $"{name}: \"{m.Value}\" plural";
-    }
-
-    /// <summary>src/Optimizer.App, found by walking up from the test output folder.</summary>
-    private static string AppSourceFolder()
-    {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
-        {
-            var app = Path.Combine(dir.FullName, "src", "Optimizer.App");
-            if (Directory.Exists(app)) return app;
-        }
-        throw new DirectoryNotFoundException("src/Optimizer.App not found above " + AppContext.BaseDirectory);
     }
 
     /// <summary>"value(s)", "Wert(e)", "Änderung(en)" and similar.</summary>

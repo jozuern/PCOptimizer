@@ -1,0 +1,177 @@
+[
+  {
+    "name": "PCOptimizer",
+    "license": "PolyForm Strict 1.0.0",
+    "source": "https://github.com/jozuern/PCOptimizer",
+    "files": [
+      "PCOptimizer.txt"
+    ]
+  },
+  {
+    "name": ".NET Runtime",
+    "package": "Microsoft.NETCore.App",
+    "version": "10.0.12",
+    "license": "MIT",
+    "source": "https://github.com/dotnet/runtime",
+    "files": [
+      "dotnet-mit.txt",
+      "dotnet-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "Windows Desktop Runtime (WPF)",
+    "package": "Microsoft.WindowsDesktop.App",
+    "version": "10.0.12",
+    "license": "MIT",
+    "source": "https://github.com/dotnet/wpf",
+    "files": [
+      "dotnet-mit.txt",
+      "dotnet-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "System.Management",
+    "package": "System.Management",
+    "version": "10.0.12",
+    "license": "MIT",
+    "source": "https://github.com/dotnet/runtime",
+    "files": [
+      "dotnet-mit.txt",
+      "dotnet-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "System.IO.Ports",
+    "package": "System.IO.Ports",
+    "version": "10.0.3",
+    "license": "MIT",
+    "source": "https://github.com/dotnet/runtime",
+    "files": [
+      "dotnet-mit.txt",
+      "dotnet-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "System.IO.FileSystem.AccessControl",
+    "package": "System.IO.FileSystem.AccessControl",
+    "version": "5.0.0",
+    "license": "MIT",
+    "source": "https://github.com/dotnet/runtime",
+    "files": [
+      "dotnet-mit.txt",
+      "dotnet5-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "WPF UI",
+    "package": "WPF-UI",
+    "version": "4.3.0",
+    "license": "MIT",
+    "source": "https://github.com/lepoco/wpfui",
+    "files": [
+      "wpf-ui.txt",
+      "wpf-ui-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "WPF UI Abstractions",
+    "package": "WPF-UI.Abstractions",
+    "version": "4.3.0",
+    "license": "MIT",
+    "source": "https://github.com/lepoco/wpfui",
+    "files": [
+      "wpf-ui.txt",
+      "wpf-ui-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "CommunityToolkit.Mvvm",
+    "package": "CommunityToolkit.Mvvm",
+    "version": "8.4.2",
+    "license": "MIT",
+    "source": "https://github.com/CommunityToolkit/dotnet",
+    "files": [
+      "communitytoolkit-mvvm.txt",
+      "communitytoolkit-mvvm-third-party-notices.txt"
+    ]
+  },
+  {
+    "name": "Markdig",
+    "package": "Markdig",
+    "version": "1.4.0",
+    "license": "BSD-2-Clause",
+    "source": "https://github.com/xoofx/markdig",
+    "files": [
+      "markdig.txt"
+    ]
+  },
+  {
+    "name": "LibreHardwareMonitorLib",
+    "package": "LibreHardwareMonitorLib",
+    "version": "0.9.6",
+    "license": "MPL-2.0",
+    "source": "https://github.com/LibreHardwareMonitor/LibreHardwareMonitor",
+    "files": [
+      "mpl-2.0.txt"
+    ]
+  },
+  {
+    "name": "DiskInfoToolkit",
+    "package": "DiskInfoToolkit",
+    "version": "1.1.2",
+    "license": "MPL-2.0",
+    "source": "https://github.com/Blacktempel/DiskInfoToolkit",
+    "files": [
+      "mpl-2.0.txt"
+    ]
+  },
+  {
+    "name": "RAMSPDToolkit-NDD",
+    "package": "RAMSPDToolkit-NDD",
+    "version": "1.4.2",
+    "license": "MPL-2.0",
+    "source": "https://github.com/Blacktempel/RAMSPDToolkit",
+    "files": [
+      "mpl-2.0.txt"
+    ]
+  },
+  {
+    "name": "BlackSharp.Core",
+    "package": "BlackSharp.Core",
+    "version": "1.0.7",
+    "license": "MPL-2.0",
+    "source": "https://github.com/Blacktempel/BlackSharp",
+    "files": [
+      "mpl-2.0.txt"
+    ]
+  },
+  {
+    "name": "HidSharp",
+    "package": "HidSharp",
+    "version": "2.6.4",
+    "license": "Apache-2.0",
+    "source": "https://software.seekye.com/hidsharp",
+    "files": [
+      "hidsharp.txt"
+    ]
+  },
+  {
+    "name": "Mono.Posix.NETStandard",
+    "package": "Mono.Posix.NETStandard",
+    "version": "1.0.0",
+    "license": "MIT",
+    "source": "https://github.com/mono/mono",
+    "files": [
+      "mono.txt"
+    ]
+  },
+  {
+    "name": "Intel PresentMon (console)",
+    "version": "2.6.0",
+    "license": "MIT",
+    "source": "https://github.com/GameTechDev/PresentMon",
+    "files": [
+      "presentmon.txt"
+    ]
+  }
+]
