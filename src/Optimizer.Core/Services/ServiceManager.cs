@@ -84,6 +84,12 @@ public static class ServiceManager
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
     /// <summary>Engine tweak for a start type change (backup and undo). Null when the manager does not allow it.</summary>
+    /// <summary>
+    /// One id per service, whatever start type is chosen: the backup keeps the true original across several changes,
+    /// and only the latest choice counts for detection (an earlier choice is not reported as reset by Windows).
+    /// </summary>
+    public static string ChangeId(string serviceName) => $"service.start.{Tweaks.TweakIds.Slug(serviceName)}";
+
     public static TweakDefinition? Change(ServiceRow row, ServiceStart start)
     {
         var allowed = row.Edit switch
@@ -95,7 +101,7 @@ public static class ServiceManager
         if (!allowed || row.Start == start) return null;
         return new TweakDefinition
         {
-            Id = $"service.{start.ToString().ToLowerInvariant()}.{new string(row.Name.Where(char.IsAsciiLetterOrDigit).Select(char.ToLowerInvariant).ToArray())}",
+            Id = ChangeId(row.Name),
             Docs = "service.change",
             Subject = row.DisplayName,
             Category = "Services",

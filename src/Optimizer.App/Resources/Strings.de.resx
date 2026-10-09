@@ -835,4 +835,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="WinUpdated_AllGood" xml:space="preserve">
     <value>Windows wurde von {0} auf {1} aktualisiert. Alle {2} Änderungen dieser App sind weiterhin aktiv.</value>
   </data>
+  <data name="Startup_ScriptHost" xml:space="preserve">
+    <value>Startet einen Skript-Host (PowerShell, cmd, mshta oder ähnlich). Das Programm selbst ist von Microsoft signiert, aber die Befehlszeile bestimmt, was ausgeführt wird: Schadsoftware startet oft so, manche seriöse Tools auch. Prüfe den Befehl.</value>
+  </data>
+  <data name="Result_NoRestorePoint" xml:space="preserve">
+    <value>Es konnte kein Wiederherstellungspunkt erstellt werden, daher wurde nichts geändert. Versuche es gleich noch einmal oder wähle „Ohne fortfahren“ (die Sicherung der Originalwerte wird in jedem Fall angelegt).</value>
+  </data>
+  <data name="Storage_RecycleOtherAccount" xml:space="preserve">
+    <value>Diese App läuft unter einem anderen Konto ({0}). Die Dateien landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Betrachte das Löschen als endgültig.</value>
+  </data>
 </root>

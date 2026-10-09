@@ -118,8 +118,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (backup is not null)
         {
             if (state == TweakState.Applied && backup.PendingRestartSince is { } since && LastBoot() < since) return TweakState.PendingRestart;
-            // We applied it, now it is gone: a feature update or another tool reset it (drift, plan v4 §4.10).
-            if (state != TweakState.Applied) return TweakState.RevertedByWindows;
+            // We applied it, now it is gone: a feature update or another tool reset it (drift, plan v4 §4.10). Only
+            // targets we changed count: a newly added adapter or a target outside the backup is simply not applied.
+            if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is not null))
+                return TweakState.RevertedByWindows;
         }
         else if (state != TweakState.Applied && facts.Get("device.managed") is true && actions.OfType<RegistryAction>().Any(a => IsPolicyPath(a.Path) && a.Read(ctx) is { Existed: true }))
         {
@@ -275,10 +277,13 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             var current = a.Read(ctx);
             if (current is null) continue;
             before[a.TargetKey] = current;
-            if (backup.Entry(a.TargetKey) is null)
-                backup.Entries.Add(new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+            if (backup.Entry(a.TargetKey) is not { } entry)
+                backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+            entry.Action = JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
         }
-        if (TweakCatalog.Current.Get(t.Id) is null) backup.Definition ??= JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
+        // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
+        // definition is what detection compares against; each entry restores itself through its own action.
+        if (TweakCatalog.Current.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
         store.Save(backup); // persisted before the first write, so a crash mid-way still has the originals
 
         // Apply in order; on failure roll back what this run changed (per-tweak transaction).
@@ -293,6 +298,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             catch (Exception ex)
             {
                 Log.Error("engine", $"{t.Id}: {a.TargetKey} failed, rolling back {done.Count} action(s)", ex);
+                var stuck = new List<TweakAction>();
                 foreach (var undo in Enumerable.Reverse(done))
                 {
                     try
@@ -301,8 +307,19 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     }
                     catch (Exception rex)
                     {
+                        stuck.Add(undo);
                         Log.Error("engine", $"rollback of {undo.TargetKey} failed", rex);
                     }
+                }
+                if (stuck.Count > 0)
+                {
+                    // Part of the change is still on the system: keep the backup so Undo can restore it later.
+                    foreach (var s in stuck)
+                        if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeRead(s);
+                    backup.LastApplied = DateTimeOffset.Now;
+                    backup.AppliedOnVersion = WindowsVersion;
+                    store.Save(backup);
+                    return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)");
                 }
                 // Remove entries this run added if nothing of this tweak remains applied.
                 if (backup.Entries.All(e => before.TryGetValue(e.TargetKey, out var b) && b.SameAs(e.Original)))
@@ -348,9 +365,19 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (backup is null) return new RevertResult(true, [], []);
         var skipped = new List<string>();
         var errors = new List<string>();
-        foreach (var a in Enumerable.Reverse(Expand(t)))
+        var kept = new List<BackupEntry>();
+        var current = new Dictionary<string, TweakAction>();
+        foreach (var a in Expand(t)) current.TryAdd(a.TargetKey, a);
+        // Every entry of the backup is restored, also targets the tweak no longer expands to (through the stored action).
+        foreach (var entry in Enumerable.Reverse(backup.Entries))
         {
-            if (backup.Entry(a.TargetKey) is not { } entry) continue;
+            var a = current.GetValueOrDefault(entry.TargetKey) ?? StoredAction(entry);
+            if (a is null)
+            {
+                kept.Add(entry);
+                errors.Add($"{entry.Description}: cannot be restored automatically (not part of this change any more)");
+                continue;
+            }
             try
             {
                 // Feature-update-aware: if the value is no longer what we applied, Windows (or the user) changed it: leave it.
@@ -364,12 +391,49 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             }
             catch (Exception ex)
             {
+                kept.Add(entry);
                 errors.Add($"{entry.Description}: {ex.Message}");
                 Log.Error("engine", $"undo {t.Id} {a.TargetKey} failed", ex);
             }
         }
-        if (errors.Count == 0) store.Archive(t.Id);
+        if (kept.Count == 0)
+        {
+            store.Archive(t.Id);
+        }
+        else
+        {
+            // Only what could not be restored stays: a retry does not report restored targets as "reset by Windows".
+            backup.Entries.RemoveAll(e => !kept.Contains(e));
+            store.Save(backup);
+        }
         return new RevertResult(errors.Count == 0, skipped, errors);
+    }
+
+    private static TweakAction? StoredAction(BackupEntry entry)
+    {
+        if (entry.Action is not { } json) return null;
+        try
+        {
+            var a = JsonSerializer.Deserialize<TweakAction>(json, TweakCatalog.JsonOptions);
+            return a?.TargetKey == entry.TargetKey ? a : null;
+        }
+        catch (JsonException ex)
+        {
+            Log.Warn("engine", $"stored action of {entry.TargetKey} unreadable: {ex.Message}");
+            return null;
+        }
+    }
+
+    private StoredValue? SafeRead(TweakAction a)
+    {
+        try
+        {
+            return a.Read(ctx);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     /// <summary>Undoes every backed-up change: catalog tweaks and runtime tweaks (from their stored definition).</summary>

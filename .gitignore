@@ -193,6 +193,8 @@ publish/
 # Note: Comment the next line if you want to checkin your web deploy settings,
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
+# The single-file publish profile has no secrets and is needed to build the exe.
+!src/Optimizer.App/Properties/PublishProfiles/SingleFile.pubxml
 *.publishproj
 
 # Microsoft Azure Web App publish settings. Comment the next line if you want to
@@ -263,7 +265,8 @@ Generated_Code/
 # to a newer Visual Studio version. Backup files are not needed,
 # because we have git ;-)
 _UpgradeReport_Files/
-Backup*/
+# Anchored to the repo root: src/Optimizer.Core/Backup is source code.
+/Backup*/
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/

@@ -26,8 +26,21 @@ public static class SignatureVerifier
     public static SignatureInfo Verify(string? path)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return new SignatureInfo(SignatureStatus.NotFound, null, false);
-        return Cache.GetOrAdd(path, p =>
+        // Keyed by size and time too: a file replaced while the app runs is verified again, not served from the cache.
+        FileInfo info;
+        try
         {
+            info = new FileInfo(path);
+            _ = info.Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new SignatureInfo(SignatureStatus.Error, null, false);
+        }
+        var key = $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+        return Cache.GetOrAdd(key, _ =>
+        {
+            var p = path;
             try
             {
                 var embedded = VerifyEmbedded(p, out var publisher);

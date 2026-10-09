@@ -835,4 +835,13 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="WinUpdated_AllGood" xml:space="preserve">
     <value>Windows was updated from {0} to {1}. All {2} changes made by this app are still in place.</value>
   </data>
+  <data name="Startup_ScriptHost" xml:space="preserve">
+    <value>Starts a script host (PowerShell, cmd, mshta or similar). The program itself is signed by Microsoft, but the command line decides what runs: malware often starts this way, some legitimate tools do too. Check the command.</value>
+  </data>
+  <data name="Result_NoRestorePoint" xml:space="preserve">
+    <value>No restore point could be created, so nothing was changed. Try again in a moment, or choose "Continue without" (the backup of the original values is made either way).</value>
+  </data>
+  <data name="Storage_RecycleOtherAccount" xml:space="preserve">
+    <value>This app runs as a different account ({0}). The files go to that account's Recycle Bin, which you may not be able to open from your own account. Treat this as a permanent delete.</value>
+  </data>
 </root>

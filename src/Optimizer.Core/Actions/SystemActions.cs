@@ -132,17 +132,23 @@ public sealed class BcdAction : TweakAction
     public string? Value { get; init; }
     public bool Delete { get; init; }
 
-    /// <summary>Value written back on undo when the element existed before (presence is all we can read reliably).</summary>
+    /// <summary>
+    /// Only for backups written before values were read (they stored "set"): the value written back on undo when the
+    /// element existed before.
+    /// </summary>
     public string RestoreValue { get; init; } = "yes";
+
+    private const string LegacyPresent = "set";
 
     public override bool IsBootCritical => true;
     public override string TargetKey => $"bcd:{Element}".ToLowerInvariant();
     public override string Describe(ActionContext c) => $"Boot configuration {{current}}: {Element}";
 
-    public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, "bcd", "set");
+    public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, "bcd", Normalize(Value ?? "yes"));
 
+    /// <summary>The element's value ("yes", "no", numbers): so "useplatformclock No" is not mistaken for "Yes".</summary>
     public override StoredValue? Read(ActionContext c) =>
-        c.Bcd.CurrentElements().Contains(Element) ? new StoredValue(true, "bcd", "set") : StoredValue.Missing;
+        c.Bcd.CurrentValues().TryGetValue(Element, out var v) ? new StoredValue(true, "bcd", Normalize(v)) : StoredValue.Missing;
 
     public override void Apply(ActionContext c)
     {
@@ -152,9 +158,25 @@ public sealed class BcdAction : TweakAction
 
     public override void Restore(ActionContext c, StoredValue original)
     {
-        if (original.Existed) c.Bcd.Set(Element, Delete ? RestoreValue : Value ?? "yes");
-        else c.Bcd.Delete(Element);
+        if (!original.Existed)
+        {
+            c.Bcd.Delete(Element);
+            return;
+        }
+        var value = original.Data == LegacyPresent ? (Delete ? RestoreValue : Value ?? "yes") : original.Data;
+        // Only plain tokens go back to bcdedit; anything else (a localized word, a device path) is not guessed at.
+        if (string.IsNullOrEmpty(value) || !value.All(ch => char.IsAsciiLetterOrDigit(ch) || ch == '-'))
+            throw new InvalidOperationException($"BCD {Element}: original value \"{value}\" cannot be written back automatically");
+        c.Bcd.Set(Element, value);
     }
+
+    /// <summary>bcdedit prints booleans as Yes/No; numbers and other tokens are kept as printed (lower case).</summary>
+    public static string Normalize(string value) => value.Trim().ToLowerInvariant() switch
+    {
+        "yes" or "true" or "on" or "1" => "yes",
+        "no" or "false" or "off" or "0" => "no",
+        var other => other,
+    };
 }
 
 /// <summary>Enables or disables a scheduled task by full path.</summary>

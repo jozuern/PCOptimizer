@@ -137,7 +137,12 @@ public sealed class SystemPowerManager(IProcessRunner processes) : IPowerManager
         return list;
     }
 
-    public void Export(Guid scheme, string file) => processes.Run("powercfg.exe", $"/export \"{file}\" {scheme}");
+    /// <summary>Throws when powercfg fails, so the backup never lists an export file that does not exist.</summary>
+    public void Export(Guid scheme, string file)
+    {
+        var (code, output) = processes.Run("powercfg.exe", $"/export \"{file}\" {scheme}");
+        if (code != 0 || !File.Exists(file)) throw new InvalidOperationException($"powercfg /export failed ({code}): {output}");
+    }
 
     private static string FriendlyName(Guid scheme)
     {
@@ -159,16 +164,25 @@ public sealed class SystemPowerManager(IProcessRunner processes) : IPowerManager
 /// <summary>bcdedit wrapper. Element identifiers are read from "/enum {current} /v" (identifiers are not localized).</summary>
 public sealed class SystemBcdStore(IProcessRunner processes) : IBcdStore
 {
-    public IReadOnlySet<string> CurrentElements()
+    public IReadOnlyDictionary<string, string> CurrentValues()
     {
         var (code, output) = processes.Run("bcdedit.exe", "/enum {current} /v");
         // bcdedit needs admin rights; failing loudly makes BCD tweaks "unknown" instead of wrongly "applied".
         if (code != 0) throw new InvalidOperationException($"bcdedit /enum failed ({code})");
-        return output.Split('\n')
-            .Select(l => l.Trim())
-            .Where(l => l.Length > 0 && char.IsAsciiLetterLower(l[0]))
-            .Select(l => l.Split(' ', 2)[0])
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return Parse(output);
+    }
+
+    /// <summary>"element    value" lines; the localized header lines start with a capital letter and are skipped.</summary>
+    public static IReadOnlyDictionary<string, string> Parse(string output)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in output.Split('\n').Select(l => l.Trim()))
+        {
+            if (line.Length == 0 || !char.IsAsciiLetterLower(line[0])) continue;
+            var parts = line.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries);
+            map.TryAdd(parts[0], parts.Length > 1 ? parts[1].Trim() : "");
+        }
+        return map;
     }
 
     public void Set(string element, string value) => Run($"/set {{current}} {element} {value}");

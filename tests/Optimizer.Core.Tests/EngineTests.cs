@@ -207,13 +207,47 @@ public class EngineTests
     public async Task BootCriticalExportsBcdFirst()
     {
         using var fx = new EngineFixture();
-        fx.Bcd.Elements.Add("useplatformclock");
+        fx.Bcd.Values["useplatformclock"] = "Yes";
         var t = T("leftover.usePlatformClock");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
         Assert.Single(fx.Bcd.Exports);
-        Assert.DoesNotContain("useplatformclock", fx.Bcd.Elements);
+        Assert.False(fx.Bcd.Values.ContainsKey("useplatformclock"));
         fx.Engine.Revert(t);
-        Assert.Contains("useplatformclock", fx.Bcd.Elements);
+        Assert.Equal("yes", fx.Bcd.Values["useplatformclock"]);
+    }
+
+    [Fact]
+    public async Task BcdUndoWritesBackTheOriginalValue()
+    {
+        // "No" must come back as "no", not as a forced "yes" (that would turn HPET on).
+        using var fx = new EngineFixture();
+        fx.Bcd.Values["useplatformclock"] = "No";
+        var t = T("leftover.usePlatformClock");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        Assert.False(fx.Bcd.Values.ContainsKey("useplatformclock"));
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal("no", fx.Bcd.Values["useplatformclock"]);
+    }
+
+    [Fact]
+    public void BcdValueIsCompared()
+    {
+        // "disabledynamictick No" is present but not the desired "yes".
+        using var fx = new EngineFixture();
+        fx.Bcd.Values["disabledynamictick"] = "No";
+        var a = new BcdAction { Element = "disabledynamictick", Value = "yes" };
+        Assert.Equal(ActionState.NotApplied, a.State(fx.Context));
+        fx.Bcd.Values["disabledynamictick"] = "Yes";
+        Assert.Equal(ActionState.Applied, a.State(fx.Context));
+    }
+
+    [Fact]
+    public void BcdOutputIsParsedWithValues()
+    {
+        var map = Platform.SystemBcdStore.Parse("Windows-Startladeprogramm\r\n-------------------------\r\nBezeichner              {current}\r\nuseplatformclock        No\r\nnx                      OptIn\r\n");
+        Assert.Equal("No", map["useplatformclock"]);
+        Assert.Equal("OptIn", map["nx"]);
+        Assert.False(map.ContainsKey("Bezeichner"));
     }
 
     [Fact]
@@ -234,6 +268,101 @@ public class EngineTests
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
         Assert.Equal("1", Reg(fx, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{BBBB}", "TCPNoDelay").Data);
     }
+
+    [Fact]
+    public async Task UndoRestoresAdaptersThatAreNoLongerConnected()
+    {
+        // Applied with Ethernet and Wi-Fi up, undone with only Wi-Fi up: Ethernet values must still be restored.
+        using var fx = new EngineFixture("{AAAA}", "{BBBB}");
+        const string eth = @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{AAAA}";
+        RegistryValue.Write(fx.Registry, Hive.Machine, eth, "TCPNoDelay", "dword", "0");
+        var t = T("network.nagleOff");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        Assert.Equal("1", Reg(fx, Hive.Machine, eth, "TCPNoDelay").Data);
+
+        var wifiOnly = new TweakEngine(WithInterfaces(fx.Context, "{BBBB}"), fx.Store, fx.RestorePoints, "test", 26300);
+        Assert.Equal(TweakState.Applied, wifiOnly.DetectState(t, Facts())); // not "reset by Windows"
+        var r = wifiOnly.Revert(t);
+        Assert.True(r.Success);
+        Assert.Equal("0", Reg(fx, Hive.Machine, eth, "TCPNoDelay").Data);
+        Assert.False(Reg(fx, Hive.Machine, eth, "TcpAckFrequency").Existed);
+        Assert.Null(fx.Store.Get(t.Id));
+    }
+
+    [Fact]
+    public async Task UndoKeepsEntriesThatCannotBeRestored()
+    {
+        using var fx = new EngineFixture();
+        fx.Services.Start["SvcA"] = ServiceStart.Automatic;
+        fx.Services.Start["SvcB"] = ServiceStart.Automatic;
+        var t = new TweakDefinition
+        {
+            Id = "test.twoServices", Category = "Services", Hidden = true, Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
+            Actions = [new ServiceAction { Name = "SvcA", StartType = ServiceStart.Manual }, new ServiceAction { Name = "SvcB", StartType = ServiceStart.Manual }],
+        };
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        fx.Services.FailOnWrite.Add("SvcA");
+        var first = fx.Engine.Revert(t);
+        Assert.False(first.Success);
+        Assert.Equal(ServiceStart.Automatic, fx.Services.Start["SvcB"]);
+        // Only SvcA is left in the backup; the retry restores it and does not call SvcB "reset by Windows".
+        Assert.Single(fx.Store.Get(t.Id)!.Entries);
+        fx.Services.FailOnWrite.Clear();
+        var second = fx.Engine.Revert(t);
+        Assert.True(second.Success);
+        Assert.Empty(second.AlreadyRevertedByWindows);
+        Assert.Equal(ServiceStart.Automatic, fx.Services.Start["SvcA"]);
+        Assert.Null(fx.Store.Get(t.Id));
+    }
+
+    [Fact]
+    public async Task FailedRollbackKeepsTheBackup()
+    {
+        using var fx = new EngineFixture();
+        fx.Services.Start["SvcA"] = ServiceStart.Automatic;
+        fx.Services.Start["SvcB"] = ServiceStart.Automatic;
+        var t = new TweakDefinition
+        {
+            Id = "test.rollback", Category = "Services", Hidden = true, Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
+            Actions = [new ServiceAction { Name = "SvcA", StartType = ServiceStart.Manual }, new ServiceAction { Name = "SvcB", StartType = ServiceStart.Manual }],
+        };
+        // SvcA is written, SvcB fails, and rolling back SvcA fails too (the fake throws on every later SvcA write).
+        var services = new ThrowAfterFirstWrite(fx.Services, "SvcA", "SvcB");
+        var engine = new TweakEngine(WithServices(fx.Context, services), fx.Store, fx.RestorePoints, "test", 26300);
+        var r = await engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        Assert.Equal(ApplyOutcome.Failed, r.Outcome);
+        Assert.Equal(ServiceStart.Manual, fx.Services.Start["SvcA"]);
+        var backup = fx.Store.Get(t.Id);
+        Assert.NotNull(backup);
+        Assert.Equal("Automatic", backup!.Entry(new ServiceAction { Name = "SvcA" }.TargetKey)!.Original.Data);
+        // Undo with working services restores it.
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal(ServiceStart.Automatic, fx.Services.Start["SvcA"]);
+    }
+
+    private sealed class ThrowAfterFirstWrite(FakeServices inner, string once, string never) : IServiceManager
+    {
+        private bool _written;
+        public ServiceStart? GetStartType(string name) => inner.GetStartType(name);
+
+        public void SetStartType(string name, ServiceStart start)
+        {
+            if (name.Equals(never, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("access denied");
+            if (name.Equals(once, StringComparison.OrdinalIgnoreCase) && _written) throw new InvalidOperationException("access denied");
+            _written = true;
+            inner.SetStartType(name, start);
+        }
+    }
+
+    private static ActionContext WithInterfaces(ActionContext c, params string[] nics) => Copy(c, c.Services, nics);
+    private static ActionContext WithServices(ActionContext c, IServiceManager services) => Copy(c, services, c.NetworkInterfaceIds);
+
+    private static ActionContext Copy(ActionContext c, IServiceManager services, IReadOnlyList<string> nics) => new()
+    {
+        Registry = c.Registry, Services = services, Power = c.Power, Bcd = c.Bcd, Tasks = c.Tasks, Displays = c.Displays, Processes = c.Processes,
+        PowerMode = c.PowerMode, Devices = c.Devices, Network = c.Network, Nvidia = c.Nvidia, Notify = c.Notify, ExportFolder = c.ExportFolder,
+        NetworkInterfaceIds = nics,
+    };
 
     [Fact]
     public async Task ClassicContextMenuKeyIsRemovedOnUndo()

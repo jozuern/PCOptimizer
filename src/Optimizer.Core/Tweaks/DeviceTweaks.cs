@@ -32,7 +32,6 @@ public static class DeviceTweaks
         return list;
     }
 
-    private static string Slug(string s) => new(s.Where(char.IsAsciiLetterOrDigit).Select(char.ToLowerInvariant).Take(40).ToArray());
 
     /// <summary>
     /// MSI mode via the documented registry override (MSISupported = 1 under Interrupt Management). Applies after a
@@ -40,7 +39,7 @@ public static class DeviceTweaks
     /// </summary>
     public static TweakDefinition MsiMode(MsiDevice d) => new()
     {
-        Id = $"device.msi.{d.Kind}.{Slug(d.InstanceId)}",
+        Id = $"device.msi.{d.Kind}.{TweakIds.Slug(d.InstanceId)}",
         Subject = d.Name,
         Docs = MsiDoc,
         Category = "Expert",
@@ -84,7 +83,7 @@ public static class DeviceTweaks
         var path = $@"SYSTEM\CurrentControlSet\Enum\{d.InstanceId}\Device Parameters\Interrupt Management\Affinity Policy";
         return new TweakDefinition
         {
-            Id = $"device.affinity.{d.Kind}.{Slug(d.InstanceId)}",
+            Id = $"device.affinity.{d.Kind}.{TweakIds.Slug(d.InstanceId)}",
             Subject = $"{d.Name} > CPU {logicalProcessor}",
             Docs = AffinityDoc,
             Category = "Expert",
@@ -109,7 +108,7 @@ public static class DeviceTweaks
     /// <summary>NVIDIA "Prefer maximum performance" in the game's own driver profile (created if the driver has none).</summary>
     public static TweakDefinition NvidiaGameMaxPerformance(InstalledGame g) => new()
     {
-        Id = $"nvidia.game.{Slug(Path.GetFileNameWithoutExtension(g.Executable!))}.{Slug(g.Name)}",
+        Id = $"nvidia.game.{TweakIds.Slug(g.Executable!)}",
         Subject = g.Name,
         Docs = NvidiaGameDoc,
         Category = "Graphics",

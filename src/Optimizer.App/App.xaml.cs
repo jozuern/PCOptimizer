@@ -23,6 +23,12 @@ public partial class App : Application
     private AppSettings _settings = new();
     private bool _watching;
 
+    // The signed-in user, whose Windows app mode counts. With a separate admin account (or Administrator protection)
+    // this process's HKCU is the admin's, and WPF-UI's theme watcher would follow that account instead.
+    private string? _sessionSid;
+    private bool _userMismatch;
+    private bool _preferenceHooked;
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -52,6 +58,8 @@ public partial class App : Application
         }
 
         var services = new AppServices();
+        _sessionSid = services.UserSid;
+        _userMismatch = services.Elevation.UserMismatch;
 
         if (args.Value("--report") is { } reportPath)
         {
@@ -108,7 +116,7 @@ public partial class App : Application
     public void ApplyTheme(string theme, bool save = true)
     {
         var setting = theme is "Light" or "Dark" ? theme : "System";
-        var dark = setting == "Dark" || (setting == "System" && !SystemUsesLightTheme());
+        var dark = setting == "Dark" || (setting == "System" && !SystemUsesLightTheme(_sessionSid));
         ApplicationThemeManager.Apply(dark ? ApplicationTheme.Dark : ApplicationTheme.Light, WindowBackdropType.Mica, true);
         ApplicationAccentColorManager.ApplySystemAccent();
         // A gray Windows accent would leave switches, buttons and progress colorless: use the Fluent default blue then.
@@ -120,6 +128,11 @@ public partial class App : Application
             // The watcher only accepts loaded windows; at startup the window is not shown yet.
             void Watch()
             {
+                if (_userMismatch)
+                {
+                    FollowSessionUserTheme();
+                    return;
+                }
                 if (setting == "System") SystemThemeWatcher.Watch(w, WindowBackdropType.Mica, true);
                 else if (_watching) SystemThemeWatcher.UnWatch(w);
                 _watching = setting == "System";
@@ -145,12 +158,33 @@ public partial class App : Application
         return max == min ? 0 : l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
     }
 
-    /// <summary>Windows "app mode" (Settings -> Personalization -> Colors). Read-only.</summary>
-    private static bool SystemUsesLightTheme()
+    /// <summary>
+    /// Separate admin account: theme changes are broadcast to every window in the session, so re-read the signed-in
+    /// user's app mode on each change instead of WPF-UI's watcher (which reads this process's own HKCU).
+    /// </summary>
+    private void FollowSessionUserTheme()
     {
+        if (_preferenceHooked) return;
+        _preferenceHooked = true;
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, e) =>
+        {
+            if (e.Category is not (Microsoft.Win32.UserPreferenceCategory.General or Microsoft.Win32.UserPreferenceCategory.Color)) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (_settings.Theme == "System") ApplyTheme("System", save: false);
+            });
+        };
+    }
+
+    /// <summary>Windows "app mode" (Settings -> Personalization -> Colors) of the signed-in user. Read-only.</summary>
+    private static bool SystemUsesLightTheme(string? sessionSid)
+    {
+        const string path = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
         try
         {
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            using var key = sessionSid is not null
+                ? Microsoft.Win32.Registry.Users.OpenSubKey($@"{sessionSid}\{path}") ?? Microsoft.Win32.Registry.CurrentUser.OpenSubKey(path)
+                : Microsoft.Win32.Registry.CurrentUser.OpenSubKey(path);
             return key?.GetValue("AppsUseLightTheme") is int v && v == 1;
         }
         catch (Exception)

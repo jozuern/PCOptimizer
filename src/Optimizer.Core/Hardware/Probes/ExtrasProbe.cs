@@ -111,7 +111,7 @@ public static class ExtrasProbe
         var entries = scanner.RunKeys().Concat(scanner.StartupFolders()).Concat(scanner.LogonTasks()).Where(Startup.StartupTweaks.CountsForF16);
         return entries
             .Where(e => !(e.Kind == Startup.StartupKind.LogonTask && e.Name.StartsWith(@"Microsoft\", StringComparison.OrdinalIgnoreCase)))
-            .Where(e => !Startup.SignatureVerifier.Verify(e.ImagePath).IsMicrosoft)
+            .Where(e => e.RunsScriptHost || !Startup.SignatureVerifier.Verify(e.ImagePath).IsMicrosoft)
             .Select(e => e.Name)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();

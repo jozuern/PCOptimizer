@@ -53,6 +53,12 @@ public sealed partial class StartupRow : SwitchRow
     public string? ReadOnlyNote { get; }
     public bool Suspicious => Entry.Suspicious;
 
+    /// <summary>Signed by Microsoft does not mean harmless here: the command line decides what the script host runs.</summary>
+    public string? ScriptHostNote => Entry.RunsScriptHost ? Loc.Instance["Startup_ScriptHost"] : null;
+
+    /// <summary>Hidden by "Hide Microsoft entries" only when signed by Microsoft and nothing else needs a look.</summary>
+    public bool IsPlainMicrosoft => IsMicrosoft && !Entry.Suspicious && !Entry.RunsScriptHost;
+
     [ObservableProperty] private string _publisherText = "";
     [ObservableProperty] private string _signatureText = "";
     [ObservableProperty] private bool _isMicrosoft;
@@ -65,7 +71,7 @@ public sealed partial class StartupRow : SwitchRow
         IsMicrosoft = s.IsMicrosoft;
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
         SignatureText = Labels.Current.Get(lang, $"signature.{s.Status}");
-        NeedsAttention = Entry.Suspicious || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
+        NeedsAttention = Entry.Suspicious || Entry.RunsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
     }
 
     protected override Task<bool> ToggleAsync(bool on) => Switching.SetAsync(_services, _runner, enabled => StartupTweaks.Set(Entry, enabled), on);
@@ -122,10 +128,10 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     {
         var kind = SelectedKind?.Key ?? "";
         Rows.Clear();
-        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsMicrosoft && !r.Suspicious))
+        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft))
                      .OrderByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
-        var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsMicrosoft);
+        var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);
         SummaryText = Loc.Instance.Format("Startup_Summary", _all.Count, atLogon, _all.Count(r => r.NeedsAttention));
     }
 
@@ -283,7 +289,9 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
         Tasks.Clear();
         foreach (var t in tasks.Where(t => showMs || !t.Path.StartsWith(@"\Microsoft\", StringComparison.OrdinalIgnoreCase)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase))
         {
-            var entry = new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), t.Command, CommandLine.ImagePath(t.Command is null ? null : $"\"{t.Command}\""),
+            // Full command with arguments: rundll32 resolves to its DLL, and script hosts are judged by what they run.
+            var command = t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim();
+            var entry = new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), command, CommandLine.ImagePath(command),
                 t.AtLogon ? Loc.Instance["Task_AtLogon"] : t.AtBoot ? Loc.Instance["Task_AtBoot"] : Loc.Instance["Task_Other"], Hive.Machine, t.Enabled, $"task:{t.Path}")
             {
                 Target = t.Path,
@@ -304,9 +312,9 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
     public async Task<bool> ChangeStartAsync(ServiceRowVm row, ServiceStart start)
     {
         // Back to the original start type of a change this app made: undo that change instead.
-        var previous = services.Store.All().FirstOrDefault(b => b.TweakId.StartsWith("service.", StringComparison.Ordinal) && b.TweakId.EndsWith("." + Slug(row.Name), StringComparison.Ordinal));
-        if (previous is not null && Owner.ResolveTweak(previous.TweakId) is { } t
-            && previous.Entries.FirstOrDefault()?.Original.Data == start.ToString())
+        var id = ServiceManager.ChangeId(row.Name);
+        if (services.Store.Get(id) is { } previous && previous.Entries.FirstOrDefault()?.Original.Data == start.ToString()
+            && Owner.ResolveTweak(id) is { } t)
             return await runner.UndoAsync(t) && await ReloadThenTrue();
         if (ServiceManager.Change(row.Row, start) is not { } tweak) return false;
         var written = await runner.ApplyAsync(tweak);
@@ -319,8 +327,6 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
         await ReloadAsync();
         return true;
     }
-
-    private static string Slug(string name) => new(name.Where(char.IsAsciiLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 }
 
 // ---------------- Apps & drivers ----------------
@@ -353,7 +359,9 @@ public sealed record DriverItem(string Device, string ClassText, string Provider
 
 public sealed partial class AppsViewModel(MainViewModel owner, AppServices services) : PageViewModel(owner)
 {
+    // Elevated installs only use winget from the protected package folder; per-user installs run as the user and may use the alias.
     private string? _winget;
+    private string? _wingetForUser;
 
     public ObservableCollection<AppRow> Apps { get; } = [];
     public ObservableCollection<DriverItem> Drivers { get; } = [];
@@ -365,8 +373,8 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
     {
         var lang = Lang;
         var programs = Owner.Profile?.Extras?.Programs ?? [];
-        _winget = await Task.Run(() => Winget.Find(services.ProfilePath));
-        WingetMissing = _winget is null;
+        (_winget, _wingetForUser) = await Task.Run(() => (Winget.FindTrusted(), Winget.FindForUser(services.ProfilePath)));
+        WingetMissing = _winget is null && _wingetForUser is null;
         Apps.Clear();
         foreach (var a in CatalogData.Current.Apps.Apps) Apps.Add(new AppRow(a, lang, a.IsInstalled(programs)));
 
@@ -387,11 +395,17 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
     [RelayCommand]
     private async Task InstallAsync(AppRow? row)
     {
-        if (row is null || _winget is null) return;
+        if (row is null) return;
         if (row.PerUser)
         {
-            var path = Winget.InstallForUser(_winget, row.App, services.Elevation);
+            if (_wingetForUser is null) return;
+            var path = Winget.InstallForUser(_wingetForUser, row.App, services.Elevation);
             row.StateText = path == DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Failed", "winget") : Loc.Instance["Apps_StartedForUser"];
+            return;
+        }
+        if (_winget is null)
+        {
+            row.StateText = Loc.Instance["Apps_NoWinget"];
             return;
         }
         row.IsInstalling = true;
@@ -542,7 +556,11 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     {
         var selected = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanDelete).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (selected.Count == 0) return;
-        if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10))), Loc.Instance["Storage_Recycle"])) return;
+        var text = Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10)));
+        // The Recycle Bin belongs to the account this process runs as. With a separate admin account (or Administrator
+        // protection) that is not the signed-in user's bin: say so before deleting.
+        if (services.Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
+        if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], text, Loc.Instance["Storage_Recycle"])) return;
         var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected));
         Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count));
         await ScanStorageAsync();
@@ -601,7 +619,7 @@ public sealed record SensorRow(string Hardware, string Sensor, string Value);
 
 public sealed record RunRow(string Label, string AvgFps, string Low, string Frames);
 
-public sealed partial class HealthViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialogs) : PageViewModel(owner)
 {
     private CancellationTokenSource? _toolCancel;
     private CancellationTokenSource? _throttleCancel;
@@ -869,7 +887,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, AppServices ser
     private async Task InstallPawnIoAsync()
     {
         var app = CatalogData.Current.Apps.Apps.First(a => a.Id == "namazso.PawnIO");
-        if (Winget.Find(services.ProfilePath) is not { } winget)
+        if (Winget.FindTrusted() is not { } winget)
         {
             PawnIoText = Loc.Instance["Apps_NoWinget"];
             return;

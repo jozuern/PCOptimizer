@@ -36,26 +36,64 @@ public sealed class AppEntry
 /// </summary>
 public static class Winget
 {
-    /// <summary>winget.exe: the signed-in user's execution alias, else the newest App Installer package folder.</summary>
-    public static string? Find(string? profilePath)
+    private const string PackageRepository = @"SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\PackageRepository\Packages";
+
+    /// <summary>
+    /// winget.exe for elevated runs: only from the App Installer package folder under Program Files\WindowsApps (writable
+    /// only by TrustedInstaller), found through the machine's package repository (HKLM, admin-only). Never the execution
+    /// alias in the user's WindowsApps folder: the user can put any program there, and this process runs it as admin.
+    /// </summary>
+    public static string? FindTrusted() => FindTrusted(ReadPackageFolders());
+
+    public static string? FindTrusted(IEnumerable<(string Package, string Folder)> packages)
+    {
+        var protectedRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps") + "\\";
+        return packages
+            .Select(p => (Version: PackageVersion(p.Package), p.Folder))
+            .Where(p => p.Version is not null && p.Folder.StartsWith(protectedRoot, StringComparison.OrdinalIgnoreCase) && !p.Folder.Contains("..", StringComparison.Ordinal))
+            .OrderByDescending(p => p.Version)
+            .Select(p => Path.Combine(p.Folder, "winget.exe"))
+            .FirstOrDefault(p => File.Exists(p) && Platform.SafeDelete.HasNoLinks(p));
+    }
+
+    /// <summary>
+    /// winget.exe for installers started as the signed-in user (they run with that user's rights anyway): the user's
+    /// execution alias, else the package folder.
+    /// </summary>
+    public static string? FindForUser(string? profilePath)
     {
         if (profilePath is not null)
         {
             var alias = Path.Combine(profilePath, @"AppData\Local\Microsoft\WindowsApps\winget.exe");
             if (File.Exists(alias)) return alias;
         }
-        var own = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\WindowsApps\winget.exe");
-        if (File.Exists(own)) return own;
+        return FindTrusted();
+    }
+
+    /// <summary>"Microsoft.DesktopAppInstaller_1.29.380.0_x64__8wekyb3d8bbwe" -> 1.29.380.0; other packages (language, bundle) -> null.</summary>
+    public static Version? PackageVersion(string package)
+    {
+        const string prefix = "Microsoft.DesktopAppInstaller_", suffix = "_x64__8wekyb3d8bbwe";
+        if (!package.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !package.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) return null;
+        return Version.TryParse(package[prefix.Length..^suffix.Length], out var v) ? v : null;
+    }
+
+    private static List<(string, string)> ReadPackageFolders()
+    {
+        var list = new List<(string, string)>();
         try
         {
-            var apps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
-            return Directory.EnumerateDirectories(apps, "Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe")
-                .Select(d => Path.Combine(d, "winget.exe")).Where(File.Exists).OrderByDescending(p => p, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(PackageRepository);
+            foreach (var name in key?.GetSubKeyNames().Where(n => n.StartsWith("Microsoft.DesktopAppInstaller_", StringComparison.OrdinalIgnoreCase)) ?? [])
+            {
+                using var sub = key!.OpenSubKey(name);
+                if (sub?.GetValue("Path") is string folder) list.Add((name, folder));
+            }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
         {
-            return null;
         }
+        return list;
     }
 
     /// <summary>Only catalog ids are passed to winget, and only if they contain nothing but id characters.</summary>

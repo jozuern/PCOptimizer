@@ -1,0 +1,64 @@
+# Build, test and publish PCOptimizer (WPF, .NET 10, Windows x64).
+# Runs the unit tests (sandbox registry and fakes; nothing on the runner is changed) and the docs lint,
+# then publishes the single self-contained exe and keeps it as a build artifact.
+
+name: Build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Install .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore
+      run: dotnet restore PCOptimizer.sln
+
+    - name: Build
+      run: dotnet build PCOptimizer.sln --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test PCOptimizer.sln --configuration Release --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: TestResults
+        if-no-files-found: ignore
+
+    - name: Publish single exe
+      run: dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile
+
+    - name: Upload exe
+      uses: actions/upload-artifact@v4
+      with:
+        name: PCOptimizer-${{ github.sha }}
+        path: artifacts/publish/PCOptimizer.exe
+        if-no-files-found: error
+        retention-days: 30

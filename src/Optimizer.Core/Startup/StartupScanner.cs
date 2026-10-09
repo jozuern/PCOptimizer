@@ -28,6 +28,12 @@ public sealed record StartupEntry(
 
     /// <summary>Non-default Winlogon values and IFEO debuggers deserve attention (often malware or leftovers).</summary>
     public bool Suspicious { get; init; }
+
+    /// <summary>
+    /// Runs PowerShell, cmd, mshta or a similar script host: Microsoft-signed, but the command decides what runs, so
+    /// such entries are never hidden as "Microsoft".
+    /// </summary>
+    public bool RunsScriptHost => CommandLine.RunsUnverifiedScript(Command, ImagePath);
 }
 
 /// <summary>Reads every autostart location the app knows (Autoruns-style), through the swappable registry and task interfaces.</summary>
@@ -160,7 +166,7 @@ public sealed class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks
 
     public IEnumerable<StartupEntry> LogonTasks() =>
         tasks.List().Where(t => t.AtLogon || t.AtBoot).Select(t => new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'),
-            t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim(), CommandLine.ImagePath(t.Command is null ? null : $"\"{t.Command}\""),
+            t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim(), CommandLine.ImagePath(t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim()),
             t.Path, Hive.Machine, t.Enabled, $"task:{t.Path}")
         {
             Target = t.Path,
@@ -364,7 +370,6 @@ public sealed class StartupApprovedAction : TweakAction
 /// <summary>Builds the engine tweaks behind the startup page's switches (backup, undo and the change log come for free).</summary>
 public static class StartupTweaks
 {
-    private static string Slug(string s) => new(s.Where(char.IsAsciiLetterOrDigit).Select(char.ToLowerInvariant).Take(48).ToArray());
 
     /// <summary>Null when the entry cannot be switched here.</summary>
     public static TweakDefinition? Set(StartupEntry e, bool enabled)
@@ -396,7 +401,7 @@ public static class StartupTweaks
         var expert = e.Kind is StartupKind.ImageHijack or StartupKind.Service;
         return new TweakDefinition
         {
-            Id = $"startup.{(enabled ? "on" : "off")}.{e.Kind.ToString().ToLowerInvariant()}.{Slug(e.Key)}",
+            Id = $"startup.{(enabled ? "on" : "off")}.{e.Kind.ToString().ToLowerInvariant()}.{TweakIds.Slug(e.Key)}",
             Docs = $"startup.{e.Kind.ToString().ToLowerInvariant()}",
             Subject = e.Name,
             Category = "Startup",

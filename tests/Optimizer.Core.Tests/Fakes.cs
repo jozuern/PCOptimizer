@@ -67,11 +67,11 @@ internal sealed class FakePower : IPowerManager
 
 internal sealed class FakeBcd : IBcdStore
 {
-    public HashSet<string> Elements { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> Values { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<string> Exports { get; } = [];
-    public IReadOnlySet<string> CurrentElements() => Elements;
-    public void Set(string element, string value) => Elements.Add(element);
-    public void Delete(string element) => Elements.Remove(element);
+    public IReadOnlyDictionary<string, string> CurrentValues() => Values;
+    public void Set(string element, string value) => Values[element] = value;
+    public void Delete(string element) => Values.Remove(element);
     public void Export(string file) => Exports.Add(file);
 }
 

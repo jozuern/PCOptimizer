@@ -42,8 +42,11 @@ public interface IPowerManager
 
 public interface IBcdStore
 {
-    /// <summary>Elements present on {current} (identifiers are not localized; values may be).</summary>
-    IReadOnlySet<string> CurrentElements();
+    /// <summary>Elements of {current} with their values as bcdedit prints them (element identifiers are not localized).</summary>
+    IReadOnlyDictionary<string, string> CurrentValues();
+
+    /// <summary>Elements present on {current}.</summary>
+    IReadOnlySet<string> CurrentElements() => CurrentValues().Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
     void Set(string element, string value);
     void Delete(string element);
     void Export(string file);

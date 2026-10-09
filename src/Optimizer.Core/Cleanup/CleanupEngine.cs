@@ -1,6 +1,7 @@
 using System.IO.Enumeration;
 using Optimizer.Core.Actions;
 using Optimizer.Core.Logging;
+using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Cleanup;
 
@@ -89,11 +90,24 @@ public static class CleanupEngine
         }
     }
 
+    /// <summary>
+    /// Roots that exist and are real folders all the way up: a user can replace %LOCALAPPDATA%\Temp (or a parent such as
+    /// %LOCALAPPDATA%\NVIDIA) with a junction to a folder they could not delete from, and this process runs elevated.
+    /// </summary>
+    private static IEnumerable<string> SafeRoots(CleanupCategory c)
+    {
+        foreach (var root in c.Roots.Where(Directory.Exists))
+        {
+            if (SafeDelete.HasNoLinks(root)) yield return root;
+            else Log.Warn("cleanup", $"{c.Id}: skipped {root}, it is or lies under a junction or symbolic link");
+        }
+    }
+
     public static CleanupScan Scan(CleanupCategory c, DateTime? now = null)
     {
         long bytes = 0;
         var files = 0;
-        var roots = c.Roots.Where(Directory.Exists).ToList();
+        var roots = SafeRoots(c).ToList();
         foreach (var f in roots.SelectMany(r => Files(r, c, now ?? DateTime.UtcNow)))
         {
             bytes += f.Length;
@@ -106,15 +120,16 @@ public static class CleanupEngine
     {
         long freed = 0;
         int deleted = 0, skipped = 0;
-        foreach (var root in c.Roots.Where(Directory.Exists))
+        foreach (var root in SafeRoots(c))
         {
             foreach (var f in Files(root, c, now ?? DateTime.UtcNow).ToList())
             {
                 try
                 {
                     var length = f.Length;
-                    if ((f.Attributes & FileAttributes.ReadOnly) != 0) f.Attributes &= ~FileAttributes.ReadOnly;
-                    f.Delete();
+                    // Through a handle, after checking it still resolves to this path (a folder may have been swapped
+                    // for a junction since the scan).
+                    SafeDelete.DeleteFile(f.FullName);
                     freed += length;
                     deleted++;
                 }
@@ -187,7 +202,7 @@ public static class CleanupEngine
             if (keepRoot && string.Equals(d.FullName.TrimEnd('\\'), root.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) continue;
             try
             {
-                if (!d.EnumerateFileSystemInfos().Any()) d.Delete();
+                if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.DeleteEmptyDirectory(d.FullName);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

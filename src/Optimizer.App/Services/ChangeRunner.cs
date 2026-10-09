@@ -133,6 +133,12 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
                 options = new ApplyOptions { ExpertMode = options.ExpertMode, ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue };
                 results = await services.Engine.ApplyBatchAsync(tweaks, facts(), appliedIds(), options);
             }
+            if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
+            {
+                // Enabling System Protection did not lead to a restore point: the batch stopped before changing anything.
+                Report(Loc.Instance["Result_NoRestorePoint"]);
+                return results;
+            }
             var ok = results.Count(r => r.Result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective);
             var failed = results.Count(r => r.Result.Outcome == ApplyOutcome.Failed);
             var skipped = results.Count - ok - failed;
@@ -155,7 +161,8 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
             ApplyOutcome.AppliedIneffective => Loc.Instance.Format("Result_Ineffective", title),
             ApplyOutcome.NothingToDo => Loc.Instance["Result_NothingToDo"],
             ApplyOutcome.Blocked => string.Join(" ", (result.Blocks ?? []).Select(b => Labels.Current.Get(lang, b.ReasonKey) + (b.Detail ?? ""))),
-            ApplyOutcome.NeedsRestorePointDecision => Loc.Instance["Result_NothingToDo"],
+            // Only reached when a restore point was requested but could not be created: nothing was changed.
+            ApplyOutcome.NeedsRestorePointDecision => Loc.Instance["Result_NoRestorePoint"],
             _ => Loc.Instance.Format("Result_Failed", result.Error ?? "?"),
         };
     }

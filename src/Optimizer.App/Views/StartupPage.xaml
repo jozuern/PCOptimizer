@@ -64,6 +64,8 @@
                                     <Run Text="{Binding KindText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding PublisherText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding SignatureText, Mode=OneWay}" />
                                 </ui:TextBlock>
                                 <TextBlock Style="{StaticResource Mono}" Text="{Binding Command}" Margin="0,4,0,0" />
+                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ScriptHostNote}" TextWrapping="Wrap"
+                                              Margin="0,4,0,0" Visibility="{Binding ScriptHostNote, Converter={StaticResource NullToVisibility}}" />
                                 <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Location}" TextWrapping="Wrap" Margin="0,4,0,0" />
                                 <ui:HyperlinkButton Content="{Binding VirusTotalText}" Padding="0" Margin="0,4,0,0"
                                                     Visibility="{Binding VirusTotalText, Converter={StaticResource NullToVisibility}}"

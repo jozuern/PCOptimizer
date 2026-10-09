@@ -84,7 +84,7 @@ public sealed partial class MainViewModel : ObservableObject
         ServicesPage = new ServicesViewModel(this, services, Runner);
         Apps = new AppsViewModel(this, services);
         Tools = new ToolsViewModel(this, services, Runner, dialogs);
-        Health = new HealthViewModel(this, services, dialogs);
+        Health = new HealthViewModel(this, dialogs);
         _virusTotalConfigured = !string.IsNullOrEmpty(settings.VirusTotalKey);
         Loc.Instance.LanguageChanged += (_, _) => Rebuild();
     }
