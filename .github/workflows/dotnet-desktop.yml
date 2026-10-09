@@ -1,6 +1,8 @@
 # Build, test and publish PCOptimizer (WPF, .NET 10, Windows x64).
 # Runs the unit tests (sandbox registry and fakes; nothing on the runner is changed) and the docs lint,
 # then publishes the single self-contained exe and keeps it as a build artifact.
+# Tests marked Category=Hardware read the real PC (Store apps, sensors, GPU driver) and only make sense on a
+# gaming PC, not on the Windows Server runner: they are skipped here.
 
 name: Build and test
 
@@ -28,10 +30,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
 
     - name: Install .NET 10
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 10.0.x
 
@@ -42,23 +44,27 @@ jobs:
       run: dotnet build PCOptimizer.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test PCOptimizer.sln --configuration Release --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults
+      run: dotnet test PCOptimizer.sln --configuration Release --no-build --filter "Category!=Hardware" --logger "trx;LogFileName=results.trx" --results-directory TestResults
 
+    # Artifacts count against the account's storage quota: a full quota must not fail the build.
     - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
+      if: failure()
+      continue-on-error: true
+      uses: actions/upload-artifact@v7
       with:
         name: test-results
         path: TestResults
         if-no-files-found: ignore
+        retention-days: 7
 
     - name: Publish single exe
       run: dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile
 
     - name: Upload exe
-      uses: actions/upload-artifact@v4
+      continue-on-error: true
+      uses: actions/upload-artifact@v7
       with:
         name: PCOptimizer-${{ github.sha }}
         path: artifacts/publish/PCOptimizer.exe
         if-no-files-found: error
-        retention-days: 30
+        retention-days: 14
