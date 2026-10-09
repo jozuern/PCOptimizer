@@ -808,4 +808,31 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Feat_None" xml:space="preserve">
     <value>No optional features from the list exist on this Windows edition.</value>
   </data>
+  <data name="Drift_BannerUpdate" xml:space="preserve">
+    <value>After the Windows update to {0}, these changes are no longer in place: {1}</value>
+  </data>
+  <data name="Drift_BannerOther" xml:space="preserve">
+    <value>These changes are no longer in place, changed back by Windows or another program: {0}</value>
+  </data>
+  <data name="Drift_More" xml:space="preserve">
+    <value>and {0} more</value>
+  </data>
+  <data name="Drift_ApplyAgain" xml:space="preserve">
+    <value>Apply again</value>
+  </data>
+  <data name="Drift_ConfirmIntro" xml:space="preserve">
+    <value>These changes were reset since this app applied them. The original values from before the first change stay saved, so undo still restores them.</value>
+  </data>
+  <data name="Drift_ExpertIndividually" xml:space="preserve">
+    <value>{0} Expert changes were not applied again automatically. Apply them one by one on the Changes page.</value>
+  </data>
+  <data name="Drift_ResetUpdate" xml:space="preserve">
+    <value>Reset after the Windows update from {0} to {1}</value>
+  </data>
+  <data name="Drift_ResetOther" xml:space="preserve">
+    <value>Reset by Windows or another program</value>
+  </data>
+  <data name="WinUpdated_AllGood" xml:space="preserve">
+    <value>Windows was updated from {0} to {1}. All {2} changes made by this app are still in place.</value>
+  </data>
 </root>

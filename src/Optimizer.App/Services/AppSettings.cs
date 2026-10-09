@@ -15,6 +15,9 @@ public sealed class AppSettings
     /// <summary>VirusTotal API key, DPAPI-protected for the current user (never stored in clear text).</summary>
     public string? VirusTotalKey { get; set; }
 
+    /// <summary>Windows version seen at the last scan ("26300.9550"), to notice updates.</summary>
+    public string? LastSeenWindowsVersion { get; set; }
+
     private static string FilePath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer", "settings.json");
 

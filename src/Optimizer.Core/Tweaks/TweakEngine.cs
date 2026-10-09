@@ -56,11 +56,23 @@ public sealed record BatchItemResult(TweakDefinition Tweak, ApplyResult Result);
 public sealed record RevertResult(bool Success, IReadOnlyList<string> AlreadyRevertedByWindows, IReadOnlyList<string> Errors);
 
 /// <summary>
+/// A change this app made that is no longer in place. <see cref="WindowsUpdatedSince"/>: the Windows version (build and
+/// update revision) differs from the one the change was applied on, so an update is the likely cause.
+/// </summary>
+public sealed record DriftItem(TweakDefinition Tweak, TweakBackup Backup, string? AppliedOn, string Current)
+{
+    public bool WindowsUpdatedSince => AppliedOn is not null && !string.Equals(AppliedOn, AppliedOn.Contains('.') ? Current : Current.Split('.')[0], StringComparison.Ordinal);
+}
+
+/// <summary>
 /// Detect -> preflight -> restore point -> backup (first-original) -> apply with per-tweak rollback -> verify -> log
 /// (plan v4 §4.3). Undo restores originals unless Windows already changed the value (feature-update-aware, §4.4).
 /// </summary>
-public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild)
+/// <param name="windowsVersion">Full Windows version ("26300.9550"); defaults to the build number.</param>
+public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild, string? windowsVersion = null)
 {
+    public string WindowsVersion { get; } = windowsVersion ?? windowsBuild.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     public const string RestorePointFrequencyTweak = "system.restorePointFrequency";
 
     private bool _restorePointDone;
@@ -302,6 +314,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         foreach (var a in done)
             if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.Read(ctx);
         backup.LastApplied = DateTimeOffset.Now;
+        backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart") backup.PendingRestartSince = DateTimeOffset.Now;
         store.Save(backup);
 
@@ -367,6 +380,24 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             if (Resolve(b.TweakId) is { Reversibility: Reversibility.Reversible } t)
                 results.Add((t, Revert(t)));
         return results;
+    }
+
+    /// <summary>
+    /// Every change this app made (catalog and runtime tweaks) whose values are no longer in place. Run after each scan;
+    /// a Windows update between apply and now is reported as the likely cause.
+    /// </summary>
+    public IReadOnlyList<DriftItem> CheckDrift(Facts facts)
+    {
+        var list = new List<DriftItem>();
+        foreach (var backup in store.All())
+        {
+            if (Resolve(backup.TweakId) is not { } t) continue;
+            if (DetectState(t, facts) != TweakState.RevertedByWindows) continue;
+            // Older backups only know the build number of their first apply (compared by build only).
+            var appliedOn = backup.AppliedOnVersion ?? (backup.WindowsBuild > 0 ? backup.WindowsBuild.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
+            list.Add(new DriftItem(t, backup, appliedOn, WindowsVersion));
+        }
+        return list;
     }
 
     /// <summary>The definition of a tweak id: the catalog entry, or the one stored with the backup of a runtime tweak.</summary>

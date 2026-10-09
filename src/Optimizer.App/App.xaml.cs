@@ -73,6 +73,7 @@ public partial class App : Application
             if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
             if (args.Value("--select") is { } id)
                 vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
+            if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
             if (args.Value("--category") is { } cat) vm.SelectedCategory = vm.Categories.FirstOrDefault(c => c.Key == cat) ?? vm.SelectedCategory;
             await Task.Delay(1500); // pages that load their own data (startup, services, apps)
             if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;

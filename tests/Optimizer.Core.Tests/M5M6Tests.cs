@@ -209,7 +209,7 @@ public class DebloatServicesAppsTests
     }
 
     [Fact]
-    public void OptionalFeatureStateFromEnglishDismOutput()
+    public async Task OptionalFeatureStateFromEnglishDismOutput()
     {
         using var fx = new EngineFixture();
         var state = "Disabled";
@@ -224,7 +224,7 @@ public class DebloatServicesAppsTests
         var smb = new FeatureEntry { Name = "SMB1Protocol", Title = "SMB 1.0" };
         var t = OptionalFeatureAction.Tweak(smb, enabled: true);
         Assert.Equal(TweakState.NotApplied, fx.Engine.DetectState(t, new Facts().Set("os.build", 26300)));
-        var r = fx.Engine.ApplyAsync(t, new Facts().Set("os.build", 26300).Set("elevated", true), new HashSet<string>(), new ApplyOptions { ContinueWithoutRestorePoint = true }).Result;
+        var r = await fx.Engine.ApplyAsync(t, new Facts().Set("os.build", 26300).Set("elevated", true), new HashSet<string>(), new ApplyOptions { ContinueWithoutRestorePoint = true });
         Assert.Equal(ApplyOutcome.Applied, r.Outcome);
         Assert.Equal("Enabled", OptionalFeatureAction.ReadState(fx.Processes, "SMB1Protocol")); // pending counts as the target state
         Assert.Null(OptionalFeatureAction.ReadState(fx.Processes, "Missing"));
@@ -469,6 +469,45 @@ public class RuntimeTweakPersistenceTests
         Assert.All(all, r => Assert.True(r.Result.Success));
         Assert.Contains(all, r => r.Tweak.Id == tweak.Id);
         Assert.False(RegistryValue.Read(fx.Registry, Hive.User, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Updater").Existed);
+    }
+
+    [Fact]
+    public async Task DriftAfterWindowsUpdateIsReportedWithBothVersions()
+    {
+        using var fx = new EngineFixture();
+        RegistryValue.Write(fx.Registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\Run", "Updater", "string", @"C:\Vendor\updater.exe");
+        var entry = new StartupScanner(fx.Registry, fx.Tasks, null).RunKeys().Single();
+        var tweak = StartupTweaks.Set(entry, enabled: false)!;
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true);
+        var before = new TweakEngine(fx.Context, new Backup.BackupStore(fx.BackupRoot, secure: false), fx.RestorePoints, "test", 26300, "26300.9000");
+        await before.ApplyAsync(tweak, facts, new HashSet<string>(), new ApplyOptions { ContinueWithoutRestorePoint = true });
+        Assert.Empty(before.CheckDrift(facts));
+
+        // The update puts the entry back to enabled.
+        RegistryValue.Delete(fx.Registry, Hive.User, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Updater");
+
+        var after = new TweakEngine(fx.Context, new Backup.BackupStore(fx.BackupRoot, secure: false), fx.RestorePoints, "test", 26300, "26300.9550");
+        var drift = Assert.Single(after.CheckDrift(facts));
+        Assert.Equal(tweak.Id, drift.Tweak.Id);
+        Assert.Equal("26300.9000", drift.AppliedOn);
+        Assert.Equal("26300.9550", drift.Current);
+        Assert.True(drift.WindowsUpdatedSince);
+
+        // Same version: reset by something else, not by an update.
+        var same = Assert.Single(before.CheckDrift(facts));
+        Assert.False(same.WindowsUpdatedSince);
+    }
+
+    [Theory]
+    [InlineData("26300.9000", "26300.9550", true)]
+    [InlineData("26300.9550", "26300.9550", false)]
+    [InlineData("26300", "26300.9550", false)] // older backup knows the build only
+    [InlineData("26100", "26300.9550", true)]
+    [InlineData(null, "26300.9550", false)]
+    public void WindowsUpdatedSinceComparesWhatTheBackupKnows(string? appliedOn, string current, bool expected)
+    {
+        var item = new DriftItem(RuntimeFixes.PowerModeBestPerformance(), new Backup.TweakBackup { TweakId = "x" }, appliedOn, current);
+        Assert.Equal(expected, item.WindowsUpdatedSince);
     }
 
     [Fact]

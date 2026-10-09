@@ -19,6 +19,11 @@ public enum Page { Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup
 public sealed record Banner(string Text, bool IsWarning)
 {
     public InfoBarSeverity Severity => IsWarning ? InfoBarSeverity.Warning : InfoBarSeverity.Informational;
+
+    /// <summary>Optional button in the info bar (e.g. "Apply again").</summary>
+    public string? ActionText { get; init; }
+
+    public System.Windows.Input.ICommand? Action { get; init; }
 }
 
 public sealed record SummaryItem(string Label, string Value);
@@ -33,7 +38,13 @@ public sealed record CategoryItem(string Key, string Text, int Count)
     public string Display => $"{Text} ({Count})";
 }
 
-public sealed record ChangeRecordItem(string TweakId, string Title, string When, string Details, string StateText, string Status, bool CanUndo);
+public sealed record ChangeRecordItem(string TweakId, string Title, string When, string Details, string StateText, string Status, bool CanUndo)
+{
+    /// <summary>Set when the change is no longer in place: why (Windows update or other) for the row.</summary>
+    public string? ResetText { get; init; }
+
+    public bool IsReset => ResetText is not null;
+}
 
 public sealed record LogLine(string Time, string Text);
 
@@ -50,6 +61,8 @@ public sealed partial class MainViewModel : ObservableObject
     private IReadOnlyList<TweakStatus> _tweakStates = [];
     private IReadOnlyList<TweakStatus> _deviceStates = [];
     private RecommendationPlan _plan = new([], []);
+    private IReadOnlyList<DriftItem> _drift = [];
+    private string? _updateNotice;
     private Facts _facts = new();
     private DateTime? _lastScanTime;
 
@@ -267,7 +280,41 @@ public sealed partial class MainViewModel : ObservableObject
             return (facts, catalog, device);
         });
         _plan = Optimizer.Core.Tweaks.Recommendations.Build(_tweakStates, _findings);
+        var facts = _facts;
+        _drift = await Task.Run(() => engine.CheckDrift(facts));
+        foreach (var d in _drift)
+            Log.Warn("drift", $"{d.Tweak.Id} is no longer in place", new { d.AppliedOn, d.Current, d.WindowsUpdatedSince });
+
+        // Once per Windows update: say so when all changes survived it (a reset shows in the drift banner instead).
+        var current = _services.Os.BuildString;
+        var count = _services.Store.All().Count;
+        if (_settings.LastSeenWindowsVersion is { } last && last != current && count > 0 && _drift.Count == 0)
+            _updateNotice = Loc.Instance.Format("WinUpdated_AllGood", last, current, count);
+        if (_settings.LastSeenWindowsVersion != current)
+        {
+            _settings.LastSeenWindowsVersion = current;
+            _settings.Save();
+        }
     }
+
+    /// <summary>Applies every reset change again (one confirmation). Expert changes are left for the Changes page.</summary>
+    [RelayCommand]
+    private async Task ReapplyDriftAsync()
+    {
+        var safe = _drift.Where(d => d.Tweak.IsBatchSafe).Select(d => d.Tweak).ToList();
+        var expert = _drift.Count - safe.Count;
+        if (safe.Count > 0) await Runner.ApplyBatchAsync(safe, Loc.Instance["Drift_ApplyAgain"], Loc.Instance["Drift_ConfirmIntro"]);
+        if (expert > 0) ShowResult(Loc.Instance.Format("Drift_ExpertIndividually", expert));
+    }
+
+    [RelayCommand]
+    private async Task ReapplyRecordAsync(string tweakId)
+    {
+        if (ResolveTweak(tweakId) is { } t) await Runner.ApplyAsync(t);
+    }
+
+    private string DriftReason(DriftItem d) =>
+        d.WindowsUpdatedSince ? Loc.Instance.Format("Drift_ResetUpdate", d.AppliedOn, d.Current) : Loc.Instance["Drift_ResetOther"];
 
     // ---------------- apply / undo ----------------
 
@@ -517,6 +564,8 @@ public sealed partial class MainViewModel : ObservableObject
             var t = ResolveTweak(b.TweakId);
             var title = t is null ? b.TweakId : Runner.Title(t);
             var state = _tweakStates.Concat(_deviceStates).FirstOrDefault(s => s.Tweak.Id == b.TweakId)?.State;
+            var drift = _drift.FirstOrDefault(d => d.Tweak.Id == b.TweakId);
+            if (drift is not null) state = TweakState.RevertedByWindows;
             ChangeRecords.Add(new ChangeRecordItem(
                 b.TweakId,
                 title,
@@ -524,7 +573,10 @@ public sealed partial class MainViewModel : ObservableObject
                 Loc.Instance.Format("Changes_Entries", b.Entries.Count),
                 state is null ? "" : Labels.Current.Get(lang, $"state.{state}"),
                 state is TweakState.RevertedByWindows ? "Problem" : "Ok",
-                t is not null));
+                t is not null)
+            {
+                ResetText = drift is null ? null : DriftReason(drift),
+            });
         }
         OnPropertyChanged(nameof(ChangesEmpty));
 
@@ -551,12 +603,31 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Developer aid for screenshots: shows the drift banner for three catalog tweaks without touching anything.</summary>
+    public void PreviewDrift()
+    {
+        _drift = _services.Catalog.Tweaks.Where(t => t.IsBatchSafe).Take(3)
+            .Select(t => new DriftItem(t, new Optimizer.Core.Backup.TweakBackup { TweakId = t.Id }, "26300.9000", _services.Os.BuildString))
+            .ToList();
+        BuildBanners();
+    }
+
     private void BuildBanners()
     {
         Banners.Clear();
         if (Profile is null) return;
-        var drift = _tweakStates.Count(s => s.State == TweakState.RevertedByWindows);
-        if (drift > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Drift", drift), true));
+        if (_drift.Count > 0)
+        {
+            var names = _drift.Take(4).Select(d => Runner.Title(d.Tweak)).ToList();
+            var list = string.Join(", ", names) + (_drift.Count > names.Count ? " " + Loc.Instance.Format("Drift_More", _drift.Count - names.Count) : "");
+            var update = _drift.FirstOrDefault(d => d.WindowsUpdatedSince);
+            var text = update is not null ? Loc.Instance.Format("Drift_BannerUpdate", update.Current, list) : Loc.Instance.Format("Drift_BannerOther", list);
+            Banners.Add(new Banner(text, true) { ActionText = Loc.Instance["Drift_ApplyAgain"], Action = ReapplyDriftCommand });
+        }
+        else if (_updateNotice is not null)
+        {
+            Banners.Add(new Banner(_updateNotice, false));
+        }
         var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State == TweakState.PendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));
         var os = Profile.Os;

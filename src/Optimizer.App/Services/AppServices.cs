@@ -21,7 +21,7 @@ public sealed class AppServices
         Store = new BackupStore(root, secure: Elevation.IsElevated);
         Context = SystemNotify.CreateContext(Elevation.SessionUserSid ?? Elevation.ProcessUserSid, Store.ExportFolder, ActiveInterfaceIds());
         RestorePoints = new RestorePointService(Context.Processes);
-        Engine = new TweakEngine(Context, Store, RestorePoints, typeof(AppServices).Assembly.GetName().Version?.ToString(3) ?? "0", Os.Build);
+        Engine = new TweakEngine(Context, Store, RestorePoints, typeof(AppServices).Assembly.GetName().Version?.ToString(3) ?? "0", Os.Build, Os.BuildString);
 
         // bcdedit needs admin rights; without them the BCD part of F21 is reported as unknown.
         LeftoverCheck.BcdElements = Elevation.IsElevated ? () => Context.Bcd.CurrentElements() : () => null;

@@ -808,4 +808,31 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Feat_None" xml:space="preserve">
     <value>Keines der optionalen Features aus der Liste gibt es in dieser Windows-Edition.</value>
   </data>
+  <data name="Drift_BannerUpdate" xml:space="preserve">
+    <value>Nach dem Windows-Update auf {0} sind diese Änderungen nicht mehr aktiv: {1}</value>
+  </data>
+  <data name="Drift_BannerOther" xml:space="preserve">
+    <value>Diese Änderungen sind nicht mehr aktiv, von Windows oder einem anderen Programm zurückgesetzt: {0}</value>
+  </data>
+  <data name="Drift_More" xml:space="preserve">
+    <value>und {0} weitere</value>
+  </data>
+  <data name="Drift_ApplyAgain" xml:space="preserve">
+    <value>Erneut anwenden</value>
+  </data>
+  <data name="Drift_ConfirmIntro" xml:space="preserve">
+    <value>Diese Änderungen wurden zurückgesetzt, seit diese App sie angewendet hat. Die Originalwerte von vor der ersten Änderung bleiben gespeichert, Rückgängig stellt sie weiterhin her.</value>
+  </data>
+  <data name="Drift_ExpertIndividually" xml:space="preserve">
+    <value>{0} Expertenänderungen wurden nicht automatisch erneut angewendet. Wende sie einzeln auf der Seite Änderungen an.</value>
+  </data>
+  <data name="Drift_ResetUpdate" xml:space="preserve">
+    <value>Nach dem Windows-Update von {0} auf {1} zurückgesetzt</value>
+  </data>
+  <data name="Drift_ResetOther" xml:space="preserve">
+    <value>Von Windows oder einem anderen Programm zurückgesetzt</value>
+  </data>
+  <data name="WinUpdated_AllGood" xml:space="preserve">
+    <value>Windows wurde von {0} auf {1} aktualisiert. Alle {2} Änderungen dieser App sind weiterhin aktiv.</value>
+  </data>
 </root>

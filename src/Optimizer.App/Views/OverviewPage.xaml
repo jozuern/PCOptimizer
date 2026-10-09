@@ -17,7 +17,20 @@
             <ItemsControl ItemsSource="{Binding Banners}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ui:InfoBar Title="" Message="{Binding Text}" Severity="{Binding Severity}" IsOpen="True" IsClosable="False" Margin="0,0,0,8" />
+                        <!-- The WPF-UI InfoBar has no content slot and a fixed padding: it draws the bar and icon, the message
+                             and the optional action button are laid over it in two columns so the text never runs under the button. -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:InfoBar Grid.ColumnSpan="2" Title="" Message="" Severity="{Binding Severity}" IsOpen="True" IsClosable="False" VerticalAlignment="Stretch" />
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="14" VerticalAlignment="Center" Margin="46,12,16,12"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <ui:Button Grid.Column="1" Content="{Binding ActionText}" Command="{Binding Action}" Icon="{ui:SymbolIcon ArrowSync20}"
+                                       VerticalAlignment="Center" Margin="0,8,16,8"
+                                       Visibility="{Binding ActionText, Converter={StaticResource NullToVisibility}}" />
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
