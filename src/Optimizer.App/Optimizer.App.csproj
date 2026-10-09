@@ -10,6 +10,8 @@
     <RootNamespace>Optimizer.App</RootNamespace>
     <Version>0.3.0</Version>
     <Product>PCOptimizer</Product>
+    <Authors>Joshua Zürn</Authors>
+    <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
     <!-- Release: always elevated (plan v4 §2). Debug: asInvoker so the scanner can be run without UAC during development. -->
