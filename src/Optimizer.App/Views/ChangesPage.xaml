@@ -39,7 +39,7 @@
                             <ui:CardControl.Header>
                                 <StackPanel>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" TextWrapping="Wrap" />
-                                    <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Margin="0,4,0,0">
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0">
                                         <Run Text="{Binding When, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding Details, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding StateText, Mode=OneWay}" />
                                     </ui:TextBlock>
                                     <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ResetText}" TextWrapping="Wrap"

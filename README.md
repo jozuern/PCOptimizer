@@ -12,7 +12,7 @@ Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer
 
 ## What it does
 
-- **Scan:** 43 read-only checks (problems, BIOS and hardware advice, game access per anti-cheat). Each comes with what was found, why it matters, how to fix it and sources, in English and German.
+- **Scan:** 46 read-only checks (problems, BIOS and hardware advice, game access per anti-cheat). Each comes with what was found, why it matters, how to fix it and sources, in English and German.
 - **Tweaks:** 99 catalog tweaks with gaming impact from 0 to 5, risk and sources, plus tweaks built for this PC: per-game NVIDIA profiles, MSI mode and interrupt affinity per device (Expert), startup entries, services, Windows features.
 - **Profiles:** Gaming, Laptop gaming, Battery, Office, Quiet and cool, Older PC. A profile changes nothing by itself; it decides what "Apply recommended" includes and which impact is shown.
 - **Apply recommended:** one confirmation for the fixes of detected problems and the tweaks that fit this PC, each with its reason. Expert, boot-critical, anti-cheat sensitive and not fully reversible items are never included.

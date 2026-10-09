@@ -53,20 +53,20 @@
                             <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0">
                                 <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
                                                  Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}" />
-                                <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding ReadOnlyNote}" MaxWidth="160" TextWrapping="Wrap"
+                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReadOnlyNote}" MaxWidth="160" TextWrapping="Wrap"
                                               Visibility="{Binding ReadOnlyNote, Converter={StaticResource NullToVisibility}}" />
                             </StackPanel>
                             <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Warning20" Filled="True" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Top"
                                            Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToVisibility}}" />
                             <StackPanel>
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextWrapping="Wrap" />
-                                <ui:TextBlock FontTypography="Caption" Appearance="Secondary" TextWrapping="Wrap" Margin="0,4,0,0">
+                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0">
                                     <Run Text="{Binding KindText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding PublisherText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding SignatureText, Mode=OneWay}" />
                                 </ui:TextBlock>
                                 <TextBlock Style="{StaticResource Mono}" Text="{Binding Command}" Margin="0,4,0,0" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ScriptHostNote}" TextWrapping="Wrap"
                                               Margin="0,4,0,0" Visibility="{Binding ScriptHostNote, Converter={StaticResource NullToVisibility}}" />
-                                <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Location}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Location}" TextWrapping="Wrap" Margin="0,4,0,0" />
                                 <ui:HyperlinkButton Content="{Binding VirusTotalText}" Padding="0" Margin="0,4,0,0"
                                                     Visibility="{Binding VirusTotalText, Converter={StaticResource NullToVisibility}}"
                                                     Command="{Binding DataContext.Startup.OpenReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding VirusTotalUrl}" />

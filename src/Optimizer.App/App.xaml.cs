@@ -13,6 +13,7 @@ using Optimizer.Core.Findings;
 using Optimizer.Core.Hardware;
 using Optimizer.Core.Logging;
 using Optimizer.Core.Platform;
+using Optimizer.Core.Updates;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
@@ -38,6 +39,17 @@ public partial class App : Application
             Log.Error("ui", "unhandled exception", ex.Exception);
             if (ex.Exception.GetBaseException() is { } root && !ReferenceEquals(root, ex.Exception)) Log.Error("ui", "root cause", root);
             ex.Handled = true;
+            // Before the window is shown there is nothing to keep running: say why and exit instead of staying invisible.
+            if (MainWindow is not { IsVisible: true })
+            {
+                System.Windows.MessageBox.Show(ex.Exception.GetBaseException().Message, "PCOptimizer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                Shutdown(1);
+            }
+            else
+            {
+                // The app keeps running; say that something failed and where to report it instead of failing silently.
+                (MainWindow.DataContext as MainViewModel)?.ShowResult(Loc.Instance["Error_Unexpected"]);
+            }
         };
 
         var args = new CliArgs(e.Args);
@@ -57,6 +69,9 @@ public partial class App : Application
             return;
         }
 
+        // After a self-update: remove the previous exe and the downloaded file.
+        if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, MainViewModel.UpdatesFolder);
+
         var services = new AppServices();
         _sessionSid = services.UserSid;
         _userMismatch = services.Elevation.UserMismatch;
@@ -75,13 +90,30 @@ public partial class App : Application
         MainWindow = window;
         ApplyTheme(args.Value("--theme") ?? _settings.Theme, save: false);
         window.Show();
-        await vm.ScanAsync();
+        var scan = vm.ScanAsync();
+        // Developer aid: render the window while the first scan still runs (placeholders instead of the score).
+        if (args.Value("--shot-scanning") is { } scanningShot)
+        {
+            await Task.Delay(1200);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            SaveScreenshot(window, scanningShot);
+        }
+        await scan;
+        // Developer aid: time the interactions that felt slow (page switches, filters, profile, rebuild) until the UI is idle.
+        if (args.Value("--perf") is { } perfFile)
+        {
+            await WritePerfReportAsync(vm, perfFile);
+            Shutdown(0);
+            return;
+        }
+
         // Opt-in release check (off by default); screenshots stay offline and reproducible.
         if (args.Value("--screenshot") is null) _ = vm.CheckForUpdatesAsync(atStart: true);
 
         if (args.Value("--screenshot") is { } shot)
         {
             if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
+            if (args.Value("--pane") is "closed") window.Nav.IsPaneOpen = false;
             if (args.Value("--select") is { } id)
                 vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
             if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
@@ -89,6 +121,12 @@ public partial class App : Application
             await Task.Delay(1500); // pages that load their own data (startup, services, apps)
             if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            // Developer aid: switch the theme while the page is open, as Settings does (checks text that keeps old colors).
+            if (args.Value("--switch-theme") is { } switchTo)
+            {
+                ApplyTheme(switchTo, save: false);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            }
             // Developer aid: show the bottom of long pages (Settings > About).
             if (args.Value("--scroll") is "end")
             {
@@ -161,8 +199,13 @@ public partial class App : Application
             if (w.IsLoaded) Watch();
             else w.Loaded += (_, _) => Watch();
         }
-        _settings.Theme = setting;
-        if (save) _settings.Save();
+        // Only a choice in Settings is the user's preference: a --theme override must not end up in settings.json
+        // the next time anything else saves it.
+        if (save)
+        {
+            _settings.Theme = setting;
+            _settings.Save();
+        }
         // Status colors and the explanation document read theme brushes when they are built.
         if (MainWindow is MainWindow main)
         {
@@ -246,6 +289,35 @@ public partial class App : Application
             Log.Error("app", "report failed", ex);
             return 1;
         }
+    }
+
+    private async Task WritePerfReportAsync(MainViewModel vm, string path)
+    {
+        var lines = new List<string>();
+        async Task Measure(string name, Action action)
+        {
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            action();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            lines.Add($"{watch.ElapsedMilliseconds,6} ms  {name}");
+        }
+        foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (first time)", () => vm.CurrentPage = page);
+        await Task.Delay(3000); // pages that load their own data finish in the background
+        foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (again)", () => vm.CurrentPage = page);
+        vm.CurrentPage = Page.Tweaks;
+        await Measure("Tweaks: rebuild as for Expert mode", () => { vm.Rebuild(); vm.Network.Rebuild(); });
+        await Measure("Tweaks: category filter", () => vm.SelectedCategory = vm.Categories.Skip(1).FirstOrDefault());
+        await Measure("Tweaks: all categories", () => vm.SelectedCategory = vm.Categories.FirstOrDefault());
+        await Measure("Tweaks: only recommended on", () => vm.OnlyRecommended = true);
+        await Measure("Tweaks: only recommended off", () => vm.OnlyRecommended = false);
+        var start = vm.SelectedProfile;
+        foreach (var option in vm.ProfileOptions.Where(o => o != start).Take(2).Append(start).OfType<ProfileOption>())
+            await Measure($"Tweaks: profile {option.Id}", () => vm.SelectedProfile = option);
+        vm.CurrentPage = Page.Advisor;
+        await Measure("Advisor: show passed on", () => vm.ShowPassed = true);
+        await Measure("Advisor: show passed off", () => vm.ShowPassed = false);
+        System.IO.File.WriteAllLines(path, lines);
     }
 
     private static IEnumerable<T> Descendants<T>(DependencyObject parent) where T : DependencyObject

@@ -50,17 +50,18 @@
                     <ui:NavigationViewItem Content="{l:Tr Nav_Settings}" TargetPageType="{x:Type v:SettingsPage}" Icon="{ui:SymbolIcon Settings24}" />
                 </ui:NavigationView.FooterMenuItems>
                 <ui:NavigationView.PaneFooter>
+                    <!-- Collapsed rail: the text is hidden (it would be cut off), only the progress rings stay. -->
                     <StackPanel Margin="16,8,16,12">
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
-                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ScanStatus}" TextWrapping="Wrap" MaxWidth="180" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ScanStatus}" TextWrapping="Wrap" MaxWidth="180" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
-                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Busy}" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Busy}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
-                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding LastScanText}" />
-                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Version, StringFormat='PCOptimizer {0}'}" />
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding LastScanText}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Version, StringFormat='PCOptimizer {0}'}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </ui:NavigationView.PaneFooter>
             </ui:NavigationView>

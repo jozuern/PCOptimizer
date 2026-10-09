@@ -424,6 +424,83 @@ public class AdvisorCheckTests
         var vanguard = One(new GameAccessCheck(), Ac("vanguard", "Riot Vanguard"));
         Assert.False(vanguard.Params.ContainsKey("unverified_vanguard"));
     }
+
+    // ---------------- Stability: virtualization, mixed memory, unexpected shutdowns ----------------
+
+    private static HardwareProfile WithVirtualization(HardwareProfile p, bool hypervisor, bool cpu, bool firmware) =>
+        p with { Extras = new HardwareExtras { Virtualization = new VirtualizationInfo(hypervisor, cpu, firmware) } };
+
+    [Fact]
+    public void RunningHypervisorCountsAsVirtualizationOn()
+    {
+        // As on the real test PC: memory integrity runs, both processor flags read false.
+        var f = One(new VirtualizationCheck(), WithVirtualization(P(), hypervisor: true, cpu: false, firmware: false));
+        Assert.Equal(FindingStatus.Ok, f.Status);
+        AssertRenders(f);
+    }
+
+    [Fact]
+    public void VirtualizationOffIsAProblemOnlyWithAnAntiCheatThatCanAskForMemoryIntegrity()
+    {
+        var plain = One(new VirtualizationCheck(), WithVirtualization(P(), false, true, false));
+        Assert.Equal((FindingStatus.Info, "off"), (plain.Status, plain.Variant));
+        AssertRenders(plain);
+
+        var vanguard = One(new VirtualizationCheck(), WithVirtualization(Ac("vanguard", "Riot Vanguard"), false, true, false));
+        Assert.Equal((FindingStatus.Problem, "antiCheat"), (vanguard.Status, vanguard.Variant));
+        Assert.Equal("Riot Vanguard", vanguard.Params["antiCheats"]);
+        AssertRenders(vanguard);
+
+        Assert.Equal(FindingStatus.Unsupported, One(new VirtualizationCheck(), WithVirtualization(P(), false, false, false)).Status);
+        Assert.Equal(FindingStatus.Unknown, One(new VirtualizationCheck(), P()).Status);
+    }
+
+    private static MemoryModule Ram(string locator, string part, int gb = 16) => new((long)gb << 30, 3200, 3200, part, "Corsair", locator, "", 26, 8);
+
+    private static HardwareProfile WithRam(params MemoryModule[] modules) =>
+        P(p => p with { Memory = new MemoryInfo(modules.Sum(m => m.CapacityBytes), modules) });
+
+    [Fact]
+    public void MixedMemoryKitsAreReported()
+    {
+        Assert.Equal(FindingStatus.Ok, One(new MixedMemoryCheck(), WithRam(Ram("A2", "CMW32GX4M2E3200C16"), Ram("B2", "CMW32GX4M2E3200C16"))).Status);
+        var mixed = One(new MixedMemoryCheck(), WithRam(Ram("A2", "CMW32GX4M2E3200C16"), Ram("B2", "F4-3200C16-8GVKB", 8)));
+        Assert.Equal(FindingStatus.Info, mixed.Status);
+        AssertRenders(mixed);
+        Assert.Empty(new MixedMemoryCheck().Evaluate(WithRam(Ram("A2", "X")), C));
+    }
+
+    private static HardwareProfile WithShutdowns(params UnexpectedShutdown[] events) =>
+        P(p => p with { Extras = new HardwareExtras { UnexpectedShutdowns = events } });
+
+    [Fact]
+    public void UnexpectedShutdownsWithAStopErrorNameItsCode()
+    {
+        Assert.Equal(FindingStatus.Ok, One(new UnexpectedRestartCheck(), WithShutdowns()).Status);
+        Assert.Equal(FindingStatus.Unknown, One(new UnexpectedRestartCheck(), P()).Status);
+
+        var crash = One(new UnexpectedRestartCheck(), WithShutdowns(new UnexpectedShutdown(DateTime.UtcNow, 159, false)));
+        Assert.Equal((FindingStatus.Problem, "stop", "0x0000009F"), (crash.Status, crash.Variant, crash.Params["stopCode"]));
+        AssertRenders(crash);
+
+        var power = One(new UnexpectedRestartCheck(), WithShutdowns(new UnexpectedShutdown(DateTime.UtcNow, 0, true)));
+        Assert.Equal(("power", "yes"), (power.Variant, power.Params["powerButton"]));
+        AssertRenders(power);
+    }
+
+    [Fact]
+    public void ReadsKernelPowerEventsFromWevtutilXml()
+    {
+        const string xml = """
+            <Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-Kernel-Power'/><EventID>41</EventID><TimeCreated SystemTime='2026-10-01T18:20:05.1234567Z'/></System><EventData><Data Name='BugcheckCode'>0</Data><Data Name='PowerButtonTimestamp'>133912345678901234</Data></EventData></Event>
+            <Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-Kernel-Power'/><EventID>41</EventID><TimeCreated SystemTime='2026-10-05T09:00:00.0000000Z'/></System><EventData><Data Name='BugcheckCode'>159</Data><Data Name='PowerButtonTimestamp'>0</Data></EventData></Event>
+            """;
+        var events = StabilityProbe.Parse(xml);
+        Assert.Equal(2, events.Count);
+        Assert.Equal((159u, false), (events[0].BugcheckCode, events[0].PowerButton)); // newest first
+        Assert.True(events[1].PowerButton);
+        Assert.Empty(StabilityProbe.Parse(""));
+    }
 }
 
 /// <summary>The M3/M4 action types against the sandbox registry and fakes.</summary>

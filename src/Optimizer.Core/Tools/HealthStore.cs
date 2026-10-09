@@ -8,7 +8,7 @@ public static class HealthStore
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
-    public static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer");
+    public static string DefaultFolder => Platform.DataPaths.Root;
 
     public static ThrottleResult? LoadThrottle(string folder)
     {

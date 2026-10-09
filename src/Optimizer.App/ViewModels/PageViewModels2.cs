@@ -219,7 +219,8 @@ public sealed partial class ServiceRowVm : ObservableObject
         EditText = row.Edit switch
         {
             ServiceEdit.ReadOnly => Loc.Instance["Svc_ReadOnly"],
-            ServiceEdit.ManualOnly => row.Note?.Mode == "warn" ? Loc.Instance["Svc_Warn"] : null,
+            // Only when there is something to choose: a service already on Manual has no change to warn about.
+            ServiceEdit.ManualOnly => row.Note?.Mode == "warn" && Options.Count > 1 ? Loc.Instance["Svc_Warn"] : null,
             _ => null,
         };
     }

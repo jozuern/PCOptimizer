@@ -14,6 +14,9 @@
                 </StackPanel>
             </DockPanel>
             <ui:InfoBar Title="" Message="{l:Tr Apps_NoWinget}" Severity="Warning" IsClosable="False" IsOpen="{Binding Apps.WingetMissing}" Margin="0,0,0,8" />
+            <ui:Button Content="{l:Tr Apps_GetAppInstaller}" Icon="{ui:SymbolIcon Open20}" Margin="0,0,0,8"
+                       Command="{Binding OpenLinkCommand}" CommandParameter="https://apps.microsoft.com/detail/9nblggh4nns1"
+                       Visibility="{Binding Apps.WingetMissing, Converter={StaticResource BoolToVisibility}}" />
             <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Apps.IsLoading, Converter={StaticResource BoolToVisibility}}" />
 
             <ItemsControl ItemsSource="{Binding Apps.Apps}">
@@ -27,7 +30,7 @@
                                 <StackPanel>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" />
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Text}" Margin="0,4,0,0" />
-                                    <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Category}" Margin="0,4,0,0" />
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Category}" Margin="0,4,0,0" />
                                 </StackPanel>
                             </ui:CardControl.Header>
                             <StackPanel Orientation="Horizontal">
@@ -64,10 +67,10 @@
                             <ui:CardControl.Header>
                                 <StackPanel>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Device}" TextWrapping="Wrap" />
-                                    <ui:TextBlock FontTypography="Caption" Appearance="Secondary" TextWrapping="Wrap" Margin="0,4,0,0">
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0">
                                         <Run Text="{Binding ClassText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding Provider, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Version, Mode=OneWay}" />
                                     </ui:TextBlock>
-                                    <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Margin="0,4,0,0">
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,4,0,0">
                                         <Run Text="{Binding Date, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding Age, Mode=OneWay}" />
                                     </ui:TextBlock>
                                 </StackPanel>

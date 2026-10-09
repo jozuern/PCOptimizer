@@ -52,7 +52,7 @@ public sealed class AppServices
         }
     }
 
-    public static string DataFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer");
+    public static string DataFolder => Optimizer.Core.Platform.DataPaths.Root;
 
     /// <summary>Extracted helper tools (PresentMon) and capture files.</summary>
     public static string ToolsFolder => Path.Combine(DataFolder, "tools");

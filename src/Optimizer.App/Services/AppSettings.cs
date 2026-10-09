@@ -25,7 +25,7 @@ public sealed class AppSettings
     public string? Profile { get; set; }
 
     private static string FilePath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer", "settings.json");
+        Path.Combine(Optimizer.Core.Platform.DataPaths.Root, "settings.json");
 
     public static AppSettings Load()
     {

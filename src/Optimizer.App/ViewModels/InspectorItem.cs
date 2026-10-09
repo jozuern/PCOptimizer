@@ -9,7 +9,20 @@ public abstract class InspectorItem : ObservableObject
     public abstract string Key { get; }
     public string Title { get; protected init; } = "";
     public string Summary { get; protected init; } = "";
-    public string Markdown { get; protected init; } = "";
+    private string? _markdown;
+    private Func<string>? _markdownFactory;
+
+    /// <summary>
+    /// The inspector document, built on first use: only the selected item needs it, and building it for tweaks reads the
+    /// current values from the system (registry, power settings, BCD), which made every list rebuild slow.
+    /// </summary>
+    public string Markdown
+    {
+        get => _markdown ??= _markdownFactory?.Invoke() ?? "";
+        protected init => _markdown = value;
+    }
+
+    protected Func<string> MarkdownFactory { init => _markdownFactory = value; }
     public string StatusText { get; protected init; } = "";
 
     /// <summary>Ok, Problem, Critical, Info, Unknown, Unsupported, Neutral: drives the Fluent status icon.</summary>

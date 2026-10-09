@@ -20,7 +20,7 @@
                     <DataTemplate>
                         <ui:Card Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <DockPanel>
-                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Appearance="Secondary" Text="{Binding SizeText}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SizeText}" VerticalAlignment="Center" Margin="16,0,0,0" />
                                 <CheckBox IsChecked="{Binding Selected}" VerticalAlignment="Top"
                                           Command="{Binding DataContext.Cleanup.SelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
                                     <StackPanel>

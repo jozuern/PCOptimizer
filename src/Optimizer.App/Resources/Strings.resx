@@ -469,7 +469,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Not changed here</value>
   </data>
   <data name="Svc_Warn" xml:space="preserve">
-    <value>See the note before changing</value>
+    <value>Only Manual can be chosen here. Read the note on the left first.</value>
   </data>
   <data name="Svc_Running" xml:space="preserve">
     <value>running</value>
@@ -776,7 +776,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>PawnIO driver is installed.</value>
   </data>
   <data name="Sensors_PawnIoOff" xml:space="preserve">
-    <value>PawnIO driver is not installed: processor and mainboard sensors are not available.</value>
+    <value>PawnIO driver is not installed: processor and mainboard sensors are not available. Install it with the button here or on the Apps &amp; drivers page.</value>
   </data>
   <data name="Sensors_InstallPawnIo" xml:space="preserve">
     <value>Install PawnIO</value>
@@ -930,7 +930,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Licenses_Intro" xml:space="preserve"><value>The license of PCOptimizer and of every component it ships, with the full texts.</value></data>
   <data name="Settings_Updates" xml:space="preserve"><value>Updates</value></data>
   <data name="Update_AtStart" xml:space="preserve"><value>Check for a new version at start</value></data>
-  <data name="Update_Hint" xml:space="preserve"><value>Asks GitHub whether a newer release exists. Nothing is downloaded or installed. The app only links to the release page.</value></data>
+  <data name="Update_Hint" xml:space="preserve"><value>Asks GitHub whether a newer release exists. An update is downloaded only when you confirm it.</value></data>
   <data name="Update_CheckNow" xml:space="preserve"><value>Check now</value></data>
   <data name="Update_Checking" xml:space="preserve"><value>Asking GitHub for the latest release.</value></data>
   <data name="Update_UpToDate" xml:space="preserve"><value>Version {0} is the latest release.</value></data>
@@ -938,4 +938,23 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Update_NoRelease" xml:space="preserve"><value>No release has been published yet.</value></data>
   <data name="Update_Error" xml:space="preserve"><value>GitHub could not be reached. Try again later.</value></data>
   <data name="Update_Open" xml:space="preserve"><value>Open download page</value></data>
+  <data name="Vt_GetKey" xml:space="preserve"><value>How to get a free API key</value></data>
+  <data name="Apps_GetAppInstaller" xml:space="preserve"><value>Get App Installer</value></data>
+  <data name="Update_Install" xml:space="preserve"><value>Update now</value></data>
+  <data name="Update_ConfirmTitle" xml:space="preserve"><value>Update to version {0}?</value></data>
+  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer downloads version {0} from its GitHub release, checks the file against the release's SHA-256 checksum, replaces this exe and starts again. Your changes, backups and settings stay.</value></data>
+  <data name="Update_Restart" xml:space="preserve"><value>Update and restart</value></data>
+  <data name="Update_Downloading" xml:space="preserve"><value>Downloading version {0}: {1} %</value></data>
+  <data name="Update_Failed" xml:space="preserve"><value>The update could not be downloaded. Try again later or use the download page.</value></data>
+  <data name="Update_BadChecksum" xml:space="preserve"><value>The downloaded file does not match the release checksum and was deleted. Nothing was changed.</value></data>
+  <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
+  <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
+  <data name="Settings_Report" xml:space="preserve"><value>Report a problem</value></data>
+  <data name="Settings_CopyLog" xml:space="preserve"><value>Copy log</value></data>
+  <data name="Settings_ReportHint" xml:space="preserve"><value>Report a problem opens a bug report on GitHub with the app version and Windows build filled in. Nothing is sent until you submit it there (you need a GitHub account). Copy log puts this session's log on the clipboard to paste into it.</value></data>
+  <data name="Log_Copied" xml:space="preserve"><value>Log copied ({0} entries). Paste it into the report. It can contain your Windows user name, paths and program names: check it before you post it.</value></data>
+  <data name="Log_CopyFailed" xml:space="preserve"><value>The clipboard is in use by another app. Try again.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong and was logged. You can report it in Settings &gt; Diagnostics.</value></data>
+  <data name="Score_Pending" xml:space="preserve"><value>The score appears when the scan is finished.</value></data>
+  <data name="Dash_ProblemsPending" xml:space="preserve"><value>Problems found</value></data>
 </root>

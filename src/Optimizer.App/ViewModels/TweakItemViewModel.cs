@@ -97,18 +97,22 @@ public sealed class TweakItemViewModel : InspectorItem
         ActionEnabled = HasBackup || hard.Count == 0;
         ActionNote = HasBackup || ActionText is null ? null : BlockText;
 
-        // Inspector document: hand-written sections plus generated "What changes" and "Undo".
-        var changes = engine.Preview(t);
-        var notes = new List<string>();
-        if (t.Scope == TweakScope.User || t.Actions.OfType<Optimizer.Core.Actions.RegistryAction>().Any(a => a.Hive == Optimizer.Core.Actions.Hive.User))
-            notes.Add(labels.Get(lang, "changes.userScope"));
-        var undo = new List<string> { labels.Get(lang, t.Reversibility switch { Reversibility.Reinstall => "undo.reinstall", Reversibility.Permanent => "undo.permanent", _ => "undo.reversible" }) };
-        if (t.Restart) undo.Add(labels.Get(lang, "undo.restart"));
-        if (t.SignOut) undo.Add(labels.Get(lang, "undo.signOut"));
-        if (t.IsBootCritical) undo.Add(labels.Get(lang, "undo.bootCritical"));
-        Markdown = page is null
-            ? $"# {Title}"
-            : $"# {Title}\n\n" + DocStore.RenderTweak(page, changes, notes, string.Join(" ", undo));
+        // Inspector document: hand-written sections plus generated "What changes" and "Undo". Built when the row is
+        // opened, because the preview reads the current values from the system.
+        var heading = Title;
+        MarkdownFactory = () =>
+        {
+            if (page is null) return $"# {heading}";
+            var changes = engine.Preview(t);
+            var notes = new List<string>();
+            if (t.Scope == TweakScope.User || t.Actions.OfType<Optimizer.Core.Actions.RegistryAction>().Any(a => a.Hive == Optimizer.Core.Actions.Hive.User))
+                notes.Add(labels.Get(lang, "changes.userScope"));
+            var undo = new List<string> { labels.Get(lang, t.Reversibility switch { Reversibility.Reinstall => "undo.reinstall", Reversibility.Permanent => "undo.permanent", _ => "undo.reversible" }) };
+            if (t.Restart) undo.Add(labels.Get(lang, "undo.restart"));
+            if (t.SignOut) undo.Add(labels.Get(lang, "undo.signOut"));
+            if (t.IsBootCritical) undo.Add(labels.Get(lang, "undo.bootCritical"));
+            return $"# {heading}\n\n" + DocStore.RenderTweak(page, changes, notes, string.Join(" ", undo));
+        };
     }
 
     public TweakStatus Status_ { get; }

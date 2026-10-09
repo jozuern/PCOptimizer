@@ -52,8 +52,8 @@
                                     </Grid.ColumnDefinitions>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Label}" />
                                     <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding AvgFps, StringFormat={}{0} FPS}" />
-                                    <ui:TextBlock Grid.Column="2" FontTypography="Body" Appearance="Secondary" Text="{Binding Low, StringFormat={}1 % low {0}}" />
-                                    <ui:TextBlock Grid.Column="3" FontTypography="Caption" Appearance="Tertiary" Text="{Binding Frames}" VerticalAlignment="Center" />
+                                    <ui:TextBlock Grid.Column="2" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Low, StringFormat={}1 % low {0}}" />
+                                    <ui:TextBlock Grid.Column="3" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Frames}" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -104,7 +104,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Sensors_Hint}" />
-                        <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Health.PawnIoText}" Margin="0,4,0,0" />
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Health.PawnIoText}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
@@ -122,7 +122,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="120" />
                             </Grid.ColumnDefinitions>
-                            <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{Binding Hardware}" TextWrapping="Wrap" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Hardware}" TextWrapping="Wrap" />
                             <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding Sensor}" TextWrapping="Wrap" />
                             <ui:TextBlock Grid.Column="2" FontTypography="BodyStrong" Text="{Binding Value}" />
                         </Grid>

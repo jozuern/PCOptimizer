@@ -7,17 +7,23 @@ namespace Optimizer.Core.Updates;
 
 public enum ReleaseCheckStatus { UpToDate, NewerAvailable, NoRelease, Error }
 
-public sealed record ReleaseCheckResult(ReleaseCheckStatus Status, Version? Latest = null);
+/// <summary>Download links of a release's exe and its SHA-256 file (only links into this repository's releases).</summary>
+public sealed record ReleaseAssets(string ExeUrl, string ChecksumUrl);
+
+public sealed record ReleaseCheckResult(ReleaseCheckStatus Status, Version? Latest = null, ReleaseAssets? Assets = null);
 
 /// <summary>
 /// Opt-in check for a newer version: asks GitHub for the latest published release of this repository and compares its
-/// tag with the running version. Nothing is downloaded or run. The app only links to the release page (built here, never
-/// taken from the response), which opens de-elevated in the browser.
+/// tag with the running version. Nothing is downloaded here: the release page link is built here (never taken from the
+/// response), and an update is only downloaded by <see cref="Updater"/> after the user confirms it.
 /// </summary>
 public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : IDisposable
 {
     public const string Repository = "jozuern/PCOptimizer";
     public const string LatestReleaseUrl = "https://github.com/" + Repository + "/releases/latest";
+    public const string DownloadUrlPrefix = "https://github.com/" + Repository + "/releases/download/";
+    public const string ExeAsset = "PCOptimizer.exe";
+    public const string ChecksumAsset = "PCOptimizer.exe.sha256";
 
     private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { BaseAddress = new Uri("https://api.github.com/"), Timeout = TimeSpan.FromSeconds(15) };
 
@@ -56,12 +62,23 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
             if (Flag(root, "draft") || Flag(root, "prerelease")) return new(ReleaseCheckStatus.NoRelease);
             if (!root.TryGetProperty("tag_name", out var tag) || ParseTag(tag.ValueKind == JsonValueKind.String ? tag.GetString() : null) is not { } latest)
                 return new(ReleaseCheckStatus.Error);
-            return new(latest > Normalize(current) ? ReleaseCheckStatus.NewerAvailable : ReleaseCheckStatus.UpToDate, latest);
+            return new(latest > Normalize(current) ? ReleaseCheckStatus.NewerAvailable : ReleaseCheckStatus.UpToDate, latest, Assets(root));
         }
         catch (JsonException)
         {
             return new(ReleaseCheckStatus.Error);
         }
+    }
+
+    /// <summary>The exe and its checksum file, only when both download links point into this repository's releases.</summary>
+    private static ReleaseAssets? Assets(JsonElement root)
+    {
+        if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return null;
+        string? Url(string name) => assets.EnumerateArray()
+            .Where(a => a.ValueKind == JsonValueKind.Object && a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == name)
+            .Select(a => a.TryGetProperty("browser_download_url", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null)
+            .FirstOrDefault(u => u is not null && u.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal) && Uri.IsWellFormedUriString(u, UriKind.Absolute));
+        return Url(ExeAsset) is { } exe && Url(ChecksumAsset) is { } sha ? new ReleaseAssets(exe, sha) : null;
     }
 
     /// <summary>"v1.2.3" or "1.2.3"; anything else (suffixes, four parts) is not a release tag of this app.</summary>

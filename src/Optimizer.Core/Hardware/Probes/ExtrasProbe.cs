@@ -47,6 +47,8 @@ public static class ExtrasProbe
             Programs = Try("programs", () => InstalledPrograms.Read(userSid)) ?? [],
             StartupPrograms = Try("startup", () => ReadStartupPrograms(userSid)),
             DiskHealth = Try("diskhealth", Tools.DiskHealthReader.Read) ?? [],
+            Virtualization = Try("virtualization", StabilityProbe.ReadVirtualization),
+            UnexpectedShutdowns = Try("shutdowns", StabilityProbe.ReadUnexpectedShutdowns),
             BackgroundCpu = Try("processes", () => Tools.ProcessSampler.SampleAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()),
             LastThrottle = Try("throttle", () => Tools.HealthStore.LoadThrottle(Tools.HealthStore.DefaultFolder)),
         };

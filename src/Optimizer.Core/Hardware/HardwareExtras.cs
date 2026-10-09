@@ -27,6 +27,12 @@ public sealed record HardwareExtras
     /// <summary>Third-party programs enabled at logon (Run keys, Startup folders, logon tasks), for F16. Null = not read.</summary>
     public IReadOnlyList<string>? StartupPrograms { get; init; }
 
+    /// <summary>Hardware virtualization state (A.virtualization); null when it could not be read.</summary>
+    public Probes.VirtualizationInfo? Virtualization { get; init; }
+
+    /// <summary>Unexpected shutdowns of the last 30 days (Kernel-Power event 41), newest first; null when the System log could not be read.</summary>
+    public IReadOnlyList<Probes.UnexpectedShutdown>? UnexpectedShutdowns { get; init; }
+
     /// <summary>Drive health (F28); empty when Storage Management could not be read.</summary>
     public IReadOnlyList<Tools.DiskHealth> DiskHealth { get; init; } = [];
 

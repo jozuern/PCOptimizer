@@ -469,7 +469,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Hier nicht änderbar</value>
   </data>
   <data name="Svc_Warn" xml:space="preserve">
-    <value>Vor dem Ändern den Hinweis lesen</value>
+    <value>Hier ist nur Manuell wählbar. Lies zuerst den Hinweis links.</value>
   </data>
   <data name="Svc_Running" xml:space="preserve">
     <value>läuft</value>
@@ -776,7 +776,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Der PawnIO-Treiber ist installiert.</value>
   </data>
   <data name="Sensors_PawnIoOff" xml:space="preserve">
-    <value>Der PawnIO-Treiber ist nicht installiert: Prozessor- und Mainboard-Sensoren sind nicht verfügbar.</value>
+    <value>Der PawnIO-Treiber ist nicht installiert: Prozessor- und Mainboard-Sensoren sind nicht verfügbar. Installiere ihn mit der Schaltfläche hier oder unter Apps &amp; Treiber.</value>
   </data>
   <data name="Sensors_InstallPawnIo" xml:space="preserve">
     <value>PawnIO installieren</value>
@@ -930,7 +930,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Licenses_Intro" xml:space="preserve"><value>Die Lizenz von PCOptimizer und aller mitgelieferten Komponenten, mit den vollständigen Texten.</value></data>
   <data name="Settings_Updates" xml:space="preserve"><value>Updates</value></data>
   <data name="Update_AtStart" xml:space="preserve"><value>Beim Start nach einer neuen Version suchen</value></data>
-  <data name="Update_Hint" xml:space="preserve"><value>Fragt bei GitHub, ob es eine neuere Version gibt. Es wird nichts heruntergeladen oder installiert. Die App verlinkt nur die Release-Seite.</value></data>
+  <data name="Update_Hint" xml:space="preserve"><value>Fragt bei GitHub, ob es eine neuere Version gibt. Ein Update wird nur heruntergeladen, wenn du es bestätigst.</value></data>
   <data name="Update_CheckNow" xml:space="preserve"><value>Jetzt prüfen</value></data>
   <data name="Update_Checking" xml:space="preserve"><value>Frage bei GitHub nach der neuesten Version.</value></data>
   <data name="Update_UpToDate" xml:space="preserve"><value>Version {0} ist die neueste Version.</value></data>
@@ -938,4 +938,23 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Update_NoRelease" xml:space="preserve"><value>Es wurde noch keine Version veröffentlicht.</value></data>
   <data name="Update_Error" xml:space="preserve"><value>GitHub ist nicht erreichbar. Versuch es später noch einmal.</value></data>
   <data name="Update_Open" xml:space="preserve"><value>Download-Seite öffnen</value></data>
+  <data name="Vt_GetKey" xml:space="preserve"><value>So bekommst du einen kostenlosen API-Schlüssel</value></data>
+  <data name="Apps_GetAppInstaller" xml:space="preserve"><value>App Installer holen</value></data>
+  <data name="Update_Install" xml:space="preserve"><value>Jetzt aktualisieren</value></data>
+  <data name="Update_ConfirmTitle" xml:space="preserve"><value>Auf Version {0} aktualisieren?</value></data>
+  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer lädt Version {0} aus dem GitHub-Release, prüft die Datei gegen die SHA-256-Prüfsumme des Release, ersetzt diese exe und startet neu. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
+  <data name="Update_Restart" xml:space="preserve"><value>Aktualisieren und neu starten</value></data>
+  <data name="Update_Downloading" xml:space="preserve"><value>Lade Version {0} herunter: {1} %</value></data>
+  <data name="Update_Failed" xml:space="preserve"><value>Das Update konnte nicht heruntergeladen werden. Versuch es später noch einmal oder nutze die Download-Seite.</value></data>
+  <data name="Update_BadChecksum" xml:space="preserve"><value>Die heruntergeladene Datei passt nicht zur Prüfsumme des Release und wurde gelöscht. Es wurde nichts geändert.</value></data>
+  <data name="Update_CannotReplace" xml:space="preserve"><value>Das Update wurde heruntergeladen, aber diese exe konnte nicht ersetzt werden ({0}). Nutze stattdessen die Download-Seite.</value></data>
+  <data name="Update_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und aktualisiere dann.</value></data>
+  <data name="Settings_Report" xml:space="preserve"><value>Problem melden</value></data>
+  <data name="Settings_CopyLog" xml:space="preserve"><value>Protokoll kopieren</value></data>
+  <data name="Settings_ReportHint" xml:space="preserve"><value>Problem melden öffnet einen Fehlerbericht auf GitHub, in dem App-Version und Windows-Build schon eingetragen sind. Gesendet wird erst, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto). Protokoll kopieren legt das Protokoll dieser Sitzung in die Zwischenablage, damit du es einfügen kannst.</value></data>
+  <data name="Log_Copied" xml:space="preserve"><value>Protokoll kopiert ({0} Einträge). Füge es in den Bericht ein. Es kann deinen Windows-Benutzernamen, Pfade und Programmnamen enthalten: prüfe es vor dem Absenden.</value></data>
+  <data name="Log_CopyFailed" xml:space="preserve"><value>Die Zwischenablage wird gerade von einer anderen App benutzt. Versuch es noch einmal.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Etwas ist schiefgelaufen und wurde protokolliert. Du kannst es unter Einstellungen &gt; Diagnose melden.</value></data>
+  <data name="Score_Pending" xml:space="preserve"><value>Die Bewertung erscheint, wenn der Scan fertig ist.</value></data>
+  <data name="Dash_ProblemsPending" xml:space="preserve"><value>Gefundene Probleme</value></data>
 </root>

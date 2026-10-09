@@ -17,13 +17,13 @@
             <DockPanel DockPanel.Dock="Bottom" Margin="0,24,0,0" LastChildFill="False">
                 <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
                 <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
-                <ui:TextBlock DockPanel.Dock="Left" FontTypography="Caption" Appearance="Tertiary" Text="{l:Tr Confirm_Backup}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
+                <ui:TextBlock DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{l:Tr Confirm_Backup}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
             </DockPanel>
 
             <StackPanel DockPanel.Dock="Top">
                 <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
-                <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Appearance="Secondary" TextWrapping="Wrap" Margin="0,8,0,0" />
-                <ui:TextBlock x:Name="BadgeText" FontTypography="Caption" Appearance="Secondary" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <ui:TextBlock x:Name="BadgeText" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
                 <ItemsControl x:Name="WarningList" Margin="0,8,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -41,9 +41,9 @@
                         <ColumnDefinition Width="180" />
                         <ColumnDefinition Width="180" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{l:Tr Confirm_Target}" />
-                    <ui:TextBlock Grid.Column="1" FontTypography="Caption" Appearance="Secondary" Text="{l:Tr Confirm_Now}" />
-                    <ui:TextBlock x:Name="NewHeader" Grid.Column="2" FontTypography="Caption" Appearance="Secondary" />
+                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Confirm_Target}" />
+                    <ui:TextBlock Grid.Column="1" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Confirm_Now}" />
+                    <ui:TextBlock x:Name="NewHeader" Grid.Column="2" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </Grid>
                 <Separator />
             </StackPanel>

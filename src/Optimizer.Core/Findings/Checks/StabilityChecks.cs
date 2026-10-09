@@ -1,0 +1,124 @@
+using System.Globalization;
+using Optimizer.Core.Catalog;
+using Optimizer.Core.Hardware;
+
+namespace Optimizer.Core.Findings.Checks;
+
+/// <summary>
+/// A.virtualization: hardware virtualization off in the firmware. Memory integrity needs it, and anti-cheats that can
+/// ask for memory integrity (catalog: "hvci" required or sometimes) make it a problem.
+/// </summary>
+public sealed class VirtualizationCheck : IFindingCheck
+{
+    public const string Id = "A.virtualization";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        var v = p.Extras?.Virtualization;
+        var needing = (p.Software?.AntiCheats ?? [])
+            .Where(a => c.AntiCheat.AntiCheats.FirstOrDefault(s => s.Id == a.Id) is { } sig && (sig.Required.Contains("hvci") || sig.Sometimes.Contains("hvci")))
+            .Select(a => a.DisplayName).ToList();
+        FindingStatus status;
+        string? variant = null;
+        if (v is null) status = FindingStatus.Unknown;
+        else if (v.Enabled) status = FindingStatus.Ok;
+        else if (!v.CpuSupport) status = FindingStatus.Unsupported;
+        else if (needing.Count > 0) { status = FindingStatus.Problem; variant = "antiCheat"; }
+        else { status = FindingStatus.Info; variant = "off"; }
+
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Advisor,
+            Status = status,
+            Variant = variant,
+            Impact = needing.Count > 0 ? 3 : 1,
+            Effects = [Effect.Prerequisite],
+            Facts = v is null
+                ? []
+                :
+                [
+                    new("fact.hypervisor", v.HypervisorPresent ? "@yes" : "@no"),
+                    new("fact.virtualizationFirmware", v.Enabled ? "@yes" : v.CpuSupport ? "@no" : "@unsupported"),
+                ],
+            Params = new Dictionary<string, string>
+            {
+                ["antiCheats"] = string.Join(", ", needing),
+                ["board"] = $"{p.Firmware?.BoardManufacturer} {p.Firmware?.BoardProduct}".Trim(),
+                ["intel"] = p.Cpu?.Vendor == Vendor.Intel ? "yes" : "",
+            },
+        };
+    }
+}
+
+/// <summary>A.mixedRam: memory modules with different part numbers or sizes (not one matched kit).</summary>
+public sealed class MixedMemoryCheck : IFindingCheck
+{
+    public const string Id = "A.mixedRam";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        if (p.Memory is null || p.Memory.Modules.Count < 2) yield break;
+        var modules = p.Memory.Modules;
+        var parts = modules.Select(m => m.PartNumber.Trim()).ToList();
+        var status = parts.Any(string.IsNullOrEmpty) ? FindingStatus.Unknown
+            : parts.Distinct(StringComparer.OrdinalIgnoreCase).Count() > 1 || modules.Select(m => m.CapacityBytes).Distinct().Count() > 1 ? FindingStatus.Info
+            : FindingStatus.Ok;
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Advisor,
+            Status = status,
+            Impact = 2,
+            Effects = [Effect.Stability, Effect.Fps],
+            Facts =
+            [
+                .. modules.Select(m => new Fact("fact.ramModule",
+                    $"{m.DeviceLocator}: {m.Manufacturer} {m.PartNumber.Trim()}, {m.CapacityBytes >> 30} GB {m.Type}")),
+            ],
+        };
+    }
+}
+
+/// <summary>A.unexpectedRestarts: Kernel-Power event 41 in the last 30 days (crash, power loss or forced power off).</summary>
+public sealed class UnexpectedRestartCheck : IFindingCheck
+{
+    public const string Id = "A.unexpectedRestarts";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        var events = p.Extras?.UnexpectedShutdowns;
+        var stop = events?.FirstOrDefault(e => e.BugcheckCode != 0);
+        var status = events is null ? FindingStatus.Unknown : events.Count == 0 ? FindingStatus.Ok : FindingStatus.Problem;
+        var last = events?.FirstOrDefault();
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Advisor,
+            Status = status,
+            Variant = status != FindingStatus.Problem ? null : stop is not null ? "stop" : "power",
+            Impact = 3,
+            Effects = [Effect.Stability],
+            Facts = events is null
+                ? []
+                :
+                [
+                    new("fact.unexpectedCount", events.Count.ToString(CultureInfo.InvariantCulture)),
+                    .. last is null ? Array.Empty<Fact>() : [new Fact("fact.lastUnexpected", last.Time.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))],
+                    .. stop is null ? Array.Empty<Fact>() : [new Fact("fact.lastStopCode", StopCode(stop.BugcheckCode))],
+                ],
+            Params = new Dictionary<string, string>
+            {
+                ["count"] = events?.Count.ToString(CultureInfo.InvariantCulture) ?? "",
+                ["stopCode"] = stop is null ? "" : StopCode(stop.BugcheckCode),
+                ["powerButton"] = events?.Any(e => e.PowerButton) == true ? "yes" : "",
+            },
+        };
+    }
+
+    /// <summary>Event 41 stores the bug check code in decimal; documentation lists it as 0x0000009F.</summary>
+    public static string StopCode(uint code) => $"0x{code:X8}";
+}

@@ -72,7 +72,7 @@ public sealed class BackupStore
         Directory.CreateDirectory(ExportFolder);
     }
 
-    public static string DefaultRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PCOptimizer");
+    public static string DefaultRoot => Platform.DataPaths.Root;
 
     public string Root { get; }
     public string BackupFolder => Path.Combine(Root, "backups");

@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in PCOptimizer does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security problems: please use "Report a vulnerability" on the Security tab instead.
+        The app fills in the version and Windows build when you open this form from Settings > Diagnostics.
+  - type: input
+    id: version
+    attributes:
+      label: PCOptimizer version
+      description: Settings > About
+      placeholder: "0.3.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows build
+      placeholder: "26100.4351"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Tweaks page
+        2. Turn on ...
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: In the app, Settings > Diagnostics > Copy log, then paste here. Check it first; it can contain your Windows user name, paths and program names.
+      render: text

@@ -18,7 +18,8 @@ public sealed class FindingItemViewModel : InspectorItem
         var title = page is null ? finding.Id : DocStore.Substitute(page.Title, finding.Params);
         Title = finding.Subject is { Length: > 0 } s && !title.Contains(s, StringComparison.OrdinalIgnoreCase) ? $"{title}: {s}" : title;
         Summary = page is null ? "" : DocStore.Summary(page, finding);
-        Markdown = page is null ? $"# {finding.Id}\n\n(no explanation page)" : $"# {Title}\n\n" + DocStore.RenderFinding(page, finding, labels);
+        var heading = Title;
+        MarkdownFactory = () => page is null ? $"# {finding.Id}\n\n(no explanation page)" : $"# {heading}\n\n" + DocStore.RenderFinding(page, finding, labels);
         StatusText = labels.Get(lang, $"status.{finding.Status}");
         Status = finding.Status.ToString();
         EffectsText = string.Join(", ", finding.Effects.Where(e => e != Effect.Prerequisite || finding.Impact is null).Select(e => labels.Get(lang, $"effect.{e}")));

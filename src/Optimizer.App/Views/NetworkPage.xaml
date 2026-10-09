@@ -55,8 +55,8 @@
                                     <ui:TextBlock FontTypography="Body" Text="{Binding Name}" />
                                     <TextBlock Grid.Column="1" Style="{StaticResource Mono}" Text="{Binding Server}" VerticalAlignment="Center" />
                                     <ui:TextBlock Grid.Column="2" FontTypography="BodyStrong" Text="{Binding Median}" />
-                                    <ui:TextBlock Grid.Column="3" FontTypography="Caption" Appearance="Secondary" Text="{Binding Best}" VerticalAlignment="Center" />
-                                    <ui:TextBlock Grid.Column="4" FontTypography="Caption" Appearance="Secondary" Text="{Binding Answered}" VerticalAlignment="Center" />
+                                    <ui:TextBlock Grid.Column="3" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Best}" VerticalAlignment="Center" />
+                                    <ui:TextBlock Grid.Column="4" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Answered}" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

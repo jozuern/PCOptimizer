@@ -13,7 +13,7 @@
         <ui:TitleBar Grid.Row="0" Title="" ShowMinimize="False" ShowMaximize="False" ShowHelp="False" />
         <StackPanel Grid.Row="1" Margin="24,8,24,24">
             <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
-            <ui:TextBlock x:Name="BodyText" FontTypography="Body" Appearance="Secondary" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <ui:TextBlock x:Name="BodyText" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
             <StackPanel x:Name="Buttons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0" />
         </StackPanel>
     </Grid>

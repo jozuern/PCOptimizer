@@ -33,7 +33,7 @@
                                 <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Meta}" />
+                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
                                     </StackPanel>
                                 </CheckBox>
                             </DockPanel>
@@ -49,7 +49,7 @@
                                 <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                    <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Files}" />
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Files}" />
                                 </StackPanel>
                             </DockPanel>
                         </DataTemplate>
@@ -65,7 +65,7 @@
                                 <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Meta}" />
+                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
                                     </StackPanel>
                                 </CheckBox>
                             </DockPanel>
@@ -112,7 +112,7 @@
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Margin="0,2">
                             <ui:TextBlock FontTypography="Body" Text="{Binding Text}" />
-                            <ui:TextBlock FontTypography="Caption" Appearance="Tertiary" Text="{Binding Detail}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" Margin="12,0,0,0" VerticalAlignment="Center" />
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

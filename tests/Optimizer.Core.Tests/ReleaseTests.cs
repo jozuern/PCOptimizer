@@ -58,6 +58,100 @@ public class ReleaseTests
         }
     }
 
+    // ---------------- Self-update ----------------
+
+    private const string Download = "https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/";
+
+    private static string ReleaseJson(string exeUrl, string shaUrl) => $$"""
+        {"tag_name":"v1.0.0","assets":[
+          {"name":"PCOptimizer.exe","browser_download_url":"{{exeUrl}}"},
+          {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{shaUrl}}"}]}
+        """;
+
+    [Fact]
+    public void AssetsAreTakenOnlyFromThisRepository()
+    {
+        var ok = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        Assert.Equal(Download + "PCOptimizer.exe", ok.Assets?.ExeUrl);
+        var elsewhere = ReleaseCheck.Evaluate(Current, ReleaseJson("https://example.com/PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        Assert.Null(elsewhere.Assets);
+    }
+
+    [Fact]
+    public void ReadsSha256sumFormat()
+    {
+        var hash = new string('a', 64);
+        Assert.Equal(hash, Updater.ParseChecksum($"{hash}  PCOptimizer.exe\n"));
+        Assert.Null(Updater.ParseChecksum("not a hash"));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task KeepsTheDownloadOnlyWhenTheChecksumMatches(bool matching)
+    {
+        var exe = "new exe bytes"u8.ToArray();
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(matching ? exe : [1, 2, 3])).ToLowerInvariant();
+        var release = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        var folder = Path.Combine(Path.GetTempPath(), "pco-update-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var updater = new Updater(new RoutingHandler(new()
+            {
+                [Download + "PCOptimizer.exe"] = exe,
+                [Download + "PCOptimizer.exe.sha256"] = System.Text.Encoding.ASCII.GetBytes($"{hash}  PCOptimizer.exe\n"),
+            }));
+            var result = await updater.DownloadAsync(release, folder);
+            if (matching)
+            {
+                Assert.Equal(UpdateOutcome.Ready, result.Outcome);
+                Assert.Equal(exe, File.ReadAllBytes(result.FilePath!));
+            }
+            else
+            {
+                Assert.Equal(UpdateOutcome.ChecksumMismatch, result.Outcome);
+                Assert.Empty(Directory.EnumerateFiles(folder));
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
+    public void InstallSwapsTheExeAndCleanUpRemovesTheOldOne()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "pco-install-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var running = Path.Combine(folder, "PCOptimizer.exe");
+            var downloaded = Path.Combine(folder, "PCOptimizer-1.0.0.exe");
+            File.WriteAllText(running, "old");
+            File.WriteAllText(downloaded, "new");
+            Updater.Install(downloaded, running);
+            Assert.Equal("new", File.ReadAllText(running));
+            Assert.Equal("old", File.ReadAllText(running + ".old"));
+            Updater.CleanUp(running, folder);
+            Assert.False(File.Exists(running + ".old"));
+            Assert.False(File.Exists(downloaded));
+            Assert.True(File.Exists(running));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    private sealed class RoutingHandler(Dictionary<string, byte[]> files) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+            Task.FromResult(files.TryGetValue(request.RequestUri!.ToString(), out var body)
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(body) }
+                : new HttpResponseMessage(HttpStatusCode.NotFound));
+    }
+
     // ---------------- Shipped licenses ----------------
 
     private sealed record Component(string Name, string? Package, string? Version, string License, string Source, List<string> Files);

@@ -106,6 +106,7 @@ public sealed partial class MainViewModel : ObservableObject
         Tools = new ToolsViewModel(this, services, Runner, dialogs);
         Health = new HealthViewModel(this, dialogs);
         _virusTotalConfigured = !string.IsNullOrEmpty(settings.VirusTotalKey);
+        ShowPendingCounts();
         Loc.Instance.LanguageChanged += (_, _) => Rebuild();
     }
 
@@ -259,6 +260,41 @@ public sealed partial class MainViewModel : ObservableObject
         Network.Rebuild();
     }
 
+    /// <summary>Score and counts only after a finished scan: during a scan the cards keep their layout but show "--".</summary>
+    public bool HasScore => Profile is not null && !IsScanning;
+
+    public string ScoreText => HasScore ? Score.ToString(System.Globalization.CultureInfo.CurrentCulture) : "--";
+    public int ScoreBarValue => HasScore ? Score : 0;
+    public string ScoreStatusShown => HasScore ? ScoreStatus : "Neutral";
+    public string ScoreVerdictShown => HasScore ? ScoreVerdict : Loc.Instance["Score_Pending"];
+
+    private void NotifyScore()
+    {
+        foreach (var name in new[] { nameof(HasScore), nameof(ScoreText), nameof(ScoreBarValue), nameof(ScoreStatusShown), nameof(ScoreVerdictShown) })
+            OnPropertyChanged(name);
+    }
+
+    partial void OnScoreChanged(int value) => NotifyScore();
+    partial void OnScoreStatusChanged(string value) => NotifyScore();
+    partial void OnScoreVerdictChanged(string value) => NotifyScore();
+    partial void OnProfileChanged(HardwareProfile? value) => NotifyScore();
+
+    partial void OnIsScanningChanged(bool value)
+    {
+        NotifyScore();
+        if (value) ShowPendingCounts();
+    }
+
+    /// <summary>While scanning (and before the first scan): the count tiles with "--" instead of old or empty numbers.</summary>
+    private void ShowPendingCounts()
+    {
+        ProblemSummary = Loc.Instance["Dash_ProblemsPending"];
+        ScoreTitle = Loc.Instance.Format("Dash_ScoreFor", ProfileName(_usage));
+        Counts.Clear();
+        foreach (var label in new[] { "Count_Problems", "Count_Advisor", "Count_Passed" })
+            Counts.Add(new CountItem("--", Loc.Instance[label], "Neutral"));
+    }
+
     partial void OnCheckForUpdatesChanged(bool value)
     {
         _settings.CheckForUpdates = value;
@@ -288,20 +324,122 @@ public sealed partial class MainViewModel : ObservableObject
         Log.Info("update", "release check", new { _release.Status, latest = _release.Latest?.ToString(3) });
         OnPropertyChanged(nameof(UpdateStatus));
         OnPropertyChanged(nameof(UpdateAvailable));
+        OnPropertyChanged(nameof(CanSelfUpdate));
         BuildBanners();
     }
 
     [RelayCommand]
     private Task CheckUpdatesNow() => CheckForUpdatesAsync(atStart: false);
 
-    /// <summary>Only the release page opens (in the browser, de-elevated); the app never downloads or runs an update itself.</summary>
     [RelayCommand]
     private void OpenReleasePage() => OpenLink(ReleaseCheck.LatestReleaseUrl);
 
+    /// <summary>Opens the GitHub bug form with version and Windows build filled in; nothing is sent until the user submits it there.</summary>
+    [RelayCommand]
+    private void ReportProblem() =>
+        OpenLink($"https://github.com/{ReleaseCheck.Repository}/issues/new?template=bug_report.yml" +
+                 $"&version={Uri.EscapeDataString(Version)}&windows={Uri.EscapeDataString(_services.Os.BuildString)}");
+
+    /// <summary>Copies this session's log for a bug report (the clipboard, not a file in a user-writable folder).</summary>
+    [RelayCommand]
+    private void CopyLog()
+    {
+        var entries = Log.Snapshot(400);
+        var text = string.Join(Environment.NewLine, entries.Select(e =>
+            $"{e.Time:HH:mm:ss} {e.Level} {e.Source}: {e.Message}{(e.Data is null ? "" : " " + e.Data)}"));
+        try
+        {
+            System.Windows.Clipboard.SetText(text);
+            ShowResult(Loc.Instance.Format("Log_Copied", entries.Count));
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            ShowResult(Loc.Instance["Log_CopyFailed"]);
+        }
+    }
+
+    /// <summary>Downloaded updates (protected data folder); emptied on the next start.</summary>
+    public static string UpdatesFolder => System.IO.Path.Combine(DataPaths.Root, "updates");
+
+    /// <summary>
+    /// Self-update only replaces the published single-file exe running elevated. A Debug build has PCOptimizer.dll next
+    /// to its exe and gets the download page instead.
+    /// </summary>
+    public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && DataPaths.ProcessIsElevated &&
+        Environment.ProcessPath is { } exe && System.IO.Path.GetFileName(exe).Equals("PCOptimizer.exe", StringComparison.OrdinalIgnoreCase) &&
+        !System.IO.File.Exists(System.IO.Path.ChangeExtension(exe, ".dll"));
+
+    [ObservableProperty] private bool _updating;
+
+    /// <summary>After confirmation: download the release exe, check its SHA-256, replace this exe and restart.</summary>
+    [RelayCommand]
+    private async Task UpdateNowAsync()
+    {
+        if (!CanSelfUpdate || _release is not { Latest: { } latest } release || Environment.ProcessPath is not { } exe)
+        {
+            OpenReleasePage();
+            return;
+        }
+        if (IsBusy || Updating)
+        {
+            ShowResult(Loc.Instance["Update_Busy"]);
+            return;
+        }
+        var version = latest.ToString(3);
+        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_ConfirmText", version), Loc.Instance["Update_Restart"])) return;
+        Updating = true;
+        try
+        {
+            using var updater = new Updater();
+            ShowResult(Loc.Instance.Format("Update_Downloading", version, 0));
+            var progress = new Progress<int>(p => ShowResult(Loc.Instance.Format("Update_Downloading", version, p)));
+            var download = await updater.DownloadAsync(release, UpdatesFolder, progress);
+            Log.Info("update", "download", new { download.Outcome, version });
+            if (download.Outcome != UpdateOutcome.Ready)
+            {
+                ShowResult(Loc.Instance[download.Outcome == UpdateOutcome.ChecksumMismatch ? "Update_BadChecksum" : "Update_Failed"]);
+                return;
+            }
+            try
+            {
+                Updater.Install(download.FilePath!, exe);
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+            {
+                Log.Error("update", "replacing the exe failed", ex);
+                ShowResult(Loc.Instance.Format("Update_CannotReplace", ex.Message));
+                return;
+            }
+            Log.Info("update", "installed, restarting", new { version });
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false });
+            System.Windows.Application.Current.Shutdown();
+        }
+        finally
+        {
+            Updating = false;
+        }
+    }
+
+    private System.Windows.Threading.DispatcherTimer? _resultTimer;
+
+    /// <summary>Shows the result of an action at the bottom; it closes by itself after long enough to read it.</summary>
     public void ShowResult(string text)
     {
         ResultText = text;
         ResultOpen = !string.IsNullOrWhiteSpace(text);
+        if (_resultTimer is null)
+        {
+            _resultTimer = new System.Windows.Threading.DispatcherTimer();
+            _resultTimer.Tick += (_, _) =>
+            {
+                _resultTimer.Stop();
+                ResultOpen = false;
+            };
+        }
+        _resultTimer.Stop();
+        if (!ResultOpen) return;
+        _resultTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(5 + text.Length / 15.0, 8, 20));
+        _resultTimer.Start();
     }
 
     [RelayCommand]
@@ -811,7 +949,9 @@ public sealed partial class MainViewModel : ObservableObject
             Banners.Add(new Banner(_updateNotice, false));
         }
         if (UpdateAvailable)
-            Banners.Add(new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Open"], Action = OpenReleasePageCommand, ActionIcon = SymbolRegular.Open20 });
+            Banners.Add(CanSelfUpdate
+                ? new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Install"], Action = UpdateNowCommand, ActionIcon = SymbolRegular.ArrowDownload20 }
+                : new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Open"], Action = OpenReleasePageCommand, ActionIcon = SymbolRegular.Open20 });
         if (_profileAutoSet) Banners.Add(new Banner(Loc.Instance.Format("Profile_AutoSet", ProfileName(_usage)), false));
         var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State == TweakState.PendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));

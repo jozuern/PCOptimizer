@@ -22,11 +22,15 @@ Developer switches (all read-only):
 | `--report <file.md>` | headless scan, writes all findings with explanations and the system info as Markdown |
 | `--screenshot <file.png>` | opens the UI, scans, renders the window to PNG and exits |
 | `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware, Settings |
+| `--shot-scanning <file.png>` | renders the window while the first scan still runs (score placeholders) |
+| `--pane closed` | collapses the navigation rail before the screenshot |
 | `--scroll end` | scrolls the page to the end before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
 | `--confirm <tweak id> --confirm-shot <file.png>` | renders the confirmation dialog of a tweak (nothing is applied) |
 | `--licenses-shot <file.png>` | renders the Licenses window |
+| `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors) |
+| `--perf <file.txt>` | times page switches, filters, profile changes and a full rebuild until the UI is idle, writes the result and exits |
 | `--profile <id>` | start with a profile: gaming, laptopGaming, battery, office, quiet, lowEnd (saved only when changed in the app) |
 | `--preview-drift on` | shows the "changes reset" banner with sample entries (nothing is read or changed) |
 | `--expert on` | Expert mode for this session |
@@ -43,7 +47,7 @@ docs/                 privacy, third-party notices, VM test plan, explanation st
 .github/workflows/    CI (build, tests without Category=Hardware, single-exe artifact) and the tag-triggered release
 ```
 
-Data: `%ProgramData%\PCOptimizer` (locked to Administrators and SYSTEM, links removed on start): `backups\` (originals per change), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon and captures), `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`.
+Data: `%ProgramData%\PCOptimizer` when elevated (locked to Administrators and SYSTEM, links removed on start); Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead: `backups\` (originals per change), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon and captures), `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`.
 
 Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/profiles.json` (profiles: per-profile impact of tweaks and findings, recommendations, what works against each), `Data/labels.json` (generated text, EN and DE), `Docs/{en,de}/*.md` (one explanation page per tweak and check). Entries marked `verified: false` (BIOS menu paths, one anti-cheat) say so on their explanation page.
 
