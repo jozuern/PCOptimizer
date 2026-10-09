@@ -1,0 +1,27 @@
+#!/bin/sh
+# Raises the patch version in src/Optimizer.App/Optimizer.App.csproj on every commit (0.3.0 -> 0.3.1).
+# Enable once per clone:  git config core.hooksPath .githooks
+# A version changed by hand in the same commit (for example 0.4.0) is kept.
+# Skip for one commit (for example with --amend):  SKIP_VERSION_BUMP=1 git commit ...
+[ -n "$SKIP_VERSION_BUMP" ] && exit 0
+
+csproj=src/Optimizer.App/Optimizer.App.csproj
+current=$(sed -n 's|.*<Version>\([0-9]*\.[0-9]*\.[0-9]*\)</Version>.*|\1|p' "$csproj" | head -n 1)
+if [ -z "$current" ]; then
+    echo "pre-commit: no <Version>x.y.z</Version> in $csproj" >&2
+    exit 1
+fi
+
+if git diff --cached -U0 -- "$csproj" | grep -q '^+.*<Version>'; then
+    exit 0
+fi
+
+major=${current%%.*}
+rest=${current#*.}
+minor=${rest%%.*}
+patch=${rest#*.}
+next="$major.$minor.$((patch + 1))"
+
+sed -i "s|<Version>$current</Version>|<Version>$next</Version>|" "$csproj"
+git add "$csproj"
+echo "pre-commit: version $current -> $next"

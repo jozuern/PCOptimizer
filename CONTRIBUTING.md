@@ -64,7 +64,9 @@ Every NuGet package that ships in the exe needs its license text in `src/Optimiz
 
 ## Releases
 
-1. Set `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` and commit. The tag must match it, or the workflow stops.
+Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
+
+1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
 3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and creates a **draft** release. Check it, then publish it on GitHub.
 

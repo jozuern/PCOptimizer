@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>PCOptimizer</AssemblyName>
     <RootNamespace>Optimizer.App</RootNamespace>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Product>PCOptimizer</Product>
     <Authors>Joshua Zürn</Authors>
     <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
