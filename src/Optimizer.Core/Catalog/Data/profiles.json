@@ -91,11 +91,8 @@
         { "id": "background.widgetsOff", "impact": 1 },
         { "id": "storage.storageSenseOn", "impact": 1, "recommendWhen": { "fact": "finding.F17.lowDiskSpace.problem", "eq": true }, "reasonKey": "rec.lowDiskSpace" },
         { "id": "privacy.clipboardHistoryOff", "impact": -1, "reasonKey": "avoid.productivity" },
-        { "id": "services.spoolerManual", "impact": -1, "reasonKey": "avoid.printing" },
         { "id": "memory.compressionOff", "impact": -1, "reasonKey": "avoid.lessRam" },
-        { "id": "security.vbsOff", "impact": -3, "reasonKey": "avoid.security" },
-        { "id": "security.mitigationsOff", "impact": -4, "reasonKey": "avoid.security" },
-        { "id": "security.smartScreenOff", "impact": -3, "reasonKey": "avoid.security" }
+        { "id": "security.vbsOff", "impact": -3, "reasonKey": "avoid.security" }
       ],
       "findings": {
         "F28.diskHealth": 5,
@@ -130,10 +127,8 @@
         { "id": "power.balancedPlan", "impact": 2, "recommendWhen": { "fact": "power.personality", "eq": "highperformance" }, "reasonKey": "rec.highPerfPlan" },
         { "id": "battery.boostOffDc", "impact": 1 },
         { "id": "power.turboRestore", "impact": -3, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
-        { "id": "power.minProcessorState100", "impact": -2, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
         { "id": "power.ultimatePlan", "impact": -2, "reasonKey": "avoid.moreHeat" },
         { "id": "power.gamingPlan", "impact": -1, "reasonKey": "avoid.moreHeat" },
-        { "id": "power.coreParkingOff", "impact": -1, "reasonKey": "avoid.moreHeat", "onlyIfChanged": true },
         { "id": "power.throttlingOff", "impact": -1, "reasonKey": "avoid.moreHeat" },
         { "id": "nvidia.preferMaxPerformance", "impact": -2, "reasonKey": "avoid.gpuClocks" }
       ],

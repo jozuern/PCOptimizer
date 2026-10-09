@@ -5,7 +5,7 @@ namespace Optimizer.Core.Interop;
 
 /// <summary>
 /// Minimal NVAPI interop (nvapi64.dll, MIT-licensed SDK). Function IDs come from nvapi_interface.h, struct layouts
-/// from nvapi.h (pack 8), setting IDs from NvApiDriverSettings.h. Only documented DRS settings are used.
+/// from nvapi.h, setting IDs from NvApiDriverSettings.h. Only documented DRS settings are used.
 /// </summary>
 public static class Nvapi
 {
@@ -48,12 +48,12 @@ public static class Nvapi
     public const uint TextureHighPerformance = 0x14;
     public const uint ShaderCacheUnlimited = 0xFFFFFFFF;
 
-    // Struct sizes (pack 8): NvAPI_UnicodeString = NvU16[2048] = 4096 bytes.
+    // NvAPI_UnicodeString = NvU16[2048] = 4096 bytes.
     private const int UnicodeStringBytes = 4096;
-    // Sizes verified with ctypes (MSVC x64 alignment). NVDRS_SETTING_V1 exists in two sizes: SDKs since the QWORD
-    // union member use 12328 (current value at 8224); drivers built against the older layout expect 12320 (8220).
-    // The session tries the current layout first and falls back on NVAPI_INCOMPATIBLE_STRUCT_VERSION (-9).
-    private static readonly (int Size, int CurrentOffset)[] SettingLayouts = [(12328, 8224), (12320, 8220)];
+    // NVDRS_SETTING_V1 is 12320 bytes with the current value at offset 8220 in every public nvapi.h: since R610 the
+    // 64-bit union member is wrapped in pack(4), so the size did not change (a 12328-byte variant is rejected with
+    // NVAPI_INCOMPATIBLE_STRUCT_VERSION, -9).
+    private static readonly (int Size, int CurrentOffset)[] SettingLayouts = [(12320, 8220)];
     public const int ApplicationSize = 20492;       // NVDRS_APPLICATION_V4
     public const int ProfileSize = 4116;            // NVDRS_PROFILE_V1
     private const int IncompatibleStructVersion = -9;

@@ -4,7 +4,7 @@
 Stops Microsoft from using your diagnostic data for personalized tips, ads and recommendations.
 
 ## How it works
-A user policy turns off "tailored experiences", which use diagnostic data to personalize tips and offers [1].
+The user policy "Do not use diagnostic data for tailored experiences" is turned on [1]. Windows then no longer uses diagnostic data to personalize tips, offers and lock screen content for the signed-in user. It applies only to that user.
 
 ## Why it can help
 Less data leaves this PC. No measurable effect on performance.

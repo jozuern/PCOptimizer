@@ -4,7 +4,7 @@
 Verhindert, dass Windows Einstellungen wie Designs, Kennwörter und Spracheinstellungen mit deinem Microsoft-Konto synchronisiert.
 
 ## So funktioniert es
-Die Richtlinie „Nicht synchronisieren“ wird gesetzt, und Benutzer können sie in den Einstellungen nicht wieder einschalten [1].
+Die Richtlinie „Nicht synchronisieren“ wird gesetzt, und Benutzer können sie in den Einstellungen nicht wieder einschalten [1][2].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
@@ -20,3 +20,4 @@ Wenn du neue PCs mit deinem Microsoft-Konto einrichtest.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+2. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-settingsync

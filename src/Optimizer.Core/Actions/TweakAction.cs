@@ -26,6 +26,7 @@ public sealed record ChangeLine(string Target, string Before, string After);
 [JsonDerivedType(typeof(RegistryAction), "registry")]
 [JsonDerivedType(typeof(RegistryBitsAction), "registryBits")]
 [JsonDerivedType(typeof(RegistryTokenAction), "registryToken")]
+[JsonDerivedType(typeof(RegistryBinaryBitsAction), "registryBinaryBits")]
 [JsonDerivedType(typeof(ServiceAction), "service")]
 [JsonDerivedType(typeof(PowerSettingAction), "powerSetting")]
 [JsonDerivedType(typeof(PowerSchemeAction), "powerScheme")]

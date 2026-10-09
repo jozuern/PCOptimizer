@@ -1,22 +1,23 @@
 # Hintergrund-Apps aus
 
 ## Zusammenfassung
-Verhindert, dass Store-Apps im Hintergrund laufen. Wirkung auf aktuellen Windows-11-Builds umstritten.
+Verhindert, dass Store-Apps im Hintergrund laufen. Desktop-Programme sind nicht betroffen. Der Effekt auf Spiele ist umstritten und meist null.
 
 ## So funktioniert es
-Der Wert GlobalUserDisabled = 1 blockiert für deinen Benutzer die Hintergrundaktivität von Paket-Apps (Store) [1]. Windows 11 verwaltet Hintergrundberechtigungen pro App, und nicht jeder Build beachtet den globalen Wert.
+Die Richtlinie „Windows-Apps im Hintergrund ausführen lassen“ wird für alle Store-Apps auf „Ablehnen erzwingen“ gesetzt [2]. Sonst regelt Windows 11 das pro App unter Einstellungen > Apps > Installierte Apps > Erweiterte Optionen [1].
 
 ## Warum es helfen kann
 Weniger Store-Apps, die im Hintergrund aufwachen.
 
 ## Belege
-Desktop-Programme (Steam, Discord, Launcher) sind nicht betroffen. Der messbare Effekt auf Spiele ist meist null.
+Desktop-Programme wie Steam, Discord und Spiele-Launcher sind nicht betroffen [1]. Keine veröffentlichte Messung zeigt einen FPS-Gewinn.
 
 ## Nachteile & Risiken
-Store-Apps wie Mail, Kalender oder Smartphone-Link senden keine Benachrichtigungen mehr und synchronisieren nicht im Hintergrund.
+Kommunikations-Apps zeigen womöglich keine Benachrichtigungen mehr und synchronisieren nicht im Hintergrund, davor warnt Microsoft [2]. Die Einstellung pro App ist gesperrt, solange die Richtlinie gesetzt ist.
 
 ## Wann du es nicht nutzen solltest
-Behalte Hintergrund-Apps, wenn du auf Benachrichtigungen von Store-Apps angewiesen bist.
+Behalte Hintergrund-Apps, wenn du auf Benachrichtigungen von Store-Apps wie Smartphone-Link angewiesen bist.
 
 ## Quellen
-1. https://github.com/ChrisTitusTech/winutil
+1. https://support.microsoft.com/en-us/windows/windows-background-apps-and-your-privacy-83f2de44-d2d9-2b29-4649-2afe0913360a
+2. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy

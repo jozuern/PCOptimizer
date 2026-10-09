@@ -4,7 +4,7 @@
 Stops the clipboard from syncing to your other devices through your Microsoft account.
 
 ## How it works
-The policy "Allow Clipboard synchronization across devices" is set to off [1]. Clipboard history on this PC keeps working.
+The policy "Allow Clipboard synchronization across devices" is set to off [1][2]. Clipboard history on this PC keeps working.
 
 ## Why it can help
 Less data leaves this PC. No measurable effect on performance.
@@ -20,3 +20,4 @@ If you copy between your devices.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy
+2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

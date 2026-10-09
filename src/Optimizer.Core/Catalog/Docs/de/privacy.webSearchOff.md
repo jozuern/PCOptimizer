@@ -1,10 +1,10 @@
 # Webergebnisse in der Startsuche aus
 
 ## Zusammenfassung
-Die Suche im Startmenü zeigt nur Ergebnisse von diesem PC, keine Bing-Webergebnisse oder Vorschläge.
+Die Suche im Startmenü zeigt nur Ergebnisse von diesem PC. Microsoft dokumentiert die Richtlinie nur für den Datei-Explorer, die Wirkung auf Start ist nicht bestätigt.
 
 ## So funktioniert es
-Eine Benutzerrichtlinie schaltet die Vorschläge im Suchfeld ab, wodurch die Webergebnisse aus der Suche im Startmenü und in der Taskleiste verschwinden [1].
+Die Benutzerrichtlinie „Anzeige der letzten Sucheinträge im Datei-Explorer-Suchfeld deaktivieren“ wird aktiviert [1]. Microsoft dokumentiert sie nur für den Datei-Explorer, der frühere Suchen dann weder anzeigt noch speichert. Unter Windows 11 entfernt sie außerdem Webergebnisse und Vorschläge aus der Suche im Startmenü; das dokumentiert Microsoft nicht. Die dokumentierte Richtlinie dafür funktioniert nur in Enterprise und Education [2].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
@@ -13,10 +13,11 @@ Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
 
 ## Nachteile & Risiken
-Im Web suchst du dann im Browser statt im Startmenü.
+Im Web suchst du dann im Browser statt im Startmenü. Der Datei-Explorer schlägt keine früheren Suchen mehr vor.
 
 ## Wann du es nicht nutzen solltest
 Wenn du über das Startmenü im Web suchst.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-windowsexplorer
+2. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search

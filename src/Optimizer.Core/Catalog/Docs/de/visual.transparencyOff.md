@@ -4,10 +4,10 @@
 Schaltet die unscharfen, durchscheinenden Hintergründe (Acrylic und Mica) in Startmenü, Taskleiste und Apps ab.
 
 ## So funktioniert es
-Acrylic und Mica zeichnen den Inhalt hinter einer Fläche unscharf, was der Compositor laufend berechnen muss [1]. EnableTransparency = 0 ersetzt sie durch einfarbige Flächen, wie Einstellungen > Personalisierung > Farben > Transparenzeffekte.
+Acrylic zeichnet den Inhalt hinter Menüs, Flyouts und Bereichen unscharf, was laut Microsoft die GPU stark beansprucht [1]. Mica tönt Fensterhintergründe mit dem Hintergrundbild, das es nur einmal abtastet [2]. EnableTransparency = 0 ersetzt beides durch einfarbige Flächen, wie Einstellungen > Personalisierung > Farben > Transparenzeffekte [1][2].
 
 ## Warum es helfen kann
-Etwas weniger Arbeit für die GPU auf dem Desktop. Am ehesten relevant bei integrierter Grafik.
+Etwas weniger GPU-Arbeit für Acrylic-Flächen auf dem Desktop. Am ehesten relevant bei integrierter Grafik und im Akkubetrieb.
 
 ## Belege
 Mit eigener Grafikkarte kein messbarer Effekt auf Spiele.
@@ -20,3 +20,4 @@ Lass sie an, wenn dir der Look gefällt und du eine eigene Grafikkarte hast.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic
+2. https://learn.microsoft.com/en-us/windows/apps/design/style/mica

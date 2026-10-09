@@ -5,12 +5,13 @@
       "category": "Services",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "actions": [
         {
           "type": "service",
@@ -29,36 +30,9 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
-      ]
-    },
-    {
-      "id": "services.spoolerManual",
-      "category": "Services",
-      "impact": {
-        "gaming": 0,
-        "basis": "measured",
-        "effect": [
-          "none"
-        ]
-      },
-      "risk": "safe",
-      "blockedWhen": [
-        {
-          "fact": "printers.count",
-          "gt": 0,
-          "reasonKey": "block.printersInstalled"
-        }
-      ],
-      "actions": [
-        {
-          "type": "service",
-          "name": "Spooler",
-          "startType": "manual"
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server",
+        "https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfigw",
+        "https://learn.microsoft.com/en-us/windows/whats-new/deprecated-features"
       ]
     }
   ]

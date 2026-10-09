@@ -4,7 +4,7 @@
 Verhindert, dass dieser PC sich mit einem Smartphone verbindet (Smartphone-Link), um Nachrichten, Fotos und Benachrichtigungen zu synchronisieren.
 
 ## So funktioniert es
-Die Richtlinie „Verknüpfung von Smartphone und PC auf diesem Gerät zulassen“ wird abgeschaltet [1].
+Die Richtlinie „Telefon-PC-Verbindung auf diesem Gerät“ wird abgeschaltet [1]. Der PC entfernt sich außerdem aus der Geräteliste verknüpfter Smartphones. Die Änderung wirkt nach einem Neustart.
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
@@ -19,4 +19,4 @@ Smartphone-Link und das Fortsetzen von Aufgaben vom Smartphone funktionieren nic
 Wenn du Smartphone-Link nutzt.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-grouppolicy

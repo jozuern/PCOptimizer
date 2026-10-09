@@ -4,7 +4,7 @@
 Internal: lets the app create a restore point before changes even if another one was created in the last 24 hours.
 
 ## How it works
-Windows skips new restore points within 24 hours of the last one. SystemRestorePointCreationFrequency = 0 removes that limit [1]. The app sets this itself before its first change in a session, and it is undone like any other change.
+Windows skips new restore points within 24 hours of the last one. SystemRestorePointCreationFrequency = 0 removes that limit [1]. The app sets this itself before its first change in a session, and "Undo all" removes it again (it is not listed as a separate change).
 
 ## Why it can help
 Makes sure there is a fresh restore point before the app changes anything.

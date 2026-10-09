@@ -4,10 +4,10 @@
 Verhindert, dass Windows in Pop-ups nach Feedback fragt.
 
 ## So funktioniert es
-Die Richtlinie „Feedbackbenachrichtigungen nicht anzeigen“ schaltet die Feedback-Anfragen des Feedback-Hubs ab [1].
+Die Richtlinie „Feedbackbenachrichtigungen nicht mehr anzeigen“ schaltet die Feedback-Anfragen des Feedback-Hubs ab [1].
 
 ## Warum es helfen kann
-Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
+Weniger Unterbrechungen: Windows fragt nicht mehr nach Feedback. Wie viele Diagnosedaten gesendet werden, ändert sich dadurch nicht. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
 Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.

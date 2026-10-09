@@ -6,7 +6,7 @@
       "hidden": true,
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -27,40 +27,6 @@
       ]
     },
     {
-      "id": "leftover.overlayTestMode",
-      "category": "Leftovers",
-      "impact": {
-        "gaming": 1,
-        "basis": "situational",
-        "effect": [
-          "stability"
-        ]
-      },
-      "risk": "safe",
-      "restart": true,
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SOFTWARE\\Microsoft\\Windows\\Dwm",
-          "name": "OverlayTestMode",
-          "kind": "dword",
-          "delete": true
-        }
-      ],
-      "recommendWhen": {
-        "fact": "leftover.overlayTestMode",
-        "eq": true
-      },
-      "fixes": [
-        "F21.leftovers"
-      ],
-      "sources": [
-        "https://forums.guru3d.com/goto/post?id=6305178"
-      ],
-      "recommendReasonKey": "rec.leftover"
-    },
-    {
       "id": "leftover.usePlatformClock",
       "category": "Leftovers",
       "impact": {
@@ -72,6 +38,7 @@
         ]
       },
       "risk": "expert",
+      "preview": true,
       "bootCritical": true,
       "restart": true,
       "actions": [
@@ -86,7 +53,8 @@
         "F21.leftovers"
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set"
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set",
+        "https://learn.microsoft.com/en-us/windows/win32/sysinfo/acquiring-high-resolution-time-stamps"
       ]
     }
   ]

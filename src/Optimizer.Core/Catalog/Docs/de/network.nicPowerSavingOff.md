@@ -1,23 +1,25 @@
 # Energiesparfunktionen des Netzwerkadapters aus
 
 ## Zusammenfassung
-Schaltet die Energiesparfunktionen kabelgebundener Netzwerkadapter ab (Energy Efficient Ethernet, Green Ethernet und ähnliche). Startet den Adapter neu.
+Schaltet Energy Efficient Ethernet und Selective Suspend bei kabelgebundenen Netzwerkadaptern ab. Kann Verbindungsabbrüche bei manchen Adaptern beheben. Startet den Adapter neu.
 
 ## So funktioniert es
-Viele Ethernet-Treiber versetzen die Verbindung zwischen Paketen in einen Energiesparzustand (Energy Efficient Ethernet, IEEE 802.3az) oder senken bei kurzen Kabeln die Leistung [1]. Die App schaltet jede dieser Einstellungen ab, aber nur die, die der Treiber deines Adapters tatsächlich anbietet, und nur mit Werten, die der Treiber auflistet. Der Adapter startet neu, damit der Treiber die neuen Werte liest; die Verbindung bricht für einige Sekunden ab. Rückgängig machen stellt jeden Wert wieder her.
+Mit Energy Efficient Ethernet (IEEE 802.3az) versetzt der Adapter die Verbindung zwischen Datenpaketen in einen Energiesparzustand, und beide Seiten wachen auf, sobald Daten gesendet werden müssen [1][2]. Selective Suspend lässt einen untätigen Adapter in einen Stromsparzustand wechseln [3]. Für beide definiert Windows eine Standard-Treibereinstellung [1][3]. Die App schaltet beide ab, aber nur, wenn der Treiber deines Adapters sie mit einem Wert für „aus“ anbietet. Energiesparoptionen, die nur der Treiber eines bestimmten Herstellers hat, ändert sie nicht. Der Adapter startet neu, damit der Treiber die neuen Werte liest; die Verbindung bricht für einige Sekunden ab. Rückgängig machen stellt jeden Wert wieder her.
 
 ## Warum es helfen kann
-Das Aufwecken der Verbindung aus dem Energiesparzustand dauert pro Aufwachen einige Mikrosekunden. Wichtiger in der Praxis: Manche Kombinationen aus Adapter und Switch verlieren mit Energy Efficient Ethernet die Verbindung oder Pakete.
+Das Aufwachen der Verbindung kostet etwas Latenz [2]. Wichtiger in der Praxis: Manche Adapter verlieren mit Energy Efficient Ethernet die Verbindung, und das Abschalten ist die Umgehung des Herstellers [4].
 
 ## Belege
-Die Verzögerung selbst ist in Spielen zu klein, um sie zu bemerken. Der Nutzen sind weniger Verbindungsabbrüche bei Hardware mit solchen Problemen.
+Die Aufwachverzögerung ist in Spielen zu klein, um sie zu bemerken [2]. Der Nutzen sind weniger Verbindungsabbrüche bei Hardware mit solchen Problemen [4].
 
 ## Nachteile & Risiken
-Etwas höherer Stromverbrauch (deutlich unter einem Watt pro Adapter). Der Adapter startet beim Anwenden und beim Rückgängigmachen je einmal neu.
+Etwas höherer Stromverbrauch. Der Adapter startet beim Anwenden und beim Rückgängigmachen je einmal neu.
 
 ## Wann du es nicht nutzen solltest
 Wenn deine Verbindung stabil ist und der Stromverbrauch zählt, etwa auf einem Laptop.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords
-2. https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-power-management
+1. https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-power-management
+2. https://edc.intel.com/content/www/us/en/design/products/ethernet/adapters-and-devices-user-guide/other-power-options
+3. https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-ndis-selective-suspend
+4. https://www.asus.com/support/faq/1052466

@@ -4,7 +4,7 @@
 Fügt dem Rechtsklickmenü der Taskleistenschaltflächen „Task beenden“ hinzu. So schließt du ein eingefrorenes Spiel oder Programm ohne Task-Manager.
 
 ## So funktioniert es
-TaskbarEndTask = 1 in den Entwicklereinstellungen der Taskleiste schaltet die Option ein, wie Einstellungen > System > Für Entwickler > Task beenden [1].
+TaskbarEndTask = 1 schaltet die Option ein, wie Einstellungen > System > Erweitert > Task beenden (vor Version 25H2 „Für Entwickler“) [1].
 
 ## Warum es helfen kann
 Ein hängendes Vollbildspiel lässt sich schneller schließen.
@@ -19,4 +19,4 @@ Beim Beenden gehen nicht gespeicherte Daten in dieser App verloren.
 Es spricht nichts dagegen.
 
 ## Quellen
-1. https://github.com/ChrisTitusTech/winutil
+1. https://learn.microsoft.com/en-us/windows/advanced-settings/

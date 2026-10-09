@@ -1,19 +1,19 @@
 # MSI mode for this device (Expert)
 
 ## Summary
-Lets the device use message-signaled interrupts instead of line-based ones. Many current drivers already do. Disputed, needs a restart.
+Lets the device use message-signaled interrupts instead of line-based ones. Disputed: user reports of a benefit are not consistently measurable. Needs a restart.
 
 ## How it works
-Devices signal the processor with interrupts. Older line-based interrupts can be shared between devices; message-signaled interrupts (MSI) are written to memory and never shared. Windows uses MSI when the driver requests it in the registry; the app sets that documented value (MSISupported = 1) for this device [1]. The change takes effect after a restart.
+Devices signal the processor with interrupts. Older line-based interrupts can be shared between devices; message-signaled interrupts (MSI) are written to memory and are not shared. Windows uses MSI for a device when its registry entry MSISupported is 1; normally the driver's installer sets it [1]. The app sets this value for this device. The change takes effect after a restart.
 
 ## Why it can help
 If the device used shared line-based interrupts, MSI avoids other devices' interrupts being checked first, which can reduce delay spikes.
 
 ## Evidence
-Most current graphics and network drivers already request MSI themselves; then this changes nothing. Benefits reported by users are not consistently measurable.
+If MSISupported is already 1 for this device, the item shows as on and nothing changes. Benefits reported by users are not consistently measurable.
 
 ## Trade-offs & risks
-A driver that does not handle MSI correctly can fail to start (Device Manager error), or in rare cases cause a blue screen. That is why it is an Expert, boot-critical change: create a restore point first. For a graphics card, Windows still starts with the basic display driver, and undo works from there.
+If the driver's installer set MSISupported to 0, the vendor chose line-based interrupts on purpose, and forcing MSI can make the driver fail to start (Device Manager error) or, in rare cases, crash Windows. A driver update can also write its own value again. That is why this is an Expert, boot-critical change; the app creates a restore point first.
 
 ## When not to use it
 If the device already uses MSI, or for storage controllers (not offered here).

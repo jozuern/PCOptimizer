@@ -4,19 +4,20 @@
 Stellt sicher, dass der Windows-Spielmodus an ist. Er gibt dem laufenden Spiel Vorrang und blockiert während des Spielens Treiberinstallationen und Neustart-Hinweise von Windows Update.
 
 ## So funktioniert es
-Erkennt der Spielmodus ein Spiel, priorisiert Windows dessen Threads, begrenzt Hintergrundarbeit und hält Treiberinstallationen und Neustart-Benachrichtigungen von Windows Update zurück [1]. Standardmäßig ist er an. Die App schaltet ihn wieder ein, falls er abgeschaltet wurde.
+Erkennt der Spielmodus ein Spiel, gibt Windows ihm bevorzugten Zugriff auf die Hardware [2] und hält Treiberinstallationen und Neustart-Benachrichtigungen von Windows Update zurück [1]. Seit dem Update vom Oktober 2018 ist er standardmäßig für alle Spiele an und hat einen Schalter in den Einstellungen [1]. Die App schaltet ihn wieder ein, falls er abgeschaltet wurde.
 
 ## Warum es helfen kann
-Weniger Unterbrechungen durch Hintergrundaufgaben bedeuten weniger Ruckler, besonders auf CPUs mit wenigen Kernen.
+Weniger Unterbrechungen durch Hintergrundarbeit und Update-Hinweise beim Spielen. Laut Microsoft kann das zu gleichmäßigeren FPS führen [1].
 
 ## Belege
-Die durchschnittlichen FPS ändern sich kaum. Der Nutzen zeigt sich in weniger Unterbrechungen, nicht in mehr FPS.
+Microsoft schreibt, dass Spiele je nach Spiel und System besser laufen können, mit weniger schwankenden FPS, nennt aber keine Zahlen [1].
 
 ## Nachteile & Risiken
 Selten verhält sich ein Spiel mit Spielmodus schlechter. Dann kannst du ihn wieder abschalten.
 
 ## Wann du es nicht nutzen solltest
-Anlassen. Auf Ryzen-X3D-Prozessoren mit zwei Chiplets gehört der Spielmodus dazu, wie der AMD-Treiber Spiele erkennt.
+Anlassen. Schalte ihn nur für ein Spiel ab, das damit schlechter läuft.
 
 ## Quellen
-1. https://www.elevenforum.com/t/turn-on-or-off-game-mode-in-windows-11.1447/
+1. https://news.xbox.com/en-us/2018/10/02/latest-october-2018-windows-update-gaming-features-3/
+2. https://learn.microsoft.com/en-us/previous-versions/windows/desktop/gamemode/game-mode-portal

@@ -7,7 +7,7 @@ Stops Windows from asking for feedback in pop-ups.
 The policy "Do not show feedback notifications" turns off the feedback prompts of the Feedback Hub [1].
 
 ## Why it can help
-Less data leaves this PC. No measurable effect on performance.
+Fewer interruptions: Windows no longer asks for feedback. It does not change how much diagnostic data is sent. No measurable effect on performance.
 
 ## Evidence
 Privacy setting; it does not change frame rate or latency.

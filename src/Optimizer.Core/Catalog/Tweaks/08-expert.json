@@ -14,6 +14,14 @@
       "impactOverrides": [
         {
           "when": {
+            "fact": "vbs.running",
+            "eq": false
+          },
+          "gaming": 0,
+          "reasonKey": "impact.vbsAlreadyOff"
+        },
+        {
+          "when": {
             "fact": "cpu.mbec",
             "eq": false
           },
@@ -22,6 +30,7 @@
         }
       ],
       "risk": "expert",
+      "preview": true,
       "bootCritical": true,
       "antiCheatSensitive": true,
       "restart": true,
@@ -45,66 +54,12 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity"
-      ]
-    },
-    {
-      "id": "security.mitigationsOff",
-      "category": "Expert",
-      "impact": {
-        "gaming": 1,
-        "basis": "disputed",
-        "effect": [
-          "fps"
-        ]
-      },
-      "risk": "expert",
-      "restart": true,
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
-          "name": "FeatureSettingsOverride",
-          "kind": "dword",
-          "value": 3
-        },
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
-          "name": "FeatureSettingsOverrideMask",
-          "kind": "dword",
-          "value": 3
-        }
-      ],
-      "sources": [
-        "https://support.microsoft.com/en-us/topic/kb4073119-windows-client-guidance-for-it-pros-to-protect-against-silicon-based-microarchitectural-and-speculative-execution-side-channel-vulnerabilities-35820a8a-ae13-1299-88cc-357f104f5b11"
-      ]
-    },
-    {
-      "id": "security.smartScreenOff",
-      "category": "Expert",
-      "impact": {
-        "gaming": 0,
-        "basis": "measured",
-        "effect": [
-          "none"
-        ]
-      },
-      "risk": "expert",
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
-          "name": "EnableSmartScreen",
-          "kind": "dword",
-          "value": 0
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/"
+        "https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity",
+        "https://learn.microsoft.com/en-us/windows/security/identity-protection/credential-guard/",
+        "https://www.tomshardware.com/news/windows-11-gaming-benchmarks-performance-vbs-hvci-security",
+        "https://support.faceit.com/hc/en-us/articles/23117181142556-Windows-Security-Requirements-FAQ",
+        "https://support.riotgames.com/riot/performance/vanguard-security-requirements",
+        "https://support.faceit.com/hc/en-us/articles/8546882512284-Enabling-Memory-Integrity-HVCI"
       ]
     }
   ]

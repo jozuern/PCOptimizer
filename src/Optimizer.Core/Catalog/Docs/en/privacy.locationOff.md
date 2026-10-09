@@ -1,22 +1,23 @@
 # Location access off
 
 ## Summary
-Denies location access for apps system-wide.
+Turns off location services for the whole PC, like the Location services switch in Settings.
 
 ## How it works
-The consent store value for location is set to Deny, which turns off location access for all apps, as the switch in Settings > Privacy > Location does [1].
+The device-wide consent value for location is set to Deny. This is the value behind Settings > Privacy & security > Location > Location services, which only administrators can change [1]. Windows and apps then get no device location [1]. Microsoft's guide for managing connections from Windows names the same switch for turning off location on a device [2].
 
 ## Why it can help
-Fewer background location lookups. No performance effect.
+No location lookups in the background. No performance effect.
 
 ## Evidence
-Privacy setting; no frame-rate effect.
+Privacy setting; no frame rate effect.
 
 ## Trade-offs & risks
-Maps, weather and Find my device stop using your location.
+Apps, automatic time zone and Find my device lose the device location [1]. Some features, such as weather on the taskbar, can still use your IP address, and an emergency call still shares your location [1].
 
 ## When not to use it
-Keep location on if you use apps that need it.
+Keep location on if you use apps or features that need it.
 
 ## Sources
-1. https://github.com/ChrisTitusTech/winutil
+1. https://support.microsoft.com/en-us/windows/windows-location-service-and-privacy-3a8eee0a-5b0b-dc07-eede-2a5ca1c49088
+2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

@@ -4,7 +4,7 @@
 Stops Windows from syncing settings such as themes, passwords and language preferences to your Microsoft account.
 
 ## How it works
-The policy "Do not sync" is set and users cannot turn it back on in Settings [1].
+The policy "Do not sync" is set and users cannot turn it back on in Settings [1][2].
 
 ## Why it can help
 Less data leaves this PC. No measurable effect on performance.
@@ -20,3 +20,4 @@ If you set up new PCs with your Microsoft account.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+2. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-settingsync

@@ -1,16 +1,16 @@
 # Widgets off
 
 ## Summary
-Turns off the Widgets board and its news feed via policy. The Widgets host processes no longer run in the background.
+Turns off the Widgets board and its news feed for the PC via policy, including the taskbar entry.
 
 ## How it works
-The policy AllowNewsAndInterests = 0 disables Widgets for the PC [1]. The taskbar button disappears.
+The policy AllowNewsAndInterests = 0 (Allow widgets) disables the whole widgets experience, including content on the taskbar [1].
 
 ## Why it can help
-The Widgets host and its web content use memory and occasional CPU time; turning them off frees both.
+The Widgets board loads web content; with the policy set, that content is no longer loaded.
 
 ## Evidence
-The saving is a few hundred MB of RAM at most; no measurable frame-rate effect on PCs with enough memory.
+No published measurement shows a frame rate or memory effect. The benefit is mainly fewer distractions.
 
 ## Trade-offs & risks
 No weather or news on the taskbar.

@@ -4,7 +4,7 @@
 Turns off the Connected Devices Platform, which lets apps continue tasks across your devices and share nearby.
 
 ## How it works
-The policy "Continue experiences on this device" is set to off [1].
+The policy "Continue experiences on this device" is set to off [1][2]. The change takes effect after a restart.
 
 ## Why it can help
 Less data leaves this PC. No measurable effect on performance.
@@ -20,3 +20,4 @@ If you use nearby sharing.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+2. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-grouppolicy

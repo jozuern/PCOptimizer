@@ -4,10 +4,10 @@
       "id": "gpu.hags",
       "category": "Graphics",
       "impact": {
-        "gaming": 1,
+        "gaming": 0,
         "basis": "situational",
         "effect": [
-          "latency"
+          "none"
         ]
       },
       "impactOverrides": [
@@ -47,7 +47,9 @@
         "eq": true
       },
       "sources": [
-        "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/"
+        "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/",
+        "https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS_G.md",
+        "https://www.intel.com/content/www/us/en/support/articles/000056788/graphics.html"
       ],
       "recommendReasonKey": "rec.frameGeneration"
     },
@@ -92,7 +94,7 @@
         ]
       },
       "sources": [
-        "https://devblogs.microsoft.com/directx/optimizations-for-windowed-games-in-windows-11/",
+        "https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/",
         "https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952"
       ],
       "recommendReasonKey": "rec.windowedFlip"
@@ -134,7 +136,8 @@
         "gte": 26100
       },
       "sources": [
-        "https://www.elevenforum.com/t/turn-on-or-off-game-mode-in-windows-11.1447/"
+        "https://news.xbox.com/en-us/2018/10/02/latest-october-2018-windows-update-gaming-features-3/",
+        "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/gamemode/game-mode-portal"
       ],
       "recommendReasonKey": "rec.gameModeOff"
     },
@@ -154,9 +157,8 @@
             "fact": "gamedvr.backgroundRecording",
             "eq": true
           },
-          "gaming": 2,
+          "gaming": 1,
           "effect": [
-            "fps",
             "stutter"
           ],
           "reasonKey": "impact.backgroundRecording"
@@ -196,85 +198,37 @@
         "eq": true
       },
       "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-applicationmanagement",
         "https://github.com/ChrisTitusTech/winutil"
       ],
       "recommendReasonKey": "rec.backgroundRecording"
-    },
-    {
-      "id": "gpu.fullscreenOptimizationsOff",
-      "category": "Graphics",
-      "impact": {
-        "gaming": 0,
-        "basis": "disputed",
-        "effect": [
-          "latency"
-        ]
-      },
-      "risk": "moderate",
-      "scope": "user",
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "user",
-          "path": "System\\GameConfigStore",
-          "name": "GameDVR_FSEBehaviorMode",
-          "kind": "dword",
-          "value": 2
-        },
-        {
-          "type": "registry",
-          "hive": "user",
-          "path": "System\\GameConfigStore",
-          "name": "GameDVR_HonorUserFSEBehaviorMode",
-          "kind": "dword",
-          "value": 1
-        },
-        {
-          "type": "registry",
-          "hive": "user",
-          "path": "System\\GameConfigStore",
-          "name": "GameDVR_FSEBehavior",
-          "kind": "dword",
-          "value": 2
-        },
-        {
-          "type": "registry",
-          "hive": "user",
-          "path": "System\\GameConfigStore",
-          "name": "GameDVR_DXGIHonorFSEWindowsCompatible",
-          "kind": "dword",
-          "value": 1
-        }
-      ],
-      "sources": [
-        "https://devblogs.microsoft.com/directx/demystifying-full-screen-optimizations/"
-      ]
     },
     {
       "id": "gpu.mpoOff",
       "category": "Graphics",
       "impact": {
         "gaming": 0,
-        "basis": "disputed",
+        "basis": "situational",
         "effect": [
           "stability"
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "restart": true,
+      "verify": "afterRestart",
       "actions": [
         {
           "type": "registry",
           "hive": "machine",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
-          "name": "DisableOverlays",
+          "path": "SOFTWARE\\Microsoft\\Windows\\Dwm",
+          "name": "OverlayTestMode",
           "kind": "dword",
-          "value": 1
+          "value": 5
         }
       ],
       "sources": [
-        "https://www.guru3d.com/publish/comments/geforce-56603-whql-driver-download/page-17",
-        "https://www.techpowerup.com/forums/goto/post?id=5552960"
+        "https://nvidia.custhelp.com/app/answers/detail/a_id/5157"
       ]
     }
   ]

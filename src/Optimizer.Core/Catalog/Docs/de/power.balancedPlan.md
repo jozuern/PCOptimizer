@@ -4,22 +4,22 @@
 Wechselt auf den Windows-Standard „Ausbalanciert“: statt Energiesparmodus wieder voller CPU-Takt, in den Profilen „Leise und kühl“ und „Akku“ statt Höchstleistung weniger Wärme und Lärm.
 
 ## So funktioniert es
-Windows-Energiesparpläne legen fest, wie der Prozessor seinen Takt hebt und senkt, wann er Kerne parkt und wie Geräte Strom sparen. Der Energiesparmodus begrenzt die Prozessorleistung und reagiert träge auf Last. „Ausbalanciert“ hebt den Takt schnell an, wenn Arbeit anliegt, und senkt ihn im Leerlauf [1]. „Höchstleistung“ und darauf aufbauende Pläne wie „Ultimative Leistung“ liefern maximale Leistung auf Kosten eines höheren Stromverbrauchs; „Ausbalanciert“ passt Leistung und Verbrauch dem Bedarf an [2].
+Windows-Energiesparpläne legen fest, wie der Prozessor seinen Takt hebt und senkt, wann er Kerne parkt und wie Geräte Strom sparen. Der Energiesparmodus senkt die Leistung, um Strom zu sparen; „Ausbalanciert“ passt Leistung und Verbrauch dem Bedarf an; „Höchstleistung“ und darauf aufbauende Pläne wie „Ultimative Leistung“ liefern maximale Leistung auf Kosten eines höheren Stromverbrauchs [1]. In den Windows-Standardwerten parkt der Energiesparmodus im Netzbetrieb außerdem Prozessorkerne, „Ausbalanciert“ nicht.
 
 ## Warum es helfen kann
 Ein Spiel auf einer CPU, die der Energiesparmodus bremst, bekommt weniger Bilder und unruhigere Frametimes. „Ausbalanciert“ hebt die Grenze auf, ohne den Leerlaufverbrauch nennenswert zu erhöhen.
 
-In den Profilen „Leise und kühl“ und „Akku“ ist es umgekehrt: Ein Höchstleistungsplan verbraucht bei wenig Last mehr Strom als nötig, also mehr Wärme, mehr Lüfterlärm und weniger Akkulaufzeit. „Ausbalanciert“ senkt den Verbrauch, wenn wenig zu tun ist, und erreicht unter Last trotzdem den vollen Takt [2].
+In den Profilen „Leise und kühl“ und „Akku“ ist es umgekehrt: Ein Höchstleistungsplan verbraucht bei wenig Last mehr Strom als nötig, also mehr Wärme, mehr Lüfterlärm und weniger Akkulaufzeit. „Ausbalanciert“ senkt den Verbrauch, wenn wenig zu tun ist, und erreicht unter Last trotzdem den vollen Takt [1].
 
 ## Belege
-Vom Energiesparmodus aus hängt der Effekt davon ab, wie stark der Plan die CPU begrenzt hat. Auf Desktops ist er meist groß. Von „Höchstleistung“ aus geht es um Verbrauch und Wärme, nicht um FPS, und wie groß der Unterschied ist, hängt vom Prozessor ab. „Ausbalanciert“ ist auch der Plan, den AMD für Ryzen-X3D-Prozessoren mit zwei Chiplets empfiehlt.
+Vom Energiesparmodus aus hängt der Effekt vom Prozessor und von der Einrichtung des Plans ab, daher bewertet die App ihn als situationsabhängig. Von „Höchstleistung“ aus geht es um Verbrauch und Wärme, nicht um FPS: Im Netzbetrieb lässt „Ausbalanciert“ den Takt bei wenig Last weit sinken, „Höchstleistung“ hält ihn oben [2].
 
 ## Nachteile & Risiken
-Unter Last etwas höherer Stromverbrauch als im Energiesparmodus. Im Leerlauf auf den meisten Desktops kein Unterschied. Gegenüber „Höchstleistung“ gibt es unter Last keine niedrigere Taktgrenze.
+Unter Last höherer Verbrauch als im Energiesparmodus. Gegenüber „Höchstleistung“ taktet der Prozessor bei wenig Last herunter und muss bei neuer Last erst wieder hochtakten.
 
 ## Wann du es nicht nutzen solltest
 Fürs Spielen ist es nicht nötig, wenn du bereits „Ausbalanciert“, „Höchstleistung“ oder einen eigenen Leistungsplan nutzt. Deshalb empfiehlt die App es statt „Höchstleistung“ nur in den Profilen „Leise und kühl“ und „Akku“.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings
-2. https://learn.microsoft.com/en-us/windows/win32/power/power-policy-settings
+1. https://learn.microsoft.com/en-us/windows/win32/power/power-policy-settings
+2. https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning

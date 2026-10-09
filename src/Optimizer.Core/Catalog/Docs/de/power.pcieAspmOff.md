@@ -1,13 +1,13 @@
 # PCIe-Verbindungsenergieverwaltung aus
 
 ## Zusammenfassung
-Schaltet im Netzbetrieb Active State Power Management (ASPM) für PCIe-Verbindungen ab. Die Verbindungen wechseln im Leerlauf nicht mehr in Stromsparzustände.
+Schaltet im Netzbetrieb die PCIe-Verbindungsenergieverwaltung (ASPM) ab, die Verbindungen bleiben im Leerlauf voll aktiv. Ein Vorteil in Spielen ist umstritten, der Leerlaufverbrauch steigt.
 
 ## So funktioniert es
-ASPM erlaubt PCIe-Verbindungen (Grafikkarte, NVMe-SSD, Netzwerkkarte), im Leerlauf in Stromsparzustände zu wechseln [1]. Die Rückkehr auf volle Leistung dauert Mikrosekunden. Die App setzt den Planwert für den Netzbetrieb auf „Aus“.
+ASPM lässt PCIe-Verbindungen (Grafikkarte, NVMe-SSD, Netzwerkkarte) im Leerlauf in Stromsparzustände wechseln; „Mittlere Energieeinsparungen“ nutzt einen leichten, „Maximale Energieeinsparungen“ einen tieferen Zustand [1]. Das Verlassen eines Stromsparzustands kostet eine kurze Verzögerung. In den Windows-Standardwerten nutzt „Ausbalanciert“ im Netzbetrieb „Mittlere Energieeinsparungen“, „Höchstleistung“ „Aus“. Die App setzt den Wert für den Netzbetrieb auf „Aus“.
 
 ## Warum es helfen kann
-Die Aufwachverzögerung ungenutzter Verbindungen entfällt. Auf manchen Mainboards gab es außerdem Stabilitätsprobleme mit ASPM, die so vermieden werden.
+Die Aufwachverzögerung ungenutzter Verbindungen entfällt.
 
 ## Belege
 Messungen in Spielen zeigen selten einen Unterschied. Eine GPU unter Last schickt ihre Verbindung ohnehin nicht in den Ruhezustand.

@@ -1,13 +1,13 @@
 # PCIe link power management off
 
 ## Summary
-Turns off Active State Power Management (ASPM) for PCIe links on mains power. Links no longer drop into low-power states at idle.
+Turns off PCIe link power management (ASPM) on mains power, so links stay in full power at idle. A gaming benefit is disputed; it mainly raises idle power.
 
 ## How it works
-ASPM lets PCIe links (graphics card, NVMe SSD, network card) enter low-power states when idle [1]. Returning to full power takes microseconds. The app sets the plan value for mains power to Off.
+ASPM lets PCIe links (graphics card, NVMe SSD, network card) enter low-power states when idle; Moderate power savings uses a light state, Maximum power savings a deeper one [1]. Leaving a low-power state adds a short delay. In the Windows defaults, Balanced uses Moderate power savings on mains power and High performance uses Off. The app sets the mains value to Off.
 
 ## Why it can help
-Removes the wake-up delay of idle links. Some boards also had stability problems with ASPM, which this avoids.
+It removes the wake-up delay of idle links.
 
 ## Evidence
 Gaming measurements rarely show a difference. GPUs under load do not idle their link in the first place.

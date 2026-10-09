@@ -40,7 +40,13 @@ public sealed record ServiceRow(
     /// <summary>Filled when the signature check ran.</summary>
     public SignatureInfo? Signature { get; init; }
 
-    public bool IsMicrosoft => Signature?.IsMicrosoft ?? (File?.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase) == true);
+    /// <summary>
+    /// A valid signature decides. Without one (not checked yet, file not found, check failed, not signed), a file in
+    /// the Windows folder counts as a Windows service, so a failed check never unlocks Disabled for it.
+    /// </summary>
+    public bool IsMicrosoft => Signature is { Status: SignatureStatus.Signed } s
+        ? s.IsMicrosoft
+        : File?.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
     /// What the manager allows: catalog "protected" and unknown Microsoft services are read-only; Microsoft services the
@@ -107,9 +113,11 @@ public static class ServiceManager
             Category = "Services",
             Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
             Risk = row.Note?.Mode == "warn" || start == ServiceStart.Disabled ? Risk.Moderate : Risk.Safe,
+            // Disabling a service nobody reviewed can break the program it belongs to.
+            Preview = start == ServiceStart.Disabled,
             Hidden = true,
             Actions = [new ServiceAction { Name = row.Name, StartType = start }],
-            Sources = ["https://learn.microsoft.com/en-us/windows/win32/services/service-startup"],
+            Sources = ["https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfigw"],
         };
     }
 }

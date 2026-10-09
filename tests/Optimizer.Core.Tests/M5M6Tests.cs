@@ -254,17 +254,6 @@ public class DebloatServicesAppsTests
     }
 
     [Fact]
-    public void SpoolerPresetIsBlockedWithPrinters()
-    {
-        using var fx = new EngineFixture();
-        var t = TweakCatalog.Current.Get("services.spoolerManual")!;
-        var facts = new Facts().Set("os.build", 26300).Set("elevated", true).Set("printers.count", 1);
-        Assert.Contains(fx.Engine.Preflight(t, facts, new HashSet<string>(), new ApplyOptions()), b => b.ReasonKey == "block.printersInstalled");
-        Assert.DoesNotContain(fx.Engine.Preflight(t, new Facts().Set("os.build", 26300).Set("elevated", true).Set("printers.count", 0), new HashSet<string>(), new ApplyOptions()),
-            b => b.ReasonKey == "block.printersInstalled");
-    }
-
-    [Fact]
     public void ElevatedWingetComesOnlyFromTheProtectedPackageFolder()
     {
         var apps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");

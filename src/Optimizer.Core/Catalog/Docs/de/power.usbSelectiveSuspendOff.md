@@ -13,7 +13,7 @@ Eingabegeräte, die spät aufwachen, verpassen die erste Bewegung oder trennen k
 Auf die FPS hat das keinen Einfluss. Es behebt Stabilitätsprobleme mit bestimmten Geräten und bewirkt auf Systemen ohne solche Probleme nichts.
 
 ## Nachteile & Risiken
-Etwas höherer Stromverbrauch der USB-Geräte. Der Akkubetrieb von Laptops bleibt unverändert.
+Höherer Leerlaufverbrauch: Ein USB-Gerät, das nie in den Ruhezustand geht, kann den USB-Controller beschäftigt halten und verhindern, dass der Prozessor tiefere Schlafzustände erreicht [1]. Microsoft empfiehlt, das selektive Energiesparen eingeschaltet zu lassen [1]; nutze das also nur gegen ein Gerät mit Aussetzern. Der Akkubetrieb von Laptops bleibt unverändert.
 
 ## Wann du es nicht nutzen solltest
 Nicht nötig, wenn deine USB-Geräte ohne Aussetzer funktionieren.

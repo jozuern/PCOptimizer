@@ -32,11 +32,11 @@ scripts are copied from GPL projects):
 
 | Project | License | Note |
 |---|---|---|
-| Chris Titus Tech WinUtil | MIT | Source for these catalog entries: privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, privacy.locationOff, privacy.wpbtOff, background.backgroundAppsOff, gpu.gameDvrOff, network.deliveryOptimizationP2POff, visual.bestPerformance, explorer.fileExtensions, explorer.endTask, explorer.classicContextMenu. Values are reused; descriptions are our own. |
+| Chris Titus Tech WinUtil | MIT | Cross-check for the values of privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, privacy.locationOff, gpu.gameDvrOff, network.deliveryOptimizationP2POff, visual.bestPerformance, explorer.fileExtensions and explorer.endTask, which cite Microsoft documentation; the only source for explorer.classicContextMenu, which Microsoft does not document. Values are reused; descriptions are our own. |
 | O&O ShutUp10++ | Freeware, closed source | Idea for the privacy core set only. All privacy entries use the documented Group Policy and Policy CSP values from Microsoft's own documentation, cited per entry. |
 | Microsoft PC Manager, Wintoys | Freeware, closed source | Feature ideas only (cleanup categories, storage analyzer, repair tools). Nothing copied. |
 | Sysinternals Autoruns | Sysinternals license | Feature idea only (autostart locations, signature check). Nothing copied. |
 | Atlas OS playbook | GPLv3 | Reference only. Nothing copied verbatim. |
 | hellzerg Optimizer / OptimizerNXT | check LICENSE before use | Reference only |
 
-AMD ADLX is not used: it is a C++ SDK without a supported way to write Adrenalin settings from this app, so AMD settings are explained (advisor item "AMD Software settings") instead of changed.
+AMD ADLX is not used: it is a C++ SDK and would need a native helper inside the exe, so AMD Software settings are explained (advisor item "AMD Software settings") instead of changed.

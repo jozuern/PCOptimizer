@@ -11,6 +11,7 @@
         ]
       },
       "risk": "safe",
+      "preview": true,
       "appliesTo": {
         "gpuVendor": [
           "nvidia"
@@ -25,7 +26,10 @@
         }
       ],
       "sources": [
-        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+        "https://www.nvidia.com/en-us/geforce/news/gamescom-2019-game-ready-driver/",
+        "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm",
+        "https://www.nvidia.com/en-us/geforce/news/reflex-low-latency-platform/",
+        "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h"
       ]
     },
     {
@@ -39,6 +43,7 @@
         ]
       },
       "risk": "safe",
+      "preview": true,
       "appliesTo": {
         "gpuVendor": [
           "nvidia"
@@ -53,7 +58,9 @@
         }
       ],
       "sources": [
-        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+        "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm",
+        "https://nvidia.custhelp.com/app/answers/detail/a_id/5735/~/deleting-nvidia-shader-cache-files",
+        "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h"
       ]
     },
     {
@@ -67,6 +74,7 @@
         ]
       },
       "risk": "safe",
+      "preview": true,
       "appliesTo": {
         "gpuVendor": [
           "nvidia"
@@ -81,7 +89,8 @@
         }
       ],
       "sources": [
-        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+        "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm",
+        "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h"
       ]
     },
     {
@@ -95,6 +104,7 @@
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "appliesTo": {
         "gpuVendor": [
           "nvidia"
@@ -109,7 +119,8 @@
         }
       ],
       "sources": [
-        "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"
+        "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm",
+        "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h"
       ]
     }
   ]

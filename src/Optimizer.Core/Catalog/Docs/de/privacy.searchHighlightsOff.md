@@ -1,10 +1,10 @@
-# Suchhighlights aus
+# Suchhervorhebungen aus
 
 ## Zusammenfassung
-Entfernt die täglichen Highlights und Trendinhalte aus dem Suchfeld und der Suchstartseite.
+Entfernt die täglichen Suchhervorhebungen und Trendinhalte aus dem Suchfeld und der Suchstartseite.
 
 ## So funktioniert es
-Die Richtlinie „Suchhighlights zulassen“ wird abgeschaltet [1].
+Die Richtlinie „Suchhervorhebungen zulassen“ wird abgeschaltet [1].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
@@ -16,7 +16,7 @@ Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
 Die Suchstartseite zeigt keine täglichen Inhalte mehr.
 
 ## Wann du es nicht nutzen solltest
-Wenn dir die täglichen Highlights gefallen.
+Wenn dir die täglichen Suchhervorhebungen gefallen.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search

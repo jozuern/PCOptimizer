@@ -1,22 +1,23 @@
 # NTFS last-access timestamps off
 
 ## Summary
-Stops NTFS from updating the last-access time of files on every read. Windows already does this on large volumes; small effect.
+Stops NTFS from updating the last-access time of files and folders. Takes effect after a restart. No measurable gaming effect.
 
 ## How it works
-NTFS can store when a file was last read, which costs an extra metadata write per access. The value 0x80000001 turns updates off for all volumes and keeps the choice fixed [1].
+NTFS records when a file or folder was last accessed. It keeps the time in memory and writes it to disk later, at most one hour later [1]. Since Windows 10 version 1803, Windows can manage this setting itself ("system managed"). The value 0x80000001 means "user managed, updates off" [2], so Windows keeps your choice. Takes effect after a restart [1].
 
 ## Why it can help
-Fewer small metadata writes during heavy file access, such as loading many small game files.
+Microsoft states that turning off last-access updates speeds up file and directory access [1], because NTFS writes less metadata.
 
 ## Evidence
-Since Windows 10 1803, Windows turns last-access updates off automatically on large volumes, so the default is usually already off. No measurable gaming effect.
+The saving is small metadata writes. We found no measurement that shows an effect on games.
 
 ## Trade-offs & risks
-Tools that rely on last-access times (some backup or cleanup tools) lose that information.
+Programs that rely on last-access times, such as some backup and archiving tools, lose that information [1].
 
 ## When not to use it
-Not needed on most PCs.
+Not needed on most PCs. Skip it if you use a backup or cleanup tool that works with last-access times.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior
+2. https://support.citrix.com/external/article/CTX338425/pvs-and-mcs-devices-cache-disk-quickly-c.html

@@ -469,17 +469,38 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public TweakDefinition? Resolve(string id)
     {
         if (TweakCatalog.Current.Get(id) is { } t) return t;
-        if (store.Get(id)?.Definition is not { } json) return null;
-        try
+        if (store.Get(id) is not { } backup) return null;
+        if (backup.Definition is { } json)
         {
-            return JsonSerializer.Deserialize<TweakDefinition>(json, TweakCatalog.JsonOptions);
+            try
+            {
+                return JsonSerializer.Deserialize<TweakDefinition>(json, TweakCatalog.JsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                Log.Warn("engine", $"stored definition of {id} unreadable: {ex.Message}");
+            }
         }
-        catch (JsonException ex)
-        {
-            Log.Warn("engine", $"stored definition of {id} unreadable: {ex.Message}");
-            return null;
-        }
+        return Retired(backup);
     }
+
+    /// <summary>
+    /// A catalog tweak that a later version removed: it is no longer offered, but a change made with it must still be
+    /// undoable. Undo restores every entry through the action stored with it, so the definition needs no actions.
+    /// </summary>
+    private static TweakDefinition? Retired(TweakBackup backup) =>
+        backup.Entries.Any(e => e.Action is not null)
+            ? new TweakDefinition
+            {
+                Id = backup.TweakId,
+                Category = "Retired",
+                Docs = "retired",
+                Subject = backup.TweakId,
+                Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
+                Hidden = true,
+                Actions = [],
+            }
+            : null;
 
     // ---------------- helpers ----------------
 
@@ -491,6 +512,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     {
         var list = new List<TweakAction>();
         IReadOnlyList<NicAdapter>? adapters = null;
+        Guid? activeScheme = null;
         foreach (var a in t.Actions)
         {
             switch (a)
@@ -507,9 +529,13 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     foreach (var id in ctx.NetworkInterfaceIds)
                         list.Add(new DnsAction { InterfaceGuid = id, Servers = d.Servers });
                     break;
+                case PowerSettingAction p when p.Scheme is null:
+                    activeScheme ??= SafeActiveScheme();
+                    list.Add(activeScheme is { } scheme ? p.For(scheme) : p);
+                    break;
                 case NicPropertyAction n when n.Adapter is null:
                     adapters ??= SafeAdapters();
-                    foreach (var adapter in adapters.Where(x => n.Media switch { "ethernet" => !x.IsWifi, "wifi" => x.IsWifi, _ => true }))
+                    foreach (var adapter in adapters.Where(x => n.Media switch { "ethernet" => x.IsEthernet, "wifi" => x.IsWifi, _ => true }))
                     {
                         if (n.InterfaceGuid is { } only && !string.Equals(only, adapter.InterfaceGuid, StringComparison.OrdinalIgnoreCase)) continue;
                         list.Add(new NicPropertyAction { Properties = n.Properties, Dwords = n.Dwords, Media = n.Media, InterfaceGuid = n.InterfaceGuid, Adapter = adapter });
@@ -521,6 +547,19 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             }
         }
         return list;
+    }
+
+    private Guid? SafeActiveScheme()
+    {
+        try
+        {
+            return ctx.Power.ActiveScheme() is var g && g != Guid.Empty ? g : null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("engine", $"active power plan unreadable: {ex.Message}");
+            return null;
+        }
     }
 
     private IReadOnlyList<NicAdapter> SafeAdapters()

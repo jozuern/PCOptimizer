@@ -4,7 +4,7 @@
 Adds "End task" to the right-click menu of taskbar buttons, to close a frozen game or app without Task Manager.
 
 ## How it works
-TaskbarEndTask = 1 in the taskbar developer settings enables the option, the same as Settings > System > For developers > End task [1].
+TaskbarEndTask = 1 turns on the option, the same as Settings > System > Advanced > End task (called For developers before version 25H2) [1].
 
 ## Why it can help
 A hung fullscreen game can be closed faster.
@@ -19,4 +19,4 @@ Ending a task discards unsaved work in that app.
 No reason not to use it.
 
 ## Sources
-1. https://github.com/ChrisTitusTech/winutil
+1. https://learn.microsoft.com/en-us/windows/advanced-settings/

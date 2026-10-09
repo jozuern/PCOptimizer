@@ -1,22 +1,23 @@
-# Erzwungenes HPET entfernen (useplatformclock)
+# Erzwungene Plattformuhr entfernen (useplatformclock)
 
 ## Zusammenfassung
-Experte, Startkonfiguration: entfernt useplatformclock, das ältere Anleitungen setzen und das den langsamen HPET-Timer erzwingt. Danach nutzt Windows wieder seinen Standard-Timer.
+Experte, Startkonfiguration: entfernt useplatformclock, eine Debug-Option aus älteren Anleitungen. Sie erzwingt einen langsameren Plattform-Timer. Danach wählt Windows den Timer wieder selbst.
 
 ## So funktioniert es
-Die Startoption useplatformclock zwingt Windows, die Plattformuhr (HPET) als Zeitquelle zu nutzen [1]. HPET auszulesen dauert viel länger als der CPU-eigene Timer. Programme, die oft die Zeit abfragen (Spiele tun das), verbringen deshalb mehr Zeit in Timer-Aufrufen. Die App löscht die Option, nachdem sie die Startkonfiguration exportiert hat.
+Die Startoption useplatformclock zwingt Windows, die Plattformuhr als Leistungszähler zu nutzen. Laut Microsoft ist sie nur zur Fehlersuche gedacht [1]. Die Plattformuhr ist der HPET oder der ACPI-PM-Timer. Normalerweise nutzt Windows den Zeitstempelzähler der CPU (TSC), wenn er geeignet ist [2]. Die App löscht die Option, nachdem sie die Startkonfiguration exportiert hat.
 
 ## Warum es helfen kann
-Spiele, die in jedem Frame die Zeit abfragen, laufen mit weniger Overhead. Die Frametimes können gleichmäßiger werden.
+Den TSC auszulesen dauert einige zehn bis einige hundert CPU-Takte. Ein Plattform-Timer braucht etwa 0,8 bis 1,0 Mikrosekunden und einen Systemaufruf [2]. Spiele fragen die Zeit pro Frame oft ab, das summiert sich.
 
 ## Belege
-Die höheren Kosten von HPET-Abfragen sind gut dokumentiert. Wie stark sich das auf die FPS auswirkt, hängt davon ab, wie oft ein Spiel die Zeit abfragt.
+Den Kostenunterschied dokumentiert Microsoft [2]. Wie stark sich das auf die FPS auswirkt, hängt davon ab, wie oft ein Spiel die Zeit abfragt.
 
 ## Nachteile & Risiken
-Eine Änderung der Startkonfiguration. Startet der PC nicht richtig, mache sie über die Wiederherstellungsumgebung rückgängig (Umschalt + Neu starten > Problembehandlung > Systemwiederherstellung). Der BCD-Export liegt im Datenordner der App.
+Eine Änderung der Startkonfiguration. Ist BitLocker aktiv, halte deinen Wiederherstellungsschlüssel bereit: Laut Microsoft muss BitLocker vor Änderungen an Startoptionen eventuell angehalten werden [1]. Startet der PC nicht richtig, mache die Änderung über die Wiederherstellungsumgebung rückgängig (Umschalt + Neu starten > Problembehandlung > Systemwiederherstellung). Der BCD-Export liegt im Datenordner der App.
 
 ## Wann du es nicht nutzen solltest
 Nichts zu tun, wenn die Option nicht gesetzt ist. Startoptionen nur mit direktem Zugriff auf den PC ändern.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
+2. https://learn.microsoft.com/en-us/windows/win32/sysinfo/acquiring-high-resolution-time-stamps

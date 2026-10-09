@@ -110,9 +110,20 @@ public sealed class NicPropertyAction : TweakAction
 
     public override void Apply(ActionContext c)
     {
-        foreach (var p in Applicable(c)) RegistryValue.Write(c.Registry, Hive.Machine, Adapter!.ClassKey, p.Key, "string", p.Value);
+        foreach (var p in Applicable(c)) WriteKeyword(c, p.Key, p.Value);
         foreach (var d in Dwords) RegistryValue.Write(c.Registry, Hive.Machine, Adapter!.ClassKey, d.Key, "dword", d.Value.ToString(CultureInfo.InvariantCulture));
         RestartAdapter(c);
+    }
+
+    /// <summary>
+    /// Driver keywords are REG_SZ by the NDIS convention, but some drivers store them as DWORD: an existing value keeps
+    /// its type, so neither the change nor its undo turns a DWORD into a string.
+    /// </summary>
+    private void WriteKeyword(ActionContext c, string key, string value)
+    {
+        var existing = RegistryValue.Read(c.Registry, Hive.Machine, Adapter!.ClassKey, key);
+        var kind = existing is { Existed: true, Kind: "dword" } && uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out _) ? "dword" : "string";
+        RegistryValue.Write(c.Registry, Hive.Machine, Adapter.ClassKey, key, kind, value);
     }
 
     public override void Restore(ActionContext c, StoredValue original)
@@ -121,9 +132,9 @@ public sealed class NicPropertyAction : TweakAction
         if (map is null) return;
         foreach (var (key, value) in map)
         {
-            var kind = Dwords.ContainsKey(key) ? "dword" : "string";
             if (value is null) RegistryValue.Delete(c.Registry, Hive.Machine, Adapter!.ClassKey, key);
-            else RegistryValue.Write(c.Registry, Hive.Machine, Adapter!.ClassKey, key, kind, value);
+            else if (Dwords.ContainsKey(key)) RegistryValue.Write(c.Registry, Hive.Machine, Adapter!.ClassKey, key, "dword", value);
+            else WriteKeyword(c, key, value);
         }
         RestartAdapter(c);
     }
@@ -164,7 +175,7 @@ public sealed class NicPropertyAction : TweakAction
 
 /// <summary>A physical network adapter's class key with the values its driver allows per keyword.</summary>
 public sealed record NicAdapter(string ClassKey, string InterfaceGuid, string Description, string DeviceInstanceId, bool IsWifi,
-    IReadOnlyDictionary<string, IReadOnlyList<string>> Allowed);
+    IReadOnlyDictionary<string, IReadOnlyList<string>> Allowed, bool IsEthernet = false);
 
 /// <summary>Physical adapters from the network class key, read through <see cref="IRegistryRoots"/> (sandbox-testable).</summary>
 public static class NicAdapters
@@ -172,6 +183,7 @@ public static class NicAdapters
     public const string ClassPath = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
     private const int NcfPhysical = 0x4;
     private const int IfTypeWifi = 71; // IF_TYPE_IEEE80211
+    private const int IfTypeEthernet = 6; // IF_TYPE_ETHERNET_CSMACD; mobile broadband and others have their own types
 
     public static IReadOnlyList<NicAdapter> Enumerate(IRegistryRoots registry)
     {
@@ -197,8 +209,8 @@ public static class NicAdapters
                     if (en is not null) allowed[param] = en.GetValueNames();
                 }
             }
-            var isWifi = key.GetValue("*IfType") is int t ? t == IfTypeWifi : (key.GetValue("*IfType") as string) == "71";
-            list.Add(new NicAdapter($@"{ClassPath}\{sub}", guid, key.GetValue("DriverDesc") as string ?? guid, instance, isWifi, allowed));
+            var ifType = key.GetValue("*IfType") switch { int t => t, string text when int.TryParse(text, out var t) => t, _ => 0 };
+            list.Add(new NicAdapter($@"{ClassPath}\{sub}", guid, key.GetValue("DriverDesc") as string ?? guid, instance, ifType == IfTypeWifi, allowed, ifType == IfTypeEthernet));
         }
         return list;
     }

@@ -1,10 +1,10 @@
 # Onlinespracherkennung aus
 
 ## Zusammenfassung
-Schaltet die cloudbasierte Spracherkennung ab. Spracheingabe und Sprachzugriff funktionieren dann nur noch mit Offline-Funktionen.
+Schaltet Microsofts Onlinespracherkennung ab. Funktionen, die sie brauchen, etwa das Diktieren in manchen Sprachen, funktionieren dann nicht mehr.
 
 ## So funktioniert es
-Die Richtlinie „Benutzern das Aktivieren der Onlinespracherkennungsdienste erlauben“ wird abgeschaltet [1].
+Die Richtlinie „Aktivierung von Online-Spracherkennungsdiensten durch Benutzer zulassen“ wird abgeschaltet [1].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.

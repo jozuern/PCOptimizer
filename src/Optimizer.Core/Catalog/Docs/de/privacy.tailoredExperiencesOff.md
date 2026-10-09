@@ -4,7 +4,7 @@
 Verhindert, dass Microsoft deine Diagnosedaten für persönliche Tipps, Werbung und Empfehlungen nutzt.
 
 ## So funktioniert es
-Eine Benutzerrichtlinie schaltet „maßgeschneiderte Erfahrungen“ ab, die Diagnosedaten zur Personalisierung von Tipps und Angeboten nutzen [1].
+Die Benutzerrichtlinie „Keine Diagnosedaten zur Personalisierung der Benutzererfahrung verwenden“ wird aktiviert [1]. Windows nutzt Diagnosedaten dann nicht mehr, um Tipps, Angebote und Inhalte auf dem Sperrbildschirm für den angemeldeten Benutzer anzupassen. Sie gilt nur für diesen Benutzer.
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.

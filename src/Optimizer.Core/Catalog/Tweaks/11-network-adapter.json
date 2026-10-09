@@ -7,44 +7,40 @@
         "gaming": 1,
         "basis": "situational",
         "effect": [
-          "latency"
+          "stability"
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "actions": [
         {
           "type": "nicProperty",
           "media": "ethernet",
           "properties": {
             "*EEE": "0",
-            "EEELinkAdvertisement": "0",
-            "EEE": "0",
-            "AdvancedEEE": "0",
-            "GreenEthernet": "0",
-            "PowerSavingMode": "0",
-            "AutoPowerSaveModeEnabled": "0",
-            "SipsEnabled": "0",
-            "ULPMode": "0",
             "*SelectiveSuspend": "0"
           }
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords",
-        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-power-management"
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-power-management",
+        "https://edc.intel.com/content/www/us/en/design/products/ethernet/adapters-and-devices-user-guide/other-power-options",
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/standardized-inf-keywords-for-ndis-selective-suspend",
+        "https://www.asus.com/support/faq/1052466"
       ]
     },
     {
       "id": "network.nicAllowPowerOffOff",
       "category": "Network",
       "impact": {
-        "gaming": 1,
+        "gaming": 0,
         "basis": "situational",
         "effect": [
           "stability"
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "appliesTo": {
         "formFactor": "desktop"
       },
@@ -58,20 +54,21 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/networking/power-management-on-network-adapter"
+        "https://github.com/MicrosoftDocs/SupportArticles-docs/blob/63017aecf99ce46fc89302444a1b2f4537698ae4/support/windows-client/networking/power-management-on-network-adapter.md"
       ]
     },
     {
       "id": "network.interruptModerationOff",
       "category": "Expert",
       "impact": {
-        "gaming": 1,
+        "gaming": 0,
         "basis": "disputed",
         "effect": [
           "latency"
         ]
       },
       "risk": "expert",
+      "preview": true,
       "actions": [
         {
           "type": "nicProperty",
@@ -83,7 +80,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/enumeration-keywords",
-        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/interrupt-moderation"
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/interrupt-moderation",
+        "https://learn.microsoft.com/en-us/windows-server/networking/technologies/network-subsystem/net-sub-performance-tuning-nics"
       ]
     },
     {
@@ -92,12 +90,13 @@
       "category": "Network",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "actions": [
         {
           "type": "dns",
@@ -120,12 +119,13 @@
       "category": "Network",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "actions": [
         {
           "type": "dns",
@@ -148,12 +148,13 @@
       "category": "Network",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "actions": [
         {
           "type": "dns",

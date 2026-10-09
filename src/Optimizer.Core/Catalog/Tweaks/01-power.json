@@ -4,8 +4,8 @@
       "id": "power.balancedPlan",
       "category": "Power",
       "impact": {
-        "gaming": 3,
-        "basis": "measured",
+        "gaming": 2,
+        "basis": "situational",
         "effect": [
           "fps",
           "lows"
@@ -30,7 +30,8 @@
         "F9.powerSaver"
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+        "https://learn.microsoft.com/en-us/windows/win32/power/power-policy-settings",
+        "https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning"
       ],
       "recommendReasonKey": "rec.powerSaverPlan"
     },
@@ -51,7 +52,7 @@
             "fact": "power.personality",
             "eq": "powersaver"
           },
-          "gaming": 3,
+          "gaming": 2,
           "reasonKey": "impact.fromPowerSaver"
         }
       ],
@@ -83,7 +84,9 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+        "https://learn.microsoft.com/en-us/windows/win32/power/power-policy-settings",
+        "https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/customize-power-slider"
       ]
     },
     {
@@ -97,6 +100,7 @@
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "appliesTo": {
         "formFactor": "desktop"
       },
@@ -124,22 +128,25 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-power-settings"
+        "https://blogs.windows.com/windows-insider/2018/02/14/announcing-windows-10-insider-preview-build-17101-fast-build-17604-skip-ahead/",
+        "https://learn.microsoft.com/en-us/windows/win32/power/power-policy-settings"
       ]
     },
     {
       "id": "power.turboRestore",
       "category": "Power",
       "impact": {
-        "gaming": 5,
-        "basis": "measured",
+        "gaming": 4,
+        "basis": "situational",
         "effect": [
           "fps",
           "lows"
         ]
       },
       "risk": "safe",
-      "conflictsWith": [ "quiet.boostOff" ],
+      "conflictsWith": [
+        "quiet.boostOff"
+      ],
       "actions": [
         {
           "type": "powerSetting",
@@ -162,63 +169,10 @@
         "F6.turbo"
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode"
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-maxperformance"
       ],
       "recommendReasonKey": "rec.turboDisabled"
-    },
-    {
-      "id": "power.coreParkingOff",
-      "category": "Power",
-      "impact": {
-        "gaming": 1,
-        "basis": "disputed",
-        "effect": [
-          "lows",
-          "latency"
-        ]
-      },
-      "risk": "moderate",
-      "actions": [
-        {
-          "type": "powerSetting",
-          "subgroup": "SUB_PROCESSOR",
-          "setting": "CPMINCORES",
-          "ac": 100
-        }
-      ],
-      "blockedWhen": [
-        {
-          "fact": "cpu.x3dMultiCcd",
-          "eq": true,
-          "reasonKey": "block.x3dParking"
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
-      ]
-    },
-    {
-      "id": "power.minProcessorState100",
-      "category": "Power",
-      "impact": {
-        "gaming": 0,
-        "basis": "disputed",
-        "effect": [
-          "latency"
-        ]
-      },
-      "risk": "moderate",
-      "actions": [
-        {
-          "type": "powerSetting",
-          "subgroup": "SUB_PROCESSOR",
-          "setting": "PROCTHROTTLEMIN",
-          "ac": 100
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configure-processor-power-management-options"
-      ]
     },
     {
       "id": "power.throttlingOff",
@@ -261,7 +215,9 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation"
+        "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-power",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/customize-power-slider"
       ]
     },
     {
@@ -332,7 +288,9 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/distinguishing-fast-startup-from-wake-from-hibernation"
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/distinguishing-fast-startup-from-wake-from-hibernation",
+        "https://learn.microsoft.com/en-us/windows/configuration/unified-write-filter/hibernate-once-resume-many-horm",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-wininit"
       ]
     },
     {
@@ -340,7 +298,7 @@
       "category": "Power",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -368,7 +326,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options"
+        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/adaptive-hibernate"
       ]
     }
   ]

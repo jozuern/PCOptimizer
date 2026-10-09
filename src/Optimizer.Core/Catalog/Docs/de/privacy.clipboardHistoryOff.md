@@ -7,7 +7,7 @@ Schaltet den Zwischenablageverlauf (Windows + V) ab, damit kopierte Kennwörter 
 Die Richtlinie „Zwischenablageverlauf zulassen“ wird abgeschaltet [1].
 
 ## Warum es helfen kann
-Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
+Kopierte Kennwörter und Texte bleiben nicht in einem Verlauf auf diesem PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
 Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
@@ -19,4 +19,4 @@ Windows + V zeigt keine früher kopierten Einträge mehr.
 Wenn du Windows + V nutzt.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy
+1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience

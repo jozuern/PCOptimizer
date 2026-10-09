@@ -1,22 +1,23 @@
 # Auslagerungsdatei von Windows verwalten lassen
 
 ## Zusammenfassung
-Stellt die Auslagerungsdatei wieder auf „Automatisch verwalten“. Behebt Abstürze und Speicherfehler durch eine abgeschaltete oder zu kleine Auslagerungsdatei.
+Stellt „Auslagerungsdateigröße für alle Laufwerke automatisch verwalten“ wieder her. Behebt Abstürze und Speicherfehler durch eine abgeschaltete oder zu kleine Auslagerungsdatei.
 
 ## So funktioniert es
-Die Auslagerungsdatei erweitert den Arbeitsspeicher und wird für Absturzabbilder gebraucht. Alte Anleitungen empfehlen, sie abzuschalten oder eine kleine feste Größe zu setzen. Der Wert PagingFiles = ?:\pagefile.sys bedeutet, dass Windows Größe und Ort auf allen Laufwerken verwaltet [1]. Wirkt nach einem Neustart.
+Das Commit-Limit, also wie viel Speicher Programme insgesamt zusichern lassen können, ist RAM plus alle Auslagerungsdateien [1]. Im Task-Manager steht es unter „Zugesichert“. Alte Anleitungen empfehlen, die Auslagerungsdatei abzuschalten oder eine kleine feste Größe zu setzen. Die App setzt den Wert PagingFiles auf ?:\pagefile.sys. Diesen Wert schreibt der Windows-Dialog, wenn „Auslagerungsdateigröße für alle Laufwerke automatisch verwalten“ gesetzt ist. Microsoft dokumentiert den Wert selbst nicht. Windows bestimmt die Größe dann selbst, bis zum Dreifachen des RAMs oder 4 GB, je nachdem, was größer ist, und höchstens ein Achtel des Laufwerks [2]. Wirkt nach einem Neustart.
 
 ## Warum es helfen kann
-Spiele mit hohem Speicherbedarf können abstürzen oder ruckeln, wenn das Zusagelimit erreicht ist. Eine verwaltete Auslagerungsdatei wächst bei Bedarf mit.
+Erreichen Programme das Commit-Limit, kann Windows einfrieren, abstürzen oder Speicherfehler melden [1]. Eine verwaltete Auslagerungsdatei wächst mit, wenn die zugesicherte Menge nahe ans Limit kommt [2].
 
 ## Belege
-Microsoft empfiehlt für die meisten Systeme eine vom System verwaltete Auslagerungsdatei [1]. Mit genug RAM wird sie selten genutzt und kostet nichts.
+Standardmäßig verwaltet Windows die Auslagerungsdatei selbst [2]. Eine Auslagerungsdatei oder eigene Abbilddatei wird außerdem gebraucht, um nach einem Absturz ein Speicherabbild zu speichern [2].
 
 ## Nachteile & Risiken
-Belegt etwas Platz auf dem Systemlaufwerk.
+Belegt Platz auf dem Systemlaufwerk, bis zu den genannten Grenzen.
 
 ## Wann du es nicht nutzen solltest
-Behalte eine eigene Größe nur, wenn du sie bewusst gesetzt hast und den Spitzenbedarf deiner Anwendungen kennst.
+Behalte eine eigene Größe nur, wenn du sie bewusst gesetzt hast und den Spitzenbedarf deiner Anwendungen kennst. Nutzt du auf Laufwerk C: bereits „Größe wird vom System verwaltet“, ändert sich praktisch nichts, auch wenn die App die Einstellung als nicht angewendet zeigt.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/introduction-to-the-page-file
+2. https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/how-to-determine-the-appropriate-page-file-size-for-64-bit-versions-of-windows

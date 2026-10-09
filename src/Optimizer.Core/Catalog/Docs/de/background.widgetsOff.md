@@ -1,16 +1,16 @@
 # Widgets aus
 
 ## Zusammenfassung
-Schaltet das Widgets-Board und seinen Newsfeed per Richtlinie ab. Die Widgets-Prozesse laufen nicht mehr im Hintergrund.
+Schaltet das Widgets-Board und seinen Newsfeed per Richtlinie für den PC ab, auch den Eintrag in der Taskleiste.
 
 ## So funktioniert es
-Die Richtlinie AllowNewsAndInterests = 0 deaktiviert Widgets für den PC [1]. Die Schaltfläche in der Taskleiste verschwindet.
+Die Richtlinie AllowNewsAndInterests = 0 („Widgets zulassen“) deaktiviert die gesamte Widgets-Funktion, auch die Inhalte in der Taskleiste [1].
 
 ## Warum es helfen kann
-Der Widgets-Host und seine Webinhalte belegen Arbeitsspeicher und gelegentlich CPU-Zeit. Ohne Widgets wird beides frei.
+Das Widgets-Board lädt Webinhalte; mit der Richtlinie werden sie nicht mehr geladen.
 
 ## Belege
-Die Ersparnis liegt bei höchstens einigen hundert MB RAM. Auf PCs mit genug Speicher kein messbarer Effekt auf die FPS.
+Keine veröffentlichte Messung zeigt einen Effekt auf FPS oder Arbeitsspeicher. Der Nutzen ist vor allem weniger Ablenkung.
 
 ## Nachteile & Risiken
 Kein Wetter und keine Nachrichten mehr in der Taskleiste.

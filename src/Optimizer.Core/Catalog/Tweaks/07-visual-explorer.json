@@ -24,6 +24,7 @@
         }
       ],
       "risk": "safe",
+      "preview": true,
       "scope": "user",
       "signOut": true,
       "actions": [
@@ -33,15 +34,14 @@
           "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
           "name": "VisualFXSetting",
           "kind": "dword",
-          "value": 2
+          "value": 3
         },
         {
-          "type": "registry",
+          "type": "registryBinaryBits",
           "hive": "user",
           "path": "Control Panel\\Desktop",
           "name": "UserPreferencesMask",
-          "kind": "binary",
-          "value": "9012038010000000"
+          "clear": "0E2C040002000000"
         },
         {
           "type": "registry",
@@ -74,10 +74,27 @@
           "name": "ListviewShadow",
           "kind": "dword",
           "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Desktop",
+          "name": "DragFullWindows",
+          "kind": "string",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\DWM",
+          "name": "EnableAeroPeek",
+          "kind": "dword",
+          "value": 0
         }
       ],
       "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://support.microsoft.com/en-us/windows/tips-to-improve-pc-performance-in-windows-b3b3ef5b-5953-fb6a-2528-4bbed82fba96",
+        "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-2000-server/cc957204(v=technet.10)"
       ],
       "recommendReasonKey": "rec.integratedGraphics",
       "recommendWhen": {
@@ -122,7 +139,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic"
+        "https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic",
+        "https://learn.microsoft.com/en-us/windows/apps/design/style/mica"
       ],
       "recommendReasonKey": "rec.integratedGraphics",
       "recommendWhen": {
@@ -135,7 +153,7 @@
       "category": "Explorer",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -154,7 +172,8 @@
         }
       ],
       "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01",
+        "https://learn.microsoft.com/en-us/windows/advanced-settings/"
       ]
     },
     {
@@ -162,7 +181,7 @@
       "category": "Explorer",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -181,7 +200,7 @@
         }
       ],
       "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://learn.microsoft.com/en-us/windows/advanced-settings/"
       ]
     },
     {
@@ -189,12 +208,13 @@
       "category": "Explorer",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "scope": "user",
       "signOut": true,
       "actions": [

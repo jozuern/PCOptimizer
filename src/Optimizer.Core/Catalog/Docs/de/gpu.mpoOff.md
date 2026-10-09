@@ -1,23 +1,22 @@
 # Multiplane Overlay (MPO) aus
 
 ## Zusammenfassung
-Nur zur Fehlerbehebung: schaltet Multiplane Overlay ab, um Flackern, schwarze Bildschirme oder eingefrorene Fenster in manchen Apps zu beheben. Kein Leistungsgewinn.
+Nur zur Fehlerbehebung: schaltet Multiplane Overlay mit dem von NVIDIA dokumentierten Registrierungswert ab, um Flackern oder schwarze Bildschirme in manchen Apps zu beheben. Kein Leistungsgewinn.
 
 ## So funktioniert es
-Mit Multiplane Overlay kann die Anzeigehardware mehrere Ebenen (etwa ein Video und den Desktop) selbst zusammensetzen, statt das dem Compositor zu überlassen. Bei manchen Kombinationen aus Treiber und Monitor führt das zu Flackern. Laut Nutzerberichten schaltet der Wert DisableOverlays = 1 unter GraphicsDrivers es ab 24H2 ab [1].
+Mit Multiplane Overlay setzt die Anzeigehardware mehrere Ebenen, etwa ein Video und den Desktop, selbst zusammen, statt das dem Desktop-Compositor zu überlassen. NVIDIA beschreibt das als Weg zu mehr Leistung und weniger Stromverbrauch [1]. Bei manchen Kombinationen aus Treiber und Monitor führt es zu Flackern. Die App setzt OverlayTestMode = 5 unter HKLM\SOFTWARE\Microsoft\Windows\Dwm, denselben Wert wie NVIDIAs mpo_disable.reg; Rückgängig machen löscht ihn wieder, wie NVIDIAs mpo_restore.reg [1]. Wirkt nach einem Neustart.
 
 ## Warum es helfen kann
 Beseitigt die Ursache MPO-bedingter Flacker- und Einfrierprobleme, wenn sie auftreten.
 
 ## Belege
-Für diesen Wert gibt es keine Microsoft-Dokumentation, er beruht auf Berichten aus der Community [1]. dxdiag zeigt nicht zuverlässig, ob MPO genutzt wird [2]. Ohne MPO-Probleme gibt es nichts zu gewinnen.
+NVIDIA dokumentiert diesen Wert für Windows 11 [1]. Microsoft dokumentiert ihn nicht. Ohne MPO-Probleme gibt es nichts zu gewinnen.
 
 ## Nachteile & Risiken
-Kann den Verbrauch bei der Videowiedergabe erhöhen, weil der Compositor mehr arbeitet. Neustart nötig.
+Der Compositor arbeitet mehr, was den Stromverbrauch erhöhen kann, etwa bei der Videowiedergabe [1]. Neustart nötig.
 
 ## Wann du es nicht nutzen solltest
-Nur nutzen, wenn du Flackern oder schwarze Blitze siehst. Der alte Wert OverlayTestMode = 5 wirkt ab 24H2 nicht mehr und wird stattdessen von der Prüfung auf Altlasten gemeldet.
+Nur bei Flackern oder schwarzen Blitzen. Aktualisiere vorher Grafiktreiber und Windows: NVIDIA nennt verbesserte MPO-Unterstützung ab Treibern der Release 610 mit Windows-Build 26100.7705 oder 26200.7705 und neuer [1].
 
 ## Quellen
-1. https://www.guru3d.com/publish/comments/geforce-56603-whql-driver-download/page-17
-2. https://www.techpowerup.com/forums/goto/post?id=5552960
+1. https://nvidia.custhelp.com/app/answers/detail/a_id/5157

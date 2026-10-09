@@ -5,7 +5,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -31,7 +31,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -58,7 +58,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -84,7 +84,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -117,7 +117,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -142,6 +142,14 @@
         },
         {
           "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\TextInput",
+          "name": "AllowLinguisticDataCollection",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
           "hive": "user",
           "path": "Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
           "name": "HarvestContacts",
@@ -159,7 +167,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-textinput",
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-globalization"
       ]
     },
     {
@@ -167,7 +176,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -193,7 +202,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -210,7 +219,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-windowsexplorer",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
       ],
       "scope": "user"
     },
@@ -219,7 +229,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -244,7 +254,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -261,8 +271,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search",
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
       ]
     },
     {
@@ -270,7 +279,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -287,7 +296,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
       ]
     },
     {
@@ -295,7 +305,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -368,7 +378,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
       ],
       "scope": "user"
     },
@@ -377,7 +387,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -402,7 +412,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -428,7 +438,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -454,7 +464,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -471,7 +481,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
       ]
     },
     {
@@ -479,7 +490,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -505,7 +516,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -522,7 +533,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-icm"
       ]
     },
     {
@@ -530,12 +541,13 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "moderate",
+      "restart": true,
       "actions": [
         {
           "type": "registry",
@@ -555,40 +567,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
-      ]
-    },
-    {
-      "id": "privacy.handwritingSharingOff",
-      "category": "Privacy",
-      "impact": {
-        "gaming": 0,
-        "basis": "measured",
-        "effect": [
-          "none"
-        ]
-      },
-      "risk": "safe",
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\TabletPC",
-          "name": "PreventHandwritingDataSharing",
-          "kind": "dword",
-          "value": 1
-        },
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\HandwritingErrorReports",
-          "name": "PreventHandwritingErrorReports",
-          "kind": "dword",
-          "value": 1
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-appcompat"
       ]
     },
     {
@@ -596,7 +575,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -669,7 +648,9 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://support.microsoft.com/en-us/office/windows-mail-calendar-and-people-become-outlook-773ecb94-5b16-4155-96e1-bc9afdc08e31"
       ]
     },
     {
@@ -677,7 +658,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -702,7 +683,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-settingsync"
       ]
     },
     {
@@ -710,7 +692,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -736,12 +718,13 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "moderate",
+      "restart": true,
       "actions": [
         {
           "type": "registry",
@@ -753,7 +736,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-grouppolicy"
       ]
     },
     {
@@ -761,12 +744,13 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "moderate",
+      "restart": true,
       "actions": [
         {
           "type": "registry",
@@ -778,7 +762,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-grouppolicy"
       ]
     },
     {
@@ -786,7 +771,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -812,7 +797,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-maps",
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/whats-new/deprecated-features"
       ]
     },
     {
@@ -820,7 +806,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -838,7 +824,7 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
       ]
     }
   ]

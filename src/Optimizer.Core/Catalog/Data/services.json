@@ -1,5 +1,5 @@
 {
-  "_comment": "Service explanations for the services manager. protected = never changed here; manualOk = can be set to Manual; warn = can be changed, the note says what stops working. Unknown Microsoft services are read-only; unknown third-party services can be set to Manual.",
+  "_comment": "Service explanations for the services manager. protected = never changed here; manualOk = can be set to Manual; warn = can be changed, the note says what stops working. Unknown Microsoft services are read-only; unknown third-party services can get any start type. Kernel drivers (mpsdrv, vgk, FACEIT) never appear in the list; they stay here as documentation.",
   "services": [
     {
       "name": "RpcSs",
@@ -112,32 +112,32 @@
     {
       "name": "WinDefend",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "SecurityHealthService",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "wscsvc",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "AudioSrv",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Windows audio. Changing it stops sound on this PC.",
+      "de": "Windows-Audio. Eine Änderung schaltet den Ton auf diesem PC ab."
     },
     {
       "name": "AudioEndpointBuilder",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Windows audio. Changing it stops sound on this PC.",
+      "de": "Windows-Audio. Eine Änderung schaltet den Ton auf diesem PC ab."
     },
     {
       "name": "UserManager",
@@ -346,14 +346,14 @@
     {
       "name": "Sense",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "WdNisSvc",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "TabletInputService",
@@ -388,8 +388,8 @@
     {
       "name": "webthreatdefsvc",
       "mode": "protected",
-      "en": "Part of Windows that other parts depend on. Changing it can break sign-in, networking, updates or the Start menu.",
-      "de": "Teil von Windows, von dem andere Teile abhängen. Eine Änderung kann Anmeldung, Netzwerk, Updates oder das Startmenü beschädigen."
+      "en": "Part of Windows Security. Changing it can weaken the protection of this PC.",
+      "de": "Teil der Windows-Sicherheit. Eine Änderung kann den Schutz dieses PCs schwächen."
     },
     {
       "name": "vgc",
@@ -428,6 +428,12 @@
       "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
     },
     {
+      "name": "FACEITService",
+      "mode": "protected",
+      "en": "Anti-cheat service. Games that use it do not start without it.",
+      "de": "Anti-Cheat-Dienst. Spiele, die ihn nutzen, starten ohne ihn nicht."
+    },
+    {
       "name": "EAAntiCheatService",
       "mode": "protected",
       "en": "Anti-cheat service. Games that use it do not start without it.",
@@ -436,8 +442,8 @@
     {
       "name": "MapsBroker",
       "mode": "manualOk",
-      "en": "Downloaded Maps Manager: updates offline maps for the Maps app.",
-      "de": "Verwaltung heruntergeladener Karten: aktualisiert Offlinekarten der Karten-App."
+      "en": "Downloaded Maps Manager: updates offline maps for the Maps app. The Maps app is deprecated.",
+      "de": "Verwaltung heruntergeladener Karten: aktualisiert Offlinekarten der Karten-App. Die Karten-App ist abgekündigt."
     },
     {
       "name": "PcaSvc",
@@ -448,14 +454,14 @@
     {
       "name": "TrkWks",
       "mode": "manualOk",
-      "en": "Distributed Link Tracking Client: keeps shortcuts working when files move between NTFS volumes on a network.",
-      "de": "Überwachung verteilter Verknüpfungen (Client): hält Verknüpfungen funktionsfähig, wenn Dateien zwischen NTFS-Volumes im Netzwerk wandern."
+      "en": "Distributed Link Tracking Client: keeps shortcuts working when linked files move to another NTFS volume on this PC or on the network.",
+      "de": "Überwachung verteilter Verknüpfungen (Client): hält Verknüpfungen funktionsfähig, wenn verknüpfte Dateien auf ein anderes NTFS-Volume dieses PCs oder im Netzwerk verschoben werden."
     },
     {
       "name": "Spooler",
       "mode": "warn",
-      "en": "Print Spooler: needed for printing, including \"Print to PDF\".",
-      "de": "Druckwarteschlange: zum Drucken nötig, auch für „Microsoft Print to PDF“."
+      "en": "Print Spooler: needed for printing, including \"Print to PDF\". On Manual it does not start by itself.",
+      "de": "Druckwarteschlange: zum Drucken nötig, auch für „Microsoft Print to PDF“. Auf Manuell startet der Dienst nicht von selbst."
     },
     {
       "name": "Fax",
@@ -514,8 +520,8 @@
     {
       "name": "iphlpsvc",
       "mode": "warn",
-      "en": "IP Helper: IPv6 transition (Teredo). Xbox party chat and some multiplayer games need it.",
-      "de": "IP-Hilfsdienst: IPv6-Übergang (Teredo). Xbox-Party-Chat und manche Mehrspielerspiele brauchen ihn."
+      "en": "IP Helper: IPv6 transition technologies such as Teredo. On Manual it does not start by itself, and online features that use Teredo stop working.",
+      "de": "IP-Hilfsdienst: IPv6-Übergangstechniken wie Teredo. Auf Manuell startet er nicht von selbst, und Onlinefunktionen, die Teredo nutzen, funktionieren nicht mehr."
     },
     {
       "name": "WbioSrvc",
@@ -586,26 +592,14 @@
     {
       "name": "edgeupdate",
       "mode": "manualOk",
-      "en": "Microsoft Edge Update: also runs as a scheduled task, so Manual keeps Edge updated.",
-      "de": "Microsoft Edge Update: läuft auch als geplante Aufgabe, Edge bleibt auf Manuell aktuell."
+      "en": "Microsoft Edge Update: installs updates for Microsoft Edge.",
+      "de": "Microsoft Edge Update: installiert Updates für Microsoft Edge."
     },
     {
       "name": "edgeupdatem",
       "mode": "manualOk",
       "en": "Microsoft Edge Update (on demand).",
       "de": "Microsoft Edge Update (bei Bedarf)."
-    },
-    {
-      "name": "gupdate",
-      "mode": "manualOk",
-      "en": "Google Update: also runs as a scheduled task, so Manual keeps Chrome updated.",
-      "de": "Google Update: läuft auch als geplante Aufgabe, Chrome bleibt auf Manuell aktuell."
-    },
-    {
-      "name": "gupdatem",
-      "mode": "manualOk",
-      "en": "Google Update (on demand).",
-      "de": "Google Update (bei Bedarf)."
     },
     {
       "name": "Steam Client Service",

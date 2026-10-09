@@ -13,11 +13,11 @@ Edge-Prozesse ohne offenes Fenster belegen Arbeitsspeicher und etwas Prozessorze
 Beide Richtlinien sind von Microsoft dokumentiert [1][2]. Ohne die Richtlinien kann der Startboost je nach Einrichtung an oder aus sein, der Hintergrundmodus ist aus, solange du ihn nicht eingeschaltet hast [1][2]. Wie viel Speicher die ruhenden Prozesse belegen, hängt von Erweiterungen und offenen Sitzungen ab.
 
 ## Nachteile & Risiken
-Das erste Edge-Fenster nach der Anmeldung öffnet etwas langsamer. Erweiterungen und Web-Apps laufen bei geschlossenem Edge nicht mehr. Weil es Richtlinien sind, zeigt Edge in Menü und Einstellungen „Ihr Browser wird von Ihrer Organisation verwaltet“; Rückgängig entfernt sie.
+Das erste Edge-Fenster nach der Anmeldung öffnet etwas langsamer. Erweiterungen und Web-Apps laufen bei geschlossenem Edge nicht mehr. Weil es Richtlinien sind, zeigt Edge in Menü und Einstellungen an, dass es von deiner Organisation verwaltet wird; Rückgängig entfernt sie.
 
 ## Wann du es nicht nutzen solltest
 Wenn du Edge direkt nach jeder Anmeldung öffnest und es so schnell wie möglich willst, oder Erweiterungen nutzt, die bei geschlossenem Edge arbeiten.
 
 ## Quellen
-1. https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/startupboostenabled
-2. https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/backgroundmodeenabled
+1. https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/startupboostenabled
+2. https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/backgroundmodeenabled

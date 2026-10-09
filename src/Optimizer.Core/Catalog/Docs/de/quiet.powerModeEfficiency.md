@@ -10,7 +10,7 @@ Energiemodi sind Überlagerungen des Plans „Ausbalanciert“, die Hersteller u
 In diesem Modus lässt Windows den Prozessor weniger bereitwillig hohe Takte erreichen. Kurze Lastspitzen brauchen weniger Energie, der PC erzeugt weniger Wärme und die Lüfter drehen seltener hoch.
 
 ## Belege
-Die Energiemodi sind von Microsoft dokumentiert [1]. Was ein Modus ändert, bestimmen Prozessor und PC-Hersteller, daher unterscheidet sich die Wirkung von PC zu PC.
+Die Energiemodi sind von Microsoft dokumentiert [1]. Auf PCs ohne Akku bringt Windows keine eigenen Werte für die Modi mit; was ein Modus ändert, legen PC- oder Prozessorhersteller fest [1]. Auf manchen Desktops ändert dieser Modus deshalb wenig oder nichts.
 
 ## Nachteile & Risiken
 Geringere Reaktionsfreude und weniger Leistung in Spielen. In den Gaming-Profilen meldet der Scan diesen Modus als Problem. Nur auf Desktop-PCs angeboten: Laptops haben getrennte Modi für Akku und Netzteil, die dieser Tweak nicht abdecken würde.

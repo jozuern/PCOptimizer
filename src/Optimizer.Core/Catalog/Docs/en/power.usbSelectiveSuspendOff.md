@@ -13,7 +13,7 @@ Input devices that wake late can miss the first movement or disconnect for a mom
 There is no frame-rate effect. It is a stability fix for specific devices and does nothing on systems without such problems.
 
 ## Trade-offs & risks
-Slightly higher power draw of USB devices. Battery power on laptops is not changed.
+Higher idle power: a USB device that is never suspended can keep the USB controller busy and prevent the processor from entering deeper sleep states [1]. Microsoft recommends leaving selective suspend on [1], so use this only as a fix for a device that drops out. Battery power on laptops is not changed.
 
 ## When not to use it
 Not needed if your USB devices work without dropouts.

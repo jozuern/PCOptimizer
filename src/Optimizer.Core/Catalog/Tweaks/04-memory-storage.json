@@ -11,6 +11,7 @@
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "restart": true,
       "appliesTo": {
         "when": {
@@ -25,7 +26,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/powershell/module/mmagent/disable-mmagent"
+        "https://learn.microsoft.com/en-us/powershell/module/mmagent/disable-mmagent",
+        "https://blogs.windows.com/windows-insider/2015/08/18/announcing-windows-10-insider-preview-build-10525/"
       ]
     },
     {
@@ -39,6 +41,7 @@
         ]
       },
       "risk": "moderate",
+      "restart": true,
       "appliesTo": {
         "when": {
           "fact": "storage.ssdOnly",
@@ -53,7 +56,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/powershell/module/mmagent/disable-mmagent"
+        "https://learn.microsoft.com/en-us/archive/blogs/e7/support-and-qa-for-solid-state-drives",
+        "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
       ]
     },
     {
@@ -67,6 +71,7 @@
         ]
       },
       "risk": "safe",
+      "preview": true,
       "restart": true,
       "actions": [
         {
@@ -93,7 +98,8 @@
         ]
       },
       "sources": [
-        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/introduction-to-the-page-file"
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/introduction-to-the-page-file",
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/how-to-determine-the-appropriate-page-file-size-for-64-bit-versions-of-windows"
       ],
       "recommendReasonKey": "rec.pagefile"
     },
@@ -102,7 +108,7 @@
       "category": "Storage",
       "impact": {
         "gaming": 1,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "stutter"
         ]
@@ -127,7 +133,8 @@
         "F18.trim"
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-filesys"
       ],
       "recommendReasonKey": "rec.trimOff"
     },
@@ -136,12 +143,13 @@
       "category": "Storage",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "restart": true,
       "actions": [
         {
           "type": "registry",
@@ -153,32 +161,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
-      ]
-    },
-    {
-      "id": "storage.8dot3Off",
-      "category": "Storage",
-      "impact": {
-        "gaming": 0,
-        "basis": "measured",
-        "effect": [
-          "none"
-        ]
-      },
-      "risk": "safe",
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem",
-          "name": "NtfsDisable8dot3NameCreation",
-          "kind": "dword",
-          "value": 1
-        }
-      ],
-      "sources": [
-        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior",
+        "https://support.citrix.com/external/article/CTX338425/pvs-and-mcs-devices-cache-disk-quickly-c.html"
       ]
     },
     {
@@ -186,12 +170,13 @@
       "category": "Storage",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "preview": true,
       "scope": "user",
       "actions": [
         {
@@ -204,7 +189,8 @@
         }
       ],
       "sources": [
-        "https://support.microsoft.com/en-us/windows/manage-drive-space-with-storage-sense-654f6ada-7bfc-45e5-966b-e24aded96ad5"
+        "https://support.microsoft.com/en-us/windows/manage-drive-space-with-storage-sense-654f6ada-7bfc-45e5-966b-e24aded96ad5",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-storage"
       ],
       "recommendReasonKey": "rec.lowDiskSpace",
       "recommendWhen": {

@@ -1,23 +1,22 @@
 # Multiplane overlay (MPO) off
 
 ## Summary
-Troubleshooting only: turns off multiplane overlay to fix flicker, black screens or frozen windows in some apps. No performance gain.
+Troubleshooting only: turns off multiplane overlay with the registry value NVIDIA documents, to fix flicker or black screens in some apps. No performance gain.
 
 ## How it works
-Multiplane overlay lets the display engine combine several layers (for example a video and the desktop) in hardware instead of in the compositor. On some driver and monitor combinations it causes flicker. The value DisableOverlays = 1 under GraphicsDrivers is reported by users to turn it off on 24H2 and newer [1].
+Multiplane overlay lets the display hardware combine several layers, for example a video and the desktop, instead of the desktop compositor doing it. NVIDIA describes this as a way to improve performance and lower power use [1]. On some driver and monitor combinations it causes flicker. The app sets OverlayTestMode = 5 under HKLM\SOFTWARE\Microsoft\Windows\Dwm, the same value as NVIDIA's mpo_disable.reg; undo deletes it, like NVIDIA's mpo_restore.reg [1]. It takes effect after a restart.
 
 ## Why it can help
 Removes the cause of MPO-related flicker and freezes when they occur.
 
 ## Evidence
-There is no Microsoft documentation for this value; it is based on community reports [1]. dxdiag does not reliably show whether MPO is in use [2]. Without MPO problems there is nothing to gain.
+NVIDIA documents this value for Windows 11 [1]. Microsoft does not document it. Without MPO problems there is nothing to gain.
 
 ## Trade-offs & risks
-Can increase power draw during video playback, because the compositor does more work. Needs a restart.
+The compositor does more work, which can raise power draw, for example during video playback [1]. Needs a restart.
 
 ## When not to use it
-Only use it if you see flicker or black flashes. The old OverlayTestMode = 5 value no longer works on 24H2 and is reported by the leftover check instead.
+Only if you see flicker or black flashes. Update the graphics driver and Windows first: NVIDIA notes improved MPO support from Release 610 drivers with Windows build 26100.7705 or 26200.7705 and later [1].
 
 ## Sources
-1. https://www.guru3d.com/publish/comments/geforce-56603-whql-driver-download/page-17
-2. https://www.techpowerup.com/forums/goto/post?id=5552960
+1. https://nvidia.custhelp.com/app/answers/detail/a_id/5157

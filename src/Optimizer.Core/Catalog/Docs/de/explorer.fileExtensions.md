@@ -4,7 +4,7 @@
 Zeigt im Datei-Explorer Dateierweiterungen wie .exe oder .zip an. Eine Bedien- und Sicherheitseinstellung ohne Leistungseffekt.
 
 ## So funktioniert es
-HideFileExt = 0 in deinen Explorer-Einstellungen zeigt die Erweiterungen bekannter Dateitypen an [1].
+HideFileExt = 0 zeigt die Erweiterungen bekannter Dateitypen an, wie Datei-Explorer > Ansicht > Anzeigen > Dateinamenerweiterungen [1] oder Einstellungen > System > Erweitert > Datei-Explorer > Dateierweiterungen anzeigen (vor Version 25H2 „Für Entwickler“) [2].
 
 ## Warum es helfen kann
 Du siehst, was eine Datei wirklich ist, etwa ein gefälschtes „dokument.pdf.exe“.
@@ -19,4 +19,5 @@ Dateinamen werden länger, und beim Umbenennen kann man versehentlich die Erweit
 Es spricht nichts dagegen, außer du magst die kürzeren Namen lieber.
 
 ## Quellen
-1. https://github.com/ChrisTitusTech/winutil
+1. https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01
+2. https://learn.microsoft.com/en-us/windows/advanced-settings/

@@ -36,17 +36,22 @@ public sealed class AppServices
     public TweakEngine Engine { get; }
     public TweakCatalog Catalog => TweakCatalog.Current;
 
+    /// <summary>
+    /// Connected physical adapters ("{nic}" values and DNS presets): virtual switches, VPN and Hyper-V adapters are left
+    /// alone, so a VPN keeps its own DNS servers.
+    /// </summary>
     private static IReadOnlyList<string> ActiveInterfaceIds()
     {
         try
         {
+            var physical = NicAdapters.Enumerate(new SystemRegistryRoots(null)).Select(a => a.InterfaceGuid).ToHashSet(StringComparer.OrdinalIgnoreCase);
             return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                .Where(n => n.OperationalStatus == OperationalStatus.Up && physical.Contains(n.Id) &&
                             n.NetworkInterfaceType is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.GigabitEthernet)
                 .Select(n => n.Id)
                 .ToList();
         }
-        catch (NetworkInformationException)
+        catch (Exception ex) when (ex is NetworkInformationException or System.Security.SecurityException or UnauthorizedAccessException or IOException)
         {
             return [];
         }

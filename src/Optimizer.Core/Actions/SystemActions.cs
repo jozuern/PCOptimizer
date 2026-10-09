@@ -18,13 +18,19 @@ public sealed class ServiceAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Services.SetStartType(Name, StartType);
 
+    /// <summary>A service that was uninstalled since has nothing to restore (undo would otherwise fail on every attempt).</summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
+        if (c.Services.GetStartType(Name) is null) return;
         if (original.Existed && Enum.TryParse<ServiceStart>(original.Data, out var s)) c.Services.SetStartType(Name, s);
     }
 }
 
-/// <summary>A power setting on the active scheme, by GUID or powercfg alias (localization-safe, plan v4 §4.9).</summary>
+/// <summary>
+/// A power setting on the active scheme, by GUID or powercfg alias (localization-safe). The engine fills in
+/// <see cref="Scheme"/> with the active scheme when it expands the tweak, so each scheme gets its own backup entry:
+/// applying the tweak again after switching plans backs up the new plan's original instead of losing it.
+/// </summary>
 public sealed class PowerSettingAction : TweakAction
 {
     public string Subgroup { get; init; } = "";
@@ -32,34 +38,42 @@ public sealed class PowerSettingAction : TweakAction
     public uint? Ac { get; init; }
     public uint? Dc { get; init; }
 
+    /// <summary>The scheme this action reads and writes; null in the catalog (the active scheme at expansion).</summary>
+    public Guid? Scheme { get; init; }
+
     private Guid Sub => PowerAliases.Resolve(Subgroup);
     private Guid Set => PowerAliases.Resolve(Setting);
 
-    public override string TargetKey => $"pwr:{Sub}:{Set}";
-    public override string Describe(ActionContext c) => $"Power plan {c.Power.ActiveScheme()}: {Setting} ({Subgroup})";
+    // Backups written before schemes were part of the key have no scheme; their key stays the same.
+    public override string TargetKey => Scheme is { } s ? $"pwr:{s}:{Sub}:{Set}" : $"pwr:{Sub}:{Set}";
+    public override string Describe(ActionContext c) => $"Power plan {SchemeOf(c)}: {Setting} ({Subgroup})";
+
+    public PowerSettingAction For(Guid scheme) => new() { Subgroup = Subgroup, Setting = Setting, Ac = Ac, Dc = Dc, Scheme = scheme };
+
+    private Guid SchemeOf(ActionContext c) => Scheme ?? c.Power.ActiveScheme();
 
     // Data = "<scheme>;<ac>;<dc>" so undo writes back to the scheme that was changed, even if another plan is active now.
     private static string Format(Guid scheme, uint? ac, uint? dc) => $"{scheme};{ac?.ToString(CultureInfo.InvariantCulture)};{dc?.ToString(CultureInfo.InvariantCulture)}";
 
     public override StoredValue Desired(ActionContext c)
     {
-        var scheme = c.Power.ActiveScheme();
+        var scheme = SchemeOf(c);
         return new StoredValue(true, "power", Format(scheme, Ac ?? c.Power.ReadAc(scheme, Sub, Set), Dc ?? c.Power.ReadDc(scheme, Sub, Set)));
     }
 
     public override StoredValue? Read(ActionContext c)
     {
-        var scheme = c.Power.ActiveScheme();
+        var scheme = SchemeOf(c);
         var ac = c.Power.ReadAc(scheme, Sub, Set);
         return ac is null ? null : new StoredValue(true, "power", Format(scheme, ac, c.Power.ReadDc(scheme, Sub, Set)));
     }
 
     public override void Apply(ActionContext c)
     {
-        var scheme = c.Power.ActiveScheme();
+        var scheme = SchemeOf(c);
         if (Ac is { } ac) c.Power.WriteAc(scheme, Sub, Set, ac);
         if (Dc is { } dc) c.Power.WriteDc(scheme, Sub, Set, dc);
-        c.Power.SetActive(scheme); // re-activating applies the new values
+        if (c.Power.ActiveScheme() == scheme) c.Power.SetActive(scheme); // re-activating applies the new values
     }
 
     /// <summary>
@@ -124,13 +138,26 @@ public sealed class PowerSchemeAction : TweakAction
         if (target is { } t) c.Power.SetActive(t);
     }
 
+    /// <summary>
+    /// Undo always runs: when the user picked another plan since, the active plan stays as it is, but a plan this action
+    /// created is still removed (otherwise it would be left behind for good).
+    /// </summary>
+    public override bool IsStillApplied(ActionContext c, StoredValue applied) => true;
+
     public override void Restore(ActionContext c, StoredValue original)
     {
-        if (Guid.TryParse(original.Data, out var previous) && c.Power.SchemeExists(previous)) c.Power.SetActive(previous);
+        var active = c.Power.ActiveScheme();
+        var created = DuplicateFrom is not null && Name is not null ? c.Power.Schemes().Where(s => s.Name == Name).Select(s => s.Id).ToList() : [];
+        var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate));
+        if (ours)
+        {
+            // The previous plan may have been deleted in the meantime: Balanced exists on every PC.
+            var previous = Guid.TryParse(original.Data, out var p) && c.Power.SchemeExists(p) && !created.Contains(p) ? p : PowerAliases.Resolve("balanced");
+            if (previous != active) c.Power.SetActive(previous);
+        }
         // Schemes this action created are removed again on undo.
-        if (DuplicateFrom is not null && Name is not null)
-            foreach (var s in c.Power.Schemes().Where(s => s.Name == Name && s.Id != c.Power.ActiveScheme()))
-                c.Power.Delete(s.Id);
+        foreach (var id in created.Where(id => id != c.Power.ActiveScheme()))
+            c.Power.Delete(id);
     }
 }
 

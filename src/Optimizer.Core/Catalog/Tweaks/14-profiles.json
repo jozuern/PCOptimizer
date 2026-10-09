@@ -54,7 +54,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/archive/blogs/richardsmith/powercfg-useful-if-you-know-the-guids",
-        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options"
+        "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options",
+        "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744398(v=ws.10)"
       ]
     },
     {
@@ -62,7 +63,7 @@
       "category": "Battery",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -88,7 +89,7 @@
       "category": "Quiet",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -148,7 +149,7 @@
       "category": "Productivity",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -171,7 +172,7 @@
       ],
       "sources": [
         "https://support.microsoft.com/en-us/windows/clipboard-in-windows-c436501e-985d-1c8d-97ea-fe46ddf338c6",
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
       ]
     },
     {
@@ -197,8 +198,7 @@
         }
       ],
       "sources": [
-        "https://www.winhelponline.com/blog/open-file-explorer-downloads-folder-default-windows-10/",
-        "https://www.elevenforum.com/t/change-folder-to-open-file-explorer-to-by-default-in-windows-11.675/"
+        "https://www.winhelponline.com/blog/open-file-explorer-downloads-folder-default-windows-10/"
       ]
     },
     {
@@ -231,8 +231,8 @@
         }
       ],
       "sources": [
-        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/startupboostenabled",
-        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-browser-policies/backgroundmodeenabled"
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/startupboostenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/backgroundmodeenabled"
       ]
     }
   ]

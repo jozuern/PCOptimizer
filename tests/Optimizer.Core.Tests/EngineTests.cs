@@ -78,27 +78,27 @@ public class EngineTests
     public async Task UndoLeavesValuesWindowsAlreadyChanged()
     {
         using var fx = new EngineFixture();
-        const string path = @"SYSTEM\CurrentControlSet\Control\PriorityControl";
-        RegistryValue.Write(fx.Registry, Hive.Machine, path, "Win32PrioritySeparation", "dword", "2");
-        var t = T("latency.win32PrioritySeparation");
+        const string path = @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers";
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "HwSchMode", "dword", "1");
+        var t = T("gpu.hags");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
 
-        RegistryValue.Write(fx.Registry, Hive.Machine, path, "Win32PrioritySeparation", "dword", "24"); // feature update wrote a new default
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "HwSchMode", "dword", "3"); // a feature update wrote a new value
         var undo = fx.Engine.Revert(t);
 
         Assert.Single(undo.AlreadyRevertedByWindows);
-        Assert.Equal("24", Reg(fx, Hive.Machine, path, "Win32PrioritySeparation").Data);
+        Assert.Equal("3", Reg(fx, Hive.Machine, path, "HwSchMode").Data);
     }
 
     [Fact]
     public async Task DriftIsReportedAsRevertedByWindows()
     {
         using var fx = new EngineFixture();
-        var t = T("network.throttlingIndex");
+        var t = T("privacy.advertisingIdOff");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
         Assert.Equal(TweakState.Applied, fx.Engine.DetectState(t, Facts()));
 
-        RegistryValue.Delete(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
+        RegistryValue.Delete(fx.Registry, Hive.Machine, @"SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo", "DisabledByGroupPolicy");
         Assert.Equal(TweakState.RevertedByWindows, fx.Engine.DetectState(t, Facts()));
     }
 
@@ -107,13 +107,19 @@ public class EngineTests
     {
         using var fx = new EngineFixture();
         const string path = @"SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters";
+        // A second tweak owning another bit of the same value (0x08).
+        var other = new TweakDefinition
+        {
+            Id = "test.otherBit", Category = "Network", Hidden = true, Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
+            Actions = [new RegistryBitsAction { Hive = Hive.Machine, Path = path, Name = "DisabledComponents", Set = 8 }],
+        };
         await fx.Engine.ApplyAsync(T("network.preferIpv4"), Facts(), new HashSet<string>(), Expert);
-        await fx.Engine.ApplyAsync(T("network.teredoOff"), Facts(), new HashSet<string>(), Expert);
+        await fx.Engine.ApplyAsync(other, Facts(), new HashSet<string>(), Expert);
         Assert.Equal("40", Reg(fx, Hive.Machine, path, "DisabledComponents").Data); // 0x20 | 0x08
 
         fx.Engine.Revert(T("network.preferIpv4"));
         Assert.Equal("8", Reg(fx, Hive.Machine, path, "DisabledComponents").Data);
-        fx.Engine.Revert(T("network.teredoOff"));
+        fx.Engine.Revert(other);
         var final = Reg(fx, Hive.Machine, path, "DisabledComponents");
         Assert.True(!final.Existed || final.Data == "0"); // 0 = Windows default (all IPv6 components enabled)
     }
@@ -141,9 +147,7 @@ public class EngineTests
         Assert.Contains(fx.Engine.Preflight(T("security.vbsOff"), Facts(f => f.Set("anticheat.strict", true)), none, opts), b => b.ReasonKey == "block.antiCheat");
         Assert.DoesNotContain(fx.Engine.Preflight(T("security.vbsOff"), Facts(f => f.Set("anticheat.strict", true)), none, new ApplyOptions { ExpertMode = true, AcknowledgeAntiCheat = true }), b => b.ReasonKey == "block.antiCheat");
         Assert.Contains(fx.Engine.Preflight(T("power.gamingPlan"), Facts(f => f.Set("cpu.x3dMultiCcd", true)), none, opts), b => b.ReasonKey == "block.x3dBalanced");
-        Assert.Contains(fx.Engine.Preflight(T("power.coreParkingOff"), Facts(f => f.Set("cpu.x3dMultiCcd", true)), none, opts), b => b.ReasonKey == "block.x3dParking");
-        Assert.Contains(fx.Engine.Preflight(T("network.teredoOff"), Facts(f => f.Set("xbox.used", true)), none, opts), b => b.ReasonKey == "block.xboxTeredo");
-        Assert.Contains(fx.Engine.Preflight(T("latency.disableDynamicTick"), Facts(), none, new ApplyOptions()), b => b.ReasonKey == "block.expertMode");
+        Assert.Contains(fx.Engine.Preflight(T("leftover.usePlatformClock"), Facts(), none, new ApplyOptions()), b => b.ReasonKey == "block.expertMode");
         Assert.Contains(fx.Engine.Preflight(T("gpu.hags"), Facts(f => f.Set("elevated", false)), none, opts), b => b.ReasonKey == "block.notElevated");
         Assert.Contains(fx.Engine.Preflight(T("power.gamingPlan"), Facts(), new HashSet<string> { "power.ultimatePlan" }, opts), b => b.ReasonKey == "block.conflict");
         Assert.Contains(fx.Engine.Preflight(T("power.hibernateOff"), Facts(f => f.Set("power.modernStandby", true).Set("system.laptop", true)), none, opts), b => b.ReasonKey == "block.modernStandbyHibernate");
@@ -264,9 +268,9 @@ public class EngineTests
     {
         using var fx = new EngineFixture("{AAAA}", "{BBBB}");
         var t = T("network.nagleOff");
-        Assert.Equal(4, fx.Engine.Expand(t).Count);
+        Assert.Equal(2, fx.Engine.Expand(t).Count);
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
-        Assert.Equal("1", Reg(fx, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{BBBB}", "TCPNoDelay").Data);
+        Assert.Equal("1", Reg(fx, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{BBBB}", "TcpAckFrequency").Data);
     }
 
     [Fact]
@@ -275,17 +279,17 @@ public class EngineTests
         // Applied with Ethernet and Wi-Fi up, undone with only Wi-Fi up: Ethernet values must still be restored.
         using var fx = new EngineFixture("{AAAA}", "{BBBB}");
         const string eth = @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{AAAA}";
-        RegistryValue.Write(fx.Registry, Hive.Machine, eth, "TCPNoDelay", "dword", "0");
+        RegistryValue.Write(fx.Registry, Hive.Machine, eth, "TcpAckFrequency", "dword", "2");
         var t = T("network.nagleOff");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
-        Assert.Equal("1", Reg(fx, Hive.Machine, eth, "TCPNoDelay").Data);
+        Assert.Equal("1", Reg(fx, Hive.Machine, eth, "TcpAckFrequency").Data);
 
         var wifiOnly = new TweakEngine(WithInterfaces(fx.Context, "{BBBB}"), fx.Store, fx.RestorePoints, "test", 26300);
         Assert.Equal(TweakState.Applied, wifiOnly.DetectState(t, Facts())); // not "reset by Windows"
         var r = wifiOnly.Revert(t);
         Assert.True(r.Success);
-        Assert.Equal("0", Reg(fx, Hive.Machine, eth, "TCPNoDelay").Data);
-        Assert.False(Reg(fx, Hive.Machine, eth, "TcpAckFrequency").Existed);
+        Assert.Equal("2", Reg(fx, Hive.Machine, eth, "TcpAckFrequency").Data);
+        Assert.False(Reg(fx, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{BBBB}", "TcpAckFrequency").Existed);
         Assert.Null(fx.Store.Get(t.Id));
     }
 
@@ -380,15 +384,16 @@ public class EngineTests
     {
         using var fx = new EngineFixture();
         const string path = @"SYSTEM\CurrentControlSet\Control\FileSystem";
-        RegistryValue.Write(fx.Registry, Hive.Machine, path, "NtfsDisable8dot3NameCreation", "dword", "2");
-        var t = T("storage.8dot3Off");
+        // 0x80000002: system managed, last access updates on (the Windows default on small volumes).
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "NtfsDisableLastAccessUpdate", "dword", "2147483650");
+        var t = T("storage.lastAccessOff");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
-        RegistryValue.Write(fx.Registry, Hive.Machine, path, "NtfsDisable8dot3NameCreation", "dword", "0");
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "NtfsDisableLastAccessUpdate", "dword", "0");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert); // re-apply after drift
 
-        Assert.Equal("2", fx.Store.Get(t.Id)!.Entries.Single().Original.Data);
+        Assert.Equal("2147483650", fx.Store.Get(t.Id)!.Entries.Single().Original.Data);
         fx.Engine.Revert(t);
-        Assert.Equal("2", Reg(fx, Hive.Machine, path, "NtfsDisable8dot3NameCreation").Data);
+        Assert.Equal("2147483650", Reg(fx, Hive.Machine, path, "NtfsDisableLastAccessUpdate").Data);
     }
 
     [Fact]
@@ -409,7 +414,7 @@ public class EngineTests
     [Fact]
     public void ImpactOverrideForFrameGeneration()
     {
-        Assert.Equal(1, TweakEngine.ImpactFor(T("gpu.hags"), Facts()).Impact);
+        Assert.Equal(0, TweakEngine.ImpactFor(T("gpu.hags"), Facts()).Impact);
         var (impact, effects, _) = TweakEngine.ImpactFor(T("gpu.hags"), Facts(f => f.Set("gpu.supportsFrameGeneration", true)));
         Assert.Equal(3, impact);
         Assert.Contains("prerequisite", effects);

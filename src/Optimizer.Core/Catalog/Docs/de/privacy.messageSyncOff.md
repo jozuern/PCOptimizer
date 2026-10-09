@@ -4,7 +4,7 @@
 Verhindert, dass Textnachrichten auf diesem Gerät in der Cloud gesichert werden.
 
 ## So funktioniert es
-Die Richtlinie „Cloudsynchronisierung des Nachrichtendiensts zulassen“ wird abgeschaltet [1].
+Die Richtlinie „Synchronisierung von Nachrichtendienstcloud zulassen“ wird abgeschaltet [1].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.

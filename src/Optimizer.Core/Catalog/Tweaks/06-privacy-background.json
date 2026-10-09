@@ -12,6 +12,7 @@
         ]
       },
       "risk": "moderate",
+      "restart": true,
       "actions": [
         {
           "type": "registry",
@@ -29,6 +30,11 @@
         {
           "type": "scheduledTask",
           "path": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",
+          "enabled": false
+        },
+        {
+          "type": "scheduledTask",
+          "path": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser Exp",
           "enabled": false
         },
         {
@@ -66,7 +72,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization",
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system#allowtelemetry",
+        "https://learn.microsoft.com/en-us/windows-insider/data-settings"
       ]
     },
     {
@@ -74,7 +81,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -108,7 +115,7 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy",
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://support.microsoft.com/en-us/windows/windows-activity-history-and-your-privacy-2b279964-44ec-8c2f-e0c2-6779b07d2cbd"
       ]
     },
     {
@@ -116,12 +123,26 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
       },
       "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "os.edition",
+          "in": [
+            "Enterprise",
+            "EnterpriseS",
+            "EnterpriseN",
+            "Education",
+            "EducationN",
+            "IoTEnterprise",
+            "IoTEnterpriseS"
+          ]
+        }
+      },
       "actions": [
         {
           "type": "registry",
@@ -134,7 +155,7 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
       ]
     },
     {
@@ -142,7 +163,7 @@
       "category": "Privacy",
       "impact": {
         "gaming": 0,
-        "basis": "measured",
+        "basis": "situational",
         "effect": [
           "none"
         ]
@@ -159,33 +180,8 @@
         }
       ],
       "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
-      ]
-    },
-    {
-      "id": "privacy.wpbtOff",
-      "category": "Privacy",
-      "impact": {
-        "gaming": 0,
-        "basis": "measured",
-        "effect": [
-          "none"
-        ]
-      },
-      "risk": "moderate",
-      "restart": true,
-      "actions": [
-        {
-          "type": "registry",
-          "hive": "machine",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
-          "name": "DisableWpbtExecution",
-          "kind": "dword",
-          "value": 1
-        }
-      ],
-      "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://support.microsoft.com/en-us/windows/windows-location-service-and-privacy-3a8eee0a-5b0b-dc07-eede-2a5ca1c49088",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
       ]
     },
     {
@@ -199,19 +195,19 @@
         ]
       },
       "risk": "moderate",
-      "scope": "user",
       "actions": [
         {
           "type": "registry",
-          "hive": "user",
-          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications",
-          "name": "GlobalUserDisabled",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsRunInBackground",
           "kind": "dword",
-          "value": 1
+          "value": 2
         }
       ],
       "sources": [
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://support.microsoft.com/en-us/windows/windows-background-apps-and-your-privacy-83f2de44-d2d9-2b29-4649-2afe0913360a",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
       ]
     },
     {
@@ -231,14 +227,6 @@
           "hive": "machine",
           "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
           "name": "DisableAIDataAnalysis",
-          "kind": "dword",
-          "value": 1
-        },
-        {
-          "type": "registry",
-          "hive": "user",
-          "path": "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
-          "name": "TurnOffWindowsCopilot",
           "kind": "dword",
           "value": 1
         }

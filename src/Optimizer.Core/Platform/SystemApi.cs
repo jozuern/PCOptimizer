@@ -65,7 +65,8 @@ public sealed class SystemServiceManager : IServiceManager
                 if (type == 2)
                 {
                     var info = new NativeWrite.SERVICE_DELAYED_AUTO_START_INFO { fDelayedAutostart = start == ServiceStart.AutomaticDelayed ? 1 : 0 };
-                    NativeWrite.ChangeServiceConfig2(svc, NativeWrite.ServiceConfigDelayedAutoStartInfo, ref info);
+                    if (!NativeWrite.ChangeServiceConfig2(svc, NativeWrite.ServiceConfigDelayedAutoStartInfo, ref info))
+                        throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Cannot change the delayed start of {name}");
                 }
             }
             finally

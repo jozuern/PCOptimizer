@@ -10,7 +10,7 @@ NVIDIA stores driver settings in profiles: a global profile and one per game. Th
 A global frame rate limit far below the refresh rate, or the power mode forced to minimum, slows down every game. Without them, each game runs as the driver intends.
 
 ## Evidence
-A frame rate limit caps the frame rate by design, and the minimum power mode keeps the graphics card at lower clocks; removing them restores the normal behavior.
+A frame rate limit caps the frame rate by design, and the minimum power mode keeps the graphics card at lower clocks; removing them restores the normal behavior. The NVIDIA Control Panel lists Max Frame Rate as off by default [2], and the driver settings header defines the power mode default as optimal power [3].
 
 ## Trade-offs & risks
 If you set the limit on purpose, for example to reduce heat or noise, you lose that. Set it per game in that case.
@@ -20,3 +20,5 @@ When you deliberately use a global frame limit.
 
 ## Sources
 1. https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html
+2. https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm
+3. https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h

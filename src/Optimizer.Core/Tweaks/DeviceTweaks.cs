@@ -24,7 +24,9 @@ public static class DeviceTweaks
         foreach (var d in p.Extras?.MsiDevices.Where(d => d.SupportsMsi) ?? [])
         {
             list.Add(MsiMode(d));
-            if (p.Cpu is { } cpu && AffinityTarget(cpu) is { } lp) list.Add(InterruptAffinity(d, lp));
+            // Graphics cards only: network adapters spread interrupts over several processors with RSS (one MSI-X
+            // message per queue), and pinning them to one processor works against that.
+            if (d.Kind == "gpu" && p.Cpu is { } cpu && AffinityTarget(cpu) is { } lp) list.Add(InterruptAffinity(d, lp));
         }
         if (p.Gpus?.Any(g => g.Vendor == Vendor.Nvidia && g.Kind == GpuKind.Discrete) == true)
             foreach (var g in p.Software?.Games.Where(g => g.Executable is not null).DistinctBy(g => g.Executable, StringComparer.OrdinalIgnoreCase) ?? [])
@@ -46,6 +48,7 @@ public static class DeviceTweaks
         Impact = new ImpactInfo { Gaming = 0, Basis = "disputed", Effect = ["latency"] },
         Risk = Risk.Expert,
         BootCritical = true,
+        Preview = true,
         Restart = true,
         Verify = "afterRestart",
         Actions =
@@ -90,6 +93,7 @@ public static class DeviceTweaks
             Impact = new ImpactInfo { Gaming = 0, Basis = "disputed", Effect = ["latency"] },
             Risk = Risk.Expert,
             BootCritical = true,
+            Preview = true,
             Restart = true,
             Verify = "afterRestart",
             Actions =
@@ -114,8 +118,13 @@ public static class DeviceTweaks
         Category = "Graphics",
         Impact = new ImpactInfo { Gaming = 1, Basis = "situational", Effect = ["lows"] },
         Risk = Risk.Safe,
+        Preview = true,
         AppliesTo = new AppliesTo { GpuVendor = ["nvidia"] },
         Actions = [new NvidiaDrsAction { Profile = g.Executable!, SettingId = Nvapi.SettingPreferredPState, Value = Nvapi.PStatePreferMax }],
-        Sources = ["https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"],
+        Sources =
+        [
+            "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html",
+            "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(reference).htm",
+        ],
     };
 }

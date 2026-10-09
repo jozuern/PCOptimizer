@@ -17,6 +17,7 @@ public static class FactsBuilder
         var f = new Facts();
         f.Set("os.build", p.Os.Build);
         f.Set("os.insider", p.Os.FlightingActive);
+        f.Set("os.edition", p.Os.Edition.Length > 0 ? p.Os.Edition : null);
         f.Set("elevated", p.Elevation?.IsElevated);
         f.Set("device.managed", p.Managed?.IsManaged);
         f.Set("system.laptop", p.System is null ? null : p.IsLaptop);
@@ -44,7 +45,12 @@ public static class FactsBuilder
             f.Set("gpu.hagsEnabled", gpus.FirstOrDefault()?.HagsEnabled switch { TriState.Yes => true, TriState.No => false, _ => null });
         }
 
-        if (p.Firmware is { } fw) f.Set("cpu.mbec", fw.MbecAvailable);
+        // VbsStatus is -1 when Win32_DeviceGuard could not be read: both facts stay unknown then.
+        if (p.Firmware is { VbsStatus: >= 0 } fw)
+        {
+            f.Set("cpu.mbec", fw.MbecAvailable);
+            f.Set("vbs.running", fw.VbsRunning);
+        }
         if (p.Memory is { } mem) f.Set("memory.totalGb", Math.Round(mem.TotalBytes / (double)(1L << 30)));
         if (p.Power is { } pw)
         {
@@ -64,9 +70,7 @@ public static class FactsBuilder
             f.Set("anticheat.strict", strict.Count > 0);
             f.Set("anticheat.strictNames", string.Join(", ", strict.Select(a => a.DisplayName)));
             f.Set("anticheat.any", sw.AntiCheats.Count > 0);
-            f.Set("xbox.used", sw.Launchers.Contains("Xbox / Game Pass"));
         }
-        if (p.Extras is { } extras) f.Set("printers.count", extras.PrintersInstalled.Count);
         if (p.Network is { } net) f.Set("network.wifiOnly", net.Any(n => n.IsUp) && net.Where(n => n.IsUp).All(n => n.Type == "Wi-Fi"));
 
         foreach (var group in findings.GroupBy(x => x.Id))
@@ -94,9 +98,6 @@ public static class FactsBuilder
         {
             // User hive unavailable (no interactive session): the facts stay unknown.
         }
-
-        var overlay = RegistryValue.Read(r, Hive.Machine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode");
-        f.Set("leftover.overlayTestMode", overlay.Existed);
 
         var paging = RegistryValue.Read(r, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "PagingFiles");
         var (managed, disabled, maxMb) = PageFile.Parse(paging.Existed ? paging.Data : null);

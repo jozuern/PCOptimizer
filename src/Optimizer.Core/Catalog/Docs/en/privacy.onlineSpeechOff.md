@@ -1,7 +1,7 @@
 # Online speech recognition off
 
 ## Summary
-Turns off cloud-based speech recognition. Voice typing and voice access then work only with offline features.
+Turns off Microsoft's online speech recognition. Features that need it, such as dictation in some languages, stop working.
 
 ## How it works
 The policy "Allow users to enable online speech recognition services" is set to off [1].

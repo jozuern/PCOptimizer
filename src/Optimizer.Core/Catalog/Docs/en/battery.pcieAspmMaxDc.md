@@ -13,7 +13,7 @@ Idle links that cannot sleep keep drawing power. Laptops spend most of their bat
 Windows itself uses Maximum power savings on battery in the Balanced plan. The app only recommends this when your current value differs from that default.
 
 ## Trade-offs & risks
-Waking a link takes microseconds. Some older devices had stability problems with ASPM; if a device misbehaves on battery afterwards, use Undo.
+Waking a link adds a short delay. Some older devices had stability problems with ASPM; if a device misbehaves on battery afterwards, use Undo.
 
 ## When not to use it
 If a PCIe device (for example an external dock or a capture card) drops out on battery with this setting.

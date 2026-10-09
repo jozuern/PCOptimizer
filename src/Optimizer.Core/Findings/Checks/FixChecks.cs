@@ -17,7 +17,7 @@ public static class RuntimeFixes
         Id = $"fix.refreshRate.{d.GdiName.TrimStart('\\', '.')}",
         Docs = RefreshRateDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 5, Basis = "measured", Effect = ["fps", "latency"] },
+        Impact = new ImpactInfo { Gaming = 5, Basis = "situational", Effect = ["fps", "latency"] },
         Risk = Risk.Safe,
         Hidden = true,
         Actions =
@@ -40,12 +40,17 @@ public static class RuntimeFixes
         Id = "fix.nvidiaGlobal",
         Docs = NvidiaGlobalDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 4, Basis = "measured", Effect = ["fps", "latency"] },
+        Impact = new ImpactInfo { Gaming = 4, Basis = "situational", Effect = ["fps", "latency"] },
         Risk = Risk.Safe,
+        Preview = true,
         Hidden = true,
         Actions = settings.Select(id => (TweakAction)new NvidiaDrsAction { Profile = "global", SettingId = id, Value = null }).ToList(),
         Fixes = [NvidiaGlobalCheck.Id],
-        Sources = ["https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html"],
+        Sources =
+        [
+            "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html",
+            "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h",
+        ],
     };
 
     /// <summary>Power mode "Best performance" while plugged in.</summary>
@@ -54,7 +59,7 @@ public static class RuntimeFixes
         Id = "fix.powerMode",
         Docs = PowerModeDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 3, Basis = "measured", Effect = ["fps"] },
+        Impact = new ImpactInfo { Gaming = 3, Basis = "situational", Effect = ["fps"] },
         Risk = Risk.Safe,
         Hidden = true,
         Actions = [new PowerModeAction { Overlay = FirmwareExtras.OverlayBestPerformance }],
@@ -70,8 +75,9 @@ public static class RuntimeFixes
         Id = $"fix.ethernetAuto.{nic.Id.Trim('{', '}').ToLowerInvariant()}",
         Docs = EthernetAutoDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 1, Basis = "measured", Effect = ["latency"] },
+        Impact = new ImpactInfo { Gaming = 1, Basis = "situational", Effect = ["none"] },
         Risk = Risk.Safe,
+        Preview = true,
         Hidden = true,
         Actions = [new NicPropertyAction { Properties = new(StringComparer.OrdinalIgnoreCase) { ["*SpeedDuplex"] = "0" }, InterfaceGuid = nic.Id, Media = "ethernet" }],
         Fixes = [EthernetSpeedCheck.Id],
@@ -83,7 +89,7 @@ public static class RuntimeFixes
         Id = "fix.gpuPreference",
         Docs = GpuPreferenceDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 5, Basis = "measured", Effect = ["fps"] },
+        Impact = new ImpactInfo { Gaming = 5, Basis = "situational", Effect = ["fps"] },
         Risk = Risk.Safe,
         Scope = TweakScope.User,
         Hidden = true,
@@ -153,7 +159,7 @@ public sealed class GpuPreferenceCheck(IRegistryRoots? registry) : IFindingCheck
     }
 }
 
-/// <summary>F21: values left behind by other tweak tools that are ineffective or harmful on 24H2+.</summary>
+/// <summary>F21: boot settings left behind by other tweak tools that cost performance on current hardware.</summary>
 public sealed class LeftoverCheck : IFindingCheck
 {
     public const string Id = "F21.leftovers";
@@ -165,8 +171,6 @@ public sealed class LeftoverCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var found = new List<Fact>();
-        var overlay = Reg.HklmValue(@"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode");
-        if (overlay is not null) found.Add(new Fact("fact.leftoverValue", $@"HKLM\SOFTWARE\Microsoft\Windows\Dwm\OverlayTestMode = {overlay}"));
         var bcd = SafeBcd();
         if (bcd?.Contains("useplatformclock") == true) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
 
