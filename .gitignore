@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 
 # Publish output
 artifacts/
+
+# Local audit notes
+.audit/
