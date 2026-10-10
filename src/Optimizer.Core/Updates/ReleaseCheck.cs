@@ -7,8 +7,8 @@ namespace Optimizer.Core.Updates;
 
 public enum ReleaseCheckStatus { UpToDate, NewerAvailable, NoRelease, Error }
 
-/// <summary>Download links of a release's exe and its SHA-256 file (only links into this repository's releases).</summary>
-public sealed record ReleaseAssets(string ExeUrl, string ChecksumUrl);
+/// <summary>Download links of a release's exe, its SHA-256 file and its signature (only links into this repository's releases).</summary>
+public sealed record ReleaseAssets(string ExeUrl, string ChecksumUrl, string SignatureUrl);
 
 public sealed record ReleaseCheckResult(ReleaseCheckStatus Status, Version? Latest = null, ReleaseAssets? Assets = null);
 
@@ -24,6 +24,7 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
     public const string DownloadUrlPrefix = "https://github.com/" + Repository + "/releases/download/";
     public const string ExeAsset = "PCOptimizer.exe";
     public const string ChecksumAsset = "PCOptimizer.exe.sha256";
+    public const string SignatureAsset = "PCOptimizer.exe.sig";
 
     private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { BaseAddress = new Uri("https://api.github.com/"), Timeout = TimeSpan.FromSeconds(15) };
 
@@ -70,7 +71,7 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
         }
     }
 
-    /// <summary>The exe and its checksum file, only when both download links point into this repository's releases.</summary>
+    /// <summary>The exe, its checksum and its signature, only when all download links point into this repository's releases.</summary>
     private static ReleaseAssets? Assets(JsonElement root)
     {
         if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return null;
@@ -78,7 +79,7 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
             .Where(a => a.ValueKind == JsonValueKind.Object && a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == name)
             .Select(a => a.TryGetProperty("browser_download_url", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null)
             .FirstOrDefault(IsReleaseDownload);
-        return Url(ExeAsset) is { } exe && Url(ChecksumAsset) is { } sha ? new ReleaseAssets(exe, sha) : null;
+        return Url(ExeAsset) is { } exe && Url(ChecksumAsset) is { } sha && Url(SignatureAsset) is { } sig ? new ReleaseAssets(exe, sha, sig) : null;
     }
 
     /// <summary>

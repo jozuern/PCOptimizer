@@ -23,7 +23,7 @@ Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer
 - **Debloat, cleanup, startup, services:** a reviewed list of 34 inbox apps (with an honest note when the Store no longer offers an app), 11 cleanup categories that never follow links, an Autoruns-style startup list with signature checks, service start types with explanations.
 - **Tools and health:** storage analyzer, Windows features, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
 
-The app uses only settings that Microsoft or the hardware vendor documents (or, where noted on the explanation page, the value behind a documented Windows option). It never recommends turning off security features that anti-cheats require, and keeps changes that weaken security or touch the boot configuration in Expert mode.
+The app uses settings that Microsoft or the hardware vendor documents. A few harmless, fully reversible tweaks use a value Microsoft does not document (the value behind a Windows Settings switch, or a widely used one such as the classic right-click menu): they carry an "Undocumented value" badge, their explanation page says so, and they stay previews until a test has shown that the value works. It never recommends turning off security features that anti-cheats require, and keeps changes that weaken security or touch the boot configuration in Expert mode.
 
 <p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page with impact, risk and badges, and the explanation of the selected tweak"></p>
 

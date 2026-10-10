@@ -192,6 +192,9 @@ public sealed record FirmwareInfo(
     PartitionStyle SystemDiskPartitionStyle)
 {
     public bool VbsRunning => VbsStatus == 2;
+
+    /// <summary>TPM maker id (Win32_Tpm.ManufacturerIdTxt, "AMD" for fTPM); null when not elevated or unknown.</summary>
+    public string? TpmManufacturer { get; init; }
 }
 
 // ---------------- Power ----------------

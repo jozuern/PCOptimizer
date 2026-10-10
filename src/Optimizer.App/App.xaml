@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:s="clr-namespace:Optimizer.App.Services"
              xmlns:v="clr-namespace:Optimizer.App.Views"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
@@ -15,14 +16,13 @@
             <v:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <v:BoolToVisibilityConverter x:Key="InverseBoolToVisibility" Invert="True" />
             <v:NullToVisibilityConverter x:Key="NullToVisibility" />
-            <v:NullToVisibilityConverter x:Key="InverseNullToVisibility" Invert="True" />
             <v:InverseBoolConverter x:Key="InverseBool" />
             <v:ResourceKeyToBrushConverter x:Key="KeyToBrush" />
             <v:StatusToBrushConverter x:Key="StatusToBrush" />
             <v:StatusToSymbolConverter x:Key="StatusToSymbol" />
-            <v:EqualsConverter x:Key="EqualsTo" />
             <v:CountToVisibilityConverter x:Key="CountToVisibility" />
             <v:NullToBoolConverter x:Key="NullToBool" />
+            <v:AllTrueConverter x:Key="AllTrue" />
             <v:CountToVisibilityConverter x:Key="EmptyToVisibility" Invert="True" />
 
             <!--
@@ -83,11 +83,26 @@
                 </ScrollViewer>
             </ControlTemplate>
 
-            <!-- Status icon of a finding or tweak row -->
-            <DataTemplate x:Key="StatusIcon">
-                <ui:SymbolIcon Symbol="{Binding StatusSymbol}" FontSize="20" Filled="True"
-                               Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
-            </DataTemplate>
+            <!--
+                Long card lists: only the cards in view are built (virtualizing panel with its own scroll viewer, pixel
+                scrolling so it moves like the rest of the app). Rebuilding a list of 75 cards then costs a few cards.
+            -->
+            <Style x:Key="VirtualCardList" TargetType="ItemsControl">
+                <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+                <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+                <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template" Value="{StaticResource VirtualList}" />
+            </Style>
+
+
 
             <!-- Finding / advisor row: status icon, title, summary, impact line; Fix button when there is one -->
             <DataTemplate x:Key="FindingRow">
@@ -137,7 +152,14 @@
                                           Margin="0,4,0,0" Visibility="{Binding AgainstNote, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </ui:CardControl.Header>
-                    <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" />
+                    <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" >
+                        <ui:ToggleSwitch.IsEnabled>
+                            <MultiBinding Converter="{StaticResource AllTrue}">
+                                <Binding Path="CanToggle" />
+                                <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
+                            </MultiBinding>
+                        </ui:ToggleSwitch.IsEnabled>
+                    </ui:ToggleSwitch>
                 </ui:CardControl>
             </DataTemplate>
         </ResourceDictionary>

@@ -11,8 +11,26 @@ public sealed record StoredValue(bool Existed, string? Kind = null, string? Data
 
     public string Display => !Existed ? "(not set)" : Data ?? "";
 
+    /// <summary>Same presence and data, and the same registry type when both are registry values (a REG_SZ "1" is not a DWORD 1).</summary>
     public bool SameAs(StoredValue other) =>
-        Existed == other.Existed && (!Existed || string.Equals(Data, other.Data, StringComparison.Ordinal));
+        Existed == other.Existed && (!Existed || (string.Equals(Data, other.Data, StringComparison.Ordinal) &&
+                                                  (!IsRegistryKind(Kind) || !IsRegistryKind(other.Kind) || string.Equals(Kind, other.Kind, StringComparison.Ordinal))));
+
+    // Other actions use the kind for their own purposes (a label, or the raw bytes of a startup entry).
+    private static bool IsRegistryKind(string? kind) => kind is "dword" or "qword" or "string" or "expandString" or "multiString" or "binary" or "none";
+}
+
+/// <summary>What an undo did with one target.</summary>
+public enum RestoreOutcome
+{
+    /// <summary>The original is back.</summary>
+    Restored,
+
+    /// <summary>Nothing restored: the value is no longer the one this app wrote (Windows or the user changed it).</summary>
+    ChangedSince,
+
+    /// <summary>The parts still as applied were restored; parts changed since (one side of a power setting) were left.</summary>
+    PartlyRestored,
 }
 
 /// <summary>One exact change for the confirmation dialog and the generated "What changes" section.</summary>
@@ -81,6 +99,18 @@ public abstract class TweakAction
     /// Actions whose target is shared or scheme-specific override this.
     /// </summary>
     public virtual bool IsStillApplied(ActionContext c, StoredValue applied) => Read(c) is not { } current || current.SameAs(applied);
+
+    /// <summary>
+    /// Undo of one target: restores the original unless the value is no longer what this app wrote. Null
+    /// <paramref name="applied"/> restores unconditionally. Actions made of several parts (mains and battery, several
+    /// adapter keywords) override this to compare and restore each part on its own.
+    /// </summary>
+    public virtual RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
+    {
+        if (applied is not null && !IsStillApplied(c, applied)) return RestoreOutcome.ChangedSince;
+        Restore(c, original);
+        return RestoreOutcome.Restored;
+    }
 
     public ChangeLine Change(ActionContext c)
     {

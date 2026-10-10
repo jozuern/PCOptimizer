@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Optimizer.Core.Actions;
 using Optimizer.Core.Apps;
 using Optimizer.Core.Catalog;
@@ -17,24 +16,11 @@ namespace Optimizer.Core.Tests;
 
 public class CleanupStorageTests : IDisposable
 {
-    // Outside AppData on purpose: the storage analyzer never offers anything under AppData (program state).
-    private readonly string _root = Path.Combine(Path.GetPathRoot(Path.GetTempPath())!, "pco-test-" + Guid.NewGuid().ToString("N"));
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "pco-test-" + Guid.NewGuid().ToString("N"));
 
     public CleanupStorageTests() => Directory.CreateDirectory(_root);
 
-    public void Dispose()
-    {
-        try
-        {
-            // Remove the junction first so the delete never walks into its target.
-            foreach (var d in Directory.GetDirectories(_root, "*", SearchOption.AllDirectories).Where(d => (System.IO.File.GetAttributes(d) & FileAttributes.ReparsePoint) != 0))
-                Directory.Delete(d);
-            Directory.Delete(_root, true);
-        }
-        catch (IOException)
-        {
-        }
-    }
+    public void Dispose() => TestFolders.Delete(_root);
 
     private string File(string relative, int bytes, DateTime? written = null)
     {
@@ -61,9 +47,7 @@ public class CleanupStorageTests : IDisposable
         var ini = File(@"temp\desktop.ini", 5, DateTime.UtcNow.AddDays(-3));
         // Junction inside the cleaned folder pointing outside (no admin rights needed for junctions).
         var junction = Path.Combine(temp, "link");
-        var mk = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{junction}\" \"{outside}\"") { CreateNoWindow = true, UseShellExecute = false })!;
-        mk.WaitForExit();
-        Assert.True(Directory.Exists(junction));
+        Junction(junction, outside);
 
         var category = new CleanupCategory("cleanup.test", [temp], MinAge: CleanupEngine.TempMinAge);
         var scan = CleanupEngine.Scan(category);
@@ -78,12 +62,7 @@ public class CleanupStorageTests : IDisposable
         Assert.True(Directory.Exists(temp));             // root kept
     }
 
-    private static void Junction(string link, string target)
-    {
-        var mk = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{target}\"") { CreateNoWindow = true, UseShellExecute = false })!;
-        mk.WaitForExit();
-        Assert.True(Directory.Exists(link));
-    }
+    private static void Junction(string link, string target) => TestFolders.Junction(link, target);
 
     [Fact]
     public void CleanupSkipsARootThatIsOrLiesUnderAJunction()
@@ -133,6 +112,11 @@ public class CleanupStorageTests : IDisposable
         Assert.Throws<IOException>(() => Optimizer.Core.Platform.SafeDelete.DeleteFile(Path.Combine(sub, "old.tmp")));
         Assert.True(System.IO.File.Exists(victim));
         Assert.False(Optimizer.Core.Platform.SafeDelete.HasNoLinks(Path.Combine(sub, "old.tmp")));
+        Assert.False(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(Path.Combine(sub, "old.tmp")));
+        Assert.True(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(victim));
+        // The storage analyzer refuses to recycle it as well.
+        Assert.Equal([Path.Combine(sub, "old.tmp")], StorageAnalyzer.Recycle([Path.Combine(sub, "old.tmp")], []));
+        Assert.True(System.IO.File.Exists(victim));
 
         // A normal read-only file is deleted.
         var ro = File(@"temp\readonly.tmp", 10);
@@ -148,7 +132,8 @@ public class CleanupStorageTests : IDisposable
         var b = File(@"backup\a-copy.bin", 2 << 20);
         System.IO.File.WriteAllBytes(Path.Combine(_root, @"docs\different.bin"), [.. new byte[(2 << 20) - 1], 1]);
         File(@"docs\small.txt", 100);
-        var report = await StorageAnalyzer.ScanAsync(_root, StorageAnalyzer.ProtectedRoots(null));
+        // The test folder lies in %TEMP% under AppData, which the analyzer protects; that rule is checked below.
+        var report = await StorageAnalyzer.ScanAsync(_root, StorageAnalyzer.ProtectedRoots(null), protectAppData: false);
         Assert.Equal(4, report.ScannedFiles);
         var dup = Assert.Single(report.Duplicates);
         Assert.Equal(new[] { b, a }.Order(StringComparer.OrdinalIgnoreCase), dup.Paths);
@@ -156,8 +141,9 @@ public class CleanupStorageTests : IDisposable
         Assert.Contains(report.LargestFolders, f => f.Path.EndsWith("docs", StringComparison.OrdinalIgnoreCase));
         Assert.True(StorageAnalyzer.IsProtected(@"C:\Windows\System32\x.dll", StorageAnalyzer.ProtectedRoots(null)));
         Assert.True(StorageAnalyzer.IsProtected(@"C:\Users\x\AppData\Local\y.db", StorageAnalyzer.ProtectedRoots(null)));
-        Assert.False(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null)));
-        Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots([Path.Combine(_root, "docs")]))); // game library
+        Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null)));
+        Assert.False(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null), appData: false));
+        Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots([Path.Combine(_root, "docs")]), appData: false)); // game library
     }
 
     [Fact]

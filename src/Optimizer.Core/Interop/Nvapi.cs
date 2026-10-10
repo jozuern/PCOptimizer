@@ -25,6 +25,8 @@ public static class Nvapi
     private const uint IdDrsFindProfileByName = 0x7e4a9a0b;
     private const uint IdDrsCreateProfile = 0xcc176068;
     private const uint IdDrsCreateApplication = 0x4347a9de;
+    private const uint IdDrsDeleteProfile = 0x17093206;
+    private const uint IdDrsGetProfileInfo = 0x61cd6fd6;
     private const uint IdSysGetDriverAndBranchVersion = 0x2926aaad;
     private const uint IdDispGetDisplayIdByDisplayName = 0xae457190;
     private const uint IdDispGetVrrInfo = 0xdf8fda57;
@@ -81,6 +83,8 @@ public static class Nvapi
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int FindProfileFn(IntPtr session, byte[] name, out IntPtr profile);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int CreateProfileFn(IntPtr session, byte[] profileInfo, out IntPtr profile);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int CreateAppFn(IntPtr session, IntPtr profile, byte[] app);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int ProfileInfoFn(IntPtr session, IntPtr profile, byte[] info);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int DeleteProfileFn(IntPtr session, IntPtr profile);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int DriverVersionFn(out uint version, byte[] branch);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int DisplayIdFn([MarshalAs(UnmanagedType.LPStr)] string name, out uint displayId);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int VrrInfoFn(uint displayId, byte[] info);
@@ -159,7 +163,32 @@ public static class Nvapi
         {
             if (!Available) throw new InvalidOperationException("NVIDIA driver (NVAPI) not available");
             Check(Fn<OutHandle>(IdDrsCreateSession)(out _session), "DRS_CreateSession");
-            Check(Fn<Handle1>(IdDrsLoadSettings)(_session), "DRS_LoadSettings");
+            var loaded = Fn<Handle1>(IdDrsLoadSettings)(_session);
+            if (loaded != Ok)
+            {
+                // The constructor throws, so Dispose never runs: end the session here.
+                Fn<Handle1>(IdDrsDestroySession)(_session);
+                Check(loaded, "DRS_LoadSettings");
+            }
+        }
+
+        /// <summary>The name of the profile this app creates for a game the driver has no profile for.</summary>
+        public static string OwnProfileName(string exePath) => $"PCOptimizer: {Path.GetFileName(exePath).ToLowerInvariant()}";
+
+        /// <summary>
+        /// Deletes the profile this app created for a game ("PCOptimizer: game.exe") once it holds no settings, so an
+        /// undo leaves nothing behind. Profiles of the driver or of other tools are never deleted.
+        /// </summary>
+        public void DeleteOwnProfileIfEmpty(string exePath)
+        {
+            if (Fn<FindProfileFn>(IdDrsFindProfileByName)(_session, Unicode(OwnProfileName(exePath)), out var profile) != Ok || profile == IntPtr.Zero) return;
+            var info = new byte[ProfileSize];
+            BitConverter.GetBytes(ProfileVersion).CopyTo(info, 0);
+            if (Fn<ProfileInfoFn>(IdDrsGetProfileInfo)(_session, profile, info) != Ok) return;
+            // NVDRS_PROFILE_V1: version, profileName (4096 bytes), gpuSupport, isPredefined, numOfApps, numOfSettings.
+            var predefined = BitConverter.ToUInt32(info, 4104);
+            var settings = BitConverter.ToUInt32(info, 4112);
+            if (predefined == 0 && settings == 0) Check(Fn<DeleteProfileFn>(IdDrsDeleteProfile)(_session, profile), "DRS_DeleteProfile");
         }
 
         /// <summary>Base profile = the global settings shown as "Global Settings" in the NVIDIA Control Panel.</summary>
@@ -179,7 +208,7 @@ public static class Nvapi
             if (status == Ok && profile != IntPtr.Zero) return profile;
             if (!create) return IntPtr.Zero;
 
-            var name = $"PCOptimizer: {exe}";
+            var name = OwnProfileName(exe);
             if (Fn<FindProfileFn>(IdDrsFindProfileByName)(_session, Unicode(name), out profile) == Ok && profile != IntPtr.Zero) return profile;
             var info = new byte[ProfileSize];
             BitConverter.GetBytes(ProfileVersion).CopyTo(info, 0);

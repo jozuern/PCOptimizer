@@ -109,11 +109,29 @@ public class RamTests
     public void UnknownPartNumbers(string part) => Assert.Null(RamSpeed.DecodeRated(part, CatalogData.Current));
 
     [Theory]
-    [InlineData(1600, "DDR4", 3200)]
-    [InlineData(3200, "DDR4", 3200)]
-    [InlineData(2400, "DDR5", 4800)]
-    [InlineData(6000, "DDR5", 6000)]
-    public void NormalizesMhzReports(int value, string type, int expected) => Assert.Equal(expected, RamSpeed.NormalizeConfigured(value, type));
+    [InlineData(1600, "DDR4", 3200, 3200)]
+    [InlineData(1600, "DDR4", 1600, 3200)]   // firmware that reports MHz reports the module speed in MHz too
+    [InlineData(3200, "DDR4", 3200, 3200)]
+    [InlineData(1866, "DDR4", 2666, 1866)]   // four dual-rank DDR4 modules on Ryzen 1000
+    [InlineData(2400, "DDR5", 4800, 4800)]   // MHz only when the module speed is MHz as well
+    [InlineData(2400, "DDR5", 2400, 4800)]
+    [InlineData(3600, "DDR5", 4800, 3600)]   // four DDR5 modules on AM5 (AMD's specification)
+    [InlineData(6000, "DDR5", 4800, 6000)]
+    [InlineData(2400, "DDR5", null, 4800)]   // module speed unknown: no real DDR5 configuration runs that low
+    [InlineData(3600, "DDR5", null, null)]   // could be 3600 MT/s or 7200 MT/s reported as MHz
+    [InlineData(6000, "DDR5", null, 6000)]
+    public void NormalizesMhzReports(int value, string type, int? moduleSpeed, int? expected) =>
+        Assert.Equal(expected, RamSpeed.NormalizeConfigured(value, type, moduleSpeed));
+
+    [Fact]
+    public void IntelControllerLocatorsCountAsTwoChannels()
+    {
+        // 12th to 14th gen Intel: one channel A per memory controller.
+        var dual = new DualChannelCheck().Evaluate(Profile(Module("Controller0-ChannelA-DIMM0", "BANK 0", 3200), Module("Controller1-ChannelA-DIMM0", "BANK 0", 3200)), CatalogData.Current).Single();
+        Assert.Equal(FindingStatus.Ok, dual.Status);
+        var same = new DualChannelCheck().Evaluate(Profile(Module("Controller0-ChannelA-DIMM0", "BANK 0", 3200), Module("Controller0-ChannelA-DIMM1", "BANK 1", 3200)), CatalogData.Current).Single();
+        Assert.Equal("sameChannel", same.Variant);
+    }
 
     private static MemoryModule Module(string locator, string bank, int configured, string part = "CMW32GX4M2E3200C16") =>
         new(16L << 30, 3200, configured, part, "Corsair", locator, bank, 26, 8);
@@ -189,6 +207,18 @@ public class DisplayGpuTests
         var results = new RefreshRateCheck().Evaluate(p, CatalogData.Current).ToList();
         Assert.Equal(FindingStatus.Problem, results.Single(f => f.Subject == "AOC 27G1G4").Status);
         Assert.Equal(FindingStatus.Ok, results.Single(f => f.Subject == "DELL P2417H").Status);
+
+        // A laptop's own panel at 60 Hz on battery is information (Windows lowers the rate to save power), with no fix.
+        var laptop = new HardwareProfile
+        {
+            Os = TestData.Os(),
+            Displays = [TestData.Display("Built-in display", 60, 165) with { IsInternal = true }],
+            Power = new PowerInfo(Guid.Empty, "Balanced", PowerPersonality.Balanced, 100, 5, 2, 0, false, false, true, 55),
+        };
+        var battery = new RefreshRateCheck().Evaluate(laptop, CatalogData.Current).Single();
+        Assert.Equal((FindingStatus.Info, "battery", 0, null), (battery.Status, battery.Variant, battery.Impact, battery.Fix));
+        var pluggedIn = new RefreshRateCheck().Evaluate(laptop with { Power = laptop.Power with { OnAc = true } }, CatalogData.Current).Single();
+        Assert.Equal(FindingStatus.Problem, pluggedIn.Status);
     }
 
     [Fact]
@@ -223,7 +253,7 @@ public class DisplayGpuTests
     [Fact]
     public void Rtx5080WithSmallBarIsProblem()
     {
-        var p = new HardwareProfile { Os = TestData.Os(), Gpus = [TestData.Gpu("NVIDIA GeForce RTX 5080", Vendor.Nvidia, 256L << 20)], Firmware = TestData.Firmware() };
+        var p = new HardwareProfile { Os = TestData.Os(), Cpu = TestData.Cpu13700K(), Gpus = [TestData.Gpu("NVIDIA GeForce RTX 5080", Vendor.Nvidia, 256L << 20)], Firmware = TestData.Firmware() };
         Assert.Equal(FindingStatus.Problem, new RebarCheck().Evaluate(p, CatalogData.Current).Single().Status);
     }
 

@@ -10,8 +10,10 @@ public class EngineTests
 
     private static Facts Facts(Action<Facts>? extra = null)
     {
+        // The facts the catalog's safety guards read: unknown, they would block (fail closed) like a failed probe.
         var f = new Facts().Set("os.build", 26300).Set("elevated", true).Set("system.laptop", false)
-            .Set("gpu.hasDiscrete", true).Set("gpu.supportsHags", true).Set("memory.totalGb", 32.0).Set("storage.ssdOnly", true);
+            .Set("gpu.hasDiscrete", true).Set("gpu.supportsHags", true).Set("memory.totalGb", 32.0).Set("storage.ssdOnly", true)
+            .Set("power.modernStandby", false).Set("cpu.x3dMultiCcd", false).Set("os.insider", false);
         extra?.Invoke(f);
         return f;
     }
@@ -406,9 +408,11 @@ public class EngineTests
         using var fx = new EngineFixture();
         var t = T("explorer.classicContextMenu");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
-        Assert.NotNull(fx.Registry.Open(Hive.User, @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", false));
+        using (var created = fx.Registry.Open(Hive.User, @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", false))
+            Assert.NotNull(created);
         fx.Engine.Revert(t);
-        Assert.Null(fx.Registry.Open(Hive.User, @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}", false));
+        using var removed = fx.Registry.Open(Hive.User, @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}", false);
+        Assert.Null(removed);
     }
 
     [Fact]

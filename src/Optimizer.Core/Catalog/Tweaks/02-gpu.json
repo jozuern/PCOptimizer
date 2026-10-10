@@ -2,6 +2,8 @@
   "tweaks": [
     {
       "id": "gpu.hags",
+      "undocumented": true,
+      "preview": true,
       "category": "Graphics",
       "impact": {
         "gaming": 0,
@@ -101,6 +103,8 @@
     },
     {
       "id": "gpu.gameMode",
+      "undocumented": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds both values, so they are the ones Windows itself uses for Game Mode on" ],
       "category": "Graphics",
       "impact": {
         "gaming": 1,
@@ -143,6 +147,8 @@
     },
     {
       "id": "gpu.gameDvrOff",
+      "undocumented": true,
+      "preview": true,
       "category": "Graphics",
       "impact": {
         "gaming": 0,

@@ -23,6 +23,8 @@
     <EmbeddedResource Include="Catalog\Tweaks\*.json" LogicalName="Catalog.Tweaks.%(Filename)%(Extension)" />
     <!-- PresentMon 2.6.0 (MIT, Intel-signed), SHA-256 checked when extracted (Tools/PresentMon.cs). -->
     <EmbeddedResource Include="Tools\Vendor\PresentMon-2.6.0-x64.exe" LogicalName="Tools.PresentMon.exe" />
+    <!-- Public key that must have signed a release before self-update installs it (scripts/new-update-key.ps1). -->
+    <EmbeddedResource Include="Updates\update-key.pem" LogicalName="Updates.update-key.pem" Condition="Exists('Updates\update-key.pem')" />
   </ItemGroup>
 
   <ItemGroup>

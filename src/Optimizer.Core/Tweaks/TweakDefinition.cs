@@ -72,6 +72,19 @@ public sealed class TweakDefinition
     /// </summary>
     public bool Preview { get; init; }
 
+    /// <summary>
+    /// The value or interface the tweak uses is not documented by Microsoft or the vendor: the value behind a documented
+    /// Settings switch, or a value known from widely used tools. Allowed only for harmless, fully reversible changes; the
+    /// explanation page says so and the app shows a badge (CONTRIBUTING, "Undocumented values").
+    /// </summary>
+    public bool Undocumented { get; init; }
+
+    /// <summary>
+    /// For <see cref="Undocumented"/> tweaks: what proves that the value works (a VM test result that checked the effect,
+    /// or a source that shows it working). Without proof an undocumented tweak stays a <see cref="Preview"/>.
+    /// </summary>
+    public List<string> Proof { get; init; } = [];
+
     /// <summary>Internal tweaks are not listed (e.g. the restore point frequency the engine sets itself).</summary>
     public bool Hidden { get; init; }
 
@@ -81,6 +94,10 @@ public sealed class TweakDefinition
     public List<string> ConflictsWith { get; init; } = [];
     public List<Condition> BlockedWhen { get; init; } = [];
     public Condition? RecommendWhen { get; init; }
+
+    /// <summary>Every condition of this tweak: applies to, blocked when, recommended when and the impact overrides.</summary>
+    public IEnumerable<Condition> Conditions() =>
+        BlockedWhen.Concat(ImpactOverrides.Select(o => o.When)).Append(RecommendWhen).Append(AppliesTo.When).OfType<Condition>();
 
     /// <summary>Label key that explains why the tweak is recommended for this PC (shown next to "Recommended").</summary>
     public string? RecommendReasonKey { get; init; }

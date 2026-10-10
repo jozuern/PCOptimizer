@@ -10,7 +10,7 @@ Mit Power Throttling stuft Windows Hintergrundarbeit als EcoQoS ein und versucht
 Programme, die neben einem Spiel laufen, etwa Voice-Chat, Overlays oder Streaming-Software, werden sonst womöglich gebremst, wenn sie den Fokus verlieren.
 
 ## Belege
-Auf Desktops ohne Effizienzkerne ist der Effekt meist nicht messbar. Auf hybriden CPUs und Laptops behalten Hintergrund-Apps volle Geschwindigkeit.
+Eine Messung der Wirkung auf Spiele haben wir nicht gefunden. Auf Desktops ohne Effizienzkerne hat Windows wenig zu drosseln; auf hybriden CPUs und Laptops zeigt sich die Änderung daran, dass Hintergrund-Apps volle Geschwindigkeit behalten, nicht an mehr FPS im laufenden Spiel.
 
 ## Nachteile & Risiken
 Höherer Stromverbrauch, besonders im Akkubetrieb. Nach dem Anwenden bittet die App um einen Neustart.

@@ -20,4 +20,3 @@ Wenn du bei der Analyse von Abstürzen hilfst oder ein Entwickler um Berichte bi
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-errorreporting
-2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

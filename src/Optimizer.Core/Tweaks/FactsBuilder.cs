@@ -38,6 +38,8 @@ public static class FactsBuilder
             f.Set("gpu.discreteVendor", discrete.FirstOrDefault()?.Vendor.ToString().ToLowerInvariant());
             f.Set("gpu.hasNvidia", gpus.Any(g => g.Vendor == Vendor.Nvidia && g.Kind == GpuKind.Discrete));
             f.Set("gpu.hasAmd", gpus.Any(g => g.Vendor == Vendor.Amd && g.Kind == GpuKind.Discrete));
+            // appliesTo.gpuVendor "intel" reads this fact (Intel Arc); before, the name had no fact and never matched.
+            f.Set("gpu.hasIntel", gpus.Any(g => g.Vendor == Vendor.Intel && g.Kind == GpuKind.Discrete));
             // HAGS needs WDDM 2.7+ and a supporting GPU/driver; every current discrete GPU qualifies.
             f.Set("gpu.supportsHags", discrete.Count > 0);
             // DLSS Frame Generation (RTX 40/50) requires HAGS.

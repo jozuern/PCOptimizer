@@ -60,13 +60,6 @@ public sealed class StatusToSymbolConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
-/// <summary>Radio buttons for a string setting: IsChecked = (value == parameter).</summary>
-public sealed class EqualsConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => Equals(value?.ToString(), parameter?.ToString());
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => value is true ? parameter! : Binding.DoNothing;
-}
-
 /// <summary>Collection count -> visible when above zero (Invert: visible when empty).</summary>
 public sealed class CountToVisibilityConverter : IValueConverter
 {
@@ -83,4 +76,11 @@ public sealed class NullToBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value is not null && (value is not string s || s.Length > 0);
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>True when every bound value is true (a row's own "can toggle" and the app-wide "a change may start now").</summary>
+public sealed class AllTrueConverter : IMultiValueConverter
+{
+    public object Convert(object?[] values, Type targetType, object? parameter, CultureInfo culture) => values.All(v => v is true);
+    public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

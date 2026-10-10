@@ -1,6 +1,10 @@
-# Release: on a version tag (v1.2.3), build and test like CI, publish the single exe with its SHA-256 and create a
-# DRAFT GitHub release. Check the draft, then publish it by hand. The app's opt-in update check only sees published
-# releases. The tag must match <Version> in src/Optimizer.App/Optimizer.App.csproj.
+# Release: on a version tag (v1.2.3) of a commit on main, build and test like CI, publish the single exe, sign its
+# SHA-256 for the in-app update and create a DRAFT GitHub release. Check the draft, then publish it by hand. The app's
+# opt-in update check only sees published releases. The tag must match <Version> in src/Optimizer.App/Optimizer.App.csproj.
+#
+# Two jobs on purpose: the build job runs third-party package code (restore, build, tests) with a read-only token and
+# without the signing key; only the release job, which runs no project code, gets write access and the key.
+# Actions are pinned to commit SHAs; to update one, look up the new tag's commit (gh api repos/<action>/commits/<tag> --jq .sha).
 
 name: Release
 
@@ -9,15 +13,15 @@ on:
     tags: [ "v*.*.*" ]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: windows-latest
+  build:
+    runs-on: windows-2025
 
     env:
       DOTNET_NOLOGO: true
@@ -26,12 +30,16 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v7
-
-    - name: Install .NET 10
-      uses: actions/setup-dotnet@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
-        dotnet-version: 10.0.x
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Tag is on main
+      shell: pwsh
+      run: |
+        git merge-base --is-ancestor $env:GITHUB_SHA origin/main
+        if ($LASTEXITCODE -ne 0) { Write-Error "Tag $env:TAG does not point to a commit on main"; exit 1 }
 
     - name: Tag matches the app version
       shell: pwsh
@@ -39,8 +47,13 @@ jobs:
         $version = ([xml](Get-Content src/Optimizer.App/Optimizer.App.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
         if ("v$version" -ne $env:TAG) { Write-Error "Tag $env:TAG does not match <Version>$version</Version> in Optimizer.App.csproj"; exit 1 }
 
+    - name: Install .NET (version from global.json)
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+      with:
+        global-json-file: global.json
+
     - name: Restore
-      run: dotnet restore PCOptimizer.sln
+      run: dotnet restore PCOptimizer.sln --locked-mode
 
     - name: Build
       run: dotnet build PCOptimizer.sln --configuration Release --no-restore
@@ -53,15 +66,52 @@ jobs:
 
     # Code signing (Azure Trusted Signing or an OV certificate) goes here, before the checksum.
 
-    - name: Checksum
+    - name: Upload exe
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+      with:
+        name: release-exe
+        path: artifacts/publish/PCOptimizer.exe
+        if-no-files-found: error
+        retention-days: 3
+
+  release:
+    needs: build
+    runs-on: windows-2025
+    permissions:
+      contents: write
+
+    env:
+      TAG: ${{ github.ref_name }}
+
+    steps:
+    - name: Download exe
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+      with:
+        name: release-exe
+        path: release
+
+    - name: Checksum and update signature
       shell: pwsh
+      env:
+        UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
       run: |
-        $hash = (Get-FileHash artifacts/publish/PCOptimizer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-        "$hash  PCOptimizer.exe" | Set-Content -Encoding ascii artifacts/publish/PCOptimizer.exe.sha256
+        if (-not $env:UPDATE_SIGNING_KEY) { Write-Error "The UPDATE_SIGNING_KEY secret is missing (scripts/new-update-key.ps1)"; exit 1 }
+        $hash = (Get-FileHash release/PCOptimizer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  PCOptimizer.exe" | Set-Content -Encoding ascii release/PCOptimizer.exe.sha256
+        # Same statement as UpdateSignature.Statement: "PCOptimizer <version>\n<sha256>\n", signed with ECDSA P-256 and SHA-256.
+        $version = $env:TAG.TrimStart('v')
+        $statement = [System.Text.Encoding]::UTF8.GetBytes("PCOptimizer $version`n$hash`n")
+        $ecdsa = [System.Security.Cryptography.ECDsa]::Create()
+        try {
+          $ecdsa.ImportFromPem($env:UPDATE_SIGNING_KEY)
+          $signature = $ecdsa.SignData($statement, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+        } finally { $ecdsa.Dispose() }
+        [Convert]::ToBase64String($signature) | Set-Content -Encoding ascii release/PCOptimizer.exe.sig
         "SHA-256: $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     - name: Draft release
       shell: pwsh
       env:
         GH_TOKEN: ${{ github.token }}
-      run: gh release create $env:TAG artifacts/publish/PCOptimizer.exe artifacts/publish/PCOptimizer.exe.sha256 --draft --title "PCOptimizer $env:TAG" --generate-notes
+        GH_REPO: ${{ github.repository }}
+      run: gh release create $env:TAG release/PCOptimizer.exe release/PCOptimizer.exe.sha256 release/PCOptimizer.exe.sig --draft --verify-tag --title "PCOptimizer $env:TAG" --generate-notes

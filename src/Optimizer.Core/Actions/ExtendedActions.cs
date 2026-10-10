@@ -33,26 +33,59 @@ public sealed class NvidiaDrsAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Nvidia.Write(Profile, SettingId, Value);
 
-    public override void Restore(ActionContext c, StoredValue original) =>
+    /// <summary>Without the NVIDIA driver (uninstalled, another graphics card) there is nothing to restore.</summary>
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (!c.Nvidia.Available) return;
         c.Nvidia.Write(Profile, SettingId, original.Existed && uint.TryParse(original.Data, CultureInfo.InvariantCulture, out var v) ? v : null);
+    }
 
     private static StoredValue Stored(uint v) => new(true, "drs", v.ToString(CultureInfo.InvariantCulture));
 }
 
-/// <summary>Windows power mode (Settings > System > Power > Power mode) for the current power source.</summary>
+/// <summary>
+/// Windows power mode (Settings > System > Power > Power mode). Windows keeps one mode for mains and one for battery
+/// and the API reads and writes the one of the current power source. The engine fills in <see cref="Source"/> when it
+/// expands the tweak, so a change made on mains is undone on mains: on battery the undo waits instead of writing the
+/// battery mode or taking the other mode for a reset by Windows.
+/// </summary>
 public sealed class PowerModeAction : TweakAction
 {
     /// <summary>Overlay GUID; Guid.Empty = Balanced.</summary>
     public Guid Overlay { get; init; }
 
-    public override string TargetKey => "pwr:overlay";
-    public override string Describe(ActionContext c) => "Windows power mode";
+    /// <summary>"ac" or "dc" after expansion; null in the catalog and in backups made before the source was recorded.</summary>
+    public string? Source { get; init; }
+
+    public PowerModeAction For(string source) => new() { Overlay = Overlay, Source = source };
+
+    public override string TargetKey => Source is null ? "pwr:overlay" : $"pwr:overlay:{Source}";
+    public override string Describe(ActionContext c) => Source switch
+    {
+        "ac" => "Windows power mode (plugged in)",
+        "dc" => "Windows power mode (on battery)",
+        _ => "Windows power mode",
+    };
+
     public override StoredValue Desired(ActionContext c) => new(true, "overlay", Overlay.ToString());
-    public override StoredValue? Read(ActionContext c) => c.PowerMode.Read() is { } g ? new StoredValue(true, "overlay", g.ToString()) : null;
+
+    private bool OnOtherSource(ActionContext c) => Source is not null && CurrentSource(c) is { } now && now != Source;
+
+    public static string? CurrentSource(ActionContext c) => c.PowerMode.OnBattery() switch { true => "dc", false => "ac", null => null };
+
+    public override StoredValue? Read(ActionContext c) =>
+        !OnOtherSource(c) && c.PowerMode.Read() is { } g ? new StoredValue(true, "overlay", g.ToString()) : null;
+
     public override void Apply(ActionContext c) => c.PowerMode.Write(Overlay);
+
+    public override bool IsStillApplied(ActionContext c, StoredValue applied) => OnOtherSource(c) || base.IsStillApplied(c, applied);
 
     public override void Restore(ActionContext c, StoredValue original)
     {
+        if (OnOtherSource(c))
+            throw new InvalidOperationException(Source == "ac"
+                ? "The power mode was changed while plugged in: connect the charger and undo again."
+                : "The power mode was changed on battery: unplug the charger and undo again.");
         if (Guid.TryParse(original.Data, out var g)) c.PowerMode.Write(g);
     }
 }
@@ -139,6 +172,23 @@ public sealed class NicPropertyAction : TweakAction
         RestartAdapter(c);
     }
 
+    /// <summary>
+    /// Each keyword is compared and restored on its own: a keyword the user changed since in Device Manager keeps the
+    /// user's value, the others go back.
+    /// </summary>
+    public override RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
+    {
+        if (applied is null || Adapter is null) return base.RestoreIfUnchanged(c, original, applied);
+        if (original.Data is null || applied.Data is null || Read(c) is not { Data: { } now }) return RestoreOutcome.ChangedSince;
+        var before = Parse(original.Data);
+        var wrote = Parse(applied.Data);
+        var current = Parse(now);
+        var restore = before.Where(kv => wrote.TryGetValue(kv.Key, out var w) && current.TryGetValue(kv.Key, out var cur) && cur == w).ToList();
+        if (restore.Count == 0) return RestoreOutcome.ChangedSince;
+        Restore(c, new StoredValue(true, "nic", Format(restore)));
+        return restore.Count == before.Count ? RestoreOutcome.Restored : RestoreOutcome.PartlyRestored;
+    }
+
     /// <summary>"Keyword=value, Keyword2=(not set)": readable in the confirmation dialog, parsed back on undo.</summary>
     public const string NotSet = "(not set)";
 
@@ -190,6 +240,28 @@ public static class NicAdapters
     /// values belong on it. Never for hardware properties (NicPropertyAction). The host's virtual switch adapters
     /// (ROOT\VMS_MP) stay excluded either way.
     /// </param>
+    /// <summary>
+    /// The one rule for "a real network card" (findings, fixes, DNS presets and per-adapter values all use it): the
+    /// driver marks it physical (NCF_PHYSICAL) and the device is on PCI or USB, or, with <paramref name="includeSynthetic"/>,
+    /// the synthetic adapter of a Hyper-V guest (VMBUS\). Virtual switches, VPN and WAN miniports never count.
+    /// </summary>
+    public static bool IsPhysical(int characteristics, string? deviceInstanceId, bool includeSynthetic = false) =>
+        (characteristics & NcfPhysical) != 0 && deviceInstanceId is { } instance &&
+        (instance.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) || instance.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase) ||
+         (includeSynthetic && instance.StartsWith(@"VMBUS\", StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>Interface ids (GUIDs) of the connected adapters that <see cref="IsPhysical"/> accepts, synthetic guest adapters included.</summary>
+    public static IReadOnlyList<string> ConnectedPhysicalInterfaceIds(IRegistryRoots registry)
+    {
+        var physical = Enumerate(registry, includeSynthetic: true).Select(a => a.InterfaceGuid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+            .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && physical.Contains(n.Id) &&
+                        n.NetworkInterfaceType is System.Net.NetworkInformation.NetworkInterfaceType.Ethernet
+                            or System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211 or System.Net.NetworkInformation.NetworkInterfaceType.GigabitEthernet)
+            .Select(n => n.Id)
+            .ToList();
+    }
+
     public static IReadOnlyList<NicAdapter> Enumerate(IRegistryRoots registry, bool includeSynthetic = false)
     {
         var list = new List<NicAdapter>();
@@ -203,9 +275,7 @@ public static class NicAdapters
             var instance = key.GetValue("DeviceInstanceID") as string ?? "";
             var guid = key.GetValue("NetCfgInstanceId") as string;
             // Physical hardware only: virtual switches, VPN and Hyper-V adapters are never changed.
-            if ((characteristics & NcfPhysical) == 0 || guid is null) continue;
-            if (!instance.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) && !instance.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase) &&
-                !(includeSynthetic && instance.StartsWith(@"VMBUS\", StringComparison.OrdinalIgnoreCase))) continue;
+            if (guid is null || !IsPhysical(characteristics, instance, includeSynthetic)) continue;
             var allowed = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
             using (var ndi = key.OpenSubKey(@"Ndi\params"))
             {
@@ -249,7 +319,12 @@ public sealed class DnsAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Network.SetDns(InterfaceGuid, Parse(Servers));
 
-    public override void Restore(ActionContext c, StoredValue original) => c.Network.SetDns(InterfaceGuid, Parse(original.Data));
+    /// <summary>An adapter that was removed since has nothing to restore.</summary>
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        if (Read(c) is null) return;
+        c.Network.SetDns(InterfaceGuid, Parse(original.Data));
+    }
 
     private static string[]? Parse(string? servers) => servers is null or "dhcp" ? null : servers.Split(',');
 }
@@ -262,6 +337,9 @@ public interface IPowerModeManager
     Guid? Read();
 
     void Write(Guid overlay);
+
+    /// <summary>True on battery, false on mains, null when Windows does not know.</summary>
+    bool? OnBattery();
 }
 
 public interface IDeviceManager
@@ -292,6 +370,7 @@ public sealed class SystemPowerModeManager : IPowerModeManager
 {
     public Guid? Read() => FirmwareExtras.OverlayApiAvailable() ? FirmwareExtras.EffectiveOverlay() : null;
     public void Write(Guid overlay) => FirmwareExtras.SetOverlay(overlay);
+    public bool? OnBattery() => Hardware.Probes.PowerProbe.OnBattery();
 }
 
 public sealed class SystemDeviceManager : IDeviceManager
@@ -321,24 +400,58 @@ public sealed class SystemNetworkManager : INetworkManager
     }
 }
 
+/// <summary>
+/// Reads share one DRS session for a short time: opening a session loads the driver's whole settings database, and a
+/// detection pass reads dozens of settings (global and per game). A write always uses its own fresh session and drops
+/// the shared one, so a read after a change never sees old values; changes made in the NVIDIA Control Panel show up
+/// once the shared session expired.
+/// </summary>
 public sealed class SystemNvidiaSettings : INvidiaSettings
 {
+    private static readonly TimeSpan ReadSessionLifetime = TimeSpan.FromSeconds(10);
+    private readonly Lock _gate = new();
+    private Nvapi.Session? _readSession;
+    private DateTime _readSessionOpened;
+
     public bool Available => Nvapi.Available;
 
     public uint? ReadOwn(string profile, uint settingId)
     {
-        using var s = new Nvapi.Session();
-        var p = profile == "global" ? s.BaseProfile() : s.ProfileForExe(profile, create: false);
-        return p == IntPtr.Zero ? null : s.GetOwn(p, settingId);
+        lock (_gate)
+        {
+            if (_readSession is null || DateTime.UtcNow - _readSessionOpened > ReadSessionLifetime)
+            {
+                DropReadSession();
+                _readSession = new Nvapi.Session();
+                _readSessionOpened = DateTime.UtcNow;
+            }
+            var s = _readSession;
+            var p = profile == "global" ? s.BaseProfile() : s.ProfileForExe(profile, create: false);
+            return p == IntPtr.Zero ? null : s.GetOwn(p, settingId);
+        }
+    }
+
+    private void DropReadSession()
+    {
+        _readSession?.Dispose();
+        _readSession = null;
     }
 
     public void Write(string profile, uint settingId, uint? value)
     {
+        lock (_gate) DropReadSession();
         using var s = new Nvapi.Session();
         var p = profile == "global" ? s.BaseProfile() : s.ProfileForExe(profile, create: value is not null);
         if (p == IntPtr.Zero) return; // resetting a setting on a profile that does not exist: nothing to do
-        if (value is { } v) s.Set(p, settingId, v);
-        else s.Delete(p, settingId);
+        if (value is { } v)
+        {
+            s.Set(p, settingId, v);
+        }
+        else
+        {
+            s.Delete(p, settingId);
+            if (profile != "global") s.DeleteOwnProfileIfEmpty(profile);
+        }
         s.Save();
     }
 }

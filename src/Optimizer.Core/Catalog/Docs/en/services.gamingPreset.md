@@ -4,7 +4,7 @@
 Sets three services that most PCs do not need to Manual: Downloaded Maps Manager, Program Compatibility Assistant and Distributed Link Tracking Client.
 
 ## How it works
-The three services are set to start on demand (Manual) instead of with Windows [2]. They are not disabled: an app or a Windows trigger can still start them. The Program Compatibility Assistant has such triggers, so it still runs when needed.
+The three services are set to start on demand (Manual) instead of with Windows [2]. They are not disabled: an app or a Windows trigger can still start them. The Program Compatibility Assistant has such start triggers on Windows 11 26H2 (`sc qtriggerinfo PcaSvc` lists them), so it still runs when needed.
 
 ## Why it can help
 Fewer services start with Windows, so there is a little less background activity.

@@ -26,18 +26,18 @@ public static class SignatureVerifier
     public static SignatureInfo Verify(string? path)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return new SignatureInfo(SignatureStatus.NotFound, null, false);
-        // Keyed by size and time too: a file replaced while the app runs is verified again, not served from the cache.
-        FileInfo info;
+        // Keyed by the file's identity, not only its path, size and write time (which a program replacing the file can
+        // keep): the NTFS file id changes when the file is swapped, and the change time when it is written in place.
+        // Hashing every file for the key would double the work WinVerifyTrust does anyway.
+        string key;
         try
         {
-            info = new FileInfo(path);
-            _ = info.Length;
+            key = $"{path}|{FileIdentity(path)}";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return new SignatureInfo(SignatureStatus.Error, null, false);
         }
-        var key = $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
         return Cache.GetOrAdd(key, _ =>
         {
             var p = path;
@@ -56,6 +56,41 @@ public static class SignatureVerifier
             }
         });
     }
+
+    /// <summary>Volume serial, file id, size, last write and change time of the file, read through one handle.</summary>
+    private static string FileIdentity(string path)
+    {
+        using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        var handle = stream.SafeFileHandle;
+        if (!GetFileInformationByHandle(handle, out var info)) throw new IOException($"cannot read the identity of {path}");
+        var basic = new FILE_BASIC_INFO();
+        var changed = GetFileInformationByHandleEx(handle, 0 /* FileBasicInfo */, out basic, (uint)Marshal.SizeOf<FILE_BASIC_INFO>()) ? basic.ChangeTime : 0;
+        return $"{info.VolumeSerialNumber:X}:{info.FileIndexHigh:X}{info.FileIndexLow:X8}:{((long)info.FileSizeHigh << 32) | info.FileSizeLow}:" +
+               $"{((long)info.LastWriteTime.dwHighDateTime << 32) | (uint)info.LastWriteTime.dwLowDateTime}:{changed}";
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BY_HANDLE_FILE_INFORMATION
+    {
+        public uint FileAttributes;
+        public System.Runtime.InteropServices.ComTypes.FILETIME CreationTime, LastAccessTime, LastWriteTime;
+        public uint VolumeSerialNumber, FileSizeHigh, FileSizeLow, NumberOfLinks, FileIndexHigh, FileIndexLow;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FILE_BASIC_INFO
+    {
+        public long CreationTime, LastAccessTime, LastWriteTime, ChangeTime;
+        public uint FileAttributes;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle handle, out BY_HANDLE_FILE_INFORMATION info);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(Microsoft.Win32.SafeHandles.SafeFileHandle handle, int infoClass, out FILE_BASIC_INFO info, uint size);
 
     private const int TrustENoSignature = unchecked((int)0x800B0100);
     private const int TrustESubjectFormUnknown = unchecked((int)0x800B0003), TrustEProviderUnknown = unchecked((int)0x800B0001);
@@ -87,9 +122,15 @@ public static class SignatureVerifier
 
     private static SignatureInfo VerifyCatalog(string path)
     {
+        var sha256 = VerifyCatalog(path, "SHA256");
+        // Older catalogs list only SHA-1 hashes: a file not found by its SHA-256 hash is looked up again by SHA-1.
+        return sha256.Status is SignatureStatus.Unsigned or SignatureStatus.Error ? VerifyCatalog(path, "SHA1") is { Status: SignatureStatus.Signed } sha1 ? sha1 : sha256 : sha256;
+    }
+
+    private static SignatureInfo VerifyCatalog(string path, string algorithm)
+    {
         var policy = DriverActionVerify;
-        if (!CryptCATAdminAcquireContext2(out var admin, IntPtr.Zero, "SHA256", IntPtr.Zero, 0) &&
-            !CryptCATAdminAcquireContext2(out admin, IntPtr.Zero, null, IntPtr.Zero, 0))
+        if (!CryptCATAdminAcquireContext2(out var admin, IntPtr.Zero, algorithm, IntPtr.Zero, 0))
             return new SignatureInfo(SignatureStatus.Error, null, false);
         try
         {

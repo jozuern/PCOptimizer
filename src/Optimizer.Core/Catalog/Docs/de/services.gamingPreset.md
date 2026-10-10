@@ -4,7 +4,7 @@
 Stellt drei Dienste, die die meisten PCs nicht brauchen, auf Manuell: Verwaltung heruntergeladener Karten, Programmkompatibilitäts-Assistent und Überwachung verteilter Verknüpfungen.
 
 ## So funktioniert es
-Die drei Dienste starten bei Bedarf (Manuell) statt mit Windows [2]. Sie werden nicht deaktiviert: Eine App oder ein Windows-Auslöser kann sie weiterhin starten. Der Programmkompatibilitäts-Assistent hat solche Auslöser und läuft deshalb weiter, wenn er gebraucht wird.
+Die drei Dienste starten bei Bedarf (Manuell) statt mit Windows [2]. Sie werden nicht deaktiviert: Eine App oder ein Windows-Auslöser kann sie weiterhin starten. Der Programmkompatibilitäts-Assistent hat unter Windows 11 26H2 solche Startauslöser (`sc qtriggerinfo PcaSvc` listet sie auf) und läuft deshalb weiter, wenn er gebraucht wird.
 
 ## Warum es helfen kann
 Weniger Dienste starten mit Windows, es gibt also etwas weniger Hintergrundaktivität.

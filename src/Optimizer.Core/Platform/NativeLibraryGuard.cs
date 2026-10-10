@@ -8,24 +8,21 @@ namespace Optimizer.Core.Platform;
 /// powrprof.dll or nvapi64.dll in the app's own folder before System32, and the app's folder is often Downloads, which
 /// the signed-in user (and anything running as that user) can write to. A DLL planted there would run with
 /// administrator rights. The guard resolves plain DLL names to System32 or to a trusted folder (the locked folder the
-/// single-file exe extracts its WPF libraries to), and refuses a DLL of that name next to the exe.
+/// single-file exe extracts its WPF libraries to), and refuses every other plain name.
 /// </summary>
 public static class NativeLibraryGuard
 {
     private const uint LoadLibrarySearchSystem32 = 0x00000800, LoadLibrarySearchUserDirs = 0x00000400;
 
     private static IReadOnlyList<string> _trusted = [];
-    private static string? _appFolder;
 
     /// <summary>
     /// Installs the guard for every assembly, loaded now or later. <paramref name="trustedFolders"/>: folders besides
     /// System32 that only administrators can write to and that hold the app's own native libraries.
-    /// <paramref name="appFolder"/>: the exe's folder, where a library with a resolvable name is refused.
     /// </summary>
-    public static void Install(IReadOnlyList<string> trustedFolders, string? appFolder)
+    public static void Install(IReadOnlyList<string> trustedFolders)
     {
         _trusted = trustedFolders;
-        _appFolder = appFolder;
         // LoadLibrary calls made by native code (WPF's native part, drivers' helper DLLs) search System32 and the
         // trusted folders instead of the exe's folder and the PATH.
         if (SetDefaultDllDirectories(LoadLibrarySearchSystem32 | LoadLibrarySearchUserDirs))
@@ -50,9 +47,15 @@ public static class NativeLibraryGuard
     private static IntPtr Resolve(string name, Assembly assembly, DllImportSearchPath? searchPath)
     {
         if (Locate(name, Environment.SystemDirectory, _trusted) is { } path) return NativeLibrary.Load(path);
-        if (IsNextToExe(name, _appFolder))
-            throw new DllNotFoundException($"{name} next to the exe is not loaded: it is not in System32 or the app's protected folder");
-        return IntPtr.Zero; // default search (absolute paths, libraries the runtime links in)
+        // Any other plain name (API sets such as api-ms-win-crt-heap-l1-1-0, which are no files) is loaded with a
+        // System32-only search. The default search would also look in the exe's folder (often Downloads), where a
+        // file planted after any check would still be loaded.
+        if (IsPlainName(name))
+        {
+            if (NativeLibrary.TryLoad(name, assembly, DllImportSearchPath.System32, out var handle)) return handle;
+            throw new DllNotFoundException($"{name} is not loaded: it is not in System32 or the app's protected folder");
+        }
+        return IntPtr.Zero; // absolute paths
     }
 
     /// <summary>A plain DLL name ("powrprof.dll", "nvapi64") found in System32 or a trusted folder, in that order.</summary>
@@ -67,9 +70,6 @@ public static class NativeLibraryGuard
         }
         return null;
     }
-
-    public static bool IsNextToExe(string name, string? appFolder) =>
-        appFolder is not null && IsPlainName(name) && Variants(name).Any(v => File.Exists(Path.Combine(appFolder, v)));
 
     private static bool IsPlainName(string name) =>
         name.Length > 0 && name.IndexOfAny(['\\', '/', ':']) < 0 && name is not ("." or "..");

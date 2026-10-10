@@ -74,15 +74,41 @@ public class DocsConsistencyTests
             sb.Append('\n');
         }
         Table("2. Expert and boot-critical tweaks",
-            "Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone, restart, confirm Windows still starts, then undo and restart again.",
+            "Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone, restart, confirm Windows still starts, then undo and restart again.\n\n" +
+            "Preconditions, or there is nothing to change on a clean install: turn on memory integrity (Windows Security > Device security > Core isolation) " +
+            "and restart before `security.vbsOff`; run `bcdedit /set {current} useplatformclock true` before `leftover.usePlatformClock`.",
             expert, false);
         Table("3. Tweaks that need a restart or sign-out", "", restart, false);
-        Table("4. Other tweaks", "", other, false);
+        Table("4. Other tweaks",
+            "`memory.sysmainOff` cannot be tested in Hyper-V: the virtual disk is not reported as an SSD, so the tweak does not apply there.",
+            other, false);
         Table("5. Tweaks that need real hardware",
             "A VM has no NVIDIA GPU and only a synthetic network adapter. Test these on a spare real PC with the hardware named, one at a time, with a restore point first.",
             hardware, true);
+
+        // Owner rule: an undocumented value is used only once it is proven to work; until then the tweak is a preview.
+        var unproven = tweaks.Where(t => t.Undocumented && t.Proof.Count == 0).ToList();
+        sb.Append("### Undocumented values: check the effect\n\n")
+          .Append("These tweaks use values Microsoft does not document and stay previews until a test shows that the value does what the page says. ")
+          .Append("Check the visible effect after apply and after undo, then add the result to the tweak's `proof` in the catalog.\n\n")
+          .Append("| Tweak | Title | Check |\n|---|---|---|\n");
+        foreach (var t in unproven)
+            sb.Append("| `").Append(t.Id).Append("` | ").Append(Title(t)).Append(" | ").Append(EffectToCheck.GetValueOrDefault(t.Id, "the effect the explanation page describes")).Append(" |\n");
+        sb.Append('\n');
         return sb.ToString();
     }
+
+    /// <summary>What to look at for an undocumented value (the visible effect, not only the registry value).</summary>
+    private static readonly Dictionary<string, string> EffectToCheck = new()
+    {
+        ["explorer.classicContextMenu"] = "right-click a file in File Explorer after signing in again: the classic menu opens at once; after undo the new menu is back",
+        ["gpu.hags"] = "Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support)",
+        ["gpu.gameDvrOff"] = "Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing",
+        ["office.launchToThisPc"] = "a new File Explorer window opens to This PC; Folder Options shows \"Open File Explorer to: This PC\"",
+        ["privacy.inkingTypingOff"] = "Settings > Privacy & security > Inking & typing personalization shows both switches off",
+        ["privacy.suggestionsOff"] = "the three Settings switches named on the page show off",
+        ["privacy.webSearchOff"] = "searching in the Start menu shows no web results or suggestions",
+    };
 
     private static string Title(TweakDefinition t) => (DocStore.Get(t.DocId, "en")?.Title ?? t.Id).Replace("|", "/");
 

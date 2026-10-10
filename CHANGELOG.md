@@ -2,9 +2,47 @@
 
 ## Unreleased
 
-Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)).
+Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from the [code audit](docs/audit-2026-10-10.md), plus a speed pass.
+
+### Speed
+
+- A scan takes about 2 seconds instead of 15: the TPM is read once (through the TPM Base Services API when the app is not elevated) instead of waiting twice for a slow WMI query, firmware, startup and extra checks run in parallel, and a rescan after a change reuses the parts no change can affect.
+- The page is ready before the 3 second background CPU sample ends; the background activity check follows when the sample is done, without reading every tweak state again.
+- Reading all tweak states takes under a second instead of about 8: NVIDIA driver settings share one driver session for a few seconds instead of opening one per setting, and backups are read once per pass.
+- The Tweaks and Advisor lists build only the cards in view. Opening Tweaks, switching the category, the profile or "Only recommended" and turning on Expert mode take 3 to 6 times less time.
+- Explanations in the details pane are built in the background, and slow work (process lists, page loads, changes) no longer runs on the UI thread.
+
+### Security
+
+- An elevated start refuses to run when the runtime folder is not protected, and files the app creates are owned by Administrators.
+- Updates are checked against an ECDSA signature of the release (`PCOptimizer.exe.sig`) besides the hash; an update without a valid signature is not installed.
+- Child processes (PowerShell, system tools) start in System32 with a cleaned environment, so variables like `COR_PROFILER` or `PSModulePath` cannot load foreign code into them.
+- Plain DLL names load only from System32. The signature check cache is keyed to the file's identity, so a replaced file is checked again. Builds restore locked package versions, CI actions are pinned to commits, and releases are built only from `main`.
 
 ### Undo and engine
+
+- When one step of a tweak fails, the steps already done are rolled back, including the failing step when it changed something before failing; the result says when something could not be rolled back.
+- A damaged backup file is set aside (`.damaged`) and blocks a new change to that tweak instead of being overwritten. Backups are written to disk before the change starts.
+- A tweak whose conditions cannot be checked on this PC is blocked instead of applied.
+- Undo restores only what the tweak changed: per power source for power settings and power modes, per keyword for network adapter properties, and only the registry keys the tweak created. Power plans are restored by GUID, and a scheduled task, NVIDIA profile, DNS setting or display mode that no longer exists is skipped instead of failing.
+- The restore point frequency is set back when no restore point was created.
+
+### Checks
+
+- RAM speed, channel layout, the AMD AGESA version, Resizable BAR platform support, the microcode age with an unknown BIOS date, X3D processors and the battery report on desktops no longer give wrong results.
+- The readiness score counts only findings that matter on their own, not prerequisites of other findings.
+
+### App
+
+- Switches and change buttons are disabled while a change, scan or update runs, and only one change runs at a time.
+- Failures show as errors instead of information. Explorer restarts ask first. Frame time captures can be stopped. Escape closes message windows. Settings are saved atomically.
+
+### Content
+
+- Tweaks that use an undocumented value are marked "Undocumented value" and either cite proof that it works or stay in Preview; the lint enforces it.
+- Explanation pages need a Sources section, and every source must be cited in the text.
+
+### Undo and engine (VM test run)
 
 - Undo of "Memory compression off" did nothing: the change takes effect only after a restart, so the engine recorded the old value and later took the new one for a reset by Windows. It now shows "pending restart" after apply, and undo turns memory compression back on, also before the restart and for changes made with 0.4.0. After the undo the tweak shows "Off after a restart" until Windows restarts, and turning it on again before then works.
 - A Windows default no longer blocks a conflicting tweak. With the default Balanced plan, the Gaming and Ultimate Performance plans were blocked, and with the default boost mode "Processor boost off" could never be applied. Only changes made by this app still block.

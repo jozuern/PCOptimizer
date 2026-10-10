@@ -16,6 +16,13 @@ public sealed class TweakCatalog
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
+    /// <summary>
+    /// For the embedded catalog only: an unknown property is an error (a typo like "restat" would otherwise be ignored
+    /// and the tweak would silently miss its restart flag). Stored definitions in backups keep <see cref="JsonOptions"/>,
+    /// so a backup written by an older version stays readable.
+    /// </summary>
+    public static readonly JsonSerializerOptions CatalogJsonOptions = new(JsonOptions) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
+
     private static readonly Lazy<TweakCatalog> Lazy = new(Load);
     public static TweakCatalog Current => Lazy.Value;
 
@@ -33,7 +40,7 @@ public sealed class TweakCatalog
         var list = new List<TweakDefinition>();
         foreach (var name in CatalogData.ResourceNames("Catalog.Tweaks.").OrderBy(n => n, StringComparer.Ordinal))
         {
-            var file = JsonSerializer.Deserialize<CatalogFile>(CatalogData.ReadResourceText(name), JsonOptions)
+            var file = JsonSerializer.Deserialize<CatalogFile>(CatalogData.ReadResourceText(name), CatalogJsonOptions)
                        ?? throw new InvalidDataException($"Empty catalog file {name}");
             list.AddRange(file.Tweaks);
         }
@@ -44,6 +51,10 @@ public sealed class TweakCatalog
 
     private sealed class CatalogFile
     {
+        /// <summary>A note for maintainers at the top of a file.</summary>
+        [JsonPropertyName("_comment")]
+        public string? Comment { get; init; }
+
         public List<TweakDefinition> Tweaks { get; init; } = [];
     }
 }

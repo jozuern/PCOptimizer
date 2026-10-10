@@ -23,8 +23,10 @@ public sealed class GameAccessCheck : IFindingCheck
         {
             "uefi" => fw.IsUefi ? TriState.Yes : TriState.No,
             "secureBoot" => fw.SecureBoot,
+            // A TPM 2.0 that Windows reports as not ready (disabled or not provisioned) cannot be relied on: unknown, not yes.
             "tpm2" => fw.TpmPresent switch
             {
+                TriState.Yes when fw.TpmReady == TriState.No => fw.TpmSpecVersion?.TrimStart().StartsWith('2') == true ? TriState.Unknown : TriState.No,
                 TriState.Yes => fw.TpmSpecVersion?.TrimStart().StartsWith('2') == true ? TriState.Yes : TriState.No,
                 TriState.No => TriState.No,
                 _ => TriState.Unknown,

@@ -30,7 +30,7 @@
       "id": "leftover.usePlatformClock",
       "category": "Leftovers",
       "impact": {
-        "gaming": 2,
+        "gaming": 1,
         "basis": "situational",
         "effect": [
           "latency",

@@ -3,5 +3,9 @@
     <LangVersion>latest</LangVersion>
     <!-- Embed symbols so the single-file publish produces exactly one file. -->
     <DebugType Condition="'$(Configuration)' == 'Release'">embedded</DebugType>
+    <!-- packages.lock.json pins every package and its hash; CI restores with locked mode. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- CI builds: deterministic, and source paths in the embedded symbols do not reveal the build machine's folders. -->
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 </Project>

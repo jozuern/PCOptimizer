@@ -75,7 +75,7 @@ public static class DeElevatedLauncher
 
     private static bool TryTask(string target, string? arguments, string user)
     {
-        var name = $"PCOptimizer-open-{Guid.NewGuid():N}";
+        string? name = $"PCOptimizer-open-{Guid.NewGuid():N}";
         dynamic? folder = null;
         try
         {
@@ -91,10 +91,13 @@ public static class DeElevatedLauncher
             dynamic action = def.Actions.Create(0); // TASK_ACTION_EXEC
             var isUrl = target.Contains("://", StringComparison.Ordinal);
             action.Path = isUrl ? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe") : target;
-            action.Arguments = isUrl ? $"\"{target}\"" : arguments ?? "";
+            // The link in its escaped form: a quote inside the raw text could otherwise end the argument early.
+            action.Arguments = isUrl ? $"\"{(Uri.TryCreate(target, UriKind.Absolute, out var uri) ? uri.AbsoluteUri : target)}\"" : arguments ?? "";
             dynamic task = folder.RegisterTaskDefinition(name, def, 6 /* CREATE_OR_UPDATE */, null, null, 3 /* INTERACTIVE_TOKEN */, null);
             task.Run(null);
-            Thread.Sleep(1500);
+            // The task is deleted once it has started; waiting for that happens off the UI thread.
+            DeleteLater(name);
+            name = null;
             return true;
         }
         catch (Exception ex)
@@ -106,7 +109,7 @@ public static class DeElevatedLauncher
         {
             try
             {
-                folder?.DeleteTask(name, 0);
+                if (name is not null) folder?.DeleteTask(name, 0);
             }
             catch (Exception)
             {
@@ -114,6 +117,22 @@ public static class DeElevatedLauncher
             }
         }
     }
+
+    /// <summary>Deletes the one-time task after it had time to start, on a background thread with its own connection.</summary>
+    private static void DeleteLater(string name) => Task.Run(async () =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        try
+        {
+            dynamic service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
+            service.Connect();
+            service.GetFolder("\\").DeleteTask(name, 0);
+        }
+        catch (Exception ex)
+        {
+            Logging.Log.Warn("launcher", $"one-time task {name} not deleted: {ex.Message}");
+        }
+    });
 
     // ---------------- COM interfaces (vtable order matters) ----------------
 

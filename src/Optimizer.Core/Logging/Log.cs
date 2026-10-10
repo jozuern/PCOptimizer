@@ -14,7 +14,7 @@ public static class Log
     private static string? _file;
 
     public static string Directory { get; } =
-        Path.Combine(Platform.DataPaths.Root, "logs");
+        Platform.DataPaths.Logs;
 
     public static string? CurrentFile => _file;
 
@@ -24,24 +24,44 @@ public static class Log
     /// </summary>
     public static bool FileEnabled { get; private set; } = !Platform.DataPaths.ProcessIsElevated;
 
+    private static bool _fileDisabled;
+
     /// <summary>Starts writing the log file, including the entries logged so far.</summary>
     public static void EnableFile()
     {
         lock (Gate)
         {
-            if (FileEnabled) return;
+            if (FileEnabled || _fileDisabled) return;
             FileEnabled = true;
             foreach (var entry in Session) Append(entry);
         }
     }
 
-    /// <summary>In-memory copy of this session's entries (shown in the UI and used by tests).</summary>
-    public static List<LogEntry> Session { get; } = [];
+    /// <summary>Keeps every entry in memory only, for the rest of the process (tests must not write into the real data folder).</summary>
+    public static void DisableFile()
+    {
+        lock (Gate)
+        {
+            _fileDisabled = true;
+            FileEnabled = false;
+        }
+    }
+
+    /// <summary>Entries kept in memory; older ones are dropped (the file keeps them).</summary>
+    public const int MaxEntries = 10_000;
+
+    private static readonly Queue<LogEntry> Session = new();
 
     /// <summary>The last <paramref name="max"/> entries of this session, safe to read while other threads log.</summary>
     public static IReadOnlyList<LogEntry> Snapshot(int max)
     {
         lock (Gate) return Session.TakeLast(max).ToList();
+    }
+
+    /// <summary>The last <paramref name="max"/> entries that match <paramref name="filter"/>, newest first.</summary>
+    public static IReadOnlyList<LogEntry> Newest(Func<LogEntry, bool> filter, int max)
+    {
+        lock (Gate) return Session.Where(filter).Reverse().Take(max).ToList();
     }
 
     public static void Debug(string source, string message, object? data = null) => Write(LogLevel.Debug, source, message, data);
@@ -52,10 +72,20 @@ public static class Log
 
     private static void Write(LogLevel level, string source, string message, object? data)
     {
-        var entry = new LogEntry(DateTimeOffset.Now, level, source, message, data is null ? null : JsonSerializer.Serialize(data));
+        string? json;
+        try
+        {
+            json = data is null ? null : JsonSerializer.Serialize(data);
+        }
+        catch (Exception ex)
+        {
+            json = JsonSerializer.Serialize(new { unserializable = data!.GetType().FullName, ex.Message });
+        }
+        var entry = new LogEntry(DateTimeOffset.Now, level, source, message, json);
         lock (Gate)
         {
-            Session.Add(entry);
+            Session.Enqueue(entry);
+            while (Session.Count > MaxEntries) Session.Dequeue();
             if (FileEnabled) Append(entry);
         }
     }

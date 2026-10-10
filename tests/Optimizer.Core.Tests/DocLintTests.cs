@@ -13,12 +13,8 @@ public partial class DocLintTests(ITestOutputHelper output)
     {
         var issues = DocLint.Run();
         foreach (var issue in issues) output.WriteLine(issue.ToString());
-#if DEBUG
-        // Debug: report only, development is not blocked.
-        Assert.True(true);
-#else
+        // An error in every configuration: plain "dotnet test" (Debug) must report what CI reports.
         Assert.Empty(issues);
-#endif
     }
 
     [Fact]
@@ -54,18 +50,57 @@ public partial class DocLintTests(ITestOutputHelper output)
         Assert.Empty(offenders);
     }
 
+    /// <summary>
+    /// Every UI string key exists in English and German: the keys of both resource files match, every key the code or
+    /// XAML names is defined, and so are the keys built at run time (profile names and descriptions, sensor types).
+    /// </summary>
+    [Fact]
+    public void UiStringKeysExistInBothLanguages()
+    {
+        HashSet<string> Keys(string file) => XDocument.Load(Path.Combine(RepoPaths.App, "Resources", file)).Descendants("data")
+            .Select(d => (string)d.Attribute("name")!).ToHashSet(StringComparer.Ordinal);
+        var en = Keys("Strings.resx");
+        var de = Keys("Strings.de.resx");
+        var missing = en.Except(de).Select(k => $"{k}: no German text").Concat(de.Except(en).Select(k => $"{k}: no English text")).ToList();
+
+        var used = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")))
+            foreach (Match m in CodeKeyPattern().Matches(File.ReadAllText(file))) used.Add(m.Groups[1].Value);
+        foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.xaml", SearchOption.AllDirectories).Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")))
+            foreach (Match m in XamlKeyPattern().Matches(File.ReadAllText(file))) used.Add(m.Groups[1].Value);
+        foreach (var p in Catalog.CatalogData.Current.Profiles.Profiles) used.UnionWith([$"Profile_{p.Id}", $"ProfileDesc_{p.Id}"]);
+        foreach (var type in new[] { "Temperature", "Load", "Clock", "Power", "Fan" }) used.Add($"SensorType_{type}");
+        missing.AddRange(used.Where(k => !en.Contains(k)).Select(k => $"{k}: used but not defined"));
+
+        foreach (var m in missing) output.WriteLine(m);
+        Assert.Empty(missing);
+    }
+
+    [GeneratedRegex(@"Loc\.Instance(?:\[|\.Format\()""(\w+)""")]
+    private static partial Regex CodeKeyPattern();
+
+    [GeneratedRegex(@"\{l:Tr (\w+)\}")]
+    private static partial Regex XamlKeyPattern();
+
     /// <summary>The same rule for the repository's own documents, and for code (comments included), minus the plural rule there.</summary>
     [Fact]
     public void DocumentsAndCodeHaveNoBannedTypography()
     {
         var offenders = new List<string>();
-        foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal)))
+        foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal) && !IsQuotedReference(f)))
             offenders.AddRange(BannedTypography(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file)));
         foreach (var file in RepositoryFiles("*.cs").Concat(RepositoryFiles("*.csproj")).Concat(RepositoryFiles("*.yml")))
             offenders.AddRange(BannedCharacters(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file)));
         foreach (var o in offenders) output.WriteLine(o);
         Assert.Empty(offenders);
     }
+
+    /// <summary>
+    /// Research notes that quote other tools' feature names and descriptions word for word; they are not shown in the
+    /// app, and rewriting the quotes would misstate what those tools say.
+    /// </summary>
+    private static bool IsQuotedReference(string file) =>
+        file.EndsWith("windows-tweak-tools-feature-reference.md", StringComparison.Ordinal);
 
     /// <summary>Filler words in everything the user reads besides the explanation pages (which the docs lint covers).</summary>
     [Fact]
@@ -79,8 +114,8 @@ public partial class DocLintTests(ITestOutputHelper output)
             Check(Path.GetFileName(file), string.Join("\n", XDocument.Load(file).Descendants("data").Select(d => (string?)d.Element("value") ?? "")));
         foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.xaml", SearchOption.AllDirectories).Where(f => !IsBuildOutput(f)))
             Check(Path.GetFileName(file), XamlComment().Replace(File.ReadAllText(file), ""));
-        // The style guide quotes the banned words as examples.
-        foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal) && !f.EndsWith("explanation-style-guide.md", StringComparison.Ordinal)))
+        // The style guide quotes the banned words as examples; the feature reference quotes other tools.
+        foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal) && !f.EndsWith("explanation-style-guide.md", StringComparison.Ordinal) && !IsQuotedReference(f)))
             Check(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file));
         foreach (var o in offenders) output.WriteLine(o);
         Assert.Empty(offenders);

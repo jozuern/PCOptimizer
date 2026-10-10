@@ -114,6 +114,8 @@
     },
     {
       "id": "privacy.inkingTypingOff",
+      "undocumented": true,
+      "preview": true,
       "category": "Privacy",
       "impact": {
         "gaming": 0,
@@ -199,6 +201,8 @@
     },
     {
       "id": "privacy.webSearchOff",
+      "undocumented": true,
+      "preview": true,
       "category": "Privacy",
       "impact": {
         "gaming": 0,
@@ -302,6 +306,8 @@
     },
     {
       "id": "privacy.suggestionsOff",
+      "undocumented": true,
+      "preview": true,
       "category": "Privacy",
       "impact": {
         "gaming": 0,

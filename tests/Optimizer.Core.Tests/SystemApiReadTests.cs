@@ -41,11 +41,26 @@ public class SystemApiReadTests(ITestOutputHelper output)
     [Trait("Category", "Hardware")]
     public void EveryCatalogTweakHasADetectableState()
     {
-        var engine = new TweakEngine(Ctx, new Backup.BackupStore(Path.Combine(Path.GetTempPath(), "pco-read-" + Guid.NewGuid().ToString("N")), secure: false),
-            new FakeRestorePoints(), "test", 26300);
-        var facts = new Facts().Set("os.build", 26300).Set("memory.totalGb", 32.0).Set("gpu.hasDiscrete", true).Set("gpu.supportsHags", true).Set("storage.ssdOnly", true);
-        foreach (var s in engine.DetectAll(TweakCatalog.Current.Tweaks, facts))
-            output.WriteLine($"{s.State,-18} {s.Tweak.Id}");
+        var folder = TestFolders.Create("read");
+        try
+        {
+            var engine = new TweakEngine(Ctx, new Backup.BackupStore(folder, secure: false), new FakeRestorePoints(), "test", 26300);
+            var facts = new Facts().Set("os.build", 26300).Set("memory.totalGb", 32.0).Set("gpu.hasDiscrete", true).Set("gpu.supportsHags", true).Set("storage.ssdOnly", true);
+            // Time per tweak too: detection runs after every scan, and a slow reader shows up here.
+            foreach (var t in TweakCatalog.Current.Tweaks)
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                var s = engine.Detect(t, facts);
+                output.WriteLine($"{watch.ElapsedMilliseconds,6} ms  {s.State,-18} {s.Tweak.Id}");
+            }
+            var all = System.Diagnostics.Stopwatch.StartNew();
+            engine.DetectAll(TweakCatalog.Current.Tweaks, facts);
+            output.WriteLine($"DetectAll: {all.ElapsedMilliseconds} ms");
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
         // No exception and no tweak without a state is the assertion; states depend on this PC.
     }
 }

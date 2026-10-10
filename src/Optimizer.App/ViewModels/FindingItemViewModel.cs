@@ -27,7 +27,6 @@ public sealed class FindingItemViewModel : InspectorItem
         Impact = rated ? Math.Clamp(finding.Impact!.Value, 0, 5) : null;
         ImpactText = Impact is { } i ? Loc.Instance.Format("Impact_Short", i) : "";
         ImpactTooltip = Impact is { } j ? Loc.Instance.Format("Impact_TooltipGoal", labels.Get(lang, $"effect.{goal}"), j) : "";
-        FactRows = finding.Facts.Select(f => new SummaryItem(labels.Get(lang, f.LabelKey), labels.Value(lang, f.Value))).ToList();
         CriticalText = finding.Critical ? Loc.Instance["Impact_Critical"] : null;
         MetaText = string.Join(", ", new[] { StatusText, CriticalText ?? ImpactText, EffectsText }.Where(x => !string.IsNullOrEmpty(x)));
         if (fix is not null && finding.Status == FindingStatus.Problem) ActionText = Loc.Instance["Fix_Apply"];
@@ -38,8 +37,6 @@ public sealed class FindingItemViewModel : InspectorItem
     /// <summary>One-click fix for this finding (runtime fix or catalog tweak), if any.</summary>
     public TweakDefinition? Fix { get; }
 
-    public IReadOnlyList<SummaryItem> FactRows { get; }
     public bool IsProblem => Finding.Status == FindingStatus.Problem;
-    public bool HasFix => HasAction;
     public override string Key => "finding:" + Finding.Key;
 }

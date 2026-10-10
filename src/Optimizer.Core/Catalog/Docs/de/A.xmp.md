@@ -23,7 +23,7 @@ Prüft, ob der Arbeitsspeicher mit der Geschwindigkeit aus seiner Teilenummer l�
 :::
 
 ## Warum das wichtig ist
-Speichermodule starten zuerst mit einer sicheren Standardgeschwindigkeit (JEDEC) [1]. Die höhere Geschwindigkeit von der Verpackung ist als Profil gespeichert (Intel XMP, AMD EXPO) und muss im BIOS eingeschaltet werden [1][2]. ASUS-Mainboards zeigen **DOCP**, wenn das Kit das Profil des jeweils anderen Herstellers trägt, zum Beispiel ein XMP-Kit auf einem AMD-Mainboard [3]. Intel und AMD bezeichnen diese Profile als Speicherübertaktung, und laut Intel kann eine Änderung von Takt oder Spannung die Garantie berühren und die Stabilität verringern [1][2]. Ohne Profil läuft der Speicher langsamer als angegeben, und Spiele, die von Speicherbandbreite und -latenz abhängen, verlieren FPS, vor allem bei den 1-%-Lows.
+Speichermodule starten zuerst mit einer sicheren Standardgeschwindigkeit (JEDEC) [1]. Die höhere Geschwindigkeit von der Verpackung ist als Profil gespeichert (Intel XMP, AMD EXPO) und muss im BIOS eingeschaltet werden [1][2]. ASUS-Mainboards zeigen **DOCP**, wenn das Kit das Profil des jeweils anderen Herstellers trägt, zum Beispiel ein XMP-Kit auf einem AMD-Mainboard [3]. Intel und AMD bezeichnen diese Profile als Speicherübertaktung, und laut Intel kann eine Änderung von Takt oder Spannung die Garantie berühren und die Stabilität verringern [1][2]. Ohne Profil läuft der Speicher langsamer als angegeben, und Spiele, die von Speicherbandbreite und -latenz abhängen, können FPS verlieren; wie viel, hängt vom Spiel und von der Plattform ab.
 ::: variant laptop
 Die meisten Laptops bieten kein XMP an. Ihre Speichergeschwindigkeit legt der Hersteller fest.
 :::

@@ -11,16 +11,28 @@ public static class SingleFileRuntime
 {
     public const string ExtractVariable = "DOTNET_BUNDLE_EXTRACT_BASE_DIR";
 
-    /// <summary>Set for the second start, so a failed redirect can never loop.</summary>
+    /// <summary>
+    /// Set for the second start, so a failed redirect can never loop. It only breaks the loop: the decision itself
+    /// depends on the real extraction folder, because any program of the signed-in user can set this variable too.
+    /// </summary>
     public const string RestartedVariable = "PCOPTIMIZER_RUNTIME_RESTARTED";
 
-    public static string ExtractBase(string dataRoot) => Path.Combine(dataRoot, "runtime");
+    public static string ExtractBase(string dataRoot) => Path.Combine(dataRoot, Path.GetFileName(DataPaths.Runtime));
 
     /// <summary>
-    /// Restart when this is a single-file exe that extracts its libraries elsewhere, unless this already is the restart.
+    /// Continue when this is no single-file exe or it already extracts into <paramref name="wantedBase"/>. Otherwise
+    /// restart once; when the folder still differs after that restart (or the variable was set from outside), an
+    /// elevated process refuses to start instead of loading native libraries from a folder the user can write to.
     /// </summary>
-    public static bool NeedsRestart(bool isBundle, string? currentExtractBase, string wantedBase, bool restarted) =>
-        isBundle && !restarted && !SameFolder(currentExtractBase, wantedBase);
+    public static RuntimeStart Decide(bool isBundle, string? currentExtractBase, string wantedBase, bool restarted, bool elevated)
+    {
+        if (!isBundle || SameFolder(currentExtractBase, wantedBase)) return RuntimeStart.Continue;
+        if (!restarted) return RuntimeStart.Restart;
+        return elevated ? RuntimeStart.Refuse : RuntimeStart.Continue;
+    }
+
+    /// <summary>What to do when the restart could not be started.</summary>
+    public static RuntimeStart AfterFailedRestart(bool elevated) => elevated ? RuntimeStart.Refuse : RuntimeStart.Continue;
 
     /// <summary>
     /// Folders from the runtime's native search list that lie inside <paramref name="wantedBase"/> (the extraction
@@ -41,4 +53,11 @@ public static class SingleFileRuntime
         !string.IsNullOrWhiteSpace(a) && Path.IsPathFullyQualified(a) && string.Equals(Normalize(a), Normalize(b), StringComparison.OrdinalIgnoreCase);
 
     private static string Normalize(string path) => Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+}
+
+public enum RuntimeStart
+{
+    Continue,
+    Restart,
+    Refuse,
 }

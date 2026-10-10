@@ -25,11 +25,12 @@ public static class Program
         var runtimeBase = SingleFileRuntime.ExtractBase(DataPaths.Root);
         if (bundle)
         {
-            NativeLibraryGuard.Install(
-                SingleFileRuntime.TrustedFolders(AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string, runtimeBase),
-                Path.GetDirectoryName(Environment.ProcessPath));
+            NativeLibraryGuard.Install(SingleFileRuntime.TrustedFolders(AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string, runtimeBase));
         }
 
+        // Files the app creates must be owned by Administrators, or the data folder would distrust them (UAC off,
+        // built-in Administrator, Administrator protection).
+        if (DataPaths.ProcessIsElevated) DefaultOwner.SetAdministrators();
         if (DataPaths.ProcessIsElevated && !SecureFolder.PrepareRoot(DataPaths.Root))
         {
             ShowError(string.Format(Text("Startup_DataFolderUnsafe"), DataPaths.Root));
@@ -37,10 +38,19 @@ public static class Program
         }
         Log.EnableFile();
 
-        if (SingleFileRuntime.NeedsRestart(bundle, Environment.GetEnvironmentVariable(SingleFileRuntime.ExtractVariable), runtimeBase,
-                Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1")
-            && RunWithProtectedRuntime(args, runtimeBase) is { } exitCode)
-            return exitCode;
+        var start = SingleFileRuntime.Decide(bundle, Environment.GetEnvironmentVariable(SingleFileRuntime.ExtractVariable), runtimeBase,
+            Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1", DataPaths.ProcessIsElevated);
+        if (start == RuntimeStart.Restart)
+        {
+            if (RunWithProtectedRuntime(args, runtimeBase) is { } exitCode) return exitCode;
+            start = SingleFileRuntime.AfterFailedRestart(DataPaths.ProcessIsElevated);
+        }
+        if (start == RuntimeStart.Refuse)
+        {
+            Log.Error("app", "the native runtime folder is not the protected one; refusing to start elevated");
+            ShowError(string.Format(Text("Startup_RuntimeFolderUnsafe"), SingleFileRuntime.ExtractVariable, SingleFileRuntime.RestartedVariable));
+            return 1;
+        }
 
         var app = new App();
         app.InitializeComponent();
@@ -49,7 +59,7 @@ public static class Program
 
     /// <summary>
     /// Starts this exe again with the extraction folder inside the data folder and waits for it (developer switches
-    /// such as --report wait for the exit code). Null when that is not possible: this process then continues itself.
+    /// such as --report wait for the exit code). Null when that is not possible.
     /// </summary>
     private static int? RunWithProtectedRuntime(string[] args, string runtimeBase)
     {
@@ -71,7 +81,7 @@ public static class Program
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            Log.Error("app", "restart with the protected runtime folder failed; continuing", ex);
+            Log.Error("app", "restart with the protected runtime folder failed", ex);
             return null;
         }
     }

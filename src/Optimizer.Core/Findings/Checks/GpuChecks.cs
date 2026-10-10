@@ -112,6 +112,24 @@ public sealed class RebarCheck : IFindingCheck
 {
     public const string Id = "A.rebar";
 
+    /// <summary>
+    /// Processors whose platform supports Resizable BAR: Intel Core 10th generation and newer (NVIDIA's list), AMD Ryzen
+    /// 3000 and newer (AMD's Smart Access Memory claims), that is Zen 2 (family 17h from model 30h) and later families.
+    /// Ryzen 1000 and 2000 and the Zen+ APUs 3200G and 3400G (family 17h below model 30h) are older. Null: not known.
+    /// </summary>
+    public static bool? PlatformSupportsRebar(CpuInfo? cpu)
+    {
+        if (cpu is null) return null;
+        if (cpu.Vendor == Vendor.Amd) return cpu.Family switch { < 0x17 => false, 0x17 => cpu.Model >= 0x30, _ => true };
+        if (cpu.Vendor != Vendor.Intel) return null;
+        if (cpu.Name.Contains("Core(TM) Ultra", StringComparison.OrdinalIgnoreCase) || cpu.Name.Contains("Core Ultra", StringComparison.OrdinalIgnoreCase)) return true;
+        var m = RegexCache.Get(@"\bi[3579]-(\d{4,5})").Match(cpu.Name);
+        if (!m.Success) return null;
+        var number = m.Groups[1].Value;
+        var generation = number.Length == 5 ? int.Parse(number[..2]) : int.Parse(number[..1]);
+        return generation >= 10;
+    }
+
     /// <summary>A BAR above 256 MB means the large BAR is active (classic BAR1 is 256 MB).</summary>
     public const long ClassicBarBytes = 256L * 1024 * 1024;
 
@@ -131,6 +149,8 @@ public sealed class RebarCheck : IFindingCheck
             else if (active is null) { status = FindingStatus.Unknown; variant = "unknownState"; }
             else if (active.Value) { status = FindingStatus.Ok; variant = "active"; }
             else if (p.IsLaptop) { status = FindingStatus.Info; variant = "laptop"; }
+            // Only a platform that supports it can turn it on: older or unknown processors get no BIOS steps.
+            else if (PlatformSupportsRebar(p.Cpu) != true) { status = FindingStatus.Info; variant = "platform"; }
             else { status = FindingStatus.Problem; variant = "off"; }
 
             var vendor = c.Bios.NormalizeVendor(p.Firmware?.BoardManufacturer);
@@ -176,8 +196,7 @@ public sealed class RebarCheck : IFindingCheck
         _ => "*",
     };
 
-    public static string FormatBytes(long bytes) =>
-        bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.#} GB" : $"{bytes / (double)(1L << 20):0} MB";
+    public static string FormatBytes(long bytes) => Platform.ByteSize.Format(bytes);
 }
 
 /// <summary>

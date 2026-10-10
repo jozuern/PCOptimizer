@@ -4,7 +4,7 @@
 Makes sure Windows Game Mode is on. It gives the running game priority and blocks driver installs and restart prompts from Windows Update while you play.
 
 ## How it works
-When Game Mode detects a game, Windows gives it priority access to hardware resources [2] and holds back Windows Update driver installs and restart notifications [1]. Since the October 2018 update it is on by default for all games, with one switch in Settings [1]. The app sets it back on if it was turned off.
+When Game Mode detects a game, Windows gives it priority access to hardware resources [2] and holds back Windows Update driver installs and restart notifications [1]. Since the October 2018 update it is on by default for all games, with one switch in Settings [1]. The app sets it back on if it was turned off, with the registry values behind that switch; Microsoft does not document the values on their own.
 
 ## Why it can help
 Fewer interruptions from background work and update prompts during play. Microsoft says this can mean less FPS variability [1].

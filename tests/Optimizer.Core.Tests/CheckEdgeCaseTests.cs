@@ -122,11 +122,27 @@ public class CheckEdgeCaseTests
     public void IntelArcClassification(string name, GpuKind expected) =>
         Assert.Equal(expected, GpuProbe.Classify(name, @"PCI\VEN_8086&DEV_0000", Vendor.Intel, "oem1.inf", C));
 
+    [Theory]
+    [InlineData("Radeon RX Vega", GpuKind.Discrete)]
+    [InlineData("AMD Radeon RX Vega 64", GpuKind.Discrete)]
+    [InlineData("AMD Radeon R9 390 Series", GpuKind.Discrete)]
+    [InlineData("AMD Radeon(TM) R7 370 Series", GpuKind.Discrete)]
+    [InlineData("AMD Radeon HD 7970", GpuKind.Discrete)]
+    [InlineData("Radeon 550 Series", GpuKind.Discrete)]
+    [InlineData("AMD Radeon RX 7800 XT", GpuKind.Discrete)]
+    [InlineData("AMD Radeon(TM) Graphics", GpuKind.Integrated)]          // Ryzen APUs
+    [InlineData("AMD Radeon(TM) Vega 8 Graphics", GpuKind.Integrated)]
+    [InlineData("AMD Radeon 780M Graphics", GpuKind.Integrated)]
+    [InlineData("AMD Radeon HD 7660D", GpuKind.Integrated)]              // A10 APU
+    [InlineData("AMD Radeon(TM) R7 Graphics", GpuKind.Integrated)]       // Kaveri APU
+    public void AmdClassification(string name, GpuKind expected) =>
+        Assert.Equal(expected, GpuProbe.Classify(name, @"PCI\VEN_1002&DEV_0000", Vendor.Amd, "oem1.inf", C));
+
     // ---------------- X3 / F25: virtual adapters, location permission ----------------
 
     private static NicDetail Nic(string instance, string description, bool up = true) => new("{" + description.Length.ToString("D8") + "-0000-0000-0000-000000000000}",
         description, description, "Ethernet", up, up ? 10_000_000_000 : 0, null, @"SYSTEM\x\0007",
-        new Dictionary<string, string>(), new Dictionary<string, IReadOnlyList<string>>()) { DeviceInstanceId = instance };
+        new Dictionary<string, string>(), new Dictionary<string, IReadOnlyList<string>>()) { DeviceInstanceId = instance, Characteristics = 0x4 }; // NCF_PHYSICAL, as cards and miniports report it
 
     private static Wlan.Connection Wifi24() => new("Intel(R) Wi-Fi 6E AX211", "Home", "AABBCCDDEEFF", 2_437_000, [2_437_000, 5_180_000]);
 
@@ -429,6 +445,11 @@ public class CheckEdgeCaseTests
         var f = One(new MicrocodeCheck(), P(p => p with { Cpu = Intel("13th Gen Intel(R) Core(TM) i5-13600K", 183, 0x12B) }));
         Assert.Equal((FindingStatus.Problem, true), (f.Status, f.Critical));
         Assert.Equal(FindingStatus.Ok, One(new MicrocodeCheck(), P(p => p with { Cpu = Intel("13th Gen Intel(R) Core(TM) i5-13600K", 183, 0x12F) })).Status);
+
+        // BIOS revision unknown: a running revision that is too low proves the problem; a high one may come from Windows.
+        var unknownBios = Intel("13th Gen Intel(R) Core(TM) i5-13600K", 183, 0x12F) with { MicrocodeBios = null };
+        Assert.Equal(FindingStatus.Unknown, One(new MicrocodeCheck(), P(p => p with { Cpu = unknownBios })).Status);
+        Assert.Equal(FindingStatus.Problem, One(new MicrocodeCheck(), P(p => p with { Cpu = unknownBios with { MicrocodeCurrent = 0x12B } })).Status);
     }
 
     [Theory]
@@ -460,11 +481,26 @@ public class CheckEdgeCaseTests
     [Fact]
     public void Rx5000WithSmallBarIsProblemWithImpact2()
     {
-        var f = One(new RebarCheck(), P(p => p with { Gpus = [TestData.Gpu("AMD Radeon RX 5700 XT", Vendor.Amd, 256L << 20)] }));
+        var f = One(new RebarCheck(), P(p => p with { Cpu = TestData.Cpu13700K(), Gpus = [TestData.Gpu("AMD Radeon RX 5700 XT", Vendor.Amd, 256L << 20)] }));
         Assert.Equal((FindingStatus.Problem, "off", 2), (f.Status, f.Variant, f.Impact));
         AssertRenders(f);
         var arc = One(new RebarCheck(), P(p => p with { Gpus = [TestData.Gpu("Intel(R) Arc(TM) B580 Graphics", Vendor.Intel, 256L << 20)] }));
         Assert.Equal(5, arc.Impact); // Intel calls ReBAR required for Arc
+    }
+
+    [Fact]
+    public void RebarOffOnAnOlderPlatformIsInfo()
+    {
+        HardwareProfile R(CpuInfo cpu) => P(p => p with { Cpu = cpu, Gpus = [TestData.Gpu("NVIDIA GeForce RTX 4070", Vendor.Nvidia, 256L << 20)] });
+        // NVIDIA names Intel Core 10th gen and newer, AMD names Ryzen 3000 and newer.
+        var coffeeLake = One(new RebarCheck(), R(TestData.Cpu9700K()));
+        Assert.Equal((FindingStatus.Info, "platform"), (coffeeLake.Status, coffeeLake.Variant));
+        AssertRenders(coffeeLake);
+        Assert.Equal("platform", One(new RebarCheck(), R(Amd("AMD Ryzen 7 2700X Eight-Core Processor", 23, 8, "AM4", 16))).Variant);
+        Assert.Equal("platform", One(new RebarCheck(), R(Amd("AMD Ryzen 5 3400G with Radeon Vega Graphics", 23, 24, "AM4", 4))).Variant);
+        Assert.Equal("off", One(new RebarCheck(), R(Amd("AMD Ryzen 5 3600 6-Core Processor", 23, 113, "AM4", 32))).Variant);
+        Assert.Equal("off", One(new RebarCheck(), R(TestData.Cpu9700K() with { Name = "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz" })).Variant);
+        Assert.Equal("off", One(new RebarCheck(), R(TestData.Cpu9700K() with { Name = "Intel(R) Core(TM) Ultra 7 265K" })).Variant);
     }
 
     [Fact]

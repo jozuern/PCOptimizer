@@ -10,7 +10,7 @@ With power throttling, Windows classifies background work as EcoQoS and tries to
 Tools that run next to a game, such as voice chat, overlays or streaming software, may otherwise be slowed down when they lose focus.
 
 ## Evidence
-On desktops without efficiency cores the effect is usually not measurable. On hybrid CPUs and laptops, background apps keep full speed.
+We found no measurement of the effect on games. On desktops without efficiency cores Windows has little to throttle; on hybrid CPUs and laptops the visible result is that background apps keep full speed, not a higher frame rate in the game you play.
 
 ## Trade-offs & risks
 Higher power draw, especially on battery. The app asks for a restart after applying it.

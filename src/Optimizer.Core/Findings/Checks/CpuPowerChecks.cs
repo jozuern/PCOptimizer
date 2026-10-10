@@ -19,9 +19,12 @@ public sealed class MicrocodeCheck : IFindingCheck
         if (p.Cpu is null) yield break;
         var rule = MatchRule(p.Cpu, c);
         if (rule is null) yield break; // CPU not affected by any rule -> nothing to show
-        // The BIOS revision matters: an OS-loaded update does not fix the BIOS voltage behavior.
-        var bios = p.Cpu.MicrocodeBios ?? p.Cpu.MicrocodeCurrent;
-        var status = bios is null ? FindingStatus.Unknown : bios < rule.MinRevisionValue ? FindingStatus.Problem : FindingStatus.Ok;
+        // The BIOS revision matters: an OS-loaded update does not fix the BIOS voltage behavior. Without it, the running
+        // revision still proves a problem (an OS update only raises it, so the BIOS revision is not higher), but not a fix.
+        var bios = p.Cpu.MicrocodeBios;
+        var status = bios is { } b ? b < rule.MinRevisionValue ? FindingStatus.Problem : FindingStatus.Ok
+            : p.Cpu.MicrocodeCurrent is { } current && current < rule.MinRevisionValue ? FindingStatus.Problem
+            : FindingStatus.Unknown;
         yield return new Finding
         {
             Id = rule.Id,
@@ -83,7 +86,9 @@ public sealed class X3dCheck : IFindingCheck
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = p.Power is null ? FindingStatus.Unknown : balanced && !parkingOff ? FindingStatus.Ok : FindingStatus.Problem,
+            // A plan whose type could not be read is not proof of a wrong plan.
+            Status = p.Power is null || p.Power.Personality == PowerPersonality.Unknown ? FindingStatus.Unknown
+                : balanced && !parkingOff ? FindingStatus.Ok : FindingStatus.Problem,
             Variant = p.Power is not null && balanced && parkingOff ? "parkingOff" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],

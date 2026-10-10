@@ -37,6 +37,8 @@
                         <ComboBox ItemsSource="{Binding Health.CaptureOptions}" SelectedItem="{Binding Health.CaptureSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Bench_Before}" Command="{Binding Health.CaptureBeforeCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Bench_After}" Command="{Binding Health.CaptureAfterCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Health.StopCaptureCommand}" Margin="0,0,8,0"
+                                   Visibility="{Binding Health.IsCapturing, Converter={StaticResource BoolToVisibility}}" />
                         <ui:Button Content="{l:Tr Bench_Clear}" Appearance="Transparent" Command="{Binding Health.ClearRunsCommand}" />
                     </WrapPanel>
                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Health.BenchmarkStatus}" Margin="0,8,0,0" Visibility="{Binding Health.BenchmarkStatus, Converter={StaticResource NullToVisibility}}" />
@@ -51,8 +53,8 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Label}" />
-                                    <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding AvgFps, StringFormat={}{0} FPS}" />
-                                    <ui:TextBlock Grid.Column="2" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Low, StringFormat={}1 % low {0}}" />
+                                    <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding AvgFps}" />
+                                    <ui:TextBlock Grid.Column="2" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Low}" />
                                     <ui:TextBlock Grid.Column="3" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Frames}" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>

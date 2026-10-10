@@ -13,7 +13,7 @@ Reading the TSC takes tens to a few hundred CPU cycles. Reading a platform timer
 The cost difference is documented by Microsoft [2]. How much it changes the frame rate depends on how often a game queries the time.
 
 ## Trade-offs & risks
-A boot configuration change. If BitLocker is on, keep your recovery key at hand: Microsoft notes that BitLocker may need to be suspended before changing boot options [1]. If the PC does not start correctly, undo it from the recovery environment (Shift + Restart > Troubleshoot > System Restore); the BCD export is kept in the app's data folder.
+A boot configuration change. If BitLocker is on, keep your recovery key at hand: Microsoft notes that BitLocker may need to be suspended before changing boot options [1]. If the PC does not start correctly, System Restore does not help, because it does not restore the boot configuration. Open the recovery environment (Shift + Restart > Troubleshoot > Advanced options > Command Prompt) and run `bcdedit /deletevalue {default} useplatformclock` to remove the setting again [1][3]. The app also exports the whole boot configuration before the change into its data folder; `bcdedit /import <file>` restores it from there [3].
 
 ## When not to use it
 Nothing to do if the option is not set. Only change boot settings with physical access to the PC.
@@ -21,3 +21,4 @@ Nothing to do if the option is not set. Only change boot settings with physical 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
 2. https://learn.microsoft.com/en-us/windows/win32/sysinfo/acquiring-high-resolution-time-stamps
+3. https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcdedit-command-line-options

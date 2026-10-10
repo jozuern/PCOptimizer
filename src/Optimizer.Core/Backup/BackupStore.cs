@@ -93,28 +93,86 @@ public sealed class BackupStore
     public string PendingUndoFolder => Path.Combine(Root, "backups", "pending-undo");
     public string ExportFolder => Path.Combine(Root, "exports");
 
-    private string FileFor(string tweakId) => Path.Combine(BackupFolder, Sanitize(tweakId) + ".json");
+    /// <summary>
+    /// The backup file of a tweak. Ids that need replaced characters get a short hash of the real id, so two ids never
+    /// share a file; a file under the older plain name is still found.
+    /// </summary>
+    private string FileFor(string tweakId)
+    {
+        var name = Sanitize(tweakId);
+        if (name == tweakId) return Path.Combine(BackupFolder, name + ".json");
+        var hashed = Path.Combine(BackupFolder, $"{name}-{IdHash(tweakId)}.json");
+        var legacy = Path.Combine(BackupFolder, name + ".json");
+        return !File.Exists(hashed) && File.Exists(legacy) && Read(legacy)?.TweakId == tweakId ? legacy : hashed;
+    }
+
+    private static string IdHash(string id) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(id)))[..8].ToLowerInvariant();
+
+    /// <summary>Suffix of a backup file that could not be read: kept for the user, never overwritten.</summary>
+    public const string DamagedSuffix = ".damaged";
 
     public TweakBackup? Get(string tweakId)
     {
         var file = FileFor(tweakId);
-        return File.Exists(file) && Trusted(file) ? Read(file) : null;
+        if (!File.Exists(file) || !Trusted(file)) return null;
+        var (backup, damaged) = TryRead(file);
+        if (damaged) Quarantine(file);
+        return backup;
     }
 
-    public IReadOnlyList<TweakBackup> All() =>
-        Directory.EnumerateFiles(BackupFolder, "*.json")
-            .Where(Trusted)
-            .Select(Read)
-            .OfType<TweakBackup>()
-            .OrderByDescending(b => b.LastApplied)
-            .ToList();
+    /// <summary>
+    /// The tweak's backup file exists but cannot be read (cut off by a power loss, edited by hand). It still holds the
+    /// only copy of the originals, so the tweak must not be applied again until the user removes it.
+    /// </summary>
+    public bool IsDamaged(string tweakId) => File.Exists(DamagedFile(tweakId));
 
-    public void Save(TweakBackup backup)
+    public string DamagedFile(string tweakId) => FileFor(tweakId) + DamagedSuffix;
+
+    public IReadOnlyList<TweakBackup> All()
     {
-        var file = FileFor(backup.TweakId);
+        var list = new List<TweakBackup>();
+        foreach (var file in Directory.EnumerateFiles(BackupFolder, "*.json").Where(Trusted))
+        {
+            var (backup, damaged) = TryRead(file);
+            if (backup is not null) list.Add(backup);
+            else if (damaged) Quarantine(file);
+        }
+        return list.OrderByDescending(b => b.LastApplied).ToList();
+    }
+
+    public void Save(TweakBackup backup) => WriteDurably(FileFor(backup.TweakId), JsonSerializer.Serialize(backup, Json));
+
+    /// <summary>
+    /// Written to a temporary file, flushed to the disk and then moved over the old file: a power loss right after a
+    /// boot configuration change leaves either the old or the new backup, never an empty one.
+    /// </summary>
+    private static void WriteDurably(string file, string json)
+    {
         var tmp = file + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(backup, Json));
+        using (var stream = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+        using (var writer = new StreamWriter(stream, new System.Text.UTF8Encoding(false)))
+        {
+            writer.Write(json);
+            writer.Flush();
+            stream.Flush(flushToDisk: true);
+        }
         File.Move(tmp, file, overwrite: true);
+    }
+
+    private static void Quarantine(string file)
+    {
+        try
+        {
+            var target = file + DamagedSuffix;
+            if (File.Exists(target)) target = $"{file}-{DateTime.Now:yyyyMMdd-HHmmss}{DamagedSuffix}";
+            File.Move(file, target);
+            Log.Error("backup", $"unreadable backup moved to {target}; the tweak cannot be applied again until it is removed");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("backup", $"unreadable backup {file} could not be moved aside: {ex.Message}");
+        }
     }
 
     /// <summary>After a complete undo the record moves to history (kept for the change log).</summary>
@@ -148,13 +206,7 @@ public sealed class BackupStore
         }
     }
 
-    public void SavePendingUndo(PendingUndo pending)
-    {
-        var file = PendingUndoFile(pending.TweakId);
-        var tmp = file + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(pending, Json));
-        File.Move(tmp, file, overwrite: true);
-    }
+    public void SavePendingUndo(PendingUndo pending) => WriteDurably(PendingUndoFile(pending.TweakId), JsonSerializer.Serialize(pending, Json));
 
     public void ClearPendingUndo(string tweakId)
     {
@@ -170,16 +222,25 @@ public sealed class BackupStore
         return false;
     }
 
-    private static TweakBackup? Read(string file)
+    private static TweakBackup? Read(string file) => TryRead(file).Backup;
+
+    /// <summary>Damaged: the content cannot be parsed. A file that is only locked for a moment is not damaged.</summary>
+    private static (TweakBackup? Backup, bool Damaged) TryRead(string file)
     {
         try
         {
-            return JsonSerializer.Deserialize<TweakBackup>(File.ReadAllText(file), Json);
+            var backup = JsonSerializer.Deserialize<TweakBackup>(File.ReadAllText(file), Json);
+            return backup is { TweakId.Length: > 0 } ? (backup, false) : (null, true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or ArgumentException or InvalidOperationException)
         {
             Log.Error("backup", $"unreadable backup {file}", ex);
-            return null;
+            return (null, true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("backup", $"backup {file} not readable right now: {ex.Message}");
+            return (null, false);
         }
     }
 

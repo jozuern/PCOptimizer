@@ -106,7 +106,9 @@ public sealed class NvidiaGlobalCheck : IFindingCheck
         var refresh = (nvidiaDisplays.Count > 0 ? nvidiaDisplays : p.Displays ?? []).Select(d => d.CurrentRefresh.Hz).DefaultIfEmpty(0).Max();
         var frl = nv.FrameRateLimit is > 0 ? nv.FrameRateLimit : null;
         // A cap a few FPS below the refresh rate is the recommended G-SYNC setup; only a cap well below it is a problem.
-        var lowCap = frl is { } cap && refresh > 0 && cap < refresh * 0.9;
+        // Reflex caps lower on very high refresh displays (refresh - refresh² / 3600: 416 FPS at 480 Hz), so that cap counts as fine too.
+        var lowest = refresh > 0 ? Math.Min(refresh * 0.9, refresh - refresh * refresh / 3600) - 2 : 0;
+        var lowCap = frl is { } cap && refresh > 0 && cap < lowest;
         var powerMin = nv.PowerMode == Nvapi.PStatePreferMin;
         var vrrOn = nv.Vrr.Values.Any(v => v.Enabled);
         var vsyncForced = nv.VSyncMode == Nvapi.VSyncForceOn && !vrrOn;
@@ -646,9 +648,12 @@ public sealed class AmdFtpmCheck : IFindingCheck
         return cpu.Family == 0x17 || (cpu.Family == 0x19 && cpu.Model < 0x60);
     }
 
-    /// <summary>AMD's AGESA 1.2.0.7 threshold describes the desktop AM4 packages (ComboAM4PI, ComboAM4v2PI) only.</summary>
+    /// <summary>
+    /// AMD's AGESA 1.2.0.7 threshold belongs to the ComboAM4v2PI line. The older ComboAM4PI line is numbered 1.0.0.x
+    /// and would always look older than 1.2.0.7, so it is judged by the BIOS date like the mobile lines.
+    /// </summary>
     public static bool IsDesktopAm4Agesa(string? smbiosString) =>
-        smbiosString is not null && RegexCache.Get(@"ComboAM4(v2)?PI").IsMatch(smbiosString);
+        smbiosString is not null && RegexCache.Get(@"ComboAM4v2PI").IsMatch(smbiosString);
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
@@ -710,7 +715,7 @@ public sealed class RyzenMemoryCheck : IFindingCheck
         if (p.Cpu?.Vendor != Vendor.Amd || p.IsLaptop || p.Memory is null || p.Memory.Modules.Count == 0) yield break;
         var type = p.Memory.Modules[0].Type;
         if (SweetSpot(type) is not { } range) yield break;
-        var configured = p.Memory.Modules.Select(m => RamSpeed.NormalizeConfigured(m.ConfiguredMts, m.Type)).ToList();
+        var configured = p.Memory.Modules.Select(RamSpeed.NormalizeConfigured).ToList();
         var rated = p.Memory.Modules.Select(m => RamSpeed.DecodeRated(m.PartNumber, c)).ToList();
         var speed = configured.All(v => v is not null) ? configured.Min() : null;
         var ratedMin = rated.All(v => v is not null) ? rated.Min() : null;
@@ -911,18 +916,24 @@ public sealed class ThrottleCheck : IFindingCheck
     public const string Id = "F23.throttling";
     public IReadOnlyList<string> DocIds => [Id];
 
+    /// <summary>After this, the last measurement is shown as out of date and asks for a new one.</summary>
+    public static readonly TimeSpan MaxAge = TimeSpan.FromDays(30);
+
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Extras?.LastThrottle is not { } t) yield break; // not measured yet: the Health page offers the check
         var gpuThermal = t.GpuThermal;
         var status = t.CpuThrottled || gpuThermal ? FindingStatus.Problem : t.GpuPower ? FindingStatus.Info : FindingStatus.Ok;
+        // An old measurement says little about today (dust, a new cooler, another season): shown, but not as a problem.
+        var stale = DateTimeOffset.Now - t.Measured > MaxAge;
+        if (stale && status == FindingStatus.Problem) status = FindingStatus.Info;
         string Share(string reason) => t.GpuReasonShare.TryGetValue(reason, out var v) ? $"{v * 100:0} %" : "@unknown";
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
             Status = status,
-            Variant = t.CpuThrottled ? "cpu" : gpuThermal ? "gpuThermal" : t.GpuPower ? "gpuPower" : null,
+            Variant = stale ? "stale" : t.CpuThrottled ? "cpu" : gpuThermal ? "gpuThermal" : t.GpuPower ? "gpuPower" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
@@ -960,7 +971,7 @@ public sealed class DiskHealthCheck : IFindingCheck
             yield return new Finding
             {
                 Id = Id,
-                InstanceKey = d.Name,
+                InstanceKey = d.DeviceId.Length > 0 ? $"disk{d.DeviceId}" : d.Name,
                 Subject = d.Name,
                 Kind = FindingKind.Finding,
                 Status = status,

@@ -21,10 +21,10 @@ public sealed class AppServices
         Store = new BackupStore(root, secure: Elevation.IsElevated);
         Context = SystemNotify.CreateContext(Elevation.SessionUserSid ?? Elevation.ProcessUserSid, Store.ExportFolder, ActiveInterfaceIds());
         RestorePoints = new RestorePointService(Context.Processes);
-        Engine = new TweakEngine(Context, Store, RestorePoints, typeof(AppServices).Assembly.GetName().Version?.ToString(3) ?? "0", Os.Build, Os.BuildString);
+        Engine = new TweakEngine(Context, Store, RestorePoints, Optimizer.Core.Platform.AppInfo.Text, Os.Build, Os.BuildString);
 
         // bcdedit needs admin rights; without them the BCD part of F21 is reported as unknown.
-        LeftoverCheck.BcdElements = Elevation.IsElevated ? () => Context.Bcd.CurrentElements() : () => null;
+        BcdElements = Elevation.IsElevated ? () => Context.Bcd.CurrentElements() : () => null;
         Log.Info("app", "services ready", new { Elevation.IsElevated, Elevation.AdministratorProtection, user = Elevation.SessionUser });
     }
 
@@ -44,12 +44,7 @@ public sealed class AppServices
     {
         try
         {
-            var physical = NicAdapters.Enumerate(new SystemRegistryRoots(null), includeSynthetic: true).Select(a => a.InterfaceGuid).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up && physical.Contains(n.Id) &&
-                            n.NetworkInterfaceType is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.GigabitEthernet)
-                .Select(n => n.Id)
-                .ToList();
+            return NicAdapters.ConnectedPhysicalInterfaceIds(new SystemRegistryRoots(null));
         }
         catch (Exception ex) when (ex is NetworkInformationException or System.Security.SecurityException or UnauthorizedAccessException or IOException)
         {
@@ -59,8 +54,11 @@ public sealed class AppServices
 
     public static string DataFolder => Optimizer.Core.Platform.DataPaths.Root;
 
+    /// <summary>BCD elements of {current} for the findings (bcdedit needs admin rights; not elevated = unknown).</summary>
+    public Func<IReadOnlySet<string>?> BcdElements { get; }
+
     /// <summary>Extracted helper tools (PresentMon) and capture files.</summary>
-    public static string ToolsFolder => Path.Combine(DataFolder, "tools");
+    public static string ToolsFolder => Optimizer.Core.Platform.DataPaths.Tools;
 
     /// <summary>SID of the signed-in user (not the elevated account), for per-user paths and registry.</summary>
     public string? UserSid => Elevation.SessionUserSid ?? Elevation.ProcessUserSid;

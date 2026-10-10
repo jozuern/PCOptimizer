@@ -45,16 +45,17 @@ public static class StorageAnalyzer
         return list.Where(p => !string.IsNullOrEmpty(p)).Select(p => p.TrimEnd('\\') + "\\").Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    public static bool IsProtected(string path, IReadOnlyList<string> protectedRoots)
+    /// <param name="appData">Also protect every AppData folder; off only in tests, whose temp folder lies there.</param>
+    public static bool IsProtected(string path, IReadOnlyList<string> protectedRoots, bool appData = true)
     {
         var p = path.TrimEnd('\\') + "\\";
         // AppData holds program state (settings, caches, saves): never offered for deletion.
-        if (p.Contains(@"\AppData\", StringComparison.OrdinalIgnoreCase)) return true;
+        if (appData && p.Contains(@"\AppData\", StringComparison.OrdinalIgnoreCase)) return true;
         return protectedRoots.Any(r => p.StartsWith(r, StringComparison.OrdinalIgnoreCase));
     }
 
     public static async Task<StorageReport> ScanAsync(string root, IReadOnlyList<string> protectedRoots, int topFiles = 100, int maxFiles = 3_000_000,
-        IProgress<(int Files, long Bytes)>? progress = null, CancellationToken ct = default)
+        IProgress<(int Files, long Bytes)>? progress = null, CancellationToken ct = default, bool protectAppData = true)
     {
         return await Task.Run(() =>
         {
@@ -116,7 +117,7 @@ public static class StorageAnalyzer
                         folderBytes[key] = (b + length, n + 1);
                     }
 
-                    if (length >= DuplicateMinBytes && !IsProtected(f.FullName, protectedRoots))
+                    if (length >= DuplicateMinBytes && !IsProtected(f.FullName, protectedRoots, protectAppData))
                     {
                         if (!bySize.TryGetValue(length, out var same)) bySize[length] = same = [];
                         same.Add(f.FullName);
@@ -125,7 +126,7 @@ public static class StorageAnalyzer
             }
 
             var files = new List<LargeFile>();
-            while (largest.TryDequeue(out var f, out var len)) files.Add(new LargeFile(f.FullName, len, f.LastWriteTimeUtc, !IsProtected(f.FullName, protectedRoots)));
+            while (largest.TryDequeue(out var f, out var len)) files.Add(new LargeFile(f.FullName, len, f.LastWriteTimeUtc, !IsProtected(f.FullName, protectedRoots, protectAppData)));
             files.Reverse();
             var folders = folderBytes.Select(kv => new FolderSize(kv.Key, kv.Value.Bytes, kv.Value.Files)).OrderByDescending(x => x.Bytes).Take(50).ToList();
             var duplicates = FindDuplicates(bySize.Values.Where(v => v.Count > 1), ct);
@@ -168,13 +169,17 @@ public static class StorageAnalyzer
         }
     }
 
-    /// <summary>Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths. Returns the failures.</summary>
+    /// <summary>
+    /// Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths and paths that do not resolve
+    /// to themselves: a parent folder swapped for a junction between scan and confirmation would otherwise send a
+    /// system file to the Recycle Bin with administrator rights. Returns the failures.
+    /// </summary>
     public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots)
     {
         var failed = new List<string>();
         foreach (var p in paths)
         {
-            if (IsProtected(p, protectedRoots) || !File.Exists(p))
+            if (IsProtected(p, protectedRoots) || !File.Exists(p) || !Platform.SafeDelete.ResolvesToItself(p))
             {
                 failed.Add(p);
                 continue;

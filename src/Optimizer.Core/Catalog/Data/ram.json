@@ -8,6 +8,6 @@
     { "brand": "TeamGroup", "regex": "^T[A-Z0-9]*?\\d+G(\\d{4})[HC]C?\\d+", "multiplier": 1 },
     { "brand": "Patriot", "regex": "^PV[A-Z]*\\d+G(\\d{3})C\\d+", "multiplier": 10 }
   ],
-  "channelPatterns": [ "Channel\\s*([A-H])", "CHANNEL\\s*([A-H])", "DIMM_?([A-H])\\d", "DDR\\d_([A-H])\\d" ],
+  "channelPatterns": [ "Controller\\s*(\\d)\\s*-?\\s*Channel\\s*([A-H])", "Channel\\s*([A-H])", "CHANNEL\\s*([A-H])", "DIMM_?([A-H])\\d", "DDR\\d_([A-H])\\d" ],
   "speedToleranceFraction": 0.03
 }

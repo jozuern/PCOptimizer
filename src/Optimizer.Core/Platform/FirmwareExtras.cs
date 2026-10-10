@@ -65,15 +65,36 @@ public static partial class FirmwareExtras
         {
             if (!s.Contains("PI", StringComparison.Ordinal) && !s.Contains("AGESA", StringComparison.OrdinalIgnoreCase)) continue;
             var m = AgesaRegex().Match(s);
-            if (m.Success && Version.TryParse(m.Groups[1].Value, out var v)) return v;
+            if (m.Success && ParseAgesa(m.Groups[1].Value) is { } v) return v;
         }
         return null;
+    }
+
+    /// <summary>
+    /// "1.2.0.7", and the later letter versions "1.2.0.A", "1.2.0.B", "1.2.0.Ca": a letter in the last part counts as
+    /// 10 for A, 11 for B and so on (they follow 1.2.0.9), letters after it are ignored.
+    /// </summary>
+    public static Version? ParseAgesa(string text)
+    {
+        var parts = text.Split('.');
+        if (parts.Length != 4) return null;
+        var numbers = new int[4];
+        for (var i = 0; i < 4; i++)
+        {
+            var part = parts[i];
+            var digits = part.TakeWhile(char.IsAsciiDigit).Count();
+            if (digits == part.Length && int.TryParse(part, out var n)) numbers[i] = n;
+            else if (i == 3 && digits > 0) numbers[i] = int.Parse(part[..digits]); // "2b": a revision of 2
+            else if (i == 3 && part.Length > 0 && char.IsAsciiLetter(part[0])) numbers[i] = 10 + (char.ToUpperInvariant(part[0]) - 'A');
+            else return null;
+        }
+        return new Version(numbers[0], numbers[1], numbers[2], numbers[3]);
     }
 
     [GeneratedRegex(@"[\x20-\x7E]{4,}")]
     private static partial Regex PrintableRegex();
 
-    [GeneratedRegex(@"(?:AM4|AM5|Combo|Genesis|Cezanne|Renoir|Matisse|Vermeer|Raphael)[A-Za-z0-9]*PI\s*V?(\d+\.\d+\.\d+\.\d+)")]
+    [GeneratedRegex(@"(?:AM4|AM5|Combo|Genesis|Cezanne|Renoir|Matisse|Vermeer|Raphael)[A-Za-z0-9]*PI\s*V?(\d+\.\d+\.\d+\.[0-9A-Za-z]+)")]
     private static partial Regex AgesaRegex();
 
     // ---------------- Windows power mode (slider overlay) ----------------

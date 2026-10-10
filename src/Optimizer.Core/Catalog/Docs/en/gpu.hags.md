@@ -4,7 +4,7 @@
 Lets the graphics card schedule its own work instead of a CPU thread. Required for DLSS Frame Generation; without Frame Generation no measurable gain is documented.
 
 ## How it works
-Since WDDM 2.7, Windows can hand most GPU scheduling to a dedicated processor on the graphics card instead of a high-priority CPU thread [1]. Only supporting GPUs and drivers use it. The value HwSchMode = 2 turns it on; it takes effect after a restart.
+Since WDDM 2.7, Windows can hand most GPU scheduling to a dedicated processor on the graphics card instead of a high-priority CPU thread [1]. Only supporting GPUs and drivers use it. The value HwSchMode = 2 turns it on; it takes effect after a restart. It is the value behind the switch "Hardware-accelerated GPU scheduling" in Settings > System > Display > Graphics; Microsoft does not document the value on its own.
 
 ## Why it can help
 On NVIDIA RTX 40 and 50 cards, DLSS Frame Generation only works with this setting on [2]. Without Frame Generation, Microsoft describes the change as one users should not notice [1].

@@ -23,7 +23,7 @@ Checks whether the memory runs at the speed printed in its part number, which us
 :::
 
 ## Why it matters
-Memory modules first start at a safe standard speed (JEDEC) [1]. The faster speed on the box is stored as a profile (Intel XMP, AMD EXPO) that must be switched on in the BIOS [1][2]. ASUS boards show **DOCP** when the kit carries the other vendor's profile, for example an XMP kit on an AMD board [3]. Intel and AMD describe these profiles as memory overclocking, and Intel notes that changing clock or voltage can affect warranties and reduce stability [1][2]. Without the profile, the memory runs slower than its rating, and games that depend on memory bandwidth and latency lose frame rate, especially in the 1 % lows.
+Memory modules first start at a safe standard speed (JEDEC) [1]. The faster speed on the box is stored as a profile (Intel XMP, AMD EXPO) that must be switched on in the BIOS [1][2]. ASUS boards show **DOCP** when the kit carries the other vendor's profile, for example an XMP kit on an AMD board [3]. Intel and AMD describe these profiles as memory overclocking, and Intel notes that changing clock or voltage can affect warranties and reduce stability [1][2]. Without the profile, the memory runs slower than its rating, and games that depend on memory bandwidth and latency can lose frame rate; how much depends on the game and the platform.
 ::: variant laptop
 Most laptops do not offer XMP; their memory speed is fixed by the manufacturer.
 :::

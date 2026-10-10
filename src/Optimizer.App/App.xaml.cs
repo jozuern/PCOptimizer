@@ -52,10 +52,21 @@ public partial class App : Application
             }
         };
 
+        // Failures outside the dispatcher (background tasks nobody awaited, other threads) are logged, not lost.
+        TaskScheduler.UnobservedTaskException += (_, ex) =>
+        {
+            Log.Error("ui", "unobserved task exception", ex.Exception);
+            ex.SetObserved();
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
+        {
+            if (ex.ExceptionObject is Exception error) Log.Error("app", "unhandled exception", error);
+        };
+
         var args = new CliArgs(e.Args);
         _settings = AppSettings.Load();
         Loc.Instance.SetLanguage(args.Value("--lang") ?? _settings.Language ?? Loc.Instance.Language);
-        Log.Info("app", "start", new { version = typeof(App).Assembly.GetName().Version?.ToString(), args = e.Args });
+        Log.Info("app", "start", new { version = AppInfo.Text, args = e.Args });
 
         // OS gate: block below 26100 and non-x64 before scanning anything.
         var os = BuildInfo.Read();
@@ -83,14 +94,17 @@ public partial class App : Application
             return;
         }
 
-        if (args.Value("--expert") is "on") _settings.ExpertMode = true;
         // Developer aid for screenshots: start with this profile for the session (never saved).
         var vm = new MainViewModel(_settings, services, new Dialogs()) { ProfileOverride = args.Value("--profile") };
+        if (args.Value("--expert") is "on") vm.EnableExpertForSession();
         var window = new MainWindow(vm);
         MainWindow = window;
         ApplyTheme(args.Value("--theme") ?? _settings.Theme, save: false);
-        window.Show();
+        // The scan starts before the window is built: its probes run on other threads while WPF creates the page.
         var scan = vm.ScanAsync();
+        window.Show();
+        // "System" theme: WPF-UI's watcher switches the brushes when Windows changes its mode; content built from brushes follows.
+        ApplicationThemeManager.Changed += (_, _) => Dispatcher.BeginInvoke(RefreshThemedContent);
         // Developer aid: render the window while the first scan still runs (placeholders instead of the score).
         if (args.Value("--shot-scanning") is { } scanningShot)
         {
@@ -108,7 +122,7 @@ public partial class App : Application
         }
 
         // Opt-in release check (off by default); screenshots stay offline and reproducible.
-        if (args.Value("--screenshot") is null) _ = vm.CheckForUpdatesAsync(atStart: true);
+        if (args.Value("--screenshot") is null) vm.CheckForUpdatesAsync(atStart: true).Forget("update check");
 
         if (args.Value("--screenshot") is { } shot)
         {
@@ -120,6 +134,8 @@ public partial class App : Application
             if (args.Value("--category") is { } cat) vm.SelectedCategory = vm.Categories.FirstOrDefault(c => c.Key == cat) ?? vm.SelectedCategory;
             await Task.Delay(1500); // pages that load their own data (startup, services, apps)
             if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
+            // The inspector document is built in the background: wait for it before the picture.
+            if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             // Developer aid: switch the theme while the page is open, as Settings does (checks text that keeps old colors).
             if (args.Value("--switch-theme") is { } switchTo)
@@ -139,12 +155,9 @@ public partial class App : Application
             // Developer aid: render the confirmation dialog of a tweak without applying anything.
             if (args.Value("--confirm") is { } confirmId && services.Catalog.Get(confirmId) is { } ct && args.Value("--confirm-shot") is { } confirmShot)
             {
-                var cpage = DocStore.Get(ct.DocId, Loc.Instance.Language);
-                var dlg = new ConfirmWindow(new ConfirmRequest(cpage?.Title ?? ct.Id, cpage?.Section(DocHeadings.Summary(Loc.Instance.Language))?.Body ?? "",
-                    services.Engine.Preview(ct),
-                    [.. ct.Preview ? [Labels.Current.Get(Loc.Instance.Language, "badge.preview")] : Array.Empty<string>(), Labels.Current.Get(Loc.Instance.Language, $"risk.{ct.EffectiveRisk}")],
-                    [.. ct.Preview ? [Labels.Current.Get(Loc.Instance.Language, "preview.warning")] : Array.Empty<string>(), .. ct.IsBootCritical ? [Labels.Current.Get(Loc.Instance.Language, "undo.bootCritical")] : Array.Empty<string>()],
-                    null, false)) { Owner = window };
+                var request = ChangeRunner.ConfirmRequestFor(ct, services.Engine.Detect(ct, vm.Facts, vm.AppliedIds()), vm.ExpertMode,
+                    vm.Runner.Title(ct), vm.Runner.Summary(ct), services.Engine.Preview(ct));
+                var dlg = new ConfirmWindow(request) { Owner = window };
                 dlg.Show();
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 await Task.Delay(400);
@@ -208,12 +221,16 @@ public partial class App : Application
             _settings.Theme = setting;
             _settings.Save();
         }
-        // Status colors and the explanation document read theme brushes when they are built.
-        if (MainWindow is MainWindow main)
-        {
-            (main.DataContext as MainViewModel)?.Rebuild();
-            main.RenderDetails();
-        }
+        // Status colors and the explanation document read theme brushes when they are built: refreshed through
+        // ApplicationThemeManager.Changed (also raised when Windows switches the mode).
+    }
+
+    /// <summary>Rebuilds everything that holds theme brushes: after a switch in Settings and when Windows switches the theme.</summary>
+    private void RefreshThemedContent()
+    {
+        if (MainWindow is not MainWindow main) return;
+        (main.DataContext as MainViewModel)?.OnThemeChanged();
+        main.RenderDetails();
     }
 
     private static double Saturation(Color c)
@@ -266,7 +283,7 @@ public partial class App : Application
         {
             var catalog = CatalogData.Current;
             var profile = await new HardwareScanner(catalog).ScanAsync();
-            var findings = new FindingEngine(catalog, services.Context.Registry).Evaluate(profile);
+            var findings = new FindingEngine(catalog, services.Context.Registry, services.BcdElements).Evaluate(profile);
             var sb = new StringBuilder();
             sb.AppendLine($"# PCOptimizer scan report ({DateTime.Now:yyyy-MM-dd HH:mm})").AppendLine();
             sb.AppendLine($"Readiness score: **{ReadinessScore.Compute(findings)}/100**, Windows {profile.Os.DisplayVersion} build {profile.Os.BuildString}, elevated: {profile.Elevation?.IsElevated}").AppendLine();
@@ -307,6 +324,7 @@ public partial class App : Application
         foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (first time)", () => vm.CurrentPage = page);
         await Task.Delay(3000); // pages that load their own data finish in the background
         foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (again)", () => vm.CurrentPage = page);
+        lines.Add($"rows: apps {vm.Apps.Apps.Count}, drivers {vm.Apps.Drivers.Count}, startup {vm.Startup.Rows.Count}, services {vm.ServicesPage.Rows.Count}, tasks {vm.ServicesPage.Tasks.Count}");
         vm.CurrentPage = Page.Tweaks;
         await Measure("Tweaks: rebuild as for Expert mode", () => { vm.Rebuild(); vm.Network.Rebuild(); });
         await Measure("Tweaks: category filter", () => vm.SelectedCategory = vm.Categories.Skip(1).FirstOrDefault());

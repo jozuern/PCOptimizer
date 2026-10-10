@@ -77,15 +77,20 @@ public static class StorageProbe
 
 public static class NetworkProbe
 {
-    public static List<NetworkAdapterInfo> Read() =>
-        NetworkInterface.GetAllNetworkInterfaces()
+    /// <summary>Real network cards only (<see cref="Actions.NicAdapters.IsPhysical"/>): a VPN or a virtual switch reported as Ethernet is not counted.</summary>
+    public static List<NetworkAdapterInfo> Read()
+    {
+        var physical = Actions.NicAdapters.Enumerate(new SystemRegistryRoots(null), includeSynthetic: true)
+            .Select(a => a.InterfaceGuid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.NetworkInterfaceType is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.GigabitEthernet)
-            .Where(n => !n.Description.Contains("Virtual", StringComparison.OrdinalIgnoreCase) && !n.Description.Contains("Hyper-V", StringComparison.OrdinalIgnoreCase))
+            .Where(n => physical.Contains(n.Id))
             .Select(n => new NetworkAdapterInfo(n.Name, n.Description,
                 n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? "Wi-Fi" : "Ethernet",
                 n.OperationalStatus == OperationalStatus.Up ? n.Speed : 0,
                 n.OperationalStatus == OperationalStatus.Up))
             .ToList();
+    }
 }
 
 public static partial class SoftwareProbe

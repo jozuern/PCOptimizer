@@ -63,7 +63,16 @@ public sealed class RegistryAction : TweakAction
         if (!original.Existed)
         {
             RegistryValue.Delete(c.Registry, Hive, Path, Name);
-            if (RemoveKeyOnUndo is { Length: > 0 } key) RegistryValue.DeleteEmptyKeys(c.Registry, Hive, Path, key);
+            // Keys the apply created (recorded with the original) go again when they are empty; a key that existed
+            // before, even empty, stays. Backups from older versions know only RemoveKeyOnUndo.
+            if (RegistryValue.CreatedKeys(original) is { } created)
+            {
+                if (created > 0) RegistryValue.DeleteEmptyKeys(c.Registry, Hive, Path, RegistryValue.Ancestor(Path, created - 1));
+            }
+            else if (RemoveKeyOnUndo is { Length: > 0 } key)
+            {
+                RegistryValue.DeleteEmptyKeys(c.Registry, Hive, Path, key);
+            }
         }
         else
         {
@@ -259,12 +268,16 @@ public sealed class RegistryTokenAction : TweakAction
 /// <summary>Typed registry read/write shared by the registry actions.</summary>
 public static class RegistryValue
 {
+    /// <summary>
+    /// The value, or a missing value whose kind records how many keys of the path do not exist ("missingKeys:2", or
+    /// "missingKeys:0" in an existing key), so an undo removes exactly the keys the change created.
+    /// </summary>
     public static StoredValue Read(IRegistryRoots roots, Hive hive, string path, string name)
     {
         using var key = roots.Open(hive, path, writable: false);
-        if (key is null) return StoredValue.Missing;
+        if (key is null) return new StoredValue(false, $"{MissingKeysPrefix}{MissingKeyCount(roots, hive, path).ToString(CultureInfo.InvariantCulture)}");
         var value = key.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
-        if (value is null) return StoredValue.Missing;
+        if (value is null) return new StoredValue(false, $"{MissingKeysPrefix}0");
         var kind = key.GetValueKind(name);
         return kind switch
         {
@@ -273,8 +286,49 @@ public static class RegistryValue
             RegistryValueKind.ExpandString => new StoredValue(true, "expandString", (string)value),
             RegistryValueKind.MultiString => new StoredValue(true, "multiString", string.Join("\n", (string[])value)),
             RegistryValueKind.Binary => new StoredValue(true, "binary", Convert.ToHexString((byte[])value)),
+            // REG_NONE and other raw types: keep the bytes, not the text "System.Byte[]".
+            _ when value is byte[] raw => new StoredValue(true, "none", Convert.ToHexString(raw)),
             _ => new StoredValue(true, "string", value.ToString()),
         };
+    }
+
+    private const string MissingKeysPrefix = "missingKeys:";
+
+    /// <summary>How many keys the change created, from an original read by <see cref="Read"/>; null when not recorded.</summary>
+    public static int? CreatedKeys(StoredValue original)
+    {
+        if (original.Existed) return null;
+        if (original.Kind is null) return null;
+        return original.Kind.StartsWith(MissingKeysPrefix, StringComparison.Ordinal) &&
+               int.TryParse(original.Kind.AsSpan(MissingKeysPrefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : null;
+    }
+
+    /// <summary>The path without its last <paramref name="levels"/> keys.</summary>
+    public static string Ancestor(string path, int levels)
+    {
+        var p = path.TrimEnd('\\');
+        for (var i = 0; i < levels; i++)
+        {
+            var cut = p.LastIndexOf('\\');
+            if (cut <= 0) break;
+            p = p[..cut];
+        }
+        return p;
+    }
+
+    private static int MissingKeyCount(IRegistryRoots roots, Hive hive, string path)
+    {
+        var count = 0;
+        var p = path.TrimEnd('\\');
+        while (p.Length > 0)
+        {
+            using (var k = roots.Open(hive, p, writable: false))
+                if (k is not null) break;
+            count++;
+            var cut = p.LastIndexOf('\\');
+            p = cut > 0 ? p[..cut] : "";
+        }
+        return count;
     }
 
     public static void Write(IRegistryRoots roots, Hive hive, string path, string name, string kind, string data)
@@ -312,6 +366,9 @@ public static class RegistryValue
                 break;
             case "binary":
                 key.SetValue(name, Convert.FromHexString(data.Replace(" ", "")), RegistryValueKind.Binary);
+                break;
+            case "none":
+                key.SetValue(name, Convert.FromHexString(data), RegistryValueKind.None);
                 break;
             default:
                 key.SetValue(name, data, RegistryValueKind.String);

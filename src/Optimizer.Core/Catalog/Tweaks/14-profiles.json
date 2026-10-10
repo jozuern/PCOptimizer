@@ -115,6 +115,8 @@
     },
     {
       "id": "quiet.powerModeEfficiency",
+      "undocumented": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: after apply, Windows reports \"Best power efficiency\" as the effective power mode; undo restores the previous mode" ],
       "category": "Quiet",
       "impact": {
         "gaming": 0,
@@ -177,6 +179,8 @@
     },
     {
       "id": "office.launchToThisPc",
+      "undocumented": true,
+      "preview": true,
       "category": "Productivity",
       "impact": {
         "gaming": 0,

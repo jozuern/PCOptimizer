@@ -3,6 +3,7 @@
 # then publishes the single self-contained exe and keeps it as a build artifact.
 # Tests marked Category=Hardware read the real PC (Store apps, sensors, GPU driver) and only make sense on a
 # gaming PC, not on the Windows Server runner: they are skipped here.
+# Actions are pinned to commit SHAs; to update one, look up the new tag's commit (gh api repos/<action>/commits/<tag> --jq .sha).
 
 name: Build and test
 
@@ -22,7 +23,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     env:
       DOTNET_NOLOGO: true
@@ -30,15 +31,29 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v7
-
-    - name: Install .NET 10
-      uses: actions/setup-dotnet@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
-        dotnet-version: 10.0.x
+        fetch-depth: 2
+        persist-credentials: false
+
+    # Every commit on main raises the patch version (.githooks/pre-commit); a commit made without the hook fails here.
+    - name: Version raised
+      if: github.event_name == 'push'
+      shell: pwsh
+      run: |
+        $csproj = "src/Optimizer.App/Optimizer.App.csproj"
+        function Version($text) { if ($text -match '<Version>([0-9.]+)</Version>') { $Matches[1] } }
+        $now = Version (Get-Content $csproj -Raw)
+        $before = Version ((git show "HEAD~1:$csproj") -join "`n")
+        if ($before -and $now -eq $before) { Write-Error "<Version> is still $now: enable the pre-commit hook (git config core.hooksPath .githooks)"; exit 1 }
+
+    - name: Install .NET (version from global.json)
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+      with:
+        global-json-file: global.json
 
     - name: Restore
-      run: dotnet restore PCOptimizer.sln
+      run: dotnet restore PCOptimizer.sln --locked-mode
 
     - name: Build
       run: dotnet build PCOptimizer.sln --configuration Release --no-restore
@@ -50,7 +65,7 @@ jobs:
     - name: Upload test results
       if: failure()
       continue-on-error: true
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: test-results
         path: TestResults
@@ -62,7 +77,7 @@ jobs:
 
     - name: Upload exe
       continue-on-error: true
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: PCOptimizer-${{ github.sha }}
         path: artifacts/publish/PCOptimizer.exe

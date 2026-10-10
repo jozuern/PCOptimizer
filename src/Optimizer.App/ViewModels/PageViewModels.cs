@@ -22,8 +22,48 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
 
     public Task EnsureLoadedAsync() => _load ??= ReloadAsync();
 
+    partial void OnIsLoadingChanged(bool value) => LoadingChanged();
+
+    /// <summary>For "nothing found" texts that must stay hidden while the page still loads.</summary>
+    protected virtual void LoadingChanged()
+    {
+    }
+
+    /// <summary>After a language switch: a page that was opened builds its rows again in the new language.</summary>
+    public void OnLanguageChanged()
+    {
+        if (_load is not null) ReloadAsync().Forget($"{GetType().Name} language switch");
+    }
+
+    private Task? _running;
+    private bool _reloadRequested;
+
+    /// <summary>
+    /// One load at a time: a reload asked for while one runs (Refresh, the first load and a reload after a change can
+    /// overlap) runs once after it, so two loads never fill the same list at once.
+    /// </summary>
     [RelayCommand]
-    public async Task ReloadAsync()
+    public Task ReloadAsync()
+    {
+        if (_running is { IsCompleted: false })
+        {
+            _reloadRequested = true;
+            return _running;
+        }
+        return _running = ReloadUntilCurrentAsync();
+    }
+
+    private async Task ReloadUntilCurrentAsync()
+    {
+        do
+        {
+            _reloadRequested = false;
+            await ReloadOnceAsync();
+        }
+        while (_reloadRequested);
+    }
+
+    private async Task ReloadOnceAsync()
     {
         IsLoading = true;
         try
@@ -33,7 +73,7 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
         catch (Exception ex)
         {
             Log.Error("ui", $"{GetType().Name} load failed", ex);
-            Owner.ShowResult(Loc.Instance.Format("Result_Failed", ex.Message));
+            Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
         }
         finally
         {
@@ -68,7 +108,7 @@ public abstract partial class SwitchRow : ObservableObject
             if (value == _switch) return;
             _switch = value;
             OnPropertyChanged();
-            if (value != IsOn) _ = RunAsync(value);
+            if (value != IsOn) RunAsync(value).Forget("switch");
         }
     }
 
@@ -164,7 +204,7 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         }
         catch (Exception ex)
         {
-            BenchmarkStatus = Loc.Instance.Format("Result_Failed", ex.Message);
+            BenchmarkStatus = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {
@@ -203,6 +243,8 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     [ObservableProperty] private bool _canUninstallOneDrive;
 
     public bool ItemsEmpty => !IsLoading && Items.Count == 0;
+
+    protected override void LoadingChanged() => OnPropertyChanged(nameof(ItemsEmpty));
     public bool RemovedEmpty => Removed.Count == 0;
 
     protected override async Task LoadAsync()
@@ -242,7 +284,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         try
         {
             var error = await Task.Run(() => Service.Remove(item.Item.Installed, item.Item.Entry));
-            Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", item.Name) : Loc.Instance.Format("Result_Failed", error));
+            Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", item.Name) : Loc.Instance.Format("Result_Error", error));
         }
         finally
         {
@@ -262,7 +304,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         }
         if (!dialogs.Ask(Loc.Instance["Debloat_OneDriveTitle"], Loc.Instance["Debloat_OneDriveConfirm"], Loc.Instance["Debloat_Remove"])) return;
         var path = Optimizer.Core.Debloat.OneDrive.Uninstall(state, services.Elevation);
-        Owner.ShowResult(path == Optimizer.Core.Platform.DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Failed", "OneDriveSetup") : Loc.Instance["Debloat_OneDriveStarted"]);
+        Owner.ShowResult(path == Optimizer.Core.Platform.DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Error", "OneDriveSetup") : Loc.Instance["Debloat_OneDriveStarted"]);
     }
 
     [RelayCommand]
@@ -289,7 +331,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
     [ObservableProperty] private string _totalText = "";
     [ObservableProperty] private string _toolOutput = "";
 
-    public static string Size(long bytes) => bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.0} GB" : bytes >= 1L << 20 ? $"{bytes / (double)(1L << 20):0} MB" : $"{bytes / 1024.0:0} KB";
+    public static string Size(long bytes) => Optimizer.Core.Platform.ByteSize.Format(bytes);
 
     protected override async Task LoadAsync()
     {
@@ -297,7 +339,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         var categories = Optimizer.Core.Cleanup.CleanupEngine.Categories(services.ProfilePath, services.UserSid);
         Rows.Clear();
         foreach (var c in categories) Rows.Add(new CleanupRow(c, lang));
-        foreach (var row in Rows)
+        foreach (var row in Rows.ToList())
         {
             var scan = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Scan(row.Category));
             row.Bytes = scan.Bytes;
@@ -347,7 +389,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         try
         {
             var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.ComponentStoreCleanup(services.Context.Processes));
-            ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Failed", output.Trim().Split('\n').LastOrDefault() ?? code.ToString());
+            ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim().Split('\n').LastOrDefault() ?? code.ToString());
         }
         finally
         {
@@ -362,7 +404,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         try
         {
             var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.DeliveryOptimizationCleanup(services.Context.Processes));
-            ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Failed", output.Trim());
+            ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim());
         }
         finally
         {

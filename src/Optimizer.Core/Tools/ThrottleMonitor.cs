@@ -134,7 +134,7 @@ public static class ProcessSampler
         var first = Snapshot();
         var sw = Stopwatch.StartNew();
         await Task.Delay(window, ct);
-        var second = Snapshot();
+        var second = Snapshot(first);
         var elapsed = sw.Elapsed.TotalMilliseconds * Environment.ProcessorCount;
         var own = Environment.ProcessId;
         var list = new List<ProcessCpu>();
@@ -147,7 +147,9 @@ public static class ProcessSampler
         return list.OrderByDescending(p => p.CpuShare).ToList();
     }
 
-    private static Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet, string? Path)> Snapshot()
+    /// <param name="earlier">A snapshot of a moment ago: the path of a process still running is taken from it (reading MainModule is slow).</param>
+    private static Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet, string? Path)> Snapshot(
+        Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet, string? Path)>? earlier = null)
     {
         var map = new Dictionary<int, (string, TimeSpan, long, string?)>();
         foreach (var p in Process.GetProcesses())
@@ -156,10 +158,10 @@ public static class ProcessSampler
             {
                 try
                 {
-                    string? path = null;
+                    string? path = earlier is not null && earlier.TryGetValue(p.Id, out var known) && known.Name == p.ProcessName ? known.Path : null;
                     try
                     {
-                        path = p.MainModule?.FileName;
+                        path ??= p.MainModule?.FileName;
                     }
                     catch (Exception)
                     {

@@ -5,6 +5,8 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.App.ViewModels;
 
+public enum RowAction { None, Apply, ApplyAgain, Undo }
+
 /// <summary>One tweak row (card with a switch) and its inspector page, in the current language.</summary>
 public sealed class TweakItemViewModel : InspectorItem
 {
@@ -25,7 +27,6 @@ public sealed class TweakItemViewModel : InspectorItem
         Title = t.Subject is { Length: > 0 } s ? subjectAsTitle ? s : $"{title}: {s}" : title;
         Summary = subjectAsTitle && t.Subject is { Length: > 0 } ? "" : page?.Section(DocHeadings.Summary(page.Language))?.Body ?? "";
         Category = t.Category;
-        CategoryText = labels.Get(lang, $"category.{t.Category}");
 
         StatusText = labels.Get(lang, $"state.{status.State}");
         Status = status.State switch
@@ -63,6 +64,7 @@ public sealed class TweakItemViewModel : InspectorItem
         if (t.Preview) badges.Add(labels.Get(lang, "badge.preview"));
         if (t.EffectiveRisk != Risk.Safe) badges.Add(labels.Get(lang, $"risk.{t.EffectiveRisk}"));
         if (t.Impact.Basis == "disputed") badges.Add(labels.Get(lang, "badge.disputed"));
+        if (t.Undocumented) badges.Add(labels.Get(lang, "badge.undocumented"));
         if (t.Restart) badges.Add(labels.Get(lang, "badge.restart"));
         if (t.SignOut) badges.Add(labels.Get(lang, "badge.signOut"));
         if (t.IsBootCritical) badges.Add(labels.Get(lang, "badge.bootCritical"));
@@ -90,13 +92,16 @@ public sealed class TweakItemViewModel : InspectorItem
         MetaText = string.Join(", ", new[] { StatusText, outside, ImpactText, EffectsText, BadgesText }.Where(x => !string.IsNullOrEmpty(x)));
         // Only real blocks are shown as a warning; "set outside this app" is part of the detail line.
         ToggleNote = canChange && !IsOn && hard.Count > 0 ? BlockText : null;
-        ActionText = !canChange ? null
-            : HasBackup ? Loc.Instance["Tweak_Undo"]
-            : status.State is TweakState.Applied or TweakState.PendingRestart or TweakState.AppliedIneffective ? null
-            : Loc.Instance["Tweak_TurnOn"];
-        if (status.State == TweakState.RevertedByWindows) ActionText = Loc.Instance["Tweak_Reapply"];
-        ActionEnabled = HasBackup || hard.Count == 0;
-        ActionNote = HasBackup || ActionText is null ? null : BlockText;
+        Action = ActionFor(status.State, canChange, HasBackup);
+        ActionText = Action switch
+        {
+            RowAction.Undo => Loc.Instance["Tweak_Undo"],
+            RowAction.Apply => Loc.Instance["Tweak_TurnOn"],
+            RowAction.ApplyAgain => Loc.Instance["Tweak_Reapply"],
+            _ => null,
+        };
+        ActionEnabled = Action == RowAction.Undo || hard.Count == 0;
+        ActionNote = Action is RowAction.Undo or RowAction.None ? null : BlockText;
 
         // Inspector document: hand-written sections plus generated "What changes" and "Undo". Built when the row is
         // opened, because the preview reads the current values from the system.
@@ -117,12 +122,23 @@ public sealed class TweakItemViewModel : InspectorItem
         };
     }
 
+    /// <summary>
+    /// What the row's button does. Reset by Windows comes first: such a tweak has a backup, but the button applies it
+    /// again (as its label says); Undo stays available on the Changes page.
+    /// </summary>
+    public static RowAction ActionFor(TweakState state, bool canChange, bool hasBackup) =>
+        !canChange ? RowAction.None
+        : state == TweakState.RevertedByWindows ? RowAction.ApplyAgain
+        : hasBackup ? RowAction.Undo
+        : state is TweakState.Applied or TweakState.PendingRestart or TweakState.AppliedIneffective ? RowAction.None
+        : RowAction.Apply;
+
+    public RowAction Action { get; }
+
     public TweakStatus Status_ { get; }
     public TweakDefinition Tweak => Status_.Tweak;
     public string Category { get; }
-    public string CategoryText { get; }
     public string BadgesText { get; }
-    public bool HasBadges => BadgesText.Length > 0;
     public bool IsRecommended { get; }
     public string? RecommendedText { get; }
     public string? BlockText { get; }
@@ -148,7 +164,7 @@ public sealed class TweakItemViewModel : InspectorItem
             if (value == _switch) return;
             _switch = value;
             OnPropertyChanged();
-            if (_owner is not null && value != IsOn) _ = _owner.ToggleAsync(this, value);
+            if (_owner is not null && value != IsOn) _owner.ToggleAsync(this, value).Forget("tweak switch");
             else ResetSwitch();
         }
     }

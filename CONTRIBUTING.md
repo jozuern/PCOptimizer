@@ -10,7 +10,7 @@ PCOptimizer is source-available under the [PolyForm Strict License 1.0.0](LICENS
 
 ```powershell
 dotnet build                     # Debug: asInvoker manifest, runs without UAC (TPM and some counters show "Unknown")
-dotnet test                      # unit tests + explanation lint (lint = error in Release)
+dotnet test                      # unit tests + explanation lint, also the read-only checks of this PC (Category=Hardware)
 dotnet test -c Release --filter "Category!=Hardware"   # what CI runs
 dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifacts/publish/PCOptimizer.exe
 ```
@@ -26,6 +26,7 @@ Developer switches (all read-only):
 | `--pane closed` | collapses the navigation rail before the screenshot |
 | `--scroll end` | scrolls the page to the end before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
+| `--category <key>` | Tweaks page filtered to one category before the screenshot (e.g. `Privacy`) |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
 | `--confirm <tweak id> --confirm-shot <file.png>` | renders the confirmation dialog of a tweak (nothing is applied) |
 | `--licenses-shot <file.png>` | renders the Licenses window |
@@ -62,11 +63,20 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 
 ## Adding a tweak
 
-1. Catalog entry in `Catalog/Tweaks/*.json`: documented setting only (Microsoft or the hardware vendor), correct risk, `restart`/`signOut`, `bootCritical`, `antiCheatSensitive`, impact 0 to 5 with basis `situational` or `disputed` (`measured` only with a cited measurement), sources you opened. Set `"preview": true` when it is risky and not yet tested on real Windows; Expert and boot-critical tweaks must be previews (`CatalogRuleTests`).
+1. Catalog entry in `Catalog/Tweaks/*.json`: a documented setting (Microsoft or the hardware vendor), or an undocumented value under the rules in [Undocumented values](#undocumented-values); correct risk, `restart`/`signOut`, `bootCritical`, `antiCheatSensitive`, impact 0 to 5 with basis `situational` or `disputed` (`measured` only with a cited measurement), sources you opened. Set `"preview": true` when it is risky and not yet tested on real Windows; Expert and boot-critical tweaks must be previews (`CatalogRuleTests`).
 2. EN and DE explanation pages following [docs/explanation-style-guide.md](docs/explanation-style-guide.md); the docs lint checks the structure, summary length, sources, typography and banned words.
 3. A sandbox test for apply and undo (see `UndoTests` and `EngineTests`).
 4. Regenerate the VM test plan tables: run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`. The counts in README.md are checked against the catalog (`DocsConsistencyTests`).
 5. A tweak that is removed later stays undoable: undo uses the action stored with each backup entry.
+
+## Undocumented values
+
+A value Microsoft or the vendor does not document is allowed only when all of this holds; the docs lint (`CheckUndocumented`) enforces the first three:
+
+- The change is harmless and fully reversible, below Expert risk.
+- The tweak has `"undocumented": true` (the app shows an "Undocumented value" badge), and both explanation pages say that Microsoft does not document the value.
+- It is proven to work: `"proof"` names the test or source that showed the effect (a VM test result that checked the visible effect, not only the registry value). Without proof the tweak is `"preview": true`; the VM test plan lists what to check.
+- It is not something risky that nobody documents (for example NVIDIA Ultra Low Latency through undocumented driver values, or forced Resizable BAR). Those stay in [docs/not-included.md](docs/not-included.md).
 
 ## New dependencies
 

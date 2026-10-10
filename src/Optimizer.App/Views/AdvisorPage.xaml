@@ -4,8 +4,13 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}">
+    <!-- The list scrolls on its own and builds only the cards in view. -->
+    <Grid Margin="{StaticResource PagePadding}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
             <DockPanel>
                 <CheckBox DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" VerticalAlignment="Top" />
                 <StackPanel>
@@ -14,7 +19,7 @@
                 </StackPanel>
             </DockPanel>
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding AdvisorEmpty, Converter={StaticResource BoolToVisibility}}" />
-            <ItemsControl ItemsSource="{Binding AdvisorItems}" ItemTemplate="{StaticResource FindingRow}" />
         </StackPanel>
-    </ScrollViewer>
+        <ItemsControl Grid.Row="1" Style="{StaticResource VirtualCardList}" ItemsSource="{Binding AdvisorItems}" ItemTemplate="{StaticResource FindingRow}" />
+    </Grid>
 </UserControl>

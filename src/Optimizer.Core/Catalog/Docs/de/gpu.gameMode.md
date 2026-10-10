@@ -4,7 +4,7 @@
 Stellt sicher, dass der Windows-Spielmodus an ist. Er gibt dem laufenden Spiel Vorrang und blockiert während des Spielens Treiberinstallationen und Neustart-Hinweise von Windows Update.
 
 ## So funktioniert es
-Erkennt der Spielmodus ein Spiel, gibt Windows ihm bevorzugten Zugriff auf die Hardware [2] und hält Treiberinstallationen und Neustart-Benachrichtigungen von Windows Update zurück [1]. Seit dem Update vom Oktober 2018 ist er standardmäßig für alle Spiele an und hat einen Schalter in den Einstellungen [1]. Die App schaltet ihn wieder ein, falls er abgeschaltet wurde.
+Erkennt der Spielmodus ein Spiel, gibt Windows ihm bevorzugten Zugriff auf die Hardware [2] und hält Treiberinstallationen und Neustart-Benachrichtigungen von Windows Update zurück [1]. Seit dem Update vom Oktober 2018 ist er standardmäßig für alle Spiele an und hat einen Schalter in den Einstellungen [1]. Die App schaltet ihn wieder ein, falls er abgeschaltet wurde, mit den Registrierungswerten hinter diesem Schalter; Microsoft dokumentiert die Werte selbst nicht.
 
 ## Warum es helfen kann
 Weniger Unterbrechungen durch Hintergrundarbeit und Update-Hinweise beim Spielen. Laut Microsoft kann das zu gleichmäßigeren FPS führen [1].

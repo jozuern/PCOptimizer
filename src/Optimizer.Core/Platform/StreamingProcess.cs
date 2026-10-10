@@ -10,9 +10,11 @@ namespace Optimizer.Core.Platform;
 /// </summary>
 public static class StreamingProcess
 {
-    public static async Task<int> RunAsync(string file, string arguments, IProgress<string>? lines, CancellationToken ct = default, Encoding? encoding = null)
+    /// <param name="started">Called right after the process has started (for example to release a file held open until then).</param>
+    public static async Task<int> RunAsync(string file, string arguments, IProgress<string>? lines, CancellationToken ct = default, Encoding? encoding = null,
+        Action? started = null)
     {
-        var psi = new ProcessStartInfo(file, arguments)
+        var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool(file), arguments)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -21,6 +23,7 @@ public static class StreamingProcess
             StandardOutputEncoding = encoding ?? Encoding.UTF8,
             StandardErrorEncoding = encoding ?? Encoding.UTF8,
         };
+        ProcessHardening.Apply(psi);
         using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var all = new StringBuilder();
         void OnLine(string? line)
@@ -35,6 +38,7 @@ public static class StreamingProcess
         p.OutputDataReceived += (_, e) => OnLine(e.Data);
         p.ErrorDataReceived += (_, e) => OnLine(e.Data);
         if (!p.Start()) throw new InvalidOperationException($"Cannot start {file}");
+        started?.Invoke();
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
         try
@@ -43,13 +47,7 @@ public static class StreamingProcess
         }
         catch (OperationCanceledException)
         {
-            try
-            {
-                p.Kill(entireProcessTree: true);
-            }
-            catch (InvalidOperationException)
-            {
-            }
+            ProcessHardening.KillTree(p);
             throw;
         }
         var output = all.ToString();

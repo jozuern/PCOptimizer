@@ -11,8 +11,9 @@ public static partial class CpuProbe
 
     public static CpuInfo Read()
     {
-        var row = Wmi.Query("SELECT Name, Manufacturer, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, SocketDesignation FROM Win32_Processor").FirstOrDefault()
-                  ?? new Dictionary<string, object?>();
+        // One query for all sockets: the first row describes the processor, the core count adds up every socket.
+        var rows = Wmi.Query("SELECT Name, Manufacturer, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, SocketDesignation FROM Win32_Processor");
+        var row = rows.FirstOrDefault() ?? new Dictionary<string, object?>();
         var name = Reg.HklmString(CpuKey, "ProcessorNameString")?.Trim() ?? row.Str("Name");
         var vendorId = Reg.HklmString(CpuKey, "VendorIdentifier") ?? row.Str("Manufacturer");
         var vendor = vendorId.Contains("Intel", StringComparison.OrdinalIgnoreCase) ? Vendor.Intel
@@ -21,7 +22,7 @@ public static partial class CpuProbe
         var (family, model, stepping) = ParseIdentifier(Reg.HklmString(CpuKey, "Identifier"));
         var (current, bios, source) = ReadMicrocode(vendor);
         var (l3, effClasses, coreCount) = ReadTopology();
-        var sockets = Wmi.Query("SELECT NumberOfCores FROM Win32_Processor").Sum(r => r.Int("NumberOfCores") ?? 0);
+        var sockets = rows.Sum(r => r.Int("NumberOfCores") ?? 0);
 
         return new CpuInfo(
             name,

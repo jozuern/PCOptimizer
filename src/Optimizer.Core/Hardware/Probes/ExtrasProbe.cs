@@ -8,15 +8,30 @@ using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Hardware.Probes;
 
-/// <summary>Collects <see cref="HardwareExtras"/>. Every part is isolated: a failure leaves that part empty/null.</summary>
+/// <summary>
+/// Collects <see cref="HardwareExtras"/>. Every part is isolated (a failure leaves that part empty or null) and the
+/// parts run in parallel: one after another they took as long as the slowest ones added up (a 3 second process sample,
+/// the event log, the installed programs).
+/// </summary>
 public static class ExtrasProbe
 {
+    /// <summary>How long background CPU use is sampled (F11).</summary>
+    public static readonly TimeSpan SampleWindow = TimeSpan.FromSeconds(3);
+
     private const string NicClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
 
-    public static HardwareExtras Read(CatalogData catalog, CpuInfo? cpu, IReadOnlyList<GpuInfo>? gpus, FirmwareInfo? firmware, IReadOnlyList<DisplayInfo>? displays, bool elevated, string? userSid)
+    /// <param name="reuse">
+    /// The previous result, after a change made by this app: parts that no tweak or fix can change (installed programs,
+    /// drive health, shutdown history, the background process sample, AGESA, TPM, NVMe links) are taken from it
+    /// instead of being read again.
+    /// </param>
+    public static HardwareExtras Read(CatalogData catalog, CpuInfo? cpu, IReadOnlyList<GpuInfo>? gpus, FirmwareInfo? firmware, IReadOnlyList<DisplayInfo>? displays,
+        bool elevated, string? userSid, HardwareExtras? reuse = null, Task<IReadOnlyList<Tools.ProcessCpu>>? processSample = null,
+        bool waitForSample = true)
     {
-        T? Try<T>(string part, Func<T> f)
+        Task<T?> Part<T>(string part, Func<T> f) => Task.Run(() =>
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 return f();
@@ -26,34 +41,66 @@ public static class ExtrasProbe
                 Log.Warn("scan", $"extras/{part}: {ex.Message}");
                 return default;
             }
-        }
+            finally
+            {
+                // Slow parts are worth knowing about: the extras are on the scan's critical path.
+                if (watch.ElapsedMilliseconds > 250) Log.Debug("scan", $"extras/{part} took {watch.ElapsedMilliseconds} ms");
+            }
+        });
+        Task<T?> Reused<T>(T? value) => Task.FromResult(value);
 
-        var nics = Try("nics", ReadNics) ?? [];
-        var agesa = cpu?.Vendor == Vendor.Amd ? Try("agesa", () => FindAgesa(FirmwareExtras.SmbiosStrings())) : null;
+        var nics = Part("nics", ReadNics);
+        var agesa = reuse is not null ? Reused(reuse.Agesa is { } v ? (Version: v, Source: reuse.AgesaSource ?? "") : ((Version Version, string Source)?)null)
+            : cpu?.Vendor == Vendor.Amd ? Part("agesa", () => FindAgesa(FirmwareExtras.SmbiosStrings())) : Reused<(Version Version, string Source)?>(null);
+        // Read with the rest of the TPM in the firmware probe (one Win32_Tpm query per scan).
+        var tpm = Reused(firmware?.TpmManufacturer);
+        var trim = Part("trim", () => new TrimSetting(Reg.HklmInt(@"SYSTEM\CurrentControlSet\Control\FileSystem", "DisableDeleteNotification")));
+        var secureBoot = elevated && firmware?.SecureBoot == TriState.Yes
+            ? reuse is not null ? Reused(reuse.SecureBootCerts) : Part("secureboot", FirmwareExtras.ReadSecureBootCerts)
+            : Reused<SecureBootCerts>(null);
+        var overlay = Part("overlay", FirmwareExtras.EffectiveOverlay);
+        var wifi = Part("wifi", Wlan.Connections);
+        var nvme = reuse is not null ? Reused(reuse.NvmeLinks) : Part<IReadOnlyList<NvmeLink>>("nvme", ReadNvmeLinks);
+        var overlays = Part("overlays", () => RunningOverlays(catalog));
+        var services = Part("services", () => catalog.Extras.AllServiceNames
+            .Where(s => Reg.HklmKeyExists($@"SYSTEM\CurrentControlSet\Services\{s}")).ToHashSet(StringComparer.OrdinalIgnoreCase));
+        var nvidia = Part("nvidia", () => ReadNvidia(displays));
+        var programs = reuse is not null ? Reused(reuse.Programs) : Part("programs", () => InstalledPrograms.Read(userSid));
+        var startup = Part("startup", () => ReadStartupPrograms(userSid));
+        var disks = reuse is not null ? Reused(reuse.DiskHealth) : Part("diskhealth", Tools.DiskHealthReader.Read);
+        var virtualization = Part("virtualization", StabilityProbe.ReadVirtualization);
+        var shutdowns = reuse is not null ? Reused(reuse.UnexpectedShutdowns) : Part("shutdowns", StabilityProbe.ReadUnexpectedShutdowns);
+        // The 3 second sample usually started with the scan (it only measures, so it can run beside the other probes).
+        var processes = reuse is not null ? Reused(reuse.BackgroundCpu)
+            : processSample is { IsCompleted: false } && !waitForSample ? Reused<IReadOnlyList<Tools.ProcessCpu>>(null)
+            : Part("processes", () => (processSample ?? Tools.ProcessSampler.SampleAsync(SampleWindow)).GetAwaiter().GetResult());
+        var throttle = Part("throttle", () => Tools.HealthStore.LoadThrottle(Tools.HealthStore.DefaultFolder));
+        var nicList = nics.GetAwaiter().GetResult() ?? [];
+        var msi = Part("msi", () => ReadMsiDevices(gpus, nicList));
+        Task.WaitAll(agesa, tpm, trim, secureBoot, overlay, wifi, nvme, overlays, services, nvidia, programs, startup, disks, virtualization, shutdowns, processes, throttle, msi);
+
         return new HardwareExtras
         {
-            TpmManufacturer = Try("tpm", () => Wmi.Query("SELECT ManufacturerIdTxt FROM Win32_Tpm", @"root\CIMV2\Security\MicrosoftTpm").FirstOrDefault()?.Str("ManufacturerIdTxt")),
-            Agesa = agesa?.Version,
-            AgesaSource = agesa?.Source,
-            Trim = Try("trim", () => new TrimSetting(Reg.HklmInt(@"SYSTEM\CurrentControlSet\Control\FileSystem", "DisableDeleteNotification"))),
-            SecureBootCerts = elevated && firmware?.SecureBoot == TriState.Yes ? Try("secureboot", FirmwareExtras.ReadSecureBootCerts) : null,
-            PowerOverlay = Try("overlay", FirmwareExtras.EffectiveOverlay),
-            Nics = nics,
-            MsiDevices = Try("msi", () => ReadMsiDevices(gpus, nics)) ?? [],
-            Wifi = Try("wifi", Wlan.Connections) ?? [],
-            NvmeLinks = Try("nvme", ReadNvmeLinks) ?? [],
-            RunningOverlays = Try("overlays", () => RunningOverlays(catalog)) ?? [],
-            ServicesPresent = Try("services", () => catalog.Extras.AllServiceNames
-                .Where(s => Reg.HklmKeyExists($@"SYSTEM\CurrentControlSet\Services\{s}")).ToHashSet(StringComparer.OrdinalIgnoreCase)) ?? new HashSet<string>(),
-            Nvidia = Try("nvidia", () => ReadNvidia(displays)),
-            PrintersInstalled = Try("printers", ReadPrinters) ?? [],
-            Programs = Try("programs", () => InstalledPrograms.Read(userSid)) ?? [],
-            StartupPrograms = Try("startup", () => ReadStartupPrograms(userSid)),
-            DiskHealth = Try("diskhealth", Tools.DiskHealthReader.Read) ?? [],
-            Virtualization = Try("virtualization", StabilityProbe.ReadVirtualization),
-            UnexpectedShutdowns = Try("shutdowns", StabilityProbe.ReadUnexpectedShutdowns),
-            BackgroundCpu = Try("processes", () => Tools.ProcessSampler.SampleAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult()),
-            LastThrottle = Try("throttle", () => Tools.HealthStore.LoadThrottle(Tools.HealthStore.DefaultFolder)),
+            TpmManufacturer = tpm.Result,
+            Agesa = agesa.Result?.Version,
+            AgesaSource = agesa.Result?.Source,
+            Trim = trim.Result,
+            SecureBootCerts = secureBoot.Result,
+            PowerOverlay = overlay.Result,
+            Nics = nicList,
+            MsiDevices = msi.Result ?? [],
+            Wifi = wifi.Result ?? [],
+            NvmeLinks = nvme.Result ?? [],
+            RunningOverlays = overlays.Result ?? [],
+            ServicesPresent = services.Result ?? new HashSet<string>(),
+            Nvidia = nvidia.Result,
+            Programs = programs.Result ?? [],
+            StartupPrograms = startup.Result,
+            DiskHealth = disks.Result ?? [],
+            Virtualization = virtualization.Result,
+            UnexpectedShutdowns = shutdowns.Result,
+            BackgroundCpu = processes.Result,
+            LastThrottle = throttle.Result,
         };
     }
 
@@ -112,6 +159,7 @@ public static class ExtrasProbe
                 n.OperationalStatus == OperationalStatus.Up, n.OperationalStatus == OperationalStatus.Up ? n.Speed : 0, max, classKey, keywords, allowed)
             {
                 DeviceInstanceId = Reg.HklmString(classKey, "DeviceInstanceID"),
+                Characteristics = Reg.HklmInt(classKey, "Characteristics") ?? 0,
             });
         }
         return list;
@@ -123,9 +171,16 @@ public static class ExtrasProbe
     {
         var profile = userSid is null ? null : Reg.HklmString($@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{userSid}", "ProfileImagePath");
         var scanner = new Startup.StartupScanner(new SystemRegistryRoots(userSid), new SystemTaskScheduler(), profile);
-        var entries = scanner.RunKeys().Concat(scanner.StartupFolders()).Concat(scanner.LogonTasks()).Where(Startup.StartupTweaks.CountsForF16);
-        return entries
+        // The three sources and the signature checks are independent: read side by side (the task list and
+        // WinVerifyTrust are the slow parts).
+        var runKeys = Task.Run(() => scanner.RunKeys().ToList());
+        var folders = Task.Run(() => scanner.StartupFolders().ToList());
+        var tasks = Task.Run(() => scanner.LogonTasks().ToList());
+        Task.WaitAll(runKeys, folders, tasks);
+        var entries = runKeys.Result.Concat(folders.Result).Concat(tasks.Result).Where(Startup.StartupTweaks.CountsForF16)
             .Where(e => !(e.Kind == Startup.StartupKind.LogonTask && e.Name.StartsWith(@"Microsoft\", StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        return entries.AsParallel().AsOrdered().WithDegreeOfParallelism(4)
             .Where(e => e.RunsScriptHost || !Startup.SignatureVerifier.Verify(e.ImagePath).IsMicrosoft)
             .Select(e => e.Name)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -189,13 +244,6 @@ public static class ExtrasProbe
             using (p) return p.ProcessName;
         }).ToHashSet(StringComparer.OrdinalIgnoreCase);
         return catalog.Extras.OverlayProcesses.Where(o => names.Contains(o.Process)).Select(o => o.Name).Distinct().ToList();
-    }
-
-    private static List<string> ReadPrinters()
-    {
-        string[] virtualPrinters = ["Microsoft Print to PDF", "Microsoft XPS Document Writer", "OneNote", "Fax", "Send To OneNote", "AnyDesk"];
-        return Wmi.Query("SELECT Name FROM Win32_Printer").Select(r => r.Str("Name"))
-            .Where(n => !virtualPrinters.Any(v => n.Contains(v, StringComparison.OrdinalIgnoreCase))).ToList();
     }
 
     // ---------------- NVIDIA ----------------

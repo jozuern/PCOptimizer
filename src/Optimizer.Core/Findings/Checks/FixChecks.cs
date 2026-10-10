@@ -167,18 +167,15 @@ public sealed class LeftoverCheck : IFindingCheck
     public const string Id = "F21.leftovers";
     public IReadOnlyList<string> DocIds => [Id];
 
-    /// <summary>BCD elements of {current}; set by the app when elevated (bcdedit needs admin rights). Null = unknown.</summary>
-    public static Func<IReadOnlySet<string>?> BcdElements { get; set; } = () => null;
+    private readonly Func<IReadOnlySet<string>?> _bcd;
 
-    private readonly Func<IReadOnlySet<string>?>? _bcd;
-
-    /// <param name="bcd">BCD reader for tests; default: <see cref="BcdElements"/>, which the app sets.</param>
-    public LeftoverCheck(Func<IReadOnlySet<string>?>? bcd = null) => _bcd = bcd;
+    /// <param name="bcd">BCD elements of {current} (the app passes a reader only when elevated); null = unknown.</param>
+    public LeftoverCheck(Func<IReadOnlySet<string>?>? bcd = null) => _bcd = bcd ?? (() => null);
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var found = new List<Fact>();
-        var bcd = SafeBcd(_bcd ?? BcdElements);
+        var bcd = SafeBcd(_bcd);
         if (bcd?.Contains("useplatformclock") == true) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
 
         yield return new Finding

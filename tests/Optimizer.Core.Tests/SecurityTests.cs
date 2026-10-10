@@ -60,7 +60,7 @@ public class SecurityTests
         }
         finally
         {
-            Directory.Delete(folder, true);
+            TestFolders.Delete(folder);
         }
     }
 
@@ -76,30 +76,49 @@ public class SecurityTests
     public void OnlyWebAndStoreLinksAreOpened(string target, bool expected) =>
         Assert.Equal(expected, DeElevatedLauncher.IsLink(target));
 
-    // ---------------- Data folder ----------------
-
-    private static string TempFolder(string name)
+    [Fact]
+    public void ElevatedToolsStartWithoutUserControlledCodePaths()
     {
-        var folder = Path.Combine(Path.GetTempPath(), $"pco-{name}-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(folder);
-        return folder;
+        var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"));
+        psi.Environment["PSModulePath"] = @"C:\Users\me\Documents\WindowsPowerShell\Modules";
+        psi.Environment["COR_ENABLE_PROFILING"] = "1";
+        psi.Environment["COR_PROFILER_PATH"] = @"C:\Users\me\evil.dll";
+        psi.Environment["DOTNET_STARTUP_HOOKS"] = @"C:\Users\me\hook.dll";
+        psi.Environment["PATH_KEEP"] = "x";
+        ProcessHardening.Apply(psi);
+        Assert.Equal(ProcessHardening.PowerShellModules, psi.Environment["PSModulePath"]);
+        Assert.False(psi.Environment.ContainsKey("COR_ENABLE_PROFILING"));
+        Assert.False(psi.Environment.ContainsKey("COR_PROFILER_PATH"));
+        Assert.False(psi.Environment.ContainsKey("DOTNET_STARTUP_HOOKS"));
+        Assert.Equal("x", psi.Environment["PATH_KEEP"]);
+        Assert.Equal(Environment.SystemDirectory, psi.WorkingDirectory);
+        Assert.StartsWith(Environment.SystemDirectory, psi.FileName, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(Path.Combine(Environment.SystemDirectory, "bcdedit.exe"), ProcessHardening.ResolveSystemTool("bcdedit.exe"));
     }
 
+    // ---------------- Data folder ----------------
+
+    private static string TempFolder(string name) => TestFolders.Create(name);
+
     /// <summary>
-    /// A standard user can plant backups or settings in the data folder before the first elevated start. The test
-    /// process is not elevated, so the files it creates are owned by this user, as a planted file would be.
+    /// A standard user can plant backups or settings in the data folder before the first elevated start. Such files
+    /// are owned by the user; when the test runs elevated (files would be owned by Administrators) the owner is set
+    /// to the user explicitly.
     /// </summary>
     [Fact]
     public void FilesNotCreatedByAnAdministratorAreRemoved()
     {
-        if (DataPaths.ProcessIsElevated) return; // files created elevated are owned by Administrators
         var root = TempFolder("untrusted");
         try
         {
             Directory.CreateDirectory(Path.Combine(root, "backups"));
-            File.WriteAllText(Path.Combine(root, "backups", "planted.json"), "{}");
-            File.WriteAllText(Path.Combine(root, "settings.json"), "{}");
-            Assert.False(Backup.SecureFolder.IsOwnedByAdmins(Path.Combine(root, "settings.json")));
+            var planted = Path.Combine(root, "backups", "planted.json");
+            var settings = Path.Combine(root, "settings.json");
+            File.WriteAllText(planted, "{}");
+            File.WriteAllText(settings, "{}");
+            if (DataPaths.ProcessIsElevated)
+                foreach (var f in new[] { planted, settings }) OwnByUser(f);
+            Assert.False(Backup.SecureFolder.IsOwnedByAdmins(settings));
 
             Backup.SecureFolder.RemoveUntrusted(root);
 
@@ -107,8 +126,16 @@ public class SecurityTests
         }
         finally
         {
-            Directory.Delete(root, true);
+            TestFolders.Delete(root);
         }
+    }
+
+    private static void OwnByUser(string file)
+    {
+        var info = new FileInfo(file);
+        var security = info.GetAccessControl();
+        security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User!);
+        info.SetAccessControl(security);
     }
 
     [Fact]
@@ -119,26 +146,15 @@ public class SecurityTests
         try
         {
             File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
-            Directory.CreateSymbolicLink(Path.Combine(root, "logs"), target);
-        }
-        catch (IOException)
-        {
-            return; // symbolic links need Developer Mode or admin rights
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return;
-        }
-        try
-        {
+            TestFolders.Junction(Path.Combine(root, "logs"), target);
             Backup.SecureFolder.RemoveLinks(root);
             Assert.False(Path.Exists(Path.Combine(root, "logs")));
             Assert.True(File.Exists(Path.Combine(target, "keep.txt")));
         }
         finally
         {
-            Directory.Delete(root, true);
-            Directory.Delete(target, true);
+            TestFolders.Delete(root);
+            TestFolders.Delete(target);
         }
     }
 
@@ -158,7 +174,7 @@ public class SecurityTests
         }
         finally
         {
-            Directory.Delete(root, true);
+            TestFolders.Delete(root);
         }
     }
 
@@ -181,37 +197,32 @@ public class SecurityTests
         }
         finally
         {
-            Directory.Delete(trusted, true);
+            TestFolders.Delete(trusted);
         }
     }
 
-    [Fact]
-    public void DllNextToTheExeIsDetected()
-    {
-        var app = TempFolder("app");
-        try
-        {
-            File.WriteAllText(Path.Combine(app, "atiadlxx.dll"), "planted");
-            Assert.True(NativeLibraryGuard.IsNextToExe("atiadlxx", app));
-            Assert.True(NativeLibraryGuard.IsNextToExe("atiadlxx.dll", app));
-            Assert.False(NativeLibraryGuard.IsNextToExe("nvml.dll", app));
-            Assert.False(NativeLibraryGuard.IsNextToExe("atiadlxx.dll", null));
-        }
-        finally
-        {
-            Directory.Delete(app, true);
-        }
-    }
+    private const string ProtectedRuntime = @"C:\ProgramData\PCOptimizer\runtime";
 
     [Theory]
-    [InlineData(true, null, false, true)]
-    [InlineData(true, @"C:\Users\me\AppData\Local\Temp", false, true)]
-    [InlineData(true, @"C:\ProgramData\PCOptimizer\runtime", false, false)]
-    [InlineData(true, @"C:\ProgramData\PCOptimizer\runtime\", false, false)]
-    [InlineData(true, null, true, false)]
-    [InlineData(false, null, false, false)]
-    public void SingleFileExeRestartsOnceWithTheProtectedExtractionFolder(bool bundle, string? current, bool restarted, bool expected) =>
-        Assert.Equal(expected, SingleFileRuntime.NeedsRestart(bundle, current, @"C:\ProgramData\PCOptimizer\runtime", restarted));
+    [InlineData(true, null, false, false, RuntimeStart.Restart)]
+    [InlineData(true, @"C:\Users\me\AppData\Local\Temp", false, true, RuntimeStart.Restart)]
+    [InlineData(true, ProtectedRuntime, false, true, RuntimeStart.Continue)]
+    [InlineData(true, ProtectedRuntime + @"\", true, true, RuntimeStart.Continue)]
+    [InlineData(false, null, false, true, RuntimeStart.Continue)]
+    // The restart marker alone never skips the check: set from outside (or after a restart that did not take), an
+    // elevated process refuses to start; an unelevated one gains nothing from the folder and continues.
+    [InlineData(true, null, true, true, RuntimeStart.Refuse)]
+    [InlineData(true, @"C:\Users\me\Planted", true, true, RuntimeStart.Refuse)]
+    [InlineData(true, @"C:\Users\me\Planted", true, false, RuntimeStart.Continue)]
+    public void SingleFileExeRestartsOnceWithTheProtectedExtractionFolder(bool bundle, string? current, bool restarted, bool elevated, RuntimeStart expected) =>
+        Assert.Equal(expected, SingleFileRuntime.Decide(bundle, current, ProtectedRuntime, restarted, elevated));
+
+    [Fact]
+    public void AFailedRestartStopsAnElevatedProcess()
+    {
+        Assert.Equal(RuntimeStart.Refuse, SingleFileRuntime.AfterFailedRestart(elevated: true));
+        Assert.Equal(RuntimeStart.Continue, SingleFileRuntime.AfterFailedRestart(elevated: false));
+    }
 
     [Fact]
     public void OnlyExtractionFoldersInsideTheDataFolderAreTrusted()

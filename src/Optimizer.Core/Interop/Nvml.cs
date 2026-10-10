@@ -37,6 +37,35 @@ public static class Nvml
 
     public static bool Available => File.Exists(Path.Combine(Environment.SystemDirectory, Dll));
 
+    private static readonly Lock Gate = new();
+    private static bool _initialized;
+
+    /// <summary>
+    /// NVML is initialized once and stays initialized until the process ends: the sensor and throttle monitors read a
+    /// sample every second, and starting the library each time costs far more than the reading.
+    /// </summary>
+    private static bool EnsureInitialized()
+    {
+        lock (Gate)
+        {
+            if (_initialized) return true;
+            if (nvmlInit_v2() != 0) return false;
+            _initialized = true;
+            AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+            {
+                try
+                {
+                    nvmlShutdown();
+                }
+                catch (Exception)
+                {
+                    // Ending anyway.
+                }
+            };
+            return true;
+        }
+    }
+
     /// <summary>One sample per NVIDIA GPU. Returns an empty list when NVML is unavailable.</summary>
     public static IReadOnlyList<Sample> Read()
     {
@@ -44,8 +73,8 @@ public static class Nvml
         if (!Available) return list;
         try
         {
-            if (nvmlInit_v2() != 0) return list;
-            try
+            if (!EnsureInitialized()) return list;
+            lock (Gate)
             {
                 if (nvmlDeviceGetCount_v2(out var count) != 0) return list;
                 for (uint i = 0; i < count; i++)
@@ -73,10 +102,6 @@ public static class Nvml
                     }
                     list.Add(new Sample(n, temp, clock, util, power, gen, width, maxGen, reasons));
                 }
-            }
-            finally
-            {
-                nvmlShutdown();
             }
         }
         catch (Exception)

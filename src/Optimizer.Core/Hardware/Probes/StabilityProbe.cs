@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Optimizer.Core.Platform;
 using System.Globalization;
 using System.Xml.Linq;
 
@@ -40,6 +41,7 @@ public static class StabilityProbe
             RedirectStandardError = true,
             CreateNoWindow = true,
         };
+        ProcessHardening.Apply(start);
         foreach (var arg in new[]
                  {
                      "qe", "System",
@@ -51,7 +53,7 @@ public static class StabilityProbe
         var output = process.StandardOutput.ReadToEndAsync();
         if (!process.WaitForExit(15_000))
         {
-            process.Kill();
+            ProcessHardening.KillTree(process);
             throw new TimeoutException("wevtutil did not finish");
         }
         if (process.ExitCode != 0) throw new InvalidOperationException($"wevtutil exit code {process.ExitCode}");

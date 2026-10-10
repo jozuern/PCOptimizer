@@ -38,6 +38,9 @@ public sealed record DiskHealth(
     public bool IsProblem => Health is "Warning" or "Unhealthy" || WearPercent >= 90 || ReadErrorsUncorrected > 0 || WriteErrorsUncorrected > 0;
 
     public bool IsCritical => Health == "Unhealthy" || WriteErrorsUncorrected > 0;
+
+    /// <summary>The disk number Windows uses (MSFT_PhysicalDisk.DeviceId): two drives of the same model differ here.</summary>
+    public string DeviceId { get; init; } = "";
 }
 
 /// <summary>
@@ -75,7 +78,7 @@ public static class DiskHealthReader
                 c is null ? null : (int?)Number(c, "Wear"),
                 Number(c, "ReadErrorsUncorrected"),
                 Number(c, "WriteErrorsUncorrected"),
-                Number(c, "PowerOnHours")));
+                Number(c, "PowerOnHours")) { DeviceId = d.Str("DeviceId") });
         }
         return list;
     }

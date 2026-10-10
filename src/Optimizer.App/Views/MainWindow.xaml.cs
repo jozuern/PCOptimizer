@@ -81,16 +81,29 @@ public partial class MainWindow : FluentWindow, IServiceProvider
         }
     }
 
-    /// <summary>Renders the selected item's explanation (re-run after theme changes so brushes match).</summary>
-    public void RenderDetails()
+    /// <summary>
+    /// Renders the selected item's explanation (re-run after theme changes so brushes match). The document is built in
+    /// the background; the title shows at once, and a result for an item that is no longer selected is dropped.
+    /// </summary>
+    public void RenderDetails() => RenderDetailsAsync().Forget("inspector");
+
+    private async Task RenderDetailsAsync()
     {
         if (_vm.SelectedItem is not { } item)
         {
             DetailsViewer.Document = null;
             return;
         }
+        var pending = item.MarkdownAsync();
+        if (!pending.IsCompleted) Show($"# {item.Title}");
+        var markdown = await pending;
+        if (ReferenceEquals(_vm.SelectedItem, item)) Show(markdown);
+    }
+
+    private void Show(string markdown)
+    {
         Brush B(string key, Brush fallback) => TryFindResource(key) as Brush ?? fallback;
-        DetailsViewer.Document = MarkdownFlow.Render(item.Markdown,
+        DetailsViewer.Document = MarkdownFlow.Render(markdown,
             B("TextFillColorPrimaryBrush", Brushes.White),
             B("TextFillColorSecondaryBrush", Brushes.Gray),
             B("SubtleFillColorSecondaryBrush", Brushes.DimGray),

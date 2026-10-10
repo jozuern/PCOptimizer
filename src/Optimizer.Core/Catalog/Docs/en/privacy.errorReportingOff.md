@@ -20,4 +20,3 @@ If you help diagnose crashes, or a developer asks for reports.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-errorreporting
-2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

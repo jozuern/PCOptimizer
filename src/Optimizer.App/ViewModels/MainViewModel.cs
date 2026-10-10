@@ -53,7 +53,7 @@ public sealed record ChangeRecordItem(string TweakId, string Title, string When,
 public sealed record LogLine(string Time, string Text);
 
 /// <summary>One line of the "Apply recommended" plan: what, why, and its impact.</summary>
-public sealed record RecommendationLine(string Title, string Reason, string ImpactText, bool IsFix);
+public sealed record RecommendationLine(string Title, string Reason, string ImpactText);
 
 /// <summary>A usage profile in the picker.</summary>
 public sealed record ProfileOption(string Id, string Name, string Description, SymbolRegular Icon);
@@ -93,9 +93,20 @@ public sealed partial class MainViewModel : ObservableObject
         _expertMode = settings.ExpertMode;
         _checkForUpdates = settings.CheckForUpdates;
         Runner = new ChangeRunner(services, dialogs, () => _facts, AppliedIds, () => ExpertMode);
-        Runner.Status += (_, text) => ShowResult(text);
+        Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
         Runner.BusyChanged += (_, busy) => IsBusy = busy;
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
+        ChangeGate.Instance.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(ChangeGate.CanChange)) return;
+            OnPropertyChanged(nameof(CanChange));
+            foreach (var command in new CommunityToolkit.Mvvm.Input.IRelayCommand[]
+                     {
+                         RunActionCommand, ApplyRecommendedCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
+                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand,
+                     })
+                command.NotifyCanExecuteChanged();
+        };
 
         Network = new NetworkViewModel(this, services);
         Debloat = new DebloatViewModel(this, services, dialogs);
@@ -107,7 +118,12 @@ public sealed partial class MainViewModel : ObservableObject
         Health = new HealthViewModel(this, dialogs);
         _virusTotalConfigured = !string.IsNullOrEmpty(settings.VirusTotalKey);
         ShowPendingCounts();
-        Loc.Instance.LanguageChanged += (_, _) => Rebuild();
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            Rebuild();
+            Network.Rebuild();
+            foreach (var page in new PageViewModel[] { Debloat, Cleanup, Startup, ServicesPage, Apps, Tools, Health }) page.OnLanguageChanged();
+        };
     }
 
     public AppServices Services => _services;
@@ -159,7 +175,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<ProfileOption> ProfileOptions { get; } = [];
     public ObservableCollection<AgainstLine> AgainstProfile { get; } = [];
-    public UsageProfile ActiveProfile => _usage;
 
     /// <summary>Developer switch --profile: use this profile for the session without saving it.</summary>
     public string? ProfileOverride { get; set; }
@@ -177,7 +192,6 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<RecommendationLine> Recommendations { get; } = [];
     public ObservableCollection<RecommendationLine> RecommendationsExcluded { get; } = [];
 
-    public IReadOnlyList<Finding> AllFindings => _findings;
     public Facts Facts => _facts;
     public IReadOnlyList<TweakStatus> DeviceStates => _deviceStates;
 
@@ -191,7 +205,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsGerman => Loc.Instance.Language == "de";
     public string ThemeSetting => _settings.Theme;
 
-    public string Version => typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.4.0";
+    public string Version => AppInfo.Text;
     public string AboutText => Loc.Instance.Format("About_Text", Version);
     public string LogFile => Log.CurrentFile ?? Log.Directory;
     public string DataFolder => AppServices.DataFolder;
@@ -233,7 +247,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SelectedItem = null;
         if (value == Page.Changes) BuildChanges();
-        _ = value switch
+        (value switch
         {
             Page.Debloat => Debloat.EnsureLoadedAsync(),
             Page.Cleanup => Cleanup.EnsureLoadedAsync(),
@@ -244,7 +258,16 @@ public sealed partial class MainViewModel : ObservableObject
             Page.Health => Health.EnsureLoadedAsync(),
             Page.Network => Network.EnsureLoadedAsync(),
             _ => Task.CompletedTask,
-        };
+        }).Forget($"loading page {value}");
+    }
+
+    /// <summary>Developer switch --expert on: Expert mode for this session only (not saved, no confirmation).</summary>
+    public void EnableExpertForSession()
+    {
+#pragma warning disable MVVMTK0034
+        _expertMode = true;
+#pragma warning restore MVVMTK0034
+        OnPropertyChanged(nameof(ExpertMode));
     }
 
     partial void OnExpertModeChanged(bool value)
@@ -281,9 +304,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnIsScanningChanged(bool value)
     {
+        ChangeGate.Instance.Scanning = value;
         NotifyScore();
         if (value) ShowPendingCounts();
     }
+
+    /// <summary>No change, scan or update is running: switches and change buttons are enabled.</summary>
+    public bool CanChange => ChangeGate.Instance.CanChange;
+
+    /// <summary>A scan may start while no change or update runs (a running scan is joined, not repeated).</summary>
+    private bool CanScan() => !ChangeGate.Instance.Busy && !ChangeGate.Instance.Updating;
 
     /// <summary>While scanning (and before the first scan): the count tiles with "--" instead of old or empty numbers.</summary>
     private void ShowPendingCounts()
@@ -318,9 +348,20 @@ public sealed partial class MainViewModel : ObservableObject
         if ((atStart && !_settings.CheckForUpdates) || _releaseChecking) return;
         _releaseChecking = true;
         OnPropertyChanged(nameof(UpdateStatus));
-        using var check = new ReleaseCheck();
-        _release = await check.CheckAsync(typeof(MainViewModel).Assembly.GetName().Version ?? new Version(0, 0, 0));
-        _releaseChecking = false;
+        try
+        {
+            using var check = new ReleaseCheck();
+            _release = await check.CheckAsync(AppInfo.Version);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("update", "release check failed", ex);
+            _release = new ReleaseCheckResult(ReleaseCheckStatus.Error);
+        }
+        finally
+        {
+            _releaseChecking = false;
+        }
         Log.Info("update", "release check", new { _release.Status, latest = _release.Latest?.ToString(3) });
         OnPropertyChanged(nameof(UpdateStatus));
         OnPropertyChanged(nameof(UpdateAvailable));
@@ -359,20 +400,22 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Downloaded updates (protected data folder); emptied on the next start.</summary>
-    public static string UpdatesFolder => System.IO.Path.Combine(DataPaths.Root, "updates");
+    public static string UpdatesFolder => DataPaths.Updates;
 
     /// <summary>
     /// Self-update only replaces the published single-file exe running elevated. A Debug build has PCOptimizer.dll next
     /// to its exe and gets the download page instead.
     /// </summary>
-    public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && DataPaths.ProcessIsElevated &&
+    public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
         Environment.ProcessPath is { } exe && System.IO.Path.GetFileName(exe).Equals("PCOptimizer.exe", StringComparison.OrdinalIgnoreCase) &&
         !System.IO.File.Exists(System.IO.Path.ChangeExtension(exe, ".dll"));
 
     [ObservableProperty] private bool _updating;
 
-    /// <summary>After confirmation: download the release exe, check its SHA-256, replace this exe and restart.</summary>
-    [RelayCommand]
+    partial void OnUpdatingChanged(bool value) => ChangeGate.Instance.Updating = value;
+
+    /// <summary>After confirmation: download the release exe, check its signature and SHA-256, replace this exe and restart.</summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task UpdateNowAsync()
     {
         if (!CanSelfUpdate || _release is not { Latest: { } latest } release || Environment.ProcessPath is not { } exe)
@@ -397,7 +440,18 @@ public sealed partial class MainViewModel : ObservableObject
             Log.Info("update", "download", new { download.Outcome, version });
             if (download.Outcome != UpdateOutcome.Ready)
             {
-                ShowResult(Loc.Instance[download.Outcome == UpdateOutcome.ChecksumMismatch ? "Update_BadChecksum" : "Update_Failed"]);
+                ShowResult(Loc.Instance[download.Outcome switch
+                {
+                    UpdateOutcome.ChecksumMismatch => "Update_BadChecksum",
+                    UpdateOutcome.SignatureInvalid => "Update_BadSignature",
+                    _ => "Update_Failed",
+                }]);
+                return;
+            }
+            // A change may have started while the download ran: never replace the exe in the middle of it.
+            if (IsBusy)
+            {
+                ShowResult(Loc.Instance["Update_Busy"]);
                 return;
             }
             try
@@ -428,8 +482,12 @@ public sealed partial class MainViewModel : ObservableObject
     private System.Windows.Threading.DispatcherTimer? _resultTimer;
 
     /// <summary>Shows the result of an action at the bottom; it closes by itself after long enough to read it.</summary>
-    public void ShowResult(string text)
+    [ObservableProperty] private InfoBarSeverity _resultSeverity = InfoBarSeverity.Informational;
+
+    /// <summary>Shows the result of an action; failures in the caution or error style, so they are not read as done.</summary>
+    public void ShowResult(string text, InfoBarSeverity severity = InfoBarSeverity.Informational)
     {
+        ResultSeverity = severity;
         ResultText = text;
         ResultOpen = !string.IsNullOrWhiteSpace(text);
         if (_resultTimer is null)
@@ -486,9 +544,38 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ---------------- scanning ----------------
 
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    public async Task ScanAsync()
+    private Task? _scan;
+    private bool _rescanRequested;
+
+    /// <summary>
+    /// One scan at a time. A call while a scan runs asks for one more scan after it (the running one may have read the
+    /// system before a change finished) and returns the task that ends after both, so two scans never race and an
+    /// older result can never overwrite a newer one.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanScan))]
+    public Task ScanAsync()
     {
+        if (_scan is { IsCompleted: false })
+        {
+            _rescanRequested = true;
+            return _scan;
+        }
+        return _scan = ScanUntilCurrentAsync();
+    }
+
+    private async Task ScanUntilCurrentAsync()
+    {
+        do
+        {
+            _rescanRequested = false;
+            await ScanOnceAsync();
+        }
+        while (_rescanRequested);
+    }
+
+    private async Task ScanOnceAsync()
+    {
+        Task<IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>>? pendingSample = null;
         IsScanning = true;
         ScanStatus = Loc.Instance["Scan_Running"];
         Headline = Loc.Instance["Headline_Scanning"];
@@ -496,9 +583,19 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var progress = new Progress<string>(probe => ScanStatus = Loc.Instance.Format("Scan_Probe", probe));
-            var profile = await new HardwareScanner(_catalog).ScanAsync(progress);
+            // After a change only what a change can affect is read again; "Scan again" reads everything.
+            var previous = _reuseSlowParts ? Profile : null;
+            _reuseSlowParts = false;
+            var scanner = new HardwareScanner(_catalog);
+            // The page is ready without the 3 second background CPU sample; that one check follows when it is done.
+            var profile = await scanner.ScanAsync(progress, previous: previous, waitForBackgroundSample: false);
+            pendingSample = scanner.PendingBackgroundSample;
+            // A quick rescan after a change reuses the last finished sample.
+            if (profile.Extras is { BackgroundCpu: null } && pendingSample is null && _lastBackgroundSample is { } last)
+                profile = HardwareScanner.WithBackgroundSample(profile, last);
             var registry = _services.Context.Registry;
-            _findings = await Task.Run(() => new FindingEngine(_catalog, registry).Evaluate(profile));
+            var bcd = _services.BcdElements;
+            _findings = await Task.Run(() => new FindingEngine(_catalog, registry, bcd).Evaluate(profile));
             Profile = profile;
             await RefreshTweaksAsync();
             _lastScanTime = DateTime.Now;
@@ -516,15 +613,83 @@ public sealed partial class MainViewModel : ObservableObject
             ScanStatus = error ?? Loc.Instance["Scan_Idle"];
             OnPropertyChanged(nameof(LogFile));
         }
+        await RefreshChangesStateAsync();
+        if (pendingSample is not null && Profile is { } scanned) CompleteBackgroundSampleAsync(scanned, pendingSample).Forget("background CPU sample");
+    }
+
+    private IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>? _lastBackgroundSample;
+
+    /// <summary>
+    /// The 3 second background CPU sample finished after the page was ready: its check (F11) is evaluated now. Skipped
+    /// when a newer scan replaced the result meanwhile; that scan's own sample follows.
+    /// </summary>
+    private async Task CompleteBackgroundSampleAsync(HardwareProfile scanned, Task<IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>> pending)
+    {
+        IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>? sample;
+        try
+        {
+            sample = await pending;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("scan", $"background CPU sample failed: {ex.Message}");
+            return;
+        }
+        _lastBackgroundSample = sample;
+        if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
+        var completed = HardwareScanner.WithBackgroundSample(scanned, sample);
+        var registry = _services.Context.Registry;
+        var bcd = _services.BcdElements;
+        var findings = await Task.Run(() => new FindingEngine(_catalog, registry, bcd).Evaluate(completed));
+        var facts = await Task.Run(() => FactsBuilder.Build(completed, findings, _catalog, registry));
+        if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
+        _findings = findings;
+        Profile = completed;
+        // Reading every tweak's state takes most of a second and recreating every row makes each page draw again; the
+        // sample changes only its own check, which no tweak reads today. Both happen only when a tweak depends on it.
+        if (TweaksDependOn(_facts, facts))
+        {
+            await RefreshTweaksAsync();
+            Rebuild();
+            Network.Rebuild();
+            return;
+        }
+        _facts = facts;
+        ApplyProfile();
+        RebuildFindings();
+    }
+
+    /// <summary>
+    /// True when the facts differ in one the tweak rows depend on: any fact that is not a finding's (the engine reads
+    /// hardware and system facts directly), or a finding that a tweak fixes or a tweak or profile condition reads.
+    /// </summary>
+    private bool TweaksDependOn(Facts before, Facts after)
+    {
+        var changed = before.All.Keys.Union(after.All.Keys, StringComparer.OrdinalIgnoreCase)
+            .Where(k => !Equals(before.Get(k), after.Get(k))).ToList();
+        if (changed.Count == 0) return false;
+        if (changed.Any(k => !k.StartsWith("finding.", StringComparison.OrdinalIgnoreCase))) return true;
+        var tweaks = _tweakStates.Concat(_deviceStates).Select(s => s.Tweak).ToList();
+        var findingIds = changed.Select(k => k.Split('.')[1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (tweaks.Any(t => t.Fixes.Any(findingIds.Contains))) return true;
+        var profiles = _catalog.Profiles.Profiles;
+        var read = tweaks.SelectMany(t => t.Conditions())
+            .Concat(profiles.Select(p => p.SuggestWhen).OfType<Condition>())
+            .Concat(profiles.SelectMany(p => p.Tweaks).Select(pt => pt.RecommendWhen).OfType<Condition>())
+            .SelectMany(c => c.ReferencedFacts())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return changed.Any(read.Contains);
     }
 
     /// <summary>Re-reads every tweak's state (after a scan or after applying/undoing).</summary>
     private async Task RefreshTweaksAsync()
     {
         if (Profile is null) return;
+        InspectorItem.ClearMarkdownCache();
         var profile = Profile;
         var engine = _services.Engine;
         var registry = _services.Context.Registry;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         (_facts, _tweakStates, _deviceStates) = await Task.Run(() =>
         {
             var facts = FactsBuilder.Build(profile, _findings, _catalog, registry);
@@ -532,6 +697,7 @@ public sealed partial class MainViewModel : ObservableObject
             var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
             return (facts, catalog, device);
         });
+        Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });
         EnsureProfile();
         ApplyProfile();
         var facts = _facts;
@@ -541,7 +707,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         // Once per Windows update: say so when all changes survived it (a reset shows in the drift banner instead).
         var current = _services.Os.BuildString;
-        var count = _services.Store.All().Count;
+        var count = await Task.Run(() => _services.Store.All().Count);
         if (_settings.LastSeenWindowsVersion is { } last && last != current && count > 0 && _drift.Count == 0)
             _updateNotice = Loc.Instance.Format("WinUpdated_AllGood", last, current, count);
         if (_settings.LastSeenWindowsVersion != current)
@@ -607,11 +773,10 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedProfile));
         ProfileDescription = Loc.Instance[$"ProfileDesc_{_usage.Id}"];
         SuggestedProfileText = _suggested is { } s && s.Id != _usage.Id && Profile is not null ? Loc.Instance.Format("Profile_Suggested", ProfileName(s)) : null;
-        OnPropertyChanged(nameof(ActiveProfile));
     }
 
     /// <summary>Applies every reset change again (one confirmation). Expert changes are left for the Changes page.</summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task ReapplyDriftAsync()
     {
         var safe = _drift.Where(d => d.Tweak.IsBatchSafe).Select(d => d.Tweak).ToList();
@@ -620,7 +785,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (expert > 0) ShowResult(Loc.Instance.Format("Drift_ExpertIndividually", expert));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task ReapplyRecordAsync(string tweakId)
     {
         if (ResolveTweak(tweakId) is { } t) await Runner.ApplyAsync(t);
@@ -631,16 +796,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ---------------- apply / undo ----------------
 
-    [RelayCommand]
+    /// <summary>The row's action button: the same action its label names (<see cref="TweakItemViewModel.Action"/>).</summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task RunActionAsync(InspectorItem? item)
     {
         item ??= SelectedItem;
         switch (item)
         {
-            case TweakItemViewModel t when t.HasBackup:
+            case TweakItemViewModel { Action: RowAction.Undo } t:
                 await Runner.UndoAsync(t.Tweak);
                 break;
-            case TweakItemViewModel t:
+            case TweakItemViewModel { Action: RowAction.Apply or RowAction.ApplyAgain } t:
                 await Runner.ApplyAsync(t.Tweak);
                 break;
             case FindingItemViewModel { Fix: { } fix }:
@@ -654,7 +820,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            if (on && !item.IsOn) await Runner.ApplyAsync(item.Tweak);
+            if (!CanChange) ShowResult(Loc.Instance["Change_Busy"]);
+            else if (on && !item.IsOn) await Runner.ApplyAsync(item.Tweak);
             else if (!on && item.HasBackup) await Runner.UndoAsync(item.Tweak);
             else if (!on) ShowResult(Loc.Instance["Tweak_NoBackup"]);
         }
@@ -664,7 +831,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task ApplyRecommendedAsync()
     {
         if (_plan.IsEmpty)
@@ -675,39 +842,25 @@ public sealed partial class MainViewModel : ObservableObject
         await Runner.ApplyBatchAsync(_plan.Items.Select(i => i.Tweak).ToList(), Loc.Instance["Rec_Title"], Loc.Instance["Rec_Intro"]);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task UndoRecordAsync(string tweakId)
     {
         if (ResolveTweak(tweakId) is { } t) await Runner.UndoAsync(t);
-        else ShowResult(Loc.Instance.Format("Result_Failed", tweakId));
+        else ShowResult(Loc.Instance.Format("Result_Error", tweakId), Wpf.Ui.Controls.InfoBarSeverity.Error);
     }
 
     /// <summary>Catalog entry, runtime fix of this scan, or the definition stored with the backup.</summary>
     public TweakDefinition? ResolveTweak(string id) =>
         _services.Catalog.Get(id) ?? _findings.Select(f => f.Fix).FirstOrDefault(f => f?.Id == id) ?? _services.Engine.Resolve(id);
 
-    [RelayCommand]
-    private async Task UndoAllAsync()
-    {
-        var count = _services.Store.All().Count;
-        if (count == 0 || !_dialogs.ConfirmUndoAll(count)) return;
-        IsBusy = true;
-        try
-        {
-            var results = await Task.Run(() => _services.Engine.RevertAll());
-            var failed = results.Count(r => !r.Result.Success);
-            ShowResult(failed == 0 ? Loc.Instance.Format("Result_UndoAll", results.Count) : Loc.Instance.Format("Result_Failed", $"{failed} / {results.Count}"));
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-        await AfterChangeAsync();
-    }
+    /// <summary>The runner refreshes the pages after it (also when some changes could not be undone).</summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
+    private Task UndoAllAsync() => Runner.UndoAllAsync();
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task EnableRestorePointsAsync()
     {
+        ChangeGate.Instance.Busy = true;
         IsBusy = true;
         try
         {
@@ -715,31 +868,58 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowResult(Loc.Instance.Format("Result_Failed", ex.Message));
+            Log.Error("ui", "enabling System Restore failed", ex);
+            ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
         }
         finally
         {
             IsBusy = false;
+            ChangeGate.Instance.Busy = false;
         }
-        BuildChanges();
+        await RefreshChangesStateAsync();
     }
 
-    /// <summary>Tweaks that change findings need a rescan; page-level changes (startup, services, features) refresh their page.</summary>
-    private async Task OnChangedAsync(TweakDefinition t)
+    /// <summary>
+    /// Tweaks that change findings need a rescan; page-level changes (startup, services, features) refresh their page.
+    /// Null: several changes at once (Undo all).
+    /// </summary>
+    private async Task OnChangedAsync(TweakDefinition? t)
     {
-        if (t.Category is "Startup" or "Services" or "Features")
+        try
         {
-            BuildChanges();
-            return;
+            if (t?.Category is "Startup" or "Services" or "Features")
+            {
+                await RefreshChangesStateAsync();
+                return;
+            }
+            await AfterChangeAsync();
         }
-        await AfterChangeAsync();
+        catch (Exception ex)
+        {
+            Log.Error("ui", "refresh after a change failed", ex);
+        }
     }
+
+    private bool _reuseSlowParts;
 
     private async Task AfterChangeAsync()
     {
         var result = ResultText;
+        var severity = ResultSeverity;
+        _reuseSlowParts = true;
         await ScanAsync();
-        if (result is not null) ShowResult(result);
+        if (result is not null) ShowResult(result, severity);
+    }
+
+    // The Changes page reads every backup file and asks WMI whether System Restore is on: done in the background after a
+    // scan or a change, not on every rebuild (filter, language, theme, profile).
+    private IReadOnlyList<Optimizer.Core.Backup.TweakBackup> _backups = [];
+    private bool? _restoreEnabled;
+
+    private async Task RefreshChangesStateAsync()
+    {
+        var store = _services.Store;
+        (_backups, _restoreEnabled) = await Task.Run(() => (store.All(), SafeRestoreEnabled()));
         BuildChanges();
     }
 
@@ -748,13 +928,63 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ---------------- building view state ----------------
 
+    /// <summary>
+    /// Theme switched (in Settings or by Windows): rows and status colors are rebuilt, and properties whose value did
+    /// not change are raised again, so their brushes are looked up in the new theme.
+    /// </summary>
+    public void OnThemeChanged()
+    {
+        Rebuild();
+        Network.Rebuild();
+        NotifyScore();
+        Health.OnThemeChanged();
+    }
+
     /// <summary>Recreates all language-dependent items (after a scan, a language switch or a theme switch).</summary>
     public void Rebuild()
     {
-        var lang = Loc.Instance.Language;
         var selectedKey = SelectedItem?.Key;
 
         BuildProfileOptions();
+        BuildFindingLists();
+        OnPropertyChanged(nameof(IsEnglish));
+        OnPropertyChanged(nameof(IsGerman));
+
+        BuildCategories();
+        FillTweaks();
+        BuildRecommendations();
+        BuildBanners();
+        BuildSummary();
+        BuildChanges();
+        HardwareSections.Clear();
+        if (Profile is not null)
+            foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
+
+        RestoreSelection(selectedKey);
+        OnPropertyChanged(nameof(AboutText));
+    }
+
+    /// <summary>
+    /// Only the findings changed (the background CPU sample): the finding lists, score and plan are built again, while
+    /// the tweak, network and hardware rows stay, so pages that show them need not draw again.
+    /// </summary>
+    private void RebuildFindings()
+    {
+        var selectedKey = SelectedItem?.Key;
+        BuildFindingLists();
+        BuildRecommendations();
+        BuildBanners();
+        RestoreSelection(selectedKey);
+    }
+
+    private void RestoreSelection(string? key) =>
+        SelectedItem = key is null ? null :
+            Findings.Cast<InspectorItem>().Concat(AdvisorItems).Concat(Tweaks).Concat(Network.DeviceTweaks).Append(GameAccess).FirstOrDefault(i => i?.Key == key);
+
+    /// <summary>The finding and advisor lists, the score and the counts on the overview.</summary>
+    private void BuildFindingLists()
+    {
+        var lang = Loc.Instance.Language;
         Fill(Findings, _profiledFindings.Where(f => f.Kind == FindingKind.Finding), lang);
         Fill(AdvisorItems, _profiledFindings.Where(f => f.Kind == FindingKind.Advisor), lang);
         OnPropertyChanged(nameof(FindingsEmpty));
@@ -782,22 +1012,6 @@ public sealed partial class MainViewModel : ObservableObject
         if (Profile is { } prof)
             Headline = string.Join(", ", new[] { prof.Cpu?.Name, prof.Gpus?.FirstOrDefault(g => g.Kind == GpuKind.Discrete)?.Name ?? prof.Gpus?.FirstOrDefault()?.Name,
                 $"Windows 11 {prof.Os.DisplayVersion}" }.Where(x => !string.IsNullOrEmpty(x)));
-        OnPropertyChanged(nameof(IsEnglish));
-        OnPropertyChanged(nameof(IsGerman));
-
-        BuildCategories();
-        FillTweaks();
-        BuildRecommendations();
-        BuildBanners();
-        BuildSummary();
-        BuildChanges();
-        HardwareSections.Clear();
-        if (Profile is not null)
-            foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
-
-        SelectedItem = selectedKey is null ? null :
-            Findings.Cast<InspectorItem>().Concat(AdvisorItems).Concat(Tweaks).Concat(Network.DeviceTweaks).Append(GameAccess).FirstOrDefault(i => i?.Key == selectedKey);
-        OnPropertyChanged(nameof(AboutText));
     }
 
     private void Fill(ObservableCollection<FindingItemViewModel> target, IEnumerable<Finding> source, string lang)
@@ -870,10 +1084,10 @@ public sealed partial class MainViewModel : ObservableObject
             : Labels.Current.Get(lang, $"reversibility.{i.Tweak.Reversibility}");
         Recommendations.Clear();
         foreach (var i in _plan.Items)
-            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), Loc.Instance.Format("Impact_Short", i.Impact), i.FixesFinding is not null));
+            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), Loc.Instance.Format("Impact_Short", i.Impact)));
         RecommendationsExcluded.Clear();
         foreach (var i in _plan.Excluded)
-            RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), Loc.Instance.Format("Impact_Short", i.Impact), i.FixesFinding is not null));
+            RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), Loc.Instance.Format("Impact_Short", i.Impact)));
         HasRecommendations = _plan.Items.Count > 0;
         RecommendedButtonText = Loc.Instance.Format("Rec_Button", _plan.Items.Count);
         RecommendationsIntro = Loc.Instance.Format("Rec_IntroProfile", ProfileName(_usage));
@@ -889,7 +1103,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var lang = Loc.Instance.Language;
         ChangeRecords.Clear();
-        foreach (var b in _services.Store.All().OrderByDescending(b => b.LastApplied))
+        foreach (var b in _backups.OrderByDescending(b => b.LastApplied))
         {
             var t = ResolveTweak(b.TweakId);
             var title = t is null ? b.TweakId : Runner.Title(t);
@@ -910,12 +1124,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
         OnPropertyChanged(nameof(ChangesEmpty));
 
-        var sr = SafeRestoreEnabled();
+        var sr = _restoreEnabled;
         RestorePointText = sr switch { true => Loc.Instance["Rp_On"], false => Loc.Instance["Rp_Off"], _ => Loc.Instance["Rp_Unknown"] };
         CanEnableRestorePoints = sr == false && IsElevated;
 
         ChangeLog.Clear();
-        foreach (var e in Log.Session.Where(e => e.Source == "change").Reverse().Take(200))
+        foreach (var e in Log.Newest(e => e.Source == "change", 200))
             ChangeLog.Add(new LogLine(e.Time.ToString("HH:mm:ss"), e.Message + (e.Data is { } d ? "  " + d : "")));
         OnPropertyChanged(nameof(ChangeLogEmpty));
     }
@@ -990,7 +1204,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (p.Memory is { } m)
         {
             var first = m.Modules.FirstOrDefault();
-            var speed = first is null ? "" : $" {first.Type}-{Optimizer.Core.Findings.Checks.RamSpeed.NormalizeConfigured(first.ConfiguredMts, first.Type)}";
+            var speed = first is null ? "" : $" {first.Type}-{Optimizer.Core.Findings.Checks.RamSpeed.NormalizeConfigured(first)}";
             Summary.Add(new SummaryItem(l["Sum_Memory"], $"{m.TotalBytes / (double)(1L << 30):0} GB{speed}, {m.Modules.Count} " + l["Sum_Modules"]));
         }
         if (p.Displays is { Count: > 0 } d)

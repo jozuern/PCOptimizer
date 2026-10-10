@@ -13,7 +13,7 @@ No location lookups in the background. No performance effect.
 Privacy setting; no frame rate effect.
 
 ## Trade-offs & risks
-Apps, automatic time zone and Find my device lose the device location [1]. Some features, such as weather on the taskbar, can still use your IP address, and an emergency call still shares your location [1].
+Apps, automatic time zone and Find my device lose the device location [1]. Some features, such as weather on the taskbar, can still use your IP address, and an emergency call still shares your location [1]. The app's own Wi-Fi band check shows "unknown" afterwards: Windows gives Wi-Fi details only to apps that may use the location [3].
 
 ## When not to use it
 Keep location on if you use apps or features that need it.
@@ -21,3 +21,4 @@ Keep location on if you use apps or features that need it.
 ## Sources
 1. https://support.microsoft.com/en-us/windows/windows-location-service-and-privacy-3a8eee0a-5b0b-dc07-eede-2a5ca1c49088
 2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services
+3. https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes

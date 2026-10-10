@@ -136,13 +136,23 @@
       "id": "power.turboRestore",
       "category": "Power",
       "impact": {
-        "gaming": 4,
+        "gaming": 0,
         "basis": "situational",
         "effect": [
           "fps",
           "lows"
         ]
       },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "finding.F6.turbo.problem",
+            "eq": true
+          },
+          "gaming": 4,
+          "reasonKey": "impact.turboCapped"
+        }
+      ],
       "risk": "safe",
       "conflictsWith": [
         "quiet.boostOff"

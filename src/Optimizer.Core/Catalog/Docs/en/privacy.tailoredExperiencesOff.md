@@ -20,4 +20,3 @@ Keep it if you like personalized suggestions.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience
-2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

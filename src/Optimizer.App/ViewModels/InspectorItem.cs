@@ -13,14 +13,34 @@ public abstract class InspectorItem : ObservableObject
     private Func<string>? _markdownFactory;
 
     /// <summary>
-    /// The inspector document, built on first use: only the selected item needs it, and building it for tweaks reads the
-    /// current values from the system (registry, power settings, BCD), which made every list rebuild slow.
+    /// The inspector document, built on first use and off the UI thread: only the selected item needs it, and building it
+    /// for tweaks reads the current values from the system (registry, power settings, bcdedit), which froze the window
+    /// for a moment on every selection. Kept per item and language until the next scan or change
+    /// (<see cref="ClearMarkdownCache"/>), so the rows a rebuild recreates do not read the system again.
     /// </summary>
-    public string Markdown
+    public Task<string> MarkdownAsync()
     {
-        get => _markdown ??= _markdownFactory?.Invoke() ?? "";
-        protected init => _markdown = value;
+        if (_markdown is { } ready) return Task.FromResult(ready);
+        return _markdownTask ??= BuildMarkdownAsync();
     }
+
+    protected string MarkdownText { init => _markdown = value; }
+
+    private Task<string>? _markdownTask;
+    private static readonly Dictionary<(string Key, string Lang), string> Cache = [];
+
+    private async Task<string> BuildMarkdownAsync()
+    {
+        var cacheKey = (Key, Optimizer.App.Services.Loc.Instance.Language);
+        if (Cache.TryGetValue(cacheKey, out var cached)) return _markdown = cached;
+        var factory = _markdownFactory;
+        var text = factory is null ? "" : await Task.Run(factory);
+        Cache[cacheKey] = text;
+        return _markdown = text;
+    }
+
+    /// <summary>After a scan or a change the "What changes" values are different: documents are built again.</summary>
+    public static void ClearMarkdownCache() => Cache.Clear();
 
     protected Func<string> MarkdownFactory { init => _markdownFactory = value; }
     public string StatusText { get; protected init; } = "";
@@ -36,7 +56,6 @@ public abstract class InspectorItem : ObservableObject
     /// <summary>Gaming impact 0-5 (null = not rated, e.g. game access and critical items).</summary>
     public int? Impact { get; protected init; }
 
-    public bool HasImpact => Impact is not null;
     public string ImpactText { get; protected init; } = "";
     public string ImpactTooltip { get; protected init; } = "";
     public string? CriticalText { get; protected init; }

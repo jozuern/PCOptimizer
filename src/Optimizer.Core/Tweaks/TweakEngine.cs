@@ -52,7 +52,8 @@ public sealed class ApplyOptions
 
 public enum ApplyOutcome { Applied, AppliedIneffective, Blocked, NeedsRestorePointDecision, Failed, NothingToDo }
 
-public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine> Changes, string? Error = null, IReadOnlyList<Block>? Blocks = null);
+/// <param name="LeftChanged">Failed, and part of the change could not be rolled back: the backup is kept for Undo.</param>
+public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine> Changes, string? Error = null, IReadOnlyList<Block>? Blocks = null, bool LeftChanged = false);
 
 public sealed record BatchItemResult(TweakDefinition Tweak, ApplyResult Result);
 
@@ -72,8 +73,12 @@ public sealed record DriftItem(TweakDefinition Tweak, TweakBackup Backup, string
 ///. Undo restores originals unless Windows already changed the value (feature-update-aware).
 /// </summary>
 /// <param name="windowsVersion">Full Windows version ("26300.9550"); defaults to the build number.</param>
-public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild, string? windowsVersion = null)
+/// <param name="catalog">The tweak catalog (runtime tweaks are those it does not contain); null = the embedded catalog.</param>
+public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild, string? windowsVersion = null,
+    TweakCatalog? catalog = null)
 {
+    private readonly TweakCatalog _catalog = catalog ?? TweakCatalog.Current;
+
     public string WindowsVersion { get; } = windowsVersion ?? windowsBuild.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public const string RestorePointFrequencyTweak = "system.restorePointFrequency";
@@ -88,10 +93,23 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public IReadOnlyList<TweakStatus> DetectAll(IEnumerable<TweakDefinition> tweaks, Facts facts)
     {
         var list = tweaks.ToList();
-        var first = list.Select(t => (t, state: DetectState(t, facts))).ToList();
-        var applied = first.Where(x => x.state is TweakState.Applied or TweakState.PendingRestart).Select(x => x.t.Id).ToHashSet();
-        return first.Select(x => BuildStatus(x.t, x.state, facts, applied)).ToList();
+        // One read of every backup file for the whole detection instead of two or three per tweak.
+        _backups = store.All().ToDictionary(b => b.TweakId, StringComparer.Ordinal);
+        try
+        {
+            var first = list.Select(t => (t, state: DetectState(t, facts))).ToList();
+            var applied = first.Where(x => x.state is TweakState.Applied or TweakState.PendingRestart).Select(x => x.t.Id).ToHashSet();
+            return first.Select(x => BuildStatus(x.t, x.state, facts, applied)).ToList();
+        }
+        finally
+        {
+            _backups = null;
+        }
     }
+
+    private Dictionary<string, TweakBackup>? _backups;
+
+    private TweakBackup? BackupOf(string id) => _backups is { } cached ? cached.GetValueOrDefault(id) : store.Get(id);
 
     public TweakStatus Detect(TweakDefinition t, Facts facts, IReadOnlySet<string>? appliedIds = null) =>
         BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>());
@@ -103,7 +121,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var blocks = Preflight(t, facts, applied, new ApplyOptions { ExpertMode = true });
         var recommended = state is TweakState.NotApplied or TweakState.Partial or TweakState.RevertedByWindows
                           && t.RecommendWhen?.Evaluate(facts) == true && blocks.Count == 0;
-        return new TweakStatus(t, state, impact, effects, reason, recommended, blocks, store.Get(t.Id) is not null);
+        return new TweakStatus(t, state, impact, effects, reason, recommended, blocks, BackupOf(t.Id) is not null);
     }
 
     public TweakState DetectState(TweakDefinition t, Facts facts)
@@ -118,7 +136,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var appliedCount = supported.Count(s => s == ActionState.Applied);
         var state = appliedCount == supported.Count ? TweakState.Applied : appliedCount == 0 ? TweakState.NotApplied : TweakState.Partial;
 
-        var backup = store.Get(t.Id);
+        var backup = BackupOf(t.Id);
         if (backup is not null)
         {
             // Pending restart: everything reads as applied, except changes that only show their value after the restart.
@@ -129,7 +147,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is not null))
                 return TweakState.RevertedByWindows;
         }
-        else if (state != TweakState.Applied && facts.Get("device.managed") is true && actions.OfType<RegistryAction>().Any(a => IsPolicyPath(a.Path) && a.Read(ctx) is { Existed: true }))
+        else if (state != TweakState.Applied && facts.Get("device.managed") is true && actions.OfType<RegistryAction>().Any(a => IsPolicyPath(a.Path) && SafeRead(a) is { Existed: true }))
         {
             return TweakState.EnforcedByPolicy;
         }
@@ -178,13 +196,18 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (!AppliesTo(t, facts)) blocks.Add(new Block("block.notApplicable"));
         foreach (var c in t.BlockedWhen.Where(c => c.Evaluate(facts)))
             blocks.Add(new Block(c.ReasonKey ?? "block.guardRule"));
+        // A guard whose facts could not be read (a probe failed) fails closed: the danger it guards against may be there.
+        if (t.BlockedWhen.Any(c => !c.CanEvaluate(facts)) && blocks.Count == 0) blocks.Add(new Block("block.cannotCheck"));
         if (t.AntiCheatSensitive && facts.Get("anticheat.strict") is true && !options.AcknowledgeAntiCheat)
             blocks.Add(new Block("block.antiCheat", facts.Get("anticheat.strictNames") as string, CanOverride: true));
         if (t.EffectiveRisk == Risk.Expert && !options.ExpertMode) blocks.Add(new Block("block.expertMode", CanOverride: true));
         // Conflicts: only changes this app made and has not undone. A value that merely matches the other tweak (the
         // Windows default Balanced plan matches power.balancedPlan) is not a change to protect; this tweak's own backup
         // keeps it as the original, so undo brings it back.
-        foreach (var other in t.ConflictsWith.Where(o => store.Get(o) is not null)) blocks.Add(new Block("block.conflict", other));
+        foreach (var other in t.ConflictsWith.Where(o => BackupOf(o) is not null)) blocks.Add(new Block("block.conflict", other));
+        // A backup file that cannot be read still holds the true originals: applying again would record the changed
+        // values as originals and overwrite it.
+        if (store.IsDamaged(t.Id)) blocks.Add(new Block("block.backupDamaged", store.DamagedFile(t.Id)));
         foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
         if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
         return blocks;
@@ -285,7 +308,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var before = new Dictionary<string, StoredValue>();
         foreach (var a in actions)
         {
-            var current = a.Read(ctx);
+            var current = SafeRead(a);
             if (current is null) continue;
             // Undone and not restarted yet: the setting is the restored original, not the running value.
             if (a.TakesEffectAfterRestart && pendingUndo?.Entries.FirstOrDefault(e => e.TargetKey == a.TargetKey) is { } restored) current = restored.Original;
@@ -296,7 +319,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         }
         // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
         // definition is what detection compares against; each entry restores itself through its own action.
-        if (TweakCatalog.Current.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
+        if (_catalog.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
         store.Save(backup); // persisted before the first write, so a crash mid-way still has the originals
 
         // Apply in order; on failure roll back what this run changed (per-tweak transaction).
@@ -310,19 +333,25 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             }
             catch (Exception ex)
             {
-                Log.Error("engine", $"{t.Id}: {a.TargetKey} failed, rolling back {done.Count} action(s)", ex);
+                Log.Error("engine", $"{t.Id}: {a.TargetKey} failed, rolling back {done.Count} action(s) and the failed one", ex);
+                // The failing action may have written part of its change before it threw (one adapter keyword, the
+                // mains side of a power setting): it is rolled back too. A target counts as stuck only when it no
+                // longer reads as before, so a write that Windows refused outright is not reported as half-changed.
                 var stuck = new List<TweakAction>();
-                foreach (var undo in Enumerable.Reverse(done))
+                foreach (var undo in Enumerable.Reverse(done).Prepend(a))
                 {
+                    var restored = true;
                     try
                     {
                         undo.Restore(ctx, before[undo.TargetKey]);
                     }
                     catch (Exception rex)
                     {
-                        stuck.Add(undo);
+                        restored = false;
                         Log.Error("engine", $"rollback of {undo.TargetKey} failed", rex);
                     }
+                    var now = SafeRead(undo);
+                    if (now is not null ? !now.SameAs(before[undo.TargetKey]) : !restored) stuck.Add(undo);
                 }
                 if (stuck.Count > 0)
                 {
@@ -332,7 +361,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     backup.LastApplied = DateTimeOffset.Now;
                     backup.AppliedOnVersion = WindowsVersion;
                     store.Save(backup);
-                    return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)");
+                    return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)") with { LeftChanged = true };
                 }
                 // Remove entries this run added if nothing of this tweak remains applied.
                 if (backup.Entries.All(e => before.TryGetValue(e.TargetKey, out var b) && b.SameAs(e.Original)))
@@ -344,7 +373,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // A change that takes effect after a restart still reads the old value: record what was written instead, or undo
         // would later take the new running value for a change by Windows and skip it.
         foreach (var a in done)
-            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.TakesEffectAfterRestart ? a.Desired(ctx) : a.Read(ctx);
+            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.TakesEffectAfterRestart ? a.Desired(ctx) : SafeRead(a);
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
@@ -368,9 +397,14 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     {
         if (restorePoints.IsEnabled() != true) return false;
         // Lift the 24 h limit through a normal, backed-up tweak, so undo puts the original value back.
-        if (TweakCatalog.Current.Get(RestorePointFrequencyTweak) is { } freq)
-            await ApplyAsync(freq, facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true });
-        return await restorePoints.CreateAsync($"PCOptimizer {DateTime.Now:yyyy-MM-dd HH:mm}");
+        var freq = _catalog.Get(RestorePointFrequencyTweak);
+        var lifted = freq is not null && store.Get(freq.Id) is null &&
+                     (await ApplyAsync(freq, facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true })).Outcome
+                     is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective;
+        var created = await restorePoints.CreateAsync($"PCOptimizer {DateTime.Now:yyyy-MM-dd HH:mm}");
+        // No restore point came of it (the user may now cancel the change): the limit goes back as it was.
+        if (!created && lifted) Revert(freq!);
+        return created;
     }
 
     // ---------------- undo ----------------
@@ -378,7 +412,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public RevertResult Revert(TweakDefinition t)
     {
         var backup = store.Get(t.Id);
-        if (backup is null) return new RevertResult(true, [], []);
+        if (backup is null)
+            return store.IsDamaged(t.Id)
+                ? new RevertResult(false, [], [$"The backup file {store.DamagedFile(t.Id)} is damaged; the original values cannot be read from it."])
+                : new RevertResult(true, [], []);
         var skipped = new List<string>();
         var errors = new List<string>();
         var kept = new List<BackupEntry>();
@@ -402,12 +439,14 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 // Not for a change that takes effect after a restart while the restart is pending (the running value is
                 // still the old one), nor for backups of version 0.4.0 and older, which stored that old value as applied.
                 var waitsForRestart = a.TakesEffectAfterRestart && (pending || entry.Applied?.SameAs(entry.Original) == true);
-                if (entry.Applied is { } appliedValue && !waitsForRestart && !a.IsStillApplied(ctx, appliedValue))
+                var outcome = a.RestoreIfUnchanged(ctx, entry.Original, waitsForRestart ? null : entry.Applied);
+                if (outcome == RestoreOutcome.ChangedSince)
                 {
                     skipped.Add(entry.Description);
                     continue;
                 }
-                a.Restore(ctx, entry.Original);
+                // Parts changed since (one side of a power setting, one adapter keyword) keep the value set since.
+                if (outcome == RestoreOutcome.PartlyRestored) skipped.Add(entry.Description);
                 if (a.TakesEffectAfterRestart) restartBound.Add(entry);
                 Log.Info("change", $"{t.Id}: undo {entry.Description}", new { restored = entry.Original.Display });
             }
@@ -491,7 +530,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     /// <summary>The definition of a tweak id: the catalog entry, or the one stored with the backup of a runtime tweak.</summary>
     public TweakDefinition? Resolve(string id)
     {
-        if (TweakCatalog.Current.Get(id) is { } t) return t;
+        if (_catalog.Get(id) is { } t) return t;
         if (store.Get(id) is not { } backup) return null;
         if (backup.Definition is { } json)
         {
@@ -555,6 +594,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 case PowerSettingAction p when p.Scheme is null:
                     activeScheme ??= SafeActiveScheme();
                     list.Add(activeScheme is { } scheme ? p.For(scheme) : p);
+                    break;
+                case PowerModeAction m when m.Source is null:
+                    list.Add(PowerModeAction.CurrentSource(ctx) is { } source ? m.For(source) : m);
                     break;
                 case NicPropertyAction n when n.Adapter is null:
                     adapters ??= SafeAdapters();

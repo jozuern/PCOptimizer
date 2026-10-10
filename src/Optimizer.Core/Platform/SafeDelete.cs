@@ -32,6 +32,25 @@ public static class SafeDelete
         }
     }
 
+    /// <summary>
+    /// True when the file exists, no part of its path is a link, and its handle's real path is the path itself. For
+    /// callers that must hand the path to another API (the Recycle Bin), checked right before that call.
+    /// </summary>
+    public static bool ResolvesToItself(string path)
+    {
+        if (!HasNoLinks(path)) return false;
+        try
+        {
+            var expected = LongPath(Path.GetFullPath(path)).TrimEnd('\\');
+            using var handle = CreateFileW(@"\\?\" + expected, FileReadAttributes, FileShareRead | FileShareWrite | FileShareDelete, IntPtr.Zero, OpenExisting, FileFlagOpenReparsePoint, IntPtr.Zero);
+            return !handle.IsInvalid && string.Equals(FinalPath(handle), expected, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Deletes the file (read-only included). Throws IOException when the path does not resolve to itself.</summary>
     public static void DeleteFile(string path) => Delete(path, directory: false);
 

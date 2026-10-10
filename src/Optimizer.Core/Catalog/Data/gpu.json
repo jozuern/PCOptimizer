@@ -1,9 +1,9 @@
 {
-  "_comment": "GPU catalog data (model lists are catalog data, not code). First matching rule wins. Intel: Arc A and B cards and Arc Pro cards are discrete; Arc B3x0 (B370, B390) is the processor graphics of Core Ultra series 3 (Panther Lake) and stays integrated. ReBAR: NVIDIA rules need GeForce (Turing Quadro RTX cards have no ReBAR); workstation RTX cards fall to Unknown (no advice). AMD RX 5000: compatible per AMD claim GD-178.",
+  "_comment": "GPU catalog data (model lists are catalog data, not code). First matching rule wins. AMD discrete: RX (also RX Vega), R9/R7/R5 with a model number, HD with four digits and no letter (HD 7660D is an APU), Radeon 540/550; APU names (Radeon Graphics, Vega 8 Graphics, 780M) stay integrated. Intel: Arc A and B cards and Arc Pro cards are discrete; Arc B3x0 (B370, B390) is the processor graphics of Core Ultra series 3 (Panther Lake) and stays integrated. ReBAR: NVIDIA rules need GeForce (Turing Quadro RTX cards have no ReBAR); workstation RTX cards fall to Unknown (no advice). AMD RX 5000: compatible per AMD claim GD-178.",
   "pciVendors": { "10DE": "nvidia", "1002": "amd", "1022": "amd", "8086": "intel", "1414": "microsoft", "5143": "qualcomm" },
   "discretePatterns": {
     "nvidia": ".*",
-    "amd": "\\bRX\\s?\\d|Radeon\\s+(Pro|VII)|FirePro|Instinct",
+    "amd": "\\bRX\\s?\\d|\\bRX\\s+Vega|Radeon\\s+(Pro|VII)|Radeon(\\(TM\\))?\\s+(R9|R7|R5)\\s+M?\\d{3}\\b|Radeon(\\(TM\\))?\\s+HD\\s+\\d{4}(?![A-Z0-9])|Radeon(\\(TM\\))?\\s+\\d{3}(?![A-Z0-9])|FirePro|Instinct",
     "intel": "Arc(\\(TM\\))?\\s+(Pro\\s+)?(A\\d{2,3}|B\\d{2}\\b|B[4-9]\\d{2})|Iris(\\(R\\))?\\s+Xe\\s+MAX"
   },
   "virtualPatterns": [ "Parsec", "Virtual Display", "Remote Display", "Meta Virtual", "IddSample", "Hyper-V", "VMware", "VirtualBox", "Citrix", "Spacedesk", "Sunshine" ],

@@ -4,7 +4,7 @@
 Lässt die Grafikkarte ihre Arbeit selbst planen statt eines CPU-Threads. Nötig für DLSS Frame Generation; ohne Frame Generation ist kein messbarer Gewinn belegt.
 
 ## So funktioniert es
-Seit WDDM 2.7 kann Windows den Großteil der GPU-Planung an einen eigenen Prozessor auf der Grafikkarte abgeben, statt sie in einem hoch priorisierten CPU-Thread zu erledigen [1]. Das nutzen nur Grafikkarten und Treiber, die es unterstützen. Der Wert HwSchMode = 2 schaltet es ein und wirkt nach einem Neustart.
+Seit WDDM 2.7 kann Windows den Großteil der GPU-Planung an einen eigenen Prozessor auf der Grafikkarte abgeben, statt sie in einem hoch priorisierten CPU-Thread zu erledigen [1]. Das nutzen nur Grafikkarten und Treiber, die es unterstützen. Der Wert HwSchMode = 2 schaltet es ein und wirkt nach einem Neustart. Es ist der Wert hinter dem Schalter „Hardwarebeschleunigte GPU-Planung“ unter Einstellungen > System > Bildschirm > Grafik; Microsoft dokumentiert den Wert selbst nicht.
 
 ## Warum es helfen kann
 Auf NVIDIA-RTX-40- und -50-Karten funktioniert DLSS Frame Generation nur, wenn diese Einstellung an ist [2]. Ohne Frame Generation beschreibt Microsoft die Änderung als etwas, das du nicht bemerken solltest [1].

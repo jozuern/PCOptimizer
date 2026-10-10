@@ -13,12 +13,11 @@ A Wi-Fi radio that sleeps longer between transmissions uses less energy, which h
 The effect depends on the Wi-Fi driver: some drivers follow the level closely, others ignore it. We could not find measurements that hold across adapters, so the impact is rated low.
 
 ## Trade-offs & risks
-On battery, latency can rise and transfers can get slower, noticeable in video calls and online games. Some access points do not handle 802.11 power saving well, which can cause connection problems [3]. Undo restores the previous battery value.
+On battery, latency can rise and transfers can get slower, noticeable in video calls and online games. Some access points do not handle 802.11 power saving well, which can cause connection problems [2]. Undo restores the previous battery value.
 
 ## When not to use it
 If you make video calls or play online on battery. If the setting is missing on your laptop, the driver does not offer it and the tweak shows as not supported.
 
 ## Sources
 1. https://learn.microsoft.com/en-us/archive/blogs/richardsmith/powercfg-useful-if-you-know-the-guids
-2. https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options
-3. https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744398(v=ws.10)
+2. https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744398(v=ws.10)

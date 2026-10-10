@@ -1,6 +1,6 @@
 # Third-party notices
 
-Components shipped in PCOptimizer.exe. Their full license texts are embedded in the exe and shown under Settings > About > Licenses (source: `src/Optimizer.App/Licenses/`, checked against the restored packages by the test `EveryShippedPackageHasItsLicense`).
+Components shipped in PCOptimizer.exe. Their full license texts are embedded in the exe and shown under Settings > About > Licenses (source: `src/Optimizer.App/Licenses/`, checked against the committed `packages.lock.json` by the test `EveryShippedPackageHasItsLicense`).
 
 | Component | License | Use |
 |---|---|---|
@@ -16,7 +16,7 @@ Components shipped in PCOptimizer.exe. Their full license texts are embedded in 
 | System.IO.Ports 10.0.3, System.IO.FileSystem.AccessControl 5.0.0 | MIT (.NET) | Dependencies of LibreHardwareMonitorLib |
 | Mono.Posix.NETStandard 1.0.0 | MIT | Dependency of LibreHardwareMonitorLib |
 | Intel PresentMon 2.6.0 (console, x64) | MIT | Frame time capture for the benchmark. Embedded unmodified, Intel-signed, SHA-256 B2A706BC6AD475749E3B7E3409263AA1E6906D45BDCF993F6DBC0F660188F1AF, checked on extraction. Source: https://github.com/GameTechDev/PresentMon |
-| .NET runtime and Windows Desktop runtime 10.0.12 (self-contained) | MIT | Runtime, WPF |
+| .NET runtime and Windows Desktop runtime 10.0.12 (self-contained, from the SDK pinned in `global.json`) | MIT | Runtime, WPF |
 
 Used through Windows or installed only on request, not shipped:
 
@@ -32,11 +32,11 @@ scripts are copied from GPL projects):
 
 | Project | License | Note |
 |---|---|---|
-| Chris Titus Tech WinUtil | MIT | Cross-check for the values of privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, privacy.locationOff, gpu.gameDvrOff, network.deliveryOptimizationP2POff, visual.bestPerformance, explorer.fileExtensions and explorer.endTask, which cite Microsoft documentation; the only source for explorer.classicContextMenu, which Microsoft does not document. Values are reused; descriptions are our own. |
+| Chris Titus Tech WinUtil | MIT | Cross-check for the values of privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, privacy.locationOff, network.deliveryOptimizationP2POff, visual.bestPerformance, explorer.fileExtensions and explorer.endTask, which cite Microsoft documentation; source for the undocumented values of gpu.gameDvrOff and explorer.classicContextMenu, which are marked as such in the app. Values are reused; descriptions are our own. |
 | O&O ShutUp10++ | Freeware, closed source | Idea for the privacy core set only. All privacy entries use the documented Group Policy and Policy CSP values from Microsoft's own documentation, cited per entry. |
 | Microsoft PC Manager, Wintoys | Freeware, closed source | Feature ideas only (cleanup categories, storage analyzer, repair tools). Nothing copied. |
 | Sysinternals Autoruns | Sysinternals license | Feature idea only (autostart locations, signature check). Nothing copied. |
 | Atlas OS playbook | GPLv3 | Reference only. Nothing copied verbatim. |
-| hellzerg Optimizer / OptimizerNXT | check LICENSE before use | Reference only |
+| hellzerg Optimizer / OptimizerNXT | GPL-3.0 | Reference only. Nothing copied. |
 
 AMD ADLX is not used: it is a C++ SDK and would need a native helper inside the exe, so AMD Software settings are explained (advisor item "AMD Software settings") instead of changed.

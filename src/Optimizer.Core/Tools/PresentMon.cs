@@ -62,7 +62,19 @@ public static class PresentMon
         if (!IsSafeProcessName(processName)) throw new ArgumentException($"invalid process name {processName}");
         Directory.CreateDirectory(outputFolder);
         var csv = Path.Combine(outputFolder, $"capture-{DateTime.Now:yyyyMMdd-HHmmss}-{Path.GetFileNameWithoutExtension(processName)}.csv");
-        var code = await StreamingProcess.RunAsync(exe, Arguments(processName, csv, seconds), lines, ct);
+        // Held open without write or delete sharing from the hash check until the process has started, so the checked
+        // file is the one that runs. The pinned hash already proves it is Intel's unmodified build; no signature check is needed on top.
+        var hold = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.Read);
+        int code;
+        try
+        {
+            if (Convert.ToHexString(SHA256.HashData(hold)) != Sha256) throw new InvalidDataException("PresentMon hash mismatch");
+            code = await StreamingProcess.RunAsync(exe, Arguments(processName, csv, seconds), lines, ct, started: hold.Dispose);
+        }
+        finally
+        {
+            hold.Dispose();
+        }
         if (!File.Exists(csv))
         {
             Log.Warn("presentmon", $"no output (exit {code})");

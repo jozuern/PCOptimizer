@@ -8,7 +8,9 @@ public static class Wmi
     public static List<Dictionary<string, object?>> Query(string wql, string scope = @"root\cimv2")
     {
         var rows = new List<Dictionary<string, object?>>();
-        using var searcher = new ManagementObjectSearcher(new ManagementScope(scope), new ObjectQuery(wql));
+        // Connecting can hang as well as the query when the WMI service is stuck: both have a time limit.
+        var managementScope = new ManagementScope(scope, new ConnectionOptions { Timeout = TimeSpan.FromSeconds(20) });
+        using var searcher = new ManagementObjectSearcher(managementScope, new ObjectQuery(wql));
         searcher.Options.Timeout = TimeSpan.FromSeconds(20);
         foreach (var obj in searcher.Get())
         {
@@ -36,18 +38,14 @@ public static class Wmi
     public static int[] IntArray(this Dictionary<string, object?> row, string name) =>
         row.TryGetValue(name, out var v) && v is Array a ? a.Cast<object>().Select(o => Convert.ToInt32(o)).ToArray() : [];
 
-    /// <summary>WMI CIM_DATETIME (yyyymmddHHMMSS.mmmmmmsUUU) -> DateTime.</summary>
+    /// <summary>
+    /// The calendar date of a WMI CIM_DATETIME (yyyymmddHHMMSS.mmmmmmsUUU), for dates such as a BIOS release or driver
+    /// date. Taken as written: converting the midnight UTC value to local time would show the day before west of UTC.
+    /// </summary>
     public static DateTime? Date(this Dictionary<string, object?> row, string name)
     {
         var s = row.Str(name);
-        if (s.Length < 8) return null;
-        try
-        {
-            return ManagementDateTimeConverter.ToDateTime(s);
-        }
-        catch (Exception)
-        {
-            return DateTime.TryParseExact(s[..8], "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var d) ? d : null;
-        }
+        return s.Length >= 8 && DateTime.TryParseExact(s[..8], "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d) ? d : null;
     }
 }

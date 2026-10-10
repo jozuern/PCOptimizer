@@ -30,6 +30,13 @@ public partial class MessageWindow : FluentWindow
             };
             Buttons.Children.Add(b);
         }
+        // Escape closes the dialog like the window's close button: no choice made (-1).
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key != System.Windows.Input.Key.Escape) return;
+            e.Handled = true;
+            DialogResult = false;
+        };
     }
 
     public int Result { get; private set; } = -1;

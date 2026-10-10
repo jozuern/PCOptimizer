@@ -28,6 +28,33 @@ public sealed class VirusTotalClient(string apiKey, HttpMessageHandler? handler 
 
     public TimeSpan Spacing { get; init; } = PublicApiSpacing;
 
+    /// <summary>
+    /// Whether the signed-in user may read the file: the app runs as administrator, and the hash of a file the user
+    /// cannot open (another account's or an administrator-only file) is not sent to an online service in their name.
+    /// Read access granted to the user, Users, Authenticated Users, Interactive or Everyone counts.
+    /// </summary>
+    public static bool UserCanRead(string path, string? userSid)
+    {
+        try
+        {
+            var rules = new FileInfo(path).GetAccessControl().GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "S-1-5-32-545", "S-1-5-11", "S-1-5-4", "S-1-1-0" };
+            if (userSid is not null) allowed.Add(userSid);
+            var read = false;
+            foreach (System.Security.AccessControl.FileSystemAccessRule rule in rules)
+            {
+                if (!allowed.Contains(rule.IdentityReference.Value) || (rule.FileSystemRights & System.Security.AccessControl.FileSystemRights.ReadData) == 0) continue;
+                if (rule.AccessControlType == System.Security.AccessControl.AccessControlType.Deny) return false;
+                read = true;
+            }
+            return read;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.AccessControl.PrivilegeNotHeldException)
+        {
+            return false;
+        }
+    }
+
     public static string Sha256(string path)
     {
         using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);

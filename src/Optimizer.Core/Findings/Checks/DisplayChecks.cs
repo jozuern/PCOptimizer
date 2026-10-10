@@ -37,6 +37,9 @@ public sealed class RefreshRateCheck : IFindingCheck
             var status = d.MaxOfferedRefreshAtCurrentResolution == 0 ? FindingStatus.Unknown
                 : IsBelowMax(d.CurrentRefresh, d.MaxOfferedRefreshAtCurrentResolution) ? FindingStatus.Problem
                 : FindingStatus.Ok;
+            // A laptop's own panel on battery may run lower on purpose (Windows lowers the rate to save power): information only.
+            var onBattery = status == FindingStatus.Problem && d.IsInternal && p.Power?.OnAc == false;
+            if (onBattery) status = FindingStatus.Info;
 
             yield return new Finding
             {
@@ -45,7 +48,8 @@ public sealed class RefreshRateCheck : IFindingCheck
                 Subject = d.FriendlyName,
                 Kind = FindingKind.Finding,
                 Status = status,
-                Impact = 5,
+                Variant = onBattery ? "battery" : null,
+                Impact = onBattery ? 0 : 5,
                 Effects = [Effect.Fps, Effect.Latency],
                 Facts = facts,
                 Fix = status == FindingStatus.Problem ? RuntimeFixes.RefreshRate(d) : null,

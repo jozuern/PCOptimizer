@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:s="clr-namespace:Optimizer.App.Services"
              xmlns:l="clr-namespace:Optimizer.App.Services"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <Grid Margin="{StaticResource PagePadding}">
@@ -51,8 +52,15 @@
                     <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0">
-                                <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
-                                                 Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}" />
+                                <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}"
+                                                 Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}" >
+                                    <ui:ToggleSwitch.IsEnabled>
+                                        <MultiBinding Converter="{StaticResource AllTrue}">
+                                            <Binding Path="CanToggle" />
+                                            <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
+                                        </MultiBinding>
+                                    </ui:ToggleSwitch.IsEnabled>
+                                </ui:ToggleSwitch>
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding ReadOnlyNote}" MaxWidth="160" TextWrapping="Wrap"
                                               Visibility="{Binding ReadOnlyNote, Converter={StaticResource NullToVisibility}}" />
                             </StackPanel>

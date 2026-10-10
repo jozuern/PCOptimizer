@@ -13,6 +13,9 @@ Resizable BAR is active for {{gpu}}: the processor can access all of the video m
 ::: variant unsupported
 {{gpu}} does not support Resizable BAR. Nothing to change. No BIOS setting can add it.
 :::
+::: variant platform
+Resizable BAR is off for {{gpu}}. This processor is older than the platforms NVIDIA and AMD name for it (Intel Core 10th generation, Ryzen 3000) or not known.
+:::
 ::: variant unknownGpu,unknownState
 Checks whether Resizable BAR (AMD: Smart Access Memory) is active for the graphics card.
 :::
@@ -24,6 +27,9 @@ Older cards like the GeForce RTX 20 series do not support it, so the setting wou
 :::
 ::: variant laptop
 In laptops, Resizable BAR support depends on the model; only the laptop maker can add it with a firmware update [1][2].
+:::
+::: variant platform
+NVIDIA lists Intel Core 10th and 11th generation processors with their chipsets as supported [1], and AMD names Ryzen 3000 and newer [7]. Some board makers added it to older platforms with unofficial BIOS updates, and NVIDIA notes that results may vary there [1].
 :::
 
 ## How we detected it
@@ -48,6 +54,9 @@ We read the size of the graphics card's memory windows (PCI memory resources) th
 :::
 6. Make sure **CSM** is disabled (pure UEFI boot) and the Windows disk uses GPT [2][6].
 7. Update the graphics driver.
+:::
+::: variant platform
+Look on your board maker's support page for a BIOS version that lists Resizable BAR (or Above 4G Decoding and Re-Size BAR) for your processor. If there is none, the platform cannot use it; nothing else needs to change.
 :::
 ::: variant laptop,active,unsupported,unknownGpu,unknownState
 No action needed.

@@ -74,6 +74,9 @@ public static class PowerProbe
             : null;
     }
 
+    /// <summary>True on battery, false on mains, null when Windows does not know (ACLineStatus 255).</summary>
+    public static bool? OnBattery() => Native.GetSystemPowerStatus(out var s) && AcLine(s.ACLineStatus) is { } ac ? !ac : null;
+
     public static bool HasBattery() => Native.GetSystemPowerStatus(out var s) && s.BatteryFlag != 128 && s.BatteryFlag != 255;
 
     private static uint? ReadAc(Guid scheme, Guid sub, Guid setting) =>

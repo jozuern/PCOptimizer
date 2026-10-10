@@ -62,7 +62,10 @@ public sealed class SystemServiceManager : IServiceManager
                 // ChangeServiceConfig sets the start type; protected services (e.g. WaaSMedicSvc) return access denied.
                 if (!NativeWrite.ChangeServiceConfig(svc, NativeWrite.ServiceNoChange, type, NativeWrite.ServiceNoChange, null, null, IntPtr.Zero, null, null, null, null))
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Cannot change start type of {name}");
-                if (type == 2)
+                // The delayed flag only when it changes: writing "not delayed" where the value never existed would leave a
+                // DelayedAutostart=0 behind after an undo.
+                var delayedNow = Reg.HklmInt($@"SYSTEM\CurrentControlSet\Services\{name}", "DelayedAutostart") == 1;
+                if (type == 2 && delayedNow != (start == ServiceStart.AutomaticDelayed))
                 {
                     var info = new NativeWrite.SERVICE_DELAYED_AUTO_START_INFO { fDelayedAutostart = start == ServiceStart.AutomaticDelayed ? 1 : 0 };
                     if (!NativeWrite.ChangeServiceConfig2(svc, NativeWrite.ServiceConfigDelayedAutoStartInfo, ref info))
@@ -214,12 +217,39 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         }
     }
 
-    public void SetEnabled(string path, bool enabled) => GetTask(path).Enabled = enabled;
+    public void SetEnabled(string path, bool enabled)
+    {
+        GetTask(path).Enabled = enabled;
+        lock (ListGate) _list = null;
+    }
+
+    // Enumerating every task folder over COM takes about a second; the scan, the Startup page and the Services page
+    // all need the list. It is shared for a short time and dropped on every change made through this class.
+    private static readonly TimeSpan ListLifetime = TimeSpan.FromSeconds(30);
+    private static readonly Lock ListGate = new();
+    private static (DateTime Read, IReadOnlyList<ScheduledTaskInfo> Tasks)? _list;
+
+    /// <summary>A full scan reads the task list fresh; pages opened after it reuse that read.</summary>
+    public static void ForgetList()
+    {
+        lock (ListGate) _list = null;
+    }
+
+    public IReadOnlyList<ScheduledTaskInfo> List()
+    {
+        lock (ListGate)
+        {
+            if (_list is { } cached && DateTime.UtcNow - cached.Read < ListLifetime) return cached.Tasks;
+        }
+        var tasks = ReadList();
+        lock (ListGate) _list = (DateTime.UtcNow, tasks);
+        return tasks;
+    }
 
     // TASK_TRIGGER_BOOT = 8, TASK_TRIGGER_LOGON = 9, TASK_ACTION_EXEC = 0 (taskschd.h)
     private const int TriggerBoot = 8, TriggerLogon = 9, ActionExec = 0;
 
-    public IReadOnlyList<ScheduledTaskInfo> List()
+    private static IReadOnlyList<ScheduledTaskInfo> ReadList()
     {
         var list = new List<ScheduledTaskInfo>();
         var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Task Scheduler not available");
@@ -314,23 +344,22 @@ public sealed class SystemProcessRunner : IProcessRunner
 {
     public (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null)
     {
-        var path = Path.IsPathRooted(file) ? file : Path.Combine(Environment.SystemDirectory, file);
-        if (file.Equals("powershell.exe", StringComparison.OrdinalIgnoreCase))
-            path = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
-        var psi = new ProcessStartInfo(path, arguments)
+        var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool(file), arguments)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
         };
+        ProcessHardening.Apply(psi);
         using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Cannot start {file}");
         var stdout = p.StandardOutput.ReadToEndAsync();
         var stderr = p.StandardError.ReadToEndAsync();
         if (!p.WaitForExit(timeout ?? TimeSpan.FromSeconds(60)))
         {
-            p.Kill(true);
+            ProcessHardening.KillTree(p);
             throw new TimeoutException($"{file} {arguments} timed out");
         }
         var output = stdout.Result + stderr.Result;

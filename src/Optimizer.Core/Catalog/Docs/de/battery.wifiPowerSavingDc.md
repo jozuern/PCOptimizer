@@ -13,12 +13,11 @@ Ein Funkmodul, das zwischen Übertragungen länger schläft, braucht weniger Ene
 Die Wirkung hängt vom WLAN-Treiber ab: Manche Treiber setzen die Stufe genau um, andere ignorieren sie. Messungen, die für alle Adapter gelten, haben wir nicht gefunden, daher ist die Wirkung niedrig bewertet.
 
 ## Nachteile & Risiken
-Im Akkubetrieb kann die Latenz steigen und Übertragungen können langsamer werden, spürbar bei Videoanrufen und Onlinespielen. Manche Router kommen mit dem WLAN-Energiesparen nicht gut zurecht, dann kann es zu Verbindungsproblemen kommen [3]. Rückgängig stellt den bisherigen Akkuwert wieder her.
+Im Akkubetrieb kann die Latenz steigen und Übertragungen können langsamer werden, spürbar bei Videoanrufen und Onlinespielen. Manche Router kommen mit dem WLAN-Energiesparen nicht gut zurecht, dann kann es zu Verbindungsproblemen kommen [2]. Rückgängig stellt den bisherigen Akkuwert wieder her.
 
 ## Wann du es nicht nutzen solltest
 Wenn du im Akkubetrieb Videoanrufe machst oder online spielst. Fehlt die Einstellung auf deinem Laptop, bietet der Treiber sie nicht an, und der Tweak wird als nicht unterstützt angezeigt.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/archive/blogs/richardsmith/powercfg-useful-if-you-know-the-guids
-2. https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options
-3. https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744398(v=ws.10)
+2. https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744398(v=ws.10)

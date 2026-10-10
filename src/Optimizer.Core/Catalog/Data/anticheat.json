@@ -87,7 +87,8 @@
       "sometimes": [
         "secureBoot",
         "tpm2",
-        "iommu"
+        "iommu",
+        "hvci"
       ],
       "sources": [
         "https://www.easy.ac/support/articles/additional-security-requirements",

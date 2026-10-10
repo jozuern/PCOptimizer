@@ -39,9 +39,31 @@ public static class CommandLine
             return true;
         var files = tokens.Select(t => t.Split(',')[0]).Where(t => t.Contains('\\')).ToList();
         if (files.Count == 0) return true; // inline code or a bare name looked up on PATH
+        return !files.All(IsInProtectedSystemFolder);
+    }
+
+    /// <summary>
+    /// Folders below System32 and SysWOW64 that standard users can write to (print color profiles, task files, crash
+    /// dumps, fax and machine key stores): a script there is not one of Windows' own.
+    /// </summary>
+    private static readonly string[] UserWritableSystemFolders =
+    [
+        @"spool\drivers\color", @"spool\PRINTERS", @"spool\SERVERS", "Tasks", "Tasks_Migrated", @"com\dmp", "FxsTmp",
+        @"Microsoft\Crypto\RSA\MachineKeys", "LogFiles", @"config\systemprofile",
+    ];
+
+    /// <summary>A file in System32 or SysWOW64 (or a subfolder only administrators can write to), without "..".</summary>
+    public static bool IsInProtectedSystemFolder(string file)
+    {
+        if (file.Contains("..", StringComparison.Ordinal)) return false;
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        var protectedDirs = new[] { Path.Combine(windows, "System32") + "\\", Path.Combine(windows, "SysWOW64") + "\\" };
-        return !files.All(f => !f.Contains("..", StringComparison.Ordinal) && protectedDirs.Any(d => f.StartsWith(d, StringComparison.OrdinalIgnoreCase)));
+        foreach (var root in new[] { Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") })
+        {
+            if (!file.StartsWith(root + "\\", StringComparison.OrdinalIgnoreCase)) continue;
+            var relative = file[(root.Length + 1)..];
+            return !UserWritableSystemFolders.Any(w => relative.StartsWith(w + "\\", StringComparison.OrdinalIgnoreCase));
+        }
+        return false;
     }
 
     private static bool IsPrefixOf(string s, params string[] words) =>

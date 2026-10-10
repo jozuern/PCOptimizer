@@ -62,6 +62,8 @@
     },
     {
       "id": "memory.pagefileSystemManaged",
+      "undocumented": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with \"Automatically manage paging file size\" checked" ],
       "category": "Memory",
       "impact": {
         "gaming": 1,
@@ -70,7 +72,7 @@
           "stability"
         ]
       },
-      "risk": "safe",
+      "risk": "moderate",
       "preview": true,
       "restart": true,
       "actions": [
@@ -167,6 +169,8 @@
     },
     {
       "id": "storage.storageSenseOn",
+      "undocumented": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with Storage Sense on" ],
       "category": "Storage",
       "impact": {
         "gaming": 0,

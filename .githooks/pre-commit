@@ -2,7 +2,10 @@
 # Raises the patch version in src/Optimizer.App/Optimizer.App.csproj on every commit (0.3.0 -> 0.3.1).
 # Enable once per clone:  git config core.hooksPath .githooks
 # A version changed by hand in the same commit (for example 0.4.0) is kept.
-# Skip for one commit (for example with --amend):  SKIP_VERSION_BUMP=1 git commit ...
+# Skip for one commit (for example with --amend, where the amended commit already raised it):
+#   SKIP_VERSION_BUMP=1 git commit --amend ...
+# Merges and rebases: git runs the hook only for commits it creates through "git commit" (a merge commit, a conflict
+# resolved by hand); a rebase replays commits that already raised the version. CI checks every push to main.
 [ -n "$SKIP_VERSION_BUMP" ] && exit 0
 
 csproj=src/Optimizer.App/Optimizer.App.csproj
@@ -14,6 +17,12 @@ fi
 
 if git diff --cached -U0 -- "$csproj" | grep -q '^+.*<Version>'; then
     exit 0
+fi
+
+# The hook stages the csproj: unstaged edits in it would end up in this commit without being chosen.
+if ! git diff --quiet -- "$csproj"; then
+    echo "pre-commit: $csproj has unstaged changes. Stage or stash them first." >&2
+    exit 1
 fi
 
 major=${current%%.*}

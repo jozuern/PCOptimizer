@@ -20,4 +20,3 @@ Wenn du die Spracheingabe nutzt.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy
-2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

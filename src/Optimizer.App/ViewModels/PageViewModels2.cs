@@ -157,7 +157,17 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
             {
                 _vtCancel.Token.ThrowIfCancellationRequested();
                 VirusTotalStatus = Loc.Instance.Format("Vt_Progress", ++done, targets.Count);
-                var hash = await Task.Run(() => VirusTotalClient.Sha256(g.Key));
+                string hash;
+                try
+                {
+                    var userSid = Owner.Services.UserSid;
+                    if (!await Task.Run(() => VirusTotalClient.UserCanRead(g.Key, userSid))) continue;
+                    hash = await Task.Run(() => VirusTotalClient.Sha256(g.Key));
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    continue; // locked or removed meanwhile: the other files are still checked
+                }
                 var result = await client.LookupAsync(hash, _vtCancel.Token);
                 var text = Labels.Current.Get(lang, $"vt.{result.Verdict}") +
                            (result.Verdict is VirusTotalVerdict.Malicious or VirusTotalVerdict.Suspicious ? $" ({result.Malicious + result.Suspicious}/{result.Total})" : "");
@@ -245,7 +255,7 @@ public sealed partial class ServiceRowVm : ObservableObject
     partial void OnSelectedChanged(StartOption? oldValue, StartOption? newValue)
     {
         if (_suppress || newValue is null || newValue.Start == Row.Start) return;
-        _ = ChangeAsync(oldValue, newValue);
+        ChangeAsync(oldValue, newValue).Forget("service start type");
     }
 
     private async Task ChangeAsync(StartOption? oldValue, StartOption newValue)
@@ -271,7 +281,10 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
 
     partial void OnSearchChanged(string value) => Filter();
     partial void OnShowWindowsServicesChanged(bool value) => Filter();
-    partial void OnShowMicrosoftTasksChanged(bool value) => _ = ReloadAsync();
+    // The task list is kept: switching the filter shows or hides rows without reading every service and task again.
+    partial void OnShowMicrosoftTasksChanged(bool value) => FillTasks();
+
+    private IReadOnlyList<ScheduledTaskInfo> _taskList = [];
 
     protected override async Task LoadAsync()
     {
@@ -285,10 +298,16 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
         _all = rows.OrderBy(r => r.DisplayName, StringComparer.CurrentCultureIgnoreCase).Select(r => new ServiceRowVm(r, lang, this)).ToList();
         Filter();
 
+        _taskList = await Task.Run(() => services.Context.Tasks.List());
+        FillTasks();
+    }
+
+    private void FillTasks()
+    {
+        var lang = Lang;
         var showMs = ShowMicrosoftTasks;
-        var tasks = await Task.Run(() => services.Context.Tasks.List());
         Tasks.Clear();
-        foreach (var t in tasks.Where(t => showMs || !t.Path.StartsWith(@"\Microsoft\", StringComparison.OrdinalIgnoreCase)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase))
+        foreach (var t in _taskList.Where(t => showMs || !t.Path.StartsWith(@"\Microsoft\", StringComparison.OrdinalIgnoreCase)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase))
         {
             // Full command with arguments: rundll32 resolves to its DLL, and script hosts are judged by what they run.
             var command = t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim();
@@ -313,7 +332,7 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
     public async Task<bool> ChangeStartAsync(ServiceRowVm row, ServiceStart start)
     {
         // Back to the original start type of a change this app made: undo that change instead.
-        var id = ServiceManager.ChangeId(row.Name);
+        var id = ServiceManager.ChangeId(ServiceManager.StartTypeOwner(row.Name));
         if (services.Store.Get(id) is { } previous && previous.Entries.FirstOrDefault()?.Original.Data == start.ToString()
             && Owner.ResolveTweak(id) is { } t)
             return await runner.UndoAsync(t) && await ReloadThenTrue();
@@ -401,7 +420,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         {
             if (_wingetForUser is null) return;
             var path = Winget.InstallForUser(_wingetForUser, row.App, services.Elevation);
-            row.StateText = path == DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Failed", "winget") : Loc.Instance["Apps_StartedForUser"];
+            row.StateText = path == DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Error", "winget") : Loc.Instance["Apps_StartedForUser"];
             return;
         }
         if (_winget is null)
@@ -427,7 +446,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         catch (Exception ex)
         {
             Log.Error("apps", $"install {row.App.Id} failed", ex);
-            row.StateText = Loc.Instance.Format("Result_Failed", ex.Message);
+            row.StateText = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {
@@ -501,10 +520,15 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
 
     protected override async Task LoadAsync()
     {
+        // Asking a drive whether it is ready can take seconds (a sleeping disk): off the UI thread.
+        var libraries = Owner.Profile?.Software?.GameLibraryPaths;
+        var (drives, protectedRoots) = await Task.Run(() => (
+            DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).Select(d => d.RootDirectory.FullName).ToList(),
+            StorageAnalyzer.ProtectedRoots(libraries)));
         Drives.Clear();
-        foreach (var d in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady)) Drives.Add(d.RootDirectory.FullName);
+        foreach (var d in drives) Drives.Add(d);
         SelectedDrive ??= Drives.FirstOrDefault();
-        _protected = StorageAnalyzer.ProtectedRoots(Owner.Profile?.Software?.GameLibraryPaths);
+        _protected = protectedRoots;
 
         var lang = Lang;
         var states = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes));
@@ -590,13 +614,18 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     private async Task FlushDnsAsync()
     {
         var (code, _) = await Task.Run(() => services.Context.Processes.Run("ipconfig.exe", "/flushdns"));
-        QuickOutput = code == 0 ? Loc.Instance["Quick_DnsFlushed"] : Loc.Instance.Format("Result_Failed", code);
+        QuickOutput = code == 0 ? Loc.Instance["Quick_DnsFlushed"] : Loc.Instance.Format("Result_Error", code);
     }
 
     [RelayCommand]
     private async Task RestartExplorerAsync()
     {
-        await Task.Run(() => services.Context.Processes.Run("taskkill.exe", "/f /im explorer.exe"));
+        if (!dialogs.Ask(Loc.Instance["Quick_ExplorerTitle"], Loc.Instance["Quick_ExplorerText"], Loc.Instance["Quick_Explorer"])) return;
+        // Only Explorer of this session: the elevated taskkill would otherwise end it for every signed-in user, and it is
+        // started again only for this one.
+        int session;
+        using (var self = Process.GetCurrentProcess()) session = self.SessionId;
+        await Task.Run(() => services.Context.Processes.Run("taskkill.exe", $"/f /im explorer.exe /fi \"SESSION eq {session}\""));
         await Task.Delay(1000);
         // Explorer must run as the signed-in user, never elevated.
         var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
@@ -608,7 +637,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     {
         if (!dialogs.Ask(Loc.Instance["Quick_WinsockTitle"], Loc.Instance["Quick_WinsockText"], Loc.Instance["Quick_Winsock"])) return;
         var (code, output) = await Task.Run(() => services.Context.Processes.Run("netsh.exe", "winsock reset"));
-        QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Failed", output.Trim());
+        QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Error", output.Trim());
     }
 }
 
@@ -651,14 +680,19 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     [ObservableProperty] private string _pawnIoText = "";
     [ObservableProperty] private bool _canInstallPawnIo;
 
-    protected override Task LoadAsync()
+    protected override async Task LoadAsync()
     {
         BuildDisks();
-        RefreshProcesses();
+        await RefreshProcessesAsync();
         CanInstallPawnIo = !Sensors.PawnIoInstalled;
         PawnIoText = Loc.Instance[Sensors.PawnIoInstalled ? "Sensors_PawnIoOn" : "Sensors_PawnIoOff"];
         if (Optimizer.Core.Tools.HealthStore.LoadThrottle(Optimizer.Core.Tools.HealthStore.DefaultFolder) is { } last) ThrottleResult = Describe(last);
-        return Task.CompletedTask;
+    }
+
+    /// <summary>The disk rows carry status brushes: built again for the new theme once the page was opened.</summary>
+    public void OnThemeChanged()
+    {
+        if (Disks.Count > 0) BuildDisks();
     }
 
     private void BuildDisks()
@@ -738,7 +772,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         }
         catch (Exception ex)
         {
-            ThrottleResult = Loc.Instance.Format("Result_Failed", ex.Message);
+            ThrottleResult = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {
@@ -757,61 +791,77 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
 
     // Benchmark
 
+    /// <summary>Games found by the scan plus programs with a window; listing processes runs off the UI thread.</summary>
     [RelayCommand]
-    private void RefreshProcesses()
+    private async Task RefreshProcessesAsync()
     {
         var selected = SelectedProcess;
-        Processes.Clear();
-        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var g in Owner.Profile?.Software?.Games ?? [])
-            if (g.Executable is { } exe) names.Add(Path.GetFileName(exe));
-        foreach (var p in Process.GetProcesses())
+        var games = (Owner.Profile?.Software?.Games ?? []).Select(g => g.Executable).OfType<string>().ToList();
+        var names = await Task.Run(() =>
         {
-            using (p)
+            var set = new SortedSet<string>(games.Select(Path.GetFileName).OfType<string>(), StringComparer.OrdinalIgnoreCase);
+            foreach (var p in Process.GetProcesses())
             {
-                try
+                using (p)
                 {
-                    if (p.MainWindowHandle != IntPtr.Zero && p.Id != Environment.ProcessId) names.Add(p.ProcessName + ".exe");
-                }
-                catch (Exception)
-                {
-                    // protected process
+                    try
+                    {
+                        if (p.MainWindowHandle != IntPtr.Zero && p.Id != Environment.ProcessId) set.Add(p.ProcessName + ".exe");
+                    }
+                    catch (Exception)
+                    {
+                        // protected process
+                    }
                 }
             }
-        }
-        foreach (var n in names.Where(PresentMon.IsSafeProcessName)) Processes.Add(n);
+            return set.Where(PresentMon.IsSafeProcessName).ToList();
+        });
+        Processes.Clear();
+        foreach (var n in names) Processes.Add(n);
         SelectedProcess = selected is not null && Processes.Contains(selected) ? selected : Processes.FirstOrDefault();
     }
 
     [RelayCommand] private Task CaptureBeforeAsync() => CaptureAsync(_before, "A");
     [RelayCommand] private Task CaptureAfterAsync() => CaptureAsync(_after, "B");
 
+    private CancellationTokenSource? _captureCancel;
+
+    [RelayCommand]
+    private void StopCapture() => _captureCancel?.Cancel();
+
     private async Task CaptureAsync(List<FrameStats> set, string label)
     {
         if (SelectedProcess is null) return;
         IsCapturing = true;
+        _captureCancel = new CancellationTokenSource();
         try
         {
             var exe = await Task.Run(() => PresentMon.Extract(AppServices.ToolsFolder));
             BenchmarkStatus = Loc.Instance.Format("Bench_Capturing", SelectedProcess, CaptureSeconds);
-            var stats = await PresentMon.CaptureAsync(exe, SelectedProcess, CaptureSeconds, Path.Combine(AppServices.ToolsFolder, "captures"), null, CancellationToken.None);
+            var stats = await PresentMon.CaptureAsync(exe, SelectedProcess, CaptureSeconds, Optimizer.Core.Platform.DataPaths.Captures, null, _captureCancel.Token);
             if (stats is null)
             {
                 BenchmarkStatus = Loc.Instance["Bench_NoFrames"];
                 return;
             }
             set.Add(stats);
-            Runs.Add(new RunRow($"{label}{set.Count}", $"{stats.AverageFps:0.0}", $"{stats.OnePercentLowFps:0.0}", stats.Frames.ToString()));
+            Runs.Add(new RunRow($"{label}{set.Count}", Loc.Instance.Format("Bench_Fps", $"{stats.AverageFps:0.0}"), Loc.Instance.Format("Bench_Low", $"{stats.OnePercentLowFps:0.0}"), stats.Frames.ToString()));
             BenchmarkStatus = Loc.Instance["Bench_Done"];
             Compare();
         }
+        catch (OperationCanceledException)
+        {
+            BenchmarkStatus = Loc.Instance["Bench_Stopped"];
+        }
         catch (Exception ex)
         {
-            BenchmarkStatus = Loc.Instance.Format("Result_Failed", ex.Message);
+            BenchmarkStatus = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {
             IsCapturing = false;
+            _captureCancel.Dispose();
+            _captureCancel = null;
         }
     }
 
@@ -846,29 +896,53 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             {
                 _sensors = new Sensors();
                 _timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-                _timer.Tick += async (_, _) => await ReadSensorsAsync();
+                _timer.Tick += (_, _) => ReadSensorsAsync().Forget("sensor reading");
                 _timer.Start();
-                _ = ReadSensorsAsync();
+                ReadSensorsAsync().Forget("sensor reading");
             }
             catch (Exception ex)
             {
-                Owner.ShowResult(Loc.Instance.Format("Result_Failed", ex.Message));
+                Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
                 SensorsOn = false;
             }
         }
         else
         {
             _timer?.Stop();
-            _sensors?.Dispose();
+            _timer = null;
+            // A read still running keeps the library open; it is closed when that read ends.
+            if (!_readingSensors) _sensors?.Dispose();
             _sensors = null;
             SensorRows.Clear();
         }
     }
 
+    private bool _readingSensors;
+
+    /// <summary>
+    /// One read at a time and only while the Health page is open: a slow read (a sensor driver that hangs for a moment)
+    /// is never overlapped by the next tick, and switching the sensors off during a read closes them after it.
+    /// </summary>
     private async Task ReadSensorsAsync()
     {
-        if (_sensors is not { } s) return;
-        var readings = await Task.Run(s.Read);
+        if (_sensors is not { } s || _readingSensors || Owner.CurrentPage != Page.Health) return;
+        _readingSensors = true;
+        IReadOnlyList<SensorReading> readings;
+        try
+        {
+            readings = await Task.Run(s.Read);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("sensors", $"read failed: {ex.Message}");
+            readings = [];
+        }
+        finally
+        {
+            _readingSensors = false;
+            if (!ReferenceEquals(s, _sensors)) s.Dispose();
+        }
+        if (!ReferenceEquals(s, _sensors)) return;
         SensorRows.Clear();
         foreach (var r in readings.Where(r => r.Value is not null && r.Type is "Temperature" or "Load" or "Clock" or "Power" or "Fan"))
             SensorRows.Add(new SensorRow(r.Hardware, $"{r.Sensor} ({Loc.Instance[$"SensorType_{r.Type}"]})", Unit(r)));
@@ -887,8 +961,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     [RelayCommand]
     private async Task InstallPawnIoAsync()
     {
-        var app = CatalogData.Current.Apps.Apps.First(a => a.Id == "namazso.PawnIO");
-        if (Winget.FindTrusted() is not { } winget)
+        if (CatalogData.Current.Apps.Apps.FirstOrDefault(a => a.Id == "namazso.PawnIO") is not { } app) return;
+        if (await Task.Run(() => Winget.FindTrusted()) is not { } winget)
         {
             PawnIoText = Loc.Instance["Apps_NoWinget"];
             return;
@@ -900,6 +974,11 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             var code = await Winget.InstallAsync(winget, app, null, CancellationToken.None);
             PawnIoText = Winget.IsSuccess(code) ? Loc.Instance["Sensors_PawnIoOn"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
             CanInstallPawnIo = !Winget.IsSuccess(code);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("apps", "PawnIO install failed", ex);
+            PawnIoText = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {

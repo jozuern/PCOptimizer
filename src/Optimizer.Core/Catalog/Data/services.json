@@ -460,8 +460,8 @@
     {
       "name": "Spooler",
       "mode": "warn",
-      "en": "Print Spooler: needed for printing, including \"Print to PDF\". On Manual it does not start by itself.",
-      "de": "Druckwarteschlange: zum Drucken nötig, auch für „Microsoft Print to PDF“. Auf Manuell startet der Dienst nicht von selbst."
+      "en": "Print Spooler: needed for printing, including \"Print to PDF\". It has no start trigger: on Manual it does not start when you print, so printing stops working until you set it back to Automatic.",
+      "de": "Druckwarteschlange: zum Drucken nötig, auch für „Microsoft Print to PDF“. Sie hat keinen Startauslöser: Auf Manuell startet sie beim Drucken nicht, und Drucken funktioniert erst wieder, wenn du sie zurück auf Automatisch stellst."
     },
     {
       "name": "Fax",

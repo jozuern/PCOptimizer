@@ -17,25 +17,41 @@ public static class RamSpeed
         return null;
     }
 
-    /// <summary>
-    /// Some firmware reports ConfiguredClockSpeed in MHz (half the MT/s rate). Retail DDR4 starts at 2133 MT/s and
-    /// DDR5 at 4800 MT/s (JEDEC), so a value below that for the type is treated as MHz (DDR4-3200 -> "1600").
-    /// </summary>
-    public static int? NormalizeConfigured(int? value, string type) => value switch
-    {
-        null or 0 => null,
-        < 2133 when type == "DDR4" => value * 2,
-        < 4000 when type == "DDR5" => value * 2,
-        _ => value,
-    };
+    /// <summary>Lowest JEDEC speed of the type in MT/s (DDR4-2133, DDR5-4800).</summary>
+    private static int? JedecMinimum(string type) => type switch { "DDR4" => 2133, "DDR5" => 4800, _ => null };
 
-    public static char? Channel(MemoryModule m, CatalogData c)
+    /// <summary>
+    /// The configured speed in MT/s. Some firmware reports ConfiguredClockSpeed in MHz (half the MT/s rate, DDR4-3200 as
+    /// "1600"), but low MT/s values are real too: four DDR5 modules on AM5 run at 3600, four dual-rank DDR4 modules on
+    /// Ryzen 1000 at 1866. The module's own speed (Win32_PhysicalMemory.Speed) decides the unit: a value is MHz when the
+    /// module speed is below the JEDEC minimum too (the firmware uses MHz for both), or when twice the value still fits
+    /// the module speed (a real 3600 MT/s on a DDR5-4800 module does not). Without the module speed, only values no real
+    /// configuration uses are doubled, and the range where both readings are plausible stays unknown.
+    /// </summary>
+    public static int? NormalizeConfigured(int? value, string type, int? moduleSpeed)
+    {
+        if (value is null or <= 0) return null;
+        if (JedecMinimum(type) is not { } min) return value;
+        if (moduleSpeed is { } speed and > 0)
+            return value < min && (speed < min * 0.95 || value * 2 <= speed * 1.05) ? value * 2 : value;
+        var lowestReal = type == "DDR5" ? 3600 : 1866;
+        return value < lowestReal ? value * 2 : value < min ? null : value;
+    }
+
+    public static int? NormalizeConfigured(MemoryModule m) => NormalizeConfigured(m.ConfiguredMts, m.Type, m.SpeedMts);
+
+    /// <summary>
+    /// The memory channel of a module from its locator. Intel platforms since 11th gen name one channel A per memory
+    /// controller ("Controller0-ChannelA-DIMM0", "Controller1-ChannelA-DIMM0"): every group of the matching pattern
+    /// counts, so those are channels "0A" and "1A", not one channel A twice.
+    /// </summary>
+    public static string? Channel(MemoryModule m, CatalogData c)
     {
         var text = $"{m.DeviceLocator} {m.BankLabel}";
         foreach (var pattern in c.Ram.ChannelPatterns)
         {
             var match = RegexCache.Get(pattern).Match(text);
-            if (match.Success) return char.ToUpperInvariant(match.Groups[1].Value[0]);
+            if (match.Success) return string.Concat(match.Groups.Values.Skip(1).Select(g => g.Value.ToUpperInvariant()));
         }
         return null;
     }
@@ -67,7 +83,7 @@ public sealed class XmpCheck : IFindingCheck
         if (p.Memory is null || p.Memory.Modules.Count == 0) yield break;
         var first = p.Memory.Modules[0];
         var rated = p.Memory.Modules.Select(m => RamSpeed.DecodeRated(m.PartNumber, c)).ToList();
-        var configured = p.Memory.Modules.Select(m => RamSpeed.NormalizeConfigured(m.ConfiguredMts, m.Type)).ToList();
+        var configured = p.Memory.Modules.Select(RamSpeed.NormalizeConfigured).ToList();
         var minRated = rated.All(r => r is not null) ? rated.Min() : null;
         var minConfigured = configured.All(v => v is not null) ? configured.Min() : null;
 

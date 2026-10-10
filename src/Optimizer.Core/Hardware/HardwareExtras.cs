@@ -22,7 +22,6 @@ public sealed record HardwareExtras
     public IReadOnlyList<string> RunningOverlays { get; init; } = [];
     public IReadOnlySet<string> ServicesPresent { get; init; } = new HashSet<string>();
     public NvidiaInfo? Nvidia { get; init; }
-    public IReadOnlyList<string> PrintersInstalled { get; init; } = [];
 
     /// <summary>Display names of installed programs (Uninstall keys), for chipset and tool checks.</summary>
     public IReadOnlyList<Probes.InstalledProgram> Programs { get; init; } = [];
@@ -65,12 +64,14 @@ public sealed record NicDetail(
     /// <summary>PnP instance id (PCI\... or USB\...) from the class key.</summary>
     public string? DeviceInstanceId { get; init; }
 
+    /// <summary>The class key's Characteristics value (NCF_* flags of the driver).</summary>
+    public int Characteristics { get; init; }
+
     /// <summary>
     /// A real network card (PCI or USB device). Virtual miniports also have class keys and report themselves as Ethernet:
     /// Hyper-V vEthernet (ROOT\VMS_MP), WAN Miniport (SWD\MSRRAS), Wintun (SWD\Wintun), Kernel Debug NIC (ROOT\KDNIC).
     /// </summary>
-    public bool IsPhysical => DeviceInstanceId is { } id &&
-                              (id.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) || id.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase));
+    public bool IsPhysical => Actions.NicAdapters.IsPhysical(Characteristics, DeviceInstanceId);
 }
 
 /// <summary>

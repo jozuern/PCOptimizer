@@ -109,6 +109,8 @@ public static class DisplayProbe
         for (var i = 0; Native.EnumDisplaySettingsEx(gdiName, i, ref dm, 0); i++)
         {
             if ((dm.dmDisplayFlags & Native.DmInterlaced) != 0) continue;
+            // 0 and 1 Hz mean "the hardware's default rate", not a rate that could be chosen.
+            if (dm.dmDisplayFrequency <= 1) continue;
             list.Add(new DisplayMode((int)dm.dmPelsWidth, (int)dm.dmPelsHeight, (int)dm.dmDisplayFrequency, (int)dm.dmBitsPerPel));
         }
         return list.OrderByDescending(m => m.Width * m.Height).ThenByDescending(m => m.RefreshHz).ToList();

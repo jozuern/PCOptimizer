@@ -122,6 +122,10 @@ public class DebloatServicesAppsTests
     [InlineData(@"cmd.exe /c C:\Users\x\AppData\Roaming\evil.bat", true)]
     [InlineData(@"cmd.exe /c C:\Windows\System32\a.cmd & calc.exe", true)]
     [InlineData(@"cmd.exe /c C:\Windows\System32\..\Temp\x.cmd", true)]
+    // Folders below System32 that standard users can write to do not count as Windows' own files.
+    [InlineData(@"cmd.exe /c C:\Windows\System32\spool\drivers\color\x.cmd", true)]
+    [InlineData(@"wscript.exe C:\Windows\System32\Tasks\x.vbs", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\WindowsPowerShell\v1.0\x.cmd", false)]
     [InlineData(@"mshta.exe https://example.invalid/x.hta", true)]
     [InlineData(@"wscript.exe ""C:\Users\x\AppData\Roaming\x.vbs""", true)]
     [InlineData(@"C:\Program Files\App\app.exe --minimized", false)]
@@ -161,7 +165,6 @@ public class DebloatServicesAppsTests
     [Fact]
     public void ElevatedWingetComesOnlyFromTheProtectedPackageFolder()
     {
-        var apps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
         Assert.Equal(new Version(1, 29, 380, 0), Winget.PackageVersion("Microsoft.DesktopAppInstaller_1.29.380.0_x64__8wekyb3d8bbwe"));
         Assert.Null(Winget.PackageVersion("Microsoft.DesktopAppInstaller_1.29.380.0_neutral_split.language-de_8wekyb3d8bbwe"));
         // A folder outside Program Files\WindowsApps (for example in the user's profile) is never used.
@@ -174,9 +177,16 @@ public class DebloatServicesAppsTests
         }
         finally
         {
-            Directory.Delete(userFolder, true);
+            TestFolders.Delete(userFolder);
         }
-        // On this PC (read-only): if App Installer is registered, the result is its package folder, never the alias.
+    }
+
+    /// <summary>Reads this PC (read-only): if App Installer is registered, the result is its package folder, never the alias.</summary>
+    [Fact]
+    [Trait("Category", "Hardware")]
+    public void WingetOnThisPcIsTheProtectedPackage()
+    {
+        var apps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
         if (Winget.FindTrusted() is { } found)
         {
             Assert.StartsWith(apps + "\\", found, StringComparison.OrdinalIgnoreCase);

@@ -6,10 +6,11 @@ using Optimizer.Core.Logging;
 namespace Optimizer.Core.Findings;
 
 /// <summary>Runs all read-only checks. A failing check yields an Unknown result instead of breaking the scan.</summary>
-public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? registry = null)
+/// <param name="bcd">Reads the BCD elements of {current} (bcdedit needs admin rights); null or a null result = unknown.</param>
+public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? registry = null, Func<IReadOnlySet<string>?>? bcd = null)
 {
     /// <summary>All checks; <paramref name="registry"/> gives access to the session user's hive (F4).</summary>
-    public static IReadOnlyList<IFindingCheck> CreateChecks(Actions.IRegistryRoots? registry) =>
+    public static IReadOnlyList<IFindingCheck> CreateChecks(Actions.IRegistryRoots? registry, Func<IReadOnlySet<string>?>? bcd = null) =>
     [
         new RefreshRateCheck(),
         new EdidRefreshCheck(),
@@ -60,7 +61,7 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new GameAccessCheck(),
     ];
 
-    public IReadOnlyList<Finding> Evaluate(HardwareProfile profile) => Evaluate(profile, CreateChecks(registry), catalog);
+    public IReadOnlyList<Finding> Evaluate(HardwareProfile profile) => Evaluate(profile, CreateChecks(registry, bcd), catalog);
 
     /// <summary>
     /// Runs <paramref name="checks"/>. A check that throws contributes exactly one Unknown of its own kind, never the
@@ -102,8 +103,8 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
 }
 
 /// <summary>
-/// Gaming Readiness score: computed only from findings, weighted by ⚡. Tweaks never add points
-/// and Game access / security items never count.
+/// Gaming Readiness score: computed only from findings, weighted by ⚡. Tweaks never add points, and game access and
+/// security prerequisites (findings whose only effect is a prerequisite for anti-cheats) never count.
 /// </summary>
 public static class ReadinessScore
 {
@@ -113,6 +114,7 @@ public static class ReadinessScore
     {
         var penalty = findings
             .Where(f => f.Kind != FindingKind.GameAccess && f.Status == FindingStatus.Problem)
+            .Where(f => !(f.Effects.Count > 0 && f.Effects.All(e => e == Effect.Prerequisite)))
             .Sum(f => f.Critical ? 20 : Weight(f.Impact ?? 0));
         return Math.Clamp(100 - penalty, 0, 100);
     }

@@ -20,4 +20,3 @@ Wenn du auf diesem Gerät SMS nutzt und eine Sicherung möchtest.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-messaging
-2. https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services

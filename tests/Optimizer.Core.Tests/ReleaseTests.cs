@@ -62,11 +62,50 @@ public class ReleaseTests
 
     private const string Download = "https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/";
 
-    private static string ReleaseJson(string exeUrl, string shaUrl) => $$"""
+    private static string ReleaseJson(string exeUrl, string shaUrl, string? sigUrl = Download + "PCOptimizer.exe.sig") => $$"""
         {"tag_name":"v1.0.0","assets":[
           {"name":"PCOptimizer.exe","browser_download_url":"{{exeUrl}}"},
+          {{(sigUrl is null ? "" : $$"""{"name":"PCOptimizer.exe.sig","browser_download_url":"{{sigUrl}}"},""")}}
           {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{shaUrl}}"}]}
         """;
+
+    /// <summary>A throwaway release key; the tests never use the project's real key.</summary>
+    private static (string PublicPem, Func<byte[], string> Sign) TestKey()
+    {
+        var key = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        return (key.ExportSubjectPublicKeyInfoPem(), data => Convert.ToBase64String(key.SignData(data, System.Security.Cryptography.HashAlgorithmName.SHA256)));
+    }
+
+    [Fact]
+    public void TheAppCarriesAP256ReleaseKey()
+    {
+        Assert.True(UpdateSignature.IsConfigured, "src/Optimizer.Core/Updates/update-key.pem is missing (scripts/new-update-key.ps1)");
+        using var key = System.Security.Cryptography.ECDsa.Create();
+        key.ImportFromPem(UpdateSignature.PublicKeyPem);
+        Assert.Equal(256, key.KeySize);
+    }
+
+    [Fact]
+    public void SignatureBindsKeyVersionAndChecksum()
+    {
+        var (pem, sign) = TestKey();
+        var (otherPem, _) = TestKey();
+        var hash = new string('a', 64);
+        var version = new Version(1, 2, 3);
+        var signature = sign(UpdateSignature.Statement(version, hash));
+        // The release workflow signs exactly this text.
+        Assert.Equal("PCOptimizer 1.2.3\n" + hash + "\n", System.Text.Encoding.UTF8.GetString(UpdateSignature.Statement(version, hash.ToUpperInvariant())));
+        Assert.True(UpdateSignature.Verify(version, hash, signature, pem));
+        Assert.True(UpdateSignature.Verify(version, hash.ToUpperInvariant(), signature + "\n", pem));
+        Assert.False(UpdateSignature.Verify(version, hash, signature, otherPem));            // another key
+        Assert.False(UpdateSignature.Verify(new Version(1, 2, 4), hash, signature, pem));      // an older release offered as newer
+        Assert.False(UpdateSignature.Verify(version, new string('b', 64), signature, pem));   // another exe
+        Assert.False(UpdateSignature.Verify(version, hash, "not base64", pem));
+    }
+
+    [Fact]
+    public void AReleaseWithoutSignatureOffersNoSelfUpdate() =>
+        Assert.Null(ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256", sigUrl: null)).Assets);
 
     [Fact]
     public void AssetsAreTakenOnlyFromThisRepository()
@@ -86,13 +125,17 @@ public class ReleaseTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task KeepsTheDownloadOnlyWhenTheChecksumMatches(bool matching)
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task KeepsTheDownloadOnlyWhenSignedAndTheChecksumMatches(bool matching, bool signedByReleaseKey)
     {
         var exe = "new exe bytes"u8.ToArray();
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(matching ? exe : [1, 2, 3])).ToLowerInvariant();
         var release = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        var (pem, sign) = TestKey();
+        var (_, signOther) = TestKey();
+        var signature = (signedByReleaseKey ? sign : signOther)(UpdateSignature.Statement(new Version(1, 0, 0), hash));
         var folder = Path.Combine(Path.GetTempPath(), "pco-update-test-" + Guid.NewGuid().ToString("N"));
         try
         {
@@ -100,9 +143,15 @@ public class ReleaseTests
             {
                 [Download + "PCOptimizer.exe"] = exe,
                 [Download + "PCOptimizer.exe.sha256"] = System.Text.Encoding.ASCII.GetBytes($"{hash}  PCOptimizer.exe\n"),
-            }));
+                [Download + "PCOptimizer.exe.sig"] = System.Text.Encoding.ASCII.GetBytes(signature),
+            }), pem);
             var result = await updater.DownloadAsync(release, folder);
-            if (matching)
+            if (!signedByReleaseKey)
+            {
+                Assert.Equal(UpdateOutcome.SignatureInvalid, result.Outcome);
+                Assert.False(Directory.Exists(folder) && Directory.EnumerateFiles(folder).Any());
+            }
+            else if (matching)
             {
                 Assert.Equal(UpdateOutcome.Ready, result.Outcome);
                 Assert.Equal(exe, File.ReadAllBytes(result.FilePath!));
@@ -115,7 +164,7 @@ public class ReleaseTests
         }
         finally
         {
-            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+            TestFolders.Delete(folder);
         }
     }
 
@@ -140,7 +189,7 @@ public class ReleaseTests
         }
         finally
         {
-            Directory.Delete(folder, true);
+            TestFolders.Delete(folder);
         }
     }
 
@@ -172,23 +221,32 @@ public class ReleaseTests
         Assert.Contains("PolyForm Strict License 1.0.0", File.ReadAllText(Path.Combine(RepoPaths.Root, "LICENSE")));
     }
 
-    /// <summary>Every NuGet package the app ships needs its license in the exe: a new dependency fails here until it is added.</summary>
+    /// <summary>
+    /// Every NuGet package the app ships needs its license in the exe and a line in THIRD-PARTY-NOTICES.md: a new
+    /// dependency fails here until both are added. Read from the committed lock file, which restore keeps current.
+    /// </summary>
     [Fact]
     public void EveryShippedPackageHasItsLicense()
     {
-        var assets = Path.Combine(RepoPaths.App, "obj", "project.assets.json");
-        Assert.True(File.Exists(assets), "restore the app first (dotnet restore)");
-        using var doc = JsonDocument.Parse(File.ReadAllText(assets));
+        using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoPaths.App, "packages.lock.json")));
         var listed = Manifest().Where(c => c.Package is not null).ToDictionary(c => c.Package!, c => c.Version, StringComparer.OrdinalIgnoreCase);
+        var notices = File.ReadAllText(Path.Combine(RepoPaths.Root, "docs", "THIRD-PARTY-NOTICES.md"));
         var missing = new List<string>();
-        foreach (var lib in doc.RootElement.GetProperty("libraries").EnumerateObject())
+        foreach (var target in doc.RootElement.GetProperty("dependencies").EnumerateObject())
+        foreach (var lib in target.Value.EnumerateObject())
         {
-            if (lib.Value.GetProperty("type").GetString() != "package") continue;
-            var (id, version) = (lib.Name.Split('/')[0], lib.Name.Split('/')[1]);
+            if (lib.Value.GetProperty("type").GetString() == "Project") continue;
+            var (id, version) = (lib.Name, lib.Value.GetProperty("resolved").GetString());
             // runtime.<rid>.* packages carry native files for other platforms; the win-x64 exe does not contain them.
             if (id.StartsWith("runtime.", StringComparison.OrdinalIgnoreCase)) continue;
-            if (!listed.TryGetValue(id, out var v) || v != version) missing.Add($"{id} {version}");
+            if (!listed.TryGetValue(id, out var v) || v != version) missing.Add($"{id} {version} (licenses.json)");
+            if (!notices.Contains(id, StringComparison.OrdinalIgnoreCase)) missing.Add($"{id} (THIRD-PARTY-NOTICES.md)");
         }
+        // The self-contained runtime comes from the SDK that global.json pins, not from a package reference.
+        var runtime = $"{Environment.Version.Major}.{Environment.Version.Minor}.{Environment.Version.Build}";
+        foreach (var pack in new[] { "Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App" })
+            if (listed.GetValueOrDefault(pack) != runtime) missing.Add($"{pack} {runtime} (licenses.json)");
+        if (!notices.Contains($"runtime {runtime}", StringComparison.Ordinal)) missing.Add($".NET runtime {runtime} (THIRD-PARTY-NOTICES.md)");
         Assert.Empty(missing);
     }
 }

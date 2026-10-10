@@ -57,7 +57,7 @@ public class BenchmarkHealthTests
         }
         finally
         {
-            Directory.Delete(dir, true);
+            TestFolders.Delete(dir);
         }
     }
 

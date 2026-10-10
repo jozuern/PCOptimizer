@@ -68,7 +68,7 @@
 
             <!-- Result of the last action -->
             <ui:InfoBar Grid.Column="0" VerticalAlignment="Bottom" Margin="24" MaxWidth="900" HorizontalAlignment="Center"
-                        Title="" Message="{Binding ResultText}" IsOpen="{Binding ResultOpen, Mode=TwoWay}" IsClosable="True" Severity="Informational" />
+                        Title="" Message="{Binding ResultText}" IsOpen="{Binding ResultOpen, Mode=TwoWay}" IsClosable="True" Severity="{Binding ResultSeverity}" />
 
             <!-- Details pane: explanation of the selected item -->
             <Border Grid.Column="1" Width="460" Background="{DynamicResource LayerFillColorDefaultBrush}"

@@ -49,6 +49,18 @@ public sealed class Condition
         return false;
     }
 
+    /// <summary>
+    /// Every fact this condition compares is known. "exists" tests are about missing facts and always count as known.
+    /// A safety guard that cannot be evaluated must not let the change through (see TweakEngine.Preflight).
+    /// </summary>
+    public bool CanEvaluate(Facts facts)
+    {
+        if (All is not null) return All.All(c => c.CanEvaluate(facts));
+        if (Any is not null) return Any.All(c => c.CanEvaluate(facts));
+        if (Not is not null) return Not.CanEvaluate(facts);
+        return Fact is null || Exists is not null || facts.Get(Fact) is not null;
+    }
+
     /// <summary>Facts referenced anywhere in this condition (used by the catalog lint).</summary>
     public IEnumerable<string> ReferencedFacts()
     {

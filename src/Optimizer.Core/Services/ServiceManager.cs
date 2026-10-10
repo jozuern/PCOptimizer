@@ -89,12 +89,21 @@ public static class ServiceManager
 
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
-    /// <summary>Engine tweak for a start type change (backup and undo). Null when the manager does not allow it.</summary>
+    /// <summary>
+    /// The service whose start type counts. A per-user service instance (SERVICE_USERSERVICE_INSTANCE, 0x80 in its
+    /// type) is created from its template at each sign-in with a new suffix: Windows reads the start type from the
+    /// template, so a change and its backup belong there.
+    /// </summary>
+    public static string StartTypeOwner(string serviceName) =>
+        Platform.Reg.HklmInt($@"SYSTEM\CurrentControlSet\Services\{serviceName}", "Type") is { } type && (type & 0x80) != 0 ? BaseName(serviceName) : serviceName;
+
     /// <summary>
     /// One id per service, whatever start type is chosen: the backup keeps the true original across several changes,
     /// and only the latest choice counts for detection (an earlier choice is not reported as reset by Windows).
     /// </summary>
     public static string ChangeId(string serviceName) => $"service.start.{Tweaks.TweakIds.Slug(serviceName)}";
+
+    /// <summary>Engine tweak for a start type change (backup and undo). Null when the manager does not allow it.</summary>
 
     public static TweakDefinition? Change(ServiceRow row, ServiceStart start)
     {
@@ -105,9 +114,10 @@ public static class ServiceManager
             _ => false,
         };
         if (!allowed || row.Start == start) return null;
+        var owner = StartTypeOwner(row.Name);
         return new TweakDefinition
         {
-            Id = ChangeId(row.Name),
+            Id = ChangeId(owner),
             Docs = "service.change",
             Subject = row.DisplayName,
             Category = "Services",
@@ -116,7 +126,7 @@ public static class ServiceManager
             // Disabling a service nobody reviewed can break the program it belongs to.
             Preview = start == ServiceStart.Disabled,
             Hidden = true,
-            Actions = [new ServiceAction { Name = row.Name, StartType = start }],
+            Actions = [new ServiceAction { Name = owner, StartType = start }],
             Sources = ["https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfigw"],
         };
     }

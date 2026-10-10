@@ -4,7 +4,7 @@
 Setzt den Windows-Energiemodus (Einstellungen > System > Energie) auf „Beste Energieeffizienz“. Der Prozessor bevorzugt Effizienz statt Tempo, das senkt Wärme und Lüfterlärm.
 
 ## So funktioniert es
-Energiemodi sind Überlagerungen des Plans „Ausbalanciert“, die Hersteller und Windows auf Effizienz oder Leistung abstimmen [1]. Die App wählt „Beste Energieeffizienz“ über die Windows-Schnittstelle für Energiemodi. Den Modus gibt es nur mit dem Plan „Ausbalanciert“, daher gilt der Tweak nur dann.
+Energiemodi sind Überlagerungen des Plans „Ausbalanciert“, die Hersteller und Windows auf Effizienz oder Leistung abstimmen [1]. Die App wählt „Beste Energieeffizienz“ über die Windows-Schnittstelle für Energiemodi (PowerSetActiveOverlayScheme), dieselbe, die die Einstellungsseite nutzt; Microsoft dokumentiert diese Schnittstelle nicht. Den Modus gibt es nur mit dem Plan „Ausbalanciert“, daher gilt der Tweak nur dann.
 
 ## Warum es helfen kann
 In diesem Modus lässt Windows den Prozessor weniger bereitwillig hohe Takte erreichen. Kurze Lastspitzen brauchen weniger Energie, der PC erzeugt weniger Wärme und die Lüfter drehen seltener hoch.

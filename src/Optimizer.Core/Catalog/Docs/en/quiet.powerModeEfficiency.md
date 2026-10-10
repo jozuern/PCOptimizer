@@ -4,7 +4,7 @@
 Sets the Windows power mode (Settings > System > Power) to Best power efficiency. The processor favors efficiency over speed, which lowers heat and fan noise.
 
 ## How it works
-Power modes are overlays on the Balanced plan that the manufacturer and Windows tune for efficiency or performance [1]. The app selects "Best power efficiency" through the Windows power mode interface. It only exists with the Balanced plan, so the tweak applies only then.
+Power modes are overlays on the Balanced plan that the manufacturer and Windows tune for efficiency or performance [1]. The app selects "Best power efficiency" through the power mode interface of Windows (PowerSetActiveOverlayScheme), the same one the Settings page uses; Microsoft does not document this interface. It only exists with the Balanced plan, so the tweak applies only then.
 
 ## Why it can help
 In this mode Windows lets the processor reach high clocks less eagerly. Short bursts use less power, so the PC produces less heat and the fans spin up less often.

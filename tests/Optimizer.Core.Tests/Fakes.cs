@@ -137,6 +137,8 @@ internal sealed class FakePowerMode : IPowerModeManager
     public Guid? Current { get; set; } = Guid.Empty;
     public Guid? Read() => Current;
     public void Write(Guid overlay) => Current = overlay;
+    public bool? Battery { get; set; } = false;
+    public bool? OnBattery() => Battery;
 }
 
 internal sealed class FakeDevices : IDeviceManager
@@ -178,10 +180,13 @@ internal sealed class FakeRestorePoints : IRestorePoints
     public bool? IsEnabled() => Enabled;
     public void Enable(int maxPercent = 5) => Enabled = true;
 
+    /// <summary>System Restore is on, but creating the point fails (disk full, the service refuses).</summary>
+    public bool CreateFails { get; set; }
+
     public Task<bool> CreateAsync(string description)
     {
         Created++;
-        return Task.FromResult(Enabled == true);
+        return Task.FromResult(Enabled == true && !CreateFails);
     }
 }
 
@@ -229,12 +234,6 @@ internal sealed class EngineFixture : IDisposable
     public void Dispose()
     {
         Registry.Dispose();
-        try
-        {
-            Directory.Delete(BackupRoot, true);
-        }
-        catch (IOException)
-        {
-        }
+        TestFolders.Delete(BackupRoot);
     }
 }

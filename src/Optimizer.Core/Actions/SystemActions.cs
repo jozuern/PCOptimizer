@@ -90,6 +90,40 @@ public sealed class PowerSettingAction : TweakAction
     }
 
     /// <summary>
+    /// Mains and battery are compared and restored on their own: when the user changed only the mains value since, the
+    /// battery value still goes back (and the mains value stays as the user set it).
+    /// </summary>
+    public override RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
+    {
+        if (applied is null) return base.RestoreIfUnchanged(c, original, applied);
+        var a = applied.Data?.Split(';') ?? [];
+        var o = original.Data?.Split(';') ?? [];
+        if (!original.Existed || a.Length < 3 || o.Length < 3 || !Guid.TryParse(a[0], out var scheme) || !c.Power.SchemeExists(scheme))
+            return RestoreOutcome.ChangedSince;
+        int wanted = 0, restored = 0;
+        if (Ac is not null)
+        {
+            wanted++;
+            if (c.Power.ReadAc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) == a[1] && uint.TryParse(o[1], out var ac))
+            {
+                c.Power.WriteAc(scheme, Sub, Set, ac);
+                restored++;
+            }
+        }
+        if (Dc is not null)
+        {
+            wanted++;
+            if (c.Power.ReadDc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) == a[2] && uint.TryParse(o[2], out var dc))
+            {
+                c.Power.WriteDc(scheme, Sub, Set, dc);
+                restored++;
+            }
+        }
+        if (restored > 0 && c.Power.ActiveScheme() == scheme) c.Power.SetActive(scheme);
+        return restored == 0 ? RestoreOutcome.ChangedSince : restored == wanted ? RestoreOutcome.Restored : RestoreOutcome.PartlyRestored;
+    }
+
+    /// <summary>
     /// Writes back only the values this action changed: a mains-only tweak and a battery-only tweak on the same setting
     /// (for example processor boost) are undone independently.
     /// </summary>
@@ -144,10 +178,23 @@ public sealed class PowerSchemeAction : TweakAction
     /// </summary>
     public override bool IsStillApplied(ActionContext c, StoredValue applied) => true;
 
-    public override void Restore(ActionContext c, StoredValue original)
+    /// <summary>The plan this action activated (its GUID) identifies a created plan even after the user renamed it.</summary>
+    public override RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
+    {
+        RestoreCore(c, original, applied is { Existed: true } && Guid.TryParse(applied.Data, out var id) ? id : null);
+        return RestoreOutcome.Restored;
+    }
+
+    public override void Restore(ActionContext c, StoredValue original) => RestoreCore(c, original, null);
+
+    private void RestoreCore(ActionContext c, StoredValue original, Guid? appliedPlan)
     {
         var active = c.Power.ActiveScheme();
         var created = DuplicateFrom is not null && Name is not null ? c.Power.Schemes().Where(s => s.Name == Name).Select(s => s.Id).ToList() : [];
+        // A plan this action created and activated, found by its GUID (the name may have been changed since).
+        if (DuplicateFrom is not null && appliedPlan is { } plan && !created.Contains(plan) && c.Power.SchemeExists(plan) &&
+            !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
+            created.Add(plan);
         var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate));
         if (ours)
         {
@@ -206,11 +253,14 @@ public sealed class BcdAction : TweakAction
         c.Bcd.Set(Element, value);
     }
 
-    /// <summary>bcdedit prints booleans as Yes/No; numbers and other tokens are kept as printed (lower case).</summary>
+    /// <summary>
+    /// bcdedit prints booleans as Yes/No in the display language (Ja/Nein on German Windows, the app's two languages);
+    /// numbers and other tokens are kept as printed (lower case).
+    /// </summary>
     public static string Normalize(string value) => value.Trim().ToLowerInvariant() switch
     {
-        "yes" or "true" or "on" or "1" => "yes",
-        "no" or "false" or "off" or "0" => "no",
+        "yes" or "true" or "on" or "1" or "ja" => "yes",
+        "no" or "false" or "off" or "0" or "nein" => "no",
         var other => other,
     };
 }
@@ -230,9 +280,10 @@ public sealed class ScheduledTaskAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Tasks.SetEnabled(Path, Enabled);
 
+    /// <summary>A task that was removed since (by an update or its app) has nothing to restore.</summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
-        if (original.Existed) c.Tasks.SetEnabled(Path, original.Data == "Enabled");
+        if (original.Existed && c.Tasks.IsEnabled(Path) is not null) c.Tasks.SetEnabled(Path, original.Data == "Enabled");
     }
 }
 
@@ -319,8 +370,10 @@ public sealed class DisplayModeAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Displays.SetMode(GdiName, Width, Height, RefreshHz);
 
+    /// <summary>A display that is no longer connected has nothing to restore (it keeps its own mode for the next time).</summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
+        if (c.Displays.CurrentRefresh(GdiName) is null) return;
         if (int.TryParse(original.Data, out var hz)) c.Displays.SetMode(GdiName, Width, Height, hz);
     }
 }
@@ -354,4 +407,8 @@ public static class PowerAliases
         : throw new ArgumentException($"Unknown power alias '{aliasOrGuid}'");
 
     public static bool IsKnown(string aliasOrGuid) => Map.ContainsKey(aliasOrGuid) || Guid.TryParse(aliasOrGuid, out _);
+
+    /// <summary>The plans Windows ships (never deleted by an undo).</summary>
+    public static bool IsBuiltIn(Guid scheme) =>
+        scheme == Map["balanced"] || scheme == Map["highPerformance"] || scheme == Map["powerSaver"] || scheme == Map["ultimatePerformance"];
 }

@@ -13,7 +13,7 @@ Den TSC auszulesen dauert einige zehn bis einige hundert CPU-Takte. Ein Plattfor
 Den Kostenunterschied dokumentiert Microsoft [2]. Wie stark sich das auf die FPS auswirkt, hängt davon ab, wie oft ein Spiel die Zeit abfragt.
 
 ## Nachteile & Risiken
-Eine Änderung der Startkonfiguration. Ist BitLocker aktiv, halte deinen Wiederherstellungsschlüssel bereit: Laut Microsoft muss BitLocker vor Änderungen an Startoptionen eventuell angehalten werden [1]. Startet der PC nicht richtig, mache die Änderung über die Wiederherstellungsumgebung rückgängig (Umschalt + Neu starten > Problembehandlung > Systemwiederherstellung). Der BCD-Export liegt im Datenordner der App.
+Eine Änderung der Startkonfiguration. Ist BitLocker aktiv, halte deinen Wiederherstellungsschlüssel bereit: Laut Microsoft muss BitLocker vor Änderungen an Startoptionen eventuell angehalten werden [1]. Startet der PC nicht richtig, hilft die Systemwiederherstellung nicht, denn sie stellt die Startkonfiguration nicht wieder her. Öffne die Wiederherstellungsumgebung (Umschalt + Neu starten > Problembehandlung > Erweiterte Optionen > Eingabeaufforderung) und führe `bcdedit /deletevalue {default} useplatformclock` aus, um die Einstellung wieder zu entfernen [1][3]. Die App exportiert vor der Änderung außerdem die ganze Startkonfiguration in ihren Datenordner; `bcdedit /import <Datei>` stellt sie von dort wieder her [3].
 
 ## Wann du es nicht nutzen solltest
 Nichts zu tun, wenn die Option nicht gesetzt ist. Startoptionen nur mit direktem Zugriff auf den PC ändern.
@@ -21,3 +21,4 @@ Nichts zu tun, wenn die Option nicht gesetzt ist. Startoptionen nur mit direktem
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
 2. https://learn.microsoft.com/en-us/windows/win32/sysinfo/acquiring-high-resolution-time-stamps
+3. https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcdedit-command-line-options

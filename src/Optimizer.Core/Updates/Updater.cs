@@ -4,30 +4,35 @@ using System.Text.RegularExpressions;
 
 namespace Optimizer.Core.Updates;
 
-public enum UpdateOutcome { Ready, ChecksumMismatch, DownloadFailed, NoAssets }
+public enum UpdateOutcome { Ready, ChecksumMismatch, SignatureInvalid, DownloadFailed, NoAssets }
 
-/// <param name="Sha256">Hash of the downloaded exe, checked against the release's SHA-256 file.</param>
+/// <param name="Sha256">Hash of the downloaded exe, checked against the release's signed SHA-256 file.</param>
 public sealed record UpdateDownload(UpdateOutcome Outcome, string? FilePath = null, string? Sha256 = null);
 
 /// <summary>
-/// Self-update after the user confirms it: downloads the release exe and its SHA-256 file from this repository's
-/// release (links checked by <see cref="ReleaseCheck"/>), keeps the exe only when its hash matches, and swaps it for
-/// the running exe. The exe is not code signed yet, so the checksum is the integrity check.
+/// Self-update after the user confirms it: downloads the release exe, its SHA-256 file and the signature from this
+/// repository's release (links checked by <see cref="ReleaseCheck"/>). The checksum counts only when the project's key
+/// signed it for this version (<see cref="UpdateSignature"/>), and the exe only when it has that checksum; then it is
+/// swapped for the running exe.
 /// </summary>
-public sealed partial class Updater(HttpMessageHandler? handler = null) : IDisposable
+/// <param name="publicKeyPem">The key that must have signed the release; null uses the key built into the app.</param>
+public sealed partial class Updater(HttpMessageHandler? handler = null, string? publicKeyPem = null) : IDisposable
 {
     private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { Timeout = TimeSpan.FromMinutes(10) };
+    private readonly string? _key = publicKeyPem ?? UpdateSignature.PublicKeyPem;
 
     /// <param name="folder">Where the download goes: the app's protected data folder (updates).</param>
     /// <param name="progress">Percent, when the server sends the size.</param>
     public async Task<UpdateDownload> DownloadAsync(ReleaseCheckResult release, string folder, IProgress<int>? progress = null, CancellationToken ct = default)
     {
-        if (release.Assets is not { } assets || release.Latest is not { } version) return new(UpdateOutcome.NoAssets);
+        if (release.Assets is not { } assets || release.Latest is not { } version || _key is null) return new(UpdateOutcome.NoAssets);
         var target = Path.Combine(folder, $"PCOptimizer-{version.ToString(3)}.exe");
         var partial = target + ".partial";
         try
         {
             if (ParseChecksum(await GetStringAsync(assets.ChecksumUrl, ct)) is not { } expected) return new(UpdateOutcome.DownloadFailed);
+            if (!UpdateSignature.Verify(version, expected, await GetStringAsync(assets.SignatureUrl, ct), _key))
+                return new(UpdateOutcome.SignatureInvalid);
             Directory.CreateDirectory(folder);
             string actual;
             using (var request = Request(assets.ExeUrl))

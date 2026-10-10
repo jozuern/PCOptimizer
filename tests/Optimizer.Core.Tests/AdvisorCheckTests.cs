@@ -230,7 +230,7 @@ public class AdvisorCheckTests
     private static NicDetail Nic(long speedBps, string? speedDuplex, int? max, string type = "Ethernet") => new("{1E2F708A-35FE-4B75-AA24-30EDD75652D3}",
         "Ethernet", "Intel(R) Ethernet Connection (7) I219-V", type, true, speedBps, max, @"SYSTEM\x\0001",
         speedDuplex is null ? new Dictionary<string, string>() : new Dictionary<string, string> { ["*SpeedDuplex"] = speedDuplex },
-        new Dictionary<string, IReadOnlyList<string>>()) { DeviceInstanceId = @"PCI\VEN_8086&DEV_15BC\3" };
+        new Dictionary<string, IReadOnlyList<string>>()) { DeviceInstanceId = @"PCI\VEN_8086&DEV_15BC\3", Characteristics = 0x4 };
 
     [Fact]
     public void ForcedEthernetSpeedIsProblemWithAutoFix()
@@ -337,7 +337,25 @@ public class AdvisorCheckTests
         Assert.Empty(new AmdFtpmCheck().Evaluate(F("IFX", null, new DateTime(2021, 1, 1)), C)); // discrete TPM: not affected
         Assert.False(AmdFtpmCheck.IsAm4(Amd("AMD Ryzen 7 7700X 8-Core Processor", 25, 97, "AM5", 32), false));
         Assert.True(AmdFtpmCheck.IsAm4(Amd("AMD Ryzen 5 3600 6-Core Processor", 23, 113, "", 16, 16), false));
+
+        // The older ComboAM4PI line (1.0.0.x) is judged by the BIOS date, not against 1.2.0.7.
+        var oldLine = One(new AmdFtpmCheck(), P(p => p with
+        {
+            Cpu = cpu,
+            Firmware = TestData.Firmware() with { BiosDate = new DateTime(2023, 3, 1) },
+            Extras = new HardwareExtras { TpmManufacturer = "AMD", Agesa = new Version(1, 0, 0, 9), AgesaSource = "AGESA ComboAM4PI 1.0.0.9" },
+        }));
+        Assert.Equal(("date", FindingStatus.Ok), (oldLine.Variant, oldLine.Status));
     }
+
+    [Theory]
+    [InlineData("AGESA ComboAM4v2PI 1.2.0.7", "1.2.0.7")]
+    [InlineData("AGESA ComboAM4v2PI 1.2.0.Ca", "1.2.0.12")]  // letter versions follow 1.2.0.9
+    [InlineData("AGESA ComboAM4v2PI 1.2.0.A", "1.2.0.10")]
+    [InlineData("ComboAM5PI 1.2.0.2b", "1.2.0.2")]
+    [InlineData("no agesa here", null)]
+    public void ReadsAgesaVersionsWithLetters(string smbios, string? expected) =>
+        Assert.Equal(expected is null ? null : Version.Parse(expected), Optimizer.Core.Platform.FirmwareExtras.AgesaVersion([smbios]));
 
     private static MemoryModule Ddr(int configured, string part, int type) => new(16L << 30, configured, configured, part, "Corsair", "DIMM_A1", "BANK 0", type, 8);
 

@@ -4,7 +4,6 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="App_Title" xml:space="preserve"><value>PCOptimizer</value></data>
   <data name="Nav_Dashboard" xml:space="preserve"><value>Overview</value></data>
   <data name="Nav_Advisor" xml:space="preserve"><value>BIOS &amp; hardware</value></data>
   <data name="Nav_Hardware" xml:space="preserve"><value>System info</value></data>
@@ -12,9 +11,6 @@
   <data name="Scan_Running" xml:space="preserve"><value>Scanning your PC</value></data>
   <data name="Scan_Probe" xml:space="preserve"><value>Reading: {0}</value></data>
   <data name="Scan_Again" xml:space="preserve"><value>Scan again</value></data>
-  <data name="Scan_Done" xml:space="preserve"><value>Last scan: {0}</value></data>
-  <data name="Dash_Score" xml:space="preserve"><value>Gaming Readiness</value></data>
-  <data name="Dash_ScoreHint" xml:space="preserve"><value>Based only on detected problems, weighted by gaming impact. Tweaks never add points.</value></data>
   <data name="Dash_Findings" xml:space="preserve"><value>Findings</value></data>
   <data name="Dash_Problems" xml:space="preserve"><value>Problems found: {0}</value></data>
   <data name="Dash_NoProblems" xml:space="preserve"><value>No problems found</value></data>
@@ -24,7 +20,6 @@
   <data name="Dash_YourPc" xml:space="preserve"><value>Your PC</value></data>
   <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; hardware advisor</value></data>
   <data name="Advisor_Hint" xml:space="preserve"><value>Things only you can change: BIOS settings, slots, firmware updates. Each item explains how.</value></data>
-  <data name="Details_Empty" xml:space="preserve"><value>Select an item to see what we found, why it matters and how to fix it.</value></data>
   <data name="Hw_Title" xml:space="preserve"><value>System info</value></data>
   <data name="Hw_Hint" xml:space="preserve"><value>Everything the scanner read. Nothing was changed.</value></data>
   <data name="Hw_Os" xml:space="preserve"><value>Windows</value></data>
@@ -38,13 +33,13 @@
   <data name="Hw_Network" xml:space="preserve"><value>Network</value></data>
   <data name="Hw_Software" xml:space="preserve"><value>Games &amp; anti-cheat</value></data>
   <data name="Hw_Errors" xml:space="preserve"><value>Probe errors</value></data>
-  <data name="Banner_ReadOnly" xml:space="preserve"><value>Read-only version: this build only scans and explains. It does not change anything on your PC.</value></data>
   <data name="Banner_NotValidated" xml:space="preserve"><value>Windows build {0} is newer than the builds this version was validated on. Checks run normally but some may be inaccurate.</value></data>
   <data name="Banner_Insider" xml:space="preserve"><value>Windows Insider build detected ({0}).</value></data>
   <data name="Banner_Managed" xml:space="preserve"><value>This PC is managed by an organization (domain, Entra ID or MDM). Policies may override settings.</value></data>
   <data name="Banner_SeparateAdmin" xml:space="preserve"><value>The app runs as {0}, but {1} is signed in. User settings belong to {1}.</value></data>
   <data name="Banner_NotElevated" xml:space="preserve"><value>Running without administrator rights. Some values (for example TPM) show as unknown.</value></data>
   <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home and Pro no longer receive updates since 13 October 2026. Update to 25H2 or 26H2.</value></data>
+  <data name="Startup_RuntimeFolderUnsafe" xml:space="preserve"><value>The program could not move its runtime libraries into its protected folder, so it does not start with administrator rights. If the environment variables {0} or {1} are set for your account, remove them and start PCOptimizer again. Nothing was changed.</value></data>
   <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>The data folder {0} was created by another account and cannot be removed. Close all programs, delete the folder and start PCOptimizer again. Nothing was changed.</value></data>
   <data name="Tweaks_ShowNotApplicable" xml:space="preserve"><value>Show tweaks that do not apply to this PC</value></data>
   <data name="Gate_Title" xml:space="preserve"><value>Windows version not supported</value></data>
@@ -60,7 +55,6 @@
   <data name="Theme_Light" xml:space="preserve"><value>Light</value></data>
   <data name="Lang_En" xml:space="preserve"><value>English</value></data>
   <data name="Lang_De" xml:space="preserve"><value>Deutsch</value></data>
-  <data name="Impact_Tooltip" xml:space="preserve"><value>Gaming impact {0} of 5</value></data>
   <data name="Impact_Critical" xml:space="preserve"><value>Critical</value></data>
   <data name="Sum_Cpu" xml:space="preserve"><value>Processor</value></data>
   <data name="Sum_Gpu" xml:space="preserve"><value>Graphics</value></data>
@@ -69,12 +63,6 @@
   <data name="Sum_Windows" xml:space="preserve"><value>Windows</value></data>
   <data name="Sum_Board" xml:space="preserve"><value>Mainboard</value></data>
   <data name="Dash_Title" xml:space="preserve"><value>Overview</value></data>
-  <data name="Details_More" xml:space="preserve"><value>Details</value></data>
-  <data name="Advisor_Items" xml:space="preserve"><value>Manual checks</value></data>
-  <data name="Col_Status" xml:space="preserve"><value>Status</value></data>
-  <data name="Col_Impact" xml:space="preserve"><value>Impact</value></data>
-  <data name="Col_Item" xml:space="preserve"><value>Item</value></data>
-  <data name="Col_Effect" xml:space="preserve"><value>Effect</value></data>
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
@@ -84,8 +72,6 @@
   <data name="Count_Problems" xml:space="preserve"><value>problems</value></data>
   <data name="Count_Advisor" xml:space="preserve"><value>manual checks</value></data>
   <data name="Count_Passed" xml:space="preserve"><value>passed</value></data>
-  <data name="Note_Info" xml:space="preserve"><value>Note</value></data>
-  <data name="Note_Warning" xml:space="preserve"><value>Attention</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scanning</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
   <data name="LastScan" xml:space="preserve"><value>Last scan {0}</value></data>
@@ -102,8 +88,6 @@
   <data name="Tweak_Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Tweak_Reapply" xml:space="preserve"><value>Apply again</value></data>
   <data name="Fix_Apply" xml:space="preserve"><value>Fix</value></data>
-  <data name="Col_State" xml:space="preserve"><value>State</value></data>
-  <data name="Col_Action" xml:space="preserve"><value></value></data>
   <data name="Result_Applied" xml:space="preserve"><value>Applied: {0}</value></data>
   <data name="Result_AppliedRestart" xml:space="preserve"><value>Applied: {0}. Restart Windows to finish.</value></data>
   <data name="Result_AppliedSignOut" xml:space="preserve"><value>Applied: {0}. Sign out and in again to finish.</value></data>
@@ -115,7 +99,6 @@
   <data name="Result_UndoAll" xml:space="preserve"><value>Changes undone: {0}.</value></data>
   <data name="Changes_Title" xml:space="preserve"><value>Changes</value></data>
   <data name="Changes_Hint" xml:space="preserve"><value>Everything this app changed, with the original values it keeps. Undo restores them.</value></data>
-  <data name="Changes_Applied" xml:space="preserve"><value>Active changes</value></data>
   <data name="Changes_Empty" xml:space="preserve"><value>No changes yet.</value></data>
   <data name="Changes_UndoAll" xml:space="preserve"><value>Undo all</value></data>
   <data name="Changes_Entries" xml:space="preserve"><value>Values: {0}</value></data>
@@ -128,7 +111,6 @@
   <data name="Rp_On" xml:space="preserve"><value>On. A restore point is created before the first change of each session.</value></data>
   <data name="Rp_Off" xml:space="preserve"><value>Off. Without it, no restore point can be created. The app's own backup still works.</value></data>
   <data name="Rp_Unknown" xml:space="preserve"><value>Unknown (needs administrator rights).</value></data>
-  <data name="Banner_Drift" xml:space="preserve"><value>Changes reset by Windows, usually by an update: {0}. See Changes to apply them again.</value></data>
   <data name="Banner_Restart" xml:space="preserve"><value>Changes that take effect after a restart: {0}.</value></data>
   <data name="Settings_Expert" xml:space="preserve"><value>Expert mode</value></data>
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Shows changes that trade security for performance or edit the boot configuration. They are never recommended automatically.</value></data>
@@ -949,11 +931,12 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Apps_GetAppInstaller" xml:space="preserve"><value>Get App Installer</value></data>
   <data name="Update_Install" xml:space="preserve"><value>Update now</value></data>
   <data name="Update_ConfirmTitle" xml:space="preserve"><value>Update to version {0}?</value></data>
-  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer downloads version {0} from its GitHub release, checks the file against the release's SHA-256 checksum, replaces this exe and starts again. Your changes, backups and settings stay.</value></data>
+  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer downloads version {0} from its GitHub release, checks that the project's release key signed it, replaces this exe and starts again. Your changes, backups and settings stay.</value></data>
   <data name="Update_Restart" xml:space="preserve"><value>Update and restart</value></data>
   <data name="Update_Downloading" xml:space="preserve"><value>Downloading version {0}: {1} %</value></data>
   <data name="Update_Failed" xml:space="preserve"><value>The update could not be downloaded. Try again later or use the download page.</value></data>
   <data name="Update_BadChecksum" xml:space="preserve"><value>The downloaded file does not match the release checksum and was deleted. Nothing was changed.</value></data>
+  <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the PCOptimizer release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
   <data name="Settings_Report" xml:space="preserve"><value>Report a problem</value></data>
@@ -964,4 +947,14 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong and was logged. You can report it in Settings &gt; Diagnostics.</value></data>
   <data name="Score_Pending" xml:space="preserve"><value>The score appears when the scan is finished.</value></data>
   <data name="Dash_ProblemsPending" xml:space="preserve"><value>Problems found</value></data>
+  <data name="Change_Busy" xml:space="preserve"><value>Wait until the current change or scan has finished.</value></data>
+  <data name="Result_Error" xml:space="preserve"><value>Did not work: {0}</value></data>
+  <data name="Result_UndoIncomplete" xml:space="preserve"><value>Undo incomplete: {0}. Not restored: {1}. What is left stays on the Changes page.</value></data>
+  <data name="Result_UndoAllIncomplete" xml:space="preserve"><value>Changes undone: {0}. Not fully undone: {1}. They stay on the Changes page with the reason.</value></data>
+  <data name="Result_FailedPartly" xml:space="preserve"><value>Not applied: {0}. Part of it could not be put back and is still changed, so it is listed on the Changes page; use Undo there. Reason: {1}</value></data>
+  <data name="Quick_ExplorerTitle" xml:space="preserve"><value>Restart File Explorer?</value></data>
+  <data name="Quick_ExplorerText" xml:space="preserve"><value>The taskbar, the Start menu and open File Explorer windows close for a moment and open again. Copy and move operations that are still running in File Explorer stop. Other users signed in to this PC are not affected.</value></data>
+  <data name="Bench_Low" xml:space="preserve"><value>1 % low {0}</value></data>
+  <data name="Bench_Fps" xml:space="preserve"><value>{0} FPS</value></data>
+  <data name="Bench_Stopped" xml:space="preserve"><value>Capture stopped. This run was not kept.</value></data>
 </root>

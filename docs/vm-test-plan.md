@@ -63,6 +63,8 @@ The tables below cover all 86 catalog tweaks. Preview tweaks have not been teste
 
 Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone, restart, confirm Windows still starts, then undo and restart again.
 
+Preconditions, or there is nothing to change on a clean install: turn on memory integrity (Windows Security > Device security > Core isolation) and restart before `security.vbsOff`; run `bcdedit /set {current} useplatformclock true` before `leftover.usePlatformClock`.
+
 | Tweak | Title | Risk | Then | Actions | Result |
 |---|---|---|---|---|---|
 | `security.vbsOff` | Virtualization-based security and memory integrity off | expert, boot-critical, anti-cheat sensitive, preview | restart | registry | |
@@ -73,11 +75,11 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | Tweak | Title | Risk | Then | Actions | Result |
 |---|---|---|---|---|---|
 | `power.throttlingOff` | Power throttling off | safe | restart | registry | |
-| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe | restart | registry | |
+| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe, preview | restart | registry | |
 | `gpu.mpoOff` | Multiplane overlay (MPO) off | moderate, preview | restart | registry | |
 | `memory.compressionOff` | Memory compression off | moderate, preview | restart | memoryCompression | |
 | `memory.sysmainOff` | SysMain (Superfetch) off | moderate | restart | service | |
-| `memory.pagefileSystemManaged` | Page file managed by Windows | safe, preview | restart | registry | |
+| `memory.pagefileSystemManaged` | Page file managed by Windows | moderate, preview | restart | registry | |
 | `storage.lastAccessOff` | NTFS last-access timestamps off | safe | restart | registry | |
 | `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe | restart | registry | |
 | `network.preferIpv4` | Prefer IPv4 over IPv6 | safe | restart | registryBits | |
@@ -91,6 +93,8 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 
 ## 4. Other tweaks
 
+`memory.sysmainOff` cannot be tested in Hyper-V: the virtual disk is not reported as an SSD, so the tweak does not apply there.
+
 | Tweak | Title | Risk | Then | Actions | Result |
 |---|---|---|---|---|---|
 | `power.balancedPlan` | Switch to the Balanced power plan | safe |  | powerScheme | |
@@ -103,7 +107,7 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `power.hibernateOff` | Hibernation off | safe |  | hibernation | |
 | `gpu.windowedOptimizations` | Optimizations for windowed games | safe |  | registryToken | |
 | `gpu.gameMode` | Game Mode on | safe |  | registry | |
-| `gpu.gameDvrOff` | Game Bar captures off | safe |  | registry | |
+| `gpu.gameDvrOff` | Game Bar captures off | safe, preview |  | registry | |
 | `input.mouseAccelOff` | Mouse acceleration off | safe |  | registry | |
 | `storage.trimOn` | TRIM on | safe |  | registry | |
 | `storage.storageSenseOn` | Storage Sense on | safe, preview |  | registry | |
@@ -113,7 +117,7 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `privacy.consumerFeaturesOff` | Consumer features off | safe |  | registry | |
 | `privacy.locationOff` | Location access off | safe |  | registry | |
 | `background.backgroundAppsOff` | Background apps off | moderate |  | registry | |
-| `background.aiOff` | Recall snapshots off | safe |  | registry | |
+| `background.aiOff` | Recall snapshots off | moderate |  | registry | |
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
@@ -125,13 +129,13 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `privacy.tailoredExperiencesOff` | Tailored experiences off | safe |  | registry | |
 | `privacy.feedbackNotificationsOff` | Feedback requests off | safe |  | registry | |
 | `privacy.diagnosticLogsLimited` | Limit diagnostic logs and memory dumps | safe |  | registry | |
-| `privacy.inkingTypingOff` | Inking and typing personalization off | safe |  | registry | |
+| `privacy.inkingTypingOff` | Inking and typing personalization off | safe, preview |  | registry | |
 | `privacy.onlineSpeechOff` | Online speech recognition off | safe |  | registry | |
-| `privacy.webSearchOff` | Web results in Start search off | safe |  | registry | |
+| `privacy.webSearchOff` | Web results in Start search off | safe, preview |  | registry | |
 | `privacy.searchHighlightsOff` | Search highlights off | safe |  | registry | |
 | `privacy.cloudSearchOff` | Cloud content in search off | safe |  | registry | |
 | `privacy.cloudClipboardOff` | Clipboard sync across devices off | safe |  | registry | |
-| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | safe |  | registry | |
+| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | safe, preview |  | registry | |
 | `privacy.onlineTipsOff` | Online tips in Settings off | safe |  | registry | |
 | `privacy.appLaunchTrackingOff` | App launch tracking off | safe |  | registry | |
 | `privacy.languageListOff` | Language list for websites off | safe |  | registry | |
@@ -150,7 +154,7 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `quiet.boostOff` | Processor boost off (quieter and cooler) | moderate |  | powerSetting | |
 | `quiet.powerModeEfficiency` | Power mode: Best power efficiency | safe |  | powerMode | |
 | `office.clipboardHistoryOn` | Clipboard history on | safe |  | registry | |
-| `office.launchToThisPc` | File Explorer opens to This PC | safe |  | registry | |
+| `office.launchToThisPc` | File Explorer opens to This PC | safe, preview |  | registry | |
 | `background.edgeBoostOff` | Microsoft Edge: no startup boost, no background mode | safe |  | registry | |
 | `updates.driversExcluded` | Drivers not included with Windows Update | moderate |  | registry | |
 | `privacy.deviceMetadataOff` | No automatic download of device apps | safe |  | registry | |
@@ -168,6 +172,20 @@ A VM has no NVIDIA GPU and only a synthetic network adapter. Test these on a spa
 | `network.nicPowerSavingOff` | Network adapter power saving off | moderate, preview | physical network adapter | nicProperty | |
 | `network.nicAllowPowerOffOff` | Do not let Windows turn off the network adapter | moderate, preview | physical network adapter | nicProperty | |
 | `network.interruptModerationOff` | Interrupt moderation off (Expert) | expert, preview | physical network adapter | nicProperty | |
+
+### Undocumented values: check the effect
+
+These tweaks use values Microsoft does not document and stay previews until a test shows that the value does what the page says. Check the visible effect after apply and after undo, then add the result to the tweak's `proof` in the catalog.
+
+| Tweak | Title | Check |
+|---|---|---|
+| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support) |
+| `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
+| `explorer.classicContextMenu` | Classic right-click menu | right-click a file in File Explorer after signing in again: the classic menu opens at once; after undo the new menu is back |
+| `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
+| `privacy.webSearchOff` | Web results in Start search off | searching in the Start menu shows no web results or suggestions |
+| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | the three Settings switches named on the page show off |
+| `office.launchToThisPc` | File Explorer opens to This PC | a new File Explorer window opens to This PC; Folder Options shows "Open File Explorer to: This PC" |
 
 <!-- End of generated tables. -->
 

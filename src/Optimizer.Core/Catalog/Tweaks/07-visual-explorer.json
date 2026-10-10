@@ -205,6 +205,7 @@
     },
     {
       "id": "explorer.classicContextMenu",
+      "undocumented": true,
       "category": "Explorer",
       "impact": {
         "gaming": 0,
