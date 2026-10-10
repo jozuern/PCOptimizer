@@ -55,6 +55,16 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - The three DNS presets are named after their resolver (Cloudflare, Google, Quad9). Before, all three rows read "Public DNS servers".
 - Startup: a Startup folder shortcut with arguments showed "File not found" and no publisher, because the whole command line was checked as a file. Windows tasks that call rundll32 with a switch first (Autochk) showed the same.
 - The storage analyzer no longer offers the page file, swap file, hibernation file and boot dump log in the root of a drive for deletion.
+- Startup entries, services, tasks and the restore point frequency show On or Off on the Changes page like the other changes.
+- Counts read "Changes: 1" and "Files: 1" instead of "1 changes" and "1 files".
+- The undo confirmation no longer says that the original values are saved; it says that values which cannot be restored stay on the Changes page.
+- Scheduled tasks that run on a schedule are no longer titled "at sign-in or boot".
+- The SFC and DISM output follows the dark theme and shows each progress line once instead of one line per percent.
+- The throttle check says when the graphics card reports no limits instead of showing "? %".
+- The DNS confirmation names the network adapter, and the list of removed apps shows app names instead of package names.
+- Screen readers announce list and combo box items by name, the language buttons work with a screen reader's select action, and a row switch no longer waits for its confirmation to close.
+- Windows Update repair stops Cryptographic Services again and retries when renaming catroot2 is denied.
+- The PawnIO install text says that uninstalling it in Settings can leave the driver, and how to remove it.
 
 ## 0.4.0 (preview)
 

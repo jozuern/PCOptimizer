@@ -127,6 +127,7 @@
   <data name="Confirm_Restore" xml:space="preserve"><value>Restored</value></data>
   <data name="Confirm_AntiCheatAck" xml:space="preserve"><value>I understand that games using this anti-cheat may not start.</value></data>
   <data name="Confirm_Backup" xml:space="preserve"><value>The original values are saved before anything changes.</value></data>
+  <data name="Confirm_UndoKeeps" xml:space="preserve"><value>Values that cannot be restored stay on the Changes page.</value></data>
   <data name="Rp_AskTitle" xml:space="preserve"><value>System Protection is off</value></data>
   <data name="Rp_AskText" xml:space="preserve"><value>Windows cannot create a restore point because System Protection is off for the system drive. The app's own backup still restores every value it changes. Turn System Protection on now?</value></data>
   <data name="Rp_Enable" xml:space="preserve"><value>Turn on and continue</value></data>
@@ -209,7 +210,7 @@
     <value>Matches this PC</value>
   </data>
   <data name="Rec_Count" xml:space="preserve">
-    <value>{0} changes</value>
+    <value>Changes: {0}</value>
   </data>
   <data name="Result_Batch" xml:space="preserve">
     <value>{0} applied, {1} failed, {2} skipped.</value>
@@ -339,7 +340,7 @@ The app is removed for all users and new accounts. Microsoft no longer offers it
     <value>Temporary files and caches with their size. Nothing is deleted until you choose it. Files in use and links to other folders are always skipped.</value>
   </data>
   <data name="Cleanup_Size" xml:space="preserve">
-    <value>{0}, {1} files</value>
+    <value>{0}, files: {1}</value>
   </data>
   <data name="Cleanup_Total" xml:space="preserve">
     <value>Selected: {0}</value>
@@ -356,7 +357,7 @@ The app is removed for all users and new accounts. Microsoft no longer offers it
 The files are deleted permanently. Files in use are skipped.</value>
   </data>
   <data name="Cleanup_Done" xml:space="preserve">
-    <value>{0} freed. {1} files were in use and skipped.</value>
+    <value>{0} freed. Files skipped because they were in use: {1}.</value>
   </data>
   <data name="Cleanup_More" xml:space="preserve">
     <value>More cleanup</value>
@@ -398,7 +399,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Hide Windows entries</value>
   </data>
   <data name="Startup_Summary" xml:space="preserve">
-    <value>{0} entries, {1} programs from other vendors at sign-in, {2} need attention (unsigned or unusual).</value>
+    <value>Entries: {0}. Programs from other vendors at sign-in: {1}. Need attention (unsigned or unusual): {2}.</value>
   </data>
   <data name="Startup_NoPublisher" xml:space="preserve">
     <value>No publisher</value>
@@ -515,7 +516,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Get update</value>
   </data>
   <data name="Drv_AgeDays" xml:space="preserve">
-    <value>{0} days old</value>
+    <value>Age in days: {0}</value>
   </data>
   <data name="DrvClass_DISPLAY" xml:space="preserve">
     <value>Graphics</value>
@@ -554,10 +555,10 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Analyze</value>
   </data>
   <data name="Storage_Progress" xml:space="preserve">
-    <value>{0} files, {1}</value>
+    <value>Files: {0}, {1}</value>
   </data>
   <data name="Storage_Done" xml:space="preserve">
-    <value>{0} files, {1} analyzed. Duplicates: {2} can be freed.</value>
+    <value>Files analyzed: {0}, {1}. Duplicates: {2} can be freed.</value>
   </data>
   <data name="Storage_Truncated" xml:space="preserve">
     <value>Stopped after 3 million files.</value>
@@ -575,7 +576,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Duplicate files</value>
   </data>
   <data name="Storage_Files" xml:space="preserve">
-    <value>{0} files</value>
+    <value>Files: {0}</value>
   </data>
   <data name="Storage_DuplicateOf" xml:space="preserve">
     <value>{0} identical copies; the first one is kept</value>
@@ -587,11 +588,11 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Move to the Recycle Bin?</value>
   </data>
   <data name="Storage_RecycleText" xml:space="preserve">
-    <value>{0} files:
+    <value>Files: {0}
 {1}</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
-    <value>{0} files moved to the Recycle Bin, {1} failed.</value>
+    <value>Moved to the Recycle Bin: {0}. Failed: {1}.</value>
   </data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows features</value>
@@ -678,13 +679,22 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Start check</value>
   </data>
   <data name="Throttle_Sample" xml:space="preserve">
-    <value>{0} samples, processor limit {1} %, processor use {2} %, GPU {3}</value>
+    <value>Samples: {0}, processor limit {1}, processor use {2}, GPU {3}</value>
   </data>
   <data name="Throttle_TooShort" xml:space="preserve">
     <value>Too few samples. Measure at least 10 seconds while playing.</value>
   </data>
   <data name="Throttle_Result" xml:space="preserve">
-    <value>Last check {0}: {1} samples. Processor busy {2} %, limited {3} % of busy time. Graphics card at temperature limit {4} %, at power limit {5} %. {6}</value>
+    <value>Last check {0}. Samples: {1}. Processor busy {2} %, limited {3} % of busy time. {4} {5}</value>
+  </data>
+  <data name="Throttle_Gpu" xml:space="preserve">
+    <value>Graphics card at temperature limit {0} %, at power limit {1} %.</value>
+  </data>
+  <data name="Throttle_GpuNone" xml:space="preserve">
+    <value>Graphics card limits were not reported; only NVIDIA graphics cards report them.</value>
+  </data>
+  <data name="Throttle_NotReported" xml:space="preserve">
+    <value>not reported</value>
   </data>
   <data name="Throttle_Verdict_Ok" xml:space="preserve">
     <value>No throttling found.</value>
@@ -774,7 +784,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Install PawnIO?</value>
   </data>
   <data name="Sensors_PawnIoText" xml:space="preserve">
-    <value>PawnIO is a signed kernel driver that lets sensor tools read processor and mainboard sensors. It is installed with winget (namazso.PawnIO) and can be uninstalled in Settings &gt; Apps.</value>
+    <value>PawnIO is a signed kernel driver that lets sensor tools read processor and mainboard sensors. It is installed with winget (namazso.PawnIO). Uninstalling it in Settings &gt; Apps removes the program, but the driver can stay in Windows. To remove it too, find the oem file with the original name pawnio.inf in pnputil /enum-drivers and run pnputil /delete-driver &lt;file&gt; /uninstall.</value>
   </data>
   <data name="SensorType_Temperature" xml:space="preserve">
     <value>temperature</value>
@@ -813,7 +823,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>These changes were reset since this app applied them. The original values from before the first change stay saved, so undo still restores them.</value>
   </data>
   <data name="Drift_ExpertIndividually" xml:space="preserve">
-    <value>{0} Expert changes were not applied again automatically. Apply them one by one on the Changes page.</value>
+    <value>Expert changes not applied again automatically: {0}. Apply them one by one on the Changes page.</value>
   </data>
   <data name="Drift_ResetUpdate" xml:space="preserve">
     <value>Reset after the Windows update from {0} to {1}</value>
@@ -822,7 +832,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Reset by Windows or another program</value>
   </data>
   <data name="WinUpdated_AllGood" xml:space="preserve">
-    <value>Windows was updated from {0} to {1}. All {2} changes made by this app are still in place.</value>
+    <value>Windows was updated from {0} to {1}. Every change made by this app is still in place. Changes: {2}.</value>
   </data>
   <data name="Startup_ScriptHost" xml:space="preserve">
     <value>Starts a script host (PowerShell, cmd, mshta or similar). The program itself is signed by Microsoft, but the command line decides what runs: malware often starts this way, some legitimate tools do too. Check the command.</value>
@@ -942,7 +952,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Settings_Report" xml:space="preserve"><value>Report a problem</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Copy log</value></data>
   <data name="Settings_ReportHint" xml:space="preserve"><value>Report a problem opens a bug report on GitHub with the app version and Windows build filled in. Nothing is sent until you submit it there (you need a GitHub account). Copy log puts this session's log on the clipboard to paste into it.</value></data>
-  <data name="Log_Copied" xml:space="preserve"><value>Log copied ({0} entries). Paste it into the report. It can contain your Windows user name, paths and program names: check it before you post it.</value></data>
+  <data name="Log_Copied" xml:space="preserve"><value>Log copied (entries: {0}). Paste it into the report. It can contain your Windows user name, paths and program names: check it before you post it.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>The clipboard is in use by another app. Try again.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong and was logged. You can report it in Settings &gt; Diagnostics.</value></data>
   <data name="Score_Pending" xml:space="preserve"><value>The score appears when the scan is finished.</value></data>

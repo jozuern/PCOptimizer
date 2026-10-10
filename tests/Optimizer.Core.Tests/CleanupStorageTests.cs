@@ -164,4 +164,43 @@ public class CleanupStorageTests : IDisposable
         Assert.Equal(3, processes.Calls.Count(c => c.Contains(" start ")));
         Assert.All(steps, s => Assert.True(Labels.Current.Has("en", s.Key) && Labels.Current.Has("de", s.Key), s.Key));
     }
+
+    [Fact]
+    public void UpdateRepairRetriesCatrootWhenCryptographicServicesHoldsIt()
+    {
+        var win = Path.Combine(_root, "Windows");
+        var catroot = Path.Combine(win, @"System32\catroot2");
+        Directory.CreateDirectory(catroot);
+        // An open file inside keeps the folder from being renamed, like the restarted service does; the second stop releases it.
+        var held = new FileStream(Path.Combine(catroot, "catdb"), FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        var stops = 0;
+        var processes = new FakeProcesses
+        {
+            Handler = (f, a) =>
+            {
+                if (a.StartsWith("stop cryptsvc", StringComparison.Ordinal) && ++stops == 2) held.Dispose();
+                return (0, "");
+            },
+        };
+        try
+        {
+            var steps = UpdateRepair.Run(processes, windowsDir: win, now: new DateTime(2026, 10, 9, 12, 0, 0), wait: _ => { });
+            Assert.True(steps.Single(s => s.Key == "repair.rename.catroot2").Ok);
+            Assert.True(Directory.Exists(catroot + ".old-20261009-120000"));
+            Assert.Equal(2, stops); // the first stop, then one retry
+        }
+        finally
+        {
+            held.Dispose();
+        }
+
+        // Still held after every attempt: the step fails with the reason, the services start again.
+        Directory.CreateDirectory(catroot);
+        using var stuck = new FileStream(Path.Combine(catroot, "catdb"), FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        var calls = new FakeProcesses { Handler = (f, a) => (0, "") };
+        var failed = UpdateRepair.Run(calls, windowsDir: win, now: new DateTime(2026, 10, 9, 13, 0, 0), wait: _ => { });
+        Assert.False(failed.Single(s => s.Key == "repair.rename.catroot2").Ok);
+        Assert.Equal(UpdateRepair.CatrootAttempts, calls.Calls.Count(c => c.Contains("stop cryptsvc")));
+        Assert.Equal(3, calls.Calls.Count(c => c.Contains(" start ")));
+    }
 }

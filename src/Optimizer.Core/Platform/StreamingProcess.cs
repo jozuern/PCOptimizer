@@ -25,14 +25,14 @@ public static class StreamingProcess
         };
         ProcessHardening.Apply(psi);
         using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
-        var all = new StringBuilder();
+        var all = new List<string>();
         void OnLine(string? line)
         {
             if (line is null) return;
             // sfc and dism print progress with carriage returns; keep the last segment of each line.
             var text = line.Split('\r').LastOrDefault(s => s.Trim().Length > 0)?.Trim() ?? "";
             if (text.Length == 0) return;
-            lock (all) all.AppendLine(text);
+            lock (all) OutputLines.Add(all, text, int.MaxValue);
             lines?.Report(text);
         }
         p.OutputDataReceived += (_, e) => OnLine(e.Data);
@@ -50,7 +50,8 @@ public static class StreamingProcess
             ProcessHardening.KillTree(p);
             throw;
         }
-        var output = all.ToString();
+        string output;
+        lock (all) output = string.Join(Environment.NewLine, all);
         Log.Info("command", $"{Path.GetFileName(file)} {arguments}", new { exitCode = p.ExitCode, output = output.Length > 4000 ? output[^4000..] : output });
         return p.ExitCode;
     }

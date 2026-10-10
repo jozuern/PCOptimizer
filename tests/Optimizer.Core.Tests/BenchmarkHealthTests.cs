@@ -127,4 +127,28 @@ public class BenchmarkHealthTests
         Assert.Equal("yes", f11.Params["defender"]);
         AssertRenders(f11);
     }
+
+    [Fact]
+    public void ToolOutputKeepsOneLinePerProgress()
+    {
+        var lines = new List<string>();
+        foreach (var l in new[]
+                 {
+                     "Beginning verification phase of system scan.", "Verification 1% complete.", "Verification 1% complete.",
+                     "Verification 57% complete.", "Verification 100% complete.", "Windows Resource Protection did not find any integrity violations.",
+                     "[=          2.0%            ]", "[==========100.0%==========]", "The operation completed successfully.",
+                     "Überprüfung 3 % abgeschlossen.", "Überprüfung 4 % abgeschlossen.", "Fortschritt: 5 %", "Überprüfung 6 % abgeschlossen.",
+                 })
+            Optimizer.Core.Platform.OutputLines.Add(lines, l);
+        Assert.Equal(new[]
+        {
+            "Beginning verification phase of system scan.", "Verification 100% complete.", "Windows Resource Protection did not find any integrity violations.",
+            "[==========100.0%==========]", "The operation completed successfully.",
+            "Überprüfung 4 % abgeschlossen.", "Fortschritt: 5 %", "Überprüfung 6 % abgeschlossen.", // a different progress line is kept
+        }, lines);
+
+        var capped = new List<string>();
+        for (var i = 0; i < 5; i++) Optimizer.Core.Platform.OutputLines.Add(capped, $"line {i}", max: 3);
+        Assert.Equal(new[] { "line 2", "line 3", "line 4" }, capped);
+    }
 }

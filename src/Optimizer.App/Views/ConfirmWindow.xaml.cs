@@ -24,6 +24,7 @@ public partial class ConfirmWindow : FluentWindow
             .ToList();
         NewHeader.Text = Loc.Instance[request.IsUndo ? "Confirm_Restore" : "Confirm_New"];
         ApplyButton.Content = Loc.Instance[request.IsUndo ? "Confirm_Undo" : "Confirm_Apply"];
+        FooterText.Text = Loc.Instance[request.IsUndo ? "Confirm_UndoKeeps" : "Confirm_Backup"];
         _needsAck = request.AntiCheatWarning is not null;
         AntiCheatAck.Visibility = _needsAck ? Visibility.Visible : Visibility.Collapsed;
         ApplyButton.IsEnabled = !_needsAck;

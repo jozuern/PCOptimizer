@@ -6,6 +6,9 @@ namespace Optimizer.App.Services;
 /// <summary>One shipped component and the license texts that must travel with it (Licenses/licenses.json).</summary>
 public sealed record LicenseComponent(string Name, string? Package, string? Version, string License, string Source, IReadOnlyList<string> Files)
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+
     public string Subtitle => Version is null ? License : $"{Version}, {License}";
 }
 

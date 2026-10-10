@@ -34,7 +34,11 @@ public enum RestoreOutcome
 }
 
 /// <summary>One exact change for the confirmation dialog and the generated "What changes" section.</summary>
-public sealed record ChangeLine(string Target, string Before, string After);
+public sealed record ChangeLine(string Target, string Before, string After)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Target;
+}
 
 /// <summary>
 /// One step of a tweak. Every action can read its current state, describe the change, apply it and restore a

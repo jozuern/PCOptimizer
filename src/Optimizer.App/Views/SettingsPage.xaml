@@ -17,8 +17,8 @@
                     <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Language}" />
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
-                    <RadioButton Content="{l:Tr Lang_En}" GroupName="Lang" IsChecked="{Binding IsEnglish, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="en" Margin="0,0,16,0" />
-                    <RadioButton Content="{l:Tr Lang_De}" GroupName="Lang" IsChecked="{Binding IsGerman, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="de" />
+                    <RadioButton Content="{l:Tr Lang_En}" GroupName="Lang" IsChecked="{Binding IsEnglish, Mode=OneWay}" Checked="Language_Checked" Tag="en" Margin="0,0,16,0" />
+                    <RadioButton Content="{l:Tr Lang_De}" GroupName="Lang" IsChecked="{Binding IsGerman, Mode=OneWay}" Checked="Language_Checked" Tag="de" />
                 </StackPanel>
             </ui:CardControl>
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">

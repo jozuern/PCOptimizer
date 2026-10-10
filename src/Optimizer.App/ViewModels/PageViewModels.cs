@@ -116,6 +116,9 @@ public abstract partial class SwitchRow : ObservableObject
     {
         try
         {
+            // Return from the binding setter before the confirmation opens: a modal dialog inside the setter keeps the
+            // switch's click (and a screen reader's toggle call) waiting until the dialog closes.
+            await Task.Yield();
             if (await ToggleAsync(on)) IsOn = on;
         }
         finally
@@ -131,7 +134,11 @@ public abstract partial class SwitchRow : ObservableObject
 
 // ---------------- Graphics & network ----------------
 
-public sealed record DnsResultRow(string Name, string Server, string Median, string Best, string Answered, bool IsBest);
+public sealed record DnsResultRow(string Name, string Server, string Median, string Best, string Answered, bool IsBest)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+}
 
 public sealed partial class NetworkViewModel(MainViewModel owner, AppServices services) : PageViewModel(owner)
 {
@@ -217,6 +224,9 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
 
 public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item, string lang, bool elevated) : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+
     public Optimizer.Core.Debloat.DebloatItem Item { get; } = item;
     public string Name { get; } = item.Entry.Label(lang);
     public string PackageName => Item.Entry.Name;
@@ -229,7 +239,11 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     public bool CanRemove => BlockText is null;
 }
 
-public sealed record RemovedRow(string Name, string When, string? StoreLink);
+public sealed record RemovedRow(string Name, string When, string? StoreLink)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+}
 
 public sealed partial class DebloatViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
@@ -263,7 +277,11 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         Items.Clear();
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
         Removed.Clear();
-        foreach (var r in removed.OrderByDescending(r => r.RemovedAt)) Removed.Add(new RemovedRow(r.Name, r.RemovedAt.LocalDateTime.ToString("g"), r.StoreLink));
+        // The app name from the catalog (the record keeps the package name); the package name for apps no longer listed.
+        var apps = Optimizer.Core.Catalog.CatalogData.Current.Appx.Apps;
+        foreach (var r in removed.OrderByDescending(r => r.RemovedAt))
+            Removed.Add(new RemovedRow(apps.FirstOrDefault(a => a.Name.Equals(r.Name, StringComparison.OrdinalIgnoreCase))?.Label(lang) ?? r.Name,
+                r.RemovedAt.LocalDateTime.ToString("g"), r.StoreLink));
         // "Not installed" is already the description; repeating it as a warning adds nothing.
         OneDriveBlock = oneDrive.Installed && oneDrive.BlockKey is { } b ? Labels.Current.Get(lang, b) : null;
         CanUninstallOneDrive = oneDrive.BlockKey is null;
@@ -315,6 +333,9 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
 
 public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory category, string lang) : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+
     public Optimizer.Core.Cleanup.CleanupCategory Category { get; } = category;
     public string Title { get; } = Labels.Current.Get(lang, category.Id);
     public string? Warning { get; } = category.WarningKey is { } k ? Labels.Current.Get(lang, k) : null;

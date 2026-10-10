@@ -14,8 +14,13 @@ public static class UpdateRepair
 {
     public static readonly string[] Services = ["wuauserv", "bits", "cryptsvc", "msiserver"];
 
-    public static IReadOnlyList<RepairStep> Run(IProcessRunner processes, IProgress<RepairStep>? progress = null, string? windowsDir = null, DateTime? now = null)
+    /// <summary>Attempts to rename catroot2; Cryptographic Services is stopped again before each retry.</summary>
+    public const int CatrootAttempts = 3;
+
+    public static IReadOnlyList<RepairStep> Run(IProcessRunner processes, IProgress<RepairStep>? progress = null, string? windowsDir = null, DateTime? now = null,
+        Action<TimeSpan>? wait = null)
     {
+        wait ??= Thread.Sleep;
         var steps = new List<RepairStep>();
         void Add(RepairStep s)
         {
@@ -36,21 +41,36 @@ public static class UpdateRepair
 
         foreach (var folder in new[] { Path.Combine(win, "SoftwareDistribution"), Path.Combine(win, @"System32\catroot2") })
         {
-            try
+            var key = $"repair.rename.{Path.GetFileName(folder).ToLowerInvariant()}";
+            var catroot = key == "repair.rename.catroot2";
+            for (var attempt = 1; ; attempt++)
             {
-                if (Directory.Exists(folder))
+                try
                 {
-                    Directory.Move(folder, folder + suffix);
-                    Add(new RepairStep($"repair.rename.{Path.GetFileName(folder).ToLowerInvariant()}", true, folder + suffix));
+                    if (Directory.Exists(folder))
+                    {
+                        Directory.Move(folder, folder + suffix);
+                        Add(new RepairStep(key, true, folder + suffix));
+                    }
+                    else
+                    {
+                        Add(new RepairStep(key, true, null));
+                    }
+                    break;
                 }
-                else
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    Add(new RepairStep($"repair.rename.{Path.GetFileName(folder).ToLowerInvariant()}", true, null));
+                    // Cryptographic Services is trigger-started: any signature check starts it again, and it holds catroot2
+                    // (seen in the VM test: "Access denied" three seconds after the stop).
+                    if (catroot && attempt < CatrootAttempts)
+                    {
+                        processes.Run("net.exe", "stop cryptsvc /y", TimeSpan.FromMinutes(2));
+                        wait(TimeSpan.FromSeconds(2));
+                        continue;
+                    }
+                    Add(new RepairStep(key, false, ex.Message));
+                    break;
                 }
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                Add(new RepairStep($"repair.rename.{Path.GetFileName(folder).ToLowerInvariant()}", false, ex.Message));
             }
         }
 

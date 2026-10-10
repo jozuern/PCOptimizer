@@ -6,6 +6,9 @@ namespace Optimizer.App.ViewModels;
 /// <summary>Anything the inspector can show: findings, advisor items and tweaks share one header and one document.</summary>
 public abstract class InspectorItem : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+
     public abstract string Key { get; }
     public string Title { get; protected init; } = "";
     public string Summary { get; protected init; } = "";

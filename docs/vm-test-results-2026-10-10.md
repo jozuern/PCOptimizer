@@ -210,18 +210,18 @@ Same VM on build 26300.9550, restored from the `clean` checkpoint (System Protec
 
 **B9. The storage analyzer offers `pagefile.sys`.** Only folders were protected, so `C:\pagefile.sys` (and `swapfile.sys`) could be selected; Windows would refuse to move them because they are in use. Page file, swap file, hibernation file and boot dump log in the root of a drive are now protected.
 
-### UI findings (open)
+### UI findings (fixed)
 
-- **U1.** Changes made outside the catalog (restore point frequency, startup entries, services) show "Values: 1" with no state after it on the Changes page.
-- **U2.** Counts use a fixed plural: "1 changes" in the Apply again dialog, "1 files:" in the Recycle Bin dialog.
-- **U3.** The undo confirmation also says "The original values are saved before anything changes.", which belongs to apply.
-- **U4.** The dialog for a scheduled task that runs on a schedule is titled "Scheduled task at sign-in or boot".
-- **U5.** The SFC and DISM output box stays white in dark mode, and every progress step (`Verification 1% complete.`, the DISM progress bar) becomes its own line: 177 lines for one SFC run.
-- **U6.** The throttle check shows "Graphics card at temperature limit ? %, at power limit ? %" when there is no graphics card data; a sentence that says the data is not available would read better.
-- **U7.** The DNS confirmation names the adapter only by its GUID; the removed apps list shows package names (`Microsoft.BingNews`) instead of the app names.
-- **U8.** Accessibility: list items in the Licenses window, the removed apps list and the Startup, Services and Tools rows have no automation name, so screen readers read the type (`Optimizer.App.ViewModels.StartupRow`, `LicenseComponent { Name = ... }`). The language radio buttons use `Command`, which a screen reader's select action does not trigger, and a toggle switch confirmation blocks the UI Automation call until the dialog closes.
-- **U9.** Windows Update repair could not rename catroot2 ("Access denied") although Cryptographic Services had been stopped three seconds earlier; it is trigger-started, so something probably started it again. Renaming catroot2 right after stopping the service, or retrying, would help.
-- **U10.** After `winget uninstall namazso.PawnIO` the driver stays installed, so the hint "can be uninstalled in Settings > Apps" promises more than it does; removing it fully needs `pnputil /delete-driver oem2.inf /uninstall`.
+- **U1.** Changes made outside the catalog (restore point frequency, startup entries, services) show "Values: 1" with no state after it on the Changes page. Fixed: their state is read in the background with the backups, so they show On or Off.
+- **U2.** Counts use a fixed plural: "1 changes" in the Apply again dialog, "1 files:" in the Recycle Bin dialog. Fixed: counts that can be 1 use the "Label: {0}" form in English and German ("Changes: 1", "Files: 1").
+- **U3.** The undo confirmation also says "The original values are saved before anything changes.", which belongs to apply. Fixed: the undo confirmation says "Values that cannot be restored stay on the Changes page."
+- **U4.** The dialog for a scheduled task that runs on a schedule is titled "Scheduled task at sign-in or boot". Fixed: the page is titled "Scheduled task", which fits every task on the Scheduled tasks tab.
+- **U5.** The SFC and DISM output box stays white in dark mode, and every progress step (`Verification 1% complete.`, the DISM progress bar) becomes its own line: 177 lines for one SFC run. Fixed: the box uses the WPF-UI text box style, and a progress line replaces the one before it when only the number changed (5 lines for an SFC run in the retest).
+- **U6.** The throttle check shows "Graphics card at temperature limit ? %, at power limit ? %" when there is no graphics card data; a sentence that says the data is not available would read better. Fixed: without limit reasons from the graphics card the result says so ("only NVIDIA graphics cards report them"), and the live line says "not reported".
+- **U7.** The DNS confirmation names the adapter only by its GUID; the removed apps list shows package names (`Microsoft.BingNews`) instead of the app names. Fixed: the DNS confirmation names the adapter ("Microsoft Hyper-V Network Adapter") before the GUID, and removed apps show their name from the catalog.
+- **U8.** Accessibility: list items in the Licenses window, the removed apps list and the Startup, Services and Tools rows have no automation name, so screen readers read the type (`Optimizer.App.ViewModels.StartupRow`, `LicenseComponent { Name = ... }`). The language radio buttons use `Command`, which a screen reader's select action does not trigger, and a toggle switch confirmation blocks the UI Automation call until the dialog closes. Fixed: every list and combo box item has a name (its title), the language buttons react to a check instead of a click, and a row switch returns before its confirmation opens (a toggle call now returns in under 20 ms).
+- **U9.** Windows Update repair could not rename catroot2 ("Access denied") although Cryptographic Services had been stopped three seconds earlier; it is trigger-started, so something probably started it again. Renaming catroot2 right after stopping the service, or retrying, would help. Fixed: when the rename is denied, Cryptographic Services is stopped again and the rename retried, up to three attempts. In the retest the rename worked on the first attempt; the retry is covered by a test.
+- **U10.** After `winget uninstall namazso.PawnIO` the driver stays installed, so the hint "can be uninstalled in Settings > Apps" promises more than it does; removing it fully needs `pnputil /delete-driver oem2.inf /uninstall`. Fixed: the PawnIO install text says that uninstalling can leave the driver and how to remove it with pnputil.
 
 ## Not covered
 
