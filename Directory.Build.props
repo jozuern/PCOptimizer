@@ -7,7 +7,5 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <!-- CI builds: deterministic, and source paths in the embedded symbols do not reveal the build machine's folders. -->
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-    <!-- Every restore in CI uses the lock files, also the one dotnet publish runs by itself. -->
-    <RestoreLockedMode Condition="'$(GITHUB_ACTIONS)' == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
 </Project>
