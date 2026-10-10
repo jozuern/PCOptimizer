@@ -63,6 +63,12 @@ public abstract class TweakAction
     /// <summary>Boot configuration and similar changes that the app's own undo cannot fix if the PC does not start.</summary>
     public virtual bool IsBootCritical => false;
 
+    /// <summary>
+    /// The change takes effect only after a restart and <see cref="Read"/> returns the running value, so the old value
+    /// until then (memory compression). The engine stores the desired value as applied and undoes it also before the restart.
+    /// </summary>
+    public virtual bool TakesEffectAfterRestart => false;
+
     public virtual ActionState State(ActionContext c)
     {
         var current = Read(c);

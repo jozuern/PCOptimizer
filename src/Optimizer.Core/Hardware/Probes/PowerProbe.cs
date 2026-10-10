@@ -62,6 +62,18 @@ public static class PowerProbe
                && capabilities[2] != 0; // LidPresent
     }
 
+    /// <summary>
+    /// SYSTEM_POWER_CAPABILITIES.SystemS4: the firmware supports hibernation. Stays true when hibernation is only turned
+    /// off (powercfg /hibernate off); false in VMs and on firmware without S4. Null when the call fails.
+    /// </summary>
+    public static bool? HibernationSupported()
+    {
+        var capabilities = new byte[128];
+        return Native.CallNtPowerInformation(Native.SystemPowerCapabilities, IntPtr.Zero, 0, capabilities, (uint)capabilities.Length) == 0
+            ? capabilities[6] != 0
+            : null;
+    }
+
     public static bool HasBattery() => Native.GetSystemPowerStatus(out var s) && s.BatteryFlag != 128 && s.BatteryFlag != 255;
 
     private static uint? ReadAc(Guid scheme, Guid sub, Guid setting) =>

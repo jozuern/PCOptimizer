@@ -117,7 +117,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var backup = store.Get(t.Id);
         if (backup is not null)
         {
-            if (state == TweakState.Applied && backup.PendingRestartSince is { } since && LastBoot() < since) return TweakState.PendingRestart;
+            // Pending restart: everything reads as applied, except changes that only show their value after the restart.
+            if (IsRestartPending(backup) && actions.Select((a, i) => (a, s: states[i])).All(x => x.s != ActionState.NotApplied || x.a.TakesEffectAfterRestart))
+                return TweakState.PendingRestart;
             // We applied it, now it is gone: a feature update or another tool reset it (drift). Only
             // targets we changed count: a newly added adapter or a target outside the backup is simply not applied.
             if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is not null))
@@ -175,8 +177,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (t.AntiCheatSensitive && facts.Get("anticheat.strict") is true && !options.AcknowledgeAntiCheat)
             blocks.Add(new Block("block.antiCheat", facts.Get("anticheat.strictNames") as string, CanOverride: true));
         if (t.EffectiveRisk == Risk.Expert && !options.ExpertMode) blocks.Add(new Block("block.expertMode", CanOverride: true));
-        // Conflicts: applied now, or changed by this app and not undone (runtime fixes are not in the applied list).
-        foreach (var other in t.ConflictsWith.Where(o => applied.Contains(o) || store.Get(o) is not null)) blocks.Add(new Block("block.conflict", other));
+        // Conflicts: only changes this app made and has not undone. A value that merely matches the other tweak (the
+        // Windows default Balanced plan matches power.balancedPlan) is not a change to protect; this tweak's own backup
+        // keeps it as the original, so undo brings it back.
+        foreach (var other in t.ConflictsWith.Where(o => store.Get(o) is not null)) blocks.Add(new Block("block.conflict", other));
         foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
         if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
         return blocks;
@@ -329,17 +333,19 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             }
         }
 
+        // A change that takes effect after a restart still reads the old value: record what was written instead, or undo
+        // would later take the new running value for a change by Windows and skip it.
         foreach (var a in done)
-            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.Read(ctx);
+            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.TakesEffectAfterRestart ? a.Desired(ctx) : a.Read(ctx);
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
-        if (t.Restart || t.Verify == "afterRestart") backup.PendingRestartSince = DateTimeOffset.Now;
+        if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
         store.Save(backup);
 
         foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { line.Before, line.After });
 
         // Verify: re-read every action. "afterRestart" tweaks are confirmed on the next scan after a reboot.
-        var ineffective = t.Verify != "afterRestart" && done.Any(a => SafeState(a) != ActionState.Applied);
+        var ineffective = t.Verify != "afterRestart" && done.Any(a => !a.TakesEffectAfterRestart && SafeState(a) != ActionState.Applied);
         return new ApplyResult(ineffective ? ApplyOutcome.AppliedIneffective : ApplyOutcome.Applied, changes);
     }
 
@@ -367,6 +373,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var skipped = new List<string>();
         var errors = new List<string>();
         var kept = new List<BackupEntry>();
+        var pending = IsRestartPending(backup);
         var current = new Dictionary<string, TweakAction>();
         foreach (var a in Expand(t)) current.TryAdd(a.TargetKey, a);
         // Every entry of the backup is restored, also targets the tweak no longer expands to (through the stored action).
@@ -382,7 +389,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             try
             {
                 // Feature-update-aware: if the value is no longer what we applied, Windows (or the user) changed it: leave it.
-                if (entry.Applied is { } appliedValue && !a.IsStillApplied(ctx, appliedValue))
+                // Not for a change that takes effect after a restart while the restart is pending (the running value is
+                // still the old one), nor for backups of version 0.4.0 and older, which stored that old value as applied.
+                var waitsForRestart = a.TakesEffectAfterRestart && (pending || entry.Applied?.SameAs(entry.Original) == true);
+                if (entry.Applied is { } appliedValue && !waitsForRestart && !a.IsStillApplied(ctx, appliedValue))
                 {
                     skipped.Add(entry.Description);
                     continue;
@@ -576,4 +586,6 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     }
 
     private static DateTimeOffset LastBoot() => DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64);
+
+    private static bool IsRestartPending(TweakBackup backup) => backup.PendingRestartSince is { } since && LastBoot() < since;
 }

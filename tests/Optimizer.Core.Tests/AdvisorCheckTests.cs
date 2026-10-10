@@ -537,6 +537,19 @@ public class ExtendedActionTests
     }
 
     [Fact]
+    public void HyperVGuestAdapterCountsForDnsButNotForHardwareProperties()
+    {
+        using var fx = new EngineFixture();
+        const string guid = "{33333333-3333-3333-3333-333333333333}";
+        AddAdapter(fx, "0001", guid, @"VMBUS\{f8615163-df3e-46c5-913f-f2d2f965ed0e}\{47bc6987-2d0c-40ff-8e80-e19e01c1f9b9}", 0x4, ("*EEE", ["0", "1"]));
+        AddAdapter(fx, "0002", "{44444444-4444-4444-4444-444444444444}", @"ROOT\VMS_MP\0000", 0x4);
+
+        Assert.Empty(NicAdapters.Enumerate(fx.Registry));
+        Assert.Equal([guid], NicAdapters.Enumerate(fx.Registry, includeSynthetic: true).Select(a => a.InterfaceGuid));
+        Assert.Empty(fx.Engine.Expand(Tweak("test.nic", new NicPropertyAction { Properties = new() { ["*EEE"] = "0" } })));
+    }
+
+    [Fact]
     public async Task NicPropertiesTouchOnlyDeclaredKeywordsOnPhysicalAdaptersAndUndo()
     {
         using var fx = new EngineFixture();

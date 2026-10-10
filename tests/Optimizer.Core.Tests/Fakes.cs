@@ -63,6 +63,9 @@ internal sealed class FakePower : IPowerManager
     public void Delete(Guid s) => SchemeNames.Remove(s);
     public IReadOnlyList<(Guid Id, string Name)> Schemes() => SchemeNames.Select(kv => (kv.Key, kv.Value)).ToList();
     public void Export(Guid scheme, string file) => Exports.Add(file);
+
+    public bool? Hibernation { get; set; } = true;
+    public bool? HibernationSupported() => Hibernation;
 }
 
 internal sealed class FakeBcd : IBcdStore
@@ -97,6 +100,11 @@ internal sealed class FakeProcesses : IProcessRunner
     public List<string> Calls { get; } = [];
     public bool MemoryCompression { get; set; } = true;
 
+    /// <summary>Like real Windows: Enable/Disable-MMAgent only change the setting for the next start (see <see cref="Restart"/>).</summary>
+    public bool MemoryCompressionAfterRestart { get; set; }
+
+    private bool? _pendingMemoryCompression;
+
     /// <summary>Optional responder for other commands (dism, net, powershell scripts).</summary>
     public Func<string, string, (int, string)?>? Handler { get; set; }
 
@@ -105,9 +113,22 @@ internal sealed class FakeProcesses : IProcessRunner
         Calls.Add($"{file} {arguments}");
         if (Handler?.Invoke(file, arguments) is { } handled) return handled;
         if (arguments.Contains("(Get-MMAgent)")) return (0, MemoryCompression ? "True" : "False");
-        if (arguments.Contains("Disable-MMAgent")) MemoryCompression = false;
-        if (arguments.Contains("Enable-MMAgent")) MemoryCompression = true;
+        if (arguments.Contains("Disable-MMAgent")) SetMemoryCompression(false);
+        if (arguments.Contains("Enable-MMAgent")) SetMemoryCompression(true);
         return (0, "");
+    }
+
+    private void SetMemoryCompression(bool on)
+    {
+        if (MemoryCompressionAfterRestart) _pendingMemoryCompression = on;
+        else MemoryCompression = on;
+    }
+
+    /// <summary>Simulated restart: pending settings take effect.</summary>
+    public void Restart()
+    {
+        if (_pendingMemoryCompression is { } on) MemoryCompression = on;
+        _pendingMemoryCompression = null;
     }
 }
 

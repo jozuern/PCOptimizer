@@ -185,7 +185,12 @@ public static class NicAdapters
     private const int IfTypeWifi = 71; // IF_TYPE_IEEE80211
     private const int IfTypeEthernet = 6; // IF_TYPE_ETHERNET_CSMACD; mobile broadband and others have their own types
 
-    public static IReadOnlyList<NicAdapter> Enumerate(IRegistryRoots registry)
+    /// <param name="includeSynthetic">
+    /// Also the synthetic adapter of a Hyper-V guest (VMBUS\): it is the guest's only uplink, so DNS servers and TCP
+    /// values belong on it. Never for hardware properties (NicPropertyAction). The host's virtual switch adapters
+    /// (ROOT\VMS_MP) stay excluded either way.
+    /// </param>
+    public static IReadOnlyList<NicAdapter> Enumerate(IRegistryRoots registry, bool includeSynthetic = false)
     {
         var list = new List<NicAdapter>();
         using var cls = registry.Open(Hive.Machine, ClassPath, writable: false);
@@ -199,7 +204,8 @@ public static class NicAdapters
             var guid = key.GetValue("NetCfgInstanceId") as string;
             // Physical hardware only: virtual switches, VPN and Hyper-V adapters are never changed.
             if ((characteristics & NcfPhysical) == 0 || guid is null) continue;
-            if (!instance.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) && !instance.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!instance.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) && !instance.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase) &&
+                !(includeSynthetic && instance.StartsWith(@"VMBUS\", StringComparison.OrdinalIgnoreCase))) continue;
             var allowed = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
             using (var ndi = key.OpenSubKey(@"Ndi\params"))
             {

@@ -38,6 +38,9 @@ public interface IPowerManager
     void Delete(Guid scheme);
     IReadOnlyList<(Guid Id, string Name)> Schemes();
     void Export(Guid scheme, string file);
+
+    /// <summary>The firmware supports hibernation (S4), also while it is turned off; null when unknown.</summary>
+    bool? HibernationSupported() => null;
 }
 
 public interface IBcdStore

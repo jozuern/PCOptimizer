@@ -149,8 +149,40 @@ public class EngineTests
         Assert.Contains(fx.Engine.Preflight(T("power.gamingPlan"), Facts(f => f.Set("cpu.x3dMultiCcd", true)), none, opts), b => b.ReasonKey == "block.x3dBalanced");
         Assert.Contains(fx.Engine.Preflight(T("leftover.usePlatformClock"), Facts(), none, new ApplyOptions()), b => b.ReasonKey == "block.expertMode");
         Assert.Contains(fx.Engine.Preflight(T("gpu.hags"), Facts(f => f.Set("elevated", false)), none, opts), b => b.ReasonKey == "block.notElevated");
-        Assert.Contains(fx.Engine.Preflight(T("power.gamingPlan"), Facts(), new HashSet<string> { "power.ultimatePlan" }, opts), b => b.ReasonKey == "block.conflict");
         Assert.Contains(fx.Engine.Preflight(T("power.hibernateOff"), Facts(f => f.Set("power.modernStandby", true).Set("system.laptop", true)), none, opts), b => b.ReasonKey == "block.modernStandbyHibernate");
+    }
+
+    [Fact]
+    public async Task WindowsDefaultsDoNotBlockConflictingTweaks()
+    {
+        // Balanced is the Windows default, so power.balancedPlan detects as applied; the Gaming plan must still apply.
+        using var fx = new EngineFixture();
+        var balanced = T("power.balancedPlan");
+        var gaming = T("power.gamingPlan");
+        Assert.Equal(TweakState.Applied, fx.Engine.DetectState(balanced, Facts()));
+        var applied = new HashSet<string> { balanced.Id };
+        Assert.DoesNotContain(fx.Engine.Preflight(gaming, Facts(), applied, Expert), b => b.ReasonKey == "block.conflict");
+
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(gaming, Facts(), applied, Expert)).Outcome);
+        Assert.Equal("PCOptimizer Gaming", fx.Power.SchemeNames[fx.Power.Active]);
+        Assert.True(fx.Engine.Revert(gaming).Success);
+        Assert.Equal(FakePower.Balanced, fx.Power.Active);
+        Assert.DoesNotContain("PCOptimizer Gaming", fx.Power.SchemeNames.Values);
+    }
+
+    [Fact]
+    public async Task ConflictBlocksWhileTheOtherChangeIsBackedUp()
+    {
+        using var fx = new EngineFixture();
+        var none = new HashSet<string>();
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(T("power.ultimatePlan"), Facts(), none, Expert)).Outcome);
+        var r = await fx.Engine.ApplyAsync(T("power.gamingPlan"), Facts(), none, Expert);
+        Assert.Equal(ApplyOutcome.Blocked, r.Outcome);
+        Assert.Contains(r.Blocks!, b => b.ReasonKey == "block.conflict" && b.Detail == "power.ultimatePlan");
+
+        // After undo the Gaming plan is free again.
+        fx.Engine.Revert(T("power.ultimatePlan"));
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(T("power.gamingPlan"), Facts(), none, Expert)).Outcome);
     }
 
     [Fact]
@@ -405,6 +437,129 @@ public class EngineTests
         Assert.False(fx.Processes.MemoryCompression);
         fx.Engine.Revert(t);
         Assert.True(fx.Processes.MemoryCompression);
+    }
+
+    /// <summary>Simulated restart: pending changes take effect and the backup's restart time lies before the boot.</summary>
+    private static void Restart(EngineFixture fx, string id)
+    {
+        fx.Processes.Restart();
+        if (fx.Store.Get(id) is { PendingRestartSince: not null } b)
+        {
+            b.PendingRestartSince = DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64) - TimeSpan.FromHours(1);
+            fx.Store.Save(b);
+        }
+    }
+
+    [Fact]
+    public async Task MemoryCompressionTakesEffectAfterRestartAndUndoRestoresIt()
+    {
+        using var fx = new EngineFixture();
+        fx.Processes.MemoryCompressionAfterRestart = true;
+        var t = T("memory.compressionOff");
+
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert)).Outcome);
+        Assert.True(fx.Processes.MemoryCompression); // still the running value
+        Assert.Equal(TweakState.PendingRestart, fx.Engine.DetectState(t, Facts()));
+        Assert.Empty(fx.Engine.CheckDrift(Facts()));
+
+        Restart(fx, t.Id);
+        Assert.False(fx.Processes.MemoryCompression);
+        Assert.Equal(TweakState.Applied, fx.Engine.DetectState(t, Facts()));
+
+        var undo = fx.Engine.Revert(t);
+        Assert.True(undo.Success);
+        Assert.Empty(undo.AlreadyRevertedByWindows);
+        Assert.Contains(fx.Processes.Calls, c => c.Contains("Enable-MMAgent"));
+        Restart(fx, t.Id);
+        Assert.True(fx.Processes.MemoryCompression);
+    }
+
+    [Fact]
+    public async Task MemoryCompressionUndoBeforeTheRestartCancelsTheChange()
+    {
+        using var fx = new EngineFixture();
+        fx.Processes.MemoryCompressionAfterRestart = true;
+        var t = T("memory.compressionOff");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Contains(fx.Processes.Calls, c => c.Contains("Enable-MMAgent"));
+        fx.Processes.Restart();
+        Assert.True(fx.Processes.MemoryCompression);
+    }
+
+    [Fact]
+    public async Task MemoryCompressionBackupOfOlderVersionsIsStillUndone()
+    {
+        // Version 0.4.0 stored the running value (the original) as applied; undo after the restart must still run.
+        using var fx = new EngineFixture();
+        fx.Processes.MemoryCompressionAfterRestart = true;
+        var t = T("memory.compressionOff");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        var b = fx.Store.Get(t.Id)!;
+        b.Entries[0].Applied = b.Entries[0].Original;
+        fx.Store.Save(b);
+        Restart(fx, t.Id);
+
+        Assert.True(fx.Engine.Revert(t).Success);
+        fx.Processes.Restart();
+        Assert.True(fx.Processes.MemoryCompression);
+    }
+
+    private const string PowerKey = @"SYSTEM\CurrentControlSet\Control\Power";
+
+    /// <summary>powercfg /hibernate as on real Windows: writes HibernateEnabled, "on" fails when the firmware has no S4.</summary>
+    private static void FakePowercfg(EngineFixture fx) => fx.Processes.Handler = (file, args) =>
+    {
+        if (file != "powercfg.exe" || !args.StartsWith("/hibernate", StringComparison.Ordinal)) return null;
+        var on = args.EndsWith(" on", StringComparison.Ordinal);
+        if (on && fx.Power.Hibernation == false) return (1, "The system firmware does not support hibernation.");
+        RegistryValue.Write(fx.Registry, Hive.Machine, PowerKey, "HibernateEnabled", "dword", on ? "1" : "0");
+        return (0, "");
+    };
+
+    [Fact]
+    public async Task HibernationRoundTrip()
+    {
+        using var fx = new EngineFixture();
+        FakePowercfg(fx);
+        RegistryValue.Write(fx.Registry, Hive.Machine, PowerKey, "HibernateEnabled", "dword", "1");
+        var t = T("power.hibernateOff");
+
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert)).Outcome);
+        Assert.Equal("0", Reg(fx, Hive.Machine, PowerKey, "HibernateEnabled").Data);
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal("1", Reg(fx, Hive.Machine, PowerKey, "HibernateEnabled").Data);
+        Assert.Null(fx.Store.Get(t.Id));
+    }
+
+    [Fact]
+    public async Task HibernationIsUnsupportedWithoutS4()
+    {
+        using var fx = new EngineFixture();
+        FakePowercfg(fx);
+        fx.Power.Hibernation = false;
+        var t = T("power.hibernateOff");
+
+        Assert.Equal(TweakState.Unsupported, fx.Engine.DetectState(t, Facts()));
+        Assert.Equal(ApplyOutcome.NothingToDo, (await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert)).Outcome);
+        Assert.DoesNotContain(fx.Processes.Calls, c => c.Contains("/hibernate"));
+    }
+
+    [Fact]
+    public async Task HibernationBackupWithoutS4CanBeUndone()
+    {
+        // A backup made before the S4 check (version 0.4.0) on a PC without S4: undo has nothing to turn on and succeeds.
+        using var fx = new EngineFixture();
+        FakePowercfg(fx);
+        var t = T("power.hibernateOff");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        fx.Power.Hibernation = false;
+
+        var undo = fx.Engine.Revert(t);
+        Assert.True(undo.Success, string.Join("; ", undo.Errors));
+        Assert.Null(fx.Store.Get(t.Id));
+        Assert.DoesNotContain(fx.Processes.Calls, c => c.EndsWith("/hibernate on", StringComparison.Ordinal));
     }
 
     [Fact]

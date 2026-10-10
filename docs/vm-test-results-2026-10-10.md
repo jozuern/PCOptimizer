@@ -5,7 +5,7 @@ Run of [vm-test-plan.md](vm-test-plan.md) sections 2, 3 and 4 at commit 20650b3 
 ## Setup
 
 - Hyper-V VM `PCO-Test`: generation 2, 4 virtual processors, Secure Boot, virtual TPM, nested virtualization on, 80 GB disk. 8 GB memory for section 4, 16 GB for sections 2 and 3.
-- Windows 11 Pro 26H2, build 26300.9457 (English, unmodified Microsoft ISO), local administrator account, Steam installed, not activated.
+- Windows 11 Pro 26H2 (English, unmodified Microsoft ISO), local administrator account, Steam installed, not activated. Section 4 ran on build 26300.9550; sections 2 and 3 and the retest ran on 26300.9457 after a restore of the `clean` checkpoint, which predates the last cumulative update.
 - Every tweak ran alone from the `clean` checkpoint state, through a console runner that builds the real `TweakEngine` the way `AppServices` does (real adapters, secured backup store in `%ProgramData%\PCOptimizer`) and calls `ApplyAsync` and `Revert`. The runner refuses to start outside a Hyper-V VM. The UI (`ChangeRunner`, dialogs, pages) was not part of this run.
 - Each change was checked independently of the engine, over PowerShell Direct: registry values read directly, service `Start` and `DelayedAutostart`, `powercfg /q` and `/getactivescheme`, `bcdedit /enum {current}`, `Get-ScheduledTask`, `Get-MMAgent`, the power mode overlay values, and `Win32_DeviceGuard` for VBS.
 - Steps per tweak: read the real values, apply, read again, check that the engine reads every desired value, restart where the plan says restart or sign out, check that nothing was lost, undo, read again and compare with the first read. Section 2 also restarted after undo.
@@ -19,7 +19,7 @@ Run of [vm-test-plan.md](vm-test-plan.md) sections 2, 3 and 4 at commit 20650b3 
 | Already set on a clean Windows, apply reports nothing to do | 6 |
 | Bug found (B1 to B4) | 6 |
 | Not applicable in this VM | 7 |
-| Cannot be tested in Hyper-V (B5) | 4 |
+| Could not be tested in Hyper-V before the B5 fix | 4 |
 | Needs real hardware (section 5) | 7 |
 
 ## Bugs
@@ -45,9 +45,9 @@ Possible fix: for actions that take effect after a restart, store the desired va
 
 In this VM the firmware does not support hibernation. Apply still succeeds (it writes `HibernateEnabled=0`; the value was not set before). Undo runs `powercfg /hibernate on`, which fails with "The system firmware does not support hibernation". The backup stays, and the tweak keeps showing as applied. Possible fix: make the tweak not applicable when `powercfg /a` reports hibernation as unavailable, or restore only the registry value in that case.
 
-### B4. `background.widgetsOff` always fails on build 26300
+### B4. `background.widgetsOff` fails on build 26300.9550
 
-Windows denies writing `HKLM\SOFTWARE\Policies\Microsoft\Dsh\AllowNewsAndInterests`, also for an elevated administrator and also with `reg.exe`, while other values in the same key can be written. The User Choice Protection Driver (`UCPD`) is running and is the likely cause (not confirmed). The engine rolls back cleanly and nothing is left, but the user only sees "Attempted to perform an unauthorized operation". Possible fix: detect the denied write and show the tweak as unsupported on this build, with a short explanation.
+On 26300.9550 Windows denies writing `HKLM\SOFTWARE\Policies\Microsoft\Dsh\AllowNewsAndInterests`, also for an elevated administrator and also with `reg.exe`, while other values in the same key can be written. On 26300.9457 (the `clean` checkpoint) the same write works, so the protection came with that cumulative update. The User Choice Protection Driver (`UCPD`) is running and is the likely cause (not confirmed). The engine rolls back cleanly and nothing is left, but the user only sees "Attempted to perform an unauthorized operation". Possible fix: detect the denied write and show the tweak as unsupported on this build, with a short explanation.
 
 ### B5. DNS presets and `network.nagleOff` skip the Hyper-V network adapter
 
@@ -146,6 +146,18 @@ Windows denies writing `HKLM\SOFTWARE\Policies\Microsoft\Dsh\AllowNewsAndInteres
 | `updates.driversExcluded` | 4 | OK, N1 |
 | `privacy.deviceMetadataOff` | 4 | OK, N1 |
 
+## Retest after the fixes
+
+Same VM, build 26300.9457, after the fixes for B1 to B5 (engine and adapter changes with sandbox tests).
+
+| Bug | Tweaks | Result |
+|---|---|---|
+| B1 | `power.gamingPlan`, `power.ultimatePlan`, `quiet.boostOff` | OK with Balanced and default boost active. Boost mode (registry `ACSettingIndex` and `DCSettingIndex`) went from 2 to 0 and back to 2. |
+| B2 | `memory.compressionOff` | OK. PendingRestart after apply, off after the restart, undo ran `Enable-MMAgent`, on again after the next restart, backup removed. Until that restart the state still reads Applied (N5). |
+| B3 | `power.hibernateOff` | Unsupported without S4, apply does nothing. A backup from version 0.4.0 can be undone (sandbox test). |
+| B4 | `background.widgetsOff` | OK, N1 (the value can be written on 9457). On builds that deny the write, the error now names the value and says Windows protects it. |
+| B5 | `network.dns.cloudflare`, `network.dns.google`, `network.dns.quad9`, `network.nagleOff` | OK. DNS went from the DHCP server to the preset and back; `TcpAckFrequency` was written and removed again. |
+
 ## Not covered
 
 - **Section 1 (general flow):** needs the UI: confirmation dialogs, restore point question, Changes page, Licenses window, reset detection banner, language and theme, update check. Also check audit H5 ("Apply again" runs Undo) and H6 (undo failure message) there.
@@ -156,6 +168,6 @@ Windows denies writing `HKLM\SOFTWARE\Policies\Microsoft\Dsh\AllowNewsAndInteres
 
 - Done in this run: VM memory raised to 16 GB in the plan.
 - Section 2 needs preconditions, or both tweaks have nothing to change on a clean install: turn on memory integrity before `security.vbsOff`, and set `useplatformclock` before `leftover.usePlatformClock`. The section 2 text is generated by `DocsConsistencyTests`, so add the preconditions there.
-- Move the DNS presets and `network.nagleOff` to section 5, or fix B5.
+- B5 is fixed: the DNS presets and `network.nagleOff` can stay in section 4.
 - Note that `memory.sysmainOff` cannot be tested in Hyper-V.
 - Retake the `clean` checkpoint after all updates are installed: this run's checkpoint was on 26300.9457 while the VM had already updated to 26300.9550.

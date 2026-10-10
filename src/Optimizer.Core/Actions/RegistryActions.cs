@@ -281,6 +281,21 @@ public static class RegistryValue
     {
         using var key = roots.Open(hive, path, writable: true, create: true)
                         ?? throw new InvalidOperationException($"Cannot open {roots.DisplayRoot(hive)}\\{path} for writing");
+        try
+        {
+            SetValue(key, name, kind, data);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // The key opened for writing, so the value itself is protected (build 26300 denies Dsh\AllowNewsAndInterests
+            // to administrators while other values in the same key can be written).
+            throw new UnauthorizedAccessException(
+                $"Windows denied writing {roots.DisplayRoot(hive)}\\{path}\\{name}, also with administrator rights. Windows protects this value on this PC.", ex);
+        }
+    }
+
+    private static void SetValue(RegistryKey key, string name, string kind, string data)
+    {
         switch (kind)
         {
             case "dword":

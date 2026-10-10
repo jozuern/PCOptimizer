@@ -236,7 +236,10 @@ public sealed class ScheduledTaskAction : TweakAction
     }
 }
 
-/// <summary>Hibernation on/off via powercfg (removes or recreates hiberfil.sys). State read from the registry.</summary>
+/// <summary>
+/// Hibernation on/off via powercfg (removes or recreates hiberfil.sys). State read from the registry. Unsupported when
+/// the firmware has no S4 (VMs, some firmware): powercfg /hibernate on fails there, so an applied change could not be undone.
+/// </summary>
 public sealed class HibernationAction : TweakAction
 {
     public bool Enabled { get; init; }
@@ -247,13 +250,19 @@ public sealed class HibernationAction : TweakAction
 
     public override StoredValue? Read(ActionContext c)
     {
+        if (c.Power.HibernationSupported() == false) return null;
         var v = RegistryValue.Read(c.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled");
         return new StoredValue(true, "bool", v is { Existed: true, Data: "0" } ? "Off" : "On");
     }
 
     public override void Apply(ActionContext c) => Run(c, Enabled);
 
-    public override void Restore(ActionContext c, StoredValue original) => Run(c, original.Data != "Off");
+    public override void Restore(ActionContext c, StoredValue original)
+    {
+        // Without S4 there is no hibernation to turn back on (backups from before this check): nothing to restore.
+        if (original.Data != "Off" && c.Power.HibernationSupported() == false) return;
+        Run(c, original.Data != "Off");
+    }
 
     private static void Run(ActionContext c, bool on)
     {
@@ -270,6 +279,9 @@ public sealed class MemoryCompressionAction : TweakAction
     public override string TargetKey => "mmagent:memorycompression";
     public override string Describe(ActionContext c) => "Memory compression (MMAgent)";
     public override StoredValue Desired(ActionContext c) => new(true, "bool", Enabled ? "True" : "False");
+
+    // Enable-MMAgent and Disable-MMAgent change the setting for the next start; Get-MMAgent shows the running state.
+    public override bool TakesEffectAfterRestart => true;
 
     public override StoredValue? Read(ActionContext c)
     {

@@ -145,6 +145,8 @@ public sealed class SystemPowerManager(IProcessRunner processes) : IPowerManager
         if (code != 0 || !File.Exists(file)) throw new InvalidOperationException($"powercfg /export failed ({code}): {output}");
     }
 
+    public bool? HibernationSupported() => Hardware.Probes.PowerProbe.HibernationSupported();
+
     private static string FriendlyName(Guid scheme)
     {
         uint size = 0;

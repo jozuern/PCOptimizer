@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)).
+
+### Undo and engine
+
+- Undo of "Memory compression off" did nothing: the change takes effect only after a restart, so the engine recorded the old value and later took the new one for a reset by Windows. It now shows "pending restart" after apply, and undo turns memory compression back on, also before the restart and for changes made with 0.4.0.
+- A Windows default no longer blocks a conflicting tweak. With the default Balanced plan, the Gaming and Ultimate Performance plans were blocked, and with the default boost mode "Processor boost off" could never be applied. Only changes made by this app still block.
+- "Hibernation off" is unsupported where the firmware cannot hibernate (virtual machines, some firmware). Before, undo failed there and the change stayed on the Changes page; such a change can now be undone.
+- When Windows denies writing a protected value even with administrator rights (the Widgets policy on newer builds), the error names the value instead of "Attempted to perform an unauthorized operation".
+- DNS presets and delayed TCP acknowledgements work inside Hyper-V virtual machines. Hardware properties of network adapters still change only on PCI and USB adapters.
+
 ## 0.4.0 (preview)
 
 A full review of every tweak, check, data file and text against Microsoft and vendor documentation, plus security hardening. Apply and undo are still only tested against the registry sandbox; run the [VM test plan](docs/vm-test-plan.md) before relying on it.
