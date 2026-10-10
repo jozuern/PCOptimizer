@@ -443,11 +443,14 @@ public class EngineTests
     private static void Restart(EngineFixture fx, string id)
     {
         fx.Processes.Restart();
+        var beforeBoot = DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64) - TimeSpan.FromHours(1);
         if (fx.Store.Get(id) is { PendingRestartSince: not null } b)
         {
-            b.PendingRestartSince = DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64) - TimeSpan.FromHours(1);
+            b.PendingRestartSince = beforeBoot;
             fx.Store.Save(b);
         }
+        if (fx.Store.GetPendingUndo(id) is { } p)
+            fx.Store.SavePendingUndo(new Backup.PendingUndo { TweakId = p.TweakId, Since = beforeBoot, Entries = p.Entries });
     }
 
     [Fact]
@@ -470,6 +473,38 @@ public class EngineTests
         Assert.True(undo.Success);
         Assert.Empty(undo.AlreadyRevertedByWindows);
         Assert.Contains(fx.Processes.Calls, c => c.Contains("Enable-MMAgent"));
+        // Undone, but still off until the restart: not shown as on, and not as a change on the Changes page.
+        Assert.Equal(TweakState.UndoPendingRestart, fx.Engine.DetectState(t, Facts()));
+        Assert.False(fx.Engine.Detect(t, Facts()).IsOn);
+        Assert.Null(fx.Store.Get(t.Id));
+
+        Restart(fx, t.Id);
+        Assert.True(fx.Processes.MemoryCompression);
+        Assert.Equal(TweakState.NotApplied, fx.Engine.DetectState(t, Facts()));
+        Assert.Null(fx.Store.GetPendingUndo(t.Id));
+    }
+
+    [Fact]
+    public async Task MemoryCompressionApplyAgainWhileTheUndoWaitsForTheRestart()
+    {
+        using var fx = new EngineFixture();
+        fx.Processes.MemoryCompressionAfterRestart = true;
+        var t = T("memory.compressionOff");
+        await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
+        Restart(fx, t.Id);
+        fx.Engine.Revert(t); // Enable-MMAgent pending, compression still off
+        Assert.Equal(TweakState.UndoPendingRestart, fx.Engine.DetectState(t, Facts()));
+
+        // Turning it on again must not be "nothing to do": the pending Enable has to be replaced by Disable.
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert)).Outcome);
+        Assert.Equal(2, fx.Processes.Calls.Count(c => c.Contains("Disable-MMAgent")));
+        Assert.Null(fx.Store.GetPendingUndo(t.Id));
+        Assert.Equal("True", fx.Store.Get(t.Id)!.Entries[0].Original.Data); // the real original, not the running value
+        Restart(fx, t.Id);
+        Assert.False(fx.Processes.MemoryCompression);
+
+        // And the next undo turns it on again.
+        fx.Engine.Revert(t);
         Restart(fx, t.Id);
         Assert.True(fx.Processes.MemoryCompression);
     }
@@ -484,6 +519,9 @@ public class EngineTests
 
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Contains(fx.Processes.Calls, c => c.Contains("Enable-MMAgent"));
+        // It never took effect, so nothing waits for the restart.
+        Assert.Equal(TweakState.NotApplied, fx.Engine.DetectState(t, Facts()));
+        Assert.Null(fx.Store.GetPendingUndo(t.Id));
         fx.Processes.Restart();
         Assert.True(fx.Processes.MemoryCompression);
     }

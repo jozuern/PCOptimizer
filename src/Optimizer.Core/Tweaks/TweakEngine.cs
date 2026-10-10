@@ -17,6 +17,9 @@ public enum TweakState
     RevertedByWindows,
     EnforcedByPolicy,
     PendingRestart,
+
+    /// <summary>Undone, but the restored value takes effect only after the next restart (still reads as applied).</summary>
+    UndoPendingRestart,
 }
 
 /// <summary>A reason that prevents applying, as a label key plus values for the text.</summary>
@@ -110,6 +113,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var states = actions.Select(a => SafeState(a)).ToList();
         var supported = states.Where(s => s != ActionState.Unsupported).ToList();
         if (supported.Count == 0) return TweakState.Unsupported;
+        if (ActivePendingUndo(t, actions) is not null) return TweakState.UndoPendingRestart;
 
         var appliedCount = supported.Count(s => s == ActionState.Applied);
         var state = appliedCount == supported.Count ? TweakState.Applied : appliedCount == 0 ? TweakState.NotApplied : TweakState.Partial;
@@ -235,7 +239,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
         var actions = Expand(t);
         var changes = Preview(t);
-        if (actions.All(a => SafeState(a) != ActionState.NotApplied)) return new ApplyResult(ApplyOutcome.NothingToDo, changes);
+        // After an undo that waits for a restart the running value still matches, but the setting is already reverted.
+        var pendingUndo = ActivePendingUndo(t, actions);
+        if (pendingUndo is null && actions.All(a => SafeState(a) != ActionState.NotApplied)) return new ApplyResult(ApplyOutcome.NothingToDo, changes);
 
         // Safety net: one restore point per session before the first change (secondary to the JSON backup).
         if (!_restorePointDone && t.Id != RestorePointFrequencyTweak)
@@ -281,6 +287,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         {
             var current = a.Read(ctx);
             if (current is null) continue;
+            // Undone and not restarted yet: the setting is the restored original, not the running value.
+            if (a.TakesEffectAfterRestart && pendingUndo?.Entries.FirstOrDefault(e => e.TargetKey == a.TargetKey) is { } restored) current = restored.Original;
             before[a.TargetKey] = current;
             if (backup.Entry(a.TargetKey) is not { } entry)
                 backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
@@ -341,6 +349,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
         store.Save(backup);
+        if (pendingUndo is not null) store.ClearPendingUndo(t.Id);
 
         foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { line.Before, line.After });
 
@@ -373,6 +382,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var skipped = new List<string>();
         var errors = new List<string>();
         var kept = new List<BackupEntry>();
+        var restartBound = new List<BackupEntry>();
         var pending = IsRestartPending(backup);
         var current = new Dictionary<string, TweakAction>();
         foreach (var a in Expand(t)) current.TryAdd(a.TargetKey, a);
@@ -398,6 +408,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     continue;
                 }
                 a.Restore(ctx, entry.Original);
+                if (a.TakesEffectAfterRestart) restartBound.Add(entry);
                 Log.Info("change", $"{t.Id}: undo {entry.Description}", new { restored = entry.Original.Display });
             }
             catch (Exception ex)
@@ -417,6 +428,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             backup.Entries.RemoveAll(e => !kept.Contains(e));
             store.Save(backup);
         }
+        // Restored values that take effect after a restart: shown as "off after restart" until then.
+        if (restartBound.Count > 0) store.SavePendingUndo(new PendingUndo { TweakId = t.Id, Entries = restartBound });
         return new RevertResult(errors.Count == 0, skipped, errors);
     }
 
@@ -588,4 +601,24 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     private static DateTimeOffset LastBoot() => DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64);
 
     private static bool IsRestartPending(TweakBackup backup) => backup.PendingRestartSince is { } since && LastBoot() < since;
+
+    /// <summary>
+    /// The pending undo of this tweak while it still waits: no boot since the undo, and a restored value is not in
+    /// effect yet (it still reads as applied). Otherwise the record is done and removed.
+    /// </summary>
+    private PendingUndo? ActivePendingUndo(TweakDefinition t, IReadOnlyList<TweakAction> actions)
+    {
+        if (store.GetPendingUndo(t.Id) is not { } p) return null;
+        if (LastBoot() < p.Since && actions.Any(a => a.TakesEffectAfterRestart && p.Entries.Any(e => e.TargetKey == a.TargetKey) && SafeState(a) == ActionState.Applied))
+            return p;
+        try
+        {
+            store.ClearPendingUndo(t.Id);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("engine", $"pending undo of {t.Id} not removed: {ex.Message}");
+        }
+        return null;
+    }
 }

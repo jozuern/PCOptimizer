@@ -59,7 +59,7 @@ On 26300.9550 Windows denies writing `HKLM\SOFTWARE\Policies\Microsoft\Dsh\Allow
 - **N2. `DelayedAutostart=0` after undo.** `privacy.telemetryOff` (DiagTrack) and `services.gamingPreset` (TrkWks) write `DelayedAutostart=0` on undo where the value did not exist. Same behavior.
 - **N3. Power mode after undo.** `quiet.powerModeEfficiency` leaves the overlay set to the empty GUID (Balanced) where no overlay value existed. Same behavior. Only the AC overlay changed, as audit M7 describes.
 - **N4. Missing scheduled tasks.** `\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser` and `ProgramDataUpdater` (part of `privacy.telemetryOff`) do not exist on build 26300. The engine skips them and still reports the tweak as applied.
-- **N5. No pending state for undo.** After undoing `security.vbsOff` and `memory.compressionOff`, the state changes at once, although the system changes only after the next restart.
+- **N5. No pending state for undo.** After undoing `security.vbsOff` and `memory.compressionOff`, the state changes at once, although the system changes only after the next restart. Fixed for memory compression with the state "Off after a restart" (see the retest). `security.vbsOff` reads the configured registry values, so its state is right; only the running VBS changes later.
 - **N6. Audit M4.** With UAC on (classic), backup files are owned by `BUILTIN\Administrators`, so they are trusted. UAC off, the built-in Administrator account and Administrator protection were not tested.
 
 ## Results per tweak
@@ -153,9 +153,9 @@ Same VM, build 26300.9457, after the fixes for B1 to B5 (engine and adapter chan
 | Bug | Tweaks | Result |
 |---|---|---|
 | B1 | `power.gamingPlan`, `power.ultimatePlan`, `quiet.boostOff` | OK with Balanced and default boost active. Boost mode (registry `ACSettingIndex` and `DCSettingIndex`) went from 2 to 0 and back to 2. |
-| B2 | `memory.compressionOff` | OK. PendingRestart after apply, off after the restart, undo ran `Enable-MMAgent`, on again after the next restart, backup removed. Until that restart the state still reads Applied (N5). |
+| B2 | `memory.compressionOff` | OK. PendingRestart after apply, off after the restart, undo ran `Enable-MMAgent`, on again after the next restart, backup removed. Retest on 26300.9550 with the new state: "Off after a restart" between the undo and the restart, then NotApplied, and the pending undo record was removed. |
 | B3 | `power.hibernateOff` | Unsupported without S4, apply does nothing. A backup from version 0.4.0 can be undone (sandbox test). |
-| B4 | `background.widgetsOff` | OK, N1 (the value can be written on 9457). On builds that deny the write, the error now names the value and says Windows protects it. |
+| B4 | `background.widgetsOff` | OK, N1. After the VM installed a newer UCPD driver (same build 26300.9550), the write works again, so whether Windows blocks the value depends on the UCPD driver version, not on the build. On a PC that denies the write, the error now names the value and says Windows protects it. |
 | B5 | `network.dns.cloudflare`, `network.dns.google`, `network.dns.quad9`, `network.nagleOff` | OK. DNS went from the DHCP server to the preset and back; `TcpAckFrequency` was written and removed again. |
 
 ## Not covered

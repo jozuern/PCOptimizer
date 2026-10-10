@@ -963,7 +963,7 @@ public sealed partial class MainViewModel : ObservableObject
                 ? new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Install"], Action = UpdateNowCommand, ActionIcon = SymbolRegular.ArrowDownload20 }
                 : new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Open"], Action = OpenReleasePageCommand, ActionIcon = SymbolRegular.Open20 });
         if (_profileAutoSet) Banners.Add(new Banner(Loc.Instance.Format("Profile_AutoSet", ProfileName(_usage)), false));
-        var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State == TweakState.PendingRestart);
+        var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State is TweakState.PendingRestart or TweakState.UndoPendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));
         var os = Profile.Os;
         if (OsGate.Evaluate(os.Build, os.NativeArchitecture) == OsGateResult.SupportedNotValidated)

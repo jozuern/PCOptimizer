@@ -52,6 +52,18 @@ public sealed class TweakBackup
     public BackupEntry? Entry(string targetKey) => Entries.FirstOrDefault(e => e.TargetKey == targetKey);
 }
 
+/// <summary>An undo whose restored values take effect after the next restart (<see cref="BackupStore.GetPendingUndo"/>).</summary>
+public sealed class PendingUndo
+{
+    public required string TweakId { get; init; }
+
+    /// <summary>Time of the undo; a boot after it means the restored values are in effect.</summary>
+    public DateTimeOffset Since { get; init; } = DateTimeOffset.Now;
+
+    /// <summary>The restored entries: their originals are what the system will have after the restart.</summary>
+    public List<BackupEntry> Entries { get; init; } = [];
+}
+
 /// <summary>
 /// JSON backups in %ProgramData%\PCOptimizer\backups. The folder is locked to Administrators + SYSTEM (no inheritance):
 /// an elevated app restoring values from user-writable files would be a privilege-escalation path.
@@ -69,6 +81,7 @@ public sealed class BackupStore
         if (secure) SecureFolder.Lock(root);
         Directory.CreateDirectory(BackupFolder);
         Directory.CreateDirectory(HistoryFolder);
+        Directory.CreateDirectory(PendingUndoFolder);
         Directory.CreateDirectory(ExportFolder);
     }
 
@@ -77,6 +90,7 @@ public sealed class BackupStore
     public string Root { get; }
     public string BackupFolder => Path.Combine(Root, "backups");
     public string HistoryFolder => Path.Combine(Root, "backups", "history");
+    public string PendingUndoFolder => Path.Combine(Root, "backups", "pending-undo");
     public string ExportFolder => Path.Combine(Root, "exports");
 
     private string FileFor(string tweakId) => Path.Combine(BackupFolder, Sanitize(tweakId) + ".json");
@@ -109,6 +123,43 @@ public sealed class BackupStore
         var file = FileFor(tweakId);
         if (!File.Exists(file)) return;
         File.Move(file, Path.Combine(HistoryFolder, $"{Sanitize(tweakId)}-{DateTime.Now:yyyyMMdd-HHmmss}.json"), overwrite: true);
+    }
+
+    // ---------------- undo that takes effect after a restart ----------------
+
+    private string PendingUndoFile(string tweakId) => Path.Combine(PendingUndoFolder, Sanitize(tweakId) + ".json");
+
+    /// <summary>
+    /// An undone change whose restored value takes effect only after a restart (memory compression). Kept apart from the
+    /// backups, so the Changes page, Undo all and drift detection do not see it as a change that is still applied.
+    /// </summary>
+    public PendingUndo? GetPendingUndo(string tweakId)
+    {
+        var file = PendingUndoFile(tweakId);
+        if (!File.Exists(file) || !Trusted(file)) return null;
+        try
+        {
+            return JsonSerializer.Deserialize<PendingUndo>(File.ReadAllText(file), Json);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("backup", $"unreadable pending undo {file}", ex);
+            return null;
+        }
+    }
+
+    public void SavePendingUndo(PendingUndo pending)
+    {
+        var file = PendingUndoFile(pending.TweakId);
+        var tmp = file + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(pending, Json));
+        File.Move(tmp, file, overwrite: true);
+    }
+
+    public void ClearPendingUndo(string tweakId)
+    {
+        var file = PendingUndoFile(tweakId);
+        if (File.Exists(file)) File.Delete(file);
     }
 
     private bool Trusted(string file)
