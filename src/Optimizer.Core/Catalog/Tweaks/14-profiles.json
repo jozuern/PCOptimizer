@@ -180,7 +180,7 @@
     {
       "id": "office.launchToThisPc",
       "undocumented": true,
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: a new File Explorer window opened on \"This PC\" after apply and on \"Home\" again after undo" ],
       "category": "Productivity",
       "impact": {
         "gaming": 0,

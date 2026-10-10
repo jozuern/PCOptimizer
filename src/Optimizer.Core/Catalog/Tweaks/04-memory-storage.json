@@ -11,7 +11,6 @@
         ]
       },
       "risk": "moderate",
-      "preview": true,
       "restart": true,
       "appliesTo": {
         "when": {
@@ -63,7 +62,7 @@
     {
       "id": "memory.pagefileSystemManaged",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with \"Automatically manage paging file size\" checked" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with \"Automatically manage paging file size\" checked", "docs/vm-test-results-2026-10-10.md: Preview review: from a page file with automatic management off, apply turned \"Automatically manage paging file size\" on (AutomaticManagedPagefile true after a restart) and undo turned it off again" ],
       "category": "Memory",
       "impact": {
         "gaming": 1,
@@ -73,7 +72,6 @@
         ]
       },
       "risk": "moderate",
-      "preview": true,
       "restart": true,
       "actions": [
         {
@@ -170,7 +168,7 @@
     {
       "id": "storage.storageSenseOn",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with Storage Sense on" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds this value with Storage Sense on", "docs/vm-test-results-2026-10-10.md: Preview review: the Storage Sense switch in Settings went from Off to On after apply and back to Off after undo" ],
       "category": "Storage",
       "impact": {
         "gaming": 0,
@@ -180,7 +178,6 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
       "scope": "user",
       "actions": [
         {

@@ -56,7 +56,7 @@ public class DocsConsistencyTests
         var other = tweaks.Except(hardware).Except(expert).Except(restart).ToList();
 
         var sb = new StringBuilder();
-        sb.Append("The tables below cover all ").Append(tweaks.Count).Append(" catalog tweaks. Preview tweaks have not been tested on real Windows yet; test them first.\n\n");
+        sb.Append("The tables below cover all ").Append(tweaks.Count).Append(" catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.\n\n");
         void Table(string heading, string intro, IEnumerable<TweakDefinition> list, bool hardwareColumn)
         {
             sb.Append("## ").Append(heading).Append("\n\n");

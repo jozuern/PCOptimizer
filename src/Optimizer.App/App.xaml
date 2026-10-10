@@ -110,7 +110,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="{Binding StatusFilled}" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>
@@ -138,7 +138,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="{Binding StatusFilled}" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>

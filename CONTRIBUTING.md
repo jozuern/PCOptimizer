@@ -58,8 +58,8 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 
 - `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\PCOptimizerTest` and fake system APIs. Nothing on the real system changes.
 - `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors).
-- Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
-- Not yet checked on real hardware: the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
+- Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md) (the last run: [docs/vm-test-results-2026-10-10.md](docs/vm-test-results-2026-10-10.md)). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
+- Not yet checked on real hardware: NVIDIA driver settings and network adapter properties (section 5 of the VM test plan), the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
 
 ## Adding a tweak
 
@@ -88,6 +88,8 @@ Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit ho
 
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
-3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and creates a **draft** release. Check it, then publish it on GitHub.
+3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and a signature file (`PCOptimizer.exe.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
+
+The in-app update installs a release only when its signature matches the public key in `src/Optimizer.Core/Updates/update-key.pem`. The release workflow signs with the private key from the repository secret `UPDATE_SIGNING_KEY` and stops when the secret is missing. Create the key pair once with `scripts/new-update-key.ps1`; the script says how to store the private key. Replace it only when it is lost or leaked: versions with the old public key then reject new releases, and users have to download the next version by hand.
 
 The exe is not code signed yet. Signing (Azure Trusted Signing or an OV certificate) fits in the release workflow between publish and upload.

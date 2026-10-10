@@ -4,13 +4,13 @@
 
 A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
 
-> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, not yet on real Windows installations: the [VM test plan](docs/vm-test-plan.md) has not been run. Tweaks marked **Preview** are the risky ones that most need that test. Create a restore point or a backup before you change anything, and start with the recommended items. Laptop profiles, battery checks and AMD-specific checks have not been checked on real hardware.
+> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, and the [VM test plan](docs/vm-test-plan.md) was run on Windows 11 26H2 in a Hyper-V virtual machine: the catalog tweaks (some do not apply in a virtual machine), the general flow and the pages that change the PC ([results](docs/vm-test-results-2026-10-10.md)). Not checked on real hardware yet: NVIDIA driver settings, network adapter properties, laptop profiles, battery checks and AMD-specific checks. Tweaks marked **Preview** are the risky ones. Create a restore point or a backup before you change anything, and start with the recommended items.
 
 <p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, profile, recommended changes and findings"></p>
 
 ## Download
 
-Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start.
+Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the release signature (`PCOptimizer.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start.
 
 ## What it does
 
@@ -35,7 +35,7 @@ No telemetry, no accounts. The app goes online only for features you start or tu
 
 **Why is tweak X not included?** Many popular tweaks do nothing on Windows 11, use settings nobody documents, or cost more than they bring. [docs/not-included.md](docs/not-included.md) lists them with the reason and sources, including the ones earlier versions offered.
 
-**What does "Preview" mean?** The tweak is risky enough that it needs testing on real Windows before it can be called safe, and that test has not been done yet. Apply it on its own, after a restore point, and check the result.
+**What does "Preview" mean?** The tweak is risky, or its effect is not proven on real Windows yet: every Expert and boot-critical change, undocumented values without proof, and settings not yet tested on real hardware (such as the NVIDIA driver settings). "Apply recommended" never includes it. Apply it on its own, after a restore point, and check the result.
 
 **Will it make my games faster?** Sometimes. The biggest gains come from fixing real problems the scan finds (a monitor at 60 Hz, memory without XMP, the wrong power plan). Most tweaks change little; each page says how solid the evidence is, and the benchmark on the Health page lets you measure your own games.
 

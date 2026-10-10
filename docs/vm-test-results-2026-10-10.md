@@ -223,6 +223,26 @@ Same VM on build 26300.9550, restored from the `clean` checkpoint (System Protec
 - **U9.** Windows Update repair could not rename catroot2 ("Access denied") although Cryptographic Services had been stopped three seconds earlier; it is trigger-started, so something probably started it again. Renaming catroot2 right after stopping the service, or retrying, would help. Fixed: when the rename is denied, Cryptographic Services is stopped again and the rename retried, up to three attempts. In the retest the rename worked on the first attempt; the retry is covered by a test.
 - **U10.** After `winget uninstall namazso.PawnIO` the driver stays installed, so the hint "can be uninstalled in Settings > Apps" promises more than it does; removing it fully needs `pnputil /delete-driver oem2.inf /uninstall`. Fixed: the PawnIO install text says that uninstalling can leave the driver and how to remove it with pnputil.
 
+## Preview review
+
+After sections 1 to 4 and 6, each of the 26 Preview tweaks was decided on. Same VM, build 26300.9550, restored from `clean`, version 0.4.7, apply and undo through the console runner. Where the effect could only be seen in Windows, it was read where a user sees it: in Settings, in File Explorer, in Start search, or through `SystemParametersInfo` after signing in again.
+
+| Tweak | Check | Result |
+|---|---|---|
+| `memory.pagefileSystemManaged` | Precondition: a page file on C: with automatic management off (`C:\pagefile.sys 0 0`). Apply, restart, undo, restart | OK. `AutomaticManagedPagefile` (the "Automatically manage paging file size" checkbox) true after apply and the restart, false again after undo with `C:\pagefile.sys 0 0` restored. |
+| `storage.storageSenseOn` | Precondition: Storage Sense off. The switch on Settings > System > Storage > Storage Sense | OK. Off, On after apply, Off after undo. The policy key exists only after the Storage Sense page was opened once. |
+| `visual.bestPerformance` | `SystemParametersInfo` after signing in again | OK. Window, menu, combo box, tooltip, selection and minimize animations, shadows, smooth scrolling and "show window contents while dragging" off after apply; font smoothing stays on; undo restores every value and the same `UserPreferencesMask`. |
+| `explorer.classicContextMenu` | Right-click a file in File Explorer after signing in again | OK. Classic menu with "Send to" and "Create shortcut" and no "Show more options"; after undo the Windows 11 menu with "Show more options" again; the CLSID key is removed. |
+| `office.launchToThisPc` | Title of a new File Explorer window | OK. "Home", "This PC" after apply, "Home" after undo. |
+| `privacy.suggestionsOff` | Switches in Settings after signing in again | OK. "Recommendations and offers in Settings", "Show tips and app recommendations" (Start) and "Get tips and suggestions when using Windows" Off after apply and On after undo. |
+| `privacy.webSearchOff` | Start search for "weather" after signing in again | OK. No "Microsoft Bing web suggestions" and no Microsoft Bing tab after apply; both back after undo. |
+| `privacy.inkingTypingOff` | Switches in Settings after signing in again | Partly. "Improve inking and typing" Off and locked after apply, On after undo; but "Custom inking and typing dictionary" stays On although both `RestrictImplicit*Collection` policies are set, and "Typing insights" does not show in the VM. |
+
+Decision:
+
+- **No longer Preview (13):** the seven above marked OK, plus `power.ultimatePlan` and `memory.compressionOff` (B1 and B2 fixed and retested), the three DNS presets (B5 fixed and retested, and the UI test in section 6) and `services.gamingPreset` (OK, N2 does not change behavior).
+- **Still Preview (13):** `security.vbsOff`, `leftover.usePlatformClock` and `network.interruptModerationOff` (Expert or boot-critical, always Preview); the four NVIDIA settings and the two network adapter properties (need real hardware); `gpu.hags` and `gpu.mpoOff` (no GPU in the VM that supports them); `gpu.gameDvrOff` (detected as Partial before and after apply); `privacy.inkingTypingOff` (the dictionary switch above).
+
 ## Not covered
 
 - **Section 1:** the Windows update between apply and undo (no newer cumulative update), the update banner for a newer release (no newer release published) and a real undo failure for the H6 message.

@@ -100,7 +100,6 @@
         ]
       },
       "risk": "moderate",
-      "preview": true,
       "appliesTo": {
         "formFactor": "desktop"
       },
