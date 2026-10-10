@@ -12,7 +12,7 @@ body:
     attributes:
       label: PCOptimizer version
       description: Settings > About
-      placeholder: "0.3.0"
+      placeholder: "0.4.0"
     validations:
       required: true
   - type: input

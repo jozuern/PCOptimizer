@@ -191,7 +191,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsGerman => Loc.Instance.Language == "de";
     public string ThemeSetting => _settings.Theme;
 
-    public string Version => typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.3.0";
+    public string Version => typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.4.0";
     public string AboutText => Loc.Instance.Format("About_Text", Version);
     public string LogFile => Log.CurrentFile ?? Log.Directory;
     public string DataFolder => AppServices.DataFolder;
