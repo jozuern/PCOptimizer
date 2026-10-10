@@ -66,7 +66,8 @@
             </Style>
 
             <!-- Output box for tools (sfc, dism, winget) -->
-            <Style x:Key="OutputBox" TargetType="TextBox">
+            <!-- Based on the WPF-UI style: without it the box keeps the classic white template in dark mode. -->
+            <Style x:Key="OutputBox" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
                 <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="IsReadOnly" Value="True" />
@@ -109,7 +110,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="{Binding StatusFilled}" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>
@@ -137,7 +138,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="{Binding StatusFilled}" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>

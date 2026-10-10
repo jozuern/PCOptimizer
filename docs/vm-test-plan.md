@@ -1,6 +1,6 @@
 # VM test plan
 
-Real apply and undo round trips for every change the app can make. Unit tests only cover the registry sandbox and fakes; this plan covers real Windows. Run it before each public release, in a Hyper-V VM, never on your own PC.
+Real apply and undo round trips for every change the app can make. Unit tests only cover the registry sandbox and fakes; this plan covers real Windows. Run it before each public release, in a Hyper-V VM, never on your own PC. The last run and its findings: [vm-test-results-2026-10-10.md](vm-test-results-2026-10-10.md).
 
 The tweak tables in sections 2 to 5 are generated from the catalog: after a catalog change, run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`.
 
@@ -57,7 +57,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 211 catalog tweaks. Preview tweaks have not been tested on real Windows yet; test them first.
+The tables below cover all 211 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -78,15 +78,15 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `power.throttlingOff` | Power throttling off | safe | restart | registry | |
 | `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe, preview | restart | registry | |
 | `gpu.mpoOff` | Multiplane overlay (MPO) off | moderate, preview | restart | registry | |
-| `memory.compressionOff` | Memory compression off | moderate, preview | restart | memoryCompression | |
+| `memory.compressionOff` | Memory compression off | moderate | restart | memoryCompression | |
 | `memory.sysmainOff` | SysMain (Superfetch) off | moderate | restart | service | |
-| `memory.pagefileSystemManaged` | Page file managed by Windows | moderate, preview | restart | registry | |
+| `memory.pagefileSystemManaged` | Page file managed by Windows | moderate | restart | registry | |
 | `storage.lastAccessOff` | NTFS last-access timestamps off | safe | restart | registry | |
 | `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe | restart | registry | |
 | `network.preferIpv4` | Prefer IPv4 over IPv6 | safe | restart | registryBits | |
 | `privacy.telemetryOff` | Telemetry to minimum | moderate | restart | registry, service, scheduledTask | |
-| `visual.bestPerformance` | Visual effects: best performance | safe, preview | sign out | registry, registryBinaryBits | |
-| `explorer.classicContextMenu` | Classic right-click menu | safe, preview | sign out | registry | |
+| `visual.bestPerformance` | Visual effects: best performance | safe | sign out | registry, registryBinaryBits | |
+| `explorer.classicContextMenu` | Classic right-click menu | safe | sign out | registry | |
 | `privacy.appCompatTelemetryOff` | Application compatibility telemetry off | moderate | restart | registry | |
 | `privacy.phoneLinkOff` | Phone-PC linking off | moderate | restart | registry | |
 | `privacy.crossDeviceOff` | Continue experiences on other devices off | moderate | restart | registry | |
@@ -114,7 +114,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 |---|---|---|---|---|---|
 | `power.balancedPlan` | Switch to the Balanced power plan | safe |  | powerScheme | |
 | `power.gamingPlan` | Gaming power plan (based on High performance) | safe |  | powerScheme | |
-| `power.ultimatePlan` | Ultimate Performance power plan | moderate, preview |  | powerScheme | |
+| `power.ultimatePlan` | Ultimate Performance power plan | moderate |  | powerScheme | |
 | `power.turboRestore` | Restore processor turbo | safe |  | powerSetting | |
 | `power.usbSelectiveSuspendOff` | USB selective suspend off | safe |  | powerSetting | |
 | `power.pcieAspmOff` | PCIe link power management off | safe |  | powerSetting | |
@@ -125,7 +125,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `gpu.gameDvrOff` | Game Bar captures off | safe, preview |  | registry | |
 | `input.mouseAccelOff` | Mouse acceleration off | safe |  | registry | |
 | `storage.trimOn` | TRIM on | safe |  | registry | |
-| `storage.storageSenseOn` | Storage Sense on | safe, preview |  | registry | |
+| `storage.storageSenseOn` | Storage Sense on | safe |  | registry | |
 | `network.nagleOff` | Delayed TCP acknowledgements off (TcpAckFrequency) | moderate |  | registry | |
 | `network.deliveryOptimizationP2POff` | Delivery Optimization peer-to-peer off | safe |  | registry | |
 | `privacy.activityHistoryOff` | Activity history off | safe |  | registry | |
@@ -137,9 +137,9 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
 | `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
-| `network.dns.cloudflare` | Public DNS servers | safe, preview |  | dns | |
-| `network.dns.google` | Public DNS servers | safe, preview |  | dns | |
-| `network.dns.quad9` | Public DNS servers | safe, preview |  | dns | |
+| `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
+| `network.dns.google` | Public DNS servers | safe |  | dns | |
+| `network.dns.quad9` | Public DNS servers | safe |  | dns | |
 | `network.dns.opendns` | Public DNS servers | safe, preview |  | dns | |
 | `network.dns.adguard` | Public DNS servers | safe, preview |  | dns | |
 | `network.dns.automatic` | DNS servers: automatic (from the router) | safe, preview |  | dns | |
@@ -149,11 +149,11 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.diagnosticLogsLimited` | Limit diagnostic logs and memory dumps | safe |  | registry | |
 | `privacy.inkingTypingOff` | Inking and typing personalization off | safe, preview |  | registry | |
 | `privacy.onlineSpeechOff` | Online speech recognition off | safe |  | registry | |
-| `privacy.webSearchOff` | Web results in Start search off | safe, preview |  | registry | |
+| `privacy.webSearchOff` | Web results in Start search off | safe |  | registry | |
 | `privacy.searchHighlightsOff` | Search highlights off | safe |  | registry | |
 | `privacy.cloudSearchOff` | Cloud content in search off | safe |  | registry | |
 | `privacy.cloudClipboardOff` | Clipboard sync across devices off | safe |  | registry | |
-| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | safe, preview |  | registry | |
+| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | safe |  | registry | |
 | `privacy.onlineTipsOff` | Online tips in Settings off | safe |  | registry | |
 | `privacy.appLaunchTrackingOff` | App launch tracking off | safe |  | registry | |
 | `privacy.languageListOff` | Language list for websites off | safe |  | registry | |
@@ -165,14 +165,14 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.messageSyncOff` | Text message cloud backup off | safe |  | registry | |
 | `privacy.mapsTrafficOff` | Offline maps updates off | safe |  | registry | |
 | `privacy.clipboardHistoryOff` | Clipboard history off | moderate |  | registry | |
-| `services.gamingPreset` | Conservative services preset | safe, preview |  | service | |
+| `services.gamingPreset` | Conservative services preset | safe |  | service | |
 | `battery.boostOffDc` | Processor boost off on battery | moderate |  | powerSetting | |
 | `battery.wifiPowerSavingDc` | Wi-Fi power saving on battery: maximum | safe |  | powerSetting | |
 | `battery.pcieAspmMaxDc` | PCIe power saving on battery: maximum | safe |  | powerSetting | |
 | `quiet.boostOff` | Processor boost off (quieter and cooler) | moderate |  | powerSetting | |
 | `quiet.powerModeEfficiency` | Power mode: Best power efficiency | safe |  | powerMode | |
 | `office.clipboardHistoryOn` | Clipboard history on | safe |  | registry | |
-| `office.launchToThisPc` | File Explorer opens to This PC | safe, preview |  | registry | |
+| `office.launchToThisPc` | File Explorer opens to This PC | safe |  | registry | |
 | `background.edgeBoostOff` | Microsoft Edge: no startup boost, no background mode | safe |  | registry | |
 | `updates.driversExcluded` | Drivers not included with Windows Update | moderate |  | registry | |
 | `privacy.deviceMetadataOff` | No automatic download of device apps | safe |  | registry | |
@@ -306,11 +306,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 |---|---|---|
 | `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support) |
 | `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
-| `explorer.classicContextMenu` | Classic right-click menu | right-click a file in File Explorer after signing in again: the classic menu opens at once; after undo the new menu is back |
 | `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
-| `privacy.webSearchOff` | Web results in Start search off | searching in the Start menu shows no web results or suggestions |
-| `privacy.suggestionsOff` | Tips, suggestions and welcome screens off | the three Settings switches named on the page show off |
-| `office.launchToThisPc` | File Explorer opens to This PC | a new File Explorer window opens to This PC; Folder Options shows "Open File Explorer to: This PC" |
 | `personalize.darkMode` | Dark mode for Windows and apps | the effect the explanation page describes |
 | `personalize.accentTitleBars` | Accent color on title bars | the effect the explanation page describes |
 | `explorer.hiddenFiles` | File Explorer: show hidden files | the effect the explanation page describes |

@@ -28,6 +28,14 @@ public partial class SettingsPage : UserControl
         (Application.Current as App)?.ApplyTheme(theme);
     }
 
+    // Checked, not Command: a screen reader's select action and the arrow keys check a radio button without clicking it.
+    // The binding checks the button of the current language too, which must not switch again.
+    private void Language_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton { Tag: string lang } || DataContext is not MainViewModel vm) return;
+        if (lang != Services.Loc.Instance.Language) vm.SetLanguageCommand.Execute(lang);
+    }
+
     private void SaveKey_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel vm || string.IsNullOrWhiteSpace(VtKey.Password)) return;

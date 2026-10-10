@@ -24,7 +24,6 @@
         }
       ],
       "risk": "safe",
-      "preview": true,
       "scope": "user",
       "signOut": true,
       "actions": [
@@ -206,6 +205,7 @@
     {
       "id": "explorer.classicContextMenu",
       "undocumented": true,
+      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: after sign-in, right-clicking a file in File Explorer showed the classic menu without \"Show more options\"; after undo and sign-in the Windows 11 menu was back" ],
       "category": "Explorer",
       "impact": {
         "gaming": 0,
@@ -215,7 +215,6 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
       "scope": "user",
       "signOut": true,
       "actions": [

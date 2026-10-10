@@ -568,6 +568,11 @@ public class ExtendedActionTests
         Assert.Empty(NicAdapters.Enumerate(fx.Registry));
         Assert.Equal([guid], NicAdapters.Enumerate(fx.Registry, includeSynthetic: true).Select(a => a.InterfaceGuid));
         Assert.Empty(fx.Engine.Expand(Tweak("test.nic", new NicPropertyAction { Properties = new() { ["*EEE"] = "0" } })));
+
+        // The DNS confirmation names the adapter; an unknown GUID still shows alone.
+        Assert.Equal($"IPv4 DNS servers of Test NIC 0001 {guid}", new DnsAction { InterfaceGuid = guid }.Describe(fx.Context));
+        Assert.Equal("IPv4 DNS servers of adapter {55555555-5555-5555-5555-555555555555}",
+            new DnsAction { InterfaceGuid = "{55555555-5555-5555-5555-555555555555}" }.Describe(fx.Context));
     }
 
     [Fact]

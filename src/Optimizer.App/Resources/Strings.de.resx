@@ -127,6 +127,7 @@
   <data name="Confirm_Restore" xml:space="preserve"><value>Wiederhergestellt</value></data>
   <data name="Confirm_AntiCheatAck" xml:space="preserve"><value>Mir ist klar, dass Spiele mit diesem Anti-Cheat womöglich nicht starten.</value></data>
   <data name="Confirm_Backup" xml:space="preserve"><value>Die Originalwerte werden gespeichert, bevor sich etwas ändert.</value></data>
+  <data name="Confirm_UndoKeeps" xml:space="preserve"><value>Werte, die sich nicht wiederherstellen lassen, bleiben auf der Seite Änderungen.</value></data>
   <data name="Rp_AskTitle" xml:space="preserve"><value>Computerschutz ist aus</value></data>
   <data name="Rp_AskText" xml:space="preserve"><value>Windows kann keinen Wiederherstellungspunkt erstellen, weil der Computerschutz für das Systemlaufwerk aus ist. Die eigene Sicherung der App stellt trotzdem jeden geänderten Wert wieder her. Computerschutz jetzt einschalten?</value></data>
   <data name="Rp_Enable" xml:space="preserve"><value>Einschalten und fortfahren</value></data>
@@ -209,7 +210,7 @@
     <value>Passt zu diesem PC</value>
   </data>
   <data name="Rec_Count" xml:space="preserve">
-    <value>{0} Änderungen</value>
+    <value>Änderungen: {0}</value>
   </data>
   <data name="Result_Batch" xml:space="preserve">
     <value>{0} angewendet, {1} fehlgeschlagen, {2} übersprungen.</value>
@@ -339,7 +340,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie n
     <value>Temporäre Dateien und Caches mit ihrer Größe. Gelöscht wird erst, wenn du es auswählst. Dateien in Benutzung und Verknüpfungen zu anderen Ordnern werden immer übersprungen.</value>
   </data>
   <data name="Cleanup_Size" xml:space="preserve">
-    <value>{0}, {1} Dateien</value>
+    <value>{0}, Dateien: {1}</value>
   </data>
   <data name="Cleanup_Total" xml:space="preserve">
     <value>Ausgewählt: {0}</value>
@@ -356,7 +357,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie n
 Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprungen.</value>
   </data>
   <data name="Cleanup_Done" xml:space="preserve">
-    <value>{0} freigegeben. {1} Dateien waren in Benutzung und wurden übersprungen.</value>
+    <value>{0} freigegeben. Übersprungene Dateien, weil sie in Benutzung waren: {1}.</value>
   </data>
   <data name="Cleanup_More" xml:space="preserve">
     <value>Weitere Bereinigung</value>
@@ -398,7 +399,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Windows-Einträge ausblenden</value>
   </data>
   <data name="Startup_Summary" xml:space="preserve">
-    <value>{0} Einträge, {1} Programme anderer Hersteller bei der Anmeldung, {2} brauchen Aufmerksamkeit (unsigniert oder ungewöhnlich).</value>
+    <value>Einträge: {0}. Programme anderer Hersteller bei der Anmeldung: {1}. Brauchen Aufmerksamkeit (unsigniert oder ungewöhnlich): {2}.</value>
   </data>
   <data name="Startup_NoPublisher" xml:space="preserve">
     <value>Kein Herausgeber</value>
@@ -515,7 +516,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Update holen</value>
   </data>
   <data name="Drv_AgeDays" xml:space="preserve">
-    <value>{0} Tage alt</value>
+    <value>Alter in Tagen: {0}</value>
   </data>
   <data name="DrvClass_DISPLAY" xml:space="preserve">
     <value>Grafik</value>
@@ -554,10 +555,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Analysieren</value>
   </data>
   <data name="Storage_Progress" xml:space="preserve">
-    <value>{0} Dateien, {1}</value>
+    <value>Dateien: {0}, {1}</value>
   </data>
   <data name="Storage_Done" xml:space="preserve">
-    <value>{0} Dateien, {1} analysiert. Duplikate: {2} lassen sich freigeben.</value>
+    <value>Analysierte Dateien: {0}, {1}. Duplikate: {2} lassen sich freigeben.</value>
   </data>
   <data name="Storage_Truncated" xml:space="preserve">
     <value>Nach 3 Millionen Dateien angehalten.</value>
@@ -575,7 +576,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Doppelte Dateien</value>
   </data>
   <data name="Storage_Files" xml:space="preserve">
-    <value>{0} Dateien</value>
+    <value>Dateien: {0}</value>
   </data>
   <data name="Storage_DuplicateOf" xml:space="preserve">
     <value>{0} identische Kopien; die erste bleibt</value>
@@ -587,11 +588,11 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>In den Papierkorb verschieben?</value>
   </data>
   <data name="Storage_RecycleText" xml:space="preserve">
-    <value>{0} Dateien:
+    <value>Dateien: {0}
 {1}</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
-    <value>{0} Dateien in den Papierkorb verschoben, {1} fehlgeschlagen.</value>
+    <value>In den Papierkorb verschoben: {0}. Fehlgeschlagen: {1}.</value>
   </data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows-Features</value>
@@ -678,13 +679,22 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Prüfung starten</value>
   </data>
   <data name="Throttle_Sample" xml:space="preserve">
-    <value>{0} Messwerte, Prozessorgrenze {1} %, Prozessorauslastung {2} %, GPU {3}</value>
+    <value>Messwerte: {0}, Prozessorgrenze {1}, Prozessorauslastung {2}, GPU {3}</value>
   </data>
   <data name="Throttle_TooShort" xml:space="preserve">
     <value>Zu wenige Messwerte. Miss mindestens 10 Sekunden beim Spielen.</value>
   </data>
   <data name="Throttle_Result" xml:space="preserve">
-    <value>Letzte Prüfung {0}: {1} Messwerte. Prozessor ausgelastet {2} %, begrenzt {3} % der ausgelasteten Zeit. Grafikkarte an der Temperaturgrenze {4} %, am Leistungslimit {5} %. {6}</value>
+    <value>Letzte Prüfung {0}. Messwerte: {1}. Prozessor ausgelastet {2} %, begrenzt {3} % der ausgelasteten Zeit. {4} {5}</value>
+  </data>
+  <data name="Throttle_Gpu" xml:space="preserve">
+    <value>Grafikkarte an der Temperaturgrenze {0} %, am Leistungslimit {1} %.</value>
+  </data>
+  <data name="Throttle_GpuNone" xml:space="preserve">
+    <value>Grenzen der Grafikkarte wurden nicht gemeldet; nur NVIDIA-Grafikkarten melden sie.</value>
+  </data>
+  <data name="Throttle_NotReported" xml:space="preserve">
+    <value>nicht gemeldet</value>
   </data>
   <data name="Throttle_Verdict_Ok" xml:space="preserve">
     <value>Keine Drosselung gefunden.</value>
@@ -774,7 +784,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>PawnIO installieren?</value>
   </data>
   <data name="Sensors_PawnIoText" xml:space="preserve">
-    <value>PawnIO ist ein signierter Kerneltreiber, mit dem Sensorprogramme Prozessor- und Mainboard-Sensoren lesen können. Er wird mit winget (namazso.PawnIO) installiert und lässt sich unter Einstellungen &gt; Apps deinstallieren.</value>
+    <value>PawnIO ist ein signierter Kerneltreiber, mit dem Sensorprogramme Prozessor- und Mainboard-Sensoren lesen können. Er wird mit winget (namazso.PawnIO) installiert. Die Deinstallation unter Einstellungen &gt; Apps entfernt das Programm, der Treiber kann aber in Windows bleiben. Um auch ihn zu entfernen, suche in pnputil /enum-drivers die oem-Datei mit dem Originalnamen pawnio.inf und führe pnputil /delete-driver &lt;Datei&gt; /uninstall aus.</value>
   </data>
   <data name="SensorType_Temperature" xml:space="preserve">
     <value>Temperatur</value>
@@ -813,7 +823,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Diese Änderungen wurden zurückgesetzt, seit diese App sie angewendet hat. Die Originalwerte von vor der ersten Änderung bleiben gespeichert, Rückgängig stellt sie weiterhin her.</value>
   </data>
   <data name="Drift_ExpertIndividually" xml:space="preserve">
-    <value>{0} Expertenänderungen wurden nicht automatisch erneut angewendet. Wende sie einzeln auf der Seite Änderungen an.</value>
+    <value>Expertenänderungen, die nicht automatisch erneut angewendet wurden: {0}. Wende sie einzeln auf der Seite Änderungen an.</value>
   </data>
   <data name="Drift_ResetUpdate" xml:space="preserve">
     <value>Nach dem Windows-Update von {0} auf {1} zurückgesetzt</value>
@@ -822,7 +832,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Von Windows oder einem anderen Programm zurückgesetzt</value>
   </data>
   <data name="WinUpdated_AllGood" xml:space="preserve">
-    <value>Windows wurde von {0} auf {1} aktualisiert. Alle {2} Änderungen dieser App sind weiterhin aktiv.</value>
+    <value>Windows wurde von {0} auf {1} aktualisiert. Jede Änderung dieser App ist weiterhin aktiv. Änderungen: {2}.</value>
   </data>
   <data name="Startup_ScriptHost" xml:space="preserve">
     <value>Startet einen Skript-Host (PowerShell, cmd, mshta oder ähnlich). Das Programm selbst ist von Microsoft signiert, aber die Befehlszeile bestimmt, was ausgeführt wird: Schadsoftware startet oft so, manche seriöse Tools auch. Prüfe den Befehl.</value>
@@ -942,7 +952,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Settings_Report" xml:space="preserve"><value>Problem melden</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Protokoll kopieren</value></data>
   <data name="Settings_ReportHint" xml:space="preserve"><value>Problem melden öffnet einen Fehlerbericht auf GitHub, in dem App-Version und Windows-Build schon eingetragen sind. Gesendet wird erst, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto). Protokoll kopieren legt das Protokoll dieser Sitzung in die Zwischenablage, damit du es einfügen kannst.</value></data>
-  <data name="Log_Copied" xml:space="preserve"><value>Protokoll kopiert ({0} Einträge). Füge es in den Bericht ein. Es kann deinen Windows-Benutzernamen, Pfade und Programmnamen enthalten: prüfe es vor dem Absenden.</value></data>
+  <data name="Log_Copied" xml:space="preserve"><value>Protokoll kopiert (Einträge: {0}). Füge es in den Bericht ein. Es kann deinen Windows-Benutzernamen, Pfade und Programmnamen enthalten: prüfe es vor dem Absenden.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>Die Zwischenablage wird gerade von einer anderen App benutzt. Versuch es noch einmal.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Etwas ist schiefgelaufen und wurde protokolliert. Du kannst es unter Einstellungen &gt; Diagnose melden.</value></data>
   <data name="Score_Pending" xml:space="preserve"><value>Die Bewertung erscheint, wenn der Scan fertig ist.</value></data>

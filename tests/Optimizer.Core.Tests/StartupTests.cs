@@ -186,11 +186,38 @@ public class StartupTests
         Assert.True(ps.RunsScriptHost);
     }
 
+    [Fact]
+    public void StartupFolderShortcutWithArgumentsPointsAtItsTarget()
+    {
+        using var fx = new EngineFixture();
+        var profile = TestFolders.Create("profile");
+        try
+        {
+            var folder = Path.Combine(profile, @"AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup");
+            Directory.CreateDirectory(folder);
+            var cmd = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+            dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+            var lnk = shell.CreateShortcut(Path.Combine(folder, "PcoTest.lnk"));
+            lnk.TargetPath = cmd;
+            lnk.Arguments = @"/c echo C:\Test\file.txt";
+            lnk.Save();
+
+            var entry = Assert.Single(new StartupScanner(fx.Registry, fx.Tasks, profile).StartupFolders(), e => e.Name == "PcoTest");
+            Assert.Equal(cmd, entry.ImagePath, ignoreCase: true); // was the whole command line, so the signature check said "File not found"
+        }
+        finally
+        {
+            TestFolders.Delete(profile);
+        }
+    }
+
     [Theory]
     [InlineData("\"C:\\Program Files\\App\\app.exe\" -min", @"C:\Program Files\App\app.exe")]
     [InlineData(@"C:\Program Files\App\app.exe -min", @"C:\Program Files\App\app.exe")]
     [InlineData(@"rundll32.exe C:\Tools\helper.dll,Start", @"C:\Tools\helper.dll")]
     [InlineData(@"\??\C:\Drivers\x.sys", @"C:\Drivers\x.sys")]
+    [InlineData(@"rundll32.exe /d C:\Tools\helper.dll,Start", @"C:\Tools\helper.dll")] // Windows' Autochk task passes /d first
+    [InlineData("\"C:\\Program Files\\App\\app.exe\" C:\\Test\\file.txt", @"C:\Program Files\App\app.exe")] // Startup folder shortcut with arguments
     public void CommandLineImagePaths(string command, string expected)
     {
         var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\App\app.exe", @"C:\Tools\helper.dll", @"C:\Drivers\x.sys" };

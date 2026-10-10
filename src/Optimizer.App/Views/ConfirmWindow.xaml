@@ -17,7 +17,7 @@
             <DockPanel DockPanel.Dock="Bottom" Margin="0,24,0,0" LastChildFill="False">
                 <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
                 <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
-                <ui:TextBlock DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{l:Tr Confirm_Backup}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
+                <ui:TextBlock x:Name="FooterText" DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
             </DockPanel>
 
             <StackPanel DockPanel.Dock="Top">

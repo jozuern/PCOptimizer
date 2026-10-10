@@ -1,4 +1,4 @@
-# Geplante Aufgabe bei Anmeldung oder Start
+# Geplante Aufgabe
 
 ## Zusammenfassung
 Schaltet diese geplante Aufgabe ein oder aus. Viele Updater und Launcher nutzen solche Aufgaben statt eines Autostart-Eintrags.

@@ -6,6 +6,9 @@ namespace Optimizer.App.ViewModels;
 /// <summary>Anything the inspector can show: findings, advisor items and tweaks share one header and one document.</summary>
 public abstract class InspectorItem : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+
     public abstract string Key { get; }
     public string Title { get; protected init; } = "";
     public string Summary { get; protected init; } = "";
@@ -81,9 +84,6 @@ public abstract class InspectorItem : ObservableObject
 
     public SymbolRegular StatusSymbol => StatusIcons.Symbol(IsCritical ? "Critical" : Status);
     public string StatusBrushKey => StatusIcons.BrushKey(IsCritical ? "Critical" : Status);
-
-    /// <summary>Neutral rows (a switch that is off) get a light outline circle instead of a filled icon.</summary>
-    public bool StatusFilled => Status is not ("Neutral" or "");
 }
 
 /// <summary>Fluent status icons and the theme brush key for each status.</summary>
@@ -96,8 +96,9 @@ public static class StatusIcons
         "Critical" => SymbolRegular.ErrorCircle20,
         "Info" => SymbolRegular.Info20,
         "Unknown" => SymbolRegular.QuestionCircle20,
-        "Unsupported" => SymbolRegular.SubtractCircle20,
-        _ => SymbolRegular.Circle20, // neutral: keeps titles aligned with rows that have a status icon
+        "Unsupported" => SymbolRegular.Prohibited20,
+        // Neutral (a switch that is off): a filled grey minus. An empty outline circle looked like a radio button to click.
+        _ => SymbolRegular.SubtractCircle20,
     };
 
     public static string BrushKey(string status) => status switch

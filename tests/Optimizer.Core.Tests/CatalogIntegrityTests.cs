@@ -38,6 +38,46 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void CatalogFilesHaveNoDuplicateKeys()
+    {
+        // System.Text.Json keeps the last of two equal keys without a word; a merge once left two "subject" keys per DNS preset.
+        var problems = new List<string>();
+        var catalog = Path.Combine(RepoPaths.Root, "src", "Optimizer.Core", "Catalog");
+        var options = new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true };
+        foreach (var file in Directory.EnumerateFiles(catalog, "*.json", SearchOption.AllDirectories))
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file), options);
+            void Walk(System.Text.Json.JsonElement e, string at)
+            {
+                if (e.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    var here = e.TryGetProperty("id", out var id) && id.ValueKind == System.Text.Json.JsonValueKind.String ? id.GetString()! : at;
+                    var seen = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var p in e.EnumerateObject())
+                    {
+                        if (!seen.Add(p.Name)) problems.Add($"{Path.GetFileName(file)} {here}: \"{p.Name}\" twice");
+                        Walk(p.Value, here);
+                    }
+                }
+                else if (e.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    foreach (var item in e.EnumerateArray()) Walk(item, at);
+            }
+            Walk(doc.RootElement, "(root)");
+        }
+        AssertNone(problems);
+    }
+
+    [Fact]
+    public void TweaksSharingAPageHaveDistinctSubjects()
+    {
+        // The title comes from the page, so without a subject the rows read the same (the DNS presets in the VM test).
+        AssertNone(Tweaks.GroupBy(t => t.DocId).Where(g => g.Count() > 1)
+            .SelectMany(g => g.GroupBy(t => t.Subject ?? "").Where(s => s.Count() > 1)
+                .Select(s => $"{g.Key}: {string.Join(", ", s.Select(t => t.Id))} share the title, set \"subject\""))
+            .ToList());
+    }
+
+    [Fact]
     public void ReferencedTweaksAndFindingsExist()
     {
         // Catalog tweaks and the fixes built at run time (fix.powerMode and the like).

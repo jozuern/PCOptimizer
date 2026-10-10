@@ -97,7 +97,6 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
       "actions": [
         {
           "type": "dns",
@@ -130,7 +129,6 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
       "actions": [
         {
           "type": "dns",
@@ -163,7 +161,6 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
       "actions": [
         {
           "type": "dns",

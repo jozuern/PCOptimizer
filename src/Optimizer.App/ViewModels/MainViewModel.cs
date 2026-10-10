@@ -20,6 +20,9 @@ public enum Page { Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup
 /// <summary>A notice at the top of the page (Fluent InfoBar).</summary>
 public sealed record Banner(string Text, bool IsWarning)
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Text;
+
     public InfoBarSeverity Severity => IsWarning ? InfoBarSeverity.Warning : InfoBarSeverity.Informational;
 
     /// <summary>Optional button in the info bar (e.g. "Apply again").</summary>
@@ -30,36 +33,70 @@ public sealed record Banner(string Text, bool IsWarning)
     public SymbolRegular ActionIcon { get; init; } = SymbolRegular.ArrowSync20;
 }
 
-public sealed record SummaryItem(string Label, string Value);
+public sealed record SummaryItem(string Label, string Value)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Label}: {Value}";
+}
 
 /// <summary>Status drives the color of the number (problems in caution color, passed in success color).</summary>
-public sealed record CountItem(string Value, string Label, string Status);
+public sealed record CountItem(string Value, string Label, string Status)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Value} {Label}";
+}
 
-public sealed record HwSection(string Title, IReadOnlyList<SummaryItem> Items);
+public sealed record HwSection(string Title, IReadOnlyList<SummaryItem> Items)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+}
 
 public sealed record CategoryItem(string Key, string Text, int Count)
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Text;
+
     public string Display => $"{Text} ({Count})";
 }
 
 public sealed record ChangeRecordItem(string TweakId, string Title, string When, string Details, string StateText, string Status, bool CanUndo)
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+
     /// <summary>Set when the change is no longer in place: why (Windows update or other) for the row.</summary>
     public string? ResetText { get; init; }
 
     public bool IsReset => ResetText is not null;
 }
 
-public sealed record LogLine(string Time, string Text);
+public sealed record LogLine(string Time, string Text)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Time} {Text}";
+}
 
 /// <summary>One line of the "Apply recommended" plan: what, why, and its impact.</summary>
-public sealed record RecommendationLine(string Title, string Reason, string ImpactText);
+public sealed record RecommendationLine(string Title, string Reason, string ImpactText)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+}
 
 /// <summary>A usage profile in the picker.</summary>
-public sealed record ProfileOption(string Id, string Name, string Description, SymbolRegular Icon);
+public sealed record ProfileOption(string Id, string Name, string Description, SymbolRegular Icon)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+}
 
 /// <summary>A change on this PC that works against the active profile (with Undo when this app made it).</summary>
-public sealed record AgainstLine(string TweakId, string Title, string Reason, bool CanUndo);
+public sealed record AgainstLine(string TweakId, string Title, string Reason, bool CanUndo)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+}
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -920,11 +957,42 @@ public sealed partial class MainViewModel : ObservableObject
     private IReadOnlyList<Optimizer.Core.Backup.TweakBackup> _backups = [];
     private bool? _restoreEnabled;
 
+    // States of changes the tweak lists do not cover (startup entries, services, tasks, the restore point frequency),
+    // so their Changes rows show On or Off like the others.
+    private IReadOnlyDictionary<string, TweakState> _otherChangeStates = new Dictionary<string, TweakState>();
+
     private async Task RefreshChangesStateAsync()
     {
         var store = _services.Store;
-        (_backups, _restoreEnabled) = await Task.Run(() => (store.All(), SafeRestoreEnabled()));
+        var engine = _services.Engine;
+        var facts = _facts;
+        var known = _tweakStates.Concat(_deviceStates).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
+        (_backups, _restoreEnabled, _otherChangeStates) = await Task.Run(() =>
+        {
+            var backups = store.All();
+            return (backups, SafeRestoreEnabled(), OtherChangeStates(engine, backups, known, facts));
+        });
         BuildChanges();
+    }
+
+    private static IReadOnlyDictionary<string, TweakState> OtherChangeStates(
+        TweakEngine engine, IReadOnlyList<Optimizer.Core.Backup.TweakBackup> backups, HashSet<string> known, Facts facts)
+    {
+        var states = new Dictionary<string, TweakState>(StringComparer.Ordinal);
+        foreach (var b in backups.Where(b => !known.Contains(b.TweakId)))
+        {
+            // A retired tweak has no actions: its state cannot be read, only undone.
+            if (engine.Resolve(b.TweakId) is not { Actions.Count: > 0 } t) continue;
+            try
+            {
+                states[b.TweakId] = engine.DetectState(t, facts);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("changes", $"state of {b.TweakId} unreadable: {ex.Message}");
+            }
+        }
+        return states;
     }
 
     public HashSet<string> AppliedIds() =>
@@ -1111,7 +1179,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var t = ResolveTweak(b.TweakId);
             var title = t is null ? b.TweakId : Runner.Title(t);
-            var state = _tweakStates.Concat(_deviceStates).FirstOrDefault(s => s.Tweak.Id == b.TweakId)?.State;
+            var state = _tweakStates.Concat(_deviceStates).FirstOrDefault(s => s.Tweak.Id == b.TweakId)?.State
+                ?? (_otherChangeStates.TryGetValue(b.TweakId, out var other) ? other : null);
             var drift = _drift.FirstOrDefault(d => d.Tweak.Id == b.TweakId);
             if (drift is not null) state = TweakState.RevertedByWindows;
             ChangeRecords.Add(new ChangeRecordItem(

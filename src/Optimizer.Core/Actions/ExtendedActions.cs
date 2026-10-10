@@ -304,7 +304,15 @@ public sealed class DnsAction : TweakAction
     public string Servers { get; init; } = "dhcp";
 
     public override string TargetKey => $"dns:{InterfaceGuid}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"IPv4 DNS servers of adapter {InterfaceGuid}";
+    public override string Describe(ActionContext c)
+    {
+        // The adapter's name, so the confirmation does not show only a GUID; the GUID stays for adapters that look alike.
+        var name = NicAdapters.Enumerate(c.Registry, includeSynthetic: true)
+            .FirstOrDefault(a => a.InterfaceGuid.Equals(InterfaceGuid, StringComparison.OrdinalIgnoreCase))?.Description;
+        return name is null || name.Equals(InterfaceGuid, StringComparison.OrdinalIgnoreCase)
+            ? $"IPv4 DNS servers of adapter {InterfaceGuid}"
+            : $"IPv4 DNS servers of {name} {InterfaceGuid}";
+    }
     public override StoredValue Desired(ActionContext c) => new(true, "dns", Servers);
 
     public override StoredValue? Read(ActionContext c)

@@ -32,6 +32,9 @@ internal static class Switching
 
 public sealed partial class StartupRow : SwitchRow
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+
     private readonly AppServices _services;
     private readonly ChangeRunner _runner;
 
@@ -80,7 +83,11 @@ public sealed partial class StartupRow : SwitchRow
     protected override Task<bool> ToggleAsync(bool on) => Switching.SetAsync(_services, _runner, enabled => StartupTweaks.Set(Entry, enabled), on);
 }
 
-public sealed record FilterOption(string Key, string Text);
+public sealed record FilterOption(string Key, string Text)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Text;
+}
 
 public sealed partial class StartupViewModel(MainViewModel owner, AppServices services, ChangeRunner runner) : PageViewModel(owner)
 {
@@ -304,10 +311,17 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
 
 // ---------------- Services ----------------
 
-public sealed record StartOption(ServiceStart Start, string Text);
+public sealed record StartOption(ServiceStart Start, string Text)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Text;
+}
 
 public sealed partial class ServiceRowVm : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => DisplayName;
+
     private readonly ServicesViewModel _page;
     private bool _suppress;
 
@@ -455,6 +469,9 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
 
 public sealed partial class AppRow(AppEntry app, string lang, bool installed) : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+
     public AppEntry App { get; } = app;
     public string Name => App.Name;
     public string Text { get; } = app.Text(lang);
@@ -477,7 +494,11 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
     [ObservableProperty] private string _stateText = installed ? Loc.Instance["Apps_Installed"] : "";
 }
 
-public sealed record DriverItem(string Device, string ClassText, string Provider, string Version, string Date, string Age, string? UpdateUrl, bool Old);
+public sealed record DriverItem(string Device, string ClassText, string Provider, string Version, string Date, string Age, string? UpdateUrl, bool Old)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Device;
+}
 
 /// <summary>A desktop program in the uninstall list.</summary>
 public sealed partial class ProgramRow(DesktopProgram program) : ObservableObject
@@ -707,6 +728,9 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
 
 public sealed partial class FileRow(string path, long bytes, string meta, bool canDelete) : ObservableObject
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Path;
+
     public string Path { get; } = path;
     public string SizeText { get; } = CleanupViewModel.Size(bytes);
     public string Meta { get; } = meta;
@@ -715,10 +739,17 @@ public sealed partial class FileRow(string path, long bytes, string meta, bool c
     [ObservableProperty] private bool _selected;
 }
 
-public sealed record FolderRow(string Path, string SizeText, string Files);
+public sealed record FolderRow(string Path, string SizeText, string Files)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Path;
+}
 
 public sealed partial class FeatureRow : SwitchRow
 {
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Title;
+
     private readonly AppServices _services;
     private readonly ChangeRunner _runner;
 
@@ -741,7 +772,11 @@ public sealed partial class FeatureRow : SwitchRow
         enabled => Entry.Capability ? OptionalCapabilityAction.Tweak(Entry, enabled) : OptionalFeatureAction.Tweak(Entry, enabled), on);
 }
 
-public sealed record StepRow(string Text, bool Ok, string? Detail);
+public sealed record StepRow(string Text, bool Ok, string? Detail)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Text;
+}
 
 public sealed partial class ToolsViewModel(MainViewModel owner, AppServices services, ChangeRunner runner, IDialogs dialogs) : PageViewModel(owner)
 {
@@ -993,11 +1028,23 @@ public sealed record QuickFixRow(QuickFix Fix)
 
 // ---------------- Health ----------------
 
-public sealed record DiskRow(string Name, string Health, string Status, string Details);
+public sealed record DiskRow(string Name, string Health, string Status, string Details)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
+}
 
-public sealed record SensorRow(string Hardware, string Sensor, string Value);
+public sealed record SensorRow(string Hardware, string Sensor, string Value)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Sensor}: {Value}";
+}
 
-public sealed record RunRow(string Label, string AvgFps, string Low, string Frames);
+public sealed record RunRow(string Label, string AvgFps, string Low, string Frames)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Label;
+}
 
 public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialogs) : PageViewModel(owner)
 {
@@ -1071,8 +1118,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         var lines = new List<string>();
         var progress = new Progress<string>(l =>
         {
-            lines.Add(l);
-            if (lines.Count > 200) lines.RemoveAt(0);
+            OutputLines.Add(lines, l);
             ToolOutput = string.Join("\n", lines);
         });
         try
@@ -1113,9 +1159,10 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         try
         {
             using var monitor = new ThrottleMonitor();
+            var none = Loc.Instance["Throttle_NotReported"];
             var progress = new Progress<ThrottleSample>(s => ThrottleStatus = Loc.Instance.Format("Throttle_Sample", monitor.Samples.Count,
-                s.CpuPerformanceLimit is { } l ? $"{l:0}" : "?", s.CpuUtility is { } u ? $"{u:0}" : "?",
-                s.Gpus.FirstOrDefault()?.TempC is { } t ? $"{t} °C" : "?"));
+                s.CpuPerformanceLimit is { } l ? $"{l:0} %" : none, s.CpuUtility is { } u ? $"{u:0} %" : none,
+                s.Gpus.FirstOrDefault()?.TempC is { } t ? $"{t} °C" : none));
             var result = await monitor.RunAsync(TimeSpan.FromSeconds(ThrottleSeconds), progress, _throttleCancel.Token);
             if (result.Samples >= 10)
             {
@@ -1143,8 +1190,10 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
 
     private static string Describe(ThrottleResult r) => Loc.Instance.Format("Throttle_Result",
         r.Measured.LocalDateTime.ToString("g"), r.Samples, $"{r.CpuBusyShare * 100:0}", $"{r.CpuLimitedShare * 100:0}",
-        r.GpuReasonShare.TryGetValue("thermal", out var th) ? $"{th * 100:0}" : "?",
-        r.GpuReasonShare.TryGetValue("powerLimit", out var pw) ? $"{pw * 100:0}" : "?",
+        // The limit reasons come from NVML: both or neither are there.
+        r.GpuReasonShare.TryGetValue("thermal", out var th) && r.GpuReasonShare.TryGetValue("powerLimit", out var pw)
+            ? Loc.Instance.Format("Throttle_Gpu", $"{th * 100:0}", $"{pw * 100:0}")
+            : Loc.Instance["Throttle_GpuNone"],
         r.CpuThrottled || r.GpuThermal ? Loc.Instance["Throttle_Verdict_Bad"] : Loc.Instance["Throttle_Verdict_Ok"]);
 
     // Benchmark

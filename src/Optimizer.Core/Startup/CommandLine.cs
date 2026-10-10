@@ -61,7 +61,7 @@ public static class CommandLine
     /// </summary>
     private static bool RundllStartsSomethingElse(string args)
     {
-        var tokens = Tokens(args).ToList();
+        var tokens = Tokens(args).Where(t => !t.StartsWith('/') && !t.StartsWith('-')).ToList();
         if (tokens.Count == 0) return false;
         var parts = tokens[0].Split(',', 2);
         if (parts.Length == 2 && ProxyExports.Contains(parts[1].Trim())) return true;
@@ -116,11 +116,7 @@ public static class CommandLine
     public static string? ImagePath(string? command, Func<string, string>? expand = null, Func<string, bool>? exists = null)
     {
         if (Parse(command, expand, exists) is not var (first, rest, system, ex)) return null;
-        if (IsRundll(first) && rest.Length > 0)
-        {
-            var dll = SplitFirst(rest).First.Split(',')[0];
-            return Qualify(dll, system, ex);
-        }
+        if (IsRundll(first) && RundllDll(rest) is { Length: > 0 } dll) return Qualify(dll, system, ex);
         return Qualify(first, system, ex);
     }
 
@@ -134,6 +130,9 @@ public static class CommandLine
         if (Parse(command, expand, exists) is not var (first, rest, system, ex)) return null;
         return (Qualify(first, system, ex), rest);
     }
+
+    /// <summary>The DLL of a rundll32 line; switches such as "/d" (Windows' own Autochk task) come before it.</summary>
+    private static string? RundllDll(string args) => Tokens(args).FirstOrDefault(t => !t.StartsWith('/') && !t.StartsWith('-'))?.Split(',')[0];
 
     private static bool IsRundll(string file) => Hosts.Any(h => Path.GetFileName(file).Equals(h, StringComparison.OrdinalIgnoreCase));
 

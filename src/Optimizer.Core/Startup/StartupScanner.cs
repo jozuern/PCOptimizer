@@ -145,7 +145,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             {
                 var name = Path.GetFileName(file);
                 var target = file.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? ShortcutTarget(file) : file;
-                // The command is target plus arguments; the image is the file it starts (judged by signature, script host).
+                // A shortcut with arguments gives "\"target\" args": the image is only the target.
                 yield return new StartupEntry(StartupKind.StartupFolder, Path.GetFileNameWithoutExtension(file), target, CommandLine.ImagePath(target), dir, hive,
                     ApprovedState(hive, "StartupFolder", name), $"folder:{hive}:{name}")
                 {

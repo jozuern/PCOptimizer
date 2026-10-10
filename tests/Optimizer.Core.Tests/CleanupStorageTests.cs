@@ -144,6 +144,9 @@ public class CleanupStorageTests : IDisposable
         Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null)));
         Assert.False(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null), appData: false));
         Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots([Path.Combine(_root, "docs")]), appData: false)); // game library
+        Assert.True(StorageAnalyzer.IsProtected(@"C:\pagefile.sys", StorageAnalyzer.ProtectedRoots(null))); // offered in the VM test
+        Assert.True(StorageAnalyzer.IsProtected(@"D:\swapfile.sys", [], appData: false));
+        Assert.False(StorageAnalyzer.IsProtected(@"D:\Backup\pagefile.sys", [], appData: false)); // only the drive root is Windows'
     }
 
     [Fact]
@@ -174,20 +177,32 @@ public class CleanupStorageTests : IDisposable
         Assert.All(steps, s => Assert.True(Labels.Current.Has("en", s.Key) && Labels.Current.Has("de", s.Key), s.Key));
     }
 
+    /// <summary>A fake service that follows net stop and net start (and stays stopped for the names in <paramref name="neverStarts"/>).</summary>
+    private static (FakeServices Services, Func<string, (int, string)?> Follow) ServicesFollowingNet(params string[] neverStarts)
+    {
+        var services = new FakeServices();
+        (int, string)? Follow(string args)
+        {
+            var parts = args.Split(' ');
+            if (parts.Length > 1 && parts[0] == "stop") services.Running[parts[1]] = false;
+            if (parts.Length > 1 && parts[0] == "start" && !neverStarts.Contains(parts[1])) services.Running[parts[1]] = true;
+            return null;
+        }
+        return (services, Follow);
+    }
+
     /// <summary>net.exe returns 2 also for "access denied": a service that does not run afterwards is a failed step.</summary>
     [Fact]
     public void UpdateRepairReportsAServiceThatDidNotStart()
     {
         var win = Path.Combine(_root, "Windows2");
         Directory.CreateDirectory(win);
-        var services = new FakeServices();
+        var (services, follow) = ServicesFollowingNet("wuauserv");
         var processes = new FakeProcesses
         {
             Handler = (f, a) =>
             {
-                var parts = a.Split(' ');
-                if (parts[0] == "stop") services.Running[parts[1]] = false;
-                if (parts[0] == "start" && parts[1] != "wuauserv") services.Running[parts[1]] = true;
+                follow(a);
                 return (a == "start wuauserv" ? 2 : 0, a == "start wuauserv" ? "System error 5 has occurred." : "");
             },
         };
@@ -195,5 +210,47 @@ public class CleanupStorageTests : IDisposable
         var failed = Assert.Single(steps, s => !s.Ok);
         Assert.Equal("repair.start.wuauserv", failed.Key);
         Assert.Contains("System error 5", failed.Detail);
+    }
+
+    [Fact]
+    public void UpdateRepairRetriesCatrootWhenCryptographicServicesHoldsIt()
+    {
+        var win = Path.Combine(_root, "Windows");
+        var catroot = Path.Combine(win, @"System32\catroot2");
+        Directory.CreateDirectory(catroot);
+        // An open file inside keeps the folder from being renamed, like the restarted service does; the second stop releases it.
+        var held = new FileStream(Path.Combine(catroot, "catdb"), FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        var stops = 0;
+        var (services, follow) = ServicesFollowingNet();
+        var processes = new FakeProcesses
+        {
+            Handler = (f, a) =>
+            {
+                follow(a);
+                if (a.StartsWith("stop cryptsvc", StringComparison.Ordinal) && ++stops == 2) held.Dispose();
+                return (0, "");
+            },
+        };
+        try
+        {
+            var steps = UpdateRepair.Run(processes, services, windowsDir: win, now: new DateTime(2026, 10, 9, 12, 0, 0), settle: TimeSpan.Zero, wait: _ => { });
+            Assert.True(steps.Single(s => s.Key == "repair.rename.catroot2").Ok);
+            Assert.True(Directory.Exists(catroot + ".old-20261009-120000"));
+            Assert.Equal(2, stops); // the first stop, then one retry
+        }
+        finally
+        {
+            held.Dispose();
+        }
+
+        // Still held after every attempt: the step fails with the reason, the services start again.
+        Directory.CreateDirectory(catroot);
+        using var stuck = new FileStream(Path.Combine(catroot, "catdb"), FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        var (services2, follow2) = ServicesFollowingNet();
+        var calls = new FakeProcesses { Handler = (f, a) => { follow2(a); return (0, ""); } };
+        var failed = UpdateRepair.Run(calls, services2, windowsDir: win, now: new DateTime(2026, 10, 9, 13, 0, 0), settle: TimeSpan.Zero, wait: _ => { });
+        Assert.False(failed.Single(s => s.Key == "repair.rename.catroot2").Ok);
+        Assert.Equal(UpdateRepair.CatrootAttempts, calls.Calls.Count(c => c.Contains("stop cryptsvc")));
+        Assert.Equal(3, calls.Calls.Count(c => c.Contains(" start ")));
     }
 }

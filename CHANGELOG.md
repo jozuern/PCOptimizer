@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from the [code audit](docs/audit-2026-10-10.md), plus a speed pass.
+Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from a code audit (open items in [TODO](docs/TODO.md)), plus a speed pass.
 
 ### Speed
 
@@ -90,6 +90,24 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - "Hibernation off" is unsupported where the firmware cannot hibernate (virtual machines, some firmware). Before, undo failed there and the change stayed on the Changes page; such a change can now be undone.
 - When Windows denies writing a protected value even with administrator rights (the Widgets policy on newer builds), the error names the value instead of "Attempted to perform an unauthorized operation".
 - DNS presets and delayed TCP acknowledgements work inside Hyper-V virtual machines. Hardware properties of network adapters still change only on PCI and USB adapters.
+
+### Pages (second VM test run)
+
+- The three DNS presets are named after their resolver (Cloudflare, Google, Quad9). Before, all three rows read "Public DNS servers".
+- Startup: a Startup folder shortcut with arguments showed "File not found" and no publisher, because the whole command line was checked as a file. Windows tasks that call rundll32 with a switch first (Autochk) showed the same.
+- The storage analyzer no longer offers the page file, swap file, hibernation file and boot dump log in the root of a drive for deletion.
+- 13 tweaks are no longer marked Preview: the VM test showed that apply, the visible effect and undo work ([Preview review](docs/vm-test-results-2026-10-10.md#preview-review)). Expert and boot-critical tweaks, the NVIDIA and network adapter settings, HAGS, MPO, Game DVR and inking and typing stay Preview.
+- Startup entries, services, tasks and the restore point frequency show On or Off on the Changes page like the other changes.
+- Counts read "Changes: 1" and "Files: 1" instead of "1 changes" and "1 files".
+- The undo confirmation no longer says that the original values are saved; it says that values which cannot be restored stay on the Changes page.
+- Scheduled tasks that run on a schedule are no longer titled "at sign-in or boot".
+- The SFC and DISM output follows the dark theme and shows each progress line once instead of one line per percent.
+- The throttle check says when the graphics card reports no limits instead of showing "? %".
+- The DNS confirmation names the network adapter, and the list of removed apps shows app names instead of package names.
+- Screen readers announce list and combo box items by name, the language buttons work with a screen reader's select action, and a row switch no longer waits for its confirmation to close.
+- Windows Update repair stops Cryptographic Services again and retries when renaming catroot2 is denied.
+- The PawnIO install text says that uninstalling it in Settings can leave the driver, and how to remove it.
+- Tweaks that are off show a grey minus instead of an empty circle, which looked like a button to click; tweaks that do not apply to this PC show a prohibited sign.
 
 ## 0.4.0 (preview)
 

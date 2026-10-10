@@ -1,4 +1,4 @@
-# Scheduled task at sign-in or boot
+# Scheduled task
 
 ## Summary
 Turns this scheduled task on or off. Many updaters and launchers use such tasks instead of a startup entry.
