@@ -46,7 +46,7 @@
                             <DataTemplate>
                                 <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                     <DockPanel>
-                                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200">
+                                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" Width="200">
                                             <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Selected}" DisplayMemberPath="Text"
                                                       Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
                                             <ui:TextBlock FontTypography="Body" Text="{Binding StartText}"

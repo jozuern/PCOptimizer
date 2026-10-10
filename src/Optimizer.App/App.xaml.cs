@@ -141,8 +141,10 @@ public partial class App : Application
             {
                 var cpage = DocStore.Get(ct.DocId, Loc.Instance.Language);
                 var dlg = new ConfirmWindow(new ConfirmRequest(cpage?.Title ?? ct.Id, cpage?.Section(DocHeadings.Summary(Loc.Instance.Language))?.Body ?? "",
-                    services.Engine.Preview(ct), [Labels.Current.Get(Loc.Instance.Language, $"risk.{ct.EffectiveRisk}")],
-                    ct.IsBootCritical ? [Labels.Current.Get(Loc.Instance.Language, "undo.bootCritical")] : [], null, false)) { Owner = window };
+                    services.Engine.Preview(ct),
+                    [.. ct.Preview ? [Labels.Current.Get(Loc.Instance.Language, "badge.preview")] : Array.Empty<string>(), Labels.Current.Get(Loc.Instance.Language, $"risk.{ct.EffectiveRisk}")],
+                    [.. ct.Preview ? [Labels.Current.Get(Loc.Instance.Language, "preview.warning")] : Array.Empty<string>(), .. ct.IsBootCritical ? [Labels.Current.Get(Loc.Instance.Language, "undo.bootCritical")] : Array.Empty<string>()],
+                    null, false)) { Owner = window };
                 dlg.Show();
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 await Task.Delay(400);

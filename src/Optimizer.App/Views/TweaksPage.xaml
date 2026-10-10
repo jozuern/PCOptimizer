@@ -23,7 +23,7 @@
                         <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="220" Margin="0,4,16,4" />
                         <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyProfile}" IsChecked="{Binding OnlyProfile}" Margin="0,4,16,4" />
                         <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyRecommended}" IsChecked="{Binding OnlyRecommended}" Margin="0,4,16,4" />
-                        <ui:ToggleSwitch Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" Margin="0,4,0,4" />
+                        <ui:ToggleSwitch Content="{l:Tr Tweaks_ShowNotApplicable}" IsChecked="{Binding ShowPassed}" Margin="0,4,0,4" />
                     </WrapPanel>
                 </DockPanel>
             </ui:Card>

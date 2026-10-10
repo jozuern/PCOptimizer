@@ -46,6 +46,7 @@
   <data name="Banner_NotElevated" xml:space="preserve"><value>Running without administrator rights. Some values (for example TPM) show as unknown.</value></data>
   <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home and Pro no longer receive updates since 13 October 2026. Update to 25H2 or 26H2.</value></data>
   <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>The data folder {0} was created by another account and cannot be removed. Close all programs, delete the folder and start PCOptimizer again. Nothing was changed.</value></data>
+  <data name="Tweaks_ShowNotApplicable" xml:space="preserve"><value>Show tweaks that do not apply to this PC</value></data>
   <data name="Gate_Title" xml:space="preserve"><value>Windows version not supported</value></data>
   <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer needs Windows 11 24H2 (build 26100) or newer. This PC runs build {0}. Please update Windows first. Nothing was changed.</value></data>
   <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer supports x64 PCs only. ARM64 PCs are not supported. Nothing was changed.</value></data>

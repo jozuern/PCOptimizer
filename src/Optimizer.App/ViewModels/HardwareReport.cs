@@ -8,11 +8,79 @@ namespace Optimizer.App.ViewModels;
 /// <summary>Flattens the HardwareProfile into labeled sections for the System info page.</summary>
 public static class HardwareReport
 {
+    /// <summary>German row labels; anything not listed (adapter names, model names) is shown as it is.</summary>
+    private static readonly Dictionary<string, string> German = new(StringComparer.Ordinal)
+    {
+        ["Administrator protection"] = "Administratorschutz",
+        ["Anti-cheats"] = "Anti-Cheats",
+        ["Architecture"] = "Architektur",
+        ["BIOS"] = "BIOS",
+        ["Battery"] = "Akku",
+        ["Battery capacity"] = "Akkukapazität",
+        ["Board"] = "Mainboard",
+        ["Boost mode (AC)"] = "Leistungssteigerungsmodus (Netzbetrieb)",
+        ["Build"] = "Build",
+        ["Connected to"] = "Verbunden mit",
+        ["Core parking min cores (AC)"] = "Core Parking: Mindestanteil Kerne (Netzbetrieb)",
+        ["Cores / threads"] = "Kerne / Threads",
+        ["DMA protection"] = "DMA-Schutz",
+        ["Driver"] = "Treiber",
+        ["Driver date"] = "Treiberdatum",
+        ["EDID"] = "EDID",
+        ["Edition"] = "Edition",
+        ["Elevated"] = "Mit Administratorrechten",
+        ["Energy Saver"] = "Energiesparen",
+        ["Family / model / stepping"] = "Familie / Modell / Stepping",
+        ["Form factor"] = "Bauform",
+        ["GDI name"] = "GDI-Name",
+        ["Game libraries"] = "Spielebibliotheken",
+        ["HAGS"] = "HAGS",
+        ["HDR supported / on"] = "HDR unterstützt / an",
+        ["HVCI running"] = "Speicherintegrität aktiv",
+        ["Hybrid (efficiency classes)"] = "Hybrid (Effizienzklassen)",
+        ["Hypervisor present"] = "Hypervisor vorhanden",
+        ["Insider (flighting)"] = "Insider (Flighting)",
+        ["Internal panel"] = "Eingebautes Display",
+        ["Kind"] = "Art",
+        ["L3 domains"] = "L3-Bereiche",
+        ["Largest BAR"] = "Größte BAR",
+        ["Launchers"] = "Launcher",
+        ["MBEC/GMET"] = "MBEC/GMET",
+        ["Managed device"] = "Verwaltetes Gerät",
+        ["Max / min processor state (AC)"] = "Max. / min. Prozessorleistung (Netzbetrieb)",
+        ["Max offered at this resolution"] = "Maximum bei dieser Auflösung",
+        ["Microcode (BIOS)"] = "Microcode (BIOS)",
+        ["Microcode (running)"] = "Microcode (aktiv)",
+        ["Mode"] = "Modus",
+        ["Modern Standby"] = "Modern Standby",
+        ["Name"] = "Name",
+        ["On AC"] = "Am Netz",
+        ["On-card switch hops"] = "PCIe-Switches auf der Karte",
+        ["PCIe (card): current / max"] = "PCIe (Karte): aktuell / max.",
+        ["PCIe (slot): max"] = "PCIe (Steckplatz): max.",
+        ["Plan"] = "Energiesparplan",
+        ["PnP ID"] = "PnP-ID",
+        ["Process user"] = "Prozessbenutzer",
+        ["Scheme GUID"] = "Plan-GUID",
+        ["Secure Boot"] = "Secure Boot",
+        ["Session user"] = "Angemeldeter Benutzer",
+        ["Socket"] = "Sockel",
+        ["System disk"] = "Systemlaufwerk",
+        ["TPM"] = "TPM",
+        ["TPM ready"] = "TPM bereit",
+        ["Total"] = "Gesamt",
+        ["UEFI"] = "UEFI",
+        ["VBS status"] = "VBS-Status",
+        ["Vendor"] = "Hersteller",
+        ["Version"] = "Version",
+        ["Video memory"] = "Grafikspeicher",
+    };
+
     public static List<HwSection> Build(HardwareProfile p, Loc l)
     {
         var sections = new List<HwSection>();
         var lang = l.Language;
-        SummaryItem I(string k, object? v) => new(k, v switch
+        SummaryItem I(string k, object? v) => new(lang == "de" && German.TryGetValue(k, out var de) ? de : k, v switch
         {
             null => Labels.Current.Get(lang, "value.unknown"),
             bool b => Labels.Current.Get(lang, b ? "value.yes" : "value.no"),
@@ -35,7 +103,7 @@ public static class HardwareReport
             [
                 I("Name", c.Name), I("Vendor", c.Vendor), I("Family / model / stepping", $"{c.Family} / {c.Model} (0x{c.Model:X}) / {c.Stepping}"),
                 I("Cores / threads", $"{c.Cores} / {c.Threads}"), I("Socket", c.Socket),
-                I("Hybrid (efficiency classes)", c.IsHybrid ? string.Join(", ", c.CoresByEfficiencyClass.Select(kv => $"class {kv.Key}: {kv.Value}")) : "No"),
+                I("Hybrid (efficiency classes)", c.IsHybrid ? string.Join(", ", c.CoresByEfficiencyClass.Select(kv => $"{(lang == "de" ? "Klasse" : "class")} {kv.Key}: {kv.Value}")) : false),
                 I("L3 domains", string.Join(" + ", c.L3Domains.Select(d => $"{d.SizeBytes >> 20} MB"))),
                 I("Microcode (running)", c.MicrocodeCurrent is { } m1 ? $"0x{m1:X}" : null),
                 I("Microcode (BIOS)", c.MicrocodeBios is { } m2 ? $"0x{m2:X} ({c.MicrocodeSource})" : null),
@@ -106,7 +174,7 @@ public static class HardwareReport
         }
 
         if (p.Network is { } net)
-            sections.Add(new HwSection(l["Hw_Network"], net.Select(n => I(n.Name, $"{n.Description}, {n.Type}, {(n.IsUp ? $"{n.SpeedBps / 1_000_000} Mbit/s" : "down")}")).ToList()));
+            sections.Add(new HwSection(l["Hw_Network"], net.Select(n => I(n.Name, $"{n.Description}, {n.Type}, {(n.IsUp ? $"{n.SpeedBps / 1_000_000} Mbit/s" : lang == "de" ? "getrennt" : "disconnected")}")).ToList()));
 
         if (p.Software is { } sw)
         {

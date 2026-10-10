@@ -222,7 +222,8 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
         Removed.Clear();
         foreach (var r in removed.OrderByDescending(r => r.RemovedAt)) Removed.Add(new RemovedRow(r.Name, r.RemovedAt.LocalDateTime.ToString("g"), r.StoreLink));
-        OneDriveBlock = oneDrive.BlockKey is { } b ? Labels.Current.Get(lang, b) : null;
+        // "Not installed" is already the description; repeating it as a warning adds nothing.
+        OneDriveBlock = oneDrive.Installed && oneDrive.BlockKey is { } b ? Labels.Current.Get(lang, b) : null;
         CanUninstallOneDrive = oneDrive.BlockKey is null;
         OneDriveText = oneDrive.Installed
             ? Loc.Instance.Format("Debloat_OneDriveInstalled", oneDrive.UserFolder ?? Loc.Instance["Debloat_OneDriveNotSignedIn"])

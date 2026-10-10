@@ -31,9 +31,14 @@ public sealed class Loc : INotifyPropertyChanged
     public void SetLanguage(string language)
     {
         var culture = Pick(language);
+        // Numbers and dates follow the app language too (also when it matches the start language), so an English
+        // page on a PC with German regional settings does not show "33,8 GB".
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.CurrentCulture = culture;
+        CultureInfo.CurrentUICulture = culture;
         if (culture.Name == _culture.Name) return;
         _culture = culture;
-        CultureInfo.DefaultThreadCurrentUICulture = culture;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Language)));
         LanguageChanged?.Invoke(this, EventArgs.Empty);
