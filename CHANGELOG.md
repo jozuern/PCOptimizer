@@ -46,6 +46,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 ### App
 
 - Switches and change buttons are disabled while a change, scan or update runs, and only one change runs at a time.
+- Numbers follow the app language everywhere: results that appear after a click (storage analysis, benchmark, cleanup sizes) no longer use the Windows regional format, such as "52,6 GB" on an English page.
 - Failures show as errors instead of information. Explorer restarts ask first. Frame time captures can be stopped. Escape closes message windows. Settings are saved atomically.
 - System info starts with tiles for processor, graphics, memory, displays, mainboard and Windows. Each area is a card with an icon and divided rows. Disks, volumes (with a used space bar), memory modules and network adapters get one row each with a second line instead of comma lists. Values are translated (graphics kind, disk health, boost mode, power plan type, HDR, G-SYNC), and IDs and raw values (PnP ID, GUID, microcode, EDID) sit behind "Technical details". "Copy" puts the whole page on the clipboard.
 - Tweak rows show Preview, Undocumented value, Disputed, Restart and Sign out as tags, and risks (Moderate risk, Expert only, Boot configuration, Anti-cheat, not reversible) as tags in the caution color, instead of at the end of the detail line. Service descriptions from Windows are cut to two lines; the whole text is in the tooltip.

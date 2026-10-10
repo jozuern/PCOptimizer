@@ -85,7 +85,7 @@ A copy of the `clean` checkpoint ran as `PCO-Test2` (8 GB) at the same time, for
 - **H4:** each .NET diagnostics variable in the environment of an elevated start showed the message naming the variable, and the app exited with code 1; a harmless `DOTNET_` variable did not stop it. With `DOTNET_EnableEventPipe=1` the runtime still wrote a trace file before the check ran, the limit SECURITY.md describes.
 - **L-P4:** elevated processes ignore per-user `HKCU\Software\Classes` overrides of `WScript.Shell` and `Schedule.Service` (CLSID and ProgID); medium integrity processes use them. Not exploitable against the elevated app.
 - **Fixed code:** the frame time benchmark captured frames (55.1 FPS; in this VM only WPF windows present frames PresentMon sees), the throttle check gave the expected verdict, and the storage analysis left duplicates in the default `XboxGames` folder alone. The refusal before the first scan finished could not be timed and is not confirmed.
-- **Found:** the English UI showed decimal commas ("52,6 GB", "55,1 FPS"), cause open, display only.
+- **Found and fixed:** the English UI showed decimal commas ("52,6 GB", "55,1 FPS"). The app set its culture inside the asynchronous start method, and the culture is an async local, so the change was undone at the first wait; the language is now set before that method.
 
 ## Notes for the next run
 
