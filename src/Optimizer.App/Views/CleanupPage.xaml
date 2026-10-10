@@ -15,6 +15,15 @@
             </DockPanel>
             <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Cleanup.IsLoading, Converter={StaticResource BoolToVisibility}}" />
 
+            <!-- Total and the button above the list, so they stay in view without scrolling past every category -->
+            <ui:Card Padding="16,12" Margin="0,0,0,8">
+                <DockPanel>
+                    <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{l:Tr Cleanup_Clean}" Icon="{ui:SymbolIcon Broom20}" Command="{Binding Cleanup.CleanCommand}"
+                               IsEnabled="{Binding Cleanup.IsWorking, Converter={StaticResource InverseBool}}" />
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Cleanup.TotalText}" VerticalAlignment="Center" />
+                </DockPanel>
+            </ui:Card>
+
             <ItemsControl ItemsSource="{Binding Cleanup.Rows}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -34,14 +43,6 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-
-            <ui:Card Padding="16,12" Margin="0,8,0,0">
-                <DockPanel>
-                    <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{l:Tr Cleanup_Clean}" Icon="{ui:SymbolIcon Broom20}" Command="{Binding Cleanup.CleanCommand}"
-                               IsEnabled="{Binding Cleanup.IsWorking, Converter={StaticResource InverseBool}}" />
-                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Cleanup.TotalText}" VerticalAlignment="Center" />
-                </DockPanel>
-            </ui:Card>
 
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Cleanup_More}" />
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">

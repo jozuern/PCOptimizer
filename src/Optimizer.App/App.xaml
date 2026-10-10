@@ -22,6 +22,7 @@
             <v:NullToBoolConverter x:Key="NullToBool" />
             <v:AllTrueConverter x:Key="AllTrue" />
             <v:CountToVisibilityConverter x:Key="EmptyToVisibility" Invert="True" />
+            <v:LayoutWidthConverter x:Key="LayoutWidth" />
 
             <!--
                 Fluent rules for every page: Segoe UI Variable type ramp (ui:TextBlock FontTypography), spacing only
@@ -99,6 +100,16 @@
                     </Setter.Value>
                 </Setter>
                 <Setter Property="Template" Value="{StaticResource VirtualList}" />
+                <!-- The panel lays every card out as wide as the widest one it ever measured, also cards realized off
+                     screen that kept a width from before the details pane opened (the switches were cut off): give each
+                     card exactly the visible width. -->
+                <Setter Property="ItemContainerStyle">
+                    <Setter.Value>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Width" Value="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LayoutWidth}}" />
+                        </Style>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
 
@@ -132,6 +143,20 @@
                 </StackPanel>
             </DataTemplate>
 
+            <!-- Badge on a tweak row: neutral facts (Preview, Restart) in a subtle tag, risks in the caution color -->
+            <DataTemplate x:Key="BadgeTag">
+                <Border x:Name="Tag" CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1"
+                        Background="{DynamicResource SubtleFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                    <TextBlock x:Name="TagText" Text="{Binding Text}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Border>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Caution}" Value="True">
+                        <Setter TargetName="Tag" Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}" />
+                        <Setter TargetName="TagText" Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+
             <DataTemplate x:Key="TweakRow">
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
@@ -144,7 +169,18 @@
                             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Summary}" Margin="0,4,0,0" Visibility="{Binding Summary, Converter={StaticResource NullToVisibility}}" />
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Text="{Binding RecommendedText}" TextWrapping="Wrap"
                                           Margin="0,4,0,0" Visibility="{Binding RecommendedText, Converter={StaticResource NullToVisibility}}" />
-                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <!-- State, impact and effects, then the badges as tags; both wrap inside the card -->
+                            <WrapPanel Margin="0,4,0,0">
+                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" TextWrapping="Wrap"
+                                              VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ItemsControl ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </WrapPanel>
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ToggleNote}" TextWrapping="Wrap"
                                           Margin="0,4,0,0" Visibility="{Binding ToggleNote, Converter={StaticResource NullToVisibility}}" />
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding AgainstNote}" TextWrapping="Wrap"

@@ -94,3 +94,12 @@ public sealed class AllTrueConverter : IMultiValueConverter
     public object Convert(object?[] values, Type targetType, object? parameter, CultureInfo culture) => values.All(v => v is true);
     public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>A layout width to set on a child: 0 (not laid out yet) means automatic, so nothing collapses before the first layout.</summary>
+public sealed class LayoutWidthConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double w && w > 0 ? w : double.NaN;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}

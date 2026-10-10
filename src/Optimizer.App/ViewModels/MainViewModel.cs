@@ -35,6 +35,12 @@ public sealed record Banner(string Text, bool IsWarning)
 
 public sealed record SummaryItem(string Label, string Value)
 {
+    /// <summary>Optional second line under the value (secondary text), for example the model under a disk size.</summary>
+    public string? Detail { get; init; }
+
+    /// <summary>Optional usage bar under the value, 0 to 1 (used share of a volume).</summary>
+    public double? Fill { get; init; }
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => $"{Label}: {Value}";
 }
@@ -48,8 +54,20 @@ public sealed record CountItem(string Value, string Label, string Status)
 
 public sealed record HwSection(string Title, IReadOnlyList<SummaryItem> Items)
 {
+    public SymbolRegular Icon { get; init; } = SymbolRegular.Info24;
+
+    /// <summary>IDs and raw values, shown only with "Technical details" on (and always in the copied text and the report).</summary>
+    public IReadOnlyList<SummaryItem> Technical { get; init; } = [];
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Title;
+}
+
+/// <summary>A summary tile at the top of the System info page.</summary>
+public sealed record HwTile(string Caption, string Value, string Detail, SymbolRegular Icon)
+{
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Caption}: {Value}, {Detail}";
 }
 
 public sealed record CategoryItem(string Key, string Text, int Count)
@@ -209,6 +227,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private FindingItemViewModel? _gameAccess;
     [ObservableProperty] private CategoryItem? _selectedCategory;
     [ObservableProperty] private bool _onlyRecommended;
+    /// <summary>Tweaks page: words in the title or summary (or the tweak id). Not saved.</summary>
+    [ObservableProperty] private string _tweakSearch = "";
     [ObservableProperty] private bool _expertMode;
     [ObservableProperty] private bool _checkForUpdates;
     [ObservableProperty] private string _restorePointText = "";
@@ -226,6 +246,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _scoreTitle = "";
     [ObservableProperty] private string _scoreHint = "";
     [ObservableProperty] private string? _hiddenFindingsText;
+    /// <summary>BIOS and hardware page: how many passed checks "Show passed checks" would add (null when shown or none).</summary>
+    [ObservableProperty] private string? _advisorPassedText;
     [ObservableProperty] private string _recommendationsIntro = "";
     [ObservableProperty] private bool _hasAgainst;
 
@@ -244,6 +266,10 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<Banner> Banners { get; } = [];
     public ObservableCollection<SummaryItem> Summary { get; } = [];
     public ObservableCollection<HwSection> HardwareSections { get; } = [];
+    public ObservableCollection<HwTile> HardwareTiles { get; } = [];
+
+    /// <summary>System info: also show IDs and raw values (PnP IDs, GUIDs, microcode). Not saved.</summary>
+    [ObservableProperty] private bool _showHardwareDetails;
     public ObservableCollection<CountItem> Counts { get; } = [];
     public ObservableCollection<RecommendationLine> Recommendations { get; } = [];
     public ObservableCollection<RecommendationLine> RecommendationsExcluded { get; } = [];
@@ -270,6 +296,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnShowPassedChanged(bool value) => Rebuild();
     partial void OnSelectedCategoryChanged(CategoryItem? value) => FillTweaks();
     partial void OnOnlyRecommendedChanged(bool value) => FillTweaks();
+    partial void OnTweakSearchChanged(string value) => FillTweaks();
 
     partial void OnOnlyProfileChanged(bool value)
     {
@@ -473,6 +500,21 @@ public sealed partial class MainViewModel : ObservableObject
         {
             System.Windows.Clipboard.SetText(text);
             ShowResult(Loc.Instance.Format("Log_Copied", entries.Count));
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            ShowResult(Loc.Instance["Log_CopyFailed"]);
+        }
+    }
+
+    /// <summary>Copies the System info page as text (technical rows included), for a forum post or a bug report.</summary>
+    [RelayCommand]
+    private void CopyHardware()
+    {
+        try
+        {
+            System.Windows.Clipboard.SetText(HardwareReport.ToText(HardwareSections));
+            ShowResult(Loc.Instance["Hw_Copied"]);
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
@@ -1109,8 +1151,10 @@ public sealed partial class MainViewModel : ObservableObject
         if (ReferenceEquals(_hardwareShown.Profile, shown.Profile) && _hardwareShown.Language == shown.Language) return;
         _hardwareShown = shown;
         HardwareSections.Clear();
-        if (Profile is not null)
-            foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
+        HardwareTiles.Clear();
+        if (Profile is null) return;
+        foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
+        foreach (var t in HardwareReport.Tiles(Profile, Loc.Instance)) HardwareTiles.Add(t);
     }
 
     /// <summary>
@@ -1142,6 +1186,8 @@ public sealed partial class MainViewModel : ObservableObject
         GameAccess = access is null ? null : new FindingItemViewModel(access, lang);
         var hidden = ProfileView.HiddenProblems(_usage, _findings);
         HiddenFindingsText = hidden > 0 ? Loc.Instance.Format("Findings_HiddenByProfile", hidden) : null;
+        var passed = ShowPassed ? 0 : _profiledFindings.Count(f => f.Kind == FindingKind.Advisor && f.Status is FindingStatus.Ok or FindingStatus.Unsupported);
+        AdvisorPassedText = passed > 0 ? Loc.Instance.Format("Advisor_PassedHidden", passed) : null;
 
         // The score counts what matters for the profile, weighted by the profile's impact.
         Score = ReadinessScore.Compute(_profiledFindings);
@@ -1202,10 +1248,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var lang = Loc.Instance.Language;
         var category = SelectedCategory?.Key ?? "";
+        var q = TweakSearch.Trim();
+        bool Matches(ProfiledTweak p) => q.Length == 0 || p.Tweak.Id.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || Runner.Title(p.Tweak).Contains(q, StringComparison.CurrentCultureIgnoreCase) || Runner.Summary(p.Tweak).Contains(q, StringComparison.CurrentCultureIgnoreCase);
         Tweaks.Clear();
         var list = VisibleTweaks()
             .Where(p => category.Length == 0 || p.Tweak.Category == category)
             .Where(p => !OnlyRecommended || p.Recommended)
+            .Where(Matches)
             .OrderByDescending(p => p.Recommended)
             .ThenByDescending(p => p.Flagged) // applied changes that work against the profile stay visible
             .ThenByDescending(p => p.Impact)

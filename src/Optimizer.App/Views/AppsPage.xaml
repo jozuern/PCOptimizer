@@ -67,13 +67,7 @@
                 <ui:TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}" Text="{Binding Apps.ProgramsText}" VerticalAlignment="Center" Margin="12,0,0,0" />
                 <ui:TextBox PlaceholderText="{l:Tr Programs_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Apps.ProgramSearch, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
-            <ItemsControl ItemsSource="{Binding Apps.ProgramRows}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" MaxHeight="520"
-                          VirtualizingPanel.ScrollUnit="Pixel" Template="{StaticResource VirtualList}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+            <ItemsControl ItemsSource="{Binding Apps.ProgramRows}" MaxHeight="520" Style="{StaticResource VirtualCardList}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">

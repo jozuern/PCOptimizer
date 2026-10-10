@@ -325,9 +325,10 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     public string Version => Item.Installed.Version;
     public string Group { get; } = Labels.Current.Get(lang, $"debloatGroup.{item.Entry.Group}");
 
-    // Removing for all users needs administrator rights.
-    public string? BlockText { get; } = item.BlockKey is { } k ? Labels.Current.Get(lang, k) : elevated ? null : Labels.Current.Get(lang, "block.notElevated");
-    public bool CanRemove => BlockText is null;
+    // Removing for all users needs administrator rights: the page says that once above the list, so the row only
+    // shows reasons that belong to this app.
+    public string? BlockText { get; } = item.BlockKey is { } k ? Labels.Current.Get(lang, k) : null;
+    public bool CanRemove => BlockText is null && elevated;
 }
 
 public sealed record RemovedRow(string Name, string When, string? StoreLink)

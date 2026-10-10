@@ -4,32 +4,99 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <UserControl.Resources>
+        <!-- One label/value row; rows after the first get a divider line. A fixed label column lines the values up down
+             the page (a shared size group costs a measure pass over every row). -->
+        <DataTemplate x:Key="HwRow">
+            <Border x:Name="Row" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="0,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="264" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Label}"
+                                  TextWrapping="Wrap" Margin="0,0,24,0" />
+                    <StackPanel Grid.Column="1">
+                        <ui:TextBlock FontTypography="Body" Text="{Binding Value}" TextWrapping="Wrap" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Detail}" Margin="0,2,0,0"
+                                      Visibility="{Binding Detail, Converter={StaticResource NullToVisibility}}" />
+                        <!-- Used space: two borders instead of a ProgressBar, which costs a template per row -->
+                        <Border Width="320" Height="4" CornerRadius="2" HorizontalAlignment="Left" Margin="0,6,0,2" Background="{DynamicResource ControlStrongFillColorDisabledBrush}"
+                                Visibility="{Binding Fill, Converter={StaticResource NullToVisibility}}">
+                            <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="2" RenderTransformOrigin="0,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="{Binding Fill, FallbackValue=0}" />
+                                </Border.RenderTransform>
+                            </Border>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                    <Setter TargetName="Row" Property="BorderThickness" Value="0" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="{StaticResource PagePadding}">
-            <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Hw_Title}" />
-            <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Hw_Hint}" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <ui:ToggleSwitch Content="{l:Tr Hw_ShowDetails}" IsChecked="{Binding ShowHardwareDetails}" Margin="0,0,16,0" />
+                    <ui:Button Content="{l:Tr Hw_Copy}" Icon="{ui:SymbolIcon Copy20}" Command="{Binding CopyHardwareCommand}" />
+                </StackPanel>
+                <StackPanel>
+                    <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Hw_Title}" />
+                    <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Hw_Hint}" />
+                </StackPanel>
+            </DockPanel>
+
+            <!-- Summary tiles: what is looked up most, like Settings > System > About -->
+            <ItemsControl ItemsSource="{Binding HardwareTiles}" Margin="0,0,-8,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Padding="16" Margin="0,0,8,8" VerticalAlignment="Stretch" VerticalContentAlignment="Top">
+                            <DockPanel>
+                                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Icon}" FontSize="20" VerticalAlignment="Top" Margin="0,2,12,0"
+                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                <StackPanel>
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Caption}" />
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Value}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Detail}" Margin="0,2,0,0"
+                                                  Visibility="{Binding Detail, Converter={StaticResource NullToVisibility}}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
             <ItemsControl ItemsSource="{Binding HardwareSections}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel>
-                            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{Binding Title}" />
-                            <ui:Card Padding="24,16">
-                                <ItemsControl ItemsSource="{Binding Items}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,4">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="240" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Label}" TextWrapping="Wrap" Margin="0,0,16,0" />
-                                                <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding Value}" TextWrapping="Wrap" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ui:Card>
-                        </StackPanel>
+                        <ui:Card Padding="16,12" Margin="0,0,0,12">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource HwRow}" Margin="32,0,0,0" />
+                                <!-- Technical rows: only with the switch on; the divider continues the list above. -->
+                                <Grid Visibility="{Binding DataContext.ShowHardwareDetails, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                    <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="32,0,0,0"
+                                            Visibility="{Binding Technical.Count, Converter={StaticResource CountToVisibility}}">
+                                        <ItemsControl ItemsSource="{Binding Technical}" ItemTemplate="{StaticResource HwRow}" />
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </ui:Card>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

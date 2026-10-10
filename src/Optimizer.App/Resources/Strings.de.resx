@@ -33,6 +33,12 @@
   <data name="Hw_Network" xml:space="preserve"><value>Netzwerk</value></data>
   <data name="Hw_Software" xml:space="preserve"><value>Spiele &amp; Anti-Cheat</value></data>
   <data name="Hw_Errors" xml:space="preserve"><value>Fehler beim Auslesen</value></data>
+  <data name="Hw_Copy" xml:space="preserve"><value>Kopieren</value></data>
+  <data name="Hw_Copied" xml:space="preserve"><value>Systeminfo kopiert. Sie enthält deinen Windows-Benutzernamen und Geräte-IDs: prüfe sie, bevor du sie veröffentlichst.</value></data>
+  <data name="Hw_ShowDetails" xml:space="preserve"><value>Technische Details</value></data>
+  <data name="Advisor_PassedHidden" xml:space="preserve"><value>Ausgeblendete bestandene Prüfungen: {0}</value></data>
+  <data name="Tweaks_Search" xml:space="preserve"><value>Tweaks suchen</value></data>
+  <data name="Startup_Search" xml:space="preserve"><value>Nach Name, Datei oder Herausgeber suchen</value></data>
   <data name="Banner_NotValidated" xml:space="preserve"><value>Windows-Build {0} ist neuer als die Builds, auf denen diese Version geprüft wurde. Die Prüfungen laufen normal, einzelne können aber ungenau sein.</value></data>
   <data name="Banner_Insider" xml:space="preserve"><value>Windows-Insider-Build erkannt ({0}).</value></data>
   <data name="Banner_Managed" xml:space="preserve"><value>Dieser PC wird von einer Organisation verwaltet (Domäne, Entra ID oder MDM). Richtlinien können Einstellungen überschreiben.</value></data>

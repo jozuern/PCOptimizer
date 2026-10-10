@@ -1,150 +1,293 @@
+using System.Globalization;
+using System.Text;
 using Optimizer.App.Services;
 using Optimizer.Core.Docs;
 using Optimizer.Core.Findings.Checks;
 using Optimizer.Core.Hardware;
+using Wpf.Ui.Controls;
 
 namespace Optimizer.App.ViewModels;
 
 /// <summary>
-/// Flattens the HardwareProfile into labeled sections for the System info page and the --report file. Row labels and
-/// words inside values come from labels.json ("hw.*" keys, English and German); names read from the hardware (models,
-/// adapters, volumes) are shown as they are.
+/// Turns the HardwareProfile into the System info page and the --report file: a few summary tiles, then one section per
+/// area with the rows a user reads, plus technical rows (IDs, raw values) shown only on request. Row labels and words
+/// inside values come from labels.json ("hw.*" and "value.*" keys, English and German); names read from the hardware
+/// (models, adapters, volumes) are shown as they are.
 /// </summary>
 public static class HardwareReport
 {
     public static List<HwSection> Build(HardwareProfile p, Loc l)
     {
+        var f = new Fmt(l.Language);
         var sections = new List<HwSection>();
-        var lang = l.Language;
-        string T(string key) => Labels.Current.Get(lang, $"hw.{key}");
-        string F(string key, params object?[] args) => string.Format(System.Globalization.CultureInfo.CurrentCulture, T(key), args);
-        SummaryItem I(string key, object? v) => new(T(key), Value(v));
-        SummaryItem Raw(string label, object? v) => new(label, Value(v));
-        string Value(object? v) => v switch
-        {
-            null => Labels.Current.Get(lang, "value.unknown"),
-            bool b => Labels.Current.Get(lang, b ? "value.yes" : "value.no"),
-            TriState t => Labels.Current.Get(lang, t switch { TriState.Yes => "value.yes", TriState.No => "value.no", _ => "value.unknown" }),
-            _ => v.ToString() ?? Labels.Current.Get(lang, "value.unknown"),
-        };
-        string Gb(long? b) => b is { } x ? RebarCheck.FormatBytes(x) : Labels.Current.Get(lang, "value.unknown");
 
         sections.Add(new HwSection(l["Hw_Os"],
         [
-            I("build", p.Os.BuildString), I("version", p.Os.DisplayVersion), I("edition", p.Os.Edition),
-            I("architecture", p.Os.NativeArchitecture), I("insider", p.Os.FlightingActive),
-            I("elevated", p.Elevation?.IsElevated), I("processUser", p.Elevation?.ProcessUser), I("sessionUser", p.Elevation?.SessionUser),
-            I("adminProtection", p.Elevation?.AdministratorProtection), I("managed", p.Managed?.IsManaged),
-            I("hypervisor", p.System?.HypervisorPresent), I("formFactor", T(p.IsLaptop ? "laptop" : "desktop")),
-        ]));
+            f.I("version", $"Windows 11 {p.Os.DisplayVersion}"), f.I("edition", p.Os.Edition), f.I("build", p.Os.BuildString),
+            f.I("architecture", p.Os.NativeArchitecture), f.I("formFactor", f.T(p.IsLaptop ? "laptop" : "desktop")),
+            f.I("elevated", p.Elevation?.IsElevated), f.I("managed", p.Managed?.IsManaged),
+        ])
+        {
+            Icon = SymbolRegular.Window24,
+            Technical =
+            [
+                f.I("insider", p.Os.FlightingActive), f.I("processUser", p.Elevation?.ProcessUser), f.I("sessionUser", p.Elevation?.SessionUser),
+                f.I("adminProtection", p.Elevation?.AdministratorProtection), f.I("hypervisor", p.System?.HypervisorPresent),
+            ],
+        });
 
         if (p.Cpu is { } c)
         {
             sections.Add(new HwSection(l["Hw_Cpu"],
             [
-                I("name", c.Name), I("vendor", c.Vendor), I("familyModel", $"{c.Family} / {c.Model} (0x{c.Model:X}) / {c.Stepping}"),
-                I("coresThreads", $"{c.Cores} / {c.Threads}"), I("maxClock", c.MaxClockMhz > 0 ? $"{c.MaxClockMhz} MHz" : null), I("socket", c.Socket),
-                I("hybrid", c.IsHybrid ? string.Join(", ", c.CoresByEfficiencyClass.Select(kv => F("efficiencyClass", kv.Key, kv.Value))) : false),
-                I("performanceCores", c.IsHybrid ? c.PerformanceCores : null),
-                I("l3", string.Join(" + ", c.L3Domains.Select(d => $"{d.SizeBytes >> 20} MB"))),
-                I("microcodeRunning", c.MicrocodeCurrent is { } m1 ? $"0x{m1:X}" : null),
-                I("microcodeBios", c.MicrocodeBios is { } m2 ? $"0x{m2:X} ({c.MicrocodeSource})" : null),
-            ]));
+                f.I("name", c.Name), f.I("vendor", VendorName(c.Vendor)), f.I("coresThreads", f.F("coresThreadsValue", c.Cores, c.Threads)),
+                f.I("maxClock", c.MaxClockMhz > 0 ? $"{c.MaxClockMhz} MHz" : null), f.I("socket", c.Socket),
+                f.I("l3", c.L3Domains.Count == 0 ? null : string.Join(" + ", c.L3Domains.Select(d => $"{d.SizeBytes >> 20} MB"))),
+                .. c.IsHybrid
+                    ? (SummaryItem[])[f.I("hybrid", string.Join(", ", c.CoresByEfficiencyClass.Select(kv => f.F("efficiencyClass", kv.Key, kv.Value)))), f.I("performanceCores", c.PerformanceCores)]
+                    : [],
+            ])
+            {
+                Icon = SymbolRegular.DeveloperBoard24,
+                Technical =
+                [
+                    f.I("familyModel", $"{c.Family} / {c.Model} (0x{c.Model:X}) / {c.Stepping}"),
+                    f.I("microcodeRunning", c.MicrocodeCurrent is { } m1 ? $"0x{m1:X}" : null),
+                    f.I("microcodeBios", c.MicrocodeBios is { } m2 ? $"0x{m2:X} ({c.MicrocodeSource})" : null),
+                    .. c.IsHybrid ? (SummaryItem[])[] : [f.I("hybrid", false)],
+                ],
+            });
         }
 
         foreach (var g in p.Gpus ?? [])
         {
             var items = new List<SummaryItem>
             {
-                I("kind", g.Kind), I("vendor", g.Vendor), I("driver", $"{g.DriverProvider} {g.NvidiaDriverVersion ?? g.DriverVersion}"),
-                I("driverDate", g.DriverDate?.ToString("yyyy-MM-dd")), I("videoMemory", Gb(g.VramBytes)), I("largestBar", Gb(g.LargestBarBytes)),
-                I("pcieCard", g.CardLink is { } cl ? $"Gen {cl.CurrentGen} x{cl.CurrentWidth} / Gen {cl.MaxGen} x{cl.MaxWidth}" : null),
-                I("pcieSlot", g.PlatformPortLink is { } pl ? $"Gen {pl.MaxGen} x{pl.MaxWidth}" : null),
-                I("switchHops", g.SwitchHopsSkipped), I("hags", g.HagsEnabled),
+                f.I("kind", f.V(g.Kind switch
+                {
+                    GpuKind.Discrete => "value.gpuDiscrete", GpuKind.Integrated => "value.gpuIntegrated", GpuKind.Basic => "value.gpuBasic",
+                    GpuKind.Virtual => "value.gpuVirtual", _ => "value.unknown",
+                })),
+                f.I("vendor", VendorName(g.Vendor)),
+                f.I("driver", $"{g.DriverProvider} {g.NvidiaDriverVersion ?? g.DriverVersion}".Trim()) with { Detail = g.DriverDate?.ToString("yyyy-MM-dd") },
+                f.I("videoMemory", f.Gb(g.VramBytes)), f.I("largestBar", f.Gb(g.LargestBarBytes)),
+                f.I("pcieCard", g.CardLink is { } cl ? $"Gen {cl.CurrentGen} x{cl.CurrentWidth} / Gen {cl.MaxGen} x{cl.MaxWidth}" : null),
+                f.I("hags", g.HagsEnabled),
+            };
+            var technical = new List<SummaryItem>
+            {
+                f.I("pcieSlot", g.PlatformPortLink is { } pl ? $"Gen {pl.MaxGen} x{pl.MaxWidth}" : null), f.I("switchHops", g.SwitchHopsSkipped),
             };
             // Interrupt mode of the card (the MSI tweak): what the device supports and what the registry sets.
             if (p.Extras?.MsiDevices.FirstOrDefault(m => string.Equals(m.InstanceId, g.PnpDeviceId, StringComparison.OrdinalIgnoreCase)) is { } msi)
-                items.Add(I("msi", F("msiValue", msi.MessageMaximum?.ToString() ?? "?", msi.MsiSupportedValue is { } v ? v.ToString() : T("notSet"))));
+                technical.Add(f.I("msi", f.F("msiValue", msi.MessageMaximum?.ToString() ?? "?", msi.MsiSupportedValue is { } v ? v.ToString() : f.T("notSet"))));
             if (g.Vendor == Vendor.Nvidia && p.Extras?.Nvidia is { } nv)
             {
-                items.Add(I("batteryBoost", nv.BatteryBoostFps is > 0 ? $"{nv.BatteryBoostFps} FPS" : T("notSet")));
-                items.Add(I("gsyncGlobal", nv.GsyncGlobalMode?.ToString() ?? T("notSet")));
+                technical.Add(f.I("batteryBoost", nv.BatteryBoostFps is > 0 ? $"{nv.BatteryBoostFps} FPS" : f.T("notSet")));
+                technical.Add(f.I("gsyncGlobal", nv.GsyncGlobalMode?.ToString() ?? f.T("notSet")));
             }
-            items.Add(I("pnp", g.PnpDeviceId));
-            sections.Add(new HwSection($"{l["Hw_Gpu"]}: {g.Name}", items));
+            technical.Add(f.I("pnp", g.PnpDeviceId));
+            sections.Add(new HwSection($"{l["Hw_Gpu"]}: {g.Name}", items) { Icon = SymbolRegular.DesktopPulse24, Technical = technical });
         }
 
         if (p.Memory is { } mem)
         {
-            var items = new List<SummaryItem> { I("total", Gb(mem.TotalBytes)) };
-            items.AddRange(mem.Modules.Select(m => Raw(m.DeviceLocator,
-                $"{m.Manufacturer} {m.PartNumber.Trim()}, {Gb(m.CapacityBytes)} {m.Type}, {m.ConfiguredMts} MT/s (SPD {m.SpeedMts}), {m.BankLabel}")));
-            sections.Add(new HwSection(l["Hw_Memory"], items));
+            var items = new List<SummaryItem> { f.I("total", f.Gb(mem.TotalBytes)) };
+            items.AddRange(mem.Modules.Select(m => new SummaryItem(m.DeviceLocator, f.F("moduleValue", f.Gb(m.CapacityBytes), m.Type, m.ConfiguredMts?.ToString() ?? "?"))
+            {
+                Detail = string.Join(", ", new[] { $"{m.Manufacturer} {m.PartNumber.Trim()}".Trim(), m.SpeedMts is { } spd ? f.F("moduleRated", spd) : "", m.BankLabel }
+                    .Where(s => s.Length > 0)),
+            }));
+            sections.Add(new HwSection(l["Hw_Memory"], items) { Icon = SymbolRegular.Ram20 });
         }
 
         foreach (var d in p.Displays ?? [])
         {
             var items = new List<SummaryItem>
             {
-                I("mode", $"{d.Width}×{d.Height} @ {d.CurrentRefresh.Hz:0.###} Hz ({d.CurrentRefresh.Numerator}/{d.CurrentRefresh.Denominator})"),
-                I("maxOffered", $"{d.MaxOfferedRefreshAtCurrentResolution} Hz"),
-                I("edid", d.Edid is { } e ? F("edidValue", $"{e.ManufacturerId} {e.ProductCode:X4}", e.MinVHz, e.MaxVHz, $"{e.PreferredWidth}×{e.PreferredHeight}", e.PreferredRefreshHz) : null),
-                I("connectedTo", d.AdapterName), I("internal", d.IsInternal),
-                I("hdr", $"{Value(d.HdrSupported)} / {Value(d.HdrEnabled)}"),
+                f.I("mode", $"{d.Width}×{d.Height} @ {d.CurrentRefresh.Hz:0} Hz"),
+                f.I("maxOffered", $"{d.MaxOfferedRefreshAtCurrentResolution} Hz"),
+                f.I("hdrState", f.V(d.HdrEnabled ? "value.on" : d.HdrSupported ? "value.hdrSupportedOff" : "value.hdrNotSupported")),
             };
-            if (p.Extras?.Nvidia?.Vrr.TryGetValue(d.GdiName, out var vrr) == true)
-                items.Add(I("gsync", F("gsyncValue", Value(vrr.Possible), Value(vrr.Enabled), Value(vrr.Requested), Value(vrr.InVrrMode))));
-            items.Add(I("gdi", d.GdiName));
-            sections.Add(new HwSection($"{l["Hw_Displays"]}: {d.FriendlyName}", items));
+            // G-SYNC in one word; the four driver flags behind it are technical rows.
+            var vrrState = p.Extras?.Nvidia?.Vrr.TryGetValue(d.GdiName, out var vrr) == true ? vrr : null;
+            if (vrrState is { } vs)
+                items.Add(f.I("gsyncState", f.V(!vs.Possible ? "value.notPossible" : vs.Enabled ? "value.on" : "value.off")));
+            items.Add(f.I("connectedTo", d.AdapterName));
+            items.Add(f.I("internal", d.IsInternal));
+            sections.Add(new HwSection($"{l["Hw_Displays"]}: {d.FriendlyName}", items)
+            {
+                Icon = SymbolRegular.Desktop24,
+                Technical =
+                [
+                    .. vrrState is { } v2 ? (SummaryItem[])[f.I("gsync", f.F("gsyncValue", f.Value(v2.Possible), f.Value(v2.Enabled), f.Value(v2.Requested), f.Value(v2.InVrrMode)))] : [],
+                    f.I("refreshExact", $"{d.CurrentRefresh.Hz:0.###} Hz ({d.CurrentRefresh.Numerator}/{d.CurrentRefresh.Denominator})"),
+                    f.I("edid", d.Edid is { } e ? f.F("edidValue", $"{e.ManufacturerId} {e.ProductCode:X4}", e.MinVHz, e.MaxVHz, $"{e.PreferredWidth}×{e.PreferredHeight}", e.PreferredRefreshHz) : null),
+                    f.I("gdi", d.GdiName),
+                ],
+            });
         }
 
         if (p.Firmware is { } fw)
         {
             sections.Add(new HwSection(l["Hw_Firmware"],
             [
-                I("board", $"{fw.BoardManufacturer} {fw.BoardProduct}"), I("bios", $"{fw.BiosVendor} {fw.BiosVersion} ({fw.BiosDate:yyyy-MM-dd})"),
-                I("uefi", fw.IsUefi), I("secureBoot", fw.SecureBoot), I("tpm", fw.TpmPresent == TriState.Yes ? fw.TpmSpecVersion : Value(fw.TpmPresent)),
-                I("tpmReady", fw.TpmReady),
-                I("vbs", Labels.Current.Get(lang, fw.VbsStatus switch { 2 => "value.running", 1 => "value.configured", 0 => "value.off", _ => "value.unknown" })),
-                I("hvci", fw.HvciRunning), I("credentialGuard", fw.CredentialGuardRunning), I("mbec", fw.MbecAvailable), I("dma", fw.DmaProtectionAvailable),
-                I("systemDisk", fw.SystemDiskPartitionStyle),
-            ]));
+                f.I("board", $"{fw.BoardManufacturer} {fw.BoardProduct}".Trim()),
+                f.I("bios", $"{fw.BiosVendor} {fw.BiosVersion}".Trim()) with { Detail = fw.BiosDate?.ToString("yyyy-MM-dd") },
+                f.I("uefi", fw.IsUefi), f.I("secureBoot", fw.SecureBoot), f.I("tpm", fw.TpmPresent == TriState.Yes ? fw.TpmSpecVersion : f.Value(fw.TpmPresent)),
+                f.I("tpmReady", fw.TpmReady),
+                f.I("vbs", f.V(fw.VbsStatus switch { 2 => "value.running", 1 => "value.configured", 0 => "value.off", _ => "value.unknown" })),
+                f.I("hvci", fw.HvciRunning),
+            ])
+            {
+                Icon = SymbolRegular.ShieldCheckmark24,
+                Technical = [f.I("credentialGuard", fw.CredentialGuardRunning), f.I("mbec", fw.MbecAvailable), f.I("dma", fw.DmaProtectionAvailable), f.I("systemDisk", fw.SystemDiskPartitionStyle)],
+            });
         }
 
         if (p.Power is { } pw)
         {
+            var personality = f.V(pw.Personality switch
+            {
+                PowerPersonality.PowerSaver => "value.personalityPowerSaver", PowerPersonality.Balanced => "value.personalityBalanced",
+                PowerPersonality.HighPerformance => "value.personalityHighPerformance", _ => "value.personalityUnknown",
+            });
             sections.Add(new HwSection(l["Hw_Power"],
             [
-                I("plan", $"{pw.ActiveSchemeName} ({pw.Personality})"), I("schemeGuid", pw.ActiveScheme),
-                I("processorState", $"{pw.MaxProcessorStateAc} % / {pw.MinProcessorStateAc} %"),
-                I("boostMode", pw.BoostModeAc), I("coreParking", pw.CoreParkingMinCoresAc is { } cp ? $"{cp} %" : null),
-                I("onAc", pw.OnAc), I("energySaver", pw.EnergySaverOn), I("modernStandby", pw.ModernStandby), I("battery", pw.BatteryPercent is { } b ? $"{b} %" : null),
-                I("batteryCapacity", p.Battery is { } bh ? $"{bh.FullChargedMwh / 1000.0:0.0} / {bh.DesignedMwh / 1000.0:0.0} Wh ({Math.Round(bh.Health * 100)} %)" : null),
-            ]));
+                f.I("plan", pw.ActiveSchemeName) with { Detail = personality },
+                f.I("processorState", $"{pw.MaxProcessorStateAc} % / {pw.MinProcessorStateAc} %"),
+                f.I("boostMode", pw.BoostModeAc switch { null => null, 0 => f.V("value.off"), <= 6 and var boost => f.V($"value.boost{boost}"), var boost => boost.ToString() }),
+                f.I("coreParking", pw.CoreParkingMinCoresAc is { } cp ? $"{cp} %" : null),
+                f.I("onAc", pw.OnAc), f.I("energySaver", pw.EnergySaverOn), f.I("modernStandby", pw.ModernStandby),
+                // A desktop has no battery: those rows would only say "Unknown".
+                .. p.Battery is null && pw.BatteryPercent is null ? (SummaryItem[])[] :
+                [
+                    f.I("battery", pw.BatteryPercent is { } b ? $"{b} %" : null),
+                    f.I("batteryCapacity", p.Battery is { } bh ? $"{bh.FullChargedMwh / 1000.0:0.0} / {bh.DesignedMwh / 1000.0:0.0} Wh ({Math.Round(bh.Health * 100)} %)" : null),
+                ],
+            ])
+            {
+                Icon = SymbolRegular.Flash24,
+                Technical = [f.I("schemeGuid", pw.ActiveScheme)],
+            });
         }
 
         if (p.Storage is { } st)
         {
-            var items = st.Disks.Select(d => Raw(F("disk", d.Number), $"{d.FriendlyName}, {d.MediaType}, {d.BusType}, {Gb(d.SizeBytes)}, {d.Health}{(d.IsSmrSuspect ? ", SMR" : "")}")).ToList();
-            items.AddRange(st.Volumes.Select(v => Raw(v.Root, F("volume", v.Label, Gb(v.FreeBytes), Gb(v.SizeBytes), v.DiskNumber?.ToString() ?? "?"))));
-            sections.Add(new HwSection(l["Hw_Storage"], items));
+            var items = st.Disks.OrderBy(d => d.Number).Select(d => new SummaryItem(d.FriendlyName, $"{d.MediaType}, {d.BusType}, {f.Gb(d.SizeBytes)}")
+            {
+                Detail = string.Join(", ", new[] { f.F("disk", d.Number), f.V($"value.health{d.Health}", d.Health), d.IsSmrSuspect ? f.T("smr") : "" }.Where(s => s.Length > 0)),
+            }).ToList();
+            items.AddRange(st.Volumes.OrderBy(v => v.Root, StringComparer.OrdinalIgnoreCase).Select(v => new SummaryItem(
+                string.IsNullOrWhiteSpace(v.Label) ? v.Root : $"{v.Root} ({v.Label.Trim()})",
+                f.F("freeOf", f.Gb(v.FreeBytes), f.Gb(v.SizeBytes)))
+            {
+                Detail = v.DiskNumber is { } n ? f.F("disk", n) : null,
+                Fill = v.SizeBytes > 0 ? Math.Clamp(1 - v.FreeFraction, 0, 1) : null,
+            }));
+            sections.Add(new HwSection(l["Hw_Storage"], items) { Icon = SymbolRegular.Storage24 });
         }
 
         if (p.Network is { } net)
-            sections.Add(new HwSection(l["Hw_Network"], net.Select(n => Raw(n.Name, $"{n.Description}, {n.Type}, {(n.IsUp ? $"{n.SpeedBps / 1_000_000} Mbit/s" : T("disconnected"))}")).ToList()));
+        {
+            sections.Add(new HwSection(l["Hw_Network"], net.Select(n => new SummaryItem(n.Name, n.IsUp ? $"{n.SpeedBps / 1_000_000} Mbit/s" : f.V("value.disconnected"))
+            {
+                Detail = $"{n.Description}, {n.Type}",
+            }).ToList()) { Icon = SymbolRegular.NetworkCheck24 });
+        }
 
         if (p.Software is { } sw)
         {
             sections.Add(new HwSection(l["Hw_Software"],
             [
-                I("antiCheats", sw.AntiCheats.Count == 0 ? Labels.Current.Get(lang, "value.unknown") : string.Join(", ", sw.AntiCheats.Select(a => $"{a.DisplayName} ({string.Join("/", a.FoundServices)})"))),
-                I("launchers", string.Join(", ", sw.Launchers)),
-                I("gameLibraries", string.Join("\n", sw.GameLibraryPaths)),
-            ]));
+                f.I("antiCheats", sw.AntiCheats.Count == 0 ? f.V("value.none") : string.Join("\n", sw.AntiCheats.Select(a => a.DisplayName))),
+                f.I("launchers", sw.Launchers.Count == 0 ? f.V("value.none") : string.Join(", ", sw.Launchers)),
+                f.I("gameLibraries", sw.GameLibraryPaths.Count == 0 ? f.V("value.none") : string.Join("\n", sw.GameLibraryPaths)),
+            ])
+            {
+                Icon = SymbolRegular.Games24,
+                Technical = sw.AntiCheats.Count == 0 ? [] : [f.I("antiCheatServices", string.Join("\n", sw.AntiCheats.Select(a => $"{a.DisplayName}: {string.Join(", ", a.FoundServices)}")))],
+            });
         }
 
         if (p.ProbeErrors.Count > 0)
-            sections.Add(new HwSection(l["Hw_Errors"], p.ProbeErrors.Select(e => Raw(e.Key, e.Value)).ToList()));
+            sections.Add(new HwSection(l["Hw_Errors"], p.ProbeErrors.Select(e => new SummaryItem(e.Key, e.Value)).ToList()) { Icon = SymbolRegular.ErrorCircle24 });
         return sections;
+    }
+
+    /// <summary>The tiles at the top of the System info page: what a user looks up most, one line each plus a detail line.</summary>
+    public static List<HwTile> Tiles(HardwareProfile p, Loc l)
+    {
+        var f = new Fmt(l.Language);
+        var tiles = new List<HwTile>();
+        if (p.Cpu is { } c)
+            tiles.Add(new HwTile(l["Sum_Cpu"], c.Name, f.F("coresThreadsValue", c.Cores, c.Threads), SymbolRegular.DeveloperBoard24));
+        if (p.Gpus?.Where(g => g.Kind is not GpuKind.Virtual).ToList() is { Count: > 0 } gpus)
+        {
+            var main = gpus.FirstOrDefault(g => g.Kind == GpuKind.Discrete) ?? gpus[0];
+            var detail = string.Join(", ", new[] { main.VramBytes is { } v ? f.Gb(v) : "", (main.NvidiaDriverVersion ?? main.DriverVersion) is { } dv ? f.F("driverValue", dv) : "" }.Where(s => s.Length > 0));
+            tiles.Add(new HwTile(l["Sum_Gpu"], string.Join("\n", gpus.Select(g => g.Name)), detail, SymbolRegular.DesktopPulse24));
+        }
+        if (p.Memory is { } m)
+        {
+            var first = m.Modules.FirstOrDefault();
+            var detail = first is null ? "" : f.F("memoryValue", first.Type, RamSpeed.NormalizeConfigured(first), m.Modules.Count);
+            tiles.Add(new HwTile(l["Sum_Memory"], f.Gb(m.TotalBytes), detail, SymbolRegular.Ram20));
+        }
+        if (p.Displays is { Count: > 0 } d)
+            tiles.Add(new HwTile(l["Sum_Displays"], string.Join("\n", d.Select(x => x.FriendlyName)),
+                string.Join("\n", d.Select(x => $"{x.Width}×{x.Height}, {x.CurrentRefresh.Hz:0} Hz")), SymbolRegular.Desktop24));
+        if (p.Firmware is { } fw)
+            tiles.Add(new HwTile(l["Sum_Board"], $"{fw.BoardManufacturer} {fw.BoardProduct}".Trim(), $"BIOS {fw.BiosVersion}".Trim(), SymbolRegular.DeveloperBoardLightning20));
+        tiles.Add(new HwTile(l["Sum_Windows"], $"Windows 11 {p.Os.DisplayVersion}", $"{p.Os.Edition}, Build {p.Os.BuildString}", SymbolRegular.Window24));
+        return tiles;
+    }
+
+    /// <summary>Plain text of all sections (technical rows included) for the clipboard and the --report file.</summary>
+    public static string ToText(IEnumerable<HwSection> sections, string bullet = "")
+    {
+        var sb = new StringBuilder();
+        foreach (var s in sections)
+        {
+            sb.AppendLine(bullet.Length > 0 ? $"### {s.Title}" : s.Title);
+            foreach (var i in s.Items.Concat(s.Technical))
+            {
+                var value = i.Value.Replace("\n", "; ");
+                if (i.Detail is { Length: > 0 } detail) value += $" ({detail.Replace("\n", "; ")})";
+                sb.AppendLine($"{bullet}{i.Label}: {value}");
+            }
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+
+    private static string VendorName(Vendor v) => v switch
+    {
+        Vendor.Nvidia => "NVIDIA", Vendor.Amd => "AMD", Vendor.Intel => "Intel", Vendor.Microsoft => "Microsoft", Vendor.Qualcomm => "Qualcomm",
+        _ => v.ToString(),
+    };
+
+    /// <summary>Label and value formatting in one language.</summary>
+    private sealed class Fmt(string lang)
+    {
+        public string T(string key) => Labels.Current.Get(lang, $"hw.{key}");
+
+        public string V(string key, string? fallback = null) =>
+            Labels.Current.Has(lang, key) ? Labels.Current.Get(lang, key) : fallback ?? Labels.Current.Get(lang, "value.unknown");
+
+        public string F(string key, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(key), args);
+
+        public SummaryItem I(string key, object? v) => new(T(key), Value(v));
+
+        public string Value(object? v) => v switch
+        {
+            null => V("value.unknown"),
+            bool b => V(b ? "value.yes" : "value.no"),
+            TriState t => V(t switch { TriState.Yes => "value.yes", TriState.No => "value.no", _ => "value.unknown" }),
+            string { Length: 0 } => V("value.unknown"),
+            _ => v.ToString() ?? V("value.unknown"),
+        };
+
+        public string Gb(long? b) => b is { } x ? RebarCheck.FormatBytes(x) : V("value.unknown");
     }
 }

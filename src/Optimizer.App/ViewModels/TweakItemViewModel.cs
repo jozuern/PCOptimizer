@@ -60,17 +60,19 @@ public sealed class TweakItemViewModel : InspectorItem
                 : impact > 0 ? labels.Get(lang, $"effect.{goal}") : "";
         }
 
-        var badges = new List<string>();
-        if (t.Preview) badges.Add(labels.Get(lang, "badge.preview"));
-        if (t.EffectiveRisk != Risk.Safe) badges.Add(labels.Get(lang, $"risk.{t.EffectiveRisk}"));
-        if (t.Impact.Basis == "disputed") badges.Add(labels.Get(lang, "badge.disputed"));
-        if (t.Undocumented) badges.Add(labels.Get(lang, "badge.undocumented"));
-        if (t.Restart) badges.Add(labels.Get(lang, "badge.restart"));
-        if (t.SignOut) badges.Add(labels.Get(lang, "badge.signOut"));
-        if (t.IsBootCritical) badges.Add(labels.Get(lang, "badge.bootCritical"));
-        if (t.AntiCheatSensitive) badges.Add(labels.Get(lang, "badge.antiCheat"));
-        if (t.Reversibility != Reversibility.Reversible) badges.Add(labels.Get(lang, $"reversibility.{t.Reversibility}"));
-        BadgesText = string.Join(", ", badges);
+        // Tags under the title; risks (caution color) first, then facts about the change.
+        var badges = new List<Badge>();
+        if (t.EffectiveRisk != Risk.Safe) badges.Add(new(labels.Get(lang, $"badge.risk{t.EffectiveRisk}"), true));
+        if (t.IsBootCritical) badges.Add(new(labels.Get(lang, "badge.bootCritical"), true));
+        if (t.AntiCheatSensitive) badges.Add(new(labels.Get(lang, "badge.antiCheat"), true));
+        if (t.Reversibility != Reversibility.Reversible) badges.Add(new(labels.Get(lang, $"reversibility.{t.Reversibility}"), true));
+        if (t.Preview) badges.Add(new(labels.Get(lang, "badge.preview"), false));
+        if (t.Undocumented) badges.Add(new(labels.Get(lang, "badge.undocumented"), false));
+        if (t.Impact.Basis == "disputed") badges.Add(new(labels.Get(lang, "badge.disputed"), false));
+        if (t.Restart) badges.Add(new(labels.Get(lang, "badge.restart"), false));
+        if (t.SignOut) badges.Add(new(labels.Get(lang, "badge.signOut"), false));
+        Badges = badges;
+        BadgesText = string.Join(", ", badges.Select(b => b.Text));
         IsRecommended = profiled?.Recommended ?? status.Recommended;
         var recReason = profiled is null ? t.RecommendReasonKey : profiled.ReasonKey;
         RecommendedText = IsRecommended
@@ -89,7 +91,8 @@ public sealed class TweakItemViewModel : InspectorItem
         // On: possible when not blocked. Off: possible when this app made the change (it has the original values).
         CanToggle = canChange && (IsOn ? HasBackup : hard.Count == 0);
         var outside = canChange && IsOn && !HasBackup ? Loc.Instance["Tweak_AlreadyOn"] : null;
-        MetaText = string.Join(", ", new[] { StatusText, outside, ImpactText, EffectsText, BadgesText }.Where(x => !string.IsNullOrEmpty(x)));
+        // The badges are drawn as tags next to the title, not repeated in this line.
+        MetaText = string.Join(", ", new[] { StatusText, outside, ImpactText, EffectsText }.Where(x => !string.IsNullOrEmpty(x)));
         // Only real blocks are shown as a warning; "set outside this app" is part of the detail line.
         ToggleNote = canChange && !IsOn && hard.Count > 0 ? BlockText : null;
         Action = ActionFor(status.State, canChange, HasBackup);
@@ -139,6 +142,7 @@ public sealed class TweakItemViewModel : InspectorItem
     public TweakDefinition Tweak => Status_.Tweak;
     public string Category { get; }
     public string BadgesText { get; }
+    public IReadOnlyList<Badge> Badges { get; }
     public bool IsRecommended { get; }
     public string? RecommendedText { get; }
     public string? BlockText { get; }
@@ -174,4 +178,11 @@ public sealed class TweakItemViewModel : InspectorItem
         _switch = IsOn;
         OnPropertyChanged(nameof(SwitchState));
     }
+}
+
+/// <summary>A tag on a tweak row (Preview, Restart, Moderate risk); <paramref name="Caution"/> draws it in the caution color.</summary>
+public sealed record Badge(string Text, bool Caution)
+{
+    // What screen readers announce for this item in a list.
+    public override string ToString() => Text;
 }

@@ -110,8 +110,10 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     [ObservableProperty] private string _snapshotText = "";
     [ObservableProperty] private bool _hasComparison;
     [ObservableProperty] private bool _onlyNew;
+    [ObservableProperty] private string _search = "";
     private bool _compareAfterLoad;
 
+    partial void OnSearchChanged(string value) => Filter();
     partial void OnOnlyNewChanged(bool value) => Filter();
     partial void OnHideMicrosoftChanged(bool value) => Filter();
     partial void OnSelectedKindChanged(FilterOption? value) => Filter();
@@ -161,8 +163,12 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     private void Filter()
     {
         var kind = SelectedKind?.Key ?? "";
+        var q = Search.Trim();
+        bool Matches(StartupRow r) => q.Length == 0 || r.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+            || r.Command?.Contains(q, StringComparison.OrdinalIgnoreCase) == true || r.Location.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || r.MetaText.Contains(q, StringComparison.CurrentCultureIgnoreCase);
         Rows.Clear();
-        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew))
+        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && Matches(r))
                      .OrderByDescending(r => r.IsNew).ThenByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
         var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);

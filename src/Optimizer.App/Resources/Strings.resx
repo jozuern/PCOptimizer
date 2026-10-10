@@ -33,6 +33,12 @@
   <data name="Hw_Network" xml:space="preserve"><value>Network</value></data>
   <data name="Hw_Software" xml:space="preserve"><value>Games &amp; anti-cheat</value></data>
   <data name="Hw_Errors" xml:space="preserve"><value>Probe errors</value></data>
+  <data name="Hw_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Hw_Copied" xml:space="preserve"><value>System info copied. It contains your Windows user name and device IDs: check it before you post it.</value></data>
+  <data name="Hw_ShowDetails" xml:space="preserve"><value>Technical details</value></data>
+  <data name="Advisor_PassedHidden" xml:space="preserve"><value>Passed checks not shown: {0}</value></data>
+  <data name="Tweaks_Search" xml:space="preserve"><value>Search tweaks</value></data>
+  <data name="Startup_Search" xml:space="preserve"><value>Search by name, file or publisher</value></data>
   <data name="Banner_NotValidated" xml:space="preserve"><value>Windows build {0} is newer than the builds this version was validated on. Checks run normally but some may be inaccurate.</value></data>
   <data name="Banner_Insider" xml:space="preserve"><value>Windows Insider build detected ({0}).</value></data>
   <data name="Banner_Managed" xml:space="preserve"><value>This PC is managed by an organization (domain, Entra ID or MDM). Policies may override settings.</value></data>

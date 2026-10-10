@@ -21,8 +21,10 @@
             <ui:Card Padding="16,12" Margin="0,0,0,16">
                 <DockPanel>
                     <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}"
-                               IsEnabled="{Binding HasRecommendations}" />
+                               Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Top" />
                     <WrapPanel Orientation="Horizontal">
+                        <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                    MinWidth="240" Margin="0,4,16,4" ClearButtonEnabled="True" />
                         <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" ItemTemplate="{StaticResource ProfileItem}"
                                   MinWidth="200" Margin="0,4,16,4" ToolTip="{l:Tr Profile_Label}" />
                         <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="220" Margin="0,4,16,4" />

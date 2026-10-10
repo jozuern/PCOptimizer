@@ -41,6 +41,12 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 
 - Switches and change buttons are disabled while a change, scan or update runs, and only one change runs at a time.
 - Failures show as errors instead of information. Explorer restarts ask first. Frame time captures can be stopped. Escape closes message windows. Settings are saved atomically.
+- System info starts with tiles for processor, graphics, memory, displays, mainboard and Windows. Each area is a card with an icon and divided rows. Disks, volumes (with a used space bar), memory modules and network adapters get one row each with a second line instead of comma lists. Values are translated (graphics kind, disk health, boost mode, power plan type, HDR, G-SYNC), and IDs and raw values (PnP ID, GUID, microcode, EDID) sit behind "Technical details". "Copy" puts the whole page on the clipboard.
+- Tweak rows show Preview, Undocumented value, Disputed, Restart and Sign out as tags, and risks (Moderate risk, Expert only, Boot configuration, Anti-cheat, not reversible) as tags in the caution color, instead of at the end of the detail line. Service descriptions from Windows are cut to two lines; the whole text is in the tooltip.
+- The Tweaks and Startup pages have a search box. Startup shows its filters and its actions on separate rows, and each entry is one line shorter.
+- With the details pane open, the switches on the right of long lists were cut off; cards now take the visible width.
+- After a theme switch, switches that were on turned gray on PCs with a gray Windows accent: the accent is now set before the theme loads. "System" follows Windows through one listener for the app mode and the accent.
+- Debloat says once at the top that removing apps needs administrator rights, instead of on every app. Cleanup shows the selected size and "Clean selected" above the list. "Apply recommended" is hidden while there is nothing to apply. BIOS & hardware says how many passed checks are hidden. "Show passed checks" is a switch like the other filters, and the Services and Scheduled tasks tabs mark the selected tab.
 
 ### Content
 

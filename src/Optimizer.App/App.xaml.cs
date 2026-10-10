@@ -23,13 +23,14 @@ namespace Optimizer.App;
 public partial class App : Application
 {
     private AppSettings _settings = new();
-    private bool _watching;
 
     // The signed-in user, whose Windows app mode counts. With a separate admin account (or Administrator protection)
     // this process's HKCU is the admin's, and WPF-UI's theme watcher would follow that account instead.
     private string? _sessionSid;
-    private bool _userMismatch;
     private bool _preferenceHooked;
+
+    // What ApplyTheme set last: a Windows setting change that alters neither does not load the theme again.
+    private (bool Dark, Color Accent)? _appliedTheme;
 
     // Developer aid (--perf): when each step of the start finished.
     private readonly List<(string Name, DateTime At)> _startMarks = [];
@@ -93,7 +94,6 @@ public partial class App : Application
         var services = new AppServices();
         Mark("services ready");
         _sessionSid = services.UserSid;
-        _userMismatch = services.Elevation.UserMismatch;
 
         if (args.Value("--report") is { } reportPath)
         {
@@ -233,30 +233,18 @@ public partial class App : Application
     {
         // Case-insensitive so "--theme light" works like "--lang de"; the saved value keeps the canonical spelling.
         var setting = new[] { "Light", "Dark" }.FirstOrDefault(t => t.Equals(theme, StringComparison.OrdinalIgnoreCase)) ?? "System";
-        var dark = setting == "Dark" || (setting == "System" && !SystemUsesLightTheme(_sessionSid));
-        ApplicationThemeManager.Apply(dark ? ApplicationTheme.Dark : ApplicationTheme.Light, WindowBackdropType.Mica, true);
-        ApplicationAccentColorManager.ApplySystemAccent();
-        // A gray Windows accent would leave switches, buttons and progress colorless: use the Fluent default blue then.
-        var accent = ApplicationAccentColorManager.GetColorizationColor();
-        if (Saturation(accent) < 0.2)
-            ApplicationAccentColorManager.Apply(Color.FromRgb(0x00, 0x78, 0xD4), dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
-        if (MainWindow is Window w)
-        {
-            // The watcher only accepts loaded windows; at startup the window is not shown yet.
-            void Watch()
-            {
-                if (_userMismatch)
-                {
-                    FollowSessionUserTheme();
-                    return;
-                }
-                if (setting == "System") SystemThemeWatcher.Watch(w, WindowBackdropType.Mica, true);
-                else if (_watching) SystemThemeWatcher.UnWatch(w);
-                _watching = setting == "System";
-            }
-            if (w.IsLoaded) Watch();
-            else w.Loaded += (_, _) => Watch();
-        }
+        var (dark, accent) = TargetTheme(setting);
+        var appTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        // The theme dictionary builds some brushes (the "on" fill of switches) from the accent colors when it loads.
+        // Set the accent for the new theme first, then load the theme, then set the accent again for the brushes the
+        // accent manager owns. Loading the theme with the Windows accent would leave switches gray on a gray accent.
+        ApplicationAccentColorManager.Apply(accent, appTheme);
+        ApplicationThemeManager.Apply(appTheme, WindowBackdropType.Mica, false);
+        ApplicationAccentColorManager.Apply(accent, appTheme);
+        _appliedTheme = (dark, accent);
+        // "System" follows Windows through our own hook, not WPF-UI's watcher: the watcher loads the theme with the
+        // Windows accent, and it reads this process's HKCU, which is the admin's with a separate admin account.
+        if (setting == "System") FollowSessionUserTheme();
         // Only a choice in Settings is the user's preference: a --theme override must not end up in settings.json
         // the next time anything else saves it.
         if (save)
@@ -276,6 +264,17 @@ public partial class App : Application
         main.RenderDetails();
     }
 
+    /// <summary>
+    /// Dark or light, and the accent color: the Windows accent, or the Fluent default blue when the Windows accent is
+    /// gray (switches, buttons and progress would be colorless).
+    /// </summary>
+    private (bool Dark, Color Accent) TargetTheme(string setting)
+    {
+        var dark = setting == "Dark" || (setting == "System" && !SystemUsesLightTheme(_sessionSid));
+        var accent = ApplicationAccentColorManager.GetColorizationColor();
+        return (dark, Saturation(accent) < 0.2 ? Color.FromRgb(0x00, 0x78, 0xD4) : accent);
+    }
+
     private static double Saturation(Color c)
     {
         double r = c.R / 255.0, g = c.G / 255.0, b = c.B / 255.0;
@@ -285,8 +284,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Separate admin account: theme changes are broadcast to every window in the session, so re-read the signed-in
-    /// user's app mode on each change instead of WPF-UI's watcher (which reads this process's own HKCU).
+    /// "System" theme: Windows broadcasts app mode and accent changes to every window in the session, so re-read the
+    /// signed-in user's app mode and accent on each change, and load the theme again only when one of them changed.
     /// </summary>
     private void FollowSessionUserTheme()
     {
@@ -297,7 +296,7 @@ public partial class App : Application
             if (e.Category is not (Microsoft.Win32.UserPreferenceCategory.General or Microsoft.Win32.UserPreferenceCategory.Color)) return;
             Dispatcher.BeginInvoke(() =>
             {
-                if (_settings.Theme == "System") ApplyTheme("System", save: false);
+                if (_settings.Theme == "System" && TargetTheme("System") != _appliedTheme) ApplyTheme("System", save: false);
             });
         };
     }
@@ -337,12 +336,7 @@ public partial class App : Application
                 sb.AppendLine(DocStore.Get(f.Id, lang) is { } page ? DocStore.RenderFinding(page, f, Labels.Current).Replace("\n## ", "\n### ") : "(no page)");
             }
             sb.AppendLine("## System info").AppendLine();
-            foreach (var s in HardwareReport.Build(profile, Loc.Instance))
-            {
-                sb.AppendLine($"### {s.Title}");
-                foreach (var i in s.Items) sb.AppendLine($"- {i.Label}: {i.Value.Replace("\n", "; ")}");
-                sb.AppendLine();
-            }
+            sb.Append(HardwareReport.ToText(HardwareReport.Build(profile, Loc.Instance), bullet: "- "));
             File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
             return 0;
         }

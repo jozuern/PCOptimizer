@@ -4,7 +4,7 @@
 
 A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
 
-> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, and the [VM test plan](docs/vm-test-plan.md) was run on Windows 11 26H2 in a Hyper-V virtual machine: the catalog tweaks (some do not apply in a virtual machine), the general flow and the pages that change the PC ([results](docs/vm-test-results-2026-10-10.md)). Not checked on real hardware yet: NVIDIA driver settings, network adapter properties, laptop profiles, battery checks and AMD-specific checks. Tweaks marked **Preview** are the risky ones. Create a restore point or a backup before you change anything, and start with the recommended items.
+> **Status: preview (0.5).** Apply and undo are tested against a registry sandbox and fake system interfaces, and the [VM test plan](docs/vm-test-plan.md) was run on Windows 11 26H2 in a Hyper-V virtual machine: the catalog tweaks (some do not apply in a virtual machine), the general flow and the pages that change the PC ([results](docs/vm-test-results-2026-10-10.md)). Not checked on real hardware yet: NVIDIA driver settings, network adapter properties, laptop profiles, battery checks and AMD-specific checks. Tweaks marked **Preview** are the risky ones. Create a restore point or a backup before you change anything, and start with the recommended items.
 
 <p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, profile, recommended changes and findings"></p>
 
@@ -23,10 +23,13 @@ Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer
 - **Graphics & network:** NVIDIA driver settings through the documented driver settings interface (NVAPI), VRR state, network adapter power saving, DNS presets and an opt-in DNS benchmark.
 - **Debloat, cleanup, startup, services:** a reviewed list of 126 removable apps (inbox apps, older Microsoft apps, third-party promotions and manufacturer apps, with a warning on vendor update tools and an honest note when the Store no longer offers an app), 11 cleanup categories that never follow links, an Autoruns-style startup list with signature checks, service start types with explanations.
 - **Tools and health:** storage analyzer, Windows features, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
+- **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan: summary tiles on top, one card per area, IDs and raw values on request, and a button that copies it all for a forum post or a bug report.
 
 The app uses settings that Microsoft or the hardware vendor documents. A few harmless, fully reversible tweaks use a value Microsoft does not document (the value behind a Windows Settings switch, or a widely used one such as the classic right-click menu): they carry an "Undocumented value" badge, their explanation page says so, and they stay previews until a test has shown that the value works. It never recommends turning off security features that anti-cheats require, and keeps changes that turn off security features or touch the boot configuration in Expert mode.
 
-<p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page with impact, risk and badges, and the explanation of the selected tweak"></p>
+<p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page with search, impact, badges and the explanation of the selected tweak"></p>
+
+<p align="center"><img src="docs/screenshots/system-info-en-dark.png" width="800" alt="System info page: summary tiles and one card per area"></p>
 
 ## Privacy
 

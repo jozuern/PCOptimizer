@@ -108,7 +108,7 @@
                 <StackPanel>
                     <DockPanel>
                         <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}"
-                                   IsEnabled="{Binding HasRecommendations}" VerticalAlignment="Top" />
+                                   Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Top" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding RecommendationsIntro}" Margin="0,0,16,0" />
                     </DockPanel>
                     <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Rec_Empty}" Margin="0,8,0,0"
@@ -171,7 +171,7 @@
 
             <!-- Findings -->
             <DockPanel Margin="0,24,0,8">
-                <CheckBox DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" />
+                <ui:ToggleSwitch DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" />
                 <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Dash_Findings}" VerticalAlignment="Center" />
             </DockPanel>
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding FindingsEmpty, Converter={StaticResource BoolToVisibility}}" />

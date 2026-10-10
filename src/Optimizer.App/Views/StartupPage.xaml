@@ -24,16 +24,21 @@
         <ui:Card Grid.Row="1" Padding="16,12" Margin="0,0,0,8">
             <StackPanel>
                 <WrapPanel>
-                    <ComboBox ItemsSource="{Binding Startup.Kinds}" SelectedItem="{Binding Startup.SelectedKind}" DisplayMemberPath="Text" MinWidth="220" Margin="0,0,16,0" />
-                    <ui:ToggleSwitch Content="{l:Tr Startup_HideMicrosoft}" IsChecked="{Binding Startup.HideMicrosoft}" Margin="0,0,16,0" />
-                    <ui:Button Content="{l:Tr Vt_Check}" Icon="{ui:SymbolIcon ShieldCheckmark24}" Command="{Binding Startup.CheckVirusTotalCommand}"
-                               IsEnabled="{Binding Startup.IsCheckingVirusTotal, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                    <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Startup.StopVirusTotalCommand}"
-                               Visibility="{Binding Startup.IsCheckingVirusTotal, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
-                    <ui:Button Content="{l:Tr Startup_SaveSnapshot}" Icon="{ui:SymbolIcon Save20}" Command="{Binding Startup.SaveSnapshotCommand}" Margin="0,0,8,0" />
-                    <ui:Button Content="{l:Tr Startup_CompareSnapshot}" Icon="{ui:SymbolIcon BranchCompare20}" Command="{Binding Startup.CompareSnapshotCommand}" Margin="0,0,16,0" />
-                    <ui:ToggleSwitch Content="{l:Tr Startup_OnlyNew}" IsChecked="{Binding Startup.OnlyNew}"
+                    <ui:TextBox PlaceholderText="{l:Tr Startup_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Startup.Search, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                MinWidth="240" Margin="0,4,16,4" ClearButtonEnabled="True" />
+                    <ComboBox ItemsSource="{Binding Startup.Kinds}" SelectedItem="{Binding Startup.SelectedKind}" DisplayMemberPath="Text" MinWidth="220" Margin="0,4,16,4" />
+                    <ui:ToggleSwitch Content="{l:Tr Startup_HideMicrosoft}" IsChecked="{Binding Startup.HideMicrosoft}" Margin="0,4,16,4" />
+                    <ui:ToggleSwitch Content="{l:Tr Startup_OnlyNew}" IsChecked="{Binding Startup.OnlyNew}" Margin="0,4,16,4"
                                      Visibility="{Binding Startup.HasComparison, Converter={StaticResource BoolToVisibility}}" />
+                </WrapPanel>
+                <!-- Actions on their own row, below the filters -->
+                <WrapPanel>
+                    <ui:Button Content="{l:Tr Vt_Check}" Icon="{ui:SymbolIcon ShieldCheckmark24}" Command="{Binding Startup.CheckVirusTotalCommand}"
+                               IsEnabled="{Binding Startup.IsCheckingVirusTotal, Converter={StaticResource InverseBool}}" Margin="0,4,8,4" />
+                    <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Startup.StopVirusTotalCommand}"
+                               Visibility="{Binding Startup.IsCheckingVirusTotal, Converter={StaticResource BoolToVisibility}}" Margin="0,4,8,4" />
+                    <ui:Button Content="{l:Tr Startup_SaveSnapshot}" Icon="{ui:SymbolIcon Save20}" Command="{Binding Startup.SaveSnapshotCommand}" Margin="0,4,8,4" />
+                    <ui:Button Content="{l:Tr Startup_CompareSnapshot}" Icon="{ui:SymbolIcon BranchCompare20}" Command="{Binding Startup.CompareSnapshotCommand}" Margin="0,4,8,4" />
                 </WrapPanel>
                 <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Startup.SnapshotText}" Margin="0,8,0,0" TextWrapping="Wrap"
                               Visibility="{Binding Startup.SnapshotText, Converter={StaticResource NullToVisibility}}" />
@@ -47,12 +52,7 @@
         <ui:ProgressRing Grid.Row="2" IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8"
                          Visibility="{Binding Startup.IsLoading, Converter={StaticResource BoolToVisibility}}" />
 
-        <ItemsControl Grid.Row="3" ItemsSource="{Binding Startup.Rows}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel" Template="{StaticResource VirtualList}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+        <ItemsControl Grid.Row="3" ItemsSource="{Binding Startup.Rows}" Style="{StaticResource VirtualCardList}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
@@ -82,8 +82,10 @@
                                 <TextBlock Style="{StaticResource Mono}" Text="{Binding Command}" Margin="0,4,0,0" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ScriptHostNote}" TextWrapping="Wrap"
                                               Margin="0,4,0,0" Visibility="{Binding ScriptHostNote, Converter={StaticResource NullToVisibility}}" />
-                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Location}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                <!-- Where it is registered, with the two links on the same line -->
                                 <WrapPanel Margin="0,4,0,0">
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Location}" TextWrapping="Wrap"
+                                                  VerticalAlignment="Center" Margin="0,0,16,0" />
                                     <ui:HyperlinkButton Content="{l:Tr Startup_ShowFile}" Padding="0" Margin="0,0,16,0"
                                                         Visibility="{Binding Entry.ImagePath, Converter={StaticResource NullToVisibility}}"
                                                         Command="{Binding DataContext.Startup.ShowFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
