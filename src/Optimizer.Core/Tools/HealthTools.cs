@@ -15,11 +15,11 @@ public static class SystemRepair
 
     /// <summary>DISM /ScanHealth (read-only check of the component store).</summary>
     public static Task<int> ScanHealthAsync(IProgress<string>? lines, CancellationToken ct) =>
-        StreamingProcess.RunAsync(Dism, "/Online /Cleanup-Image /ScanHealth", lines, ct);
+        StreamingProcess.RunAsync(Dism, "/Online /Cleanup-Image /ScanHealth", lines, ct, StreamingProcess.Oem);
 
     /// <summary>DISM /RestoreHealth (repairs the component store from Windows Update). Run sfc again afterwards.</summary>
     public static Task<int> RestoreHealthAsync(IProgress<string>? lines, CancellationToken ct) =>
-        StreamingProcess.RunAsync(Dism, "/Online /Cleanup-Image /RestoreHealth", lines, ct);
+        StreamingProcess.RunAsync(Dism, "/Online /Cleanup-Image /RestoreHealth", lines, ct, StreamingProcess.Oem);
 }
 
 public sealed record DiskHealth(

@@ -4,7 +4,7 @@
 Moves Start and the taskbar icons to the left, like Settings > Personalization > Taskbar > Taskbar behaviors > Taskbar alignment.
 
 ## How it works
-Taskbar icons are centered by default and can be aligned to the left [1]. The app sets TaskbarAl to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Taskbar icons are centered by default and can be aligned to the left [1]. The app sets TaskbarAl to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Start stays in the same corner, also on wide monitors.

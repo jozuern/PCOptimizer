@@ -4,7 +4,7 @@
 Rückt Start und die Taskleistensymbole nach links, wie Einstellungen > Personalisierung > Taskleiste > Verhalten der Taskleiste > Ausrichtung.
 
 ## So funktioniert es
-Die Taskleistensymbole sind standardmäßig zentriert und lassen sich links ausrichten [1]. Die App setzt TaskbarAl auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Die Taskleistensymbole sind standardmäßig zentriert und lassen sich links ausrichten [1]. Die App setzt TaskbarAl auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Start bleibt in derselben Ecke, auch auf breiten Monitoren.

@@ -4,7 +4,7 @@
 Turns off "Suggest ways to get the most out of Windows and finish setting up this device", the full screen setup prompt that can appear at sign-in.
 
 ## How it works
-The screen "Let's finish setting up your device" may show when you sign in, to suggest ways to get the most out of Windows [1]. It belongs to the option "Suggest ways to get the most out of Windows and finish setting up this device" in Settings > System > Notifications > Additional settings [1]. The app sets ScoobeSystemSettingEnabled to 0. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. Until a test on real Windows confirms the effect, the tweak is a Preview.
+The screen "Let's finish setting up your device" may show when you sign in, to suggest ways to get the most out of Windows [1]. It belongs to the option "Suggest ways to get the most out of Windows and finish setting up this device" in Settings > System > Notifications > Additional settings [1]. The app sets ScoobeSystemSettingEnabled to 0. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 No full screen setup prompt between signing in and the desktop.

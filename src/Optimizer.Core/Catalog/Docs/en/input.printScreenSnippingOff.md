@@ -4,7 +4,7 @@
 The Print Screen key copies the whole screen to the clipboard instead of opening Snipping Tool, as before Windows 11 build 22621.1928.
 
 ## How it works
-Since Windows 11 build 22621.1928 the Print Screen key opens Snipping Tool by default [1]. With the switch "Use the Print screen key to open screen capture" off, the key copies the screen to the clipboard [1]. The app sets PrintScreenKeyForSnippingEnabled to 0. Depending on other apps, the change can need a sign-out or restart [1]. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Since Windows 11 build 22621.1928 the Print Screen key opens Snipping Tool by default [1]. With the switch "Use the Print screen key to open screen capture" off, the key copies the screen to the clipboard [1]. The app sets PrintScreenKeyForSnippingEnabled to 0. Depending on other apps, the change can need a sign-out or restart [1]. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 One press copies the screen without a selection step, for example to paste it straight into a chat.

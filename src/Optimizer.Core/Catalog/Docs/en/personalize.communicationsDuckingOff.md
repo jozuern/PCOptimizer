@@ -4,7 +4,7 @@
 Windows no longer lowers other sounds, such as your game, by 80 percent when it detects a call or voice chat.
 
 ## How it works
-On the Communications tab of the Sound control panel you choose what happens during communication: lower other sounds (80 percent by default), mute them, or do nothing [1]. The app chooses "Do nothing" by setting UserDuckingPreference to 3. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+On the Communications tab of the Sound control panel you choose what happens during communication: lower other sounds (80 percent by default), mute them, or do nothing [1]. The app chooses "Do nothing" by setting UserDuckingPreference to 3. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Game audio does not drop when Discord or another voice app opens the microphone.

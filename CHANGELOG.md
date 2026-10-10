@@ -17,6 +17,12 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - After the first scan, the Startup, Services, Apps, Debloat and Cleanup pages load their data in the background, one after another while the window is idle, so they open with their rows instead of a loading state. Tools still reads its Windows features when it is opened (DISM takes about 12 seconds).
 - The background CPU sample starts after the scan and the tools the app started, so neither counts as background activity. The log file stays open for the session instead of being opened for every entry, and one Storage query serves the three checks that read the drives.
 
+### VM test run of 2026-10-11
+
+- 28 Preview tweaks are no longer Previews: a test on Windows 11 26H2 showed their effect where you see it (Settings, the taskbar, File Explorer, the desktop, the Print Screen key, the DNS settings, Windows Security) and its removal after undo ([results](docs/vm-test-results-2026-10-11.md)). Game Mode has a visible-effect proof too.
+- "Location access off" showed no effect in the test and "Lock screen: no fun facts and tips" also turned off Windows Spotlight: both stay Previews, and their explanations now say so.
+- The DISM checks on the Health page show umlauts again on German Windows: DISM writes the console code page, which was read as UTF-8.
+
 ### Security
 
 - An elevated start refuses to run when the runtime folder is not protected, and files the app creates are owned by Administrators.

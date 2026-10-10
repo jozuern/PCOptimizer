@@ -1,10 +1,10 @@
 # Standortzugriff aus
 
 ## Zusammenfassung
-Schaltet die Standortdienste für den ganzen PC ab, wie der Schalter „Standortdienste“ in den Einstellungen.
+Soll die Standortdienste für den ganzen PC abschalten; ein Test unter Windows 11 26H2 zeigte keine Wirkung, daher bleibt es eine Vorschau.
 
 ## So funktioniert es
-Der geräteweite Einwilligungswert für den Standort wird auf „Deny“ gesetzt, der Wert, den Windows für Einstellungen > Datenschutz und Sicherheit > Standort > Standortdienste speichert, einen Schalter, den nur Administratoren ändern können [1]. Windows und Apps bekommen dann keinen Gerätestandort mehr [1]. Microsoft beschreibt den Schalter, der Registry-Wert dahinter ist aber nicht dokumentiert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau. Microsofts Anleitung zum Verwalten der Verbindungen von Windows nennt denselben Schalter, um den Standort für ein Gerät abzuschalten [2].
+Der geräteweite Einwilligungswert für den Standort wird auf „Deny“ gesetzt, der Wert, den Windows für Einstellungen > Datenschutz und Sicherheit > Standort > Standortdienste speichert, einen Schalter, den nur Administratoren ändern können [1]. Windows und Apps bekommen dann keinen Gerätestandort mehr [1]. Microsoft beschreibt den Schalter, der Registry-Wert dahinter ist aber nicht dokumentiert. In einem Test unter echtem Windows 11 26H2 hatte der Wert keine Wirkung: Die Standortdienste blieben in den Einstellungen an, und Apps behielten den Standortzugriff, auch nach einem Neustart. Die Option bleibt eine Vorschau, bis der Wert hinter dem Schalter in den Einstellungen bekannt ist. Microsofts Anleitung zum Verwalten der Verbindungen von Windows nennt denselben Schalter, um den Standort für ein Gerät abzuschalten [2].
 
 ## Warum es helfen kann
 Keine Standortabfragen im Hintergrund. Kein Effekt auf die Leistung.

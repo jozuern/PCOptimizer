@@ -4,7 +4,7 @@
 Verringert den Abstand zwischen Dateien im Explorer, wie Ansicht > Kompakte Ansicht.
 
 ## So funktioniert es
-Die kompakte Ansicht verringert den Abstand zwischen Dateien [1]. Die App setzt UseCompactMode auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Die kompakte Ansicht verringert den Abstand zwischen Dateien [1]. Die App setzt UseCompactMode auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Mehr Dateien passen auf den Bildschirm, praktisch mit Maus und Tastatur.

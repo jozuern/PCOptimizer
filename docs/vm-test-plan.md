@@ -100,12 +100,12 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `personalize.startRecentlyAddedHidden` | Start: no recently added apps | safe | sign out | registry | |
 | `personalize.startMostUsedHidden` | Start: no most used apps | safe | sign out | registry | |
 | `system.longPaths` | Long file paths | safe | restart | registry | |
-| `security.lsaProtection` | LSA protection on | moderate, preview | restart | registry | |
+| `security.lsaProtection` | LSA protection on | moderate | restart | registry | |
 | `security.defenderSandbox` | Microsoft Defender in a sandbox | safe | restart | registry | |
-| `personalize.desktopThisPc` | This PC icon on the desktop | safe, preview | sign out | registry | |
+| `personalize.desktopThisPc` | This PC icon on the desktop | safe | sign out | registry | |
 | `personalize.titleBarShakeOff` | No minimizing by shaking a window | safe | sign out | registry | |
-| `input.printScreenSnippingOff` | Print Screen copies the screen again | safe, preview | sign out | registry | |
-| `explorer.fullPathTitle` | File Explorer: full path in the title | safe, preview | sign out | registry | |
+| `input.printScreenSnippingOff` | Print Screen copies the screen again | safe | sign out | registry | |
+| `explorer.fullPathTitle` | File Explorer: full path in the title | safe | sign out | registry | |
 
 ## 4. Other tweaks
 
@@ -137,13 +137,13 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
-| `explorer.endTask` | "End task" in the taskbar menu | safe, preview |  | registry | |
+| `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
 | `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
 | `network.dns.google` | Public DNS servers | safe |  | dns | |
 | `network.dns.quad9` | Public DNS servers | safe |  | dns | |
-| `network.dns.opendns` | Public DNS servers | safe, preview |  | dns | |
-| `network.dns.adguard` | Public DNS servers | safe, preview |  | dns | |
-| `network.dns.automatic` | DNS servers: automatic (from the router) | safe, preview |  | dns | |
+| `network.dns.opendns` | Public DNS servers | safe |  | dns | |
+| `network.dns.adguard` | Public DNS servers | safe |  | dns | |
+| `network.dns.automatic` | DNS servers: automatic (from the router) | safe |  | dns | |
 | `privacy.advertisingIdOff` | Advertising ID off | safe |  | registry | |
 | `privacy.tailoredExperiencesOff` | Tailored experiences off | safe |  | registry | |
 | `privacy.feedbackNotificationsOff` | Feedback requests off | safe |  | registry | |
@@ -259,29 +259,29 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `battery.noIndexingOnBattery` | No search indexing on battery | safe |  | registry | |
 | `network.dohAutoUpgrade` | DNS over HTTPS for Cloudflare, Google and Quad9 | moderate, preview |  | dohAutoUpgrade | |
 | `storage.reservedStorageOff` | Reserved storage off | moderate |  | reservedStorage | |
-| `personalize.darkMode` | Dark mode for Windows and apps | safe, preview |  | registry | |
-| `personalize.accentTitleBars` | Accent color on title bars | safe, preview |  | registry | |
-| `explorer.hiddenFiles` | File Explorer: show hidden files | safe, preview |  | registry | |
-| `personalize.taskbarLeft` | Taskbar: icons on the left | safe, preview |  | registry | |
-| `personalize.clockSeconds` | Taskbar clock with seconds | safe, preview |  | registry | |
-| `personalize.taskbarNeverCombine` | Taskbar: never combine buttons | safe, preview |  | registry | |
-| `focus.taskbarFlashingOff` | Taskbar: no flashing buttons | safe, preview |  | registry | |
-| `focus.taskbarBadgesOff` | Taskbar: no badges on apps | safe, preview |  | registry | |
-| `personalize.showDesktopCornerOff` | Taskbar: no show desktop corner | safe, preview |  | registry | |
-| `personalize.snapAssistOff` | Snap: no suggestions for the other half | safe, preview |  | registry | |
-| `personalize.snapLayoutsOff` | Snap: no layouts on maximize button and screen top | safe, preview |  | registry | |
-| `explorer.compactView` | File Explorer: compact view | safe, preview |  | registry | |
-| `explorer.itemCheckboxes` | File Explorer: item check boxes | safe, preview |  | registry | |
-| `focus.notificationSoundsOff` | Notifications without sound | safe, preview |  | registry | |
-| `personalize.dynamicLightingOff` | Dynamic Lighting off | safe, preview |  | registry | |
-| `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | safe, preview |  | registry | |
+| `personalize.darkMode` | Dark mode for Windows and apps | safe |  | registry | |
+| `personalize.accentTitleBars` | Accent color on title bars | safe |  | registry | |
+| `explorer.hiddenFiles` | File Explorer: show hidden files | safe |  | registry | |
+| `personalize.taskbarLeft` | Taskbar: icons on the left | safe |  | registry | |
+| `personalize.clockSeconds` | Taskbar clock with seconds | safe |  | registry | |
+| `personalize.taskbarNeverCombine` | Taskbar: never combine buttons | safe |  | registry | |
+| `focus.taskbarFlashingOff` | Taskbar: no flashing buttons | safe |  | registry | |
+| `focus.taskbarBadgesOff` | Taskbar: no badges on apps | safe |  | registry | |
+| `personalize.showDesktopCornerOff` | Taskbar: no show desktop corner | safe |  | registry | |
+| `personalize.snapAssistOff` | Snap: no suggestions for the other half | safe |  | registry | |
+| `personalize.snapLayoutsOff` | Snap: no layouts on maximize button and screen top | safe |  | registry | |
+| `explorer.compactView` | File Explorer: compact view | safe |  | registry | |
+| `explorer.itemCheckboxes` | File Explorer: item check boxes | safe |  | registry | |
+| `focus.notificationSoundsOff` | Notifications without sound | safe |  | registry | |
+| `personalize.dynamicLightingOff` | Dynamic Lighting off | safe |  | registry | |
+| `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | safe |  | registry | |
 | `display.autoHdrOn` | Auto HDR on | safe, preview |  | registryToken | |
 | `focus.startAccountNotificationsOff` | Start: no account notifications | safe |  | registry | |
-| `focus.altTabTabsOff` | Alt+Tab: open windows only | safe, preview |  | registry | |
-| `privacy.searchHistoryOff` | Search: no history on this device | safe, preview |  | registry | |
+| `focus.altTabTabsOff` | Alt+Tab: open windows only | safe |  | registry | |
+| `privacy.searchHistoryOff` | Search: no history on this device | safe |  | registry | |
 | `focus.lockScreenTipsOff` | Lock screen: no fun facts and tips | safe, preview |  | registry | |
-| `focus.finishSetupOff` | No "Let's finish setting up your device" screen | safe, preview |  | registry | |
-| `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | safe, preview |  | registry | |
+| `focus.finishSetupOff` | No "Let's finish setting up your device" screen | safe |  | registry | |
+| `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | safe |  | registry | |
 | `display.vrrOn` | Variable refresh rate for older full screen games | safe, preview |  | registryToken | |
 
 ## 5. Tweaks that need real hardware
@@ -309,32 +309,9 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
 | `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | the effect the explanation page describes |
 | `privacy.locationOff` | Location access off | the effect the explanation page describes |
-| `explorer.endTask` | "End task" in the taskbar menu | the effect the explanation page describes |
 | `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
-| `personalize.darkMode` | Dark mode for Windows and apps | the effect the explanation page describes |
-| `personalize.accentTitleBars` | Accent color on title bars | the effect the explanation page describes |
-| `explorer.hiddenFiles` | File Explorer: show hidden files | the effect the explanation page describes |
-| `personalize.taskbarLeft` | Taskbar: icons on the left | the effect the explanation page describes |
-| `personalize.clockSeconds` | Taskbar clock with seconds | the effect the explanation page describes |
-| `personalize.taskbarNeverCombine` | Taskbar: never combine buttons | the effect the explanation page describes |
-| `focus.taskbarFlashingOff` | Taskbar: no flashing buttons | the effect the explanation page describes |
-| `focus.taskbarBadgesOff` | Taskbar: no badges on apps | the effect the explanation page describes |
-| `personalize.showDesktopCornerOff` | Taskbar: no show desktop corner | the effect the explanation page describes |
-| `personalize.snapAssistOff` | Snap: no suggestions for the other half | the effect the explanation page describes |
-| `personalize.snapLayoutsOff` | Snap: no layouts on maximize button and screen top | the effect the explanation page describes |
-| `explorer.compactView` | File Explorer: compact view | the effect the explanation page describes |
-| `explorer.itemCheckboxes` | File Explorer: item check boxes | the effect the explanation page describes |
-| `focus.notificationSoundsOff` | Notifications without sound | the effect the explanation page describes |
-| `personalize.dynamicLightingOff` | Dynamic Lighting off | the effect the explanation page describes |
-| `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | the effect the explanation page describes |
-| `personalize.desktopThisPc` | This PC icon on the desktop | the effect the explanation page describes |
 | `display.autoHdrOn` | Auto HDR on | the effect the explanation page describes |
-| `privacy.searchHistoryOff` | Search: no history on this device | the effect the explanation page describes |
-| `input.printScreenSnippingOff` | Print Screen copies the screen again | the effect the explanation page describes |
 | `focus.lockScreenTipsOff` | Lock screen: no fun facts and tips | the effect the explanation page describes |
-| `focus.finishSetupOff` | No "Let's finish setting up your device" screen | the effect the explanation page describes |
-| `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | the effect the explanation page describes |
-| `explorer.fullPathTitle` | File Explorer: full path in the title | the effect the explanation page describes |
 | `display.vrrOn` | Variable refresh rate for older full screen games | the effect the explanation page describes |
 
 <!-- End of generated tables. -->

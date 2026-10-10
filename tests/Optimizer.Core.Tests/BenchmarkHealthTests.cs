@@ -175,4 +175,18 @@ public class BenchmarkHealthTests
         for (var i = 0; i < 5; i++) Optimizer.Core.Platform.OutputLines.Add(capped, $"line {i}", max: 3);
         Assert.Equal(new[] { "line 2", "line 3", "line 4" }, capped);
     }
+
+    /// <summary>
+    /// DISM writes the OEM code page to a redirected pipe (third audit L-D8, checked on German Windows): "Ausführen"
+    /// arrives as 0x81 for the ü, which UTF-8 turns into a replacement character. Code pages 437 (English) and 850
+    /// (German) both use 0x81, 0x94 and 0xE1 for ü, ö and ß.
+    /// </summary>
+    [Fact]
+    public void DismOutputIsReadInTheOemCodePage()
+    {
+        var cp = Optimizer.Core.Platform.StreamingProcess.Oem.CodePage;
+        if (cp is not (437 or 850)) return;
+        byte[] dism = [0x41, 0x75, 0x73, 0x66, 0x81, 0x68, 0x72, 0x65, 0x6E, 0x20, 0x65, 0x72, 0x68, 0x94, 0x68, 0x74, 0x65, 0x20, 0xE1];
+        Assert.Equal("Ausführen erhöhte ß", Optimizer.Core.Platform.StreamingProcess.Oem.GetString(dism));
+    }
 }

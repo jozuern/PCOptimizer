@@ -193,7 +193,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Ethernet showed \"DNS server assignment\" Manual with 208.67.222.222 after apply and Automatic (DHCP) after undo" ],
       "actions": [
         {
           "type": "dns",
@@ -226,7 +226,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Ethernet showed \"DNS server assignment\" Manual with 94.140.14.14 after apply and Automatic (DHCP) after undo" ],
       "actions": [
         {
           "type": "dns",
@@ -257,7 +257,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: from manual DNS servers (8.8.8.8), Settings > Ethernet showed \"DNS server assignment\" Automatic (DHCP) after apply and Manual with 8.8.8.8 again after undo" ],
       "actions": [
         {
           "type": "dns",

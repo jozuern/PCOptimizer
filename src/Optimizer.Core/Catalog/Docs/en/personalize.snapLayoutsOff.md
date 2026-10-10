@@ -4,7 +4,7 @@
 Hovering over the maximize button or dragging a window to the top of the screen no longer shows snap layouts.
 
 ## How it works
-Settings has separate switches for snap layouts on the maximize button (the Snap flyout) and at the top of the screen (the Snap bar) [1]. The app sets EnableSnapAssistFlyout and EnableSnapBar to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Settings has separate switches for snap layouts on the maximize button (the Snap flyout) and at the top of the screen (the Snap bar) [1]. The app sets EnableSnapAssistFlyout and EnableSnapBar to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 No layout box pops up while you move or maximize windows.

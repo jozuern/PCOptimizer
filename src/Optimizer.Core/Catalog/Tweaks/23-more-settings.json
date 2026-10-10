@@ -50,7 +50,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Multitasking showed \"Show tabs from apps when snapping or pressing Alt+Tab\" as \"Don't show tabs\", locked by the policy, after apply and \"3 most recent tabs\" after undo" ],
       "scope": "user",
       "appliesTo": {
         "when": {
@@ -91,7 +91,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Search permissions showed \"Search history on this device\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -121,7 +121,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: after signing in again the Print Screen key no longer opened the Snipping Tool; it did before apply and after undo and signing in" ],
       "signOut": true,
       "scope": "user",
       "actions": [
@@ -190,7 +190,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Notifications showed \"Suggest ways to get the most out of Windows and finish setting up this device\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -219,7 +219,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: File Explorer Options > View showed \"Show sync provider notifications\" unchecked after apply and checked after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -248,7 +248,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: the title of a new File Explorer window was \"C:\\Test\\vis - File Explorer\" after apply and \"vis - File Explorer\" before and after undo" ],
       "signOut": true,
       "scope": "user",
       "actions": [

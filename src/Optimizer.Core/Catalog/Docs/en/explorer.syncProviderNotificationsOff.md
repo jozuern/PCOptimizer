@@ -4,7 +4,7 @@
 Hides the information and suggestions File Explorer shows from sync providers (cloud storage apps), like the Folder Options box "Show sync provider notifications".
 
 ## How it works
-Since Windows 11 build 22572.100, File Explorer can show sync provider notifications with information and suggestions [1]. The box "Show sync provider notifications" is in Folder Options on the View tab [1]. The app sets ShowSyncProviderNotifications to 0. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Since Windows 11 build 22572.100, File Explorer can show sync provider notifications with information and suggestions [1]. The box "Show sync provider notifications" is in Folder Options on the View tab [1]. The app sets ShowSyncProviderNotifications to 0. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 No suggestions about new features on top of your folders.

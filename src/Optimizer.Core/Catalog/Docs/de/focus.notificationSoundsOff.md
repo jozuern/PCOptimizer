@@ -4,7 +4,7 @@
 Benachrichtigungen erscheinen weiter, spielen aber für alle Apps keinen Ton mehr.
 
 ## So funktioniert es
-In den Einstellungen lässt sich der Ton für Benachrichtigungen ein- oder ausschalten [1]. Die App setzt den globalen Wert NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND auf 0, der für alle Apps gilt. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+In den Einstellungen lässt sich der Ton für Benachrichtigungen ein- oder ausschalten [1]. Die App setzt den globalen Wert NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND auf 0, der für alle Apps gilt. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Keine Benachrichtigungstöne über dem Spielsound oder im Sprachchat.

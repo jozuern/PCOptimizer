@@ -4,7 +4,7 @@
 Die Windows-Suche speichert deine Suchen nicht mehr auf diesem PC, wie der Schalter "Suchverlauf auf diesem Gerät". Vorhandener Verlauf bleibt.
 
 ## So funktioniert es
-Die Windows-Suche speichert deinen Suchverlauf auf dem Gerät, um Dinge schneller zu finden, etwa indem eine App weiter oben steht, nach der du schon gesucht hast [1]. Der Schalter liegt unter Einstellungen > Datenschutz und Sicherheit > Suchberechtigungen [1]. Die App setzt IsDeviceSearchHistoryEnabled auf 0. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [2] zeigt den Wert, den der Schalter schreibt. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Die Windows-Suche speichert deinen Suchverlauf auf dem Gerät, um Dinge schneller zu finden, etwa indem eine App weiter oben steht, nach der du schon gesucht hast [1]. Der Schalter liegt unter Einstellungen > Datenschutz und Sicherheit > Suchberechtigungen [1]. Die App setzt IsDeviceSearchHistoryEnabled auf 0. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [2] zeigt den Wert, den der Schalter schreibt. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Andere, die dieses Konto nutzen, sehen nicht, wonach du gesucht hast.

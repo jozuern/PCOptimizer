@@ -4,7 +4,7 @@
 Hides the small counters and status badges on taskbar app icons, like the switch "Show badges on taskbar apps".
 
 ## How it works
-Taskbar behaviors include showing badges on taskbar buttons [1]. The app sets TaskbarBadges to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Taskbar behaviors include showing badges on taskbar buttons [1]. The app sets TaskbarBadges to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Fewer distractions from unread counters.

@@ -12,7 +12,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Colors showed \"Choose your mode\" Dark after apply and Light after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -50,7 +50,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Colors showed \"Show accent color on title bars and window borders\" On after apply and Off after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -79,7 +79,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: a new File Explorer window listed a hidden file only after apply, and no longer after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -108,7 +108,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Taskbar icon alignment\" Left after apply and Center after undo, and the Start button moved to the left edge of the taskbar" ],
       "scope": "user",
       "actions": [
         {
@@ -137,7 +137,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Show seconds in system tray clock\" On after apply and Off after undo, and the taskbar clock showed seconds" ],
       "scope": "user",
       "actions": [
         {
@@ -166,7 +166,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Combine taskbar buttons and hide labels\" Never after apply and Always after undo; after signing in again the taskbar buttons showed their labels, and after undo and signing in they were combined again" ],
       "scope": "user",
       "actions": [
         {
@@ -204,7 +204,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Show flashing on taskbar apps\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -233,7 +233,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Show badges on taskbar apps\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -262,7 +262,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings showed \"Select the far corner of the taskbar to show the desktop\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -291,7 +291,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Multitasking showed \"When I snap a window, suggest what I can snap next to it\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -320,7 +320,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Multitasking showed both snap layout switches (maximize button and top of the screen) Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -358,7 +358,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: the rows of a new File Explorer window were 22 pixels high after apply and 24 pixels before and after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -387,7 +387,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: a selected item in a new File Explorer window had a check box after apply and none after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -416,7 +416,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Notifications showed \"Allow notifications to play sounds\" Off after apply and On after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -445,7 +445,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > Dynamic Lighting showed \"Use Dynamic Lighting on my devices\" Off after apply and On after undo (the switch is grayed out without a lighting device)" ],
       "scope": "user",
       "actions": [
         {
@@ -473,7 +473,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Sound > Communications showed \"Do nothing\" after apply and \"Reduce the volume of other sounds by 80%\" (the default) after undo" ],
       "scope": "user",
       "actions": [
         {
@@ -501,7 +501,7 @@
         ]
       },
       "risk": "safe",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: after signing in again the This PC icon was on the desktop, and after undo and signing in it was gone" ],
       "signOut": true,
       "scope": "user",
       "actions": [

@@ -4,7 +4,7 @@
 Clicking the far right corner of the taskbar no longer minimizes all windows.
 
 ## How it works
-Taskbar behaviors include "Select the far corner of the taskbar to show the desktop" [1]. The app sets TaskbarSd to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Taskbar behaviors include "Select the far corner of the taskbar to show the desktop" [1]. The app sets TaskbarSd to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 A misplaced click in the corner no longer minimizes your game or work.

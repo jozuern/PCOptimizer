@@ -4,7 +4,7 @@
 Taskbar buttons no longer flash when an app wants your attention, like the switch "Show flashing on taskbar apps".
 
 ## How it works
-Apps flash their taskbar button when they need your interaction, for example when they open behind another window [1]. The app sets TaskbarFlashing to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Apps flash their taskbar button when they need your interaction, for example when they open behind another window [1]. The app sets TaskbarFlashing to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 No flashing taskbar while you play in borderless windowed mode or stream.

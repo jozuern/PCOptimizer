@@ -4,7 +4,7 @@
 Ein Klick in die äußerste rechte Ecke der Taskleiste minimiert nicht mehr alle Fenster.
 
 ## So funktioniert es
-Zum Verhalten der Taskleiste gehört "Ecke der Taskleiste auswählen, um den Desktop anzuzeigen" [1]. Die App setzt TaskbarSd auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Zum Verhalten der Taskleiste gehört "Ecke der Taskleiste auswählen, um den Desktop anzuzeigen" [1]. Die App setzt TaskbarSd auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Ein Fehlklick in die Ecke minimiert nicht mehr dein Spiel oder deine Arbeit.

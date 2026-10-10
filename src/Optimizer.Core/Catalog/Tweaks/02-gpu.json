@@ -106,7 +106,7 @@
     {
       "id": "gpu.gameMode",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds both values, so they are the ones Windows itself uses for Game Mode on" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md: a clean Windows 11 26H2 already holds both values, so they are the ones Windows itself uses for Game Mode on", "docs/vm-test-results-2026-10-11.md: with Game Mode turned off in Settings, Settings showed Game Mode On after apply and Off again after undo" ],
       "category": "Graphics",
       "impact": {
         "gaming": 1,

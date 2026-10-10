@@ -37,10 +37,20 @@ public partial class App : Application
 
     private void Mark(string name) => _startMarks.Add((name, DateTime.Now));
 
-    protected override async void OnStartup(StartupEventArgs e)
+    protected override void OnStartup(StartupEventArgs e)
     {
         Mark("WPF started");
         base.OnStartup(e);
+        // The language (and with it the number format) is set here, outside an async method: the culture is an async
+        // local, so a change inside an async method is undone when that method first waits, and the UI thread then
+        // keeps Windows' regional format. Everything a click starts later would show "52,6 GB" on an English page.
+        _settings = AppSettings.Load();
+        Loc.Instance.SetLanguage(new CliArgs(e.Args).Value("--lang") ?? _settings.Language ?? Loc.Instance.Language);
+        StartAsync(e);
+    }
+
+    private async void StartAsync(StartupEventArgs e)
+    {
         DispatcherUnhandledException += (_, ex) =>
         {
             // Log the root cause too: XAML and reflection errors wrap the real exception.
@@ -72,8 +82,6 @@ public partial class App : Application
         };
 
         var args = new CliArgs(e.Args);
-        _settings = AppSettings.Load();
-        Loc.Instance.SetLanguage(args.Value("--lang") ?? _settings.Language ?? Loc.Instance.Language);
         Log.Info("app", "start", new { version = AppInfo.Text, args = e.Args });
 
         // OS gate: block below 26100 and non-x64 before scanning anything.

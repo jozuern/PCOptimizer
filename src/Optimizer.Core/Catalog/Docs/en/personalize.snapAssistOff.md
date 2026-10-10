@@ -4,7 +4,7 @@
 After you snap a window to one side, Windows no longer offers other windows to fill the rest. Snapping itself still works.
 
 ## How it works
-"When I snap a window, show what I can snap next to it" turns Snap Assist on or off [1]. The app sets SnapAssist to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+"When I snap a window, show what I can snap next to it" turns Snap Assist on or off [1]. The app sets SnapAssist to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 No thumbnails to dismiss after snapping a window.

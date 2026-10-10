@@ -180,7 +180,7 @@
     {
       "id": "explorer.endTask",
       "undocumented": true,
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > System > Advanced showed \"End task\" On after apply and Off after undo; the taskbar right-click menu of Notepad showed \"End task\" only while applied" ],
       "category": "Explorer",
       "impact": {
         "gaming": 0,

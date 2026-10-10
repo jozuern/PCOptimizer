@@ -4,7 +4,7 @@
 Shows the full folder path, such as C:\Users\Name\Documents, in the File Explorer title instead of only the folder name.
 
 ## How it works
-The Folder Options box "Display the full path in the title bar" shows the full path of the open folder [1]. The app sets FullPath to 1. The tutorial restarts File Explorer after setting the value [1], so the change shows after Explorer restarts or you sign out. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. Until a test on real Windows confirms the effect, the tweak is a Preview.
+The Folder Options box "Display the full path in the title bar" shows the full path of the open folder [1]. The app sets FullPath to 1. The tutorial restarts File Explorer after setting the value [1], so the change shows after Explorer restarts or you sign out. Microsoft does not document the registry value behind the switch; the tutorial [1] shows the value the switch writes. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 You see where you are, for example to tell game folders with the same name apart.

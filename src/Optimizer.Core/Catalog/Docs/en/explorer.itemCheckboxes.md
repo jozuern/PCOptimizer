@@ -4,7 +4,7 @@
 Shows a check box next to files and folders for selecting several items, like View > Show > Item check boxes.
 
 ## How it works
-Item check boxes show a box next to files and folders [1]. The app sets AutoCheckSelect to 1. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Item check boxes show a box next to files and folders [1]. The app sets AutoCheckSelect to 1. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Selecting several files works without holding Ctrl.

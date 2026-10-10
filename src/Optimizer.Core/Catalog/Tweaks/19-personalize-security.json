@@ -599,7 +599,7 @@
         ]
       },
       "risk": "moderate",
-      "preview": true,
+      "proof": [ "docs/vm-test-results-2026-10-11-b.md: from LSA protection turned off and a restart, apply and a restart turned it on (Windows Security > Core isolation showed \"Local Security Authority protection\" On, Wininit event 12 at boot), and undo and a restart turned it off again (switch Off, no event 12)" ],
       "restart": true,
       "actions": [
         {

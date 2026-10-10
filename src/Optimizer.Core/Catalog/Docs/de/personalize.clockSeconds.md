@@ -4,7 +4,7 @@
 Zeigt Sekunden in der Uhr der Taskleiste. Laut Microsoft braucht das mehr Strom.
 
 ## So funktioniert es
-Die Einstellungen bieten "Sekunden in der Uhr im Infobereich anzeigen" und weisen darauf hin, dass es mehr Strom braucht [1]. Die App setzt ShowSecondsInSystemClock auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Die Einstellungen bieten "Sekunden in der Uhr im Infobereich anzeigen" und weisen darauf hin, dass es mehr Strom braucht [1]. Die App setzt ShowSecondsInSystemClock auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
 
 ## Warum es helfen kann
 Praktisch zum Abpassen, etwa wenn ein Match oder ein Verkauf beginnt.

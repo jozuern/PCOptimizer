@@ -4,7 +4,7 @@
 Turns off Windows Dynamic Lighting, so the RGB software of your keyboard, mouse or PC maker controls the lighting alone.
 
 ## How it works
-"Use Dynamic Lighting on my devices" turns Dynamic Lighting on or off; when it is off, devices use their behavior without Dynamic Lighting [1]. The app sets AmbientLightingEnabled to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+"Use Dynamic Lighting on my devices" turns Dynamic Lighting on or off; when it is off, devices use their behavior without Dynamic Lighting [1]. The app sets AmbientLightingEnabled to 0. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Windows and the manufacturer's RGB software no longer fight over the lights.

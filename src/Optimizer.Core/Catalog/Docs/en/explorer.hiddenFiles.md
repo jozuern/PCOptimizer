@@ -4,7 +4,7 @@
 Shows hidden files and folders, such as AppData, like View > Show > Hidden items in File Explorer. Protected system files stay hidden.
 
 ## How it works
-File Explorer shows hidden items when you select View > Show > Hidden items [1]. The app sets Hidden to 1. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+File Explorer shows hidden items when you select View > Show > Hidden items [1]. The app sets Hidden to 1. Microsoft describes the switch [1] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. A test on real Windows 11 26H2 confirmed the effect, and undo removed it again.
 
 ## Why it can help
 Game saves, mods and configuration files often live in hidden folders such as AppData.
