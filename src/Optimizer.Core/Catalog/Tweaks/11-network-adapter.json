@@ -86,6 +86,7 @@
     },
     {
       "id": "network.dns.cloudflare",
+      "subject": "Cloudflare (1.1.1.1)",
       "docs": "network.dnsServers",
       "category": "Network",
       "impact": {
@@ -115,6 +116,7 @@
     },
     {
       "id": "network.dns.google",
+      "subject": "Google (8.8.8.8)",
       "docs": "network.dnsServers",
       "category": "Network",
       "impact": {
@@ -144,6 +146,7 @@
     },
     {
       "id": "network.dns.quad9",
+      "subject": "Quad9 (9.9.9.9)",
       "docs": "network.dnsServers",
       "category": "Network",
       "impact": {

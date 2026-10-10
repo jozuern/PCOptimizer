@@ -118,8 +118,9 @@ public static class CommandLine
 
         if (Hosts.Any(h => Path.GetFileName(first).Equals(h, StringComparison.OrdinalIgnoreCase)) && rest.Length > 0)
         {
-            var dll = SplitFirst(rest).First.Split(',')[0];
-            return Qualify(dll, system, exists);
+            // Switches such as "/d" (Windows' own Autochk task) come before the DLL.
+            var dll = Tokens(rest).FirstOrDefault(t => !t.StartsWith('/') && !t.StartsWith('-'))?.Split(',')[0];
+            if (dll is { Length: > 0 }) return Qualify(dll, system, exists);
         }
         return Qualify(first, system, exists);
     }

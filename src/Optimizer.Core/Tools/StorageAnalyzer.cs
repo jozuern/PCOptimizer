@@ -45,10 +45,20 @@ public static class StorageAnalyzer
         return list.Where(p => !string.IsNullOrEmpty(p)).Select(p => p.TrimEnd('\\') + "\\").Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>Files Windows keeps in the root of a drive (page file, swap file, hibernation file, boot dump log).</summary>
+    private static readonly HashSet<string> RootSystemFiles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "pagefile.sys", "swapfile.sys", "hiberfil.sys", "DumpStack.log", "DumpStack.log.tmp",
+    };
+
     /// <param name="appData">Also protect every AppData folder; off only in tests, whose temp folder lies there.</param>
     public static bool IsProtected(string path, IReadOnlyList<string> protectedRoots, bool appData = true)
     {
-        var p = path.TrimEnd('\\') + "\\";
+        var trimmed = path.TrimEnd('\\');
+        if (RootSystemFiles.Contains(Path.GetFileName(trimmed))
+            && string.Equals(Path.GetDirectoryName(trimmed), Path.GetPathRoot(trimmed), StringComparison.OrdinalIgnoreCase))
+            return true;
+        var p = trimmed + "\\";
         // AppData holds program state (settings, caches, saves): never offered for deletion.
         if (appData && p.Contains(@"\AppData\", StringComparison.OrdinalIgnoreCase)) return true;
         return protectedRoots.Any(r => p.StartsWith(r, StringComparison.OrdinalIgnoreCase));

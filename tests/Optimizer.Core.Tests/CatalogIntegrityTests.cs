@@ -38,6 +38,16 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void TweaksSharingAPageHaveDistinctSubjects()
+    {
+        // The title comes from the page, so without a subject the rows read the same (the DNS presets in the VM test).
+        AssertNone(Tweaks.GroupBy(t => t.DocId).Where(g => g.Count() > 1)
+            .SelectMany(g => g.GroupBy(t => t.Subject ?? "").Where(s => s.Count() > 1)
+                .Select(s => $"{g.Key}: {string.Join(", ", s.Select(t => t.Id))} share the title, set \"subject\""))
+            .ToList());
+    }
+
+    [Fact]
     public void ReferencedTweaksAndFindingsExist()
     {
         // Catalog tweaks and the fixes built at run time (fix.powerMode and the like).

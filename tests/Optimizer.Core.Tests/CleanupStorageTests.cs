@@ -144,6 +144,9 @@ public class CleanupStorageTests : IDisposable
         Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null)));
         Assert.False(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null), appData: false));
         Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots([Path.Combine(_root, "docs")]), appData: false)); // game library
+        Assert.True(StorageAnalyzer.IsProtected(@"C:\pagefile.sys", StorageAnalyzer.ProtectedRoots(null))); // offered in the VM test
+        Assert.True(StorageAnalyzer.IsProtected(@"D:\swapfile.sys", [], appData: false));
+        Assert.False(StorageAnalyzer.IsProtected(@"D:\Backup\pagefile.sys", [], appData: false)); // only the drive root is Windows'
     }
 
     [Fact]

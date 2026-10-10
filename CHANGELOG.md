@@ -50,6 +50,12 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - When Windows denies writing a protected value even with administrator rights (the Widgets policy on newer builds), the error names the value instead of "Attempted to perform an unauthorized operation".
 - DNS presets and delayed TCP acknowledgements work inside Hyper-V virtual machines. Hardware properties of network adapters still change only on PCI and USB adapters.
 
+### Pages (second VM test run)
+
+- The three DNS presets are named after their resolver (Cloudflare, Google, Quad9). Before, all three rows read "Public DNS servers".
+- Startup: a Startup folder shortcut with arguments showed "File not found" and no publisher, because the whole command line was checked as a file. Windows tasks that call rundll32 with a switch first (Autochk) showed the same.
+- The storage analyzer no longer offers the page file, swap file, hibernation file and boot dump log in the root of a drive for deletion.
+
 ## 0.4.0 (preview)
 
 A full review of every tweak, check, data file and text against Microsoft and vendor documentation, plus security hardening. Apply and undo are still only tested against the registry sandbox; run the [VM test plan](docs/vm-test-plan.md) before relying on it.

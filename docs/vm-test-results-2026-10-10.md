@@ -1,6 +1,6 @@
 # VM test results, 2026-10-10
 
-Run of [vm-test-plan.md](vm-test-plan.md) sections 2, 3 and 4 at commit 20650b3 (version 0.4.0). Sections 1, 5 and 6 are still open (see [Not covered](#not-covered)).
+Run of [vm-test-plan.md](vm-test-plan.md) sections 2, 3 and 4 at commit 20650b3 (version 0.4.0). A second run covered sections 1 and 6 through the UI at commit 2d781ff (version 0.4.4), see [Sections 1 and 6](#sections-1-and-6-ui). Section 5 needs real hardware (see [Not covered](#not-covered)).
 
 ## Setup
 
@@ -158,11 +158,76 @@ Same VM, build 26300.9457, after the fixes for B1 to B5 (engine and adapter chan
 | B4 | `background.widgetsOff` | OK, N1. After the VM installed a newer UCPD driver (same build 26300.9550), the write works again, so whether Windows blocks the value depends on the UCPD driver version, not on the build. On a PC that denies the write, the error now names the value and says Windows protects it. |
 | B5 | `network.dns.cloudflare`, `network.dns.google`, `network.dns.quad9`, `network.nagleOff` | OK. DNS went from the DHCP server to the preset and back; `TcpAckFrequency` was written and removed again. |
 
+## Sections 1 and 6 (UI)
+
+Same VM on build 26300.9550, restored from the `clean` checkpoint (System Protection off, local account, OneDrive installed but not signed in). The release exe ran elevated in the signed-in console session, started through a scheduled task with the highest run level, so there was no UAC prompt; the manifest of the published exe requests `requireAdministrator`. Every step was driven through UI Automation (and the mouse where a control has no automation pattern), with screenshots, and checked independently over PowerShell Direct. The exe was built from the working tree that was then committed as 2d781ff; the fixes for B6 to B9 were checked again with a new build.
+
+### Section 1: general flow
+
+| Step | Result |
+|---|---|
+| First start | OK. Scan finished in about 1.6 s, Gaming profile suggested with an info bar, no error banner. Readiness 93, 1 manual check, 14 passed, 2 recommended. |
+| Licenses window | OK. All 17 components show their full license text. |
+| Apply recommended | OK. One confirmation with the exact registry values (mouse acceleration, transparency), nothing Expert, boot-critical or anti-cheat sensitive. |
+| Restore point | OK. With System Protection off the app asked first; "Turn on and continue" turned it on, set `SystemRestorePointCreationFrequency` to 0 (listed on the Changes page with its own undo) and created one restore point. The next app session created one more before its first change. |
+| After apply | OK. All four values written, both tweaks On, Changes page lists them with the change log. |
+| Restart | OK. Both still On. No item of this PC's recommendation waits for a restart. |
+| Undo all | OK. One confirmation ("Changes to undo: 3"), all four values and the restore point frequency back to the originals, Changes page empty, backups removed. |
+| Restart again | OK. Windows started normally; the scan matched the first one (93, same 2 recommendations). |
+| Reset detection | OK. "Show file extensions" applied, `HideFileExt` set back to 1 by hand, Scan again: the banner named the change and offered "Apply again". |
+| Apply again (audit H5) | OK, fixed. The button applied the change again (`HideFileExt` 0), the banner disappeared and the backup from the first change stayed, so undo restored 1. |
+| Undo failure message (audit H6) | Not triggered in the VM; the code now uses `Result_UndoIncomplete` for a failed undo and `Result_Error` for other errors. |
+| Windows update between apply and undo | Not tested: no cumulative update newer than 26300.9550 was offered. |
+| Language and theme | OK. Deutsch and Dark kept after restarting the app. |
+| Update check | OK. Turned on, restarted the app: the log shows the release check with latest 0.3.0, no banner because 0.4.4 is newer, no error. A banner for a newer release could not be tested. |
+
+### Section 6: runtime changes and other features
+
+| Feature | Result |
+|---|---|
+| Startup entries | OK. A test Run key entry and a Startup folder shortcut switched off (StartupApproved `03`, like Task Manager); after sign out and in neither started while Steam did. Switched on again: both started. Found B6 and B7. |
+| Services | OK. Distributed Link Tracking Client from Automatic to Manual, after a restart Manual and stopped, Windows fine, undo set Automatic again. |
+| Scheduled tasks | OK. `MicrosoftEdgeUpdateTaskMachineUA` off (Disabled) and on again (Ready). |
+| Windows features | OK. Telnet Client on, restart, still on, off again. |
+| Debloat | OK. Solitaire Collection and Microsoft News removed for the user and from provisioning, so new accounts do not get them; both listed under removed apps; the Store button opened the product page and installed Microsoft News again. |
+| OneDrive | OK. With Known Folder Move (Documents redirected into the OneDrive folder, simulated in the registry because the account is not signed in) the uninstall button was disabled with the reason. Without it, `OneDriveSetup.exe /uninstall` ran as the user and OneDrive was gone. |
+| Cleanup | OK. All 11 categories selected. "Your temporary files" showed 4 MB, 10 files, matching an independent count (4306 KB, 10 files with both times older than 24 hours); the Recycle Bin showed the 300 KB test file. Afterwards the test files were gone, a file held open was skipped, the signed-in user's Recycle Bin was empty and a second user's Recycle Bin was untouched. |
+| Storage analyzer | OK after the B9 fix. The duplicate in `C:\Test\dup2` went to the Recycle Bin, the first copy stayed; files in Windows, Program Files and ProgramData cannot be selected. |
+| Apps | OK. Discord (per user) installed with winget running as the user; 7-Zip (machine-wide) installed to Program Files. Discord's own first start then asked for UAC for its helper; that prompt comes from Discord. |
+| DNS presets | OK after the B8 fix. Cloudflare set 1.1.1.1 and 1.0.0.1 on the Hyper-V adapter, undo restored DHCP (172.19.16.1) and an empty `NameServer`. |
+| DNS benchmark | OK. Results for the current server, Quad9, Cloudflare and Google; DNS settings unchanged. |
+| Tools | OK: DNS flush (`ipconfig /flushdns`), Explorer restart (the new Explorer runs without elevation), Winsock reset (network and DNS work after the restart). Windows Update repair partly: SoftwareDistribution renamed and services started again, but renaming catroot2 was denied (U9); the page lists the failed step and says the repair was partial. |
+| Health | OK. SFC and DISM ScanHealth with live output until the result and exit code 0. Throttle check: 53 samples, no throttling. PresentMon 2.6.0 started and reported "No frames captured" for explorer.exe (no game in the VM). PawnIO installed from the Health page through winget without a prompt; `winget uninstall` removed the files but left the driver package (`oem2.inf`) and its service, also after a restart, so the page still says installed (U10). |
+| Per-game NVIDIA profiles, MSI mode | Not tested: need real hardware. |
+
+### Bugs (fixed)
+
+**B6. Startup folder shortcuts with arguments show "File not found".** `StartupScanner.StartupFolders` passed the whole `"target" arguments` string as the image path, so the signature check never found the file and the entry showed "No publisher, File not found" (a shortcut to notepad.exe in the test). The image is now taken from the target alone.
+
+**B7. rundll32 entries with a switch show "File not found".** `CommandLine.ImagePath` took the first argument as the DLL, which is `/d` in Windows' `Autochk\Proxy` task. Switches are now skipped.
+
+**B8. The three DNS presets look the same.** All three share the explanation page and had no subject, so each row read "Public DNS servers" with the same text. They now read "Public DNS servers: Cloudflare (1.1.1.1)", "Google (8.8.8.8)" and "Quad9 (9.9.9.9)", and `CatalogIntegrityTests` fails when tweaks share a page without distinct subjects.
+
+**B9. The storage analyzer offers `pagefile.sys`.** Only folders were protected, so `C:\pagefile.sys` (and `swapfile.sys`) could be selected; Windows would refuse to move them because they are in use. Page file, swap file, hibernation file and boot dump log in the root of a drive are now protected.
+
+### UI findings (open)
+
+- **U1.** Changes made outside the catalog (restore point frequency, startup entries, services) show "Values: 1" with no state after it on the Changes page.
+- **U2.** Counts use a fixed plural: "1 changes" in the Apply again dialog, "1 files:" in the Recycle Bin dialog.
+- **U3.** The undo confirmation also says "The original values are saved before anything changes.", which belongs to apply.
+- **U4.** The dialog for a scheduled task that runs on a schedule is titled "Scheduled task at sign-in or boot".
+- **U5.** The SFC and DISM output box stays white in dark mode, and every progress step (`Verification 1% complete.`, the DISM progress bar) becomes its own line: 177 lines for one SFC run.
+- **U6.** The throttle check shows "Graphics card at temperature limit ? %, at power limit ? %" when there is no graphics card data; a sentence that says the data is not available would read better.
+- **U7.** The DNS confirmation names the adapter only by its GUID; the removed apps list shows package names (`Microsoft.BingNews`) instead of the app names.
+- **U8.** Accessibility: list items in the Licenses window, the removed apps list and the Startup, Services and Tools rows have no automation name, so screen readers read the type (`Optimizer.App.ViewModels.StartupRow`, `LicenseComponent { Name = ... }`). The language radio buttons use `Command`, which a screen reader's select action does not trigger, and a toggle switch confirmation blocks the UI Automation call until the dialog closes.
+- **U9.** Windows Update repair could not rename catroot2 ("Access denied") although Cryptographic Services had been stopped three seconds earlier; it is trigger-started, so something probably started it again. Renaming catroot2 right after stopping the service, or retrying, would help.
+- **U10.** After `winget uninstall namazso.PawnIO` the driver stays installed, so the hint "can be uninstalled in Settings > Apps" promises more than it does; removing it fully needs `pnputil /delete-driver oem2.inf /uninstall`.
+
 ## Not covered
 
-- **Section 1 (general flow):** needs the UI: confirmation dialogs, restore point question, Changes page, Licenses window, reset detection banner, language and theme, update check. Also check audit H5 ("Apply again" runs Undo) and H6 (undo failure message) there.
+- **Section 1:** the Windows update between apply and undo (no newer cumulative update), the update banner for a newer release (no newer release published) and a real undo failure for the H6 message.
 - **Section 5:** needs a real NVIDIA GPU and a physical network adapter.
-- **Section 6:** runtime-built changes (startup entries, services, tasks, features, debloat, cleanup, storage analyzer, apps, tools, health) go through the UI and were not run.
+- **Section 6:** per-game NVIDIA profiles and MSI mode need real hardware.
 
 ## Suggested plan changes
 
