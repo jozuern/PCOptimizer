@@ -1,0 +1,748 @@
+{
+  "tweaks": [
+    {
+      "id": "privacy.locationServiceOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+          "name": "DisableLocation",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.searchConnectedOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "DisableWebSearch",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "ConnectedSearchUseWeb",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "AllowSearchToUseLocation",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+      ]
+    },
+    {
+      "id": "privacy.malwareReportOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\MRT",
+          "name": "DontReportInfectionInformation",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.thirdPartySpotlightOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableThirdPartySuggestions",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
+      ]
+    },
+    {
+      "id": "privacy.spotlightOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "appliesTo": {
+        "when": {
+          "fact": "os.edition",
+          "in": [
+            "Enterprise",
+            "EnterpriseS",
+            "EnterpriseN",
+            "Education",
+            "EducationN",
+            "IoTEnterprise",
+            "IoTEnterpriseS"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsSpotlightFeatures",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.cloudContentOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "os.edition",
+          "in": [
+            "Enterprise",
+            "EnterpriseS",
+            "EnterpriseN",
+            "Education",
+            "EducationN",
+            "IoTEnterprise",
+            "IoTEnterpriseS"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableCloudOptimizedContent",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableConsumerAccountStateContent",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableSoftLanding",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience"
+      ]
+    },
+    {
+      "id": "privacy.oneSettingsOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "DisableOneSettingsDownloads",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.privacyExperienceOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\OOBE",
+          "name": "DisablePrivacyExperience",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy"
+      ]
+    },
+    {
+      "id": "privacy.recentFilesOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_TrackDocs",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "privacy.lockScreenCameraOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Personalization",
+          "name": "NoLockScreenCamera",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-devicelock"
+      ]
+    },
+    {
+      "id": "privacy.drmOnlineOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\WMDRM",
+          "name": "DisableOnline",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-windowsmediadrm"
+      ]
+    },
+    {
+      "id": "privacy.oneDriveFolderBackupOff",
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\OneDrive",
+          "name": "KFMBlockOptIn",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/sharepoint/use-group-policy"
+      ]
+    },
+    {
+      "id": "background.oneDriveSyncOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive",
+          "name": "DisableFileSyncNGSC",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system"
+      ]
+    },
+    {
+      "id": "updates.featureUpdatesDeferred",
+      "category": "Updates",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdates",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdatesPeriodInDays",
+          "kind": "dword",
+          "value": 365
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update"
+      ]
+    },
+    {
+      "id": "updates.storeAutoUpdateOff",
+      "category": "Updates",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\WindowsStore",
+          "name": "AutoDownload",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-applicationmanagement",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ]
+    },
+    {
+      "id": "storage.appArchivingOff",
+      "category": "Storage",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Appx",
+          "name": "AllowAutomaticAppArchiving",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-applicationmanagement"
+      ]
+    },
+    {
+      "id": "focus.updateNotificationsReduced",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "SetUpdateNotificationLevel",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "UpdateNotificationLevel",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update"
+      ]
+    },
+    {
+      "id": "focus.toastsOff",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications",
+          "name": "NoToastApplicationNotification",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-wpn"
+      ]
+    },
+    {
+      "id": "focus.lockScreenToastsOff",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications",
+          "name": "NoToastApplicationNotificationOnLockScreen",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-wpn"
+      ]
+    },
+    {
+      "id": "focus.notificationCenterOff",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "DisableNotificationCenter",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-taskbar"
+      ]
+    },
+    {
+      "id": "power.wakeTimersOff",
+      "category": "Power",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "powerSetting",
+          "subgroup": "SUB_SLEEP",
+          "setting": "RTCWAKE",
+          "ac": 0,
+          "dc": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/sleep-settings-automatically-wake-for-tasks",
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/setup-upgrade-and-drivers/desktop-wakes-up-unexpectedly-from-sleep-hibernation"
+      ]
+    }
+  ]
+}

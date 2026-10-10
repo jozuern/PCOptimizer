@@ -398,7 +398,7 @@ public class EngineTests
     private static ActionContext Copy(ActionContext c, IServiceManager services, IReadOnlyList<string> nics) => new()
     {
         Registry = c.Registry, Services = services, Power = c.Power, Bcd = c.Bcd, Tasks = c.Tasks, Displays = c.Displays, Processes = c.Processes,
-        PowerMode = c.PowerMode, Devices = c.Devices, Network = c.Network, Nvidia = c.Nvidia, Notify = c.Notify, ExportFolder = c.ExportFolder,
+        PowerMode = c.PowerMode, Devices = c.Devices, Network = c.Network, Nvidia = c.Nvidia, Accessibility = c.Accessibility, Notify = c.Notify, ExportFolder = c.ExportFolder,
         NetworkInterfaceIds = nics,
     };
 

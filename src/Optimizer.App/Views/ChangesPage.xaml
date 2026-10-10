@@ -20,7 +20,10 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding RestorePointText}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Changes_EnableRp}" Command="{Binding EnableRestorePointsCommand}" Visibility="{Binding CanEnableRestorePoints, Converter={StaticResource BoolToVisibility}}" />
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button Content="{l:Tr Changes_EnableRp}" Command="{Binding EnableRestorePointsCommand}" Visibility="{Binding CanEnableRestorePoints, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
+                    <ui:Button Content="{l:Tr Changes_OpenRestore}" Icon="{ui:SymbolIcon History20}" Command="{Binding OpenSystemRestoreCommand}" />
+                </StackPanel>
             </ui:CardControl>
 
             <DockPanel Margin="0,24,0,8">

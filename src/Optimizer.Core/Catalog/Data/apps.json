@@ -203,6 +203,24 @@
       "de": "Laufzeitbibliotheken, die die meisten Spiele und Programme brauchen."
     },
     {
+      "id": "Microsoft.DotNet.DesktopRuntime.10",
+      "name": ".NET Desktop Runtime 10",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Windows Desktop Runtime - 10\\.",
+      "en": "Runtime many Windows programs and tools need. Long-term support release.",
+      "de": "Laufzeit, die viele Windows-Programme und Werkzeuge brauchen. Version mit Langzeitsupport."
+    },
+    {
+      "id": "Microsoft.DotNet.DesktopRuntime.8",
+      "name": ".NET Desktop Runtime 8",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Windows Desktop Runtime - 8\\.",
+      "en": "Older long-term support runtime that some programs still need. Microsoft supports it until November 10, 2026.",
+      "de": "Ältere Laufzeit mit Langzeitsupport, die manche Programme noch brauchen. Microsoft unterstützt sie bis zum 10. November 2026."
+    },
+    {
       "id": "Microsoft.EdgeWebView2Runtime",
       "wingetScope": "machine",
       "name": "WebView2 Runtime",

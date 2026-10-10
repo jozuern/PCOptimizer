@@ -173,6 +173,21 @@ internal sealed class FakeNvidia : INvidiaSettings
     }
 }
 
+internal sealed class FakeAccessibility : IAccessibilitySettings
+{
+    /// <summary>Windows defaults: Sticky Keys 510, Filter Keys 126, Toggle Keys 62 (shortcut bit 0x4 set in all three).</summary>
+    public Dictionary<AccessibilityFeature, uint> Flags { get; } = new()
+    {
+        [AccessibilityFeature.StickyKeys] = 510, [AccessibilityFeature.FilterKeys] = 126, [AccessibilityFeature.ToggleKeys] = 62,
+    };
+
+    /// <summary>The app runs as another account than the session user: nothing can be read.</summary>
+    public bool Unavailable { get; set; }
+
+    public uint? GetFlags(AccessibilityFeature feature) => Unavailable ? null : Flags[feature];
+    public void SetFlags(AccessibilityFeature feature, uint flags) => Flags[feature] = flags;
+}
+
 internal sealed class FakeRestorePoints : IRestorePoints
 {
     public bool? Enabled { get; set; } = true;
@@ -204,6 +219,7 @@ internal sealed class EngineFixture : IDisposable
     public FakePowerMode PowerMode { get; } = new();
     public FakeDevices Devices { get; } = new();
     public FakeNvidia Nvidia { get; } = new();
+    public FakeAccessibility Accessibility { get; } = new();
     public string BackupRoot { get; } = Path.Combine(Path.GetTempPath(), "pco-test-" + Guid.NewGuid().ToString("N"));
     public ActionContext Context { get; }
     public BackupStore Store { get; }
@@ -224,6 +240,7 @@ internal sealed class EngineFixture : IDisposable
             Devices = Devices,
             Network = new FakeNetwork(Registry),
             Nvidia = Nvidia,
+            Accessibility = Accessibility,
             ExportFolder = BackupRoot,
             NetworkInterfaceIds = nics,
         };

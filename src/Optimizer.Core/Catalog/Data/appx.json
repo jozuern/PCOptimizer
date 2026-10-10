@@ -1,5 +1,5 @@
 {
-  "_comment": "Removable inbox apps (allowlist). Only these are offered. guard: xbox = blocked while Xbox or Game Pass games are installed; xboxOrX3d = also on dual-CCD X3D CPUs. reinstall: store = still listed in the Microsoft Store (storeId = Store product id, checked with the Store catalog API, market US, 2026-10-10); none = Microsoft no longer offers it there or the listing is not confirmed.",
+  "_comment": "Removable inbox apps (allowlist). Only these are offered. guard: xbox = blocked while Xbox or Game Pass games are installed; xboxOrX3d = also on dual-CCD X3D CPUs. reinstall: store = still listed in the Microsoft Store (storeId = Store product id, checked with the Store catalog API, market US, 2026-10-10); none = Microsoft no longer offers it there or the listing is not confirmed. protected: names never offered; * matches a prefix; !name is an exception to a prefix (Edge Game Assist under Microsoft.Edge*).",
   "apps": [
     {
       "name": "Microsoft.BingNews",
@@ -368,6 +368,950 @@
       "de": "Xbox-App. Nötig, um Game-Pass- und Microsoft-Store-Spiele zu installieren und zu aktualisieren.",
       "title": "Xbox app",
       "titleDe": "Xbox-App"
+    },
+    {
+      "name": "Microsoft.3DBuilder",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "3D Builder",
+      "titleDe": "3D Builder"
+    },
+    {
+      "name": "Microsoft.BingFinance",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Bing Finance",
+      "titleDe": "Bing Finanzen"
+    },
+    {
+      "name": "Microsoft.BingFoodAndDrink",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Bing Food & Drink",
+      "titleDe": "Bing Essen & Trinken"
+    },
+    {
+      "name": "Microsoft.BingHealthAndFitness",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Bing Health & Fitness",
+      "titleDe": "Bing Gesundheit & Fitness"
+    },
+    {
+      "name": "Microsoft.BingSports",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Bing Sports",
+      "titleDe": "Bing Sport"
+    },
+    {
+      "name": "Microsoft.BingTravel",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Bing Travel",
+      "titleDe": "Bing Reisen"
+    },
+    {
+      "name": "Microsoft.BingTranslator",
+      "group": "consumer",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Microsoft Translator app. Translation in Edge and on the web works without it.",
+      "de": "Microsoft-Übersetzer-App. Übersetzen in Edge und im Web funktioniert auch ohne sie.",
+      "title": "Translator",
+      "titleDe": "Übersetzer"
+    },
+    {
+      "name": "Microsoft.Messaging",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Messaging",
+      "titleDe": "Nachrichten"
+    },
+    {
+      "name": "Microsoft.Microsoft3DViewer",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Viewer for 3D models. Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Betrachter für 3D-Modelle. Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "3D Viewer",
+      "titleDe": "3D-Viewer"
+    },
+    {
+      "name": "Microsoft.MicrosoftJournal",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Note-taking app for pen input.",
+      "de": "Notiz-App für Stifteingabe.",
+      "title": "Microsoft Journal",
+      "titleDe": "Microsoft Journal"
+    },
+    {
+      "name": "Microsoft.MicrosoftPowerBIForWindows",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Power BI business analytics app.",
+      "de": "Power-BI-App für Geschäftsanalysen.",
+      "title": "Power BI",
+      "titleDe": "Power BI"
+    },
+    {
+      "name": "Microsoft.MixedReality.Portal",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Portal for Windows Mixed Reality headsets. Windows 11 24H2 removed Windows Mixed Reality, so the app no longer works there.",
+      "de": "Portal für Windows-Mixed-Reality-Headsets. Windows 11 24H2 hat Windows Mixed Reality entfernt, die App funktioniert dort nicht mehr.",
+      "title": "Mixed Reality Portal",
+      "titleDe": "Mixed-Reality-Portal"
+    },
+    {
+      "name": "Microsoft.NetworkSpeedTest",
+      "group": "consumer",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Internet speed test app.",
+      "de": "App zum Messen der Internetgeschwindigkeit.",
+      "title": "Network Speed Test",
+      "titleDe": "Netzwerk-Geschwindigkeitstest"
+    },
+    {
+      "name": "Microsoft.News",
+      "group": "consumer",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft News app.",
+      "de": "Ältere Microsoft-News-App.",
+      "title": "News (older app)",
+      "titleDe": "News (ältere App)"
+    },
+    {
+      "name": "Microsoft.Office.OneNote",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "OneNote app from the Store. Notes are stored in OneDrive and stay there; the OneNote desktop app is not affected.",
+      "de": "OneNote-App aus dem Store. Notizen liegen in OneDrive und bleiben dort; die OneNote-Desktop-App ist nicht betroffen.",
+      "title": "OneNote for Windows 10",
+      "titleDe": "OneNote für Windows 10"
+    },
+    {
+      "name": "Microsoft.Office.Sway",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Sway presentation app.",
+      "de": "Präsentations-App Sway.",
+      "title": "Sway",
+      "titleDe": "Sway"
+    },
+    {
+      "name": "Microsoft.OneConnect",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Mobile Plans",
+      "titleDe": "Mobilfunktarife"
+    },
+    {
+      "name": "Microsoft.Print3D",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Print 3D",
+      "titleDe": "Print 3D"
+    },
+    {
+      "name": "Microsoft.SkypeApp",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Skype app. Microsoft ended Skype in May 2025.",
+      "de": "Skype-App. Microsoft hat Skype im Mai 2025 eingestellt.",
+      "title": "Skype",
+      "titleDe": "Skype"
+    },
+    {
+      "name": "Microsoft.XboxApp",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Old Xbox Console Companion app; the Xbox app replaces it. Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Alter Xbox-Konsolenbegleiter; die Xbox-App ersetzt ihn. Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Xbox Console Companion",
+      "titleDe": "Xbox-Konsolenbegleiter"
+    },
+    {
+      "name": "MicrosoftCorporationII.MicrosoftFamily",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Microsoft Family Safety. Keep it if parental controls for this PC are managed with it.",
+      "de": "Microsoft Family Safety. Behalte es, wenn die Jugendschutzeinstellungen dieses PCs damit verwaltet werden.",
+      "title": "Family Safety",
+      "titleDe": "Family Safety"
+    },
+    {
+      "name": "Microsoft.PCManager",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Microsoft's cleanup and optimization app.",
+      "de": "Aufräum- und Optimierungs-App von Microsoft.",
+      "title": "Microsoft PC Manager",
+      "titleDe": "Microsoft PC Manager"
+    },
+    {
+      "name": "Microsoft.M365Companions",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Microsoft 365 Calendar, Files and People mini apps for business accounts. A Microsoft 365 admin can install them again.",
+      "de": "Microsoft-365-Mini-Apps Kalender, Dateien und Personen für Geschäftskonten. Ein Microsoft-365-Admin kann sie wieder installieren.",
+      "title": "Microsoft 365 Companions",
+      "titleDe": "Microsoft 365 Companions"
+    },
+    {
+      "name": "Microsoft.MSPaint",
+      "group": "legacy",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Paint 3D. Classic Paint is a separate app and stays. Older Microsoft app that Windows 11 no longer installs; found on PCs upgraded from Windows 10.",
+      "de": "Paint 3D. Das klassische Paint ist eine eigene App und bleibt. Ältere Microsoft-App, die Windows 11 nicht mehr installiert; findet sich auf PCs, die von Windows 10 aktualisiert wurden.",
+      "title": "Paint 3D",
+      "titleDe": "Paint 3D"
+    },
+    {
+      "name": "Microsoft.RemoteDesktop",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Remote Desktop client from the Store. The built-in Remote Desktop Connection (mstsc) stays.",
+      "de": "Remotedesktop-Client aus dem Store. Die eingebaute Remotedesktopverbindung (mstsc) bleibt.",
+      "title": "Remote Desktop (Store app)",
+      "titleDe": "Remotedesktop (Store-App)"
+    },
+    {
+      "name": "Microsoft.Whiteboard",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Microsoft Whiteboard. Boards are stored in your Microsoft account.",
+      "de": "Microsoft Whiteboard. Boards liegen in deinem Microsoft-Konto.",
+      "title": "Whiteboard",
+      "titleDe": "Whiteboard"
+    },
+    {
+      "name": "AdobeSystemsIncorporated.AdobePhotoshopExpress",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Adobe Photoshop Express",
+      "titleDe": "Adobe Photoshop Express"
+    },
+    {
+      "name": "Amazon.com.Amazon",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Amazon",
+      "titleDe": "Amazon"
+    },
+    {
+      "name": "AmazonVideo.PrimeVideo",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Prime Video",
+      "titleDe": "Prime Video"
+    },
+    {
+      "name": "Disney.37853FC22B2CE",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Disney+",
+      "titleDe": "Disney+"
+    },
+    {
+      "name": "FACEBOOK.FACEBOOK",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Facebook",
+      "titleDe": "Facebook"
+    },
+    {
+      "name": "Facebook.Instagram",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Instagram",
+      "titleDe": "Instagram"
+    },
+    {
+      "name": "HULULLC.HULUPLUS",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Hulu",
+      "titleDe": "Hulu"
+    },
+    {
+      "name": "king.com.BubbleWitch3Saga",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Bubble Witch 3 Saga",
+      "titleDe": "Bubble Witch 3 Saga"
+    },
+    {
+      "name": "king.com.CandyCrushSaga",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Candy Crush Saga",
+      "titleDe": "Candy Crush Saga"
+    },
+    {
+      "name": "king.com.CandyCrushSodaSaga",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Candy Crush Soda Saga",
+      "titleDe": "Candy Crush Soda Saga"
+    },
+    {
+      "name": "4DF9E0F8.Netflix",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Netflix",
+      "titleDe": "Netflix"
+    },
+    {
+      "name": "flaregamesGmbH.RoyalRevolt",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Royal Revolt",
+      "titleDe": "Royal Revolt"
+    },
+    {
+      "name": "Sidia.LiveWallpaper",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Live Wallpaper",
+      "titleDe": "Live Wallpaper"
+    },
+    {
+      "name": "SpotifyAB.SpotifyMusic",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion. Keep it if you use Spotify.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen. Behalte sie, wenn du Spotify nutzt.",
+      "title": "Spotify",
+      "titleDe": "Spotify"
+    },
+    {
+      "name": "BytedancePte.Ltd.TikTok",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "TikTok",
+      "titleDe": "TikTok"
+    },
+    {
+      "name": "ACGMediaPlayer",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "ACG Media Player",
+      "titleDe": "ACG Media Player"
+    },
+    {
+      "name": "Asphalt8Airborne",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Asphalt 8",
+      "titleDe": "Asphalt 8"
+    },
+    {
+      "name": "AutodeskSketchBook",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Autodesk SketchBook",
+      "titleDe": "Autodesk SketchBook"
+    },
+    {
+      "name": "CaesarsSlotsFreeCasino",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Caesars Slots",
+      "titleDe": "Caesars Slots"
+    },
+    {
+      "name": "COOKINGFEVER",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Cooking Fever",
+      "titleDe": "Cooking Fever"
+    },
+    {
+      "name": "CyberLinkMediaSuiteEssentials",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "CyberLink Media Suite",
+      "titleDe": "CyberLink Media Suite"
+    },
+    {
+      "name": "DisneyMagicKingdoms",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Disney Magic Kingdoms",
+      "titleDe": "Disney Magic Kingdoms"
+    },
+    {
+      "name": "DrawboardPDF",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Drawboard PDF",
+      "titleDe": "Drawboard PDF"
+    },
+    {
+      "name": "Duolingo-LearnLanguagesforFree",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Duolingo",
+      "titleDe": "Duolingo"
+    },
+    {
+      "name": "FarmVille2CountryEscape",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "FarmVille 2",
+      "titleDe": "FarmVille 2"
+    },
+    {
+      "name": "Flipboard",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Flipboard",
+      "titleDe": "Flipboard"
+    },
+    {
+      "name": "HiddenCity",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Hidden City",
+      "titleDe": "Hidden City"
+    },
+    {
+      "name": "iHeartRadio",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "iHeartRadio",
+      "titleDe": "iHeartRadio"
+    },
+    {
+      "name": "LinkedInforWindows",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "LinkedIn",
+      "titleDe": "LinkedIn"
+    },
+    {
+      "name": "MarchofEmpires",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "March of Empires",
+      "titleDe": "March of Empires"
+    },
+    {
+      "name": "NYTCrossword",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "NYT Crossword",
+      "titleDe": "NYT Crossword"
+    },
+    {
+      "name": "OneCalendar",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "One Calendar",
+      "titleDe": "One Calendar"
+    },
+    {
+      "name": "PandoraMediaInc",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Pandora",
+      "titleDe": "Pandora"
+    },
+    {
+      "name": "PhototasticCollage",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Phototastic Collage",
+      "titleDe": "Phototastic Collage"
+    },
+    {
+      "name": "PicsArt-PhotoStudio",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "PicsArt",
+      "titleDe": "PicsArt"
+    },
+    {
+      "name": "PolarrPhotoEditorAcademicEdition",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Polarr Photo Editor",
+      "titleDe": "Polarr Photo Editor"
+    },
+    {
+      "name": "SlingTV",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "Sling TV",
+      "titleDe": "Sling TV"
+    },
+    {
+      "name": "TuneInRadio",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "TuneIn Radio",
+      "titleDe": "TuneIn Radio"
+    },
+    {
+      "name": "WinZipUniversal",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "none",
+      "suffix": true,
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "WinZip (Store app)",
+      "titleDe": "WinZip (Store-App)"
+    },
+    {
+      "name": "AD2F1837.HPAIExperienceCenter",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP AI Experience Center",
+      "titleDe": "HP AI Experience Center"
+    },
+    {
+      "name": "AD2F1837.HPConnectedMusic",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Connected Music",
+      "titleDe": "HP Connected Music"
+    },
+    {
+      "name": "AD2F1837.HPConnectedPhotopoweredbySnapfish",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Connected Photo",
+      "titleDe": "HP Connected Photo"
+    },
+    {
+      "name": "AD2F1837.HPDesktopSupportUtilities",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Desktop Support Utilities",
+      "titleDe": "HP Desktop Support Utilities"
+    },
+    {
+      "name": "AD2F1837.HPEasyClean",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Easy Clean",
+      "titleDe": "HP Easy Clean"
+    },
+    {
+      "name": "AD2F1837.HPFileViewer",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP File Viewer",
+      "titleDe": "HP File Viewer"
+    },
+    {
+      "name": "AD2F1837.HPJumpStarts",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP JumpStarts",
+      "titleDe": "HP JumpStarts"
+    },
+    {
+      "name": "AD2F1837.HPPCHardwareDiagnosticsWindows",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP hardware diagnostics. HP support may ask you to run it; it can be installed again from HP.",
+      "de": "HP-Hardwarediagnose. Der HP-Support bittet eventuell darum, sie auszuführen; sie lässt sich bei HP wieder installieren.",
+      "title": "HP PC Hardware Diagnostics",
+      "titleDe": "HP PC Hardware Diagnostics"
+    },
+    {
+      "name": "AD2F1837.HPPowerManager",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP power and battery settings app. Battery care settings of some HP laptops are made here.",
+      "de": "HP-App für Energie- und Akkueinstellungen. Akkuschonende Einstellungen mancher HP-Notebooks werden hier gesetzt.",
+      "title": "HP Power Manager",
+      "titleDe": "HP Power Manager"
+    },
+    {
+      "name": "AD2F1837.HPPrinterControl",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP printer app. Keep it if you manage an HP printer with it.",
+      "de": "HP-Drucker-App. Behalte sie, wenn du damit einen HP-Drucker verwaltest.",
+      "title": "HP Printer Control",
+      "titleDe": "HP Printer Control"
+    },
+    {
+      "name": "AD2F1837.HPPrivacySettings",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Privacy Settings",
+      "titleDe": "HP Privacy Settings"
+    },
+    {
+      "name": "AD2F1837.HPQuickDrop",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP QuickDrop",
+      "titleDe": "HP QuickDrop"
+    },
+    {
+      "name": "AD2F1837.HPQuickTouch",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP QuickTouch",
+      "titleDe": "HP QuickTouch"
+    },
+    {
+      "name": "AD2F1837.HPRegistration",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Registration",
+      "titleDe": "HP Registration"
+    },
+    {
+      "name": "AD2F1837.HPSupportAssistant",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP support app. It delivers BIOS and driver updates for this PC: keep it unless you get them another way.",
+      "de": "HP-Support-App. Sie liefert BIOS- und Treiberupdates für diesen PC: Behalte sie, wenn du sie nicht auf anderem Weg bekommst.",
+      "title": "HP Support Assistant",
+      "titleDe": "HP Support Assistant"
+    },
+    {
+      "name": "AD2F1837.HPSureShieldAI",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP security app. Microsoft Defender keeps protecting the PC without it.",
+      "de": "HP-Sicherheits-App. Microsoft Defender schützt den PC auch ohne sie.",
+      "title": "HP Sure Shield AI",
+      "titleDe": "HP Sure Shield AI"
+    },
+    {
+      "name": "AD2F1837.HPSystemInformation",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP System Information",
+      "titleDe": "HP System Information"
+    },
+    {
+      "name": "AD2F1837.HPWelcome",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP Welcome",
+      "titleDe": "HP Welcome"
+    },
+    {
+      "name": "AD2F1837.HPWorkWell",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP app. Check before removing that you do not use it for HP settings or support.",
+      "de": "HP-App. Prüfe vor dem Entfernen, dass du sie nicht für HP-Einstellungen oder Support nutzt.",
+      "title": "HP WorkWell",
+      "titleDe": "HP WorkWell"
+    },
+    {
+      "name": "AD2F1837.myHP",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "HP hub app with device information, support and services. It delivers BIOS and driver updates for this PC: keep it unless you get them another way.",
+      "de": "HP-App mit Geräteinfos, Support und Diensten. Sie liefert BIOS- und Treiberupdates für diesen PC: Behalte sie, wenn du sie nicht auf anderem Weg bekommst.",
+      "title": "myHP",
+      "titleDe": "myHP"
+    },
+    {
+      "name": "E046963F.LenovoCompanion",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Lenovo app for device settings and support, including battery charge limits. It delivers BIOS and driver updates for this PC: keep it unless you get them another way.",
+      "de": "Lenovo-App für Geräteeinstellungen und Support, auch Ladegrenzen für den Akku. Sie liefert BIOS- und Treiberupdates für diesen PC: Behalte sie, wenn du sie nicht auf anderem Weg bekommst.",
+      "title": "Lenovo Vantage",
+      "titleDe": "Lenovo Vantage"
+    },
+    {
+      "name": "LenovoCompanyLimited.LenovoVantageService",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Background part of Lenovo Vantage. It delivers BIOS and driver updates for this PC: keep it unless you get them another way.",
+      "de": "Hintergrundteil von Lenovo Vantage. Sie liefert BIOS- und Treiberupdates für diesen PC: Behalte sie, wenn du sie nicht auf anderem Weg bekommst.",
+      "title": "Lenovo Vantage Service",
+      "titleDe": "Lenovo Vantage Service"
+    },
+    {
+      "name": "DellInc.DellSupportAssistforPCs",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Dell support and diagnostics app. It delivers BIOS and driver updates for this PC: keep it unless you get them another way.",
+      "de": "Dell-App für Support und Diagnose. Sie liefert BIOS- und Treiberupdates für diesen PC: Behalte sie, wenn du sie nicht auf anderem Weg bekommst.",
+      "title": "Dell SupportAssist",
+      "titleDe": "Dell SupportAssist"
+    },
+    {
+      "name": "DellInc.DellDigitalDelivery",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Delivers software bought with the PC. Keep it until that software is installed.",
+      "de": "Liefert Software, die mit dem PC gekauft wurde. Behalte sie, bis diese Software installiert ist.",
+      "title": "Dell Digital Delivery",
+      "titleDe": "Dell Digital Delivery"
+    },
+    {
+      "name": "DellInc.DellMobileConnect",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Dell phone link app; Windows Phone Link does the same.",
+      "de": "Dell-App zum Verbinden des Handys; der Windows-Smartphone-Link macht dasselbe.",
+      "title": "Dell Mobile Connect",
+      "titleDe": "Dell Mobile Connect"
+    },
+    {
+      "name": "LGElectronics.LGMonitorApp",
+      "group": "oem",
+      "guard": null,
+      "reinstall": "none",
+      "en": "LG monitor settings app. Windows Update may install it again while an LG monitor is connected.",
+      "de": "LG-App für Monitoreinstellungen. Windows Update kann sie wieder installieren, solange ein LG-Monitor angeschlossen ist.",
+      "title": "LG Monitor App",
+      "titleDe": "LG Monitor App"
+    },
+    {
+      "name": "Microsoft.Edge.GameAssist",
+      "group": "xbox",
+      "guard": null,
+      "reinstall": "none",
+      "en": "Game Assist, a version of Edge as a Game Bar widget. Removing it keeps Edge; Edge can install it again (Settings and more, search for Game Assist).",
+      "de": "Game Assist, eine Edge-Version als Game-Bar-Widget. Edge bleibt beim Entfernen erhalten und kann es wieder installieren (Einstellungen und mehr, nach Game Assist suchen).",
+      "title": "Edge Game Assist",
+      "titleDe": "Edge Game Assist"
     }
   ],
   "protected": [
@@ -389,6 +1333,7 @@
     "Microsoft.Windows.CloudExperienceHost",
     "Microsoft.MicrosoftEdge*",
     "Microsoft.Edge*",
+    "!Microsoft.Edge.GameAssist",
     "Microsoft.HEIFImageExtension",
     "Microsoft.HEVCVideoExtension",
     "Microsoft.WebMediaExtensions",

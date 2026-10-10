@@ -24,7 +24,7 @@ Developer switches (all read-only):
 | `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware, Settings |
 | `--shot-scanning <file.png>` | renders the window while the first scan still runs (score placeholders) |
 | `--pane closed` | collapses the navigation rail before the screenshot |
-| `--scroll end` | scrolls the page to the end before the screenshot (for example Settings > About) |
+| `--scroll end` or `--scroll <pixels>` | scrolls the page to the end, or down by that many pixels, before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
 | `--category <key>` | Tweaks page filtered to one category before the screenshot (e.g. `Privacy`) |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |

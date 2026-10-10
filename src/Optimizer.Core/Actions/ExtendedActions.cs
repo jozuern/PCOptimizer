@@ -455,3 +455,37 @@ public sealed class SystemNvidiaSettings : INvidiaSettings
         s.Save();
     }
 }
+
+/// <summary>
+/// The keyboard shortcut of a keyboard accessibility feature, through the documented SystemParametersInfo flag
+/// SKF_/FKF_/TKF_HOTKEYACTIVE (0x4): Sticky Keys (Shift five times), Filter Keys (right Shift for eight seconds),
+/// Toggle Keys (Num Lock for eight seconds). Only that bit changes; whether the feature itself is on stays as it was.
+/// </summary>
+public sealed class AccessibilityShortcutAction : TweakAction
+{
+    private const uint HotkeyActive = 0x4;
+
+    public AccessibilityFeature Feature { get; init; }
+
+    /// <summary>true = the shortcut works, false = it is turned off.</summary>
+    public bool Shortcut { get; init; }
+
+    public override string TargetKey => $"spi:{Feature}:hotkey".ToLowerInvariant();
+    public override string Describe(ActionContext c) => $"{Feature} keyboard shortcut (SystemParametersInfo)";
+    public override StoredValue Desired(ActionContext c) => State(Shortcut);
+
+    private static StoredValue State(bool on) => new(true, "bool", on ? "On" : "Off");
+
+    public override StoredValue? Read(ActionContext c) =>
+        c.Accessibility.GetFlags(Feature) is { } flags ? State((flags & HotkeyActive) != 0) : null;
+
+    public override void Apply(ActionContext c) => Write(c, Shortcut);
+
+    public override void Restore(ActionContext c, StoredValue original) => Write(c, original.Data != "Off");
+
+    private void Write(ActionContext c, bool on)
+    {
+        var flags = c.Accessibility.GetFlags(Feature) ?? throw new InvalidOperationException($"{Feature} settings are not available for the signed-in user");
+        c.Accessibility.SetFlags(Feature, on ? flags | HotkeyActive : flags & ~HotkeyActive);
+    }
+}

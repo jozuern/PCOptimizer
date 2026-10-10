@@ -126,6 +126,38 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <!-- Start priorities (Image File Execution Options) -->
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Prio_Title}" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Prio_Hint}" Margin="0,0,0,8" TextWrapping="Wrap" />
+            <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                <StackPanel>
+                    <WrapPanel>
+                        <ui:TextBox PlaceholderText="{l:Tr Prio_ExePlaceholder}" Text="{Binding Tools.NewPriorityExe, UpdateSourceTrigger=PropertyChanged}" MinWidth="240" Margin="0,0,8,8" />
+                        <ComboBox ItemsSource="{Binding Tools.PriorityChoices}" SelectedItem="{Binding Tools.NewPriority}" DisplayMemberPath="Text" MinWidth="180" Margin="0,0,8,8" />
+                        <CheckBox Content="{l:Tr Prio_LowIoOption}" IsChecked="{Binding Tools.NewPriorityLowIo}" Margin="0,0,8,8" VerticalAlignment="Center" />
+                        <ui:Button Content="{l:Tr Prio_Add}" Icon="{ui:SymbolIcon Add20}" Command="{Binding Tools.AddPriorityRuleCommand}" Margin="0,0,0,8" />
+                    </WrapPanel>
+                    <ui:TextBlock Style="{StaticResource Caption}" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Tools.PriorityNote}"
+                                  Visibility="{Binding Tools.PriorityNote, Converter={StaticResource NullToVisibility}}" />
+                </StackPanel>
+            </ui:Card>
+            <ItemsControl ItemsSource="{Binding Tools.PriorityRules}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <ui:CardControl.Header>
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Exe}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Details}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </ui:CardControl.Header>
+                            <ui:Button Content="{l:Tr Prio_Remove}" Icon="{ui:SymbolIcon Delete20}" CommandParameter="{Binding}"
+                                       Command="{Binding DataContext.Tools.RemovePriorityRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                        </ui:CardControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
             <!-- Quick tools -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_Title}" />
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
@@ -155,6 +187,23 @@
                 </ui:CardControl.Header>
                 <ui:Button Content="{l:Tr Cleanup_Run}" Command="{Binding Tools.WinsockResetCommand}" />
             </ui:CardControl>
+            <ItemsControl ItemsSource="{Binding Tools.QuickFixRows}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <ui:CardControl.Header>
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </ui:CardControl.Header>
+                            <ui:Button Content="{l:Tr Cleanup_Run}" CommandParameter="{Binding}"
+                                       Command="{Binding DataContext.Tools.RunQuickFixCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                       IsEnabled="{Binding DataContext.Tools.IsWorking, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource InverseBool}}" />
+                        </ui:CardControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Tools.QuickOutput}" Margin="0,8,0,0" Visibility="{Binding Tools.QuickOutput, Converter={StaticResource NullToVisibility}}" />
         </StackPanel>
     </ScrollViewer>

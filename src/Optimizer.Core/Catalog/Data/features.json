@@ -126,6 +126,85 @@
       "recommend": null,
       "en": "Syncs files with a company Work Folders server.",
       "de": "Synchronisiert Dateien mit einem Arbeitsordner-Server einer Firma."
+    },
+    {
+      "name": "ServicesForNFS-ClientOnly",
+      "title": "Client for NFS",
+      "titleDe": "Client für NFS",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Opens NFS shares, for example on a NAS or a Linux server. Shown only where this edition of Windows has it.",
+      "de": "Öffnet NFS-Freigaben, etwa auf einem NAS oder Linux-Server. Nur sichtbar, wo diese Windows-Edition es hat."
+    },
+    {
+      "name": "Microsoft.Windows.PowerShell.ISE~~~~0.0.1.0",
+      "capability": true,
+      "title": "PowerShell ISE",
+      "titleDe": "PowerShell ISE",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Older editor for Windows PowerShell scripts. Visual Studio Code or Windows Terminal replace it for most people.",
+      "de": "Älterer Editor für Windows-PowerShell-Skripte. Visual Studio Code oder Windows Terminal ersetzen ihn für die meisten."
+    },
+    {
+      "name": "App.StepsRecorder~~~~0.0.1.0",
+      "capability": true,
+      "title": "Steps Recorder",
+      "titleDe": "Schrittaufzeichnung",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Records clicks and screenshots to describe a problem. Microsoft no longer updates it and will remove it.",
+      "de": "Zeichnet Klicks und Screenshots auf, um ein Problem zu beschreiben. Microsoft aktualisiert es nicht mehr und wird es entfernen."
+    },
+    {
+      "name": "Print.Fax.Scan~~~~0.0.1.0",
+      "capability": true,
+      "title": "Windows Fax and Scan",
+      "titleDe": "Windows-Fax und -Scan",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Sends faxes with a fax modem and scans documents. Scanner apps of the manufacturer work without it.",
+      "de": "Sendet Faxe über ein Faxmodem und scannt Dokumente. Scanner-Apps des Herstellers funktionieren ohne es."
+    },
+    {
+      "name": "MathRecognizer~~~~0.0.1.0",
+      "capability": true,
+      "title": "Math Recognizer",
+      "titleDe": "Mathematikerkennung",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Recognizes handwritten math with a pen. Not needed without a pen.",
+      "de": "Erkennt handgeschriebene Formeln mit dem Stift. Ohne Stift nicht nötig."
+    },
+    {
+      "name": "OpenSSH.Client~~~~0.0.1.0",
+      "capability": true,
+      "title": "OpenSSH client",
+      "titleDe": "OpenSSH-Client",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "The ssh command for remote shells and Git over SSH.",
+      "de": "Der Befehl ssh für entfernte Shells und Git über SSH."
+    },
+    {
+      "name": "WMIC~~~~",
+      "capability": true,
+      "title": "WMIC",
+      "titleDe": "WMIC",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Old WMI command-line tool. Not preinstalled since Windows 11 24H2; some old scripts and installers still call it.",
+      "de": "Altes WMI-Befehlszeilenwerkzeug. Seit Windows 11 24H2 nicht mehr vorinstalliert; manche alte Skripte und Installer rufen es noch auf."
+    },
+    {
+      "name": "Microsoft.Windows.WordPad~~~~0.0.1.0",
+      "capability": true,
+      "title": "WordPad",
+      "titleDe": "WordPad",
+      "hypervisor": false,
+      "recommend": null,
+      "en": "Simple word processor for .rtf, .docx and .txt files. Shown only where Windows still offers it.",
+      "de": "Einfache Textverarbeitung für .rtf-, .docx- und .txt-Dateien. Nur sichtbar, wo Windows es noch anbietet."
     }
   ]
 }

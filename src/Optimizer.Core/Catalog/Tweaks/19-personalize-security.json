@@ -1,0 +1,970 @@
+{
+  "tweaks": [
+    {
+      "id": "personalize.taskbarSearchHidden",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "conflictsWith": [
+        "personalize.taskbarSearchIcon"
+      ],
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "SearchOnTaskbarMode",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+      ]
+    },
+    {
+      "id": "personalize.taskbarSearchIcon",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "conflictsWith": [
+        "personalize.taskbarSearchHidden"
+      ],
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "SearchOnTaskbarMode",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search"
+      ]
+    },
+    {
+      "id": "personalize.taskViewHidden",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "HideTaskViewButton",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-start"
+      ]
+    },
+    {
+      "id": "personalize.startRecentlyAddedHidden",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "HideRecentlyAddedApps",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-start"
+      ]
+    },
+    {
+      "id": "personalize.startMostUsedHidden",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "ShowOrHideMostUsedApps",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-start"
+      ]
+    },
+    {
+      "id": "personalize.logonBlurOff",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "DisableAcrylicBackgroundOnLogon",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-logon"
+      ]
+    },
+    {
+      "id": "personalize.firstLogonAnimationOff",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "EnableFirstLogonAnimation",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowslogon"
+      ]
+    },
+    {
+      "id": "system.verboseStatus",
+      "category": "System",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "VerboseStatus",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-logon"
+      ]
+    },
+    {
+      "id": "personalize.hibernateInPowerMenu",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "ShowHibernateOption",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-windowsexplorer"
+      ]
+    },
+    {
+      "id": "explorer.openWithPromptsOff",
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "NoUseStoreOpenWith",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "NoNewAppAlert",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-icm",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-windowsexplorer"
+      ]
+    },
+    {
+      "id": "explorer.shortcutSearchOff",
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "NoResolveSearch",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "NoResolveTrack",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-startmenu"
+      ]
+    },
+    {
+      "id": "personalize.inkWorkspaceOff",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\WindowsInkWorkspace",
+          "name": "AllowWindowsInkWorkspace",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsinkworkspace"
+      ]
+    },
+    {
+      "id": "personalize.defaultPrinterManual",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+          "name": "LegacyDefaultPrinterMode",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-printing"
+      ]
+    },
+    {
+      "id": "input.accessibilityShortcutsOff",
+      "category": "Input",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "input"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "accessibilityShortcut",
+          "feature": "stickyKeys",
+          "shortcut": false
+        },
+        {
+          "type": "accessibilityShortcut",
+          "feature": "filterKeys",
+          "shortcut": false
+        },
+        {
+          "type": "accessibilityShortcut",
+          "feature": "toggleKeys",
+          "shortcut": false
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-stickykeys",
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-filterkeys",
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-togglekeys",
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ]
+    },
+    {
+      "id": "system.longPaths",
+      "category": "System",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+          "name": "LongPathsEnabled",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-filesys"
+      ]
+    },
+    {
+      "id": "security.puaProtection",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+          "name": "PUAProtection",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      ]
+    },
+    {
+      "id": "security.networkProtection",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows Defender Exploit Guard\\Network Protection",
+          "name": "EnableNetworkProtection",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      ]
+    },
+    {
+      "id": "security.lsaProtection",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+          "name": "RunAsPPL",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection"
+      ]
+    },
+    {
+      "id": "security.defenderSandbox",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
+          "name": "MP_FORCE_USE_SANDBOX",
+          "kind": "string",
+          "value": "1"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/defender-endpoint/sandbox-mdav"
+      ]
+    },
+    {
+      "id": "security.passwordRevealOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CredUI",
+          "name": "DisablePasswordReveal",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-credentialsui"
+      ]
+    },
+    {
+      "id": "security.llmnrOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient",
+          "name": "EnableMulticast",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-dnsclient"
+      ]
+    },
+    {
+      "id": "security.autoRestartSignOnOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "DisableAutomaticRestartSignOn",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowslogon"
+      ]
+    },
+    {
+      "id": "security.remoteAssistanceOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows NT\\Terminal Services",
+          "name": "fAllowToGetHelp",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-remoteassistance"
+      ]
+    },
+    {
+      "id": "security.projectionToPcOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Connect",
+          "name": "AllowProjectionToPC",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-wirelessdisplay"
+      ]
+    },
+    {
+      "id": "security.autoPlayOff",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "NoDriveTypeAutoRun",
+          "kind": "dword",
+          "value": 255
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-autoplay"
+      ]
+    },
+    {
+      "id": "security.deviceEncryptionPrevented",
+      "category": "Security",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\BitLocker",
+          "name": "PreventDeviceEncryption",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/"
+      ]
+    },
+    {
+      "id": "background.pcaOff",
+      "category": "Background",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppCompat",
+          "name": "DisablePCA",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-appcompat"
+      ]
+    },
+    {
+      "id": "network.smbThrottlingOff",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\LanmanWorkstation\\Parameters",
+          "name": "DisableBandwidthThrottling",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-US/windows-server/administration/performance-tuning/role/file-server"
+      ]
+    },
+    {
+      "id": "battery.noIndexingOnBattery",
+      "category": "Battery",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "battery"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "formFactor": "laptop"
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "PreventIndexOnBattery",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc732491(v=ws.10)"
+      ]
+    },
+    {
+      "id": "expert.legacyBootMenu",
+      "category": "Expert",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "expert",
+      "preview": true,
+      "restart": true,
+      "actions": [
+        {
+          "type": "bcd",
+          "element": "bootmenupolicy",
+          "value": "Legacy"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set"
+      ]
+    }
+  ]
+}

@@ -106,6 +106,25 @@ public static class FactsBuilder
         f.Set("pagefile.systemManaged", managed);
         f.Set("pagefile.disabled", disabled);
         f.Set("pagefile.maxMb", maxMb);
+
+        // Browsers whose policies the catalog offers: installed for all users or for the session user (App Paths).
+        f.Set("browser.chrome", BrowserInstalled(r, "chrome.exe"));
+        f.Set("browser.brave", BrowserInstalled(r, "brave.exe"));
+    }
+
+    private static bool BrowserInstalled(IRegistryRoots r, string exe)
+    {
+        var path = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exe}";
+        using (var machine = r.Open(Hive.Machine, path, writable: false)) if (machine is not null) return true;
+        try
+        {
+            using var user = r.Open(Hive.User, path, writable: false);
+            return user is not null;
+        }
+        catch (Exception)
+        {
+            return false; // no user hive: only the machine-wide install counts
+        }
     }
 }
 

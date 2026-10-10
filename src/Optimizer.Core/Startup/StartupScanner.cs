@@ -7,7 +7,13 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Startup;
 
-public enum StartupKind { RunKey, StartupFolder, LogonTask, Service, Driver, ShellExtension, Winlogon, ImageHijack, AppInit, PolicyRun }
+public enum StartupKind
+{
+    RunKey, StartupFolder, LogonTask, Service, Driver, ShellExtension, Winlogon, ImageHijack, AppInit, PolicyRun,
+
+    // Listed only (Autoruns-style locations): changed by the program that owns them or by hand.
+    RunOnce, ActiveSetup, LoadValue, BootExecute, KnownDll, WinsockProvider, PrintMonitor, LsaPackage, NetworkProvider, Codec, WmiConsumer,
+}
 
 /// <summary>
 /// One autostart entry. <see cref="Enabled"/> is null for entries that cannot be switched here (drivers, Winlogon,
@@ -37,7 +43,7 @@ public sealed record StartupEntry(
 }
 
 /// <summary>Reads every autostart location the app knows (Autoruns-style), through the swappable registry and task interfaces.</summary>
-public sealed class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks, string? profilePath)
+public sealed partial class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks, string? profilePath)
 {
     private const string Run = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string Run32 = @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
@@ -46,7 +52,7 @@ public sealed class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks
     public const string Winlogon = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon";
     public const string Ifeo = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options";
 
-    public IReadOnlyList<StartupEntry> ScanAll(bool includeServicesAndDrivers = true)
+    public IReadOnlyList<StartupEntry> ScanAll(bool includeServicesAndDrivers = true, bool includeWmi = true)
     {
         var list = new List<StartupEntry>();
         void Try(string part, Action a)
@@ -68,6 +74,17 @@ public sealed class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks
         Try("ifeo", () => list.AddRange(ImageHijacks()));
         Try("appinit", () => list.AddRange(AppInit()));
         if (includeServicesAndDrivers) Try("services", () => list.AddRange(ServicesAndDrivers()));
+        Try("runonce", () => list.AddRange(RunOnceEntries()));
+        Try("activesetup", () => list.AddRange(ActiveSetup()));
+        Try("load", () => list.AddRange(LoadValues()));
+        Try("bootexecute", () => list.AddRange(BootExecute()));
+        Try("knowndlls", () => list.AddRange(KnownDlls()));
+        Try("winsock", () => list.AddRange(WinsockProviders()));
+        Try("printmonitors", () => list.AddRange(PrintMonitors()));
+        Try("lsa", () => list.AddRange(LsaPackages()));
+        Try("netproviders", () => list.AddRange(NetworkProviders()));
+        Try("codecs", () => list.AddRange(Codecs()));
+        if (includeWmi) Try("wmi", () => list.AddRange(WmiConsumers()));
         return list;
     }
 

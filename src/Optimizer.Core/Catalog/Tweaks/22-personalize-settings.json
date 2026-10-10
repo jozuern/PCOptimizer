@@ -1,0 +1,578 @@
+{
+  "tweaks": [
+    {
+      "id": "personalize.darkMode",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+          "name": "AppsUseLightTheme",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+          "name": "SystemUsesLightTheme",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/personalize-your-colors-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.accentTitleBars",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\DWM",
+          "name": "ColorPrevalence",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/personalize-your-colors-in-windows"
+      ]
+    },
+    {
+      "id": "explorer.hiddenFiles",
+      "undocumented": true,
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Hidden",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/fileexplorer/file-explorer-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.taskbarLeft",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarAl",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.clockSeconds",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ShowSecondsInSystemClock",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.taskbarNeverCombine",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarGlomLevel",
+          "kind": "dword",
+          "value": 2,
+          "notify": "settings"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "MMTaskbarGlomLevel",
+          "kind": "dword",
+          "value": 2,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "focus.taskbarFlashingOff",
+      "undocumented": true,
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarFlashing",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "focus.taskbarBadgesOff",
+      "undocumented": true,
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarBadges",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.showDesktopCornerOff",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarSd",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-taskbar-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.snapAssistOff",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "SnapAssist",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/snap-your-windows"
+      ]
+    },
+    {
+      "id": "personalize.snapLayoutsOff",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "EnableSnapAssistFlyout",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "EnableSnapBar",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/snap-your-windows"
+      ]
+    },
+    {
+      "id": "explorer.compactView",
+      "undocumented": true,
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "UseCompactMode",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/fileexplorer/file-explorer-in-windows"
+      ]
+    },
+    {
+      "id": "explorer.itemCheckboxes",
+      "undocumented": true,
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "AutoCheckSelect",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/fileexplorer/file-explorer-in-windows"
+      ]
+    },
+    {
+      "id": "focus.notificationSoundsOff",
+      "undocumented": true,
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings",
+          "name": "NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/notifications-and-do-not-disturb-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.dynamicLightingOff",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Lighting",
+          "name": "AmbientLightingEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/hardware/input-devices/control-dynamic-lighting-devices-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.communicationsDuckingOff",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Multimedia\\Audio",
+          "name": "UserDuckingPreference",
+          "kind": "dword",
+          "value": 3
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/coreaudio/stream-attenuation"
+      ]
+    },
+    {
+      "id": "personalize.desktopThisPc",
+      "undocumented": true,
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "signOut": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+          "name": "{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-desktop-icons-in-windows"
+      ]
+    },
+    {
+      "id": "display.autoHdrOn",
+      "undocumented": true,
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registryToken",
+          "hive": "user",
+          "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+          "name": "DirectXUserGlobalSettings",
+          "token": "AutoHDREnable",
+          "value": "1"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/hardware/display-graphics/use-auto-hdr-for-better-gaming-in-windows"
+      ]
+    },
+    {
+      "id": "personalize.titleBarShakeOff",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "signOut": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "NoWindowMinimizingShortcuts",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-desktop"
+      ]
+    }
+  ]
+}

@@ -26,7 +26,7 @@ public class DocsConsistencyTests
     public void ReadmeCountsMatchTheCatalog()
     {
         var readme = File.ReadAllText(Path.Combine(RepoPaths.Root, "README.md"));
-        var missing = new[] { $"{VisibleTweaks} catalog tweaks", $"{Checks} read-only checks", $"{InboxApps} inbox apps", $"{CleanupCategories} cleanup categories" }
+        var missing = new[] { $"{VisibleTweaks} catalog tweaks", $"{Checks} read-only checks", $"{InboxApps} removable apps", $"{CleanupCategories} cleanup categories" }
             .Where(phrase => !readme.Contains(phrase, StringComparison.Ordinal)).ToList();
         Assert.True(missing.Count == 0, "README.md must say: " + string.Join("; ", missing));
     }

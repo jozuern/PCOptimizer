@@ -74,6 +74,15 @@ internal static partial class NativeWrite
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool SystemParametersInfo(uint action, uint param, int[] pvParam, uint winIni);
 
+    // Keyboard accessibility features: STICKYKEYS and TOGGLEKEYS are {cbSize, dwFlags}; FILTERKEYS has four more DWORDs.
+    internal const uint SpiGetFilterKeys = 0x0032, SpiSetFilterKeys = 0x0033, SpiGetToggleKeys = 0x0034, SpiSetToggleKeys = 0x0035;
+    internal const uint SpiGetStickyKeys = 0x003A, SpiSetStickyKeys = 0x003B;
+    internal const uint SpifUpdateIniFile = 0x01, SpifSendChange = 0x02;
+
+    /// <summary>For the accessibility structures, passed as a DWORD array (cbSize first).</summary>
+    [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    internal static extern bool SystemParametersInfoDwords(uint action, uint param, [In, Out] uint[] pvParam, uint winIni);
+
     internal const uint HwndBroadcast = 0xFFFF, WmSettingChange = 0x001A, SmtoAbortIfHung = 0x0002;
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]

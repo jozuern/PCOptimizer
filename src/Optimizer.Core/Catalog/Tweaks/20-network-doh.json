@@ -1,0 +1,35 @@
+{
+  "tweaks": [
+    {
+      "id": "network.dohAutoUpgrade",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "preview": true,
+      "actions": [
+        {
+          "type": "dohAutoUpgrade",
+          "servers": [
+            "1.1.1.1",
+            "1.0.0.1",
+            "8.8.8.8",
+            "8.8.4.4",
+            "9.9.9.9",
+            "149.112.112.112"
+          ],
+          "autoUpgrade": true
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-server/networking/dns/doh-client-support",
+        "https://learn.microsoft.com/en-us/powershell/module/dnsclient/set-dnsclientdohserveraddress"
+      ]
+    }
+  ]
+}

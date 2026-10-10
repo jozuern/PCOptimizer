@@ -368,6 +368,49 @@ public sealed class SystemProcessRunner : IProcessRunner
     }
 }
 
+/// <summary>
+/// Keyboard accessibility flags through SystemParametersInfo. The call works on the profile of the account the process
+/// runs as, so it is used only when that account is the signed-in session user (the usual UAC prompt); under
+/// over-the-shoulder elevation the flags count as unavailable and nothing is changed.
+/// </summary>
+public sealed class SystemAccessibilitySettings(string? userSid) : IAccessibilitySettings
+{
+    private bool IsSessionUser()
+    {
+        using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+        return userSid is not null && string.Equals(identity.User?.Value, userSid, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Structure size in DWORDs: cbSize and dwFlags, FILTERKEYS adds wait, delay, repeat and bounce times.
+    private static (uint Get, uint Set, int Dwords) Spi(AccessibilityFeature f) => f switch
+    {
+        AccessibilityFeature.StickyKeys => (NativeWrite.SpiGetStickyKeys, NativeWrite.SpiSetStickyKeys, 2),
+        AccessibilityFeature.ToggleKeys => (NativeWrite.SpiGetToggleKeys, NativeWrite.SpiSetToggleKeys, 2),
+        _ => (NativeWrite.SpiGetFilterKeys, NativeWrite.SpiSetFilterKeys, 6),
+    };
+
+    private static uint[]? Read(AccessibilityFeature feature)
+    {
+        var (get, _, dwords) = Spi(feature);
+        var data = new uint[dwords];
+        data[0] = (uint)(dwords * 4);
+        return NativeWrite.SystemParametersInfoDwords(get, data[0], data, 0) ? data : null;
+    }
+
+    public uint? GetFlags(AccessibilityFeature feature) => IsSessionUser() ? Read(feature)?[1] : null;
+
+    public void SetFlags(AccessibilityFeature feature, uint flags)
+    {
+        if (!IsSessionUser()) throw new InvalidOperationException("Accessibility settings can only be changed for the account the app runs as.");
+        var data = Read(feature) ?? throw new Win32Exception(Marshal.GetLastWin32Error());
+        data[1] = flags;
+        var (_, set, _) = Spi(feature);
+        if (!NativeWrite.SystemParametersInfoDwords(set, data[0], data, NativeWrite.SpifUpdateIniFile | NativeWrite.SpifSendChange))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        Log.Info("accessibility", $"{feature} flags set", new { flags });
+    }
+}
+
 public static class SystemNotify
 {
     /// <summary>Live refresh after user-scope changes. Mouse values: SPI without SPIF_UPDATEINIFILE (the hive was written directly).</summary>
@@ -406,6 +449,7 @@ public static class SystemNotify
             Devices = new SystemDeviceManager(),
             Network = new SystemNetworkManager(),
             Nvidia = new SystemNvidiaSettings(),
+            Accessibility = new SystemAccessibilitySettings(userSid),
             Notify = what => Handle(registry, what),
             ExportFolder = exportFolder,
             NetworkInterfaceIds = networkInterfaceIds ?? [],

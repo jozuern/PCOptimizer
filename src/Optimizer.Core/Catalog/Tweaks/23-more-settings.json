@@ -1,0 +1,299 @@
+{
+  "tweaks": [
+    {
+      "id": "focus.startAccountNotificationsOff",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\AccountNotifications",
+          "name": "DisableAccountNotifications",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-notifications"
+      ]
+    },
+    {
+      "id": "focus.altTabTabsOff",
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "MultiTaskingAltTabFilter",
+          "kind": "dword",
+          "value": 4
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-multitasking"
+      ]
+    },
+    {
+      "id": "privacy.searchHistoryOff",
+      "undocumented": true,
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+          "name": "IsDeviceSearchHistoryEnabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/privacy/windows-search-and-privacy",
+        "https://www.elevenforum.com/t/enable-or-disable-recent-search-history-in-windows-11.5395/"
+      ]
+    },
+    {
+      "id": "input.printScreenSnippingOff",
+      "undocumented": true,
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "signOut": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Keyboard",
+          "name": "PrintScreenKeyForSnippingEnabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://www.elevenforum.com/t/enable-or-disable-use-print-screen-key-to-open-screen-snipping-in-windows-11.520/"
+      ]
+    },
+    {
+      "id": "focus.lockScreenTipsOff",
+      "undocumented": true,
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "RotatingLockScreenOverlayEnabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338387Enabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/experience/personalization/customize-the-lock-screen-in-windows",
+        "https://www.elevenforum.com/t/enable-or-disable-facts-tips-and-tricks-on-lock-screen-in-windows-11.7079/"
+      ]
+    },
+    {
+      "id": "focus.finishSetupOff",
+      "undocumented": true,
+      "category": "Focus",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+          "name": "ScoobeSystemSettingEnabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://www.elevenforum.com/t/enable-or-disable-lets-finish-setting-up-your-device-in-windows-11.5205/"
+      ]
+    },
+    {
+      "id": "explorer.syncProviderNotificationsOff",
+      "undocumented": true,
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ShowSyncProviderNotifications",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://www.elevenforum.com/t/enable-or-disable-sync-provider-notifications-in-file-explorer-in-windows-11.5200/"
+      ]
+    },
+    {
+      "id": "explorer.fullPathTitle",
+      "undocumented": true,
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "signOut": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState",
+          "name": "FullPath",
+          "kind": "dword",
+          "value": 1,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://www.elevenforum.com/t/turn-on-or-off-display-full-path-in-title-bar-of-file-explorer-in-windows-11.3585/"
+      ]
+    },
+    {
+      "id": "display.vrrOn",
+      "undocumented": true,
+      "category": "Graphics",
+      "impact": {
+        "gaming": 1,
+        "basis": "situational",
+        "effect": [
+          "stutter"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registryToken",
+          "hive": "user",
+          "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+          "name": "DirectXUserGlobalSettings",
+          "token": "VRROptimizeEnable",
+          "value": "1"
+        }
+      ],
+      "sources": [
+        "https://devblogs.microsoft.com/directx/navigating-the-redesigned-graphics-settings-page/",
+        "https://www.elevenforum.com/t/enable-or-disable-variable-refresh-rate-for-games-in-windows-11.12052/"
+      ]
+    }
+  ]
+}

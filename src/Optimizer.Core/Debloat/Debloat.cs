@@ -14,16 +14,31 @@ public sealed class AppxCatalog
     public List<AppxEntry> Apps { get; init; } = [];
     public List<string> Protected { get; init; } = [];
 
-    public bool IsProtected(string name) => Protected.Any(p =>
-        p.EndsWith('*') ? name.StartsWith(p[..^1], StringComparison.OrdinalIgnoreCase) : string.Equals(p, name, StringComparison.OrdinalIgnoreCase));
+    /// <summary>A trailing * matches a prefix; an entry "!name" exempts that one package from a prefix (Edge Game Assist under Microsoft.Edge*).</summary>
+    public bool IsProtected(string name) =>
+        !Protected.Any(p => p.StartsWith('!') && Matches(p[1..], name)) && Protected.Any(p => !p.StartsWith('!') && Matches(p, name));
+
+    private static bool Matches(string pattern, string name) => pattern.EndsWith('*')
+        ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
+        : string.Equals(pattern, name, StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class AppxEntry
 {
     public string Name { get; init; } = "";
 
-    /// <summary>consumer | microsoft | xbox | media.</summary>
+    /// <summary>consumer | microsoft | xbox | media | legacy | thirdParty | oem.</summary>
     public string Group { get; init; } = "consumer";
+
+    /// <summary>
+    /// The name is the end of the package name after the publisher prefix ("Asphalt8Airborne" matches
+    /// "GAMELOFTSA.Asphalt8Airborne"), for third-party apps whose publisher prefix differs between PC makers.
+    /// </summary>
+    public bool Suffix { get; init; }
+
+    public bool Matches(string packageName) =>
+        string.Equals(packageName, Name, StringComparison.OrdinalIgnoreCase)
+        || Suffix && packageName.EndsWith("." + Name, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>null | xbox | xboxOrX3d.</summary>
     public string? Guard { get; init; }
@@ -106,11 +121,12 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
         var xboxGames = profile.Software?.Games.Any(g => g.Launcher.Contains("Xbox", StringComparison.OrdinalIgnoreCase)) == true
                         || profile.Software?.Launchers.Any(l => l.Contains("Xbox", StringComparison.OrdinalIgnoreCase)) == true;
         var x3dDual = profile.Cpu is { } cpu && X3d.Classify(cpu, data) == X3dLayout.MultiCcdAsymmetric;
-        var byName = installed.ToDictionary(a => a.Name, StringComparer.OrdinalIgnoreCase);
+        var installedList = installed.ToList();
         var list = new List<DebloatItem>();
         foreach (var e in catalog.Apps)
+        foreach (var app in installedList.Where(a => e.Matches(a.Name)))
         {
-            if (!byName.TryGetValue(e.Name, out var app) || catalog.IsProtected(e.Name)) continue;
+            if (catalog.IsProtected(e.Name) || catalog.IsProtected(app.Name)) continue;
             string? block = null;
             if (app.NonRemovable) block = "block.appNonRemovable";
             else if (e.Guard is "xbox" or "xboxOrX3d" && xboxGames) block = "block.appXboxGames";
@@ -132,6 +148,16 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
         Record(new RemovedApp(app.Name, app.FamilyName, app.Version, DateTimeOffset.Now, entry?.StoreId, entry?.CanReinstall ?? true));
         Log.Info("debloat", $"removed {app.Name}", new { app.Version });
         return null;
+    }
+
+    /// <summary>
+    /// Apps this app removed that are installed again, usually brought back by a Windows feature update or by the
+    /// manufacturer's software. Removed after the app was installed again counts only once per name.
+    /// </summary>
+    public static IReadOnlyList<RemovedApp> CameBack(IEnumerable<RemovedApp> removed, IEnumerable<InstalledAppx> installed)
+    {
+        var names = installed.Select(a => a.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return removed.Where(r => names.Contains(r.Name)).DistinctBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     /// <summary>Package names come from the catalog, but never pass anything but [A-Za-z0-9._-] into a script.</summary>

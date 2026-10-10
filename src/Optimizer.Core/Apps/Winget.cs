@@ -111,6 +111,10 @@ public static class Winget
     public static string UpgradeArguments(string id, string? scope = null) =>
         $"upgrade --id {id} --exact --source winget{ScopeArgument(scope)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
 
+    /// <summary>Upgrades every package with a newer version in the winget source.</summary>
+    public const string UpgradeAllArguments =
+        "upgrade --all --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+
     /// <summary>Only the two values winget documents; anything else is left out.</summary>
     private static string ScopeArgument(string? scope) => scope is "machine" or "user" ? $" --scope {scope}" : "";
 
