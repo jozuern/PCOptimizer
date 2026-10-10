@@ -2,7 +2,7 @@ using Microsoft.Win32;
 
 namespace Optimizer.Core.Actions;
 
-/// <summary>Which registry root an action targets. <see cref="User"/> = the signed-in session user's hive (plan v4 §4.5).</summary>
+/// <summary>Which registry root an action targets. <see cref="User"/> = the signed-in session user's hive.</summary>
 public enum Hive { Machine, User }
 
 /// <summary>Registry roots. Real: HKLM (64-bit view) and HKU\&lt;session SID&gt;. Tests: a sandbox under HKCU.</summary>

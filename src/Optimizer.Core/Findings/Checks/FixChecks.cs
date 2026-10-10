@@ -89,7 +89,7 @@ public static class RuntimeFixes
         Id = "fix.gpuPreference",
         Docs = GpuPreferenceDoc,
         Category = "Fixes",
-        Impact = new ImpactInfo { Gaming = 5, Basis = "situational", Effect = ["fps"] },
+        Impact = new ImpactInfo { Gaming = 2, Basis = "situational", Effect = ["fps"] },
         Risk = Risk.Safe,
         Scope = TweakScope.User,
         Hidden = true,
@@ -110,7 +110,9 @@ public static class RuntimeFixes
 
 /// <summary>
 /// F4: games may run on the integrated GPU (laptops with hybrid graphics, desktops with the iGPU enabled).
-/// Reads the per-app GPU preference (HKU\&lt;user&gt;\...\UserGpuPreferences) for each detected game.
+/// Reads the per-app GPU preference (HKU\&lt;user&gt;\...\UserGpuPreferences) for each detected game. Information, not a
+/// problem: the graphics driver's own profiles can route a game to the dedicated GPU without a Windows preference, and
+/// the app cannot see that.
 /// </summary>
 public sealed class GpuPreferenceCheck(IRegistryRoots? registry) : IFindingCheck
 {
@@ -126,7 +128,7 @@ public sealed class GpuPreferenceCheck(IRegistryRoots? registry) : IFindingCheck
         if (games.Count == 0) yield break;
         if (registry is null)
         {
-            yield return new Finding { Id = Id, Kind = FindingKind.Finding, Status = FindingStatus.Unknown, Impact = 5, Effects = [Effect.Fps] };
+            yield return new Finding { Id = Id, Kind = FindingKind.Finding, Status = FindingStatus.Unknown, Impact = 2, Effects = [Effect.Fps] };
             yield break;
         }
 
@@ -141,8 +143,8 @@ public sealed class GpuPreferenceCheck(IRegistryRoots? registry) : IFindingCheck
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = missing.Count > 0 ? FindingStatus.Problem : FindingStatus.Ok,
-            Impact = 5,
+            Status = missing.Count > 0 ? FindingStatus.Info : FindingStatus.Ok,
+            Impact = 2,
             Effects = [Effect.Fps],
             Facts =
             [
@@ -168,10 +170,15 @@ public sealed class LeftoverCheck : IFindingCheck
     /// <summary>BCD elements of {current}; set by the app when elevated (bcdedit needs admin rights). Null = unknown.</summary>
     public static Func<IReadOnlySet<string>?> BcdElements { get; set; } = () => null;
 
+    private readonly Func<IReadOnlySet<string>?>? _bcd;
+
+    /// <param name="bcd">BCD reader for tests; default: <see cref="BcdElements"/>, which the app sets.</param>
+    public LeftoverCheck(Func<IReadOnlySet<string>?>? bcd = null) => _bcd = bcd;
+
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var found = new List<Fact>();
-        var bcd = SafeBcd();
+        var bcd = SafeBcd(_bcd ?? BcdElements);
         if (bcd?.Contains("useplatformclock") == true) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
 
         yield return new Finding
@@ -185,11 +192,11 @@ public sealed class LeftoverCheck : IFindingCheck
         };
     }
 
-    private static IReadOnlySet<string>? SafeBcd()
+    private static IReadOnlySet<string>? SafeBcd(Func<IReadOnlySet<string>?> read)
     {
         try
         {
-            return BcdElements();
+            return read();
         }
         catch (Exception)
         {

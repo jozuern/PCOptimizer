@@ -12,18 +12,21 @@ Checks that Core Ultra 200S desktop CPUs run BIOS microcode with Intel's game pe
 :::
 
 ## Why it matters
-At launch, Intel Core Ultra 200S (Arrow Lake) processors performed below expectations in many games. Intel traced part of this to firmware and released microcode {{min}} together with an updated CSME firmware kit (19.0.0.1854v2.2 or newer) and Windows updates. Boards with older BIOS versions miss these fixes. The gain depends on the game and is usually a few percent.
+At launch, Intel Core Ultra 200S (Arrow Lake) processors performed below expectations in many games. Intel found five causes. Most of them are fixed by a current BIOS together with Windows updates up to Windows 11 build 26100.2314 or newer. The last one needs a BIOS with microcode {{min}} and Intel CSME Firmware Kit 19.0.0.1854v2.2 or newer, for which Intel expected another improvement in the single-digit percent range on average over about 35 games [1]. Boards with older BIOS versions miss these fixes.
 
 ## How we detected it
 We read the processor model and the microcode revision loaded by the BIOS. Model list and minimum revision come from the catalog.
 
 ## How to fix
 1. Open the support page for your board ({{board}}).
-2. Install the newest BIOS that lists microcode {{min}} and CSME firmware 19.0.0.1854v2.2 or newer, following the vendor's instructions.
-3. Install the latest Windows updates and the Intel chipset and PPM drivers from the board vendor.
+2. **BitLocker:** if BitLocker or device encryption is on, suspend protection first (Start > **Manage BitLocker** > **Suspend protection**) or have the recovery key ready; it is often saved in your Microsoft account. A BIOS update or a change to the TPM or the boot configuration can make Windows ask for it at the next start [2][3].
+3. Install the newest BIOS that lists microcode {{min}} and CSME firmware 19.0.0.1854v2.2 or newer, following the vendor's instructions [1].
+4. Install Windows updates until Windows 11 reports build 26100.2314 or newer (Settings > System > About) [1].
 
 ## How to check the fix
 Run the scan again. The microcode from the BIOS should be {{min}} or newer.
 
 ## Sources
-1. https://www.elevenforum.com/t/field-update-1-of-2-intel-core-ultra-200s-series-performance-status.31640/latest
+1. https://community.intel.com/t5/Blogs/Tech-Innovation/Client/Field-Update-1-of-2-Intel-Core-Ultra-200S-Series-Performance/post/1650490
+2. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
+3. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/operations-guide

@@ -16,8 +16,9 @@ We read the part number and size of every module from Windows (`Win32_PhysicalMe
 
 ## How to fix
 1. If the PC is stable and the memory runs at its rated speed (see the memory speed check), nothing needs to change.
-2. If the PC crashes or the XMP or EXPO profile does not hold, test with the profile off first, then raise the speed again step by step.
-3. For a lasting fix, use one matched kit of the total size you need, ideally from the board's memory support list (QVL) [2].
+2. **BitLocker:** before you change BIOS settings, check whether BitLocker or device encryption is on. If so, suspend protection first (Start > **Manage BitLocker** > **Suspend protection**) or have the recovery key ready; it is often saved in your Microsoft account. A BIOS update or a change to the TPM or the boot configuration can make Windows ask for it at the next start [3][4].
+3. If the PC crashes or the XMP or EXPO profile does not hold, test with the profile off first, then raise the speed again step by step.
+4. For a lasting fix, use one matched kit of the total size you need, ideally from the board's memory support list (QVL) [2].
 
 ## How to check the fix
 Run the scan again. All modules should show the same part number and size.
@@ -25,3 +26,5 @@ Run the scan again. All modules should show the same part number and size.
 ## Sources
 1. https://www.corsair.com/us/en/explorer/diy-builder/memory/can-i-mix-corsair-memory-kits/
 2. https://www.asus.com/support/faq/1042256/
+3. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
+4. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/operations-guide

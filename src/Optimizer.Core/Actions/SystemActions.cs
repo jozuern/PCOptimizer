@@ -262,7 +262,7 @@ public sealed class HibernationAction : TweakAction
     }
 }
 
-/// <summary>Memory compression via the MMAgent cmdlets (the documented interface; logged command, plan v4 §2).</summary>
+/// <summary>Memory compression via the MMAgent cmdlets (the documented interface; the command is logged).</summary>
 public sealed class MemoryCompressionAction : TweakAction
 {
     public bool Enabled { get; init; }

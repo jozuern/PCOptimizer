@@ -5,7 +5,7 @@ namespace Optimizer.Core.Platform;
 
 public enum CpuArchitecture { X64, Arm64, Other }
 
-/// <summary>Windows build facts (plan v4 §2). Read from the registry, never from version-lying APIs.</summary>
+/// <summary>Windows build facts. Read from the registry, never from version-lying APIs.</summary>
 public sealed record BuildInfo(
     int Build,
     int Ubr,
@@ -78,7 +78,7 @@ public sealed record BuildInfo(
 
 public enum OsGateResult { Supported, SupportedNotValidated, BlockedTooOld, BlockedArchitecture }
 
-/// <summary>OS gate (plan v4 §2): block below 26100 and non-x64; never block an unknown newer build.</summary>
+/// <summary>OS gate: block below 26100 and non-x64; never block an unknown newer build.</summary>
 public static class OsGate
 {
     public const int MinimumBuild = 26100;

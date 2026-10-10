@@ -41,7 +41,7 @@ public sealed class AppliesTo
     public Condition? When { get; init; }
 }
 
-/// <summary>One catalog entry (schema v2, plan v4 §4.1). Text lives in Catalog/Docs, not here.</summary>
+/// <summary>One catalog entry (schema v2). Text lives in Catalog/Docs, not here.</summary>
 public sealed class TweakDefinition
 {
     public required string Id { get; init; }
@@ -96,7 +96,7 @@ public sealed class TweakDefinition
     [JsonIgnore]
     public string DocId => Docs ?? Id;
 
-    /// <summary>Boot-critical tweaks are always Expert (plan v4 §4.6).</summary>
+    /// <summary>Boot-critical tweaks are always Expert.</summary>
     [JsonIgnore]
     public Risk EffectiveRisk => BootCritical || Actions.Any(a => a.IsBootCritical) ? Risk.Expert : Risk;
 

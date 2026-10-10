@@ -4,7 +4,7 @@ using Optimizer.Core.Interop;
 
 namespace Optimizer.Core.Hardware.Probes;
 
-/// <summary>Power state via powrprof (GUIDs and aliases only, never localized names: plan v4 §4.9).</summary>
+/// <summary>Power state via powrprof (GUIDs and aliases only, never localized names).</summary>
 public static class PowerProbe
 {
     public static readonly Guid SubProcessor = new("54533251-82be-4824-96c1-47b60b740d00");
@@ -28,7 +28,7 @@ public static class PowerProbe
             Native.LocalFree(ptr);
         }
 
-        Native.GetSystemPowerStatus(out var status);
+        var statusRead = Native.GetSystemPowerStatus(out var status);
         var capabilities = new byte[128];
         var modernStandby = Native.CallNtPowerInformation(Native.SystemPowerCapabilities, IntPtr.Zero, 0, capabilities, (uint)capabilities.Length) == 0
                             && capabilities[20] != 0; // SYSTEM_POWER_CAPABILITIES.AoAc
@@ -41,11 +41,19 @@ public static class PowerProbe
             ReadAc(scheme, SubProcessor, ProcThrottleMin),
             ReadAc(scheme, SubProcessor, PerfBoostMode),
             ReadAc(scheme, SubProcessor, CpMinCores),
-            status.ACLineStatus == 1,
+            statusRead ? AcLine(status.ACLineStatus) : null,
             (status.SystemStatusFlag & 1) != 0,
             modernStandby,
             status.BatteryFlag == 128 || status.BatteryLifePercent == 255 ? null : status.BatteryLifePercent);
     }
+
+    /// <summary>SYSTEM_POWER_STATUS.ACLineStatus: 0 offline, 1 online, 255 unknown status (null).</summary>
+    public static bool? AcLine(byte acLineStatus) => acLineStatus switch
+    {
+        0 => false,
+        1 => true,
+        _ => null,
+    };
 
     public static bool HasLid()
     {

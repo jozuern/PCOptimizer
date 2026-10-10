@@ -23,13 +23,15 @@ At least one of these shutdowns was done with the power button.
 ## How to fix
 ::: variant stop
 1. Look up the Stop error code {{stopCode}} in Microsoft's bug check reference [2] to see which part of the system it points to.
-2. Update the graphics, chipset and network drivers and the BIOS.
-3. Turn off overclocking and memory profiles (XMP or EXPO) for a test. If the crashes stop, those settings were not stable [1].
+2. **BitLocker:** before a BIOS update or a change in the BIOS, check whether BitLocker or device encryption is on. If so, suspend protection first (Start > **Manage BitLocker** > **Suspend protection**) or have the recovery key ready; it is often saved in your Microsoft account. A BIOS update or a change to the TPM or the boot configuration can make Windows ask for it at the next start [3][4].
+3. Update the graphics, chipset and network drivers and the BIOS.
+4. Turn off overclocking and memory profiles (XMP or EXPO) for a test. If the crashes stop, those settings were not stable [1].
 :::
 ::: variant power
 1. If the power went out or you turned the PC off with the power button on purpose, there is nothing to fix.
 2. Otherwise check that the power supply has enough wattage for the installed parts [1].
-3. Turn off overclocking and memory profiles (XMP or EXPO) for a test, and check temperatures under load (throttle check on the Health page) [1].
+3. **BitLocker:** before a change in the BIOS, check whether BitLocker or device encryption is on. If so, suspend protection first (Start > **Manage BitLocker** > **Suspend protection**) or have the recovery key ready; it is often saved in your Microsoft account [3][4].
+4. Turn off overclocking and memory profiles (XMP or EXPO) for a test, and check temperatures under load (throttle check on the Health page) [1].
 :::
 ::: variant default
 Nothing to do.
@@ -41,3 +43,5 @@ Run the scan again after a few days of normal use. No new unexpected shutdowns s
 ## Sources
 1. https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/event-id-41-restart
 2. https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/bug-check-code-reference2
+3. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
+4. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/operations-guide

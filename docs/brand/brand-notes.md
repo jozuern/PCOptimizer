@@ -1,25 +1,23 @@
-# PCOptimizer — Brand
-
-Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. Single self-contained exe for Windows 11 24H2+, x64, English and German. UI is Windows 11 Fluent (WPF-UI 4.3), Segoe UI Variable, Mica, light/dark following Windows, Windows accent color.
-
-Source: https://github.com/jozuern/PCOptimizer (explore it for UI and copy context). The repo had no logo or app icon; the mark here is new, created on request. Scope is logo only, not a full design system.
+# PCOptimizer brand
 
 ## App icon
-Chip square (#0078D4, subtle top-left → bottom-right gradient #2B8EE0 → #0068C2, pins #0058A6) holding a white tuning knob. The knob's blue pointer sits at 45° and lines up exactly with a white index dot on the chip: a measured setting. Transparent background, no outline.
-- `assets/icon/pcoptimizer-icon.svg` — master (48 grid, 1024 px)
-- `assets/icon/pcoptimizer-icon-mono.svg` — single color, `currentColor`, knob as knockout
-- `assets/icon/hinted/` — pixel-grid redraws for 32, 24, 20, 16 (color + mono). 16 px drops the index dot.
-- `assets/icon/png/` — 1024, 256, 48, 32, 24, 20, 16
-- `assets/logo-light.svg`, `assets/logo-dark.svg` — icon + "PCOptimizer" wordmark
 
-Rules: always use the hinted file at ≤32 px, never a downscale of the master. Don't recolor except the mono version.
+A blue chip square (#0078D4, with a light gradient from #2B8EE0 at the top left to #0068C2 at the bottom right, pins #0058A6) holding a white tuning knob. The knob's blue pointer sits at 45 degrees and points at a white index dot on the chip. Transparent background, no outline.
 
-Colors (`tokens/brand.css`): tile #0E1726, accent #4CC2FF, accent strong #0F6CBD, ink #1B1B1B.
+| File | Use |
+|---|---|
+| `pcoptimizer-icon.svg` | Master drawing (48 unit grid) |
+| `pcoptimizer-icon-mono.svg` | Single color (`currentColor`), knob as knockout |
+| `hinted/pcoptimizer-icon-{16,20,24,32}.svg`, `hinted/pcoptimizer-icon-mono-{16,20,24,32}.svg` | Pixel-grid redraws for small sizes; the 16 px version drops the index dot |
+| `pcoptimizer-icon-1024.png`, `pcoptimizer-icon-256.png` | Raster exports (README, release page) |
+| `logo-light.svg`, `logo-dark.svg` | Icon with the "PCOptimizer" wordmark |
 
-Type: wordmark uses Segoe UI Variable Display Semibold (system font, not shipped). The SVG wordmarks use live text with a Segoe → system-ui fallback; outline the text before production use.
+The app's own icon files are in `src/Optimizer.App/Assets` (`app.ico` and 16, 24 and 32 px PNGs).
 
-## Index
-- `styles.css` → `tokens/brand.css`
-- `assets/` logos
-- `guidelines/logo.card.html` logo card
-- `thumbnail.html`, `SKILL.md`, `github.md`
+Rules: at 32 px and below, use the hinted files, not a scaled master. Recolor only the mono version.
+
+## Colors and type
+
+Colors are in `brand.css`: tile #0E1726, accent #4CC2FF, strong accent #0F6CBD, ink #1B1B1B. The app itself uses the Windows accent color and the WPF-UI theme brushes.
+
+The wordmark uses Segoe UI Variable Display Semibold, a Windows system font that is not shipped. The SVG wordmarks use live text with a Segoe UI to system-ui fallback; convert the text to outlines before using them outside Windows.

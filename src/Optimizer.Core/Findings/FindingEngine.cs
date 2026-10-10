@@ -60,19 +60,25 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new GameAccessCheck(),
     ];
 
-    public IReadOnlyList<Finding> Evaluate(HardwareProfile profile)
+    public IReadOnlyList<Finding> Evaluate(HardwareProfile profile) => Evaluate(profile, CreateChecks(registry), catalog);
+
+    /// <summary>
+    /// Runs <paramref name="checks"/>. A check that throws contributes exactly one Unknown of its own kind, never the
+    /// results it yielded before the exception.
+    /// </summary>
+    public static IReadOnlyList<Finding> Evaluate(HardwareProfile profile, IEnumerable<IFindingCheck> checks, CatalogData catalog)
     {
         var results = new List<Finding>();
-        foreach (var check in CreateChecks(registry))
+        foreach (var check in checks)
         {
             try
             {
-                results.AddRange(check.Evaluate(profile, catalog));
+                results.AddRange(check.Evaluate(profile, catalog).ToList());
             }
             catch (Exception ex)
             {
                 Log.Error("findings", $"{check.GetType().Name} failed", ex);
-                results.Add(new Finding { Id = check.DocIds.FirstOrDefault() ?? check.GetType().Name, Kind = FindingKind.Finding, Status = FindingStatus.Unknown });
+                results.Add(new Finding { Id = check.DocIds.FirstOrDefault() ?? check.GetType().Name, Kind = check.Kind, Status = FindingStatus.Unknown });
             }
         }
         return Sort(results);
@@ -96,7 +102,7 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
 }
 
 /// <summary>
-/// Gaming Readiness score (plan v4 §4.11): computed only from findings, weighted by ⚡. Tweaks never add points
+/// Gaming Readiness score: computed only from findings, weighted by ⚡. Tweaks never add points
 /// and Game access / security items never count.
 /// </summary>
 public static class ReadinessScore

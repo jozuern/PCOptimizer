@@ -79,7 +79,8 @@
                                 </StackPanel>
                             </ui:CardControl.Header>
                             <ui:Button Content="{l:Tr Debloat_Reinstall}" Icon="{ui:SymbolIcon Open20}"
-                                       Command="{Binding DataContext.Debloat.OpenStoreCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding StoreLink}" />
+                                       Command="{Binding DataContext.Debloat.OpenStoreCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding StoreLink}"
+                                       Visibility="{Binding StoreLink, Converter={StaticResource NullToVisibility}}" />
                         </ui:CardControl>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

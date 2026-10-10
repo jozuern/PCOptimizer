@@ -16,8 +16,8 @@
       "titleDe": "VM-Plattform",
       "hypervisor": true,
       "recommend": null,
-      "en": "Needed by WSL 2 and Android emulators that use the Windows hypervisor. Starts the hypervisor at boot.",
-      "de": "Nötig für WSL 2 und Android-Emulatoren, die den Windows-Hypervisor nutzen. Startet beim Booten den Hypervisor."
+      "en": "Needed by WSL 2. Starts the Windows hypervisor at boot.",
+      "de": "Nötig für WSL 2. Startet beim Booten den Windows-Hypervisor."
     },
     {
       "name": "HypervisorPlatform",
@@ -25,8 +25,8 @@
       "titleDe": "Windows-Hypervisorplattform",
       "hypervisor": true,
       "recommend": null,
-      "en": "Lets third-party virtualization programs (for example VMware, VirtualBox, emulators) run on the Windows hypervisor.",
-      "de": "Lässt Virtualisierungsprogramme anderer Hersteller (zum Beispiel VMware, VirtualBox, Emulatoren) auf dem Windows-Hypervisor laufen."
+      "en": "Lets virtualization programs from other vendors (for example the Android Emulator or QEMU) run on the Windows hypervisor.",
+      "de": "Lässt Virtualisierungsprogramme anderer Hersteller (zum Beispiel den Android-Emulator oder QEMU) auf dem Windows-Hypervisor laufen."
     },
     {
       "name": "Microsoft-Windows-Subsystem-Linux",
@@ -52,8 +52,8 @@
       "titleDe": ".NET Framework 3.5",
       "hypervisor": false,
       "recommend": null,
-      "en": "Runtime for older programs and games. Turn it on when a program asks for it; it is downloaded through Windows Update.",
-      "de": "Laufzeitumgebung für ältere Programme und Spiele. Schalte sie ein, wenn ein Programm danach fragt; sie wird über Windows Update geladen."
+      "en": "Runtime for older programs and games. Turn it on when a program asks for it; it is downloaded through Windows Update. From Windows 11 26H1 on, Microsoft offers it only as a separate installer, not as a Windows feature.",
+      "de": "Laufzeitumgebung für ältere Programme und Spiele. Schalte sie ein, wenn ein Programm danach fragt; sie wird über Windows Update geladen. Ab Windows 11 26H1 bietet Microsoft sie nur noch als eigenes Installationsprogramm an, nicht mehr als Windows-Feature."
     },
     {
       "name": "DirectPlay",
@@ -61,8 +61,8 @@
       "titleDe": "DirectPlay",
       "hypervisor": false,
       "recommend": null,
-      "en": "Network component of very old games (around 2000 to 2008). Windows offers to install it when such a game needs it.",
-      "de": "Netzwerkkomponente sehr alter Spiele (etwa 2000 bis 2008). Windows bietet die Installation an, wenn ein solches Spiel sie braucht."
+      "en": "Network component of very old games. Turn it on when an old game asks for DirectPlay.",
+      "de": "Netzwerkkomponente sehr alter Spiele. Schalte sie ein, wenn ein altes Spiel nach DirectPlay fragt."
     },
     {
       "name": "SMB1Protocol",

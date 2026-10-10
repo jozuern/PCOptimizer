@@ -7,7 +7,7 @@ using Optimizer.Core.Platform;
 namespace Optimizer.Core.Hardware.Probes;
 
 /// <summary>
-/// Active displays via the CCD API (plan v4 §2): exact rational refresh rates, target -> monitor device path -> EDID,
+/// Active displays via the CCD API: exact rational refresh rates, target -> monitor device path -> EDID,
 /// adapter per target. The registry keeps EDIDs of every monitor ever connected, so only mapped EDIDs are used.
 /// </summary>
 public static class DisplayProbe
@@ -50,10 +50,13 @@ public static class DisplayProbe
             var hasColor = Native.DisplayConfigGetDeviceInfo(ref color) == 0;
 
             int width = 0, height = 0;
+            var primary = false;
             if (src.modeInfoIdx < modeCount && modes[src.modeInfoIdx].infoType == Native.ModeInfoTypeSource)
             {
                 width = (int)modes[src.modeInfoIdx].sourceWidth;
                 height = (int)modes[src.modeInfoIdx].sourceHeight;
+                // The primary display's desktop starts at (0,0) (DISPLAYCONFIG_SOURCE_MODE.position).
+                primary = modes[src.modeInfoIdx].sourcePositionX == 0 && modes[src.modeInfoIdx].sourcePositionY == 0;
             }
 
             var gdi = sourceName.viewGdiDeviceName ?? "";
@@ -68,7 +71,7 @@ public static class DisplayProbe
                 gdi,
                 string.IsNullOrWhiteSpace(targetName.monitorFriendlyDeviceName) ? edid?.Name ?? "Display" : targetName.monitorFriendlyDeviceName,
                 targetName.monitorDevicePath ?? "",
-                tgt.outputTechnology == Native.OutputTechnologyInternal,
+                IsInternalOutput(tgt.outputTechnology),
                 tgt.outputTechnology,
                 width,
                 height,
@@ -80,10 +83,20 @@ public static class DisplayProbe
                 null,
                 hasColor && (color.value & 0x1) != 0,
                 hasColor && (color.value & 0x2) != 0,
-                edid));
+                edid) { IsPrimary = primary });
         }
         return result;
     }
+
+    /// <summary>DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY values for embedded DisplayPort and embedded UDI.</summary>
+    public const uint OutputDisplayPortEmbedded = 11, OutputUdiEmbedded = 13;
+
+    /// <summary>
+    /// Built-in panel: drivers report either ..._INTERNAL or the embedded DisplayPort/UDI values for it; Microsoft says
+    /// callers should treat the embedded values as internal (DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY remarks).
+    /// </summary>
+    public static bool IsInternalOutput(uint outputTechnology) =>
+        outputTechnology is Native.OutputTechnologyInternal or OutputDisplayPortEmbedded or OutputUdiEmbedded;
 
     private static Native.DISPLAYCONFIG_DEVICE_INFO_HEADER Header(uint type, int size, Native.LUID adapter, uint id) =>
         new() { type = type, size = (uint)size, adapterId = adapter, id = id };

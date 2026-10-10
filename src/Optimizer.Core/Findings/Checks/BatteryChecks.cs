@@ -20,12 +20,13 @@ public sealed class OnBatteryCheck : IFindingCheck
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = p.Power.OnAc ? FindingStatus.Ok : FindingStatus.Problem,
+            // ACLineStatus 255 ("unknown status") is not "on battery".
+            Status = p.Power.OnAc switch { true => FindingStatus.Ok, false => FindingStatus.Problem, null => FindingStatus.Unknown },
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
             [
-                new("fact.acPower", p.Power.OnAc ? "@yes" : "@no"),
+                new("fact.acPower", p.Power.OnAc switch { true => "@yes", false => "@no", null => "@unknown" }),
                 new("fact.batteryLevel", p.Power.BatteryPercent is { } pct ? $"{pct} %" : "@unknown"),
             ],
         };

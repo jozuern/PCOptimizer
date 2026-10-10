@@ -33,8 +33,8 @@ public class CpuTests
 {
     [Theory]
     [InlineData(new byte[] { 0xF8, 0, 0, 0 }, Vendor.Intel, 0xF8u)]                            // 26300, 4-byte layout
-    [InlineData(new byte[] { 0, 0, 0, 0, 0x2F, 0x01, 0, 0 }, Vendor.Intel, 0x12Fu)]            // 8-byte MSR copy, Intel bytes 4–7
-    [InlineData(new byte[] { 0x0A, 0x52, 0x40, 0x0B, 0, 0, 0, 0 }, Vendor.Amd, 0x0B40520Au)]    // AMD bytes 0–3
+    [InlineData(new byte[] { 0, 0, 0, 0, 0x2F, 0x01, 0, 0 }, Vendor.Intel, 0x12Fu)]            // 8-byte MSR copy, Intel bytes 4 to 7
+    [InlineData(new byte[] { 0x0A, 0x52, 0x40, 0x0B, 0, 0, 0, 0 }, Vendor.Amd, 0x0B40520Au)]    // AMD bytes 0 to 3
     public void Microcode(byte[] value, Vendor vendor, uint expected) => Assert.Equal(expected, CpuProbe.ParseMicrocodeBinary(value, vendor));
 
     [Fact]
@@ -128,10 +128,10 @@ public class RamTests
         var f = new XmpCheck().Evaluate(p, CatalogData.Current).Single();
         Assert.Equal(FindingStatus.Problem, f.Status);
         Assert.Contains("Ai Overclock Tuner", f.Params["menuPath"]);
-        // bios.json marks the path as not checked against the manual: the page says so.
-        Assert.Equal("yes", f.Params["menuUnverified"]);
+        // bios.json: the ASUS path is checked against ASUS's documentation, so the page shows no "not checked" note.
+        Assert.Equal("", f.Params["menuUnverified"]);
         var md = Optimizer.Core.Docs.DocStore.RenderFinding(Optimizer.Core.Docs.DocStore.Get(f.Id, "en")!, f, Optimizer.Core.Docs.Labels.Current);
-        Assert.Contains("not yet checked against the manual", md);
+        Assert.DoesNotContain("not yet checked against the manual", md);
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class DisplayGpuTests
     [Fact]
     public void EdidParsing()
     {
-        // Minimal EDID 1.4 block: header, manufacturer "AOC" (0x05E3), product 0x2701, range limits 48–146 Hz, name descriptor.
+        // Minimal EDID 1.4 block: header, manufacturer "AOC" (0x05E3), product 0x2701, range limits 48 to 146 Hz, name descriptor.
         var e = new byte[128];
         byte[] header = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
         header.CopyTo(e, 0);

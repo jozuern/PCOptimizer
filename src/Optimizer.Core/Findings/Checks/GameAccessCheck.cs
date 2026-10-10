@@ -4,7 +4,7 @@ using Optimizer.Core.Hardware;
 namespace Optimizer.Core.Findings.Checks;
 
 /// <summary>
-/// Game access panel (plan v4 §5.3): anti-cheat readiness, shown separately from ⚡. Read-only; never advises
+/// Game access panel: anti-cheat readiness, shown separately from ⚡. Read-only; never advises
 /// disabling VT-x/SVM/VT-d/IOMMU. Requirements per anti-cheat come from anticheat.json: "required" parts block games
 /// when missing (Problem), "sometimes" parts are enforced only in some modes or rollout waves (Info).
 /// </summary>
@@ -14,7 +14,7 @@ public sealed class GameAccessCheck : IFindingCheck
     public IReadOnlyList<string> DocIds => [Id];
 
     /// <summary>Requirement ids used in anticheat.json.</summary>
-    public static readonly string[] Parts = ["uefi", "secureBoot", "tpm2", "hvci", "iommu"];
+    public static readonly string[] Parts = ["uefi", "secureBoot", "tpm2", "hvci", "vbs", "iommu"];
 
     public static TriState PartState(FirmwareInfo? fw, string part)
     {
@@ -29,7 +29,9 @@ public sealed class GameAccessCheck : IFindingCheck
                 TriState.No => TriState.No,
                 _ => TriState.Unknown,
             },
-            "hvci" => fw.HvciRunning ? TriState.Yes : TriState.No,
+            // VbsStatus < 0: Win32_DeviceGuard could not be read, so memory integrity is unknown, not off.
+            "hvci" => fw.VbsStatus < 0 ? TriState.Unknown : fw.HvciRunning ? TriState.Yes : TriState.No,
+            "vbs" => fw.VbsStatus switch { 2 => TriState.Yes, < 0 => TriState.Unknown, _ => TriState.No },
             // Kernel DMA protection proves the IOMMU is on; its absence does not prove it is off.
             "iommu" => fw.DmaProtectionAvailable ? TriState.Yes : TriState.Unknown,
             _ => TriState.Unknown,
@@ -80,6 +82,7 @@ public sealed class GameAccessCheck : IFindingCheck
             _ => FindingStatus.Unknown,
         };
         if (status == FindingStatus.Info && variant is null) variant = "baseline";
+        if (status == FindingStatus.Ok && installed.Count == 0) variant = "none"; // no anti-cheat installed, baseline on
 
         var parameters = new Dictionary<string, string>
         {
@@ -112,7 +115,7 @@ public sealed class GameAccessCheck : IFindingCheck
                 new("fact.tpm", fw is null ? "@unknown" : fw.TpmPresent == TriState.Yes ? $"{fw.TpmSpecVersion}" : Tri(fw.TpmPresent)),
                 new("fact.tpmReady", fw is null ? "@unknown" : Tri(fw.TpmReady)),
                 new("fact.vbs", fw is null ? "@unknown" : fw.VbsStatus switch { 2 => "@running", 1 => "@configured", 0 => "@off", _ => "@unknown" }),
-                new("fact.hvci", fw is null ? "@unknown" : fw.HvciRunning ? "@running" : "@off"),
+                new("fact.hvci", fw is null || fw.VbsStatus < 0 ? "@unknown" : fw.HvciRunning ? "@running" : "@off"),
                 new("fact.iommu", fw is null ? "@unknown" : fw.DmaProtectionAvailable ? "@available" : "@unknown"),
                 new("fact.systemDiskStyle", fw?.SystemDiskPartitionStyle.ToString().ToUpperInvariant() ?? "@unknown"),
                 new("fact.antiCheats", installed.Count == 0 ? "@none" : string.Join(", ", installed.Select(a => a.DisplayName))),

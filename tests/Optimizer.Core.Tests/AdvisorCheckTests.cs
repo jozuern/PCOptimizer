@@ -11,7 +11,7 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>M3 checks with mocked profiles: every rule, its edge cases and the rendered explanation.</summary>
+/// <summary>Advisor checks with mocked profiles: every rule, its edge cases and the rendered explanation.</summary>
 public class AdvisorCheckTests
 {
     private static readonly CatalogData C = CatalogData.Current;
@@ -199,10 +199,11 @@ public class AdvisorCheckTests
     }
 
     [Fact]
-    public void OtherVendorVrrIsUnknownAndFixedMonitorIsSkipped()
+    public void OtherVendorVrrIsInfoAndFixedMonitorIsSkipped()
     {
+        // Unknown never carries advice; the setup steps for AMD/Intel VRR are information.
         var f = One(new VrrCheck(), P(p => p with { Displays = [Display(vendor: Vendor.Amd, edid: Edid(48, 144))] }));
-        Assert.Equal(FindingStatus.Unknown, f.Status);
+        Assert.Equal(FindingStatus.Info, f.Status);
         Assert.Equal("otherVendor", f.Variant);
         AssertRenders(f);
         Assert.Empty(new VrrCheck().Evaluate(P(p => p with { Displays = [Display(vendor: Vendor.Amd, edid: Edid(56, 61))] }), C));
@@ -229,7 +230,7 @@ public class AdvisorCheckTests
     private static NicDetail Nic(long speedBps, string? speedDuplex, int? max, string type = "Ethernet") => new("{1E2F708A-35FE-4B75-AA24-30EDD75652D3}",
         "Ethernet", "Intel(R) Ethernet Connection (7) I219-V", type, true, speedBps, max, @"SYSTEM\x\0001",
         speedDuplex is null ? new Dictionary<string, string>() : new Dictionary<string, string> { ["*SpeedDuplex"] = speedDuplex },
-        new Dictionary<string, IReadOnlyList<string>>());
+        new Dictionary<string, IReadOnlyList<string>>()) { DeviceInstanceId = @"PCI\VEN_8086&DEV_15BC\3" };
 
     [Fact]
     public void ForcedEthernetSpeedIsProblemWithAutoFix()
@@ -325,7 +326,7 @@ public class AdvisorCheckTests
         {
             Cpu = cpu,
             Firmware = TestData.Firmware() with { BiosDate = bios },
-            Extras = new HardwareExtras { TpmManufacturer = tpm, Agesa = agesa },
+            Extras = new HardwareExtras { TpmManufacturer = tpm, Agesa = agesa, AgesaSource = agesa is null ? null : $"AGESA ComboAM4v2PI {agesa}" },
         });
         var problem = One(new AmdFtpmCheck(), F("AMD", new Version(1, 2, 0, 3), new DateTime(2021, 6, 1)));
         Assert.Equal(FindingStatus.Problem, problem.Status);
@@ -407,10 +408,14 @@ public class AdvisorCheckTests
     [Fact]
     public void LenientAntiCheatOnlyUsesBaseline()
     {
-        Assert.Equal(FindingStatus.Ok, One(new GameAccessCheck(), Ac("eac", "Easy Anti-Cheat")).Status);
-        var noTpm = One(new GameAccessCheck(), Ac("eac", "Easy Anti-Cheat", fw => fw with { TpmPresent = TriState.No }));
+        Assert.Equal(FindingStatus.Ok, One(new GameAccessCheck(), Ac("battleye", "BattlEye")).Status);
+        var noTpm = One(new GameAccessCheck(), Ac("battleye", "BattlEye", fw => fw with { TpmPresent = TriState.No }));
         Assert.Equal(("baseline", FindingStatus.Info), (noTpm.Variant, noTpm.Status));
         AssertRenders(noTpm);
+        // Easy Anti-Cheat lets each game ask for TPM 2.0 (easy.ac): a missing TPM is a "sometimes" part there.
+        var eac = One(new GameAccessCheck(), Ac("eac", "Easy Anti-Cheat", fw => fw with { TpmPresent = TriState.No }));
+        Assert.Equal(("sometimes", "yes"), (eac.Variant, eac.Params["missing_tpm2"]));
+        AssertRenders(eac);
     }
 
     [Fact]
@@ -419,7 +424,7 @@ public class AdvisorCheckTests
         var javelin = One(new GameAccessCheck(), Ac("javelin", "EA Javelin"));
         Assert.Equal("yes", javelin.Params["unverified_javelin"]);
         AssertRenders(javelin);
-        Assert.Contains("not verified yet", DocStore.RenderFinding(DocStore.Get(javelin.Id, "en")!, javelin, Labels.Current));
+        Assert.Contains("not confirmed yet", DocStore.RenderFinding(DocStore.Get(javelin.Id, "en")!, javelin, Labels.Current));
 
         var vanguard = One(new GameAccessCheck(), Ac("vanguard", "Riot Vanguard"));
         Assert.False(vanguard.Params.ContainsKey("unverified_vanguard"));
@@ -503,7 +508,7 @@ public class AdvisorCheckTests
     }
 }
 
-/// <summary>The M3/M4 action types against the sandbox registry and fakes.</summary>
+/// <summary>The extended action types (NIC, DNS, NVIDIA, power mode) against the sandbox registry and fakes.</summary>
 public class ExtendedActionTests
 {
     private static readonly Facts Facts = new Facts().Set("os.build", 26300).Set("elevated", true);

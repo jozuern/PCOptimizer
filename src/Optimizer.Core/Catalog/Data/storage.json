@@ -1,5 +1,23 @@
 {
-  "_comment": "Drive models known to use SMR (shingled recording): slow sustained writes, poor for game libraries.",
-  "smrModels": [ "WD20EZAZ", "WD40EZAZ", "WD60EZAZ", "WD20EFAX", "WD30EFAX", "WD40EFAX", "WD60EFAX", "ST2000DM008", "ST4000DM004", "ST6000DM003", "ST8000DM004" ],
-  "lowFreeSpaceFraction": 0.10
+  "_comment": "Drive models known to use SMR (shingled recording): slow sustained writes, poor for game libraries. Substring match on the model, so the base model is enough. Checked against WD product pages and the WD Red blog, Seagate's CMR/SMR list and BarraCuda product manuals, and Toshiba's SMR statement. WD20EZAZ and WD60EZAZ are discontinued and kept from WD's 2020 disclosure.",
+  "smrModels": [
+    "WD20EZAZ", "WD30EZAZ", "WD40EZAZ", "WD60EZAZ", "WD20EZBX",
+    "WD20EFAX", "WD30EFAX", "WD40EFAX", "WD60EFAX",
+    "WD10SPZX", "WD20SPZX", "WD5000LPSX", "WD10SPSX",
+    "ST1000DM014", "ST2000DM005", "ST2000DM008", "ST3000DM007", "ST4000DM004", "ST6000DM003", "ST8000DM004",
+    "ST500LM030", "ST1000LM048", "ST2000LM015",
+    "HDWD240", "HDWD260", "HDWL110", "HDWL120"
+  ],
+  "lowFreeSpaceFraction": 0.10,
+  "sources": [
+    "https://www.westerndigital.com/products/internal-drives/wd-blue-desktop-sata-hdd?sku=WD40EZAZ",
+    "https://www.westerndigital.com/products/internal-drives/wd-blue-mobile-sata-hdd?sku=WD20SPZX",
+    "https://www.westerndigital.com/products/internal-drives/wd-black-mobile-sata-hdd?sku=WD10SPSX",
+    "https://blog.westerndigital.com/wd-red-nas-drives/",
+    "https://www.seagate.com/products/cmr-smr-list/",
+    "https://www.seagate.com/content/dam/seagate/migrated-assets/www-content/product-content/barracuda-fam/barracuda-new/en-us/docs/100805918r.pdf",
+    "https://www.seagate.com/files/www-content/product-content/barracuda-fam/barracuda-new/en-us/docs/100817550m.pdf",
+    "https://www.seagate.com/files/www-content/product-content/seagate-laptop-fam/barracuda_25/en-us/docs/100807728h.pdf",
+    "https://storage.toshiba.com/news/pr/use-of-shingled-magnetic-recording-(smr)-technology-in-toshiba-consumer-hard-drives"
+  ]
 }

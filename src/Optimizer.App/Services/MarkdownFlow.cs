@@ -13,8 +13,8 @@ using WpfInline = System.Windows.Documents.Inline;
 namespace Optimizer.App.Services;
 
 /// <summary>
-/// Markdown -> FlowDocument (plan v4 §4.12): headings, paragraphs, lists, bold/italic, inline code and links only.
-/// Links are shown as text with the URL; opening them de-elevated comes with the DeElevatedLauncher in M2.
+/// Markdown -> FlowDocument: headings, paragraphs, lists, bold/italic, inline code and links only.
+/// Links are shown as text with their URL.
 /// </summary>
 public static class MarkdownFlow
 {

@@ -11,7 +11,7 @@ public sealed record DnsServerResult(string Name, IPAddress Server, double? Medi
 }
 
 /// <summary>
-/// Opt-in DNS benchmark (M4): sends plain UDP DNS queries (RFC 1035, type A) for common domains to each server and
+/// Opt-in DNS benchmark: sends plain UDP DNS queries (RFC 1035, type A) for common domains to each server and
 /// measures the response time. Runs only when the user starts it; it sends a few dozen small packets to the listed
 /// public resolvers and the current DNS servers, nothing else.
 /// </summary>

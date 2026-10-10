@@ -8,7 +8,7 @@ using Optimizer.Core.Platform;
 namespace Optimizer.Core.Hardware;
 
 /// <summary>
-/// Runs every probe in isolation (plan v4 §5.1): a failing probe leaves its section null (-> findings say Unknown)
+/// Runs every probe in isolation: a failing probe leaves its section null (-> findings say Unknown)
 /// instead of breaking the scan. Read-only.
 /// </summary>
 public sealed class HardwareScanner(CatalogData catalog)

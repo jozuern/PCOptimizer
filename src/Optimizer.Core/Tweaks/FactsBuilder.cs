@@ -56,7 +56,7 @@ public static class FactsBuilder
         {
             f.Set("power.modernStandby", pw.ModernStandby);
             f.Set("power.personality", pw.Personality.ToString().ToLowerInvariant());
-            f.Set("power.onAc", pw.OnAc);
+            if (pw.OnAc is { } onAc) f.Set("power.onAc", onAc); // ACLineStatus 255: the fact stays unknown
         }
         if (p.Storage is { } st)
         {

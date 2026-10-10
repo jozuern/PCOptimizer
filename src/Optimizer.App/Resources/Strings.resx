@@ -292,7 +292,7 @@
     <value>Preinstalled apps you can remove. Only apps from a reviewed list are offered; parts of Windows and apps that games need are never offered.</value>
   </data>
   <data name="Debloat_NotUndoable" xml:space="preserve">
-    <value>Removing an app cannot be undone by this app. The list of removed apps keeps a Microsoft Store link to install each one again.</value>
+    <value>Removing an app cannot be undone by this app. For apps still in the Microsoft Store, the list of removed apps keeps a link to install them again.</value>
   </data>
   <data name="Debloat_Empty" xml:space="preserve">
     <value>None of the apps on the list are installed.</value>
@@ -307,6 +307,11 @@
     <value>{0}
 
 The app is removed for all users and new accounts. You can install it again from the Microsoft Store.</value>
+  </data>
+  <data name="Debloat_ConfirmTextNoStore" xml:space="preserve">
+    <value>{0}
+
+The app is removed for all users and new accounts. Microsoft no longer offers it in the Microsoft Store, so it cannot be installed again.</value>
   </data>
   <data name="Debloat_Removed" xml:space="preserve">
     <value>{0} was removed.</value>

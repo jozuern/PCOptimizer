@@ -40,7 +40,7 @@ public static class SafeDelete
 
     private static void Delete(string path, bool directory)
     {
-        // Long names: the final path never contains 8.3 short names (C:\Users\JOSHU~1), the input may.
+        // Long names: the final path never contains 8.3 short names (C:\Users\EXAMPL~1), the input may.
         var expected = LongPath(Path.GetFullPath(path)).TrimEnd('\\');
         var flags = FileFlagOpenReparsePoint | (directory ? FileFlagBackupSemantics : 0);
         using var handle = CreateFileW(@"\\?\" + expected, Delete_ | FileReadAttributes, FileShareRead | FileShareWrite | FileShareDelete, IntPtr.Zero, OpenExisting, flags, IntPtr.Zero);

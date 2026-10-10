@@ -189,7 +189,7 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     public bool CanRemove => BlockText is null;
 }
 
-public sealed record RemovedRow(string Name, string When, string StoreLink);
+public sealed record RemovedRow(string Name, string When, string? StoreLink);
 
 public sealed partial class DebloatViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
@@ -235,11 +235,12 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     private async Task RemoveAsync(DebloatItem? item)
     {
         if (item is null || !item.CanRemove) return;
-        if (!dialogs.Ask(Loc.Instance.Format("Debloat_ConfirmTitle", item.Name), Loc.Instance.Format("Debloat_ConfirmText", item.Text), Loc.Instance["Debloat_Remove"])) return;
+        var confirm = item.Item.Entry.CanReinstall ? "Debloat_ConfirmText" : "Debloat_ConfirmTextNoStore";
+        if (!dialogs.Ask(Loc.Instance.Format("Debloat_ConfirmTitle", item.Name), Loc.Instance.Format(confirm, item.Text), Loc.Instance["Debloat_Remove"])) return;
         IsWorking = true;
         try
         {
-            var error = await Task.Run(() => Service.Remove(item.Item.Installed));
+            var error = await Task.Run(() => Service.Remove(item.Item.Installed, item.Item.Entry));
             Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", item.Name) : Loc.Instance.Format("Result_Failed", error));
         }
         finally

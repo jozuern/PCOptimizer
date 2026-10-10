@@ -60,11 +60,17 @@ public sealed class RefreshRateCheck : IFindingCheck
     }
 }
 
-/// <summary>F3: a monitor is connected to the integrated GPU while a discrete GPU exists (desktops).</summary>
+/// <summary>
+/// F3: a monitor is connected to the integrated GPU while a discrete GPU exists (desktops). Problem only for the primary
+/// display; a secondary display on the iGPU is information (variant "secondary"). Built-in panels (all-in-one PCs,
+/// laptops without a battery) are not judged here. An unmatched adapter gives Unknown, never Ok.
+/// </summary>
 public sealed class MonitorOnIgpuCheck : IFindingCheck
 {
     public const string Id = "F3.monitorOnIgpu";
     public IReadOnlyList<string> DocIds => [Id];
+
+    private enum Place { Igpu, Other, Unknown }
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
@@ -76,15 +82,37 @@ public sealed class MonitorOnIgpuCheck : IFindingCheck
         }
         var discrete = p.Gpus.Where(g => g.Kind == GpuKind.Discrete).ToList();
         if (discrete.Count == 0) yield break; // iGPU-only PC: nothing to fix
-        var onIgpu = p.Displays.Where(d =>
-                p.Gpus.FirstOrDefault(g => string.Equals(g.Name, d.AdapterName, StringComparison.Ordinal))?.Kind == GpuKind.Integrated)
-            .ToList();
+
+        Place Where(DisplayInfo d) => p.Gpus.FirstOrDefault(g => string.Equals(g.Name, d.AdapterName, StringComparison.Ordinal))?.Kind switch
+        {
+            GpuKind.Integrated => Place.Igpu,
+            GpuKind.Discrete or GpuKind.Virtual => Place.Other,
+            _ => Place.Unknown, // adapter not matched, unclassified or on the basic driver (F5)
+        };
+
+        var monitors = p.Displays.Where(d => !d.IsInternal).ToList();
+        if (monitors.Count == 0) yield break; // only a built-in panel: its wiring is fixed
+        var places = monitors.Select(Where).ToList();
+        var onIgpu = monitors.Where((_, i) => places[i] == Place.Igpu).ToList();
+        // Primary = desktop origin; with one monitor it is that one. Unknown primary: Problem only if every monitor is on the iGPU.
+        var primaryIndex = monitors.FindIndex(d => d.IsPrimary);
+        if (primaryIndex < 0 && monitors.Count == 1) primaryIndex = 0;
+        var primaryOnIgpu = primaryIndex >= 0 ? places[primaryIndex] == Place.Igpu : onIgpu.Count == monitors.Count;
+
+        FindingStatus status;
+        string? variant = null;
+        if (primaryOnIgpu) status = FindingStatus.Problem;
+        else if (places.Contains(Place.Unknown)) status = FindingStatus.Unknown;
+        else if (onIgpu.Count > 0) { status = FindingStatus.Info; variant = "secondary"; }
+        else status = FindingStatus.Ok;
+
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = onIgpu.Count > 0 ? FindingStatus.Problem : FindingStatus.Ok,
-            Impact = 5,
+            Status = status,
+            Variant = variant,
+            Impact = status == FindingStatus.Info ? 1 : 5,
             Effects = [Effect.Fps, Effect.Latency],
             Facts =
             [

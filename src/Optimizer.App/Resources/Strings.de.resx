@@ -292,7 +292,7 @@
     <value>Vorinstallierte Apps, die du entfernen kannst. Nur Apps aus einer geprüften Liste werden angeboten; Teile von Windows und Apps, die Spiele brauchen, nie.</value>
   </data>
   <data name="Debloat_NotUndoable" xml:space="preserve">
-    <value>Das Entfernen einer App kann diese App nicht rückgängig machen. Die Liste der entfernten Apps enthält für jede einen Link zum Microsoft Store, um sie neu zu installieren.</value>
+    <value>Das Entfernen einer App kann diese App nicht rückgängig machen. Für Apps, die es noch im Microsoft Store gibt, enthält die Liste der entfernten Apps einen Link zum Neuinstallieren.</value>
   </data>
   <data name="Debloat_Empty" xml:space="preserve">
     <value>Keine der Apps aus der Liste ist installiert.</value>
@@ -307,6 +307,11 @@
     <value>{0}
 
 Die App wird für alle Benutzer und neue Konten entfernt. Du kannst sie über den Microsoft Store neu installieren.</value>
+  </data>
+  <data name="Debloat_ConfirmTextNoStore" xml:space="preserve">
+    <value>{0}
+
+Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie nicht mehr im Microsoft Store an, du kannst sie also nicht neu installieren.</value>
   </data>
   <data name="Debloat_Removed" xml:space="preserve">
     <value>{0} wurde entfernt.</value>

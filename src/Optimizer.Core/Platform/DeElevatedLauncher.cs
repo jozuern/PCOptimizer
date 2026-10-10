@@ -5,7 +5,7 @@ using Optimizer.Core.Logging;
 namespace Optimizer.Core.Platform;
 
 /// <summary>
-/// Starts user-facing processes (browser links, launchers) as the signed-in user, never elevated (plan v4 §4.5).
+/// Starts user-facing processes (browser links, launchers) as the signed-in user, never elevated.
 /// 1) Shell technique: ask the desktop's Explorer to ShellExecute (Raymond Chen). Works when Explorer runs as the
 ///    same user as this process.
 /// 2) Fallback: a one-shot scheduled task for the session user with an interactive token (Administrator protection,

@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Catalog data and explanation pages ship inside the assembly (plan v4 §3, §4.12). -->
+    <!-- Catalog data and explanation pages ship inside the assembly. -->
     <EmbeddedResource Include="Catalog\Data\*.json" LogicalName="Catalog.Data.%(Filename)%(Extension)" />
     <EmbeddedResource Include="Catalog\Docs\en\*.md" LogicalName="Catalog.Docs.en.%(Filename)%(Extension)" />
     <EmbeddedResource Include="Catalog\Docs\de\*.md" LogicalName="Catalog.Docs.de.%(Filename)%(Extension)" />

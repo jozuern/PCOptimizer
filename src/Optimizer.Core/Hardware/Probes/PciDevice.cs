@@ -7,7 +7,7 @@ public static class PciDevice
 {
     private static readonly Guid PciFmtId = new("3ab22e31-8264-4b4e-9af5-a8d2d8e33e62");
 
-    // DEVPKEY_PciDevice_* property ids (devpkey.h). Confirmed on real hardware in M1 (see docs/hardware-notes.md).
+    // DEVPKEY_PciDevice_* property ids (devpkey.h). Confirmed on real hardware (see docs/hardware-notes.md).
     private const uint PidBaseClass = 3, PidSubClass = 4, PidCurrentLinkSpeed = 9, PidCurrentLinkWidth = 10, PidMaxLinkSpeed = 11, PidMaxLinkWidth = 12,
         PidInterruptSupport = 14, PidInterruptMessageMaximum = 15;
 
@@ -85,7 +85,7 @@ public static class PciDevice
     }
 
     /// <summary>
-    /// PCIe walk (plan v4 §5.3): Radeon RX 5000+ (and possibly Intel Arc) have a PCIe switch on the card, so the GPU's
+    /// PCIe walk: Radeon RX 5000+ (and possibly Intel Arc) have a PCIe switch on the card, so the GPU's
     /// direct parent is that switch. Walk up past bridge devices with the GPU's vendor ID that are not root ports;
     /// the node we stop at is the card's upstream port and its parent is the first platform port (the slot).
     /// </summary>

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Optimizer.Core.Interop;
 
-/// <summary>P/Invoke declarations. Everything here is read-only (M1 = zero system writes).</summary>
+/// <summary>P/Invoke declarations. Everything here only reads system state; changes go through NativeWrite.</summary>
 internal static partial class Native
 {
     // ---------- kernel32 ----------
@@ -132,6 +132,8 @@ internal static partial class Native
         // source mode
         [FieldOffset(16)] public uint sourceWidth;
         [FieldOffset(20)] public uint sourceHeight;
+        [FieldOffset(28)] public int sourcePositionX;  // DISPLAYCONFIG_SOURCE_MODE.position (POINTL), desktop coordinates
+        [FieldOffset(32)] public int sourcePositionY;
         // target mode (DISPLAYCONFIG_VIDEO_SIGNAL_INFO)
         [FieldOffset(16)] public ulong pixelRate;
         [FieldOffset(32)] public DISPLAYCONFIG_RATIONAL vSyncFreq;

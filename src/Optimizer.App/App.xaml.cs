@@ -57,7 +57,7 @@ public partial class App : Application
         Loc.Instance.SetLanguage(args.Value("--lang") ?? _settings.Language ?? Loc.Instance.Language);
         Log.Info("app", "start", new { version = typeof(App).Assembly.GetName().Version?.ToString(), args = e.Args });
 
-        // OS gate (plan v4 §2): block below 26100 and non-x64 before scanning anything.
+        // OS gate: block below 26100 and non-x64 before scanning anything.
         var os = BuildInfo.Read();
         var gate = OsGate.Evaluate(os.Build, os.NativeArchitecture);
         if (gate is OsGateResult.BlockedTooOld or OsGateResult.BlockedArchitecture)

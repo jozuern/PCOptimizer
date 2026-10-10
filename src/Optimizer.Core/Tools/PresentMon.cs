@@ -13,7 +13,7 @@ public sealed record BenchmarkComparison(Comparison Result, double BeforeMean, d
 
 /// <summary>
 /// Frame time capture with Intel PresentMon 2.6.0 (MIT), embedded and extracted to the app's data folder with a SHA-256
-/// check. Benchmark protocol (plan v4 M6): at least three runs per setting; a change counts only when the ranges of the
+/// check. Benchmark protocol: at least three runs per setting; a change counts only when the ranges of the
 /// average FPS do not overlap, otherwise the result is "no measurable difference".
 /// </summary>
 public static class PresentMon

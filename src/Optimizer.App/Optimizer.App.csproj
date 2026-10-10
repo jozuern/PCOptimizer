@@ -13,10 +13,11 @@
     <Version>0.3.1</Version>
     <Product>PCOptimizer</Product>
     <Authors>Joshua Zürn</Authors>
+    <Company>Joshua Zürn</Company>
     <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
-    <!-- Release: always elevated (plan v4 §2). Debug: asInvoker so the scanner can be run without UAC during development. -->
+    <!-- Release: always elevated. Debug: asInvoker so the scanner can be run without UAC during development. -->
     <ApplicationManifest Condition="'$(Configuration)' == 'Release'">app.manifest</ApplicationManifest>
     <ApplicationManifest Condition="'$(Configuration)' != 'Release'">app.debug.manifest</ApplicationManifest>
     <!-- Exe, taskbar and Alt+Tab icon (16 to 256 px; sources in docs/brand) -->

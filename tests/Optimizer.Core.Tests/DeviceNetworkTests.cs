@@ -7,7 +7,7 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Tests;
 
-public class M4Tests
+public class DeviceNetworkTests
 {
     private static CpuInfo Cpu(int cores, int threads, bool hybrid = false) => TestData.Cpu9700K() with
     {

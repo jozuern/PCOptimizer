@@ -24,7 +24,7 @@ public sealed record HardwareProfile
     /// <summary>Battery capacity (design vs. full charge); null without a battery or usable driver data.</summary>
     public Probes.BatteryHealth? Battery { get; init; }
 
-    /// <summary>Data for the M3/M4 checks (NIC capabilities, Wi-Fi band, NVMe links, Secure Boot certificates, NVIDIA state).</summary>
+    /// <summary>Data for the advisor and network checks (NIC capabilities, Wi-Fi band, NVMe links, Secure Boot certificates, NVIDIA state).</summary>
     public HardwareExtras? Extras { get; init; }
 
     /// <summary>Probe name -> error message, for the Hardware page and the log.</summary>
@@ -58,7 +58,7 @@ public sealed record CpuInfo(
     IReadOnlyList<CacheDomain> L3Domains,
     IReadOnlyDictionary<int, int> CoresByEfficiencyClass)
 {
-    /// <summary>Hybrid = more than one efficiency class (plan v4: via EfficiencyClass, not by model).</summary>
+    /// <summary>Hybrid = more than one efficiency class (via EfficiencyClass, not by model).</summary>
     public bool IsHybrid => CoresByEfficiencyClass.Count > 1;
 
     public int PerformanceCores => CoresByEfficiencyClass.Count == 0 ? Cores : CoresByEfficiencyClass[CoresByEfficiencyClass.Keys.Max()];
@@ -155,14 +155,18 @@ public sealed record DisplayInfo(
     string? AdapterName,
     bool HdrSupported,
     bool HdrEnabled,
-    EdidInfo? Edid);
+    EdidInfo? Edid)
+{
+    /// <summary>Primary display (desktop origin at 0,0). False when the position could not be read.</summary>
+    public bool IsPrimary { get; init; }
+}
 
 public sealed record EdidInfo(string ManufacturerId, ushort ProductCode, string? Name, int? MinVHz, int? MaxVHz, int? PreferredWidth, int? PreferredHeight, double? PreferredRefreshHz)
 {
     /// <summary>EDID 1.4 feature byte bit 0: the display accepts a continuous range of frequencies (a hint for VRR panels).</summary>
     public bool ContinuousFrequency { get; init; }
 
-    /// <summary>A refresh range wide enough for variable refresh (e.g. 48–144 Hz). Hint only; the GPU driver decides.</summary>
+    /// <summary>A refresh range wide enough for variable refresh (e.g. 48 to 144 Hz). Hint only; the GPU driver decides.</summary>
     public bool LooksVrrCapable => ContinuousFrequency && MinVHz is <= 60 && MaxVHz is >= 90 && MaxVHz >= MinVHz * 1.5;
 }
 
@@ -201,7 +205,7 @@ public sealed record PowerInfo(
     uint? MinProcessorStateAc,
     uint? BoostModeAc,
     uint? CoreParkingMinCoresAc,
-    bool OnAc,
+    bool? OnAc, // null: ACLineStatus 255 ("unknown status")
     bool EnergySaverOn,
     bool ModernStandby,
     int? BatteryPercent);

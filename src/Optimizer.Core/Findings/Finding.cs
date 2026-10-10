@@ -3,12 +3,12 @@ using Optimizer.Core.Hardware;
 
 namespace Optimizer.Core.Findings;
 
-/// <summary>Plan v4 §5.1: every check returns OK / Problem / Unsupported / Unknown. Unknown never produces advice.</summary>
+/// <summary>Every check returns OK / Problem / Unsupported / Unknown. Unknown never produces advice.</summary>
 public enum FindingStatus { Ok, Problem, Unsupported, Unknown, Info }
 
 public enum FindingKind { Finding, Advisor, GameAccess }
 
-/// <summary>Effect tags (plan v4 §4.1).</summary>
+/// <summary>Effect tags.</summary>
 public static class Effect
 {
     public const string Fps = "fps", Lows = "lows", Latency = "latency", Stutter = "stutter",
@@ -60,6 +60,14 @@ public interface IFindingCheck
 {
     /// <summary>Ids of the explanation pages this check can produce (used by the docs lint).</summary>
     IReadOnlyList<string> DocIds { get; }
+
+    /// <summary>Kind of the results (used for the Unknown result when the check fails). Default: from the doc id prefix.</summary>
+    FindingKind Kind => DocIds.FirstOrDefault() switch
+    {
+        { } id when id.StartsWith("A.", StringComparison.Ordinal) => FindingKind.Advisor,
+        { } id when id.StartsWith("G.", StringComparison.Ordinal) => FindingKind.GameAccess,
+        _ => FindingKind.Finding,
+    };
 
     IEnumerable<Finding> Evaluate(HardwareProfile profile, CatalogData catalog);
 }

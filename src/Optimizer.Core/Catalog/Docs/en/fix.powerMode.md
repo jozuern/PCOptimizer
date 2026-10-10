@@ -10,7 +10,7 @@ The app sets the power mode overlay that the Settings slider uses [1]. Windows k
 "Best performance" lets the processor raise its clock faster and use more power, which helps in processor-heavy games.
 
 ## Evidence
-Microsoft documents that each slider position applies a different set of processor power settings [1].
+Microsoft documents that each slider position applies a different set of processor power settings [1]. How much frame rate that gains is not measured and depends on the PC.
 
 ## Trade-offs & risks
 More power draw, heat and fan noise. On a desktop the difference to Balanced is usually small.

@@ -11,7 +11,7 @@ namespace Optimizer.Core.Platform;
 
 /// <summary>
 /// Real registry roots. "User" = HKU\&lt;SID of the signed-in session user&gt;, never Registry.CurrentUser: under
-/// over-the-shoulder elevation or Administrator protection the process's HKCU belongs to another account (plan v4 §4.5).
+/// over-the-shoulder elevation or Administrator protection the process's HKCU belongs to another account.
 /// </summary>
 public sealed class SystemRegistryRoots(string? userSid) : IRegistryRoots
 {

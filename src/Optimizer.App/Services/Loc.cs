@@ -7,7 +7,7 @@ using System.Windows.Markup;
 namespace Optimizer.App.Services;
 
 /// <summary>
-/// Binding-based localizer (plan v4 §2): XAML binds to <c>Loc.Instance[key]</c>, so switching the language
+/// Binding-based localizer: XAML binds to <c>Loc.Instance[key]</c>, so switching the language
 /// updates the UI live (x:Static would not).
 /// </summary>
 public sealed class Loc : INotifyPropertyChanged

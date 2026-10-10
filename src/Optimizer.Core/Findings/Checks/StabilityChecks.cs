@@ -5,8 +5,8 @@ using Optimizer.Core.Hardware;
 namespace Optimizer.Core.Findings.Checks;
 
 /// <summary>
-/// A.virtualization: hardware virtualization off in the firmware. Memory integrity needs it, and anti-cheats that can
-/// ask for memory integrity (catalog: "hvci" required or sometimes) make it a problem.
+/// A.virtualization: hardware virtualization off in the firmware. Memory integrity and virtualization-based security
+/// need it, and anti-cheats that can ask for either (catalog: "hvci" or "vbs", required or sometimes) make it a problem.
 /// </summary>
 public sealed class VirtualizationCheck : IFindingCheck
 {
@@ -17,7 +17,8 @@ public sealed class VirtualizationCheck : IFindingCheck
     {
         var v = p.Extras?.Virtualization;
         var needing = (p.Software?.AntiCheats ?? [])
-            .Where(a => c.AntiCheat.AntiCheats.FirstOrDefault(s => s.Id == a.Id) is { } sig && (sig.Required.Contains("hvci") || sig.Sometimes.Contains("hvci")))
+            .Where(a => c.AntiCheat.AntiCheats.FirstOrDefault(s => s.Id == a.Id) is { } sig &&
+                        sig.Required.Concat(sig.Sometimes).Any(part => part is "hvci" or "vbs"))
             .Select(a => a.DisplayName).ToList();
         FindingStatus status;
         string? variant = null;

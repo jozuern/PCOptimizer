@@ -5,7 +5,7 @@ using Optimizer.Core.Logging;
 
 namespace Optimizer.Core.Tweaks;
 
-/// <summary>Plan v4 §4.2.</summary>
+/// <summary>State of a tweak on this PC, as detected from the real values.</summary>
 public enum TweakState
 {
     Applied,
@@ -66,7 +66,7 @@ public sealed record DriftItem(TweakDefinition Tweak, TweakBackup Backup, string
 
 /// <summary>
 /// Detect -> preflight -> restore point -> backup (first-original) -> apply with per-tweak rollback -> verify -> log
-/// (plan v4 §4.3). Undo restores originals unless Windows already changed the value (feature-update-aware, §4.4).
+///. Undo restores originals unless Windows already changed the value (feature-update-aware).
 /// </summary>
 /// <param name="windowsVersion">Full Windows version ("26300.9550"); defaults to the build number.</param>
 public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePoints restorePoints, string appVersion, int windowsBuild, string? windowsVersion = null)
@@ -118,7 +118,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (backup is not null)
         {
             if (state == TweakState.Applied && backup.PendingRestartSince is { } since && LastBoot() < since) return TweakState.PendingRestart;
-            // We applied it, now it is gone: a feature update or another tool reset it (drift, plan v4 §4.10). Only
+            // We applied it, now it is gone: a feature update or another tool reset it (drift). Only
             // targets we changed count: a newly added adapter or a target outside the backup is simply not applied.
             if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is not null))
                 return TweakState.RevertedByWindows;

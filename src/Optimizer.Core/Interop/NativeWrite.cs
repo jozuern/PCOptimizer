@@ -3,8 +3,8 @@ using System.Runtime.InteropServices;
 namespace Optimizer.Core.Interop;
 
 /// <summary>
-/// P/Invoke declarations that change system state (M2). Only called from the action layer, which backs up
-/// every value before it writes (plan v4 §4.3/§4.4).
+/// P/Invoke declarations that change system state. Only called from the action layer, which backs up
+/// every value before it writes.
 /// </summary>
 internal static partial class NativeWrite
 {
@@ -70,7 +70,7 @@ internal static partial class NativeWrite
 
     internal const uint SpiSetMouse = 0x0004;
 
-    /// <summary>Live mouse values for the current session; called without SPIF_UPDATEINIFILE (plan v4 §4.5).</summary>
+    /// <summary>Live mouse values for the current session; called without SPIF_UPDATEINIFILE.</summary>
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool SystemParametersInfo(uint action, uint param, int[] pvParam, uint winIni);
 

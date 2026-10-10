@@ -7,8 +7,8 @@ using Xunit.Abstractions;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Read-only M5 checks on this machine (Category=Hardware). Scans only: nothing is changed or deleted.</summary>
-public class M5ReadTests(ITestOutputHelper output)
+/// <summary>Read-only checks of startup entries, AppX packages and cleanup sizes on this machine (Category=Hardware). Scans only: nothing is changed or deleted.</summary>
+public class StartupCleanupReadTests(ITestOutputHelper output)
 {
     private static readonly ElevationInfo Elevation = ElevationInfo.Read();
     private static readonly ActionContext Ctx = SystemNotify.CreateContext(Elevation.SessionUserSid, Path.GetTempPath());

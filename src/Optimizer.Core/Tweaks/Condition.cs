@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Optimizer.Core.Tweaks;
 
 /// <summary>
-/// Structured condition (plan v4 §4.1): {"all":[...]}, {"any":[...]}, {"not":{...}} or {"fact":"x", "eq"|"ne"|"gt"|"gte"|"lt"|"lte"|"in"|"exists": ...}.
+/// Structured condition: {"all":[...]}, {"any":[...]}, {"not":{...}} or {"fact":"x", "eq"|"ne"|"gt"|"gte"|"lt"|"lte"|"in"|"exists": ...}.
 /// No expression parser, so conditions are testable and cannot execute anything.
 /// </summary>
 public sealed class Condition

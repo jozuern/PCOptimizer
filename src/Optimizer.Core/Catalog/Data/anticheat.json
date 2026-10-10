@@ -1,5 +1,5 @@
 {
-  "_comment": "Kernel anti-cheat signatures (service/driver registration, not running state) and their platform requirements. 'required' blocks games when missing; 'sometimes' is enforced only in some modes or rollout waves. verified=false: signature names to confirm on a PC with the anti-cheat installed.",
+  "_comment": "Kernel anti-cheat signatures (service/driver registration, not running state) and their platform requirements. Parts: uefi, secureBoot, tpm2, hvci (memory integrity), vbs (virtualization-based security), iommu. 'required' blocks games when missing; 'sometimes' is enforced only in some games, modes, accounts or rollout waves. verified=false: signature names to confirm on a PC with the anti-cheat installed.",
   "antiCheats": [
     {
       "id": "vanguard",
@@ -19,10 +19,13 @@
         "hvci",
         "iommu"
       ],
-      "sometimesNoteKey": "ac.vanguardOnDemand",
       "sources": [
         "https://support.riotgames.com/riot/performance/vanguard-security-requirements",
-        "https://support.riotgames.com/en-us/riot/support-tools/enabling-iommu"
+        "https://support.riotgames.com/en-us/riot/client/error-van-9003/",
+        "https://support.riotgames.com/en-us/riot/client/enable-tpm-20",
+        "https://support.riotgames.com/en-us/riot/penalties/error-van-restriction",
+        "https://support.riotgames.com/en-us/riot/support-tools/enabling-iommu",
+        "https://support.riotgames.com/en-us/riot/performance/vanguard-pre-check"
       ]
     },
     {
@@ -41,12 +44,14 @@
         "tpm2"
       ],
       "sometimes": [
-        "hvci",
-        "iommu"
+        "vbs",
+        "iommu",
+        "hvci"
       ],
-      "sometimesNoteKey": "ac.faceitWaves",
       "sources": [
-        "https://support.faceit.com/hc/en-us/articles/23117181142556-Windows-Security-Requirements-FAQ"
+        "https://support.faceit.com/hc/en-us/articles/23117375791772-How-can-I-check-if-I-need-to-make-any-changes-to-my-PC-before-using-the-FACEIT-Anti-Cheat",
+        "https://support.faceit.com/hc/en-us/articles/23117181142556-Windows-Security-Requirements-FAQ",
+        "https://support.faceit.com/hc/en-us/articles/22851956652956-Known-issues-with-Anti-Cheat-Requirements"
       ]
     },
     {
@@ -57,30 +62,37 @@
       ],
       "blocksVbsOff": false,
       "verified": false,
-      "required": [
-        "uefi",
-        "secureBoot"
-      ],
+      "required": [],
       "sometimes": [
+        "uefi",
+        "secureBoot",
         "tpm2"
       ],
-      "sometimesNoteKey": "ac.javelinBf6",
       "sources": [
-        "https://www.thesixthaxis.com/2025/08/07/battlefield-6-and-black-ops-7-both-need-secure-boot-and-tpm-2-0-for-pc-anti-cheat/"
+        "https://www.ea.com/games/battlefield/battlefield-6/news/secure-boot-information",
+        "https://www.ea.com/news/ea-javelin-anticheat-2026-update",
+        "https://help.ea.com/en/articles/technical-issues/secure-boot/"
       ]
     },
     {
       "id": "eac",
       "name": "Easy Anti-Cheat",
       "services": [
-        "EasyAntiCheat",
-        "EasyAntiCheat_EOS"
+        "EasyAntiCheat_EOS",
+        "EasyAntiCheat"
       ],
       "blocksVbsOff": false,
       "verified": true,
       "required": [],
-      "sometimes": [],
-      "sources": []
+      "sometimes": [
+        "secureBoot",
+        "tpm2",
+        "iommu"
+      ],
+      "sources": [
+        "https://www.easy.ac/support/articles/additional-security-requirements",
+        "https://dev.epicgames.com/docs/epic-online-services/trust-and-safety/anti-cheat-interfaces/anti-cheat-interfaces"
+      ]
     },
     {
       "id": "battleye",
@@ -92,7 +104,9 @@
       "verified": true,
       "required": [],
       "sometimes": [],
-      "sources": []
+      "sources": [
+        "https://www.battleye.com/support/faq/"
+      ]
     }
   ]
 }

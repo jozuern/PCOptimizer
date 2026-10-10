@@ -1,6 +1,6 @@
 # Explanation style guide
 
-Every finding, advisor item and (from M2) every tweak has one page per language in
+Every finding, advisor item and tweak has one page per language in
 `src/Optimizer.Core/Catalog/Docs/<lang>/<id>.md`. The docs lint enforces the structure. A lint issue is a warning in Debug builds and an error in Release builds.
 
 ## Structure (findings and advisor items)

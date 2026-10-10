@@ -6,7 +6,7 @@ public sealed record InstalledProgram(string Name, string? Version, string? Publ
 
 /// <summary>
 /// Installed programs from the Uninstall registry keys (machine 64/32-bit and the session user's hive).
-/// Never uses Win32_Product: querying it triggers MSI self-repair (plan v4 §7.8).
+/// Never uses Win32_Product: querying it triggers MSI self-repair.
 /// </summary>
 public static class InstalledPrograms
 {

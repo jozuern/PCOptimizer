@@ -18,6 +18,12 @@ public sealed class AppEntry
     /// <summary>machine = installed elevated; user = per-user installer, started as the signed-in user.</summary>
     public string Scope { get; init; } = "machine";
 
+    /// <summary>
+    /// winget --scope ("machine" or "user") for packages that offer both installers: winget prefers the per-user one by
+    /// default, also when it runs elevated. Null = winget's choice.
+    /// </summary>
+    public string? WingetScope { get; init; }
+
     /// <summary>Regex on installed program names; empty = cannot be detected.</summary>
     public string Detect { get; init; } = "";
 
@@ -99,25 +105,28 @@ public static class Winget
     /// <summary>Only catalog ids are passed to winget, and only if they contain nothing but id characters.</summary>
     public static bool IsSafeId(string id) => id.Length is > 2 and < 100 && id.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '_' or '+');
 
-    public static string InstallArguments(string id) =>
-        $"install --id {id} --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+    public static string InstallArguments(string id, string? scope = null) =>
+        $"install --id {id} --exact --source winget{ScopeArgument(scope)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
 
-    public static string UpgradeArguments(string id) =>
-        $"upgrade --id {id} --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+    public static string UpgradeArguments(string id, string? scope = null) =>
+        $"upgrade --id {id} --exact --source winget{ScopeArgument(scope)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+
+    /// <summary>Only the two values winget documents; anything else is left out.</summary>
+    private static string ScopeArgument(string? scope) => scope is "machine" or "user" ? $" --scope {scope}" : "";
 
     /// <summary>Installs a machine-scope app with progress lines. Returns winget's exit code (0 = success).</summary>
     public static Task<int> InstallAsync(string winget, AppEntry app, IProgress<string>? lines, CancellationToken ct)
     {
         if (!IsSafeId(app.Id)) throw new ArgumentException($"invalid winget id {app.Id}");
         if (app.Scope == "user") throw new InvalidOperationException("per-user apps are started with InstallForUser");
-        return StreamingProcess.RunAsync(winget, InstallArguments(app.Id), lines, ct);
+        return StreamingProcess.RunAsync(winget, InstallArguments(app.Id, app.WingetScope), lines, ct);
     }
 
     /// <summary>Starts a per-user installer as the signed-in user (window visible; the result shows on the next scan).</summary>
     public static DeElevatedLauncher.Path InstallForUser(string winget, AppEntry app, ElevationInfo? elevation)
     {
         if (!IsSafeId(app.Id)) throw new ArgumentException($"invalid winget id {app.Id}");
-        return DeElevatedLauncher.Open(winget, InstallArguments(app.Id), elevation);
+        return DeElevatedLauncher.Open(winget, InstallArguments(app.Id, app.WingetScope), elevation);
     }
 
     /// <summary>winget's documented exit codes that are not failures for an install request.</summary>

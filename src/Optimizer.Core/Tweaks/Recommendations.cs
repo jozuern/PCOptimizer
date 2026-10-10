@@ -12,7 +12,7 @@ public sealed record RecommendationPlan(IReadOnlyList<RecommendedItem> Items, IR
 }
 
 /// <summary>
-/// Builds the "Apply recommended" plan (plan v4 §4.3): catalog tweaks whose recommendation rule matches this PC and that
+/// Builds the "Apply recommended" plan: catalog tweaks whose recommendation rule matches this PC and that
 /// are batch-safe, plus the one-click fixes of problem findings. Expert, boot-critical, anti-cheat sensitive and not fully
 /// reversible items are listed as excluded so the user can apply them one by one.
 /// </summary>

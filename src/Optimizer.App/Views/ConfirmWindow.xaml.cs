@@ -4,7 +4,7 @@ using Wpf.Ui.Controls;
 
 namespace Optimizer.App.Views;
 
-/// <summary>Shows every exact change (target, current value, new value) before anything is written (plan v4 §4.3 step 2).</summary>
+/// <summary>Shows every exact change (target, current value, new value) before anything is written.</summary>
 public partial class ConfirmWindow : FluentWindow
 {
     private readonly bool _needsAck;

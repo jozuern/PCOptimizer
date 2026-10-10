@@ -16,8 +16,9 @@ Wir lesen Teilenummer und Größe jedes Moduls aus Windows (`Win32_PhysicalMemor
 
 ## So behebst du es
 1. Läuft der PC stabil und der Speicher mit seinem Nenntakt (siehe die Prüfung zum Speichertakt), musst du nichts ändern.
-2. Stürzt der PC ab oder hält das XMP- oder EXPO-Profil nicht, teste zuerst ohne Profil und erhöhe den Takt dann schrittweise wieder.
-3. Dauerhaft hilft ein zusammengehöriges Kit in der Gesamtgröße, die du brauchst, am besten aus der Speicherliste des Mainboards (QVL) [2].
+2. **BitLocker:** Prüfe, bevor du BIOS-Einstellungen änderst, ob BitLocker oder die Geräteverschlüsselung an ist. Wenn ja, setze den Schutz vorher aus (Start > **BitLocker verwalten** > **Schutz anhalten**) oder halte den Wiederherstellungsschlüssel bereit. Oft ist er in deinem Microsoft-Konto gespeichert. Nach einem BIOS-Update oder einer Änderung am TPM oder an der Startkonfiguration kann Windows beim nächsten Start danach fragen [3][4].
+3. Stürzt der PC ab oder hält das XMP- oder EXPO-Profil nicht, teste zuerst ohne Profil und erhöhe den Takt dann schrittweise wieder.
+4. Dauerhaft hilft ein zusammengehöriges Kit in der Gesamtgröße, die du brauchst, am besten aus der Speicherliste des Mainboards (QVL) [2].
 
 ## So prüfst du die Behebung
 Starte den Scan erneut. Alle Module sollten dieselbe Teilenummer und Größe zeigen.
@@ -25,3 +26,5 @@ Starte den Scan erneut. Alle Module sollten dieselbe Teilenummer und Größe zei
 ## Quellen
 1. https://www.corsair.com/us/en/explorer/diy-builder/memory/can-i-mix-corsair-memory-kits/
 2. https://www.asus.com/support/faq/1042256/
+3. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
+4. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/operations-guide

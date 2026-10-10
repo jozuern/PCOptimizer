@@ -8,6 +8,12 @@ public sealed record HardwareExtras
 {
     public string? TpmManufacturer { get; init; }
     public Version? Agesa { get; init; }
+
+    /// <summary>The SMBIOS string the AGESA version was read from (e.g. "AGESA ComboAM4v2PI 1.2.0.7").</summary>
+    public string? AgesaSource { get; init; }
+
+    /// <summary>TRIM setting for NTFS (F18); null when the registry could not be read.</summary>
+    public TrimSetting? Trim { get; init; }
     public SecureBootCerts? SecureBootCerts { get; init; }
     public Guid? PowerOverlay { get; init; }
     public IReadOnlyList<NicDetail> Nics { get; init; } = [];
@@ -21,7 +27,7 @@ public sealed record HardwareExtras
     /// <summary>Display names of installed programs (Uninstall keys), for chipset and tool checks.</summary>
     public IReadOnlyList<Probes.InstalledProgram> Programs { get; init; } = [];
 
-    /// <summary>Graphics cards and network adapters with their interrupt capabilities (MSI mode tweak, M4).</summary>
+    /// <summary>Graphics cards and network adapters with their interrupt capabilities (MSI mode tweak).</summary>
     public IReadOnlyList<MsiDevice> MsiDevices { get; init; } = [];
 
     /// <summary>Third-party programs enabled at logon (Run keys, Startup folders, logon tasks), for F16. Null = not read.</summary>
@@ -43,7 +49,7 @@ public sealed record HardwareExtras
     public Tools.ThrottleResult? LastThrottle { get; init; }
 }
 
-/// <summary>A physical network adapter with its driver keywords (class key under {4d36e972-…}).</summary>
+/// <summary>A physical network adapter with its driver keywords (class key under {4d36e972-e325-11ce-bfc1-08002be10318}).</summary>
 public sealed record NicDetail(
     string Id,
     string Name,
@@ -58,6 +64,22 @@ public sealed record NicDetail(
 {
     /// <summary>PnP instance id (PCI\... or USB\...) from the class key.</summary>
     public string? DeviceInstanceId { get; init; }
+
+    /// <summary>
+    /// A real network card (PCI or USB device). Virtual miniports also have class keys and report themselves as Ethernet:
+    /// Hyper-V vEthernet (ROOT\VMS_MP), WAN Miniport (SWD\MSRRAS), Wintun (SWD\Wintun), Kernel Debug NIC (ROOT\KDNIC).
+    /// </summary>
+    public bool IsPhysical => DeviceInstanceId is { } id &&
+                              (id.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) || id.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase));
+}
+
+/// <summary>
+/// HKLM\SYSTEM\CurrentControlSet\Control\FileSystem DisableDeleteNotification (NTFS). Null = value not set, which means
+/// TRIM is on: "For systems using NTFS, trim is enabled by default unless an administrator disables it" (fsutil behavior).
+/// </summary>
+public sealed record TrimSetting(int? DisableDeleteNotification)
+{
+    public bool TrimOn => DisableDeleteNotification != 1;
 }
 
 /// <summary>

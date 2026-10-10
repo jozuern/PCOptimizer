@@ -1,6 +1,5 @@
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Hardware;
-using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Findings.Checks;
 
@@ -49,10 +48,18 @@ public static class RamSpeed
     };
 }
 
-/// <summary>Advisor: RAM running below its rated speed (XMP / EXPO / D.O.C.P off).</summary>
+/// <summary>
+/// Advisor: RAM running below its rated speed (XMP / EXPO / D.O.C.P off). Four DDR5 modules on a Ryzen are expected to
+/// run slower: AMD specifies DDR5-3600 for four modules (e.g. "4x1R DDR5-3600 4x2R DDR5-3600"), so that is information
+/// (variant "fourDimms"), not a missing setting.
+/// </summary>
 public sealed class XmpCheck : IFindingCheck
 {
     public const string Id = "A.xmp";
+
+    /// <summary>AMD's specified speed for four DDR5 modules (product pages, "4x1R DDR5-3600").</summary>
+    public const int FourDimmDdr5Mts = 3600;
+
     public IReadOnlyList<string> DocIds => [Id];
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
@@ -71,13 +78,15 @@ public sealed class XmpCheck : IFindingCheck
         var vendor = c.Bios.NormalizeVendor(p.Firmware?.BoardManufacturer);
         var menu = c.Bios.Find(vendor, RamSpeed.Platform(p.Cpu, first.Type), "xmp");
         var laptop = p.IsLaptop;
+        var fourDimms = !laptop && p.Cpu?.Vendor == Vendor.Amd && first.Type == "DDR5" && p.Memory.Modules.Count >= 4 && minRated > FourDimmDdr5Mts;
 
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Advisor,
-            Status = laptop && status == FindingStatus.Problem ? FindingStatus.Info : status, // laptops rarely offer XMP
-            Variant = laptop ? "laptop" : null,
+            // Laptops rarely offer XMP; four DDR5 modules on AM5 run below the kit rating by AMD's specification.
+            Status = (laptop || fourDimms) && status == FindingStatus.Problem ? FindingStatus.Info : status,
+            Variant = laptop ? "laptop" : fourDimms && status == FindingStatus.Problem ? "fourDimms" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
@@ -115,8 +124,9 @@ public sealed class DualChannelCheck : IFindingCheck
         string? variant = null;
         if (modules.Count == 1)
         {
-            // Soldered memory ("row of chips", form factor 7) can be dual channel internally -> Unknown.
-            status = modules[0].FormFactor == 7 ? FindingStatus.Unknown : FindingStatus.Problem;
+            // Only a socketed module (Win32_PhysicalMemory.FormFactor 8 = DIMM, 12 = SODIMM) proves single channel.
+            // Anything else may be soldered memory, which can be dual channel internally -> Unknown.
+            status = modules[0].FormFactor is 8 or 12 ? FindingStatus.Problem : FindingStatus.Unknown;
             variant = "single";
         }
         else if (channels.Any(ch => ch is null))
@@ -173,7 +183,10 @@ public sealed class LowRamCheck : IFindingCheck
     }
 }
 
-/// <summary>F17: low free space (&lt; 10 %) on the system drive or a game drive.</summary>
+/// <summary>
+/// F17: low free space (&lt; 10 %). Problem on the system drive and drives that hold a game library; other fixed drives
+/// (data or backup disks) are information.
+/// </summary>
 public sealed class LowDiskSpaceCheck : IFindingCheck
 {
     public const string Id = "F17.lowDiskSpace";
@@ -182,15 +195,19 @@ public sealed class LowDiskSpaceCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Storage is null) yield break;
+        var gameRoots = (p.Software?.GameLibraryPaths ?? []).Select(Path.GetPathRoot).Where(r => r is not null).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var v in p.Storage.Volumes)
         {
+            var matters = v.IsSystem || gameRoots.Contains(v.Root);
+            var low = v.FreeFraction < c.Storage.LowFreeSpaceFraction;
             yield return new Finding
             {
                 Id = Id,
                 InstanceKey = v.Root,
                 Subject = v.Root,
                 Kind = FindingKind.Finding,
-                Status = v.FreeFraction < c.Storage.LowFreeSpaceFraction ? FindingStatus.Problem : FindingStatus.Ok,
+                Status = !low ? FindingStatus.Ok : matters ? FindingStatus.Problem : FindingStatus.Info,
+                Variant = v.IsSystem ? "system" : gameRoots.Contains(v.Root) ? "games" : "other",
                 Impact = v.IsSystem ? 2 : 1,
                 Effects = [Effect.Stability, Effect.Stutter],
                 Facts =
@@ -227,7 +244,8 @@ public sealed class GamesOnHddCheck : IFindingCheck
                 Kind = FindingKind.Finding,
                 Status = disk.MediaType == "HDD" ? FindingStatus.Problem : disk.MediaType == "Unspecified" ? FindingStatus.Unknown : FindingStatus.Ok,
                 Variant = disk.IsSmrSuspect ? "smr" : null,
-                Impact = disk.IsSmrSuspect ? 4 : 3,
+                // SMR mainly slows sustained writes (installs, updates), not the reads during play: same impact.
+                Impact = 3,
                 Effects = [Effect.Stutter],
                 Facts =
                 [
@@ -241,7 +259,10 @@ public sealed class GamesOnHddCheck : IFindingCheck
     }
 }
 
-/// <summary>F18: TRIM disabled (DisableDeleteNotification = 1). Read from the registry, no fsutil call.</summary>
+/// <summary>
+/// F18: TRIM disabled for NTFS (DisableDeleteNotification = 1). The probe reads the registry (no fsutil call); a missing
+/// value means TRIM is on, the NTFS default.
+/// </summary>
 public sealed class TrimCheck : IFindingCheck
 {
     public const string Id = "F18.trim";
@@ -250,15 +271,15 @@ public sealed class TrimCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Storage is null || !p.Storage.Disks.Any(d => d.MediaType == "SSD")) yield break;
-        var value = Reg.HklmInt(@"SYSTEM\CurrentControlSet\Control\FileSystem", "DisableDeleteNotification");
+        var trim = p.Extras?.Trim;
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = value is null ? FindingStatus.Unknown : value == 1 ? FindingStatus.Problem : FindingStatus.Ok,
+            Status = trim is null ? FindingStatus.Unknown : trim.TrimOn ? FindingStatus.Ok : FindingStatus.Problem,
             Impact = 1,
             Effects = [Effect.Stutter],
-            Facts = [new("fact.trim", value switch { 0 => "@on", 1 => "@off", _ => "@unknown" })],
+            Facts = [new("fact.trim", trim is null ? "@unknown" : trim.TrimOn ? "@on" : "@off")],
         };
     }
 }

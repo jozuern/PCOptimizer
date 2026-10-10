@@ -9,15 +9,38 @@ public sealed record LintIssue(string DocId, string Language, string Message)
 }
 
 /// <summary>
-/// Explanation lint (plan v4 §4.12/§10.1). Severity: warning in Debug builds, error in Release builds: the caller decides.
+/// Explanation lint. Severity: warning in Debug builds, error in Release builds: the caller decides.
 /// </summary>
 public static partial class DocLint
 {
     public const int MaxSummaryLength = 200;
 
-    /// <summary>Marketing words are banned (style guide: facts over adjectives).</summary>
+    /// <summary>
+    /// Marketing words and filler that make text sound generated (style guide: facts over adjectives). Matched as whole
+    /// words, case-insensitive, after removing the <see cref="AllowedPhrases"/>.
+    /// </summary>
     public static readonly string[] BannedWords =
-        ["boost your", "unleash", "massive", "guaranteed", "insane", "turbocharge", "supercharge", "gewaltig", "garantiert", "enorm", "brutal schnell"];
+    [
+        "boost your", "unleash", "massive", "guaranteed", "insane", "turbocharge", "supercharge", "seamless", "seamlessly", "robust",
+        "leverage", "comprehensive", "powerful", "effortless", "effortlessly", "elevate", "unlock", "dive into", "ultimate",
+        "game-changer", "game changer", "cutting-edge", "state-of-the-art", "next-level", "blazing",
+        "gewaltig", "gewaltige", "garantiert", "enorm", "enorme", "brutal schnell", "nahtlos", "nahtlose", "nahtlosen", "mühelos", "mühelose",
+        "leistungsstark", "leistungsstarke", "leistungsstarken", "revolutionär", "revolutionäre",
+    ];
+
+    /// <summary>Names that contain a banned word: a Windows power plan, Windows' own boost mode names, laptop vendor modes.</summary>
+    public static readonly string[] AllowedPhrases =
+    [
+        "ultimate performance", "pcoptimizer ultimate", "\"ultimate\"", "„ultimate“", "aggressive at guaranteed", "garantierter leistung",
+    ];
+
+    /// <summary>Banned words found in <paramref name="text"/>.</summary>
+    public static IEnumerable<string> FindBannedWords(string text)
+    {
+        var lower = text.ToLowerInvariant();
+        foreach (var allowed in AllowedPhrases) lower = lower.Replace(allowed, " ", StringComparison.Ordinal);
+        return BannedWords.Where(w => Regex.IsMatch(lower, $@"(?<![\p{{L}}\-]){Regex.Escape(w)}(?![\p{{L}}\-])"));
+    }
 
     public static IEnumerable<string> RequiredDocIds() =>
         FindingEngine.CreateChecks(null).SelectMany(c => c.DocIds).Distinct(StringComparer.Ordinal);
@@ -43,7 +66,7 @@ public static partial class DocLint
             issues.AddRange(Check(page, DocHeadings.TweakRequired[lang], [DocHeadings.GeneratedChanges[lang], DocHeadings.GeneratedUndo[lang]]));
         }
 
-        // Every tweak needs at least one source and a valid impact (catalog lint, plan v4 §10.1).
+        // Every tweak needs at least one source and a valid impact (catalog lint).
         foreach (var t in Tweaks.TweakCatalog.Current.Tweaks)
         {
             if (t.Sources.Count == 0) issues.Add(new LintIssue(t.Id, "catalog", "no sources"));
@@ -104,8 +127,7 @@ public static partial class DocLint
                 yield return new LintIssue(page.Id, lang, $"summary is {plain.Length} characters (max {MaxSummaryLength})");
         }
 
-        var lower = page.Raw.ToLowerInvariant();
-        foreach (var word in BannedWords.Where(w => lower.Contains(w)))
+        foreach (var word in FindBannedWords(page.Raw))
             yield return new LintIssue(page.Id, lang, $"banned marketing word '{word}'");
 
         // Every [n] reference must resolve to an entry in the Sources section.

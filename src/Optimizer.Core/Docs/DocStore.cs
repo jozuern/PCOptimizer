@@ -6,7 +6,7 @@ using Optimizer.Core.Findings;
 
 namespace Optimizer.Core.Docs;
 
-/// <summary>One explanation page (Catalog/Docs/&lt;lang&gt;/&lt;id&gt;.md, plan v4 §4.12).</summary>
+/// <summary>One explanation page (Catalog/Docs/&lt;lang&gt;/&lt;id&gt;.md).</summary>
 public sealed record DocPage(string Id, string Language, string Title, IReadOnlyList<DocSection> Sections, string Raw)
 {
     public DocSection? Section(string heading) => Sections.FirstOrDefault(s => s.Heading == heading);
@@ -114,7 +114,7 @@ public static partial class DocStore
 
     /// <summary>
     /// Tweak page: inserts the generated "What changes" (exact targets, current -> new) after the summary and the
-    /// generated "Undo" before the sources, so text and behavior cannot drift apart (plan v4 §4.12).
+    /// generated "Undo" before the sources, so text and behavior cannot drift apart.
     /// </summary>
     public static string RenderTweak(DocPage page, IReadOnlyList<Actions.ChangeLine> changes, IReadOnlyList<string> notes, string undoText,
         IReadOnlyDictionary<string, string>? values = null)

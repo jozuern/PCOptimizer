@@ -6,17 +6,17 @@ using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Findings.Checks;
 
-/// <summary>Shared helpers for the M3 checks.</summary>
+/// <summary>Shared helpers for the advisor checks.</summary>
 public static class DisplayLink
 {
-    // DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY (wingdi.h)
+    // DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY (wingdi.h). Embedded DisplayPort (11) and embedded UDI (13) are built-in panels.
     public static string Connection(uint outputTechnology) => outputTechnology switch
     {
+        _ when Hardware.Probes.DisplayProbe.IsInternalOutput(outputTechnology) => "internal",
         0 => "vga",
         4 => "dvi",
         5 => "hdmi",
-        10 or 11 or 18 => "dp",
-        0x80000000 => "internal",
+        10 or 18 => "dp",
         _ => "other",
     };
 
@@ -173,7 +173,7 @@ public sealed class PowerModeCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Power is null || p.Extras?.PowerOverlay is not { } overlay) yield break; // API unavailable: nothing to judge
-        if (!p.Power.OnAc || p.Power.Personality != PowerPersonality.Balanced) yield break;
+        if (p.Power.OnAc != true || p.Power.Personality != PowerPersonality.Balanced) yield break;
         var problem = overlay == FirmwareExtras.OverlayBetterBattery;
         yield return new Finding
         {
@@ -260,7 +260,8 @@ public sealed class AmdChipsetCheck : IFindingCheck
 
 /// <summary>
 /// F20: variable refresh rate (G-SYNC / G-SYNC Compatible / FreeSync). NVIDIA: read per display through NVAPI.
-/// Other vendors: no public read API, so a VRR-looking monitor gives "Unknown" with the setup steps.
+/// Other vendors: no public read API, so a VRR-looking monitor gives information with the setup steps (Unknown never
+/// carries advice, and nothing could ever resolve it).
 /// </summary>
 public sealed class VrrCheck : IFindingCheck
 {
@@ -287,7 +288,7 @@ public sealed class VrrCheck : IFindingCheck
             }
             else if (looksVrr)
             {
-                status = FindingStatus.Unknown;
+                status = FindingStatus.Info;
                 variant = d.AdapterVendor == Vendor.Nvidia ? "nvidiaUnknown" : "otherVendor";
             }
             else
@@ -338,6 +339,7 @@ public sealed class SecureBootCertsCheck : IFindingCheck
 {
     public const string Id = "F22.secureBootCerts";
     public IReadOnlyList<string> DocIds => [Id];
+    public FindingKind Kind => FindingKind.Advisor;
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
@@ -384,7 +386,7 @@ public sealed class EthernetSpeedCheck : IFindingCheck
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
-        foreach (var n in p.Extras?.Nics.Where(n => n.Type == "Ethernet" && n.IsUp) ?? [])
+        foreach (var n in p.Extras?.Nics.Where(n => n.Type == "Ethernet" && n.IsUp && n.IsPhysical) ?? [])
         {
             if (n.MaxSpeedMbps is not { } max || n.SpeedBps <= 0) continue;
             var link = (int)(n.SpeedBps / 1_000_000);
@@ -427,7 +429,9 @@ public sealed class EthernetSpeedCheck : IFindingCheck
 
 /// <summary>
 /// F25: Wi-Fi connected on 2.4 GHz. A Problem only when the same network is also visible on 5 or 6 GHz; otherwise
-/// information. Skipped while Ethernet is connected (Windows then routes through the cable).
+/// information. Skipped while a physical Ethernet adapter is connected (Windows then routes through the cable); virtual
+/// adapters (Hyper-V, WSL, VPN) do not count. When Windows withholds the access point details because the app may not
+/// use the location, the result is Unknown (variant "noLocation").
 /// </summary>
 public sealed class WifiBandCheck : IFindingCheck
 {
@@ -440,9 +444,26 @@ public sealed class WifiBandCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var extras = p.Extras;
-        if (extras is null || extras.Nics.Any(n => n.Type == "Ethernet" && n.IsUp)) yield break;
+        if (extras is null || extras.Nics.Any(n => n.Type == "Ethernet" && n.IsUp && n.SpeedBps > 0 && n.IsPhysical)) yield break;
         foreach (var w in extras.Wifi)
         {
+            if (w.LocationDenied && w.CenterFrequencyKhz is null)
+            {
+                yield return new Finding
+                {
+                    Id = Id,
+                    InstanceKey = w.Interface,
+                    Subject = string.IsNullOrEmpty(w.Ssid) ? w.Interface : w.Ssid,
+                    Kind = FindingKind.Finding,
+                    Status = FindingStatus.Unknown,
+                    Variant = "noLocation",
+                    Impact = 2,
+                    Effects = [Effect.Latency, Effect.Stutter],
+                    Facts = [new("fact.adapter", w.Interface), new("fact.wifiBand", "@unknown")],
+                    Params = new Dictionary<string, string> { ["ssid"] = w.Ssid },
+                };
+                continue;
+            }
             var freq = w.CenterFrequencyKhz is { } f && Plausible(f) ? f : (uint?)null;
             var band = freq is { } k ? Wlan.Band(k) : null;
             var otherBands = w.SameSsidFrequenciesKhz.Where(Plausible).Select(Wlan.Band).Distinct().ToList();
@@ -594,6 +615,7 @@ public sealed class ApoCheck : IFindingCheck
             {
                 ["cpu"] = p.Cpu.Name,
                 ["board"] = $"{p.Firmware?.BoardManufacturer} {p.Firmware?.BoardProduct}".Trim(),
+                ["laptop"] = p.IsLaptop ? "yes" : "", // the DTT driver comes from the laptop maker there
             },
         };
     }
@@ -610,22 +632,31 @@ public sealed class AmdFtpmCheck : IFindingCheck
     public static readonly DateTime FixedBiosDate = new(2022, 5, 1);
     public IReadOnlyList<string> DocIds => [Id];
 
-    /// <summary>AM4 desktop: socket name, else Zen/Zen+/Zen 2 (family 17h) or Zen 3 up to Cezanne (family 19h, model &lt; 60h).</summary>
+    /// <summary>
+    /// AM4 desktop: socket name, else Zen/Zen+/Zen 2 (family 17h) or Zen 3 up to Cezanne (family 19h, model &lt; 60h).
+    /// Mobile processors (U, H, HS, HX suffix) are excluded, also in mini PCs without a battery.
+    /// </summary>
     public static bool IsAm4(CpuInfo cpu, bool laptop)
     {
         if (cpu.Vendor != Vendor.Amd || laptop) return false;
+        if (RegexCache.Get(@"\b\d{4}(U|H|HS|HX)\b").IsMatch(cpu.Name)) return false;
         if (cpu.Socket.Contains("AM4", StringComparison.OrdinalIgnoreCase)) return true;
         if (cpu.Socket.Contains("AM5", StringComparison.OrdinalIgnoreCase) || cpu.Socket.Contains("TR", StringComparison.OrdinalIgnoreCase)) return false;
         if (cpu.Name.Contains("Threadripper", StringComparison.OrdinalIgnoreCase) || cpu.Name.Contains("EPYC", StringComparison.OrdinalIgnoreCase)) return false;
         return cpu.Family == 0x17 || (cpu.Family == 0x19 && cpu.Model < 0x60);
     }
 
+    /// <summary>AMD's AGESA 1.2.0.7 threshold describes the desktop AM4 packages (ComboAM4PI, ComboAM4v2PI) only.</summary>
+    public static bool IsDesktopAm4Agesa(string? smbiosString) =>
+        smbiosString is not null && RegexCache.Get(@"ComboAM4(v2)?PI").IsMatch(smbiosString);
+
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Cpu is null || !IsAm4(p.Cpu, p.IsLaptop)) yield break;
         var tpm = p.Extras?.TpmManufacturer;
         if (!string.Equals(tpm?.Trim(), "AMD", StringComparison.OrdinalIgnoreCase)) yield break; // dTPM or no TPM: not affected
-        var agesa = p.Extras?.Agesa;
+        // Mobile AGESA lines (CezannePI, RenoirPI) use their own numbering: fall back to the BIOS date for them.
+        var agesa = IsDesktopAm4Agesa(p.Extras?.AgesaSource) ? p.Extras?.Agesa : null;
         var date = p.Firmware?.BiosDate;
         FindingStatus status;
         string variant;
@@ -657,8 +688,10 @@ public sealed class AmdFtpmCheck : IFindingCheck
 }
 
 /// <summary>
-/// Advisor: Ryzen memory speed relative to the fabric clock. AM4: 1:1 FCLK up to about DDR4-3600/3800. AM5: UCLK = MEMCLK
-/// by default up to DDR5-6000. Slower kits or speeds above the 1:1 range are information, never a problem.
+/// Advisor: Ryzen memory speed relative to the fabric clock. The lower bounds are AMD's official two-module memory
+/// specification (DDR4-3200 for Ryzen 5000, DDR5-5200 for Ryzen 7000). The upper bounds are typical 1:1 limits reported
+/// by testers (AM4 FCLK, AM5 UCLK), not an AMD specification; they can differ per processor and BIOS. Slower kits or
+/// speeds above that range are information, never a problem.
 /// </summary>
 public sealed class RyzenMemoryCheck : IFindingCheck
 {
@@ -668,7 +701,7 @@ public sealed class RyzenMemoryCheck : IFindingCheck
     public static (int Low, int High)? SweetSpot(string ramType) => ramType switch
     {
         "DDR4" => (3200, 3800),
-        "DDR5" => (5600, 6000),
+        "DDR5" => (5200, 6000),
         _ => null,
     };
 
@@ -686,8 +719,15 @@ public sealed class RyzenMemoryCheck : IFindingCheck
         string? variant = null;
         if (speed is null) status = FindingStatus.Unknown;
         else if (speed > range.High) { status = FindingStatus.Info; variant = "aboveSync"; }
-        // Below the range because XMP/EXPO is off is A.xmp's job; here only kits that are slow by design.
-        else if (speed < range.Low && ratedMin is { } r && r < range.Low) { status = FindingStatus.Info; variant = "slowKit"; }
+        // Below the range because XMP/EXPO is off is A.xmp's job; here only kits that are slow by design. Without a
+        // rated speed the two cannot be told apart: Unknown. Four DDR5 modules are limited by AMD's specification
+        // (DDR5-3600), so a faster kit would not help: no slowKit advice there.
+        else if (speed < range.Low)
+        {
+            if (ratedMin is null) status = FindingStatus.Unknown;
+            else if (ratedMin < range.Low && !(type == "DDR5" && p.Memory.Modules.Count >= 4)) { status = FindingStatus.Info; variant = "slowKit"; }
+            else status = FindingStatus.Ok;
+        }
         else status = FindingStatus.Ok;
 
         yield return new Finding
@@ -725,11 +765,16 @@ public sealed class BiosAgeCheck : IFindingCheck
     public const int MaxAgeDays = 365;
     public IReadOnlyList<string> DocIds => [Id];
 
+    private readonly Func<DateTime> _today;
+
+    /// <param name="today">Clock for tests; default: the local date.</param>
+    public BiosAgeCheck(Func<DateTime>? today = null) => _today = today ?? (() => DateTime.Today);
+
     public static string SupportUrl(string? vendor) => vendor switch
     {
         "ASUS" => "https://www.asus.com/support/download-center/",
         "MSI" => "https://www.msi.com/support",
-        "Gigabyte" => "https://www.gigabyte.com/Support",
+        "Gigabyte" => "https://www.gigabyte.com/Support/Consumer",
         "ASRock" => "https://www.asrock.com/support/index.asp",
         _ => "",
     };
@@ -737,7 +782,7 @@ public sealed class BiosAgeCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Firmware?.BiosDate is not { } date) yield break;
-        var age = (int)(GpuDriverAgeCheck.Today() - date.Date).TotalDays;
+        var age = (int)(_today() - date.Date).TotalDays;
         var vendor = c.Bios.NormalizeVendor(p.Firmware.BoardManufacturer);
         yield return new Finding
         {
@@ -794,17 +839,20 @@ public sealed class IgpuUnusedCheck : IFindingCheck
 }
 
 /// <summary>
-/// Advisor: guided AMD Software (Adrenalin) settings for a Radeon card. AMD's settings interface (ADLX) is a C++ SDK
-/// without a supported way to write these values from here, so the app explains instead of changing them.
+/// Advisor: guided AMD Software (Adrenalin) settings for a Radeon card. AMD's settings library (ADLX) is a native library
+/// this app does not include, so the app explains instead of changing them. Workstation cards (Radeon Pro, FirePro,
+/// Instinct) use AMD Software: PRO Edition or have no display driver UI, so they are skipped.
 /// </summary>
 public sealed class AmdAdrenalinCheck : IFindingCheck
 {
     public const string Id = "A.amdAdrenalin";
     public IReadOnlyList<string> DocIds => [Id];
 
+    public static bool IsWorkstation(string name) => RegexCache.Get(@"Radeon(\(TM\))?\s+Pro\b|FirePro|Instinct").IsMatch(name);
+
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
-        var radeon = p.Gpus?.FirstOrDefault(g => g.Vendor == Vendor.Amd && g.Kind == GpuKind.Discrete);
+        var radeon = p.Gpus?.FirstOrDefault(g => g.Vendor == Vendor.Amd && g.Kind == GpuKind.Discrete && !IsWorkstation(g.Name));
         if (radeon is null) yield break;
         yield return new Finding
         {

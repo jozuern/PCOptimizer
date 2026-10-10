@@ -18,7 +18,7 @@ public interface IRestorePoints
 
 /// <summary>
 /// System Restore via WMI (root\default:SystemRestore). Restore points are the secondary safety net; the JSON backup is
-/// primary (plan v4 §4.7). The 24 h creation limit is lifted by the hidden tweak "system.restorePointFrequency".
+/// primary. The 24 h creation limit is lifted by the hidden tweak "system.restorePointFrequency".
 /// </summary>
 public sealed class RestorePointService(IProcessRunner processes) : IRestorePoints
 {

@@ -5,7 +5,7 @@ using Optimizer.Core.Interop;
 namespace Optimizer.Core.Platform;
 
 /// <summary>
-/// Who the process runs as vs. who is signed in (plan v4 §4.5). Read-only; M2 uses it for user-scope writes.
+/// Who the process runs as vs. who is signed in. Read-only; the action layer uses it for user-scope writes.
 /// </summary>
 public sealed record ElevationInfo(
     bool IsElevated,
@@ -73,7 +73,7 @@ public sealed record ElevationInfo(
     }
 }
 
-/// <summary>Domain join and MDM enrollment (plan v4 §4.10). Policies may override changes on such devices.</summary>
+/// <summary>Domain join and MDM enrollment. Policies may override changes on such devices.</summary>
 public sealed record ManagedDeviceInfo(bool DomainJoined, bool EntraJoined, bool MdmEnrolled)
 {
     public bool IsManaged => DomainJoined || EntraJoined || MdmEnrolled;

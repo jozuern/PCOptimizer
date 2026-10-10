@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Read-only checks of the M3/M4 probes on this machine (Category=Hardware).</summary>
+/// <summary>Read-only checks of the extra probes on this machine (Category=Hardware).</summary>
 public class ExtrasHardwareTests(ITestOutputHelper output)
 {
     [Fact]

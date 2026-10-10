@@ -10,7 +10,7 @@ Die App setzt den Energiemodus, den auch der Regler in den Einstellungen nutzt [
 „Beste Leistung“ lässt den Prozessor schneller hochtakten und mehr Strom nutzen. Das hilft in prozessorlastigen Spielen.
 
 ## Belege
-Microsoft dokumentiert, dass jede Reglerstellung andere Energieeinstellungen für den Prozessor anwendet [1].
+Microsoft dokumentiert, dass jede Reglerstellung andere Energieeinstellungen für den Prozessor anwendet [1]. Wie viel Bildrate das bringt, ist nicht gemessen und hängt vom PC ab.
 
 ## Nachteile & Risiken
 Mehr Stromverbrauch, Wärme und Lüftergeräusch. Auf einem Desktop ist der Unterschied zu „Ausbalanciert“ meist klein.

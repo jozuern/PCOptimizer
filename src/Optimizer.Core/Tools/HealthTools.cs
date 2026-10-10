@@ -3,7 +3,7 @@ using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Tools;
 
-/// <summary>System file check and component store repair with live output (plan v4 M6).</summary>
+/// <summary>System file check and component store repair with live output.</summary>
 public static class SystemRepair
 {
     public static string Sfc => Path.Combine(Environment.SystemDirectory, "sfc.exe");

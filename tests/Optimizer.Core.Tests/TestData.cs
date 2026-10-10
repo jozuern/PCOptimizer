@@ -3,7 +3,7 @@ using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Mocked hardware pieces for rule tests (plan v4 §10.1).</summary>
+/// <summary>Mocked hardware pieces for rule tests.</summary>
 internal static class TestData
 {
     public static BuildInfo Os(int build = 26300) => new(build, 9550, "26H2", "Professional", "Windows 11 Pro", CpuArchitecture.X64, false, null);

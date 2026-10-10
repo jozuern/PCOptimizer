@@ -29,10 +29,13 @@ public static class ExtrasProbe
         }
 
         var nics = Try("nics", ReadNics) ?? [];
+        var agesa = cpu?.Vendor == Vendor.Amd ? Try("agesa", () => FindAgesa(FirmwareExtras.SmbiosStrings())) : null;
         return new HardwareExtras
         {
             TpmManufacturer = Try("tpm", () => Wmi.Query("SELECT ManufacturerIdTxt FROM Win32_Tpm", @"root\CIMV2\Security\MicrosoftTpm").FirstOrDefault()?.Str("ManufacturerIdTxt")),
-            Agesa = cpu?.Vendor == Vendor.Amd ? Try("agesa", () => FirmwareExtras.AgesaVersion(FirmwareExtras.SmbiosStrings())) : null,
+            Agesa = agesa?.Version,
+            AgesaSource = agesa?.Source,
+            Trim = Try("trim", () => new TrimSetting(Reg.HklmInt(@"SYSTEM\CurrentControlSet\Control\FileSystem", "DisableDeleteNotification"))),
             SecureBootCerts = elevated && firmware?.SecureBoot == TriState.Yes ? Try("secureboot", FirmwareExtras.ReadSecureBootCerts) : null,
             PowerOverlay = Try("overlay", FirmwareExtras.EffectiveOverlay),
             Nics = nics,
@@ -54,9 +57,17 @@ public static class ExtrasProbe
         };
     }
 
+    /// <summary>First SMBIOS string that carries an AGESA version, with the string itself (the package name tells desktop from mobile).</summary>
+    public static (Version Version, string Source)? FindAgesa(IEnumerable<string> smbiosStrings)
+    {
+        foreach (var s in smbiosStrings)
+            if (FirmwareExtras.AgesaVersion([s]) is { } v) return (v, s);
+        return null;
+    }
+
     // ---------------- NICs ----------------
 
-    /// <summary>NDIS *SpeedDuplex enumeration (Microsoft "Enumeration Keywords"): 0 auto; 1–10 fixed; values ≥ 1000 = Mbps.</summary>
+    /// <summary>NDIS *SpeedDuplex enumeration (Microsoft "Enumeration Keywords"): 0 auto; 1 to 10 fixed; values ≥ 1000 = Mbps.</summary>
     public static int? SpeedDuplexMbps(string value) => value switch
     {
         "1" or "2" => 10,
@@ -80,7 +91,9 @@ public static class ExtrasProbe
                      .Where(n => n.NetworkInterfaceType is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.GigabitEthernet))
         {
             classKeys.TryGetValue(n.Id, out var classKey);
-            if (classKey is null) continue; // virtual adapters without a hardware class key
+            // Adapters without a class key are skipped. Virtual miniports (Hyper-V vEthernet, WAN Miniport, Wintun) do have
+            // one: checks that need a real card use NicDetail.IsPhysical.
+            if (classKey is null) continue;
             var keywords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var allowed = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
             using (var key = Reg.OpenHklm(classKey))

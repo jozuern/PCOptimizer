@@ -83,7 +83,7 @@ public static partial class FirmwareExtras
     public static readonly Guid OverlayBestPerformance = new("ded574b5-45a0-4f42-8737-46345c09c238");
 
     /// <summary>
-    /// Effective power mode overlay. The export is undocumented (plan v4 §2), so it is resolved at runtime and a missing
+    /// Effective power mode overlay. The export is undocumented, so it is resolved at runtime and a missing
     /// export yields null. GUIDs from Microsoft's power slider documentation.
     /// </summary>
     public static Guid? EffectiveOverlay()

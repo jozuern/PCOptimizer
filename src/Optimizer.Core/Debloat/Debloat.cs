@@ -33,6 +33,14 @@ public sealed class AppxEntry
     public string En { get; init; } = "";
     public string De { get; init; } = "";
 
+    /// <summary>"store": the Microsoft Store still offers the app; "none": it cannot be installed again.</summary>
+    public string Reinstall { get; init; } = "store";
+
+    /// <summary>Microsoft Store product ID, for the documented ms-windows-store ProductId link.</summary>
+    public string? StoreId { get; init; }
+
+    public bool CanReinstall => Reinstall != "none";
+
     public string Text(string lang) => lang == "de" && De.Length > 0 ? De : En;
     public string Label(string lang) => lang == "de" && TitleDe.Length > 0 ? TitleDe : Title.Length > 0 ? Title : Name;
 }
@@ -42,16 +50,21 @@ public sealed record InstalledAppx(string Name, string FamilyName, string Versio
 /// <summary>An offered app on this PC, with the reason it is blocked (label key) if a guard applies.</summary>
 public sealed record DebloatItem(AppxEntry Entry, InstalledAppx Installed, string? BlockKey);
 
-public sealed record RemovedApp(string Name, string FamilyName, string Version, DateTimeOffset RemovedAt)
+public sealed record RemovedApp(string Name, string FamilyName, string Version, DateTimeOffset RemovedAt, string? StoreId = null, bool Reinstallable = true)
 {
-    /// <summary>Microsoft Store page of the package (documented ms-windows-store PFN link).</summary>
-    public string StoreLink => $"ms-windows-store://pdp/?PFN={Uri.EscapeDataString(FamilyName)}";
+    /// <summary>
+    /// Microsoft Store page of the app: the ProductId link Microsoft recommends, or the package family name link (still
+    /// working, but deprecated) for records without a product ID. Null when the Store no longer offers the app.
+    /// </summary>
+    public string? StoreLink => !Reinstallable ? null
+        : StoreId is { Length: > 0 } id ? $"ms-windows-store://pdp/?ProductId={Uri.EscapeDataString(id)}"
+        : $"ms-windows-store://pdp/?PFN={Uri.EscapeDataString(FamilyName)}";
 }
 
 /// <summary>
-/// AppX debloat (plan v4 M5): lists installed packages, offers only catalog entries (allowlist), removes for all users and
-/// deprovisions them so new accounts do not get them again. Removal is not undoable by the app; the Store link of every
-/// removed package is kept for reinstalling.
+/// AppX debloat: lists installed packages, offers only catalog entries (allowlist), removes for all users and
+/// deprovisions them so new accounts do not get them again. Removal is not undoable by the app; for apps the Store still
+/// offers, the Store link is kept for reinstalling.
 /// </summary>
 public sealed class DebloatService(IProcessRunner processes, string dataFolder)
 {
@@ -108,7 +121,7 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
     }
 
     /// <summary>Removes the package for all users and its provisioned copy. Returns null on success, else the error text.</summary>
-    public string? Remove(InstalledAppx app)
+    public string? Remove(InstalledAppx app, AppxEntry? entry = null)
     {
         if (!IsSafeName(app.Name)) return "invalid package name";
         var script = "$ProgressPreference='SilentlyContinue'; $ErrorActionPreference='Stop'; " +
@@ -116,7 +129,7 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
                      $"Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq '{app.Name}' | Remove-AppxProvisionedPackage -Online -AllUsers -ErrorAction SilentlyContinue | Out-Null";
         var (code, output) = PowerShell(script, TimeSpan.FromMinutes(3));
         if (code != 0) return string.IsNullOrWhiteSpace(output) ? $"exit code {code}" : output.Trim();
-        Record(new RemovedApp(app.Name, app.FamilyName, app.Version, DateTimeOffset.Now));
+        Record(new RemovedApp(app.Name, app.FamilyName, app.Version, DateTimeOffset.Now, entry?.StoreId, entry?.CanReinstall ?? true));
         Log.Info("debloat", $"removed {app.Name}", new { app.Version });
         return null;
     }

@@ -4,7 +4,11 @@ using Optimizer.Core.Hardware.Probes;
 
 namespace Optimizer.Core.Findings.Checks;
 
-/// <summary>F5: GPU on Microsoft Basic Display Adapter (no vendor driver).</summary>
+/// <summary>
+/// F5: GPU on Microsoft Basic Display Adapter (no vendor driver). Impact 5 when the adapter is the graphics card or the
+/// only GPU; an extra adapter without a display next to a vendor-driven graphics card (usually the unused iGPU) is
+/// information with impact 1 (variant "secondary").
+/// </summary>
 public sealed class BasicDisplayAdapterCheck : IFindingCheck
 {
     public const string Id = "F5.basicDisplay";
@@ -18,17 +22,30 @@ public sealed class BasicDisplayAdapterCheck : IFindingCheck
             yield break;
         }
         var basic = p.Gpus.Where(g => g.Kind == GpuKind.Basic).ToList();
+        var secondary = basic.Count > 0 && basic.All(b => IsSecondary(b, p));
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = basic.Count > 0 ? FindingStatus.Problem : FindingStatus.Ok,
-            Impact = 5,
+            Status = basic.Count == 0 ? FindingStatus.Ok : secondary ? FindingStatus.Info : FindingStatus.Problem,
+            Variant = secondary ? "secondary" : null,
+            Impact = secondary ? 1 : 5,
             Effects = [Effect.Fps, Effect.Stability],
             Facts = p.Gpus.Where(g => g.Kind != GpuKind.Virtual)
                 .Select(g => new Fact("fact.gpuDriver", $"{g.Name}: {g.DriverProvider ?? "?"} {g.DriverVersion}")).ToList(),
         };
     }
+
+    /// <summary>
+    /// A basic-driver adapter that is not the graphics card: a vendor-driven discrete GPU exists, the basic one is not an
+    /// NVIDIA device (NVIDIA makes no integrated GPUs for Windows PCs) and no display is connected to it.
+    /// Without display data it cannot be told apart, so it counts as the main GPU.
+    /// </summary>
+    private static bool IsSecondary(GpuInfo basic, HardwareProfile p) =>
+        basic.Vendor != Vendor.Nvidia &&
+        p.Gpus!.Any(g => g.Kind == GpuKind.Discrete) &&
+        p.Displays is { } displays &&
+        !displays.Any(d => string.Equals(d.AdapterName, basic.Name, StringComparison.Ordinal));
 }
 
 /// <summary>F15 (GPU part): driver older than ~6 months.</summary>
@@ -38,14 +55,22 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
     public const int MaxAgeDays = 183;
     public IReadOnlyList<string> DocIds => [Id];
 
-    public static Func<DateTime> Today { get; set; } = () => DateTime.Today;
+    private readonly Func<DateTime> _today;
+
+    /// <param name="today">Clock for tests; default: the local date.</param>
+    public GpuDriverAgeCheck(Func<DateTime>? today = null) => _today = today ?? (() => DateTime.Today);
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Gpus is null) yield break;
+        var hasDiscrete = p.Gpus.Any(g => g.Kind == GpuKind.Discrete);
         foreach (var g in p.Gpus.Where(g => g.Kind is GpuKind.Discrete or GpuKind.Integrated))
         {
-            var age = g.DriverDate is { } d ? (int)(Today() - d.Date).TotalDays : (int?)null;
+            // An unused iGPU next to the graphics card on a desktop does not affect games: no driver advice for it.
+            if (g.Kind == GpuKind.Integrated && hasDiscrete && !p.IsLaptop && p.Displays is { } displays &&
+                !displays.Any(d => string.Equals(d.AdapterName, g.Name, StringComparison.Ordinal)))
+                continue;
+            var age = g.DriverDate is { } d ? (int)(_today() - d.Date).TotalDays : (int?)null;
             var version = g.NvidiaDriverVersion is { } nv ? $"{nv} ({g.DriverVersion})" : g.DriverVersion ?? "?";
             yield return new Finding
             {
@@ -68,9 +93,9 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
                     ["gpu"] = g.Name,
                     ["vendorUrl"] = g.Vendor switch
                     {
-                        Vendor.Nvidia => "https://www.nvidia.com/Download/index.aspx",
+                        Vendor.Nvidia => "https://www.nvidia.com/en-us/drivers/",
                         Vendor.Amd => "https://www.amd.com/en/support/download/drivers.html",
-                        Vendor.Intel => "https://www.intel.com/content/www/us/en/download-center/home.html",
+                        Vendor.Intel => "https://www.intel.com/content/www/us/en/support/detect.html",
                         _ => "",
                     },
                 },
@@ -79,7 +104,10 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
     }
 }
 
-/// <summary>Advisor: Resizable BAR. Unsupported GPU family -> "Unsupported", never BIOS advice (plan v4 §5.3).</summary>
+/// <summary>
+/// Advisor: Resizable BAR. Unsupported GPU family -> "Unsupported", never BIOS advice. Laptops get no BIOS
+/// advice either: an inactive BAR is information there (variant "laptop"), only the laptop maker can add support.
+/// </summary>
 public sealed class RebarCheck : IFindingCheck
 {
     public const string Id = "A.rebar";
@@ -102,10 +130,11 @@ public sealed class RebarCheck : IFindingCheck
             else if (!rule.Supported) { status = FindingStatus.Unsupported; variant = "unsupported"; }
             else if (active is null) { status = FindingStatus.Unknown; variant = "unknownState"; }
             else if (active.Value) { status = FindingStatus.Ok; variant = "active"; }
+            else if (p.IsLaptop) { status = FindingStatus.Info; variant = "laptop"; }
             else { status = FindingStatus.Problem; variant = "off"; }
 
             var vendor = c.Bios.NormalizeVendor(p.Firmware?.BoardManufacturer);
-            var menu = c.Bios.Find(vendor, "*", "rebar");
+            var menu = c.Bios.Find(vendor, BiosPlatform(p.Cpu), "rebar");
             yield return new Finding
             {
                 Id = Id,
@@ -114,7 +143,8 @@ public sealed class RebarCheck : IFindingCheck
                 Kind = FindingKind.Advisor,
                 Status = status,
                 Variant = variant,
-                Impact = rule?.Critical == true ? 5 : 3,
+                // NVIDIA: "a few percent, up to 12%" in profiled games; Intel calls ReBAR required for Arc.
+                Impact = rule?.Critical == true ? 5 : 2,
                 Effects = [Effect.Fps, Effect.Lows],
                 Facts =
                 [
@@ -132,10 +162,19 @@ public sealed class RebarCheck : IFindingCheck
                     ["menuPath"] = menu?.Path ?? "",
                     ["menuUnverified"] = menu is { Verified: false } ? "yes" : "",
                     ["mbr"] = p.Firmware?.SystemDiskPartitionStyle == PartitionStyle.Mbr ? "yes" : "",
+                    ["laptop"] = p.IsLaptop ? "yes" : "",
                 },
             };
         }
     }
+
+    /// <summary>Platform key for bios.json rebar entries: "intel", "amd" or "*" (Find falls back to "*").</summary>
+    public static string BiosPlatform(CpuInfo? cpu) => cpu?.Vendor switch
+    {
+        Vendor.Intel => "intel",
+        Vendor.Amd => "amd",
+        _ => "*",
+    };
 
     public static string FormatBytes(long bytes) =>
         bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.#} GB" : $"{bytes / (double)(1L << 20):0} MB";
@@ -143,7 +182,7 @@ public sealed class RebarCheck : IFindingCheck
 
 /// <summary>
 /// Advisor: PCIe link width of the graphics card. Generation drops at idle, so only the width is judged at idle;
-/// the generation is shown as information (measured under load in M6).
+/// the generation is shown as information (measured under load by the throttle check).
 /// </summary>
 public sealed class PcieLinkCheck : IFindingCheck
 {
@@ -166,19 +205,21 @@ public sealed class PcieLinkCheck : IFindingCheck
         foreach (var g in p.Gpus.Where(g => g.Kind == GpuKind.Discrete))
         {
             var verdict = Judge(g.CardLink, g.PlatformPortLink);
+            // Laptop graphics are often wired with fewer lanes by design: information, never "move the card".
+            var designLimited = p.IsLaptop && verdict is LinkVerdict.SlotLimited or LinkVerdict.TrainedDown;
             yield return new Finding
             {
                 Id = Id,
                 InstanceKey = g.PnpDeviceId,
                 Subject = g.Name,
                 Kind = FindingKind.Advisor,
-                Status = verdict switch
+                Status = designLimited ? FindingStatus.Info : verdict switch
                 {
                     LinkVerdict.Ok => FindingStatus.Ok,
                     LinkVerdict.Unknown => FindingStatus.Unknown,
                     _ => FindingStatus.Problem,
                 },
-                Variant = verdict switch { LinkVerdict.SlotLimited => "slotLimited", LinkVerdict.TrainedDown => "trainedDown", _ => null },
+                Variant = designLimited ? "designLimited" : verdict switch { LinkVerdict.SlotLimited => "slotLimited", LinkVerdict.TrainedDown => "trainedDown", _ => null },
                 Impact = verdict == LinkVerdict.SlotLimited && g.CardLink?.MaxWidth >= 16 && g.PlatformPortLink?.MaxWidth >= 8 ? 2 : 3,
                 Effects = [Effect.Fps, Effect.Lows],
                 Facts =

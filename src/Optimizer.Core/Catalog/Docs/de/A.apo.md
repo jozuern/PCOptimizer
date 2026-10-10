@@ -2,32 +2,39 @@
 
 ## Zusammenfassung
 ::: status Info
-Der {{cpu}} unterstützt Intel APO, das in einer Liste unterstützter Spiele die Leistung verbessert. Dafür braucht es den Dynamic-Tuning-Treiber des Mainboards und die APO-App.
+Der {{cpu}} unterstützt Intel APO, das ändert, wie unterstützte Spiele die Kerne nutzen. Dafür braucht es den Dynamic-Tuning-Treiber; die APO-App ist optional.
 :::
 ::: status Ok,Unknown,Problem,Unsupported
 Prüft, ob der Prozessor Intel Application Optimization unterstützt.
 :::
 
 ## Warum das wichtig ist
-Intel APO passt an, wie die Threads eines unterstützten Spiels auf Performance- und Effizienzkerne verteilt werden. Intel listet die unterstützten Spiele; in diesen steigt die Bildrate, in anderen ändert sich nichts [1]. Es funktioniert nur mit bestimmten K-Prozessoren und braucht Unterstützung durch das Mainboard (Treiber für Intel Dynamic Tuning Technology).
+Intel APO steuert, wie die Threads eines unterstützten Spiels auf Performance- und Effizienzkerne verteilt werden. Intel veröffentlicht eine Liste unterstützter Spiele und schreibt, dass APO deren Leistung verbessern kann; es wirkt nur bei den Titeln auf dieser Liste [1]. Intel nennt geprüfte Prozessoren, zum Beispiel Core i5-14600K, i7-14700K, i9-14900K, die K-Modelle der Core Ultra 200S und einige mobile HX- und H-Modelle. Andere Prozessoren ab der 12. Generation werden nur eingeschränkt unterstützt [1]. APO läuft als Teil des Treibers für Intel Dynamic Tuning Technology (DTT), den der PC- oder Mainboard-Hersteller bereitstellt [1].
 ::: variant dttFound
 Der Dynamic-Tuning-Treiber ist auf diesem PC installiert.
 :::
 ::: variant dttNotFound
-Den Dynamic-Tuning-Treiber haben wir nicht gefunden. Er fehlt vielleicht oder nutzt einen Namen, den wir nicht kennen.
+Wir haben die Dienste von Intel Dynamic Tuning Technology, nach denen wir suchen, nicht gefunden. Das beweist nicht, dass der Treiber fehlt: Er nutzt vielleicht einen Namen, den wir nicht kennen.
 :::
 
 ## Wie wir es erkennen
-Wir gleichen den Prozessornamen mit der Liste unterstützter Modelle ab und suchen nach den Diensten von Dynamic Tuning. Ob die APO-App installiert und aktiv ist, lässt sich nicht zuverlässig lesen.
+Wir gleichen den Prozessornamen mit der Liste geprüfter Modelle ab und suchen nach den Diensten von Dynamic Tuning. Ob APO aktiv ist, lässt sich nicht zuverlässig lesen.
 
 ## So behebst du es
-1. Installiere den Treiber **Intel Dynamic Tuning Technology** von der Supportseite deines {{board}} (nicht direkt von Intel, er ist mainboardspezifisch).
-2. Installiere **Intel Application Optimization** aus dem Microsoft Store.
-3. Bei manchen Mainboards muss APO im BIOS eingeschaltet werden (oft unter Intel Dynamic Tuning oder „Application Optimization“).
-4. Öffne die APO-App und prüfe, ob sie für deine Spiele eingeschaltet ist.
+::: ifnot laptop
+1. Installiere den Treiber **Intel Dynamic Tuning Technology** von der Supportseite deines Mainboards ({{board}}). Er ist mainboardspezifisch und kommt deshalb nicht direkt von Intel [1].
+:::
+::: if laptop
+1. Installiere den Treiber **Intel Dynamic Tuning Technology** von der Supportseite oder aus der App des Laptop-Herstellers. Er ist gerätespezifisch und kommt deshalb nicht direkt von Intel [1].
+:::
+2. **BitLocker:** Ist BitLocker oder die Geräteverschlüsselung an, setze den Schutz vorher aus (Start > **BitLocker verwalten** > **Schutz anhalten**) oder halte den Wiederherstellungsschlüssel bereit. Oft ist er in deinem Microsoft-Konto gespeichert. Nach einem BIOS-Update oder einer Änderung am TPM oder an der Startkonfiguration kann Windows beim nächsten Start danach fragen [2][3].
+3. Halte das BIOS aktuell und prüfe, ob darin Intel Dynamic Tuning Technology oder Intel Platform Innovation Framework (IPF) eingeschaltet ist. Bei den meisten Systemen ist IPF ab Werk an; der Menüname unterscheidet sich je nach Mainboard [1].
+4. Optional: Lade die App **Intel Application Optimization** aus dem Intel Download Center. Sie zeigt die unterstützten Spiele und schaltet APO pro Spiel ein oder aus [1].
 
 ## So prüfst du die Behebung
-Die APO-App listet die unterstützten Spiele und zeigt, ob sie aktiv ist.
+Die APO-App listet die unterstützten Spiele und zeigt, ob APO aktiv ist.
 
 ## Quellen
-1. https://www.kitguru.net/components/cpu/joao-silva/intel-apo-receives-12-new-game-profiles-core-ultra-200k-series-now-supported/
+1. https://www.intel.com/content/www/us/en/support/articles/000095419/processors.html
+2. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
+3. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/operations-guide

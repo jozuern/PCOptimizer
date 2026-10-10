@@ -12,24 +12,28 @@ Checks that the memory runs in dual channel. That needs modules in both channels
 :::
 
 ## Why it matters
-Desktop processors read memory through two channels at the same time. With modules in only one channel, memory bandwidth is cut in half. Games, and integrated graphics even more, become slower, often by 10 to 25 % in CPU-limited scenes, and 1 % lows suffer the most. Two modules in the wrong slots (both in channel A) are as slow as a single module.
+Desktop processors read memory through two channels at the same time. With modules in only one channel, peak memory bandwidth is cut in half [1]. Games that depend on memory bandwidth, and integrated graphics even more, become slower, and 1 % lows usually suffer first. Two modules in the wrong slots (both in channel A) are as slow as a single module.
 
 ## How we detected it
-We read every module's slot names (`DeviceLocator` and `BankLabel`) from Windows and map them to channels with the catalog's patterns (for example, "ChannelA-DIMM2" means channel A). If the slot names do not reveal the channel, the result is "Unknown". Memory soldered on the mainboard can be dual channel internally and is not reported as a problem.
+We read every module's slot names (`DeviceLocator` and `BankLabel`) from Windows and map them to channels with the catalog's patterns (for example, "ChannelA-DIMM2" means channel A). If the slot names do not reveal the channel, the result is "Unknown". A single module counts as single channel only when Windows reports it as a regular DIMM or SODIMM. Anything else gives "Unknown", because memory soldered on the mainboard can run in dual channel internally.
 
 ## How to fix
 ::: variant single
-1. Add a second module of the same type, size and speed (ideally buy a matched kit of two).
+1. Add a second module of the same type, size and speed (ideally buy a matched kit of two) [1].
 2. Install it in the slot the board manual lists for two modules.
 :::
 ::: variant sameChannel
 1. Shut down the PC and unplug it.
-2. Check the board manual ({{board}}) for the slots used with two modules. On most boards with four slots these are the second and fourth slot from the CPU (A2 and B2).
+2. Check the board manual ({{board}}) for the slots used with two modules. ASUS, for example, uses DIMM_A2 and DIMM_B2 [2], which on most boards with four slots are the second and fourth slot from the CPU.
 3. Move one module into the other channel.
 :::
 ::: variant default
-For two modules, use the slots the board manual recommends (usually A2 and B2).
+For two modules, use the slots the board manual recommends (often A2 and B2) [2].
 :::
 
 ## How to check the fix
 Run the scan again. The slots should show two different channels. Tools like CPU-Z show "Dual" as channel count.
+
+## Sources
+1. https://www.corsair.com/us/en/explorer/diy-builder/memory/what-is-dual-channel-ram/
+2. https://www.asus.com/support/faq/1047257/

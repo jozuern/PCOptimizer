@@ -9,15 +9,15 @@ Recommended AMD Software settings for gaming.
 :::
 
 ## Why it matters
-Some Radeon features trade image quality or frame rate for power savings or smoothness, and their defaults depend on the driver version and the preset you chose at installation. AMD's settings interface (ADLX) is a C++ SDK without a supported way for this app to write these values safely, so the app shows the settings and what they do instead of changing them.
+Some Radeon features trade image quality or frame rate for power savings or smoothness, and their defaults depend on the driver version and the preset you chose at installation. AMD's settings library (ADLX) can change these values [1], but it is a native library that this app does not include, so the app explains the settings instead of changing them.
 
 ## How we detected it
-We found a Radeon graphics card with an AMD driver.
+We found a Radeon graphics card with an AMD driver. Workstation cards (Radeon Pro, FirePro, Instinct) are skipped, because these steps are written for AMD Software: Adrenalin Edition.
 
 ## How to fix
-1. Open **AMD Software: Adrenalin Edition > Gaming > Graphics** (global settings or per game).
-2. **Radeon Anti-Lag:** On. Lowers input delay in GPU-bound games; games with Anti-Lag 2 support use the stronger in-game version.
-3. **Radeon Chill:** Off, unless you want to limit frame rate for less heat and noise.
+1. Open **AMD Software: Adrenalin Edition > Gaming > Graphics** (global settings or per game). Menu names can differ between driver versions.
+2. **Radeon Anti-Lag:** On. AMD describes it as reducing input lag in GPU-limited cases by pacing the processor's work [1].
+3. **Radeon Chill:** Off, unless you want to limit frame rate for less heat and noise. Anti-Lag and Chill cannot be on at the same time [1].
 4. **Radeon Boost:** Off if you notice the lower resolution during fast movement; it raises frame rate by rendering at a lower resolution while you move.
 5. **Wait for Vertical Refresh:** "Off, unless application specifies", and **Enhanced Sync** off if you see stutter with FreeSync.
 6. **Gaming > Display:** turn **AMD FreeSync** on for a FreeSync monitor.
@@ -25,3 +25,6 @@ We found a Radeon graphics card with an AMD driver.
 
 ## How to check the fix
 AMD Software shows the active values per game. The Health page benchmark measures the effect.
+
+## Sources
+1. https://gpuopen.com/manuals/adlx/adlx-sdk-references/adlx-interfaces/3d-graphics/iadlx3dantilag/setenabled/

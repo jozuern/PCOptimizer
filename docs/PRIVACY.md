@@ -18,6 +18,8 @@ The app contacts the internet only for the features below, and only when you sta
 
 The frame time benchmark uses PresentMon, which is built into the exe and runs locally. Sensor readings stay local.
 
+The Wi-Fi check reads the band of the connected Wi-Fi network through the Windows Wi-Fi API. Windows gives desktop apps this information only when location access is allowed for them, and may ask you the first time ([Microsoft](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)). Without that permission the check shows "unknown". The information stays on your PC.
+
 ---
 
 # Datenschutz
@@ -37,3 +39,5 @@ Die App geht nur für die folgenden Funktionen ins Internet, und nur wenn du sie
 | Links (Store-Seiten, Treiberseiten, Quellen, GitHub) | Wenn du einen anklickst | Öffnet sich in deinem Browser. |
 
 Der Frametime-Benchmark nutzt PresentMon, das in der exe enthalten ist und lokal läuft. Sensorwerte bleiben lokal.
+
+Die WLAN-Prüfung liest das Frequenzband des verbundenen WLANs über die Windows-WLAN-Schnittstelle. Windows gibt Desktop-Apps diese Information nur, wenn der Standortzugriff für sie erlaubt ist, und fragt beim ersten Mal eventuell nach ([Microsoft](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)). Ohne diese Erlaubnis zeigt die Prüfung „unbekannt“. Die Information bleibt auf deinem PC.

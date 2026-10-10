@@ -50,7 +50,7 @@ public static class DriverInventory
         var who = $"{d.Provider} {d.Manufacturer}";
         if (d.Class == "DISPLAY")
         {
-            if (who.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)) return "https://www.nvidia.com/Download/index.aspx";
+            if (who.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)) return "https://www.nvidia.com/en-us/drivers/";
             if (who.Contains("AMD", StringComparison.OrdinalIgnoreCase) || who.Contains("Advanced Micro Devices", StringComparison.OrdinalIgnoreCase))
                 return "https://www.amd.com/en/support/download/drivers.html";
             if (who.Contains("Intel", StringComparison.OrdinalIgnoreCase)) return "https://www.intel.com/content/www/us/en/support/detect.html";

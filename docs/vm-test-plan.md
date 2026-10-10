@@ -2,7 +2,7 @@
 
 Real apply and undo round trips for every change the app can make. Unit tests only cover the registry sandbox and fakes; this plan covers real Windows. Run it before each public release, in a Hyper-V VM, never on your own PC.
 
-Generated from the tweak catalog (98 tweaks). After catalog changes, regenerate the tables or add the new rows by hand.
+The tweak tables in sections 2 to 5 are generated from the catalog: after a catalog change, run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`.
 
 ## Setup
 
@@ -31,18 +31,18 @@ For each tweak: apply it alone, check that the state shows **On** and that the c
 | Language and theme | Switch to Deutsch and Dark in Settings, restart the app: both kept | |
 | Update check | Turn on, restart the app: no error; with a newer published release a banner links to the release page | |
 
+<!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
+
+The tables below cover all 83 catalog tweaks. Preview tweaks have not been tested on real Windows yet; test them first.
+
 ## 2. Expert and boot-critical tweaks
 
 Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone, restart, confirm Windows still starts, then undo and restart again.
 
 | Tweak | Title | Risk | Then | Actions | Result |
 |---|---|---|---|---|---|
-| `latency.disableDynamicTick` | Dynamic tick off (BCD) | expert, boot-critical | restart | bcd | |
-| `latency.globalTimerResolution` | Global timer resolution requests | expert | restart | registry | |
-| `security.vbsOff` | Virtualization-based security and memory integrity off | expert, boot-critical, anti-cheat sensitive | restart | registry | |
-| `security.mitigationsOff` | Spectre/Meltdown mitigations off | expert | restart | registry | |
-| `security.smartScreenOff` | SmartScreen for apps off | expert |  | registry | |
-| `leftover.usePlatformClock` | Remove forced HPET (useplatformclock) | expert, boot-critical | restart | bcd | |
+| `security.vbsOff` | Virtualization-based security and memory integrity off | expert, boot-critical, anti-cheat sensitive, preview | restart | registry | |
+| `leftover.usePlatformClock` | Remove forced platform clock (useplatformclock) | expert, boot-critical, preview | restart | bcd | |
 
 ## 3. Tweaks that need a restart or sign-out
 
@@ -50,15 +50,19 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 |---|---|---|---|---|---|
 | `power.throttlingOff` | Power throttling off | safe | restart | registry | |
 | `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe | restart | registry | |
-| `gpu.mpoOff` | Multiplane overlay (MPO) off | moderate | restart | registry | |
-| `memory.compressionOff` | Memory compression off | moderate | restart | memoryCompression | |
-| `memory.pagefileSystemManaged` | Page file managed by Windows | safe | restart | registry | |
+| `gpu.mpoOff` | Multiplane overlay (MPO) off | moderate, preview | restart | registry | |
+| `memory.compressionOff` | Memory compression off | moderate, preview | restart | memoryCompression | |
+| `memory.sysmainOff` | SysMain (Superfetch) off | moderate | restart | service | |
+| `memory.pagefileSystemManaged` | Page file managed by Windows | safe, preview | restart | registry | |
+| `storage.lastAccessOff` | NTFS last-access timestamps off | safe | restart | registry | |
+| `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe | restart | registry | |
 | `network.preferIpv4` | Prefer IPv4 over IPv6 | safe | restart | registryBits | |
-| `network.teredoOff` | Teredo tunneling off | moderate | restart | registryBits | |
-| `privacy.wpbtOff` | Windows Platform Binary Table off | moderate | restart | registry | |
-| `visual.bestPerformance` | Visual effects: best performance | safe | sign out | registry | |
-| `explorer.classicContextMenu` | Classic right-click menu | safe | sign out | registry | |
-| `leftover.overlayTestMode` | Remove old MPO value (OverlayTestMode) | safe | restart | registry | |
+| `privacy.telemetryOff` | Telemetry to minimum | moderate | restart | registry, service, scheduledTask | |
+| `visual.bestPerformance` | Visual effects: best performance | safe, preview | sign out | registry, registryBinaryBits | |
+| `explorer.classicContextMenu` | Classic right-click menu | safe, preview | sign out | registry | |
+| `privacy.appCompatTelemetryOff` | Application compatibility telemetry off | moderate | restart | registry | |
+| `privacy.phoneLinkOff` | Phone-PC linking off | moderate | restart | registry | |
+| `privacy.crossDeviceOff` | Continue experiences on other devices off | moderate | restart | registry | |
 
 ## 4. Other tweaks
 
@@ -66,42 +70,32 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 |---|---|---|---|---|---|
 | `power.balancedPlan` | Switch to the Balanced power plan | safe |  | powerScheme | |
 | `power.gamingPlan` | Gaming power plan (based on High performance) | safe |  | powerScheme | |
-| `power.ultimatePlan` | Ultimate Performance power plan | moderate |  | powerScheme | |
+| `power.ultimatePlan` | Ultimate Performance power plan | moderate, preview |  | powerScheme | |
 | `power.turboRestore` | Restore processor turbo | safe |  | powerSetting | |
-| `power.coreParkingOff` | Core parking off | moderate |  | powerSetting | |
-| `power.minProcessorState100` | Minimum processor state 100 % | moderate |  | powerSetting | |
 | `power.usbSelectiveSuspendOff` | USB selective suspend off | safe |  | powerSetting | |
 | `power.pcieAspmOff` | PCIe link power management off | safe |  | powerSetting | |
 | `power.fastStartupOff` | Fast Startup off | safe |  | registry | |
 | `power.hibernateOff` | Hibernation off | safe |  | hibernation | |
 | `gpu.windowedOptimizations` | Optimizations for windowed games | safe |  | registryToken | |
 | `gpu.gameMode` | Game Mode on | safe |  | registry | |
-| `gpu.gameDvrOff` | Game DVR background recording off | safe |  | registry | |
-| `gpu.fullscreenOptimizationsOff` | Fullscreen optimizations off (global) | moderate |  | registry | |
+| `gpu.gameDvrOff` | Game Bar captures off | safe |  | registry | |
 | `input.mouseAccelOff` | Mouse acceleration off | safe |  | registry | |
-| `latency.mmcss` | Multimedia scheduler priorities for games | safe |  | registry | |
-| `latency.win32PrioritySeparation` | Foreground priority boost (Win32PrioritySeparation) | moderate |  | registry | |
-| `memory.sysmainOff` | SysMain (Superfetch) off | moderate |  | service | |
 | `storage.trimOn` | TRIM on | safe |  | registry | |
-| `storage.lastAccessOff` | NTFS last-access timestamps off | safe |  | registry | |
-| `storage.8dot3Off` | 8.3 short file names off | safe |  | registry | |
-| `storage.storageSenseOn` | Storage Sense on | safe |  | registry | |
-| `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe |  | registry | |
-| `network.nagleOff` | Nagle's algorithm off (TCP) | moderate |  | registry | |
+| `storage.storageSenseOn` | Storage Sense on | safe, preview |  | registry | |
+| `network.nagleOff` | Delayed TCP acknowledgements off (TcpAckFrequency) | moderate |  | registry | |
 | `network.deliveryOptimizationP2POff` | Delivery Optimization peer-to-peer off | safe |  | registry | |
-| `privacy.telemetryOff` | Telemetry to minimum | moderate |  | registry, scheduledTask, service | |
 | `privacy.activityHistoryOff` | Activity history off | safe |  | registry | |
 | `privacy.consumerFeaturesOff` | Consumer features off | safe |  | registry | |
 | `privacy.locationOff` | Location access off | safe |  | registry | |
 | `background.backgroundAppsOff` | Background apps off | moderate |  | registry | |
-| `background.aiOff` | Recall and Copilot off | safe |  | registry | |
+| `background.aiOff` | Recall snapshots off | safe |  | registry | |
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
 | `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
-| `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
-| `network.dns.google` | Public DNS servers | safe |  | dns | |
-| `network.dns.quad9` | Public DNS servers | safe |  | dns | |
+| `network.dns.cloudflare` | Public DNS servers | safe, preview |  | dns | |
+| `network.dns.google` | Public DNS servers | safe, preview |  | dns | |
+| `network.dns.quad9` | Public DNS servers | safe, preview |  | dns | |
 | `privacy.advertisingIdOff` | Advertising ID off | safe |  | registry | |
 | `privacy.tailoredExperiencesOff` | Tailored experiences off | safe |  | registry | |
 | `privacy.feedbackNotificationsOff` | Feedback requests off | safe |  | registry | |
@@ -119,17 +113,12 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `privacy.findMyDeviceOff` | Find my device off | moderate |  | registry | |
 | `privacy.errorReportingOff` | Windows Error Reporting off | moderate |  | registry | |
 | `privacy.ceipOff` | Customer Experience Improvement Program off | safe |  | registry | |
-| `privacy.appCompatTelemetryOff` | Application compatibility telemetry off | moderate |  | registry | |
-| `privacy.handwritingSharingOff` | Handwriting data sharing off | safe |  | registry | |
 | `privacy.appPersonalDataOff` | Store app access to personal data off | moderate |  | registry | |
 | `privacy.settingsSyncOff` | Settings sync off | moderate |  | registry | |
 | `privacy.messageSyncOff` | Text message cloud backup off | safe |  | registry | |
-| `privacy.phoneLinkOff` | Phone-PC linking off | moderate |  | registry | |
-| `privacy.crossDeviceOff` | Continue experiences on other devices off | moderate |  | registry | |
 | `privacy.mapsTrafficOff` | Offline maps updates off | safe |  | registry | |
 | `privacy.clipboardHistoryOff` | Clipboard history off | moderate |  | registry | |
-| `services.gamingPreset` | Conservative services preset | safe |  | service | |
-| `services.spoolerManual` | Print Spooler to Manual | safe |  | service | |
+| `services.gamingPreset` | Conservative services preset | safe, preview |  | service | |
 | `battery.boostOffDc` | Processor boost off on battery | moderate |  | powerSetting | |
 | `battery.wifiPowerSavingDc` | Wi-Fi power saving on battery: maximum | safe |  | powerSetting | |
 | `battery.pcieAspmMaxDc` | PCIe power saving on battery: maximum | safe |  | powerSetting | |
@@ -143,15 +132,17 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 
 A VM has no NVIDIA GPU and only a synthetic network adapter. Test these on a spare real PC with the hardware named, one at a time, with a restore point first.
 
-| Tweak | Title | Needs | Actions | Result |
-|---|---|---|---|---|
-| `nvidia.lowLatencyOn` | NVIDIA Low Latency Mode: On | NVIDIA GPU | nvidiaDrs | |
-| `nvidia.shaderCacheUnlimited` | NVIDIA shader cache: unlimited | NVIDIA GPU | nvidiaDrs | |
-| `nvidia.textureFilteringPerformance` | NVIDIA texture filtering: high performance | NVIDIA GPU | nvidiaDrs | |
-| `nvidia.preferMaxPerformance` | NVIDIA power mode: prefer maximum performance (global) | NVIDIA GPU | nvidiaDrs | |
-| `network.nicPowerSavingOff` | Network adapter power saving off | physical network adapter | nicProperty | |
-| `network.nicAllowPowerOffOff` | Do not let Windows turn off the network adapter | physical network adapter | nicProperty | |
-| `network.interruptModerationOff` | Interrupt moderation off (Expert) | physical network adapter | nicProperty | |
+| Tweak | Title | Risk | Needs | Actions | Result |
+|---|---|---|---|---|---|
+| `nvidia.lowLatencyOn` | NVIDIA Low Latency Mode: On | safe, preview | NVIDIA GPU | nvidiaDrs | |
+| `nvidia.shaderCacheUnlimited` | NVIDIA shader cache: unlimited | safe, preview | NVIDIA GPU | nvidiaDrs | |
+| `nvidia.textureFilteringPerformance` | NVIDIA texture filtering: high performance | safe, preview | NVIDIA GPU | nvidiaDrs | |
+| `nvidia.preferMaxPerformance` | NVIDIA power mode: prefer maximum performance (global) | moderate, preview | NVIDIA GPU | nvidiaDrs | |
+| `network.nicPowerSavingOff` | Network adapter power saving off | moderate, preview | physical network adapter | nicProperty | |
+| `network.nicAllowPowerOffOff` | Do not let Windows turn off the network adapter | moderate, preview | physical network adapter | nicProperty | |
+| `network.interruptModerationOff` | Interrupt moderation off (Expert) | expert, preview | physical network adapter | nicProperty | |
+
+<!-- End of generated tables. -->
 
 ## 6. Changes built at runtime and other features that change the PC
 

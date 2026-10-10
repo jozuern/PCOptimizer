@@ -21,7 +21,7 @@ public sealed record CleanupScan(CleanupCategory Category, long Bytes, int Files
 public sealed record CleanupResult(string CategoryId, long FreedBytes, int Deleted, int Skipped);
 
 /// <summary>
-/// Disk cleanup (plan v4 M5). Every category is scanned first (sizes shown), and only the selected ones are deleted.
+/// Disk cleanup. Every category is scanned first (sizes shown), and only the selected ones are deleted.
 /// Never follows reparse points (junctions, symbolic links, mount points), skips files in use and, for temp folders,
 /// files younger than a day (installers may still need them). Paths are resolved for the signed-in user, not the
 /// elevated account.

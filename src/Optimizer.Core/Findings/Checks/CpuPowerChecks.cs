@@ -49,7 +49,7 @@ public sealed class MicrocodeCheck : IFindingCheck
 
 public enum X3dLayout { None, SingleCcd, MultiCcdAsymmetric, DualVCache }
 
-/// <summary>X3D topology (plan v4 §4.8): asymmetric L3 sizes (largest ≥ 2 × smallest) = one CCD with V-Cache.</summary>
+/// <summary>X3D topology: asymmetric L3 sizes (largest ≥ 2 × smallest) = one CCD with V-Cache.</summary>
 public static class X3d
 {
     public static X3dLayout Classify(CpuInfo cpu, CatalogData c)
@@ -64,7 +64,11 @@ public static class X3d
     }
 }
 
-/// <summary>F10: multi-CCD X3D needs the Balanced plan (core parking routes games to the V-Cache CCD).</summary>
+/// <summary>
+/// F10: multi-CCD X3D: the AMD driver parks the cores of the chiplet without V-Cache while a game runs, which needs core
+/// parking. Problem when the plan is not Balanced, or Balanced with core parking switched off (CPMINCORES 100 %: "The
+/// Core Parking algorithm is disabled if the value of this setting is 100%", variant "parkingOff").
+/// </summary>
 public sealed class X3dCheck : IFindingCheck
 {
     public const string Id = "F10.x3d";
@@ -74,11 +78,13 @@ public sealed class X3dCheck : IFindingCheck
     {
         if (p.Cpu is null || X3d.Classify(p.Cpu, c) != X3dLayout.MultiCcdAsymmetric) yield break;
         var balanced = p.Power?.Personality == PowerPersonality.Balanced;
+        var parkingOff = p.Power?.CoreParkingMinCoresAc == 100;
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = p.Power is null ? FindingStatus.Unknown : balanced ? FindingStatus.Ok : FindingStatus.Problem,
+            Status = p.Power is null ? FindingStatus.Unknown : balanced && !parkingOff ? FindingStatus.Ok : FindingStatus.Problem,
+            Variant = p.Power is not null && balanced && parkingOff ? "parkingOff" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
@@ -86,6 +92,7 @@ public sealed class X3dCheck : IFindingCheck
                 new("fact.cpu", p.Cpu.Name),
                 new("fact.l3Domains", string.Join(" + ", p.Cpu.L3Domains.Select(d => $"{d.SizeBytes >> 20} MB"))),
                 new("fact.powerPlan", p.Power?.ActiveSchemeName ?? "@unknown"),
+                new("fact.coreParkingMinCores", p.Power?.CoreParkingMinCoresAc is { } cores ? $"{cores} %" : "@unknown"),
             ],
         };
     }
@@ -158,8 +165,8 @@ public sealed class EnergySaverCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Power is null) yield break;
-        // On battery, Energy Saver is expected behavior; only report it while on AC power.
-        if (!p.Power.OnAc && p.IsLaptop) yield break;
+        // On battery, Energy Saver is expected behavior; only report it on laptops known to be on AC power.
+        if (p.IsLaptop && p.Power.OnAc != true) yield break;
         yield return new Finding
         {
             Id = Id,
@@ -170,7 +177,7 @@ public sealed class EnergySaverCheck : IFindingCheck
             Facts =
             [
                 new("fact.energySaver", p.Power.EnergySaverOn ? "@on" : "@off"),
-                new("fact.acPower", p.Power.OnAc ? "@yes" : "@no"),
+                new("fact.acPower", p.Power.OnAc switch { true => "@yes", false => "@no", null => "@unknown" }),
             ],
         };
     }

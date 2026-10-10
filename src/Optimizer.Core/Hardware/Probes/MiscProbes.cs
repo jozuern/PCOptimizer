@@ -103,7 +103,7 @@ public static partial class SoftwareProbe
         var launchers = new List<string>();
         var libraries = new List<string>();
 
-        // Machine-wide keys only: under elevation HKCU may belong to another account (plan v4 §4.5).
+        // Machine-wide keys only: under elevation HKCU may belong to another account.
         var steam = Reg.HklmString(@"SOFTWARE\WOW6432Node\Valve\Steam", "InstallPath");
         if (steam is not null)
         {

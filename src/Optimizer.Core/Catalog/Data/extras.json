@@ -48,11 +48,9 @@
       "verified": false
     },
     "amdChipset": {
+      "_comment": "amdgpio2, amdi2c and AmdPPM are inbox Windows drivers present on every PC, so they are not listed. No AMD page names these service keys; not used by any check (AmdChipsetCheck reads the installed programs).",
       "services": [
-        "amdgpio2",
-        "amdi2c",
         "amdpsp",
-        "AmdPPM",
         "amd3dvcache",
         "amd3dvcacheSvc"
       ],
@@ -67,10 +65,10 @@
     }
   },
   "apoCpus": {
-    "_comment": "Intel Application Optimization: verified models per plan v4 (14th gen K desktop i7/i9, Core Ultra 200S K). Source: Intel APO game list and press coverage.",
-    "regex": "(i[79]-14\\d{3}K|Ultra [79] 2[68]5K)",
+    "_comment": "Intel Application Optimization: verified processors from Intel article 000095419 (desktop: 14th gen i5/i7/i9 K and KF, i9 14900KS, Core Ultra 200S K/KF and K Plus; mobile: i7/i9 14th gen HX, Core Ultra 200HX and HX Plus, Core Ultra 7 356H and Ultra 9 386H).",
+    "regex": "\\b(i9-14900(K|KF|KS|HX)|i7-14700(K|KF|HX)|i5-14600KF?|Ultra 9 (285K|285HX|275HX|290HX Plus|386H)|Ultra 7 (265KF?|270K Plus|265HX|255HX|270HX Plus|356H)|Ultra 5 (245KF?|250KF? Plus|245HX|235HX))\\b",
     "sources": [
-      "https://www.kitguru.net/components/cpu/joao-silva/intel-apo-receives-12-new-game-profiles-core-ultra-200k-series-now-supported/"
+      "https://www.intel.com/content/www/us/en/support/articles/000095419/processors.html"
     ]
   }
 }

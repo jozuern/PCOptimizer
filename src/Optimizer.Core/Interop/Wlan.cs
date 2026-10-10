@@ -4,7 +4,7 @@ namespace Optimizer.Core.Interop;
 
 /// <summary>
 /// Native Wi-Fi API (wlanapi.dll), read-only. Used to find the band of the connected access point from the BSS center
-/// frequency; channel numbers alone are ambiguous since 6 GHz reuses 1–233.
+/// frequency; channel numbers alone are ambiguous since 6 GHz reuses 1 to 233.
 /// Layouts (wlanapi.h, natural alignment): WLAN_INTERFACE_INFO = 532 bytes, WLAN_BSS_ENTRY = 360 bytes.
 /// </summary>
 public static class Wlan
@@ -20,7 +20,16 @@ public static class Wlan
     private const int OpCurrentConnection = 7, StateConnected = 1, BssInfrastructure = 1, BssAny = 3;
 
     /// <summary>A connection; <paramref name="SameSsidFrequenciesKhz"/> = every access point of this network the adapter sees.</summary>
-    public sealed record Connection(string Interface, string Ssid, string Bssid, uint? CenterFrequencyKhz, IReadOnlyList<uint> SameSsidFrequenciesKhz);
+    public sealed record Connection(string Interface, string Ssid, string Bssid, uint? CenterFrequencyKhz, IReadOnlyList<uint> SameSsidFrequenciesKhz)
+    {
+        /// <summary>
+        /// Windows refused the connection or BSS details with ERROR_ACCESS_DENIED: apps need location permission for them
+        /// ("Changes to API behavior for Wi-Fi access and location").
+        /// </summary>
+        public bool LocationDenied { get; init; }
+    }
+
+    private const uint ErrorAccessDenied = 5;
 
     public sealed record Bss(string Ssid, string Bssid, uint CenterFrequencyKhz);
 
@@ -42,7 +51,13 @@ public static class Wlan
             {
                 if (state != StateConnected) continue;
                 var g = guid;
-                if (WlanQueryInterface(h, ref g, OpCurrentConnection, IntPtr.Zero, out _, out var data, IntPtr.Zero) != 0) continue;
+                var queryResult = WlanQueryInterface(h, ref g, OpCurrentConnection, IntPtr.Zero, out _, out var data, IntPtr.Zero);
+                if (queryResult == ErrorAccessDenied)
+                {
+                    result.Add(new Connection(description, "", "", null, []) { LocationDenied = true });
+                    continue;
+                }
+                if (queryResult != 0) continue;
                 try
                 {
                     // WLAN_CONNECTION_ATTRIBUTES: state(4) mode(4) profileName(512) | association: SSID @520, BSSID @560 | security: bSecurityEnabled @588
@@ -51,7 +66,8 @@ public static class Wlan
                     var secure = Marshal.ReadInt32(data + 588) != 0;
                     uint? freq = null;
                     var sameSsid = new List<uint>();
-                    if (WlanGetNetworkBssList(h, ref g, data + 520, BssInfrastructure, secure, IntPtr.Zero, out var list) == 0)
+                    var bssResult = WlanGetNetworkBssList(h, ref g, data + 520, BssInfrastructure, secure, IntPtr.Zero, out var list);
+                    if (bssResult == 0)
                     {
                         try
                         {
@@ -64,7 +80,7 @@ public static class Wlan
                             WlanFreeMemory(list);
                         }
                     }
-                    result.Add(new Connection(description, ssid, bssid, freq, sameSsid));
+                    result.Add(new Connection(description, ssid, bssid, freq, sameSsid) { LocationDenied = bssResult == ErrorAccessDenied });
                 }
                 finally
                 {

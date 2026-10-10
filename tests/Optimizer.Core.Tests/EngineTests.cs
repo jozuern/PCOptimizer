@@ -3,7 +3,7 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Engine round trips against a sandboxed registry and fake system APIs (plan v4 §10.1). Nothing on the real system changes.</summary>
+/// <summary>Engine round trips against a sandboxed registry and fake system APIs. Nothing on the real system changes.</summary>
 public class EngineTests
 {
     private static readonly TweakCatalog Catalog = TweakCatalog.Current;

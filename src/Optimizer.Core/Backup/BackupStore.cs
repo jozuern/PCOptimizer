@@ -11,7 +11,7 @@ public sealed class BackupEntry
     public required string TargetKey { get; init; }
     public required string Description { get; init; }
 
-    /// <summary>The true original: written once, at the first apply (first-original rule, plan v4 §4.4).</summary>
+    /// <summary>The true original: written once, at the first apply (first-original rule).</summary>
     public required StoredValue Original { get; init; }
 
     /// <summary>The value after our last apply. Undo skips targets whose value no longer matches (Windows reset it).</summary>
@@ -54,7 +54,7 @@ public sealed class TweakBackup
 
 /// <summary>
 /// JSON backups in %ProgramData%\PCOptimizer\backups. The folder is locked to Administrators + SYSTEM (no inheritance):
-/// an elevated app restoring values from user-writable files would be a privilege-escalation path (plan v4 §4.4).
+/// an elevated app restoring values from user-writable files would be a privilege-escalation path.
 /// </summary>
 public sealed class BackupStore
 {

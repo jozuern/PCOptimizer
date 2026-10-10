@@ -1,5 +1,5 @@
 {
-  "_comment": "winget catalog (IDs verified in the winget-pkgs repository). scope user = per-user installer, started as the signed-in user. detect = regex on installed program names (empty = cannot be detected reliably).",
+  "_comment": "winget catalog (IDs verified in the winget-pkgs repository). scope machine = winget runs elevated; scope user = per-user installer, started as the signed-in user (this is not winget --scope). detect = regex on installed program names (empty = cannot be detected reliably). Microsoft.DirectX is not offered: since the manifest change winget picks the packaged-app framework, not dxwebsetup.exe.",
   "apps": [
     {
       "id": "Valve.Steam",
@@ -66,12 +66,13 @@
     },
     {
       "id": "TeamSpeakSystems.TeamSpeakClient",
-      "name": "TeamSpeak",
+      "wingetScope": "machine",
+      "name": "TeamSpeak 3",
       "category": "communication",
       "scope": "machine",
       "detect": "^TeamSpeak",
-      "en": "Low-latency voice chat on your own or hosted servers.",
-      "de": "Sprachchat mit geringer Latenz auf eigenen oder gemieteten Servern."
+      "en": "Voice chat on your own or rented servers (TeamSpeak 3 client).",
+      "de": "Sprachchat auf eigenen oder gemieteten Servern (TeamSpeak-3-Client)."
     },
     {
       "id": "Guru3D.Afterburner",
@@ -133,11 +134,12 @@
       "category": "tools",
       "scope": "machine",
       "detect": "^7-Zip",
-      "en": "Archive tool for zip, 7z and rar files.",
-      "de": "Archivprogramm für zip-, 7z- und rar-Dateien."
+      "en": "Archive tool for zip and 7z; also opens rar.",
+      "de": "Archivprogramm für zip und 7z; öffnet auch rar."
     },
     {
       "id": "Microsoft.PowerToys",
+      "wingetScope": "machine",
       "name": "PowerToys",
       "category": "tools",
       "scope": "machine",
@@ -147,12 +149,13 @@
     },
     {
       "id": "Parsec.Parsec",
+      "wingetScope": "machine",
       "name": "Parsec",
       "category": "tools",
       "scope": "machine",
       "detect": "^Parsec",
-      "en": "Low-latency remote desktop and game streaming.",
-      "de": "Remotedesktop und Spielestreaming mit geringer Latenz."
+      "en": "Remote desktop and game streaming.",
+      "de": "Remotedesktop und Spielestreaming."
     },
     {
       "id": "VideoLAN.VLC",
@@ -191,17 +194,8 @@
       "de": "Webbrowser von Google."
     },
     {
-      "id": "Microsoft.DirectX",
-      "name": "DirectX End-User Runtime",
-      "category": "runtimes",
-      "scope": "machine",
-      "detect": "^$",
-      "en": "Legacy DirectX 9 to 11 components (d3dx9, XAudio 2.7) that older games need. Safe to install alongside current DirectX.",
-      "de": "Ältere DirectX-Komponenten (d3dx9, XAudio 2.7), die ältere Spiele brauchen. Kann neben aktuellem DirectX installiert werden."
-    },
-    {
       "id": "Microsoft.VCRedist.2015+.x64",
-      "name": "Visual C++ Redistributable 2015-2022 (x64)",
+      "name": "Visual C++ v14 Redistributable (x64)",
       "category": "runtimes",
       "scope": "machine",
       "detect": "^Microsoft Visual C\\+\\+ (v14|20(15|17|19|22)).*x64",
@@ -210,12 +204,13 @@
     },
     {
       "id": "Microsoft.EdgeWebView2Runtime",
+      "wingetScope": "machine",
       "name": "WebView2 Runtime",
       "category": "runtimes",
       "scope": "machine",
       "detect": "^Microsoft Edge WebView2",
-      "en": "Web view used by launchers and apps (EA app, Battle.net and others). Do not remove it.",
-      "de": "Webansicht für Launcher und Apps (EA app, Battle.net und andere). Nicht entfernen."
+      "en": "Web view that many Windows apps use to show web content. Part of Windows 11; do not remove it.",
+      "de": "Webansicht, mit der viele Windows-Apps Webinhalte anzeigen. Teil von Windows 11; nicht entfernen."
     },
     {
       "id": "namazso.PawnIO",
