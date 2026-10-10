@@ -17,9 +17,12 @@ Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, th
 
 ## Checks in the VM
 
-- **Previews to prove:** `gpu.windowedOptimizations`, `explorer.endTask`, `privacy.locationOff` and `network.throttlingIndex` (marked undocumented by the third audit), the previews added after the first VM run, and the visible effect of `gpu.gameMode` (its current proof checks only the values).
+The run of 2026-10-11 ([results](vm-test-results-2026-10-11.md)) proved 28 previews and the visible effect of `gpu.gameMode`, confirmed the elevation boundary (H4, L-P4) and fixed the DISM umlauts. Still open:
+
+- **`privacy.locationOff` has no effect:** Location services stays on and apps keep their access, also after a restart. Find the value behind the Settings switch on 26H2 ([F1](vm-test-results-2026-10-11.md#f1-privacylocationoff-has-no-effect)).
+- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it ([F2](vm-test-results-2026-10-11.md#f2-focuslockscreentipsoff-turns-off-windows-spotlight)).
 - **`privacy.inkingTypingOff` stays Preview:** in the VM, "Custom inking and typing dictionary" in Settings stayed on although both `RestrictImplicit*Collection` policies were set ([Preview review](vm-test-results-2026-10-10.md#preview-review)). Find out whether it needs a restart, another value or a different description.
 - **`gpu.gameDvrOff` stays Preview:** the VM detected it as Partial before and after apply. Find the value Windows does not take.
-- **Elevation boundary:** confirm that an elevated start with `DOTNET_DiagnosticPorts` or `DOTNET_EnableEventPipe` in the user's environment refuses to run, and whether the elevated app honours per-user COM registrations of `WScript.Shell` and `Schedule.Service`.
-- **German Windows:** the live DISM output on the Health page shows umlauts correctly.
+- **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade` (Settings kept showing "Unencrypted" while Windows reported auto-upgrade on).
+- **Storage analysis before the first scan:** the refusal ("Wait until the PC scan has finished") could not be timed through UI Automation and is not confirmed.
 - **V-Cache driver (second audit M22):** the service name `amd3dvcacheSvc` needs a check on an X3D PC.
