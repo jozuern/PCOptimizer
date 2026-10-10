@@ -22,7 +22,20 @@ public static class DnsBenchmark
         ("Cloudflare", IPAddress.Parse("1.1.1.1")),
         ("Google", IPAddress.Parse("8.8.8.8")),
         ("Quad9", IPAddress.Parse("9.9.9.9")),
+        ("OpenDNS", IPAddress.Parse("208.67.222.222")),
+        ("AdGuard DNS", IPAddress.Parse("94.140.14.14")),
     ];
+
+    /// <summary>The DNS preset tweak whose first server is this address (for "use the fastest").</summary>
+    public static string? PresetFor(IPAddress server) => server.ToString() switch
+    {
+        "1.1.1.1" => "network.dns.cloudflare",
+        "8.8.8.8" => "network.dns.google",
+        "9.9.9.9" => "network.dns.quad9",
+        "208.67.222.222" => "network.dns.opendns",
+        "94.140.14.14" => "network.dns.adguard",
+        _ => null,
+    };
 
     public static readonly string[] Domains =
     [

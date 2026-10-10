@@ -57,7 +57,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 86 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 211 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -69,6 +69,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 |---|---|---|---|---|---|
 | `security.vbsOff` | Virtualization-based security and memory integrity off | expert, boot-critical, anti-cheat sensitive, preview | restart | registry | |
 | `leftover.usePlatformClock` | Remove forced platform clock (useplatformclock) | expert, boot-critical, preview | restart | bcd | |
+| `expert.legacyBootMenu` | Classic F8 boot menu | expert, boot-critical, preview | restart | bcd | |
 
 ## 3. Tweaks that need a restart or sign-out
 
@@ -90,6 +91,20 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.phoneLinkOff` | Phone-PC linking off | moderate | restart | registry | |
 | `privacy.crossDeviceOff` | Continue experiences on other devices off | moderate | restart | registry | |
 | `system.registryBackup` | Registry backup to the RegBack folder | safe | restart | registry | |
+| `ai.recallOff` | Recall removed | moderate | restart | registry | |
+| `focus.notificationCenterOff` | Notification center removed from the taskbar | moderate | restart | registry | |
+| `personalize.taskbarSearchHidden` | Taskbar: search hidden | safe | sign out | registry | |
+| `personalize.taskbarSearchIcon` | Taskbar: search as an icon only | safe | sign out | registry | |
+| `personalize.taskViewHidden` | Taskbar: Task View button hidden | safe | sign out | registry | |
+| `personalize.startRecentlyAddedHidden` | Start: no recently added apps | safe | sign out | registry | |
+| `personalize.startMostUsedHidden` | Start: no most used apps | safe | sign out | registry | |
+| `system.longPaths` | Long file paths | safe | restart | registry | |
+| `security.lsaProtection` | LSA protection on | moderate | restart | registry | |
+| `security.defenderSandbox` | Microsoft Defender in a sandbox | safe | restart | registry | |
+| `personalize.desktopThisPc` | This PC icon on the desktop | safe, preview | sign out | registry | |
+| `personalize.titleBarShakeOff` | No minimizing by shaking a window | safe | sign out | registry | |
+| `input.printScreenSnippingOff` | Print Screen copies the screen again | safe, preview | sign out | registry | |
+| `explorer.fullPathTitle` | File Explorer: full path in the title | safe, preview | sign out | registry | |
 
 ## 4. Other tweaks
 
@@ -125,6 +140,9 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
 | `network.dns.google` | Public DNS servers | safe |  | dns | |
 | `network.dns.quad9` | Public DNS servers | safe |  | dns | |
+| `network.dns.opendns` | Public DNS servers | safe, preview |  | dns | |
+| `network.dns.adguard` | Public DNS servers | safe, preview |  | dns | |
+| `network.dns.automatic` | DNS servers: automatic (from the router) | safe, preview |  | dns | |
 | `privacy.advertisingIdOff` | Advertising ID off | safe |  | registry | |
 | `privacy.tailoredExperiencesOff` | Tailored experiences off | safe |  | registry | |
 | `privacy.feedbackNotificationsOff` | Feedback requests off | safe |  | registry | |
@@ -158,6 +176,113 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `background.edgeBoostOff` | Microsoft Edge: no startup boost, no background mode | safe |  | registry | |
 | `updates.driversExcluded` | Drivers not included with Windows Update | moderate |  | registry | |
 | `privacy.deviceMetadataOff` | No automatic download of device apps | safe |  | registry | |
+| `edge.diagnosticDataRequired` | Microsoft Edge: only required diagnostic data | safe |  | registry | |
+| `edge.personalizationOff` | Microsoft Edge: no browsing data for personalization | safe |  | registry | |
+| `edge.shoppingOff` | Microsoft Edge: no shopping features | safe |  | registry | |
+| `edge.sidebarOff` | Microsoft Edge: no sidebar | safe |  | registry | |
+| `edge.setupPromptsOff` | Microsoft Edge: no setup and default browser prompts | safe |  | registry | |
+| `edge.newTabQuiet` | Microsoft Edge: new tab page without news and promotions | safe |  | registry | |
+| `edge.quickLinksOff` | Microsoft Edge: no quick links on the new tab page | safe |  | registry | |
+| `edge.promotionsOff` | Microsoft Edge: no tips, recommendations and Acrobat offer | safe |  | registry | |
+| `edge.trackingPreventionStrict` | Microsoft Edge: strict tracking prevention | moderate |  | registry | |
+| `edge.searchSuggestionsOff` | Microsoft Edge: no search and site suggestions while typing | safe |  | registry | |
+| `edge.localSuggestionsOff` | Microsoft Edge: no suggestions from history and favorites | safe |  | registry | |
+| `edge.errorPageServicesOff` | Microsoft Edge: no web services for error pages | safe |  | registry | |
+| `edge.networkPredictionOff` | Microsoft Edge: no network prediction | safe |  | registry | |
+| `edge.feedbackOff` | Microsoft Edge: no feedback tool | safe |  | registry | |
+| `edge.paymentQueryOff` | Microsoft Edge: sites cannot check for saved payment methods | safe |  | registry | |
+| `edge.passwordSavingOff` | Microsoft Edge: no saving of passwords | safe |  | registry | |
+| `edge.signInOff` | Microsoft Edge: no browser sign-in | moderate |  | registry | |
+| `edge.aiOff` | Microsoft Edge: generative AI features off | safe |  | registry | |
+| `edge.cloudWritingOff` | Microsoft Edge: no cloud text prediction and spell checking | safe |  | registry | |
+| `edge.tabServicesOff` | Microsoft Edge: no tab organization service | safe |  | registry | |
+| `edge.visualSearchOff` | Microsoft Edge: no visual search on images | safe |  | registry | |
+| `chrome.aiOff` | Google Chrome: generative AI features off | safe |  | registry | |
+| `chrome.aiNoTraining` | Google Chrome: AI features without improving Google's models | safe |  | registry | |
+| `chrome.urlDataOff` | Google Chrome: no URL-keyed data collection | safe |  | registry | |
+| `chrome.promotionsOff` | Google Chrome: no promotions and price tracking | safe |  | registry | |
+| `chrome.backgroundOff` | Google Chrome: no background mode | safe |  | registry | |
+| `brave.cryptoOff` | Brave: no Rewards, Wallet and VPN | safe |  | registry | |
+| `brave.aiChatOff` | Brave: no Leo AI assistant | safe |  | registry | |
+| `brave.telemetryOff` | Brave: no product analytics, usage ping and Web Discovery | safe |  | registry | |
+| `brave.extrasOff` | Brave: no News, Talk and Playlist | safe |  | registry | |
+| `ai.paintOff` | Paint: Cocreator, generative fill and Image Creator off | safe |  | registry | |
+| `ai.notepadOff` | Notepad: AI features off | safe |  | registry | |
+| `perm.cameraOff` | Windows apps: no camera access | safe |  | registry | |
+| `perm.microphoneOff` | Windows apps: no microphone access | safe |  | registry | |
+| `perm.notificationsOff` | Windows apps: no access to your notifications | safe |  | registry | |
+| `perm.voiceActivationOff` | Windows apps: no voice activation | safe |  | registry | |
+| `perm.motionOff` | Windows apps: no motion data | safe |  | registry | |
+| `perm.phoneOff` | Windows apps: no phone calls | safe |  | registry | |
+| `perm.radiosOff` | Windows apps: no control of radios | safe |  | registry | |
+| `perm.devicesOff` | Windows apps: no unpaired or trusted devices | safe |  | registry | |
+| `privacy.locationServiceOff` | Location service off for everything | safe |  | registry | |
+| `privacy.searchConnectedOff` | Windows Search: no web results and no location | safe |  | registry | |
+| `privacy.malwareReportOff` | Malicious Software Removal Tool: no infection reports | safe |  | registry | |
+| `privacy.thirdPartySpotlightOff` | Windows Spotlight: no third-party suggestions | safe |  | registry | |
+| `privacy.spotlightOff` | Windows Spotlight off | safe |  | registry | |
+| `privacy.cloudContentOff` | No cloud content, account notices and Windows tips | safe |  | registry | |
+| `privacy.oneSettingsOff` | No configuration downloads from OneSettings | moderate |  | registry | |
+| `privacy.privacyExperienceOff` | No privacy settings page at sign-in | safe |  | registry | |
+| `privacy.recentFilesOff` | No recently opened files in Start, jump lists and File Explorer | safe |  | registry | |
+| `privacy.lockScreenCameraOff` | No camera on the lock screen | safe |  | registry | |
+| `privacy.drmOnlineOff` | Windows Media DRM: no internet access | safe |  | registry | |
+| `privacy.oneDriveFolderBackupOff` | OneDrive: no backup of Desktop, Documents and Pictures | safe |  | registry | |
+| `background.oneDriveSyncOff` | OneDrive file sync off | moderate |  | registry | |
+| `updates.featureUpdatesDeferred` | Feature updates one year later | safe |  | registry | |
+| `updates.storeAutoUpdateOff` | Microsoft Store: no automatic app updates | safe |  | registry | |
+| `storage.appArchivingOff` | No automatic archiving of unused apps | safe |  | registry | |
+| `focus.updateNotificationsReduced` | Fewer Windows Update notifications | safe |  | registry | |
+| `focus.toastsOff` | No pop-up notifications from apps | safe |  | registry | |
+| `focus.lockScreenToastsOff` | No app notifications on the lock screen | safe |  | registry | |
+| `power.wakeTimersOff` | No wake timers | safe |  | powerSetting | |
+| `personalize.logonBlurOff` | Sign-in screen: clear background | safe |  | registry | |
+| `personalize.firstLogonAnimationOff` | No first sign-in animation | safe |  | registry | |
+| `system.verboseStatus` | Detailed status messages at startup and shutdown | safe |  | registry | |
+| `personalize.hibernateInPowerMenu` | Hibernate in the power menu | safe |  | registry | |
+| `explorer.openWithPromptsOff` | Open with: no Store search and no new app notices | safe |  | registry | |
+| `explorer.shortcutSearchOff` | Broken shortcuts: no drive search | safe |  | registry | |
+| `personalize.inkWorkspaceOff` | Windows Ink Workspace off | safe |  | registry | |
+| `personalize.defaultPrinterManual` | Default printer stays as you set it | safe |  | registry | |
+| `input.accessibilityShortcutsOff` | No Sticky Keys, Filter Keys and Toggle Keys shortcuts | safe |  | accessibilityShortcut | |
+| `security.puaProtection` | Microsoft Defender: block potentially unwanted apps | safe |  | registry | |
+| `security.networkProtection` | Microsoft Defender: network protection | moderate |  | registry | |
+| `security.passwordRevealOff` | No button to reveal passwords | safe |  | registry | |
+| `security.llmnrOff` | LLMNR off | moderate |  | registry | |
+| `security.autoRestartSignOnOff` | No automatic sign-in after restarts | safe |  | registry | |
+| `security.remoteAssistanceOff` | Remote Assistance requests off | safe |  | registry | |
+| `security.projectionToPcOff` | No wireless projection to this PC | safe |  | registry | |
+| `security.autoPlayOff` | AutoPlay off on all drives | safe |  | registry | |
+| `security.deviceEncryptionPrevented` | No automatic device encryption | moderate |  | registry | |
+| `background.pcaOff` | Program Compatibility Assistant off | safe |  | registry | |
+| `network.smbThrottlingOff` | Network file transfers: no SMB throttling | safe |  | registry | |
+| `battery.noIndexingOnBattery` | No search indexing on battery | safe |  | registry | |
+| `network.dohAutoUpgrade` | DNS over HTTPS for Cloudflare, Google and Quad9 | moderate, preview |  | dohAutoUpgrade | |
+| `storage.reservedStorageOff` | Reserved storage off | moderate |  | reservedStorage | |
+| `personalize.darkMode` | Dark mode for Windows and apps | safe, preview |  | registry | |
+| `personalize.accentTitleBars` | Accent color on title bars | safe, preview |  | registry | |
+| `explorer.hiddenFiles` | File Explorer: show hidden files | safe, preview |  | registry | |
+| `personalize.taskbarLeft` | Taskbar: icons on the left | safe, preview |  | registry | |
+| `personalize.clockSeconds` | Taskbar clock with seconds | safe, preview |  | registry | |
+| `personalize.taskbarNeverCombine` | Taskbar: never combine buttons | safe, preview |  | registry | |
+| `focus.taskbarFlashingOff` | Taskbar: no flashing buttons | safe, preview |  | registry | |
+| `focus.taskbarBadgesOff` | Taskbar: no badges on apps | safe, preview |  | registry | |
+| `personalize.showDesktopCornerOff` | Taskbar: no show desktop corner | safe, preview |  | registry | |
+| `personalize.snapAssistOff` | Snap: no suggestions for the other half | safe, preview |  | registry | |
+| `personalize.snapLayoutsOff` | Snap: no layouts on maximize button and screen top | safe, preview |  | registry | |
+| `explorer.compactView` | File Explorer: compact view | safe, preview |  | registry | |
+| `explorer.itemCheckboxes` | File Explorer: item check boxes | safe, preview |  | registry | |
+| `focus.notificationSoundsOff` | Notifications without sound | safe, preview |  | registry | |
+| `personalize.dynamicLightingOff` | Dynamic Lighting off | safe, preview |  | registry | |
+| `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | safe, preview |  | registry | |
+| `display.autoHdrOn` | Auto HDR on | safe, preview |  | registryToken | |
+| `focus.startAccountNotificationsOff` | Start: no account notifications | safe |  | registry | |
+| `focus.altTabTabsOff` | Alt+Tab: open windows only | safe, preview |  | registry | |
+| `privacy.searchHistoryOff` | Search: no history on this device | safe, preview |  | registry | |
+| `focus.lockScreenTipsOff` | Lock screen: no fun facts and tips | safe, preview |  | registry | |
+| `focus.finishSetupOff` | No "Let's finish setting up your device" screen | safe, preview |  | registry | |
+| `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | safe, preview |  | registry | |
+| `display.vrrOn` | Variable refresh rate for older full screen games | safe, preview |  | registryToken | |
 
 ## 5. Tweaks that need real hardware
 
@@ -182,6 +307,31 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support) |
 | `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
 | `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
+| `personalize.darkMode` | Dark mode for Windows and apps | the effect the explanation page describes |
+| `personalize.accentTitleBars` | Accent color on title bars | the effect the explanation page describes |
+| `explorer.hiddenFiles` | File Explorer: show hidden files | the effect the explanation page describes |
+| `personalize.taskbarLeft` | Taskbar: icons on the left | the effect the explanation page describes |
+| `personalize.clockSeconds` | Taskbar clock with seconds | the effect the explanation page describes |
+| `personalize.taskbarNeverCombine` | Taskbar: never combine buttons | the effect the explanation page describes |
+| `focus.taskbarFlashingOff` | Taskbar: no flashing buttons | the effect the explanation page describes |
+| `focus.taskbarBadgesOff` | Taskbar: no badges on apps | the effect the explanation page describes |
+| `personalize.showDesktopCornerOff` | Taskbar: no show desktop corner | the effect the explanation page describes |
+| `personalize.snapAssistOff` | Snap: no suggestions for the other half | the effect the explanation page describes |
+| `personalize.snapLayoutsOff` | Snap: no layouts on maximize button and screen top | the effect the explanation page describes |
+| `explorer.compactView` | File Explorer: compact view | the effect the explanation page describes |
+| `explorer.itemCheckboxes` | File Explorer: item check boxes | the effect the explanation page describes |
+| `focus.notificationSoundsOff` | Notifications without sound | the effect the explanation page describes |
+| `personalize.dynamicLightingOff` | Dynamic Lighting off | the effect the explanation page describes |
+| `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | the effect the explanation page describes |
+| `personalize.desktopThisPc` | This PC icon on the desktop | the effect the explanation page describes |
+| `display.autoHdrOn` | Auto HDR on | the effect the explanation page describes |
+| `privacy.searchHistoryOff` | Search: no history on this device | the effect the explanation page describes |
+| `input.printScreenSnippingOff` | Print Screen copies the screen again | the effect the explanation page describes |
+| `focus.lockScreenTipsOff` | Lock screen: no fun facts and tips | the effect the explanation page describes |
+| `focus.finishSetupOff` | No "Let's finish setting up your device" screen | the effect the explanation page describes |
+| `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | the effect the explanation page describes |
+| `explorer.fullPathTitle` | File Explorer: full path in the title | the effect the explanation page describes |
+| `display.vrrOn` | Variable refresh rate for older full screen games | the effect the explanation page describes |
 
 <!-- End of generated tables. -->
 

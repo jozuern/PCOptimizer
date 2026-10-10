@@ -131,6 +131,11 @@ public static class MarkdownFlow
                 return text;
             case AutolinkInline auto:
                 return new Run(auto.Url) { Foreground = ctx.Secondary, FontSize = 12 };
+            case DelimiterInline d:
+                // An unmatched "[" (for example in "[1][2]", which Markdig first tries as a reference link) stays text.
+                var ds = new Span(new Run(d.ToLiteral()));
+                AddInlines(ds.Inlines, d, ctx);
+                return ds;
             case ContainerInline c:
                 var s = new Span();
                 AddInlines(s.Inlines, c, ctx);

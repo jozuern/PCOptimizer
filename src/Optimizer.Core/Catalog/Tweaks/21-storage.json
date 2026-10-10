@@ -1,0 +1,26 @@
+{
+  "tweaks": [
+    {
+      "id": "storage.reservedStorageOff",
+      "category": "Storage",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "reservedStorage",
+          "enabled": false
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism-storage-reserve?view=windows-11",
+        "https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/storage-settings-in-windows"
+      ]
+    }
+  ]
+}

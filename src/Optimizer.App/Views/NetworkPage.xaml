@@ -41,6 +41,8 @@
                         </StackPanel>
                     </DockPanel>
                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Network.BenchmarkStatus}" Margin="0,8,0,0" Visibility="{Binding Network.BenchmarkStatus, Converter={StaticResource NullToVisibility}}" />
+                    <ui:Button Content="{Binding Network.FastestText}" Icon="{ui:SymbolIcon Checkmark20}" Margin="0,8,0,0" Command="{Binding Network.UseFastestCommand}"
+                               Visibility="{Binding Network.FastestText, Converter={StaticResource NullToVisibility}}" />
                     <ItemsControl ItemsSource="{Binding Network.DnsResults}" Margin="0,8,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

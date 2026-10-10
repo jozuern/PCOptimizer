@@ -84,6 +84,26 @@ The candidates that came up across several tools and fit the app's rules, groupe
 - Autoruns-style locations (codecs, boot execute, KnownDLLs, Winsock, print monitors, LSA and network providers, WMI) and startup snapshots with compare.
 - Process Lasso-style rules (ProBalance, per-game power plans, priorities, CPU limits): they need a program that runs in the background all the time.
 
+### Status after the feature phase (2026-10-10)
+
+The verdicts in the sections below are from the review before this phase. Since then PCOptimizer added most of the shortlist; the catalog has 211 tweaks.
+
+**Added**
+
+- Documented tweaks (100): Edge, Chrome and Brave policies; Recall, Paint and Notepad AI; app permissions; privacy, Windows Update and Store, personalize, Explorer, security and focus policies; wake timers; Sticky, Filter and Toggle Keys shortcuts; long paths; SMB throttling; indexing on battery; the F8 boot menu (Expert); DNS presets for OpenDNS and AdGuard and back to automatic; automatic DNS over HTTPS; reserved storage; account notifications in Start; Edge tabs in Alt+Tab.
+- Values behind Settings switches (25, Preview and marked undocumented until the VM test proves them): dark mode, accent title bars, taskbar left, clock seconds, never combine, taskbar flashing and badges, show desktop corner, Snap suggestions and layouts, This PC on the desktop, Dynamic Lighting, communications ducking, notification sounds, Auto HDR, variable refresh rate, hidden files, compact view, item check boxes, full path in the title, sync provider notifications, search history, Print Screen and Snipping Tool, lock screen fun facts, the finish-setup screen.
+- Tools and pages: quick fixes (IP renew, TCP/IP reset, audio, Bluetooth, Search and graphics driver restart, time sync, performance counters, chkdsk /scan, recovery environment); program start priorities (CPU and disk priority through Image File Execution Options, without a background program); Client for NFS and optional capabilities; desktop program uninstaller with a restore point; winget "Update all"; .NET Desktop Runtimes; a DDU card; 126 removable apps with legacy, third-party and OEM groups, Edge Game Assist and a notice for apps that came back; Autoruns-style startup locations (RunOnce, RunOnceEx, Active Setup, Load, boot execute, Known DLLs, Winsock, print monitors, LSA and network providers, codecs, WMI) with snapshot and compare; "Use the fastest" DNS; "Open System Restore".
+
+**Not added, with the reason**
+
+- Process Lasso's background features (ProBalance, per-game power plans, CPU limits, watchdog, instance limits): they need a program that runs all the time. PCOptimizer runs only when you open it; the persistent start priorities cover the part that Windows applies by itself.
+- SilentInstalledAppsEnabled: no Settings switch, and reports disagree on whether it still stops promoted app installs on current builds. privacy.consumerFeaturesOff covers Enterprise and Education.
+- Icon cache reset and re-registering all built-in apps: Microsoft documents no procedure for either.
+- TargetReleaseVersion: it needs a release version that the user picks and keeps current; updates.featureUpdatesDeferred covers the common case.
+- AllowStorageSenseGlobal instead of the per-user value: the current value has VM proof and also works on Home, so it stays.
+- Downloads as a File Explorer start folder: not added yet.
+- Documented, but skipped: Edge DefaultBrowserSettingEnabled (Windows 7 only); Edge autofill policies (deprecated); Edge SiteSafetyServicesEnabled, WebWidgetAllowed, GamerModeEnabled, EdgeCollectionsEnabled and CopilotCDPPageContext (obsolete); Edge Copilot page context and Microsoft 365 Copilot policies (Entra ID profiles only); EdgeUpdate CreateDesktopShortcutDefault (no effect when Edge is installed); Chrome MetricsReportingEnabled (managed devices only); DisableClickToDo, DisableSettingsAgent and DisableCopilotPinScreen (Insider only); NoAutoRebootWithLoggedOnUsers (only with scheduled installation); AUOptions (Microsoft advises it only for compliance); AllowMUUpdateService and OneDrive PreventNetworkTrafficPreUserSignIn (cannot be undone); ManagePreviewBuilds (Insider only); NoLockScreen (no current edition statement); DisableLogonBackgroundImage and NoInternetOpenWith (not in the Windows 11 ADMX); Num Lock at sign-in (no Microsoft page); the system cooling policy (no Microsoft page, depends on firmware).
+
 ## Contents
 
 - [PCOptimizer review (2026-10-10)](#pcoptimizer-review-2026-10-10)

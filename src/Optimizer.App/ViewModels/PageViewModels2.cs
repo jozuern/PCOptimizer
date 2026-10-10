@@ -69,6 +69,9 @@ public sealed partial class StartupRow : SwitchRow
     [ObservableProperty] private string? _virusTotalText;
     [ObservableProperty] private string? _virusTotalUrl;
 
+    /// <summary>Added or changed since the saved snapshot (set after a comparison).</summary>
+    [ObservableProperty] private bool _isNew;
+
     public void SetSignature(SignatureInfo s, string lang)
     {
         IsMicrosoft = s.IsMicrosoft;
@@ -99,7 +102,12 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     [ObservableProperty] private string _summaryText = "";
     [ObservableProperty] private string _virusTotalStatus = "";
     [ObservableProperty] private bool _isCheckingVirusTotal;
+    [ObservableProperty] private string _snapshotText = "";
+    [ObservableProperty] private bool _hasComparison;
+    [ObservableProperty] private bool _onlyNew;
+    private bool _compareAfterLoad;
 
+    partial void OnOnlyNewChanged(bool value) => Filter();
     partial void OnHideMicrosoftChanged(bool value) => Filter();
     partial void OnSelectedKindChanged(FilterOption? value) => Filter();
 
@@ -109,10 +117,12 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         var scanner = new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath);
         var entries = await Task.Run(() => scanner.ScanAll());
         _all = entries.Select(e => new StartupRow(e, lang, services, runner)).ToList();
+        if (_compareAfterLoad && await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is { } snapshot)
+            ShowComparison(StartupSnapshot.Compare(snapshot, entries));
         if (Kinds.Count == 0)
         {
             Kinds.Add(new FilterOption("", Loc.Instance["Startup_AllKinds"]));
-            foreach (var k in new[] { StartupKind.RunKey, StartupKind.StartupFolder, StartupKind.LogonTask, StartupKind.Service, StartupKind.Driver, StartupKind.ShellExtension, StartupKind.Winlogon, StartupKind.ImageHijack, StartupKind.AppInit, StartupKind.PolicyRun })
+            foreach (var k in Enum.GetValues<StartupKind>())
                 Kinds.Add(new FilterOption(k.ToString(), Labels.Current.Get(lang, $"startupKind.{k}")));
             // Set the field directly: Filter() runs right after.
 #pragma warning disable MVVMTK0034
@@ -135,8 +145,8 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     {
         var kind = SelectedKind?.Key ?? "";
         Rows.Clear();
-        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft))
-                     .OrderByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
+        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew))
+                     .OrderByDescending(r => r.IsNew).ThenByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
         var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);
         SummaryText = Loc.Instance.Format("Startup_Summary", _all.Count, atLogon, _all.Count(r => r.NeedsAttention));
@@ -199,6 +209,77 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
 
     [RelayCommand]
     private void StopVirusTotal() => _vtCancel?.Cancel();
+
+    /// <summary>Saves the current list, so a later comparison shows what an installer or update added.</summary>
+    [RelayCommand]
+    private async Task SaveSnapshotAsync()
+    {
+        var entries = _all.Select(r => r.Entry).ToList();
+        try
+        {
+            await Task.Run(() => StartupSnapshot.Save(StartupSnapshot.DefaultFile, StartupSnapshot.Take(entries, DateTimeOffset.Now)));
+            SnapshotText = Loc.Instance.Format("Startup_SnapshotSaved", entries.Count);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            SnapshotText = Loc.Instance.Format("Result_Error", ex.Message);
+            return;
+        }
+        _compareAfterLoad = false;
+        HasComparison = false;
+        OnlyNew = false;
+        foreach (var r in _all) r.IsNew = false;
+        Filter();
+    }
+
+    [RelayCommand]
+    private async Task CompareSnapshotAsync()
+    {
+        if (await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is not { } snapshot)
+        {
+            SnapshotText = Loc.Instance["Startup_NoSnapshot"];
+            return;
+        }
+        _compareAfterLoad = true;
+        ShowComparison(StartupSnapshot.Compare(snapshot, _all.Select(r => r.Entry)));
+        Filter();
+    }
+
+    private void ShowComparison(SnapshotDiff diff)
+    {
+        foreach (var r in _all) r.IsNew = diff.NewKeys.Contains(r.Entry.Key);
+        var text = Loc.Instance.Format("Startup_SnapshotDiff", diff.TakenAt.LocalDateTime.ToString("g"), diff.NewKeys.Count, diff.Removed.Count);
+        if (diff.Removed.Count > 0)
+            text += "\n" + Loc.Instance.Format("Startup_SnapshotRemoved", string.Join(", ", diff.Removed.Take(10).Select(e => e.Name)) + (diff.Removed.Count > 10 ? $" (+{diff.Removed.Count - 10})" : ""));
+        SnapshotText = text;
+        HasComparison = true;
+    }
+
+    /// <summary>Selects the entry's file in File Explorer (started as the signed-in user, never elevated).</summary>
+    [RelayCommand]
+    private void ShowFile(StartupRow? row)
+    {
+        if (row?.Entry.ImagePath is not { } path || !File.Exists(path))
+        {
+            VirusTotalStatus = Loc.Instance["Startup_FileMissing"];
+            return;
+        }
+        DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", services.Elevation);
+    }
+
+    [RelayCommand]
+    private void CopyLocation(StartupRow? row)
+    {
+        if (row is null) return;
+        try
+        {
+            System.Windows.Clipboard.SetText(row.Entry.Location);
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // The clipboard is held by another program; nothing to do.
+        }
+    }
 
     [RelayCommand]
     private void OpenReport(string? url)
@@ -398,8 +479,131 @@ public sealed record DriverItem(string Device, string ClassText, string Provider
     public override string ToString() => Device;
 }
 
-public sealed partial class AppsViewModel(MainViewModel owner, AppServices services) : PageViewModel(owner)
+/// <summary>A desktop program in the uninstall list.</summary>
+public sealed partial class ProgramRow(DesktopProgram program) : ObservableObject
 {
+    public DesktopProgram Program { get; } = program;
+    public string Name => Program.Name;
+
+    public string Meta { get; } = string.Join(", ", new[]
+    {
+        program.Publisher, program.Version,
+        program.SizeKb is { } kb ? CleanupViewModel.Size(kb * 1024) : null,
+        program.InstallDate?.ToString("d"),
+    }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    [ObservableProperty] private string? _stateText;
+    [ObservableProperty] private bool _isRemoving;
+}
+
+public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
+{
+    private List<ProgramRow> _allPrograms = [];
+    private bool _restorePointTried;
+
+    public ObservableCollection<ProgramRow> ProgramRows { get; } = [];
+
+    [ObservableProperty] private string _programSearch = "";
+    [ObservableProperty] private string _programsText = "";
+    [ObservableProperty] private bool _isUpdatingAll;
+
+    partial void OnProgramSearchChanged(string value) => FilterPrograms();
+
+    private void FilterPrograms()
+    {
+        ProgramRows.Clear();
+        var q = ProgramSearch.Trim();
+        foreach (var r in _allPrograms.Where(r => q.Length == 0 || r.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+                                                  || (r.Program.Publisher?.Contains(q, StringComparison.CurrentCultureIgnoreCase) ?? false)))
+            ProgramRows.Add(r);
+        ProgramsText = Loc.Instance.Format("Programs_Count", _allPrograms.Count);
+    }
+
+    private async Task LoadProgramsAsync()
+    {
+        var list = await Task.Run(() => Programs.Read(services.Context.Registry));
+        _allPrograms = list.Select(p => new ProgramRow(p)).ToList();
+        FilterPrograms();
+    }
+
+    /// <summary>Runs the program's own uninstaller (see <see cref="Programs.Command"/> for when it runs elevated).</summary>
+    [RelayCommand]
+    private async Task UninstallProgramAsync(ProgramRow? row)
+    {
+        if (row is null || row.IsRemoving) return;
+        if (Programs.Command(row.Program) is not { } command)
+        {
+            row.StateText = Loc.Instance["Programs_NoUninstaller"];
+            return;
+        }
+        var text = Loc.Instance.Format("Programs_ConfirmText", row.Name) + (command.Mode == UninstallMode.AsUser ? "\n\n" + Loc.Instance["Programs_AsUser"] : "");
+        if (!dialogs.Ask(Loc.Instance["Programs_ConfirmTitle"], text, Loc.Instance["Programs_Uninstall"])) return;
+        row.IsRemoving = true;
+        row.StateText = Loc.Instance["Programs_Running"];
+        try
+        {
+            // One restore point per session before the first uninstall, when System Protection is on.
+            if (!_restorePointTried)
+            {
+                _restorePointTried = true;
+                if (services.RestorePoints.IsEnabled() == true) await services.RestorePoints.CreateAsync("PCOptimizer: before uninstalling programs");
+            }
+            var code = await ProgramUninstaller.RunAsync(command, services.Elevation);
+            if (code is null)
+            {
+                row.StateText = Loc.Instance["Programs_StartedAsUser"];
+                return;
+            }
+            await LoadProgramsAsync();
+            var still = _allPrograms.Any(r => r.Program.RegistryKey == row.Program.RegistryKey);
+            row.StateText = still ? Loc.Instance.Format("Programs_StillThere", code) : Loc.Instance["Programs_Removed"];
+            if (!still) ProgramsText = Loc.Instance.Format("Programs_RemovedName", row.Name);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("apps", $"uninstall {row.Name} failed", ex);
+            row.StateText = Loc.Instance.Format("Result_Error", ex.Message);
+        }
+        finally
+        {
+            row.IsRemoving = false;
+        }
+    }
+
+    /// <summary>winget upgrade --all: every package winget knows an update for, from the winget source.</summary>
+    [RelayCommand]
+    private async Task UpdateAllAsync()
+    {
+        if (_winget is null)
+        {
+            Output = Loc.Instance["Apps_NoWinget"];
+            return;
+        }
+        if (!dialogs.Ask(Loc.Instance["Apps_UpdateAllTitle"], Loc.Instance["Apps_UpdateAllText"], Loc.Instance["Apps_UpdateAll"])) return;
+        IsUpdatingAll = true;
+        var lines = new List<string>();
+        var progress = new Progress<string>(l =>
+        {
+            lines.Add(l);
+            if (lines.Count > 40) lines.RemoveAt(0);
+            Output = string.Join("\n", lines);
+        });
+        try
+        {
+            var code = await StreamingProcess.RunAsync(_winget, Winget.UpgradeAllArguments, progress);
+            lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}"));
+            Output = string.Join("\n", lines);
+        }
+        catch (Exception ex)
+        {
+            Output = Loc.Instance.Format("Result_Error", ex.Message);
+        }
+        finally
+        {
+            IsUpdatingAll = false;
+        }
+    }
+
     // Elevated installs only use winget from the protected package folder; per-user installs run as the user and may use the alias.
     private string? _winget;
     private string? _wingetForUser;
@@ -418,6 +622,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         WingetMissing = _winget is null && _wingetForUser is null;
         Apps.Clear();
         foreach (var a in CatalogData.Current.Apps.Apps) Apps.Add(new AppRow(a, lang, a.IsInstalled(programs)));
+        await LoadProgramsAsync();
 
         var vendor = CatalogData.Current.Bios.NormalizeVendor(Owner.Profile?.Firmware?.BoardManufacturer);
         var board = BiosAgeCheck.SupportUrl(vendor);
@@ -526,7 +731,8 @@ public sealed partial class FeatureRow : SwitchRow
     public string Text { get; }
     public string? Note { get; }
 
-    protected override Task<bool> ToggleAsync(bool on) => Switching.SetAsync(_services, _runner, enabled => OptionalFeatureAction.Tweak(Entry, enabled), on);
+    protected override Task<bool> ToggleAsync(bool on) => Switching.SetAsync(_services, _runner,
+        enabled => Entry.Capability ? OptionalCapabilityAction.Tweak(Entry, enabled) : OptionalFeatureAction.Tweak(Entry, enabled), on);
 }
 
 public sealed record StepRow(string Text, bool Ok, string? Detail)
@@ -553,6 +759,61 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [ObservableProperty] private string _quickOutput = "";
     [ObservableProperty] private string? _featuresNote;
 
+    public ObservableCollection<PriorityRow> PriorityRules { get; } = [];
+    public IReadOnlyList<FilterOption> PriorityChoices { get; } =
+    [
+        new(nameof(CpuPriority.AboveNormal), Loc.Instance["Prio_AboveNormal"]),
+        new(nameof(CpuPriority.High), Loc.Instance["Prio_High"]),
+        new(nameof(CpuPriority.BelowNormal), Loc.Instance["Prio_BelowNormal"]),
+        new(nameof(CpuPriority.Low), Loc.Instance["Prio_Low"]),
+    ];
+
+    [ObservableProperty] private string _newPriorityExe = "";
+    [ObservableProperty] private FilterOption? _newPriority;
+    [ObservableProperty] private bool _newPriorityLowIo;
+    [ObservableProperty] private string? _priorityNote;
+
+    /// <summary>Reads the rules in the background: Image File Execution Options has a key per program.</summary>
+    private async Task LoadPriorityRulesAsync()
+    {
+        NewPriority ??= PriorityChoices[0];
+        var rules = await Task.Run(() => ProgramPriority.Read(services.Context.Registry));
+        PriorityRules.Clear();
+        foreach (var r in rules)
+            PriorityRules.Add(new PriorityRow(r, r.Cpu is { } c ? PriorityChoices.First(o => o.Key == c.ToString()).Text : "",
+                r.LowIo ? Loc.Instance["Prio_LowIo"] : null));
+    }
+
+    /// <summary>Adds a start priority rule through the engine (confirmation, backup, Changes page).</summary>
+    [RelayCommand]
+    private async Task AddPriorityRuleAsync()
+    {
+        var exe = NewPriorityExe.Trim();
+        if (!ProgramPriority.IsValidExe(exe))
+        {
+            PriorityNote = Loc.Instance["Prio_InvalidName"];
+            return;
+        }
+        var cpu = Enum.Parse<CpuPriority>((NewPriority ?? PriorityChoices[0]).Key);
+        PriorityNote = null;
+        if (await runner.ApplyAsync(ProgramPriority.Tweak(exe, cpu, NewPriorityLowIo))) NewPriorityExe = "";
+        await LoadPriorityRulesAsync();
+    }
+
+    /// <summary>Undoes a rule this app set; a rule from elsewhere is removed with its own backup.</summary>
+    [RelayCommand]
+    private async Task RemovePriorityRuleAsync(PriorityRow? row)
+    {
+        if (row is null) return;
+        var ours = ProgramPriority.Tweak(row.Rule.Exe, row.Rule.Cpu ?? CpuPriority.AboveNormal, row.Rule.LowIo);
+        if (services.Store.Get(ours.Id) is not null) await runner.UndoAsync(ours);
+        else await runner.ApplyAsync(ProgramPriority.RemoveTweak(row.Rule.Exe));
+        await LoadPriorityRulesAsync();
+    }
+
+    /// <summary>Repairs that run documented Windows commands (restart a service or device, renew network state, rebuild a cache).</summary>
+    public IReadOnlyList<QuickFixRow> QuickFixRows { get; } = QuickFixes.All.Select(f => new QuickFixRow(f)).ToList();
+
     protected override async Task LoadAsync()
     {
         // Asking a drive whether it is ready can take seconds (a sleeping disk): off the UI thread.
@@ -566,7 +827,9 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         _protected = protectedRoots;
 
         var lang = Lang;
-        var states = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes));
+        await LoadPriorityRulesAsync();
+        var states = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes)
+            .Concat(OptionalCapabilityAction.ReadAll(services.Context.Processes)).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase));
         Features.Clear();
         foreach (var f in CatalogData.Current.Features.Features)
             if (states.TryGetValue(f.Name, out var s)) Features.Add(new FeatureRow(f, s == "Enabled", lang, services, runner));
@@ -668,12 +931,50 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     }
 
     [RelayCommand]
+    private async Task RunQuickFixAsync(QuickFixRow row)
+    {
+        var fix = row.Fix;
+        if (fix.Confirm && !dialogs.Ask(row.Title, Loc.Instance[$"Quick_{fix.Id}Confirm"], Loc.Instance["Cleanup_Run"])) return;
+        IsWorking = true;
+        QuickOutput = Loc.Instance.Format("Quick_Running", row.Title);
+        try
+        {
+            var (ok, output) = await Task.Run(() => QuickFixes.Run(services.Context.Processes, fix));
+            QuickOutput = !ok ? Loc.Instance.Format("Result_Error", output.Trim())
+                : fix.ShowOutput ? Loc.Instance[$"Quick_{fix.Id}Done"] + "\n" + string.Join("\n", output.Trim().Split('\n').TakeLast(8))
+                : Loc.Instance[$"Quick_{fix.Id}Done"];
+        }
+        catch (Exception ex)
+        {
+            QuickOutput = Loc.Instance.Format("Result_Error", ex.Message);
+        }
+        finally
+        {
+            IsWorking = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task WinsockResetAsync()
     {
         if (!dialogs.Ask(Loc.Instance["Quick_WinsockTitle"], Loc.Instance["Quick_WinsockText"], Loc.Instance["Quick_Winsock"])) return;
         var (code, output) = await Task.Run(() => services.Context.Processes.Run("netsh.exe", "winsock reset"));
         QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Error", output.Trim());
     }
+}
+
+/// <summary>A start priority rule found in Image File Execution Options.</summary>
+public sealed record PriorityRow(PriorityRule Rule, string CpuText, string? IoText)
+{
+    public string Exe => Rule.Exe;
+    public string Details => IoText is null ? CpuText : CpuText.Length == 0 ? IoText : $"{CpuText}, {IoText}";
+}
+
+/// <summary>A quick fix card; title and hint come from the string resources in the current language.</summary>
+public sealed record QuickFixRow(QuickFix Fix)
+{
+    public string Title => Loc.Instance[$"Quick_{Fix.Id}"];
+    public string Hint => Loc.Instance[$"Quick_{Fix.Id}Hint"];
 }
 
 // ---------------- Health ----------------

@@ -1,0 +1,1027 @@
+{
+  "tweaks": [
+    {
+      "id": "edge.diagnosticDataRequired",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "DiagnosticData",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/diagnosticdata"
+      ]
+    },
+    {
+      "id": "edge.personalizationOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "PersonalizationReportingEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/personalizationreportingenabled"
+      ]
+    },
+    {
+      "id": "edge.shoppingOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "EdgeShoppingAssistantEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/edgeshoppingassistantenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.sidebarOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "HubsSidebarEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/hubssidebarenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.setupPromptsOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "HideFirstRunExperience",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ImportOnEachLaunch",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "DefaultBrowserSettingsCampaignEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/hidefirstrunexperience",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/importoneachlaunch",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/defaultbrowsersettingscampaignenabled"
+      ]
+    },
+    {
+      "id": "edge.newTabQuiet",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "NewTabPageContentEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "NewTabPageHideDefaultTopSites",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "NewTabPageBingChatEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/newtabpagecontentenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/newtabpagehidedefaulttopsites",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/newtabpagebingchatenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.quickLinksOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "NewTabPageQuickLinksEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/newtabpagequicklinksenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.promotionsOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "SpotlightExperiencesAndRecommendationsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ShowRecommendationsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ShowAcrobatSubscriptionButton",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/spotlightexperiencesandrecommendationsenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/showrecommendationsenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/showacrobatsubscriptionbutton",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.trackingPreventionStrict",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "TrackingPrevention",
+          "kind": "dword",
+          "value": 3
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/trackingprevention",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.searchSuggestionsOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "SearchSuggestEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/searchsuggestenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.localSuggestionsOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "LocalProvidersEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/localprovidersenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.errorPageServicesOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "AlternateErrorPagesEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ResolveNavigationErrorsUseWebService",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/alternateerrorpagesenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/resolvenavigationerrorsusewebservice",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.networkPredictionOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "NetworkPredictionOptions",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/networkpredictionoptions",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.feedbackOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "UserFeedbackAllowed",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/userfeedbackallowed"
+      ]
+    },
+    {
+      "id": "edge.paymentQueryOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "PaymentMethodQueryEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/paymentmethodqueryenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.passwordSavingOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "PasswordManagerEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/passwordmanagerenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.signInOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "BrowserSignin",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ImplicitSignInEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/browsersignin",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/implicitsigninenabled"
+      ]
+    },
+    {
+      "id": "edge.aiOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "EdgeHistoryAISearchEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "BuiltInAIAPIsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "AIGenThemesEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "GenAILocalFoundationalModelSettings",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/edgehistoryaisearchenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/builtinaiapisenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/aigenthemesenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/genailocalfoundationalmodelsettings",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.cloudWritingOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "TextPredictionEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "MicrosoftEditorProofingEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/textpredictionenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/microsofteditorproofingenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.tabServicesOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "TabServicesEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/tabservicesenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "edge.visualSearchOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "VisualSearchEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/visualsearchenabled",
+        "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies"
+      ]
+    },
+    {
+      "id": "chrome.aiOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.chrome",
+          "eq": true
+        }
+      },
+      "conflictsWith": [
+        "chrome.aiNoTraining"
+      ],
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "GenAiDefaultSettings",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "GeminiSettings",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "AIModeSettings",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "GenAILocalFoundationalModelSettings",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://chromeenterprise.google/policies/#GenAiDefaultSettings",
+        "https://chromeenterprise.google/policies/#GeminiSettings",
+        "https://chromeenterprise.google/policies/#AIModeSettings",
+        "https://chromeenterprise.google/policies/#GenAILocalFoundationalModelSettings",
+        "https://support.google.com/chrome/a/answer/9131254?hl=en"
+      ]
+    },
+    {
+      "id": "chrome.aiNoTraining",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.chrome",
+          "eq": true
+        }
+      },
+      "conflictsWith": [
+        "chrome.aiOff"
+      ],
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "GenAiDefaultSettings",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://chromeenterprise.google/policies/#GenAiDefaultSettings",
+        "https://support.google.com/chrome/a/answer/9131254?hl=en"
+      ]
+    },
+    {
+      "id": "chrome.urlDataOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.chrome",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "UrlKeyedAnonymizedDataCollectionEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://chromeenterprise.google/policies/#UrlKeyedAnonymizedDataCollectionEnabled",
+        "https://support.google.com/chrome/a/answer/9131254?hl=en"
+      ]
+    },
+    {
+      "id": "chrome.promotionsOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.chrome",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "PromotionsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "ShoppingListEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://chromeenterprise.google/policies/#PromotionsEnabled",
+        "https://chromeenterprise.google/policies/#ShoppingListEnabled",
+        "https://support.google.com/chrome/a/answer/9131254?hl=en"
+      ]
+    },
+    {
+      "id": "chrome.backgroundOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.chrome",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Google\\Chrome",
+          "name": "BackgroundModeEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://chromeenterprise.google/policies/#BackgroundModeEnabled",
+        "https://support.google.com/chrome/a/answer/9131254?hl=en"
+      ]
+    },
+    {
+      "id": "brave.cryptoOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.brave",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveRewardsDisabled",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveWalletDisabled",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveVPNDisabled",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy"
+      ]
+    },
+    {
+      "id": "brave.aiChatOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.brave",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveAIChatEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy"
+      ]
+    },
+    {
+      "id": "brave.telemetryOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.brave",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveP3AEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveStatsPingEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveWebDiscoveryEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy"
+      ]
+    },
+    {
+      "id": "brave.extrasOff",
+      "category": "Browser",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "browser.brave",
+          "eq": true
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveNewsDisabled",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BraveTalkDisabled",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\BraveSoftware\\Brave",
+          "name": "BravePlaylistEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://support.brave.app/hc/en-us/articles/360039248271-Group-Policy"
+      ]
+    }
+  ]
+}

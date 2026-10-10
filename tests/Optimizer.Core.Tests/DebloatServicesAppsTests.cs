@@ -43,6 +43,42 @@ public class DebloatServicesAppsTests
         Assert.True(DebloatService.IsSafeName("Microsoft.BingNews"));
         Assert.False(DebloatService.IsSafeName("x'; Remove-Item C:\\ -Recurse; '"));
         Assert.All(CatalogData.Current.Appx.Apps, a => Assert.False(CatalogData.Current.Appx.IsProtected(a.Name), a.Name));
+        // The exception frees only Game Assist: Edge and its other packages stay protected.
+        Assert.False(CatalogData.Current.Appx.IsProtected("Microsoft.Edge.GameAssist"));
+        Assert.True(CatalogData.Current.Appx.IsProtected("Microsoft.MicrosoftEdge.Stable"));
+        Assert.True(CatalogData.Current.Appx.IsProtected("Microsoft.Edge.GameAssistant"));
+    }
+
+    [Fact]
+    public void SuffixEntriesMatchAnyPublisherPrefixButNothingElse()
+    {
+        var installed = new[]
+        {
+            new InstalledAppx("GAMELOFTSA.Asphalt8Airborne", "GAMELOFTSA.Asphalt8Airborne_x", "1", false),
+            new InstalledAppx("Contoso.NotAsphalt8Airborne", "x", "1", false),
+            new InstalledAppx("Asphalt8AirborneExtra", "x", "1", false),
+            new InstalledAppx("king.com.CandyCrushSaga", "x", "1", false),
+            new InstalledAppx("Other.king.com.CandyCrushSaga", "x", "1", false),
+        };
+        var offered = DebloatService.Offer(CatalogData.Current.Appx, installed, new HardwareProfile { Os = TestData.Os() }, CatalogData.Current);
+        // A suffix entry matches after a dot; an exact entry (king.com.*) only matches its full name.
+        Assert.Equal(["GAMELOFTSA.Asphalt8Airborne", "king.com.CandyCrushSaga"], offered.Select(o => o.Installed.Name).Order());
+        Assert.All(CatalogData.Current.Appx.Apps, a => Assert.True(DebloatService.IsSafeName(a.Name), a.Name));
+        Assert.Equal(CatalogData.Current.Appx.Apps.Count, CatalogData.Current.Appx.Apps.Select(a => a.Name.ToLowerInvariant()).Distinct().Count());
+    }
+
+    [Fact]
+    public void RemovedAppsThatAreInstalledAgainAreReported()
+    {
+        var removed = new[]
+        {
+            new RemovedApp("Microsoft.BingNews", "f", "1", DateTimeOffset.Now),
+            new RemovedApp("Microsoft.BingNews", "f", "2", DateTimeOffset.Now),
+            new RemovedApp("Clipchamp.Clipchamp", "f", "1", DateTimeOffset.Now),
+        };
+        var installed = new[] { new InstalledAppx("microsoft.bingnews", "f", "3", false), new InstalledAppx("Other.App", "f", "1", false) };
+        Assert.Equal(["Microsoft.BingNews"], DebloatService.CameBack(removed, installed).Select(r => r.Name));
+        Assert.Empty(DebloatService.CameBack(removed, []));
     }
 
     [Fact]

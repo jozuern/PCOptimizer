@@ -967,4 +967,85 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Bench_Low" xml:space="preserve"><value>1 % low {0}</value></data>
   <data name="Bench_Fps" xml:space="preserve"><value>{0} FPS</value></data>
   <data name="Bench_Stopped" xml:space="preserve"><value>Capture stopped. This run was not kept.</value></data>
+  <data name="Quick_Running" xml:space="preserve"><value>Running: {0}</value></data>
+  <data name="Quick_IpRenew" xml:space="preserve"><value>Renew IP address</value></data>
+  <data name="Quick_IpRenewHint" xml:space="preserve"><value>Releases and requests the IP address of every network adapter again (ipconfig). Helps when the PC has no valid address after a router restart.</value></data>
+  <data name="Quick_IpRenewConfirm" xml:space="preserve"><value>The network connection drops for a few seconds while the address is renewed. Downloads and online games lose their connection.</value></data>
+  <data name="Quick_IpRenewDone" xml:space="preserve"><value>IP address renewed.</value></data>
+  <data name="Quick_TcpIpReset" xml:space="preserve"><value>Reset TCP/IP</value></data>
+  <data name="Quick_TcpIpResetHint" xml:space="preserve"><value>Sets the TCP/IP settings back to how Windows installs them (netsh int ip reset). For connection problems that renewing the address does not fix. Needs a restart.</value></data>
+  <data name="Quick_TcpIpResetConfirm" xml:space="preserve"><value>Microsoft describes this as having the same effect as removing and reinstalling TCP/IP: it overwrites the TCP/IP and DHCP settings in the registry. Settings stored there, such as a fixed IP address, may be lost and have to be set again. A restart is needed.</value></data>
+  <data name="Quick_TcpIpResetDone" xml:space="preserve"><value>TCP/IP reset. Restart the PC.</value></data>
+  <data name="Quick_AudioRestart" xml:space="preserve"><value>Restart Windows Audio</value></data>
+  <data name="Quick_AudioRestartHint" xml:space="preserve"><value>Restarts the Windows Audio service. Helps when sound is gone after switching headphones or speakers.</value></data>
+  <data name="Quick_AudioRestartDone" xml:space="preserve"><value>Windows Audio restarted. Apps that played sound may need a restart too.</value></data>
+  <data name="Quick_BluetoothRestart" xml:space="preserve"><value>Restart Bluetooth</value></data>
+  <data name="Quick_BluetoothRestartHint" xml:space="preserve"><value>Restarts the Bluetooth Support Service. Helps when headsets or controllers no longer connect.</value></data>
+  <data name="Quick_BluetoothRestartDone" xml:space="preserve"><value>Bluetooth service restarted. Devices connect again within a few seconds.</value></data>
+  <data name="Quick_SearchRestart" xml:space="preserve"><value>Restart Windows Search</value></data>
+  <data name="Quick_SearchRestartHint" xml:space="preserve"><value>Restarts the Windows Search service. Helps when search finds nothing or hangs.</value></data>
+  <data name="Quick_SearchRestartDone" xml:space="preserve"><value>Windows Search restarted.</value></data>
+  <data name="Quick_GraphicsRestart" xml:space="preserve"><value>Restart the graphics driver</value></data>
+  <data name="Quick_GraphicsRestartHint" xml:space="preserve"><value>Restarts the display adapters (pnputil). Helps after a black screen or a driver that stopped responding.</value></data>
+  <data name="Quick_GraphicsRestartConfirm" xml:space="preserve"><value>The screens go dark for a moment. Close games and video apps first: they can crash when the graphics device restarts.</value></data>
+  <data name="Quick_GraphicsRestartDone" xml:space="preserve"><value>Graphics driver restarted.</value></data>
+  <data name="Quick_TimeSync" xml:space="preserve"><value>Sync the clock now</value></data>
+  <data name="Quick_TimeSyncHint" xml:space="preserve"><value>Starts the Windows Time service and syncs the clock with the time server (w32tm). A wrong clock breaks sign-ins and secure connections.</value></data>
+  <data name="Quick_TimeSyncDone" xml:space="preserve"><value>Clock synced.</value></data>
+  <data name="Quick_PerfCounters" xml:space="preserve"><value>Rebuild performance counters</value></data>
+  <data name="Quick_PerfCountersHint" xml:space="preserve"><value>Restores the performance counter settings from the system files (lodctr /r). Helps when Task Manager, the sensors or benchmarks show no data.</value></data>
+  <data name="Quick_PerfCountersDone" xml:space="preserve"><value>Performance counters rebuilt.</value></data>
+  <data name="Quick_DiskScan" xml:space="preserve"><value>Check the system drive</value></data>
+  <data name="Quick_DiskScanHint" xml:space="preserve"><value>Scans the system drive for file system errors while Windows keeps running (chkdsk /scan). Can take several minutes.</value></data>
+  <data name="Quick_DiskScanDone" xml:space="preserve"><value>Drive check finished. chkdsk reports:</value></data>
+  <data name="Quick_RecoveryEnable" xml:space="preserve"><value>Turn on the recovery environment</value></data>
+  <data name="Quick_RecoveryEnableHint" xml:space="preserve"><value>Turns on the Windows Recovery Environment (reagentc /enable), which Windows needs for startup repair and resetting the PC.</value></data>
+  <data name="Quick_RecoveryEnableDone" xml:space="preserve"><value>Done. reagentc reports:</value></data>
+  <data name="Startup_SaveSnapshot" xml:space="preserve"><value>Save snapshot</value></data>
+  <data name="Startup_CompareSnapshot" xml:space="preserve"><value>Compare with snapshot</value></data>
+  <data name="Startup_OnlyNew" xml:space="preserve"><value>Only new since the snapshot</value></data>
+  <data name="Startup_SnapshotSaved" xml:space="preserve"><value>Snapshot saved with {0} entries. Install or update something, then compare to see what it added.</value></data>
+  <data name="Startup_NoSnapshot" xml:space="preserve"><value>No snapshot saved yet. Save one first.</value></data>
+  <data name="Startup_SnapshotDiff" xml:space="preserve"><value>Compared with the snapshot from {0}: {1} new or changed, {2} removed.</value></data>
+  <data name="Startup_SnapshotRemoved" xml:space="preserve"><value>Removed: {0}</value></data>
+  <data name="Startup_New" xml:space="preserve"><value>New since the snapshot</value></data>
+  <data name="Startup_ShowFile" xml:space="preserve"><value>Show file</value></data>
+  <data name="Startup_CopyLocation" xml:space="preserve"><value>Copy location</value></data>
+  <data name="Startup_FileMissing" xml:space="preserve"><value>The file of this entry does not exist.</value></data>
+  <data name="Programs_Title" xml:space="preserve"><value>Installed programs</value></data>
+  <data name="Programs_Hint" xml:space="preserve"><value>Desktop programs from the Windows uninstall list. Uninstall runs the program's own uninstaller with its window. Before the first uninstall in a session the app creates a restore point when System Protection is on. Store apps are on the Debloat page.</value></data>
+  <data name="Programs_Search" xml:space="preserve"><value>Search programs</value></data>
+  <data name="Programs_Count" xml:space="preserve"><value>{0} programs</value></data>
+  <data name="Programs_Uninstall" xml:space="preserve"><value>Uninstall</value></data>
+  <data name="Programs_ConfirmTitle" xml:space="preserve"><value>Uninstall program?</value></data>
+  <data name="Programs_ConfirmText" xml:space="preserve"><value>Starts the uninstaller of {0}. Follow its window; it decides what is removed, including your settings for this program.</value></data>
+  <data name="Programs_AsUser" xml:space="preserve"><value>This uninstaller runs under your account because it is in a folder other users or programs can change. It asks for administrator rights itself if it needs them.</value></data>
+  <data name="Programs_Running" xml:space="preserve"><value>Uninstaller is running.</value></data>
+  <data name="Programs_StartedAsUser" xml:space="preserve"><value>Uninstaller started. When it is done, select Refresh.</value></data>
+  <data name="Programs_Removed" xml:space="preserve"><value>Uninstalled.</value></data>
+  <data name="Programs_RemovedName" xml:space="preserve"><value>{0} was uninstalled.</value></data>
+  <data name="Programs_StillThere" xml:space="preserve"><value>The program is still listed (exit code {0}). The uninstaller may have been cancelled or needs a restart.</value></data>
+  <data name="Programs_NoUninstaller" xml:space="preserve"><value>This program has no uninstall command Windows can run.</value></data>
+  <data name="Apps_UpdateAll" xml:space="preserve"><value>Update all apps</value></data>
+  <data name="Apps_UpdateAllTitle" xml:space="preserve"><value>Update all apps with winget?</value></data>
+  <data name="Apps_UpdateAllText" xml:space="preserve"><value>winget updates every installed program it knows a newer version for in its source, without asking per program. Programs that are open may need a restart. Programs installed only for your account may be skipped.</value></data>
+  <data name="Apps_UpdateAllDone" xml:space="preserve"><value>winget finished updating.</value></data>
+  <data name="Net_UseFastest" xml:space="preserve"><value>Use the fastest: {0}</value></data>
+  <data name="Changes_OpenRestore" xml:space="preserve"><value>Open System Restore</value></data>
+  <data name="Debloat_CameBack" xml:space="preserve"><value>These apps you removed are installed again, for example by a Windows update or the PC maker's software: {0}. They are listed below if you want to remove them again.</value></data>
+  <data name="Drv_CleanTitle" xml:space="preserve"><value>Clean graphics driver removal</value></data>
+  <data name="Drv_CleanHint" xml:space="preserve"><value>When you switch graphics card brand or a driver keeps failing, Display Driver Uninstaller (DDU) removes the old driver completely before you install the new one. Its author recommends Safe Mode and a backup or restore point first. PCOptimizer does not remove drivers itself.</value></data>
+  <data name="Drv_CleanOpen" xml:space="preserve"><value>Open DDU page</value></data>
+  <data name="Prio_Title" xml:space="preserve"><value>Program start priorities</value></data>
+  <data name="Prio_Hint" xml:space="preserve"><value>Windows starts the program with this CPU priority every time, without a background program. Use it for a game that competes with busy background programs, or to keep a backup or download tool out of the way. Undocumented values: Preview, and some anti-cheat systems check this place.</value></data>
+  <data name="Prio_ExePlaceholder" xml:space="preserve"><value>Program file, for example game.exe</value></data>
+  <data name="Prio_LowIoOption" xml:space="preserve"><value>Low disk priority</value></data>
+  <data name="Prio_Add" xml:space="preserve"><value>Add rule</value></data>
+  <data name="Prio_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Prio_AboveNormal" xml:space="preserve"><value>Above normal</value></data>
+  <data name="Prio_High" xml:space="preserve"><value>High</value></data>
+  <data name="Prio_BelowNormal" xml:space="preserve"><value>Below normal</value></data>
+  <data name="Prio_Low" xml:space="preserve"><value>Low</value></data>
+  <data name="Prio_LowIo" xml:space="preserve"><value>low disk priority</value></data>
+  <data name="Prio_InvalidName" xml:space="preserve"><value>Enter only the program file name, for example game.exe, without a folder.</value></data>
 </root>

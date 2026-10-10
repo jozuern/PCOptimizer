@@ -122,7 +122,11 @@ public class SecurityTests
 
             Backup.SecureFolder.RemoveUntrusted(root);
 
-            Assert.Empty(Directory.EnumerateFileSystemEntries(root));
+            Assert.False(File.Exists(planted));
+            Assert.False(File.Exists(settings));
+            // What is left is trusted: an elevated test run creates the backups folder itself (owned by Administrators).
+            Assert.All(new DirectoryInfo(root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories),
+                e => Assert.True(Backup.SecureFolder.IsOwnedByAdmins(e), e.FullName));
         }
         finally
         {

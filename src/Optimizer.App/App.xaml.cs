@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -143,10 +144,12 @@ public partial class App : Application
                 ApplyTheme(switchTo, save: false);
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             }
-            // Developer aid: show the bottom of long pages (Settings > About).
-            if (args.Value("--scroll") is "end")
+            // Developer aid: show the bottom of long pages (Settings > About), or scroll down by a number of pixels.
+            if (args.Value("--scroll") is { } scroll && (scroll == "end" || double.TryParse(scroll, CultureInfo.InvariantCulture, out _)))
             {
-                foreach (var sv in Descendants<System.Windows.Controls.ScrollViewer>(window)) sv.ScrollToEnd();
+                foreach (var sv in Descendants<System.Windows.Controls.ScrollViewer>(window))
+                    if (scroll == "end") sv.ScrollToEnd();
+                    else sv.ScrollToVerticalOffset(double.Parse(scroll, CultureInfo.InvariantCulture));
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             }
             await Task.Delay(400);

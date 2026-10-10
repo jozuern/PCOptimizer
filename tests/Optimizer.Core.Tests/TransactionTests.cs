@@ -36,7 +36,7 @@ public class TransactionTests
     {
         Registry = fx.Context.Registry, Services = fx.Context.Services, Power = power, Bcd = fx.Context.Bcd, Tasks = fx.Context.Tasks,
         Displays = fx.Context.Displays, Processes = fx.Context.Processes, PowerMode = fx.Context.PowerMode, Devices = fx.Context.Devices,
-        Network = fx.Context.Network, Nvidia = fx.Context.Nvidia, ExportFolder = fx.Context.ExportFolder, NetworkInterfaceIds = fx.Context.NetworkInterfaceIds,
+        Network = fx.Context.Network, Nvidia = fx.Context.Nvidia, Accessibility = fx.Context.Accessibility, ExportFolder = fx.Context.ExportFolder, NetworkInterfaceIds = fx.Context.NetworkInterfaceIds,
     }, fx.Store, fx.RestorePoints, "test", 26300);
 
     /// <summary>Writes the mains value, then fails on the battery value: the action itself is half-done.</summary>

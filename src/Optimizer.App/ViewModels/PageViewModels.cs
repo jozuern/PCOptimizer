@@ -192,9 +192,21 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         OnPropertyChanged(nameof(GameProfilesEmpty));
     }
 
+    private string? _fastestPresetId;
+    [ObservableProperty] private string? _fastestText;
+
+    /// <summary>Turns on the DNS preset of the fastest public server from the benchmark (with the usual confirmation).</summary>
+    [RelayCommand]
+    private void UseFastest()
+    {
+        if (DnsOptions.FirstOrDefault(o => o.Tweak.Id == _fastestPresetId) is { } preset) preset.SwitchState = true;
+        FastestText = null;
+    }
+
     [RelayCommand]
     private async Task RunDnsBenchmarkAsync()
     {
+        FastestText = null;
         IsWorking = true;
         DnsResults.Clear();
         try
@@ -204,6 +216,10 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
             var progress = new Progress<string>(name => BenchmarkStatus = Loc.Instance.Format("Net_Testing", name));
             var results = await Task.Run(() => DnsBenchmark.RunAsync(servers, 2, progress));
             var best = results.FirstOrDefault(r => r.MedianMs is not null);
+            // A preset for the fastest server, unless it is already in use.
+            _fastestPresetId = best is null ? null : DnsBenchmark.PresetFor(best.Server);
+            var preset = DnsOptions.FirstOrDefault(o => o.Tweak.Id == _fastestPresetId);
+            FastestText = preset is not null && !preset.IsOn ? Loc.Instance.Format("Net_UseFastest", preset.Tweak.Subject ?? best!.Name) : null;
             foreach (var r in results)
                 DnsResults.Add(new DnsResultRow(r.Name, r.Server.ToString(), r.MedianMs is { } m ? $"{m:0.0} ms" : Loc.Instance["Net_NoAnswer"],
                     r.BestMs is { } b ? $"{b:0.0} ms" : "", $"{r.Answered}/{r.Sent}", ReferenceEquals(r, best)));
@@ -229,7 +245,7 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
 
     public Optimizer.Core.Debloat.DebloatItem Item { get; } = item;
     public string Name { get; } = item.Entry.Label(lang);
-    public string PackageName => Item.Entry.Name;
+    public string PackageName => Item.Installed.Name;
     public string Text { get; } = item.Entry.Text(lang);
     public string Version => Item.Installed.Version;
     public string Group { get; } = Labels.Current.Get(lang, $"debloatGroup.{item.Entry.Group}");
@@ -254,6 +270,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
 
     [ObservableProperty] private string _oneDriveText = "";
     [ObservableProperty] private string? _oneDriveBlock;
+    [ObservableProperty] private string? _cameBackText;
     [ObservableProperty] private bool _canUninstallOneDrive;
 
     public bool ItemsEmpty => !IsLoading && Items.Count == 0;
@@ -266,16 +283,18 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         var lang = Lang;
         var profile = Owner.Profile;
         var elevated = services.Elevation.IsElevated;
-        var (offered, removed, oneDrive) = await Task.Run(() =>
+        var (offered, removed, oneDrive, cameBack) = await Task.Run(() =>
         {
             var service = Service;
             var installed = service.ListInstalled(allUsers: elevated);
             var offer = profile is null ? [] : Optimizer.Core.Debloat.DebloatService.Offer(Optimizer.Core.Catalog.CatalogData.Current.Appx, installed, profile, Optimizer.Core.Catalog.CatalogData.Current);
             var state = Optimizer.Core.Debloat.OneDrive.Read(services.Context.Registry, services.ProfilePath);
-            return (offer, service.Removed(), state);
+            var removedList = service.Removed();
+            return (offer, removedList, state, Optimizer.Core.Debloat.DebloatService.CameBack(removedList, installed));
         });
         Items.Clear();
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
+        CameBackText = cameBack.Count == 0 ? null : Loc.Instance.Format("Debloat_CameBack", string.Join(", ", cameBack.Select(r => r.Name)));
         Removed.Clear();
         // The app name from the catalog (the record keeps the package name); the package name for apps no longer listed.
         var apps = Optimizer.Core.Catalog.CatalogData.Current.Appx.Apps;

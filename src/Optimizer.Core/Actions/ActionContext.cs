@@ -75,6 +75,18 @@ public interface IDisplayManager
     void SetMode(string gdiName, int width, int height, int refreshHz);
 }
 
+/// <summary>Keyboard accessibility features with a keyboard shortcut (SystemParametersInfo STICKYKEYS, FILTERKEYS, TOGGLEKEYS).</summary>
+public enum AccessibilityFeature { StickyKeys, FilterKeys, ToggleKeys }
+
+public interface IAccessibilitySettings
+{
+    /// <summary>The feature's dwFlags for the signed-in session user; null when they cannot be read or written for that user.</summary>
+    uint? GetFlags(AccessibilityFeature feature);
+
+    /// <summary>Writes dwFlags for the session user and saves them to the user profile.</summary>
+    void SetFlags(AccessibilityFeature feature, uint flags);
+}
+
 public interface IProcessRunner
 {
     (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null);
@@ -94,6 +106,7 @@ public sealed class ActionContext
     public required IDeviceManager Devices { get; init; }
     public required INetworkManager Network { get; init; }
     public required INvidiaSettings Nvidia { get; init; }
+    public required IAccessibilitySettings Accessibility { get; init; }
 
     /// <summary>Called after user-scope changes that need a live refresh (mouse, Explorer settings).</summary>
     public Action<string>? Notify { get; init; }

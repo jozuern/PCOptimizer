@@ -42,6 +42,39 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - Tweaks that use an undocumented value are marked "Undocumented value" and either cite proof that it works or stay in Preview; the lint enforces it.
 - Explanation pages need a Sources section, and every source must be cited in the text.
 
+### New tweaks (documented settings)
+
+100 tweaks added from the review of other tweak tools ([feature reference](docs/windows-tweak-tools-feature-reference.md)), each a setting Microsoft, Google or Brave documents, with an explanation page in English and German:
+
+- **Browsers:** Microsoft Edge (diagnostic data, personalization, shopping, sidebar, setup and default browser prompts, new tab page, tips and offers, tracking prevention, address bar suggestions, error page services, network prediction, feedback, payment queries, password saving, sign-in, AI features, cloud text prediction, tab services, visual search), Google Chrome (AI features off or without model training, URL-keyed data collection, promotions, background mode) and Brave (Rewards, Wallet and VPN, Leo, analytics and pings, News, Talk and Playlist). Chrome and Brave tweaks appear only when the browser is installed. Edge pages say when Edge ignores a policy in profiles signed in with a personal Microsoft account.
+- **AI features:** Recall removed, Paint and Notepad AI features off.
+- **App permissions:** camera, microphone, notifications, voice activation, motion, phone calls, radios and wireless devices for Windows apps.
+- **Privacy:** location service off, Windows Search without web and location, no infection reports from the Malicious Software Removal Tool, Spotlight and cloud content (Enterprise and Education), OneSettings downloads, the privacy page at sign-in, recent files, the lock screen camera, Windows Media DRM, OneDrive folder backup.
+- **Windows Update and Store:** feature updates one year later, no automatic Store app updates, fewer update notifications, no automatic archiving of unused apps.
+- **Personalize and Explorer:** taskbar search and Task View button, Start lists, clear sign-in background, first sign-in animation, detailed status messages, Hibernate in the power menu, Open with prompts, shortcut search, Ink Workspace, default printer.
+- **Security:** Defender potentially unwanted app blocking, network protection and sandbox, LSA protection, password reveal button, LLMNR, automatic sign-in after restarts, Remote Assistance, wireless projection, AutoPlay, automatic device encryption.
+- **Network:** DNS presets for OpenDNS and AdGuard, a preset that sets DNS back to automatic, automatic DNS over HTTPS for known servers, and "Use the fastest" after the DNS benchmark.
+- **Other:** no wake timers, notifications and the notification center, account notifications in Start, Edge tabs in Alt+Tab (Microsoft marks that policy as a preview), reserved storage off, Sticky Keys, Filter Keys and Toggle Keys shortcuts (through the documented SystemParametersInfo flags, changed only when the app runs under your own account), long paths, Program Compatibility Assistant, OneDrive sync, SMB bandwidth throttling, indexing on battery, the classic F8 boot menu (Expert).
+- Every registry and accessibility tweak in the catalog is now applied and undone in the registry sandbox by a test.
+
+### New tweaks (values behind Settings switches, Preview)
+
+25 tweaks for values behind a Settings or Folder Options switch that Microsoft does not document. They carry the "Undocumented value" badge and stay Preview until the VM test confirms the effect: dark mode, accent color on title bars, taskbar on the left, seconds in the clock, never combine taskbar buttons, no taskbar flashing and badges, no show desktop corner, Snap suggestions and layouts, desktop icon for This PC, Dynamic Lighting, communications ducking, notification sounds, Auto HDR, variable refresh rate for DirectX 11 full screen games, hidden files, compact view, item check boxes, full path in the File Explorer title, no sync provider notifications, no search history on this device, Print Screen copies the screen instead of opening Snipping Tool, no fun facts on the lock screen and no "Let's finish setting up your device" screen.
+
+### Tools and pages
+
+- **Quick fixes** on the Tools page: renew the IP address, reset TCP/IP, restart Windows Audio, Bluetooth, Windows Search or the graphics driver, sync the clock, rebuild performance counters, check the system drive online (chkdsk /scan) and turn the recovery environment back on.
+- **Program start priorities** on the Tools page: a CPU priority and optionally a low disk priority that Windows applies every time a program starts, without a background program (Preview, undocumented values).
+- **Windows features:** Client for NFS and optional capabilities such as PowerShell ISE, WordPad, WMIC, the OpenSSH client, Math Recognizer and Print and Scan.
+- **Apps and drivers:** uninstall desktop programs (with a restore point first), "Update all" through winget, .NET Desktop Runtime 8 and 10, and a card that explains when Display Driver Uninstaller is the right tool.
+- **Debloat:** 126 removable apps instead of 34, with groups for discontinued apps, third-party promotions and PC maker apps, and Edge Game Assist. The page says when a removed app came back after a Windows update.
+- **Startup:** more locations (RunOnce, Active Setup, the Load value, boot execute, Known DLLs, Winsock providers, print monitors, LSA packages, network providers, codecs, WMI consumers), a snapshot to compare against later with "Only new", and buttons to show the file and copy the location.
+- **Changes:** "Open System Restore" opens the Windows dialog for restore points.
+
+### Fixes
+
+- Explanations showed "1][2]" instead of "[1][2]" where two sources are cited side by side.
+
 ### Undo and engine (VM test run)
 
 - Undo of "Memory compression off" did nothing: the change takes effect only after a restart, so the engine recorded the old value and later took the new one for a reset by Windows. It now shows "pending restart" after apply, and undo turns memory compression back on, also before the restart and for changes made with 0.4.0. After the undo the tweak shows "Off after a restart" until Windows restarts, and turning it on again before then works.

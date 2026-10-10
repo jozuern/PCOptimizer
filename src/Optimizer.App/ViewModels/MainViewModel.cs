@@ -150,7 +150,7 @@ public sealed partial class MainViewModel : ObservableObject
         Cleanup = new CleanupViewModel(this, services, dialogs);
         Startup = new StartupViewModel(this, services, Runner);
         ServicesPage = new ServicesViewModel(this, services, Runner);
-        Apps = new AppsViewModel(this, services);
+        Apps = new AppsViewModel(this, services, dialogs);
         Tools = new ToolsViewModel(this, services, Runner, dialogs);
         Health = new HealthViewModel(this, dialogs);
         _virusTotalConfigured = !string.IsNullOrEmpty(settings.VirusTotalKey);
@@ -893,6 +893,23 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>The runner refreshes the pages after it (also when some changes could not be undone).</summary>
     [RelayCommand(CanExecute = nameof(CanChange))]
     private Task UndoAllAsync() => Runner.UndoAllAsync();
+
+    /// <summary>Opens Windows' System Restore wizard (rstrui.exe from System32) to go back to a restore point.</summary>
+    [RelayCommand]
+    private void OpenSystemRestore()
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo(Optimizer.Core.Platform.ProcessHardening.ResolveSystemTool("rstrui.exe")) { UseShellExecute = false };
+            Optimizer.Core.Platform.ProcessHardening.Apply(psi);
+            System.Diagnostics.Process.Start(psi)?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("ui", "starting System Restore failed", ex);
+            ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task EnableRestorePointsAsync()

@@ -61,8 +61,12 @@ public sealed record ChangeLine(string Target, string Before, string After)
 [JsonDerivedType(typeof(PowerModeAction), "powerMode")]
 [JsonDerivedType(typeof(NicPropertyAction), "nicProperty")]
 [JsonDerivedType(typeof(DnsAction), "dns")]
+[JsonDerivedType(typeof(AccessibilityShortcutAction), "accessibilityShortcut")]
+[JsonDerivedType(typeof(DohAutoUpgradeAction), "dohAutoUpgrade")]
+[JsonDerivedType(typeof(ReservedStorageAction), "reservedStorage")]
 [JsonDerivedType(typeof(Startup.StartupApprovedAction), "startupApproved")]
 [JsonDerivedType(typeof(Tools.OptionalFeatureAction), "optionalFeature")]
+[JsonDerivedType(typeof(Tools.OptionalCapabilityAction), "optionalCapability")]
 public abstract class TweakAction
 {
     /// <summary>Stable key of the changed target, used for the first-original backup rule.</summary>

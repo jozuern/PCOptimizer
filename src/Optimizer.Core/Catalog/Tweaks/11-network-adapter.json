@@ -86,8 +86,8 @@
     },
     {
       "id": "network.dns.cloudflare",
-      "subject": "Cloudflare (1.1.1.1)",
       "docs": "network.dnsServers",
+      "subject": "Cloudflare",
       "category": "Network",
       "impact": {
         "gaming": 0,
@@ -106,7 +106,10 @@
       ],
       "conflictsWith": [
         "network.dns.google",
-        "network.dns.quad9"
+        "network.dns.quad9",
+        "network.dns.opendns",
+        "network.dns.adguard",
+        "network.dns.automatic"
       ],
       "sources": [
         "https://developers.cloudflare.com/1.1.1.1/ip-addresses/",
@@ -115,8 +118,8 @@
     },
     {
       "id": "network.dns.google",
-      "subject": "Google (8.8.8.8)",
       "docs": "network.dnsServers",
+      "subject": "Google",
       "category": "Network",
       "impact": {
         "gaming": 0,
@@ -135,7 +138,10 @@
       ],
       "conflictsWith": [
         "network.dns.cloudflare",
-        "network.dns.quad9"
+        "network.dns.quad9",
+        "network.dns.opendns",
+        "network.dns.adguard",
+        "network.dns.automatic"
       ],
       "sources": [
         "https://developers.google.com/speed/public-dns/docs/using",
@@ -144,8 +150,8 @@
     },
     {
       "id": "network.dns.quad9",
-      "subject": "Quad9 (9.9.9.9)",
       "docs": "network.dnsServers",
+      "subject": "Quad9",
       "category": "Network",
       "impact": {
         "gaming": 0,
@@ -164,10 +170,109 @@
       ],
       "conflictsWith": [
         "network.dns.cloudflare",
-        "network.dns.google"
+        "network.dns.google",
+        "network.dns.opendns",
+        "network.dns.adguard",
+        "network.dns.automatic"
       ],
       "sources": [
         "https://www.quad9.net/service/service-addresses-and-features/",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    },
+    {
+      "id": "network.dns.opendns",
+      "docs": "network.dnsServers",
+      "subject": "OpenDNS",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "208.67.222.222,208.67.220.220"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.cloudflare",
+        "network.dns.google",
+        "network.dns.quad9",
+        "network.dns.adguard",
+        "network.dns.automatic"
+      ],
+      "sources": [
+        "https://www.opendns.com/setupguide/",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    },
+    {
+      "id": "network.dns.adguard",
+      "docs": "network.dnsServers",
+      "subject": "AdGuard DNS",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "94.140.14.14,94.140.15.15"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.cloudflare",
+        "network.dns.google",
+        "network.dns.quad9",
+        "network.dns.opendns",
+        "network.dns.automatic"
+      ],
+      "sources": [
+        "https://adguard-dns.io/en/public-dns.html",
+        "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
+      ]
+    },
+    {
+      "id": "network.dns.automatic",
+      "category": "Network",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "preview": true,
+      "actions": [
+        {
+          "type": "dns",
+          "interfaceGuid": "{nic}",
+          "servers": "dhcp"
+        }
+      ],
+      "conflictsWith": [
+        "network.dns.cloudflare",
+        "network.dns.google",
+        "network.dns.quad9",
+        "network.dns.opendns",
+        "network.dns.adguard"
+      ],
+      "sources": [
         "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/setdnsserversearchorder-method-in-class-win32-networkadapterconfiguration"
       ]
     }

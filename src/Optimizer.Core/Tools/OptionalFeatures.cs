@@ -22,6 +22,9 @@ public sealed class FeatureEntry
     /// <summary>Starts the Windows hypervisor when on (VBS-related performance note, anti-cheat note).</summary>
     public bool Hypervisor { get; init; }
 
+    /// <summary>A Windows capability (Feature on Demand) instead of an optional feature; Name is the capability name.</summary>
+    public bool Capability { get; init; }
+
     /// <summary>"off" = recommended off (e.g. SMB1), "on" = needed by games when off, null = your choice.</summary>
     public string? Recommend { get; init; }
 

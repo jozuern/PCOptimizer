@@ -87,6 +87,83 @@ public class StartupTests
     }
 
     [Fact]
+    public void ListedOnlyLocationsAreReadWithTheirFiles()
+    {
+        using var fx = new EngineFixture();
+        var sys = Environment.SystemDirectory;
+        RegistryValue.Write(fx.Registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\RunOnce", "Cleanup", "string", @"C:\Tools\cleanup.exe /once");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Active Setup\Installed Components\{AAAA}", "", "string", "Contoso Setup");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Active Setup\Installed Components\{AAAA}", "StubPath", "string", @"C:\Contoso\setup.exe /user");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Active Setup\Installed Components\{BBBB}", "StubPath", "string", @"C:\Old\old.exe");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Active Setup\Installed Components\{BBBB}", "IsInstalled", "dword", "0");
+        RegistryValue.Write(fx.Registry, Hive.User, @"Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", "string", @"C:\Users\x\evil.exe");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Session Manager", "BootExecute", "multiString", "autocheck autochk *\nC:\\evil\\native.exe");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs", "kernel32", "string", "kernel32.dll");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs", "DllDirectory", "string", "%SystemRoot%\\system32");
+        // PackedCatalogItem: the DLL path as a zero-terminated ANSI string, then binary data.
+        var packed = Convert.ToHexString([.. System.Text.Encoding.ASCII.GetBytes(@"%SystemRoot%\system32\mswsock.dll"), 0, 0x41, 0x42]);
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries\000000000001", "PackedCatalogItem", "binary", packed);
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Print\Monitors\Local Port", "Driver", "string", "localspl.dll");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Lsa", "Authentication Packages", "multiString", "msv1_0");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\NetworkProvider\Order", "ProviderOrder", "string", "RDPNP,LanmanWorkstation");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\LanmanWorkstation\NetworkProvider", "ProviderPath", "string", @"%SystemRoot%\System32\ntlanman.dll");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\LanmanWorkstation\NetworkProvider", "Name", "string", "Microsoft Windows Network");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32", "msacm.imaadpcm", "string", "imaadp32.acm");
+        RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32", "MidisrvTransferComplete", "dword", "1");
+
+        var all = new StartupScanner(fx.Registry, fx.Tasks, null).ScanAll(includeServicesAndDrivers: false, includeWmi: false);
+        StartupEntry One(StartupKind kind) => Assert.Single(all, e => e.Kind == kind);
+        Assert.Equal(@"C:\Tools\cleanup.exe", One(StartupKind.RunOnce).ImagePath);
+        Assert.Equal("Contoso Setup", One(StartupKind.ActiveSetup).Name); // {BBBB} is no longer installed
+        Assert.True(One(StartupKind.LoadValue).Suspicious);
+        var boot = all.Where(e => e.Kind == StartupKind.BootExecute).ToList();
+        Assert.False(boot.Single(e => e.Command == StartupScanner.BootExecuteDefault).Suspicious);
+        Assert.Equal(Path.Combine(sys, "autochk.exe"), boot.Single(e => e.Command == StartupScanner.BootExecuteDefault).ImagePath);
+        Assert.True(boot.Single(e => e.Command!.Contains("native")).Suspicious);
+        Assert.Equal(Path.Combine(sys, "kernel32.dll"), One(StartupKind.KnownDll).ImagePath);
+        Assert.Equal(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\mswsock.dll"), One(StartupKind.WinsockProvider).ImagePath);
+        Assert.Equal(Path.Combine(sys, "localspl.dll"), One(StartupKind.PrintMonitor).ImagePath);
+        Assert.Equal(Path.Combine(sys, "msv1_0.dll"), One(StartupKind.LsaPackage).ImagePath);
+        var providers = all.Where(e => e.Kind == StartupKind.NetworkProvider).ToList();
+        Assert.Equal(["RDPNP", "Microsoft Windows Network"], providers.Select(p => p.Name));
+        Assert.Equal(Path.Combine(sys, "imaadp32.acm"), One(StartupKind.Codec).ImagePath);
+        // Listed only: none of them can be switched here.
+        Assert.All(all.Where(e => e.Kind >= StartupKind.RunOnce), e => Assert.Null(StartupTweaks.Set(e, enabled: false)));
+        Assert.Null(StartupScanner.PackedPath([0x01, 0x02, 0x00]));
+    }
+
+    [Fact]
+    public void SnapshotShowsWhatAnInstallerAddedChangedAndRemoved()
+    {
+        StartupEntry Run(string name, string command) =>
+            new(StartupKind.RunKey, name, command, null, @"HKCU\Run", Hive.User, true, $"run:User:Run:{name}");
+        var before = new[] { Run("Discord", "discord.exe"), Run("Steam", "steam.exe -silent"), Run("Old", "old.exe") };
+        var snapshot = StartupSnapshot.Take(before, DateTimeOffset.Parse("2026-10-01T10:00:00Z"));
+
+        var folder = TestFolders.Create("snapshot");
+        try
+        {
+            var file = Path.Combine(folder, "startup-snapshot.json");
+            StartupSnapshot.Save(file, snapshot);
+            var loaded = StartupSnapshot.Load(file)!;
+            Assert.Equal(3, loaded.Entries.Count);
+
+            var after = new[] { Run("Discord", "discord.exe"), Run("Steam", "steam.exe -silent -nofriendsui"), Run("Updater", "contoso-update.exe") };
+            var diff = StartupSnapshot.Compare(loaded, after);
+            Assert.Equal(["run:User:Run:Steam", "run:User:Run:Updater"], diff.NewKeys.Order());
+            Assert.Equal(["Old", "Steam"], diff.Removed.Select(r => r.Name).Order());
+            Assert.Equal(snapshot.TakenAt, diff.TakenAt);
+
+            File.WriteAllText(file, "{ broken");
+            Assert.Null(StartupSnapshot.Load(file));
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
+    }
+
+    [Fact]
     public void LogonTasksComeFromTheScheduler()
     {
         using var fx = new EngineFixture();
