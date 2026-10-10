@@ -6,13 +6,37 @@ The tweak tables in sections 2 to 5 are generated from the catalog: after a cata
 
 ## Setup
 
-1. Hyper-V VM, generation 2, Windows 11 24H2 or newer x64 (Pro or Home), Secure Boot and virtual TPM on, 2 or more virtual processors, 8 GB memory, 80 GB disk.
+1. Hyper-V VM, generation 2, Windows 11 24H2 or newer x64 (Pro or Home), Secure Boot and virtual TPM on, 2 or more virtual processors, 16 GB memory (`memory.compressionOff` applies from 16 GB), 80 GB disk. Use an unmodified Microsoft ISO: debloated images change the starting state the tests compare against. See [Creating the VM](#creating-the-vm).
 2. Install all Windows updates, sign in with a local administrator account, install Steam or another launcher so game library checks have something to find.
 3. Copy the Release exe (`dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile`, then `artifacts/publish/PCOptimizer.exe`) into the VM.
 4. Take a checkpoint named **clean**. Go back to it whenever a test leaves the VM in a state you do not trust.
 5. Keep `%ProgramData%\PCOptimizer\logs` open: every apply, verify and undo is logged there. Attach the log to any bug report.
 
 For each tweak: apply it alone, check that the state shows **On** and that the change is really there (Settings, regedit, `powercfg /q`, `sc qc`, `schtasks /query`, `bcdedit`), restart or sign out where the table says so, then **Undo** on the Changes page and check that the original value is back. Write OK or the problem into the Result column.
+
+### Creating the VM
+
+Hyper-V needs Windows 11 Pro on the host: turn on **Hyper-V** in "Turn Windows features on or off" and restart. Then run this in an elevated PowerShell (change `$iso`):
+
+```powershell
+$name = 'PCO-Test'; $root = 'C:\Hyper-V'; $iso = "$env:USERPROFILE\Downloads\Win11_x64.iso"
+New-VM -Name $name -Generation 2 -MemoryStartupBytes 16GB -Path $root -NewVHDPath "$root\$name\$name.vhdx" -NewVHDSizeBytes 80GB -SwitchName 'Default Switch'
+Set-VMMemory -VMName $name -DynamicMemoryEnabled $false
+Set-VMProcessor -VMName $name -Count 4 -ExposeVirtualizationExtensions $true
+Set-VM -Name $name -CheckpointType Production -AutomaticCheckpointsEnabled $false
+Set-VMKeyProtector -VMName $name -NewLocalKeyProtector; Enable-VMTPM -VMName $name
+$dvd = Add-VMDvdDrive -VMName $name -Path $iso -Passthru; Set-VMFirmware -VMName $name -FirstBootDevice $dvd
+Get-VMIntegrationService -VMName $name | Enable-VMIntegrationService
+Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIdentity]::GetCurrent().Name)
+```
+
+`ExposeVirtualizationExtensions` lets memory integrity run in the VM, so `security.vbsOff` has something to turn off. Membership in Hyper-V Administrators (SID `S-1-5-32-578`, active after the next sign-in) lets the commands below run without UAC.
+
+1. Open **Hyper-V Manager**, double-click the VM, click **Start** and press a key at "Press any key to boot from CD or DVD". If you miss it, the VM shows a boot error: use **Action > Reset** and try again.
+2. Install Windows. For a local account, press Shift+F10 on the network or account screen and run `start ms-cxh:localonly`. If newer builds remove that route, sign in with a Microsoft account, add a local account in Settings > Accounts > Other users ("Add a user without a Microsoft account"), make it an administrator, and use only that account. Give it a password: the enhanced session (shared clipboard, window resizing) needs one.
+3. An unactivated Windows works for these tests, but Settings > Personalization is locked; check those values in regedit instead.
+4. Copy the exe from the host: `Copy-VMFile -Name PCO-Test -SourcePath artifacts\publish\PCOptimizer.exe -DestinationPath C:\Test\PCOptimizer.exe -CreateFullPath -FileSource Host` (the VM must be running), or copy and paste the file in an enhanced session.
+5. Checkpoints: `Checkpoint-VM -Name PCO-Test -SnapshotName clean` to take one, `Restore-VMCheckpoint -VMName PCO-Test -Name clean -Confirm:$false` to go back (or right-click the VM or the checkpoint in Hyper-V Manager). Production checkpoints do not keep the running state: after a restore the VM is off and starts fresh.
 
 ## 1. General flow
 
