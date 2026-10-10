@@ -41,6 +41,35 @@ public sealed class SystemRegistryRoots(string? userSid) : IRegistryRoots
 
 public sealed class SystemServiceManager : IServiceManager
 {
+    public bool? IsRunning(string name)
+    {
+        var scm = NativeWrite.OpenSCManager(null, null, NativeWrite.ScManagerConnect);
+        if (scm == IntPtr.Zero) return null;
+        try
+        {
+            var svc = NativeWrite.OpenService(scm, name, NativeWrite.ServiceQueryStatus);
+            if (svc == IntPtr.Zero) return null;
+            try
+            {
+                if (!NativeWrite.QueryServiceStatus(svc, out var status)) return null;
+                return status.dwCurrentState switch
+                {
+                    NativeWrite.ServiceRunning => true,
+                    NativeWrite.ServiceStopped => false,
+                    _ => null,
+                };
+            }
+            finally
+            {
+                NativeWrite.CloseServiceHandle(svc);
+            }
+        }
+        finally
+        {
+            NativeWrite.CloseServiceHandle(scm);
+        }
+    }
+
     public ServiceStart? GetStartType(string name)
     {
         var path = $@"SYSTEM\CurrentControlSet\Services\{name}";
@@ -342,6 +371,29 @@ public sealed class SystemDisplayManager : IDisplayManager
 /// <summary>Runs a system tool without a window and logs the command line, exit code and output.</summary>
 public sealed class SystemProcessRunner : IProcessRunner
 {
+    /// <summary>
+    /// Console tools (ipconfig, chkdsk, netsh, net, reagentc, and Windows PowerShell when its output is redirected) write
+    /// in the OEM code page of the system, not UTF-8: read as UTF-8, German umlauts come out garbled.
+    /// </summary>
+    private static readonly Encoding ToolEncoding = OemEncoding();
+
+    private static Encoding OemEncoding()
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            return Encoding.GetEncoding((int)GetOEMCP());
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            return Encoding.UTF8;
+        }
+    }
+
+    [DllImport("kernel32.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    private static extern uint GetOEMCP();
+
     public (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null)
     {
         var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool(file), arguments)
@@ -350,8 +402,8 @@ public sealed class SystemProcessRunner : IProcessRunner
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            StandardOutputEncoding = ToolEncoding,
+            StandardErrorEncoding = ToolEncoding,
         };
         ProcessHardening.Apply(psi);
         using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Cannot start {file}");
@@ -362,7 +414,10 @@ public sealed class SystemProcessRunner : IProcessRunner
             ProcessHardening.KillTree(p);
             throw new TimeoutException($"{file} {arguments} timed out");
         }
-        var output = stdout.Result + stderr.Result;
+        // A program the tool started can keep the output pipes open after the tool ended: do not wait for it forever.
+        if (!Task.WaitAll([stdout, stderr], TimeSpan.FromSeconds(10)))
+            Log.Warn("command", $"{file} {arguments}: output still open after the tool ended; using what was read");
+        var output = (stdout.IsCompletedSuccessfully ? stdout.Result : "") + (stderr.IsCompletedSuccessfully ? stderr.Result : "");
         Log.Info("command", $"{file} {arguments}", new { exitCode = p.ExitCode, output = output.Length > 2000 ? output[..2000] : output });
         return (p.ExitCode, output);
     }
@@ -432,9 +487,11 @@ public static class SystemNotify
         }
     }
 
-    public static ActionContext CreateContext(string? userSid, string exportFolder, IReadOnlyList<string>? networkInterfaceIds = null)
+    public static ActionContext CreateContext(string? userSid, string exportFolder, Func<IReadOnlyList<string>>? networkInterfaceIds = null)
     {
         var processes = new SystemProcessRunner();
+        // DISM and PowerShell reads of a scan or an apply are shared for a few seconds (dropped when the action writes).
+        ReadCache.Enable(processes, TimeSpan.FromSeconds(20));
         var registry = new SystemRegistryRoots(userSid);
         return new ActionContext
         {
@@ -452,7 +509,7 @@ public static class SystemNotify
             Accessibility = new SystemAccessibilitySettings(userSid),
             Notify = what => Handle(registry, what),
             ExportFolder = exportFolder,
-            NetworkInterfaceIds = networkInterfaceIds ?? [],
+            NetworkInterfaceIdsSource = networkInterfaceIds,
         };
     }
 }

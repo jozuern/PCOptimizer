@@ -23,6 +23,11 @@ public static class DataPaths
     public static string Captures => Path.Combine(Tools, "captures");
     public static string Updates => Path.Combine(Root, "updates");
     public static string Runtime => Path.Combine(Root, "runtime");
+
+    /// <summary>TEMP and TMP of the tools the app starts (admin-only when elevated; the user's %TEMP% is not).</summary>
+    public static string Temp => Path.Combine(Root, "temp");
+    public static string StartupSnapshot => Path.Combine(Root, "startup-snapshot.json");
+    public static string TcpIpResetLog => Path.Combine(Root, "tcpip-reset.log");
 }
 
 /// <summary>The running app's version (the version the pre-commit hook raises).</summary>

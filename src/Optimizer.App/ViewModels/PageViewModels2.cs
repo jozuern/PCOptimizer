@@ -23,7 +23,7 @@ internal static class Switching
 {
     public static async Task<bool> SetAsync(AppServices services, ChangeRunner runner, Func<bool, TweakDefinition?> build, bool on)
     {
-        if (build(!on) is { } opposite && services.Store.Get(opposite.Id) is not null) return await runner.UndoAsync(opposite);
+        if (build(!on) is { } opposite && services.Store.Exists(opposite.Id)) return await runner.UndoAsync(opposite);
         return build(on) is { } t && await runner.ApplyAsync(t);
     }
 }
@@ -89,6 +89,7 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
 
     public ObservableCollection<StartupRow> Rows { get; } = [];
     public ObservableCollection<FilterOption> Kinds { get; } = [];
+    private string? _kindsLang;
 
     [ObservableProperty] private bool _hideMicrosoft = true;
     [ObservableProperty] private FilterOption? _selectedKind;
@@ -112,14 +113,18 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         _all = entries.Select(e => new StartupRow(e, lang, services, runner)).ToList();
         if (_compareAfterLoad && await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is { } snapshot)
             ShowComparison(StartupSnapshot.Compare(snapshot, entries));
-        if (Kinds.Count == 0)
+        // Built again after a language switch; the chosen kind stays selected.
+        if (Kinds.Count == 0 || _kindsLang != lang)
         {
+            var selectedKey = SelectedKind?.Key ?? "";
+            _kindsLang = lang;
+            Kinds.Clear();
             Kinds.Add(new FilterOption("", Loc.Instance["Startup_AllKinds"]));
             foreach (var k in Enum.GetValues<StartupKind>())
                 Kinds.Add(new FilterOption(k.ToString(), Labels.Current.Get(lang, $"startupKind.{k}")));
             // Set the field directly: Filter() runs right after.
 #pragma warning disable MVVMTK0034
-            _selectedKind = Kinds[0];
+            _selectedKind = Kinds.FirstOrDefault(k => k.Key == selectedKey) ?? Kinds[0];
 #pragma warning restore MVVMTK0034
             OnPropertyChanged(nameof(SelectedKind));
         }
@@ -190,9 +195,14 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
             }
             VirusTotalStatus = Loc.Instance["Vt_Done"];
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_vtCancel?.IsCancellationRequested == true)
         {
             VirusTotalStatus = Loc.Instance["Vt_Stopped"];
+        }
+        catch (OperationCanceledException ex)
+        {
+            // An HTTP timeout, not the Stop button.
+            VirusTotalStatus = Loc.Instance.Format("Result_Error", ex.Message);
         }
         finally
         {
@@ -207,6 +217,12 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     [RelayCommand]
     private async Task SaveSnapshotAsync()
     {
+        // While the list loads it is empty or partial: saving it would replace a good snapshot.
+        if (IsLoading || _all.Count == 0)
+        {
+            SnapshotText = Loc.Instance["Startup_SnapshotWait"];
+            return;
+        }
         var entries = _all.Select(r => r.Entry).ToList();
         try
         {
@@ -228,6 +244,11 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     [RelayCommand]
     private async Task CompareSnapshotAsync()
     {
+        if (IsLoading || _all.Count == 0)
+        {
+            SnapshotText = Loc.Instance["Startup_SnapshotWait"];
+            return;
+        }
         if (await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is not { } snapshot)
         {
             SnapshotText = Loc.Instance["Startup_NoSnapshot"];
@@ -478,7 +499,7 @@ public sealed partial class ProgramRow(DesktopProgram program) : ObservableObjec
 public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
     private List<ProgramRow> _allPrograms = [];
-    private bool _restorePointTried;
+    private bool _restorePointReady;
 
     public ObservableCollection<ProgramRow> ProgramRows { get; } = [];
 
@@ -519,33 +540,49 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         if (!dialogs.Ask(Loc.Instance["Programs_ConfirmTitle"], text, Loc.Instance["Programs_Uninstall"])) return;
         row.IsRemoving = true;
         row.StateText = Loc.Instance["Programs_Running"];
+        string? state = null;
         try
         {
-            // One restore point per session before the first uninstall, when System Protection is on.
-            if (!_restorePointTried)
+            await RunWorkAsync($"uninstall {row.Name}", async () =>
             {
-                _restorePointTried = true;
-                if (services.RestorePoints.IsEnabled() == true) await services.RestorePoints.CreateAsync("PCOptimizer: before uninstalling programs");
-            }
-            var code = await ProgramUninstaller.RunAsync(command, services.Elevation);
-            if (code is null)
-            {
-                row.StateText = Loc.Instance["Programs_StartedAsUser"];
-                return;
-            }
-            await LoadProgramsAsync();
-            var still = _allPrograms.Any(r => r.Program.RegistryKey == row.Program.RegistryKey);
-            row.StateText = still ? Loc.Instance.Format("Programs_StillThere", code) : Loc.Instance["Programs_Removed"];
-            if (!still) ProgramsText = Loc.Instance.Format("Programs_RemovedName", row.Name);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("apps", $"uninstall {row.Name} failed", ex);
-            row.StateText = Loc.Instance.Format("Result_Error", ex.Message);
+                // A restore point before the first uninstall of the session. When none can be made (System Protection
+                // off, or Windows' limit of one per day), the user decides whether to go on.
+                if (!_restorePointReady)
+                {
+                    var made = await Task.Run(() => services.RestorePoints.IsEnabled()) == true
+                               && await services.RestorePoints.CreateAsync(Loc.Instance["Programs_RestorePointName"]);
+                    if (!made && !dialogs.Ask(Loc.Instance["Programs_NoRestorePointTitle"], Loc.Instance["Programs_NoRestorePointText"], Loc.Instance["Programs_Uninstall"]))
+                    {
+                        state = "";
+                        return;
+                    }
+                    _restorePointReady = true;
+                }
+                var code = await ProgramUninstaller.RunAsync(command, services.Elevation);
+                if (code is null)
+                {
+                    state = Loc.Instance["Programs_StartedAsUser"];
+                    return;
+                }
+                await LoadProgramsAsync();
+                // The list was read again: the row of the program (if it is still listed) is a new object.
+                var still = _allPrograms.FirstOrDefault(r => r.Program.RegistryKey == row.Program.RegistryKey);
+                if (still is not null)
+                {
+                    // Many uninstallers start a copy of themselves and end at once (exit code 0): it may still be running.
+                    still.StateText = code == 0 ? Loc.Instance["Programs_MaybeStillRunning"] : Loc.Instance.Format("Programs_StillThere", code);
+                }
+                else
+                {
+                    ProgramsText = Loc.Instance.Format("Programs_RemovedName", row.Name);
+                }
+            });
         }
         finally
         {
             row.IsRemoving = false;
+            if (state is not null) row.StateText = state;
+            else if (row.StateText == Loc.Instance["Programs_Running"]) row.StateText = "";
         }
     }
 
@@ -569,13 +606,13 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         });
         try
         {
-            var code = await StreamingProcess.RunAsync(_winget, Winget.UpgradeAllArguments, progress);
-            lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}"));
-            Output = string.Join("\n", lines);
-        }
-        catch (Exception ex)
-        {
-            Output = Loc.Instance.Format("Result_Error", ex.Message);
+            var winget = _winget;
+            await RunWorkAsync("winget upgrade all", async () =>
+            {
+                var code = await StreamingProcess.RunAsync(winget, Winget.UpgradeAllArguments, progress);
+                lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}"));
+                Output = string.Join("\n", lines);
+            });
         }
         finally
         {
@@ -644,14 +681,14 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         });
         try
         {
-            var code = await Winget.InstallAsync(_winget, row.App, progress, CancellationToken.None);
-            row.Installed = Winget.IsSuccess(code);
-            row.StateText = row.Installed ? Loc.Instance["Apps_Installed"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
-        }
-        catch (Exception ex)
-        {
-            Log.Error("apps", $"install {row.App.Id} failed", ex);
-            row.StateText = Loc.Instance.Format("Result_Error", ex.Message);
+            var winget = _winget;
+            if (!await RunWorkAsync($"install {row.App.Id}", async () =>
+                {
+                    var code = await Winget.InstallAsync(winget, row.App, progress, CancellationToken.None);
+                    row.Installed = Winget.IsSuccess(code);
+                    row.StateText = row.Installed ? Loc.Instance["Apps_Installed"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
+                }))
+                row.StateText = "";
         }
         finally
         {
@@ -725,13 +762,24 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [ObservableProperty] private string? _featuresNote;
 
     public ObservableCollection<PriorityRow> PriorityRules { get; } = [];
-    public IReadOnlyList<FilterOption> PriorityChoices { get; } =
+    [ObservableProperty] private IReadOnlyList<FilterOption> _priorityChoices = BuildPriorityChoices();
+
+    private static IReadOnlyList<FilterOption> BuildPriorityChoices() =>
     [
         new(nameof(CpuPriority.AboveNormal), Loc.Instance["Prio_AboveNormal"]),
         new(nameof(CpuPriority.High), Loc.Instance["Prio_High"]),
         new(nameof(CpuPriority.BelowNormal), Loc.Instance["Prio_BelowNormal"]),
         new(nameof(CpuPriority.Low), Loc.Instance["Prio_Low"]),
     ];
+
+    /// <summary>After a language switch the page loads again: lists with texts are built again in the new language.</summary>
+    private void RebuildTexts()
+    {
+        var key = NewPriority?.Key;
+        PriorityChoices = BuildPriorityChoices();
+        NewPriority = PriorityChoices.FirstOrDefault(o => o.Key == key) ?? PriorityChoices[0];
+        QuickFixRows = QuickFixes.All.Select(f => new QuickFixRow(f)).ToList();
+    }
 
     [ObservableProperty] private string _newPriorityExe = "";
     [ObservableProperty] private FilterOption? _newPriority;
@@ -745,7 +793,8 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         var rules = await Task.Run(() => ProgramPriority.Read(services.Context.Registry));
         PriorityRules.Clear();
         foreach (var r in rules)
-            PriorityRules.Add(new PriorityRow(r, r.Cpu is { } c ? PriorityChoices.First(o => o.Key == c.ToString()).Text : "",
+            PriorityRules.Add(new PriorityRow(r, r.Cpu is { } c ? PriorityChoices.First(o => o.Key == c.ToString()).Text
+                    : r.OtherCpu is { } o ? Loc.Instance.Format("Prio_Other", o) : "",
                 r.LowIo ? Loc.Instance["Prio_LowIo"] : null));
     }
 
@@ -771,13 +820,13 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     {
         if (row is null) return;
         var ours = ProgramPriority.Tweak(row.Rule.Exe, row.Rule.Cpu ?? CpuPriority.AboveNormal, row.Rule.LowIo);
-        if (services.Store.Get(ours.Id) is not null) await runner.UndoAsync(ours);
+        if (services.Store.Exists(ours.Id)) await runner.UndoAsync(ours);
         else await runner.ApplyAsync(ProgramPriority.RemoveTweak(row.Rule.Exe));
         await LoadPriorityRulesAsync();
     }
 
     /// <summary>Repairs that run documented Windows commands (restart a service or device, renew network state, rebuild a cache).</summary>
-    public IReadOnlyList<QuickFixRow> QuickFixRows { get; } = QuickFixes.All.Select(f => new QuickFixRow(f)).ToList();
+    [ObservableProperty] private IReadOnlyList<QuickFixRow> _quickFixRows = QuickFixes.All.Select(f => new QuickFixRow(f)).ToList();
 
     protected override async Task LoadAsync()
     {
@@ -792,6 +841,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         _protected = protectedRoots;
 
         var lang = Lang;
+        RebuildTexts();
         await LoadPriorityRulesAsync();
         var states = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes)
             .Concat(OptionalCapabilityAction.ReadAll(services.Context.Processes)).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase));
@@ -849,8 +899,13 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         // protection) that is not the signed-in user's bin: say so before deleting.
         if (services.Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
         if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], text, Loc.Instance["Storage_Recycle"])) return;
-        var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected));
-        Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count));
+        if (!await RunWorkAsync("recycle files", async () =>
+            {
+                var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected));
+                Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count),
+                    failed.Count == 0 ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            }))
+            return;
         await ScanStorageAsync();
     }
 
@@ -858,27 +913,23 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     private async Task RepairUpdateAsync()
     {
         if (!dialogs.Ask(Loc.Instance["Repair_Title"], Loc.Instance["Repair_Text"], Loc.Instance["Repair_Run"])) return;
-        IsWorking = true;
         RepairSteps.Clear();
         var lang = Lang;
         var progress = new Progress<RepairStep>(s => RepairSteps.Add(new StepRow(Labels.Current.Get(lang, s.Key), s.Ok, s.Detail)));
-        try
+        await RunWorkAsync("windows update repair", async () =>
         {
-            var steps = await Task.Run(() => UpdateRepair.Run(services.Context.Processes, progress));
-            Owner.ShowResult(steps.All(s => s.Ok) ? Loc.Instance["Repair_Done"] : Loc.Instance["Repair_Partial"]);
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+            var steps = await Task.Run(() => UpdateRepair.Run(services.Context.Processes, services.Context.Services, progress));
+            var ok = steps.All(s => s.Ok);
+            Owner.ShowResult(ok ? Loc.Instance["Repair_Done"] : Loc.Instance["Repair_Partial"], ok ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
+        });
     }
 
     [RelayCommand]
-    private async Task FlushDnsAsync()
+    private Task FlushDnsAsync() => RunWorkAsync("flush dns", async () =>
     {
-        var (code, _) = await Task.Run(() => services.Context.Processes.Run("ipconfig.exe", "/flushdns"));
-        QuickOutput = code == 0 ? Loc.Instance["Quick_DnsFlushed"] : Loc.Instance.Format("Result_Error", code);
-    }
+        var (code, output) = await Task.Run(() => services.Context.Processes.Run("ipconfig.exe", "/flushdns"));
+        QuickOutput = code == 0 ? Loc.Instance["Quick_DnsFlushed"] : Loc.Instance.Format("Result_Error", output.Trim());
+    });
 
     [RelayCommand]
     private async Task RestartExplorerAsync()
@@ -888,11 +939,14 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         // started again only for this one.
         int session;
         using (var self = Process.GetCurrentProcess()) session = self.SessionId;
-        await Task.Run(() => services.Context.Processes.Run("taskkill.exe", $"/f /im explorer.exe /fi \"SESSION eq {session}\""));
-        await Task.Delay(1000);
-        // Explorer must run as the signed-in user, never elevated.
-        var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
-        QuickOutput = path == DeElevatedLauncher.Path.Failed ? Loc.Instance["Quick_ExplorerManual"] : Loc.Instance["Quick_ExplorerRestarted"];
+        await RunWorkAsync("restart explorer", async () =>
+        {
+            await Task.Run(() => services.Context.Processes.Run("taskkill.exe", $"/f /im explorer.exe /fi \"SESSION eq {session}\""));
+            await Task.Delay(1000);
+            // Explorer must run as the signed-in user, never elevated.
+            var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
+            QuickOutput = path == DeElevatedLauncher.Path.Failed ? Loc.Instance["Quick_ExplorerManual"] : Loc.Instance["Quick_ExplorerRestarted"];
+        });
     }
 
     [RelayCommand]
@@ -900,31 +954,26 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     {
         var fix = row.Fix;
         if (fix.Confirm && !dialogs.Ask(row.Title, Loc.Instance[$"Quick_{fix.Id}Confirm"], Loc.Instance["Cleanup_Run"])) return;
-        IsWorking = true;
         QuickOutput = Loc.Instance.Format("Quick_Running", row.Title);
-        try
-        {
-            var (ok, output) = await Task.Run(() => QuickFixes.Run(services.Context.Processes, fix));
-            QuickOutput = !ok ? Loc.Instance.Format("Result_Error", output.Trim())
-                : fix.ShowOutput ? Loc.Instance[$"Quick_{fix.Id}Done"] + "\n" + string.Join("\n", output.Trim().Split('\n').TakeLast(8))
-                : Loc.Instance[$"Quick_{fix.Id}Done"];
-        }
-        catch (Exception ex)
-        {
-            QuickOutput = Loc.Instance.Format("Result_Error", ex.Message);
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+        if (!await RunWorkAsync($"quick fix {fix.Id}", async () =>
+            {
+                var (ok, output) = await Task.Run(() => QuickFixes.Run(services.Context.Processes, fix));
+                QuickOutput = !ok ? Loc.Instance.Format("Result_Error", output.Trim())
+                    : fix.ShowOutput ? Loc.Instance[$"Quick_{fix.Id}Done"] + "\n" + string.Join("\n", output.Trim().Split('\n').TakeLast(8))
+                    : Loc.Instance[$"Quick_{fix.Id}Done"];
+            }))
+            QuickOutput = "";
     }
 
     [RelayCommand]
     private async Task WinsockResetAsync()
     {
         if (!dialogs.Ask(Loc.Instance["Quick_WinsockTitle"], Loc.Instance["Quick_WinsockText"], Loc.Instance["Quick_Winsock"])) return;
-        var (code, output) = await Task.Run(() => services.Context.Processes.Run("netsh.exe", "winsock reset"));
-        QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Error", output.Trim());
+        await RunWorkAsync("winsock reset", async () =>
+        {
+            var (code, output) = await Task.Run(() => services.Context.Processes.Run("netsh.exe", "winsock reset"));
+            QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Error", output.Trim());
+        });
     }
 }
 
@@ -1017,6 +1066,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     private async Task RunToolAsync(Func<IProgress<string>, CancellationToken, Task<int>> run)
     {
         _toolCancel = new CancellationTokenSource();
+        var token = _toolCancel.Token;
         IsToolRunning = true;
         var lines = new List<string>();
         var progress = new Progress<string>(l =>
@@ -1027,13 +1077,20 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         });
         try
         {
-            var code = await run(progress, _toolCancel.Token);
-            lines.Add(Loc.Instance.Format("Health_ExitCode", code));
-            ToolOutput = string.Join("\n", lines);
-        }
-        catch (OperationCanceledException)
-        {
-            ToolOutput += "\n" + Loc.Instance["Health_Stopped"];
+            // SFC and DISM repair system files: no tweak, scan or update at the same time.
+            await RunWorkAsync("system file repair", async () =>
+            {
+                try
+                {
+                    var code = await run(progress, token);
+                    lines.Add(Loc.Instance.Format("Health_ExitCode", code));
+                    ToolOutput = string.Join("\n", lines);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    ToolOutput += "\n" + Loc.Instance["Health_Stopped"];
+                }
+            });
         }
         finally
         {
@@ -1269,21 +1326,11 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             return;
         }
         if (!dialogs.Ask(Loc.Instance["Sensors_PawnIoTitle"], Loc.Instance["Sensors_PawnIoText"], Loc.Instance["Apps_Install"])) return;
-        IsWorking = true;
-        try
+        await RunWorkAsync("install PawnIO", async () =>
         {
             var code = await Winget.InstallAsync(winget, app, null, CancellationToken.None);
             PawnIoText = Winget.IsSuccess(code) ? Loc.Instance["Sensors_PawnIoOn"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
             CanInstallPawnIo = !Winget.IsSuccess(code);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("apps", "PawnIO install failed", ex);
-            PawnIoText = Loc.Instance.Format("Result_Error", ex.Message);
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+        });
     }
 }

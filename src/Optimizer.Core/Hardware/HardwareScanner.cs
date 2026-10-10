@@ -29,6 +29,17 @@ public sealed class HardwareScanner(CatalogData catalog)
     public static HardwareProfile WithBackgroundSample(HardwareProfile profile, IReadOnlyList<Tools.ProcessCpu>? sample) =>
         profile.Extras is { } extras ? profile with { Extras = extras with { BackgroundCpu = sample } } : profile;
 
+    /// <summary>
+    /// The probes run about 20 parts at once, and most of them wait inside WMI, COM, the registry or a tool. The thread
+    /// pool starts with one thread per processor and adds more only slowly, so on a PC with 2 to 4 threads the parts
+    /// would wait for each other. Raised once to a minimum of 32 threads.
+    /// </summary>
+    private static void EnsureThreads()
+    {
+        ThreadPool.GetMinThreads(out var workers, out var io);
+        if (workers < 32) ThreadPool.SetMinThreads(32, io);
+    }
+
     /// <param name="previous">The last result, after a change made by this app: slow parts no change can affect are reused.</param>
     /// <param name="waitForBackgroundSample">
     /// False: return as soon as everything else is read and leave the 3 second CPU sample in <see cref="PendingBackgroundSample"/>.
@@ -36,6 +47,7 @@ public sealed class HardwareScanner(CatalogData catalog)
     public async Task<HardwareProfile> ScanAsync(IProgress<string>? progress = null, CancellationToken ct = default, HardwareProfile? previous = null,
         bool waitForBackgroundSample = true)
     {
+        EnsureThreads();
         var errors = new ConcurrentDictionary<string, string>();
         var sw = Stopwatch.StartNew();
 

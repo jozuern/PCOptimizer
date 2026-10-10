@@ -27,6 +27,10 @@ internal sealed class FakeServices : IServiceManager
 
     public ServiceStart? GetStartType(string name) => Start.TryGetValue(name, out var s) ? s : null;
 
+    public Dictionary<string, bool> Running { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool? IsRunning(string name) => Running.TryGetValue(name, out var r) ? r : null;
+
     public void SetStartType(string name, ServiceStart start)
     {
         if (FailOnWrite.Contains(name)) throw new InvalidOperationException($"access denied: {name}");

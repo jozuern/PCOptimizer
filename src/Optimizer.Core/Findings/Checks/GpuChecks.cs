@@ -126,7 +126,9 @@ public sealed class RebarCheck : IFindingCheck
         var m = RegexCache.Get(@"\bi[3579]-(\d{4,5})").Match(cpu.Name);
         if (!m.Success) return null;
         var number = m.Groups[1].Value;
-        var generation = number.Length == 5 ? int.Parse(number[..2]) : int.Parse(number[..1]);
+        // Five digits: the first two are the generation (i7-10700K, i5-13600K). Four digits starting with 1 are the
+        // mobile chips of 10th to 14th gen (i7-1065G7, i7-1165G7, i5-1235U); other four digits are 2nd to 9th gen.
+        var generation = number.Length == 5 || number[0] == '1' ? int.Parse(number[..2]) : int.Parse(number[..1]);
         return generation >= 10;
     }
 

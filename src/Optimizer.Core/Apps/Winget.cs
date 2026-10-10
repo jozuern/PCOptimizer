@@ -108,9 +108,6 @@ public static class Winget
     public static string InstallArguments(string id, string? scope = null) =>
         $"install --id {id} --exact --source winget{ScopeArgument(scope)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
 
-    public static string UpgradeArguments(string id, string? scope = null) =>
-        $"upgrade --id {id} --exact --source winget{ScopeArgument(scope)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
-
     /// <summary>Upgrades every package with a newer version in the winget source.</summary>
     public const string UpgradeAllArguments =
         "upgrade --all --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";

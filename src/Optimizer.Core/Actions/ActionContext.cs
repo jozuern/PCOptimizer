@@ -23,6 +23,9 @@ public interface IServiceManager
     ServiceStart? GetStartType(string name);
 
     void SetStartType(string name, ServiceStart start);
+
+    /// <summary>True when running, false when stopped, null when the service does not exist or is starting or stopping.</summary>
+    bool? IsRunning(string name) => null;
 }
 
 public interface IPowerManager
@@ -111,9 +114,17 @@ public sealed class ActionContext
     /// <summary>Called after user-scope changes that need a live refresh (mouse, Explorer settings).</summary>
     public Action<string>? Notify { get; init; }
 
-    /// <summary>Folder for BCD/power exports belonging to the backup store.</summary>
-    public string ExportFolder { get; init; } = Path.GetTempPath();
+    /// <summary>Folder for BCD/power exports belonging to the backup store (admin-only; never the user's %TEMP%).</summary>
+    public required string ExportFolder { get; init; }
 
     /// <summary>Interface GUIDs ("{...}") of active Ethernet/Wi-Fi adapters, for per-interface TCP values ("{nic}" in paths).</summary>
     public IReadOnlyList<string> NetworkInterfaceIds { get; init; } = [];
+
+    /// <summary>
+    /// Reads the adapters again (the app: an adapter connected after the start counts too). Null: the fixed
+    /// <see cref="NetworkInterfaceIds"/> (tests).
+    /// </summary>
+    public Func<IReadOnlyList<string>>? NetworkInterfaceIdsSource { get; init; }
+
+    public IReadOnlyList<string> CurrentNetworkInterfaceIds() => NetworkInterfaceIdsSource?.Invoke() ?? NetworkInterfaceIds;
 }

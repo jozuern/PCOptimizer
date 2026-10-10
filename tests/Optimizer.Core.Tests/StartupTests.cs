@@ -51,6 +51,10 @@ public class StartupTests
         Assert.True(StartupApprovedAction.IsEnabled(new StoredValue(true, "binary", "020000000000000000000000")));
         Assert.True(StartupApprovedAction.IsEnabled(new StoredValue(true, "binary", "060000000000000000000000")));
         Assert.True(StartupApprovedAction.IsEnabled(StoredValue.Missing));
+        // Values a program wrote in another form must not throw (that ended the scan of the Run keys).
+        Assert.True(StartupApprovedAction.IsEnabled(new StoredValue(true, "string", "zz")));
+        Assert.True(StartupApprovedAction.IsEnabled(new StoredValue(true, "binary", "zz00")));
+        Assert.True(StartupApprovedAction.IsEnabled(new StoredValue(true, "dword", "3")));
     }
 
     [Fact]
@@ -121,7 +125,8 @@ public class StartupTests
         Assert.Equal(Path.Combine(sys, "autochk.exe"), boot.Single(e => e.Command == StartupScanner.BootExecuteDefault).ImagePath);
         Assert.True(boot.Single(e => e.Command!.Contains("native")).Suspicious);
         Assert.Equal(Path.Combine(sys, "kernel32.dll"), One(StartupKind.KnownDll).ImagePath);
-        Assert.Equal(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\mswsock.dll"), One(StartupKind.WinsockProvider).ImagePath);
+        // Catalog_Entries is the 32-bit catalog: its System32 path is loaded from SysWOW64 (WOW64 file redirection).
+        Assert.Equal(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), "mswsock.dll"), One(StartupKind.WinsockProvider).ImagePath, ignoreCase: true);
         Assert.Equal(Path.Combine(sys, "localspl.dll"), One(StartupKind.PrintMonitor).ImagePath);
         Assert.Equal(Path.Combine(sys, "msv1_0.dll"), One(StartupKind.LsaPackage).ImagePath);
         var providers = all.Where(e => e.Kind == StartupKind.NetworkProvider).ToList();
@@ -172,6 +177,13 @@ public class StartupTests
         var task = Assert.Single(new StartupScanner(fx.Registry, fx.Tasks, null).LogonTasks());
         Assert.Equal(@"\Vendor\Updater", task.Target);
         Assert.IsType<ScheduledTaskAction>(StartupTweaks.Set(task, false)!.Actions.Single());
+
+        // A program path stored with quotes is quoted only once, so the image (signature, script host) is found.
+        fx.Tasks.Listed.Clear();
+        fx.Tasks.Listed.Add(new ScheduledTaskInfo(@"\Vendor\Ps", true, "Vendor", "\"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\"", "-w hidden -enc SQBFAFgA", true, false, null));
+        var ps = Assert.Single(new StartupScanner(fx.Registry, fx.Tasks, null).LogonTasks());
+        Assert.Equal(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", ps.ImagePath, ignoreCase: true);
+        Assert.True(ps.RunsScriptHost);
     }
 
     [Theory]

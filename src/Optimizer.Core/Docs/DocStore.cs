@@ -59,9 +59,6 @@ public static partial class DocStore
         }
     }
 
-    public static IEnumerable<string> AllIds(string lang) =>
-        CatalogData.ResourceNames($"Catalog.Docs.{lang}.").Select(n => n[$"Catalog.Docs.{lang}.".Length..^3]);
-
     public static DocPage Parse(string id, string lang, string markdown)
     {
         var text = markdown.Replace("\r\n", "\n");

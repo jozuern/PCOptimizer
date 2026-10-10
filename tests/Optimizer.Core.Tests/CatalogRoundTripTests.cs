@@ -24,6 +24,8 @@ public class CatalogRoundTripTests(ITestOutputHelper output)
         .Set("browser.chrome", true).Set("browser.brave", true)
         .Set("anticheat.strict", false).Set("anticheat.any", false).Set("device.managed", false);
 
+    private static readonly HashSet<string> BlockedOnPurpose = ["gpu.hags"];
+
     public static TheoryData<string> RegistryTweaks()
     {
         var data = new TheoryData<string>();
@@ -44,8 +46,10 @@ public class CatalogRoundTripTests(ITestOutputHelper output)
         var blocks = fx.Engine.Preflight(t, facts, new HashSet<string>(), Options);
         if (blocks.Count > 0)
         {
-            // Guards that depend on this PC (anti-cheat, a missing prerequisite) are covered by their own tests.
+            // Only tweaks whose guard needs something the sandbox facts do not have (covered by their own tests) may be
+            // blocked here; a new block anywhere else would otherwise turn this test into a silent pass.
             output.WriteLine($"{id}: blocked ({string.Join(", ", blocks.Select(b => b.ToString()))})");
+            Assert.True(BlockedOnPurpose.Contains(id), $"{id} is blocked in the sandbox: {string.Join(", ", blocks.Select(b => b.ReasonKey))}");
             return;
         }
 

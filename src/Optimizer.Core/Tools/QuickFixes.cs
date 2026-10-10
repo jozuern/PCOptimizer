@@ -4,7 +4,9 @@ using Optimizer.Core.Platform;
 namespace Optimizer.Core.Tools;
 
 /// <summary>One documented command of a quick fix (a Windows tool in System32, run with a cleaned environment).</summary>
-public sealed record QuickFixStep(string File, string Arguments, TimeSpan? Timeout = null);
+/// <param name="AlwaysRun">Runs even when an earlier step failed (ipconfig /renew after a /release that failed for one adapter).</param>
+/// <param name="OkCodes">Exit codes that mean success; null means only 0.</param>
+public sealed record QuickFixStep(string File, string Arguments, TimeSpan? Timeout = null, bool AlwaysRun = false, IReadOnlyList<int>? OkCodes = null);
 
 /// <summary>
 /// A repair that runs documented Windows commands and changes nothing that needs an undo: it restarts a service or
@@ -26,11 +28,11 @@ public static class QuickFixes
     [
         // ipconfig: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ipconfig
         new("IpRenew", Confirm: true, NeedsRestart: false,
-            [new("ipconfig.exe", "/release"), new("ipconfig.exe", "/renew", TimeSpan.FromMinutes(2))],
+            [new("ipconfig.exe", "/release"), new("ipconfig.exe", "/renew", TimeSpan.FromMinutes(2), AlwaysRun: true)],
             "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ipconfig"),
         // Overwrites the TCP/IP registry keys, same effect as removing and reinstalling TCP/IP; needs a restart.
         new("TcpIpReset", Confirm: true, NeedsRestart: true,
-            [new("netsh.exe", "int ip reset \"" + Path.Combine(DataPaths.Root, "tcpip-reset.log") + "\"")],
+            [new("netsh.exe", "int ip reset \"" + DataPaths.TcpIpResetLog + "\"")],
             "https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/reset-tcp-ip-net-shell"),
         new("AudioRestart", Confirm: false, NeedsRestart: false, [Ps("Restart-Service -Name Audiosrv -Force")],
             "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/restart-service"),
@@ -47,7 +49,8 @@ public static class QuickFixes
             "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/lodctr"),
         // Online scan of the system drive: Windows stays usable, found problems are queued for a fix.
         new("DiskScan", Confirm: false, NeedsRestart: false,
-            [new("chkdsk.exe", Path.GetPathRoot(Environment.SystemDirectory)!.TrimEnd('\\') + " /scan", TimeSpan.FromMinutes(60))],
+            // chkdsk: 0 no errors, 1 errors found and fixed, 2 no cleanup done; 3 means problems remain (its text says which).
+            [new("chkdsk.exe", Path.GetPathRoot(Environment.SystemDirectory)!.TrimEnd('\\') + " /scan", TimeSpan.FromMinutes(60), OkCodes: [0, 1, 2])],
             "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/chkdsk") { ShowOutput = true },
         new("RecoveryEnable", Confirm: false, NeedsRestart: false, [new("reagentc.exe", "/enable")],
             "https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/reagentc-command-line-options") { ShowOutput = true },
@@ -55,16 +58,29 @@ public static class QuickFixes
 
     public static QuickFix Get(string id) => All.Single(f => f.Id == id);
 
-    /// <summary>Runs the steps in order and stops at the first one that fails. Output is the text of all steps run.</summary>
+    /// <summary>
+    /// Runs the steps in order. After a failed step (an exit code that is not a success, or a timeout) only the steps
+    /// marked <see cref="QuickFixStep.AlwaysRun"/> still run. Output is the text of all steps run.
+    /// </summary>
     public static (bool Ok, string Output) Run(IProcessRunner runner, QuickFix fix)
     {
         var output = new List<string>();
+        var ok = true;
         foreach (var step in fix.Steps)
         {
-            var (code, text) = runner.Run(step.File, step.Arguments, step.Timeout);
-            if (text.Trim() is { Length: > 0 } t) output.Add(t);
-            if (code != 0) return (false, string.Join("\n", output));
+            if (!ok && !step.AlwaysRun) continue;
+            try
+            {
+                var (code, text) = runner.Run(step.File, step.Arguments, step.Timeout);
+                if (text.Trim() is { Length: > 0 } t) output.Add(t);
+                if (!(step.OkCodes ?? [0]).Contains(code)) ok = false;
+            }
+            catch (TimeoutException ex)
+            {
+                output.Add(ex.Message);
+                ok = false;
+            }
         }
-        return (true, string.Join("\n", output));
+        return (ok, string.Join("\n", output));
     }
 }

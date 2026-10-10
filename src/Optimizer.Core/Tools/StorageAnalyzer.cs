@@ -117,7 +117,7 @@ public static class StorageAnalyzer
                         folderBytes[key] = (b + length, n + 1);
                     }
 
-                    if (length >= DuplicateMinBytes && !IsProtected(f.FullName, protectedRoots, protectAppData))
+                    if (length >= DuplicateMinBytes && !IsSystemFile(f) && !IsProtected(f.FullName, protectedRoots, protectAppData))
                     {
                         if (!bySize.TryGetValue(length, out var same)) bySize[length] = same = [];
                         same.Add(f.FullName);
@@ -126,7 +126,8 @@ public static class StorageAnalyzer
             }
 
             var files = new List<LargeFile>();
-            while (largest.TryDequeue(out var f, out var len)) files.Add(new LargeFile(f.FullName, len, f.LastWriteTimeUtc, !IsProtected(f.FullName, protectedRoots, protectAppData)));
+            while (largest.TryDequeue(out var f, out var len))
+                files.Add(new LargeFile(f.FullName, len, f.LastWriteTimeUtc, !IsSystemFile(f) && !IsProtected(f.FullName, protectedRoots, protectAppData)));
             files.Reverse();
             var folders = folderBytes.Select(kv => new FolderSize(kv.Key, kv.Value.Bytes, kv.Value.Files)).OrderByDescending(x => x.Bytes).Take(50).ToList();
             var duplicates = FindDuplicates(bySize.Values.Where(v => v.Count > 1), ct);
@@ -146,12 +147,28 @@ public static class StorageAnalyzer
                 foreach (var full in quick.GroupBy(p => Hash(p, long.MaxValue)).Where(g => g.Key is not null && g.Count() > 1))
                 {
                     var paths = full.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
-                    result.Add(new DuplicateGroup(new FileInfo(paths[0]).Length, paths));
+                    // A file can be deleted while the others are hashed: the size of one that is still there.
+                    if (paths.Select(Length).FirstOrDefault(l => l is not null) is { } size) result.Add(new DuplicateGroup(size, paths));
                 }
             }
         }
         return result.OrderByDescending(g => g.Reclaimable).ToList();
     }
+
+    private static long? Length(string path)
+    {
+        try
+        {
+            return new FileInfo(path).Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Files Windows marks as system files (pagefile.sys, hiberfil.sys, swapfile.sys in the drive root) are never offered.</summary>
+    private static bool IsSystemFile(FileInfo f) => (f.Attributes & FileAttributes.System) != 0;
 
     private static string? Hash(string path, long maxBytes)
     {
@@ -172,7 +189,9 @@ public static class StorageAnalyzer
     /// <summary>
     /// Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths and paths that do not resolve
     /// to themselves: a parent folder swapped for a junction between scan and confirmation would otherwise send a
-    /// system file to the Recycle Bin with administrator rights. Returns the failures.
+    /// system file to the Recycle Bin with administrator rights. A file that does not fit in the Recycle Bin (larger
+    /// than its limit, or the bin is set to delete at once) would be deleted for good without a question: Windows asks
+    /// first (FOF_WANTNUKEWARNING), and a "No" counts as a failure. Returns the failures.
     /// </summary>
     public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots)
     {
@@ -188,7 +207,7 @@ public static class StorageAnalyzer
             {
                 wFunc = FoDelete,
                 pFrom = p + "\0\0",
-                fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi,
+                fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
             };
             if (SHFileOperation(ref op) != 0 || op.fAnyOperationsAborted || File.Exists(p)) failed.Add(p);
             else Log.Info("storage", $"recycled {p}");
@@ -197,7 +216,7 @@ public static class StorageAnalyzer
     }
 
     private const uint FoDelete = 3;
-    private const ushort FofSilent = 0x4, FofNoConfirmation = 0x10, FofAllowUndo = 0x40, FofNoErrorUi = 0x400;
+    private const ushort FofSilent = 0x4, FofNoConfirmation = 0x10, FofAllowUndo = 0x40, FofNoErrorUi = 0x400, FofWantNukeWarning = 0x4000;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct SHFILEOPSTRUCT

@@ -125,6 +125,9 @@ public class CheckEdgeCaseTests
     [Theory]
     [InlineData("Radeon RX Vega", GpuKind.Discrete)]
     [InlineData("AMD Radeon RX Vega 64", GpuKind.Discrete)]
+    [InlineData("Radeon RX Vega M GH Graphics", GpuKind.Discrete)]          // Kaby Lake G: AMD chip on the package
+    [InlineData("AMD Radeon(TM) RX Vega 11 Graphics", GpuKind.Integrated)] // Ryzen 5 2400G / 3400G
+    [InlineData("AMD Radeon(TM) RX Vega 10 Graphics", GpuKind.Integrated)] // Ryzen 7 2700U
     [InlineData("AMD Radeon R9 390 Series", GpuKind.Discrete)]
     [InlineData("AMD Radeon(TM) R7 370 Series", GpuKind.Discrete)]
     [InlineData("AMD Radeon HD 7970", GpuKind.Discrete)]

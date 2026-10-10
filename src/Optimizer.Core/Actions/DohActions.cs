@@ -32,10 +32,15 @@ public sealed class DohAutoUpgradeAction : TweakAction
     /// <summary>Null when PowerShell cannot list the DoH servers or one of ours is not known to Windows.</summary>
     public override StoredValue? Read(ActionContext c)
     {
-        var (code, output) = c.Processes.Run("powershell.exe",
-            "-NoProfile -NonInteractive -Command \"Get-DnsClientDohServerAddress | Select-Object ServerAddress,AutoUpgrade | ConvertTo-Json -Compress\"");
-        if (code != 0) return null;
-        var known = ParseList(output);
+        // One list for every DoH action of a scan (the read is shared through the cache, the servers are filtered here).
+        var list = ReadCache.Get(c, "doh:list", () =>
+        {
+            var (code, output) = c.Processes.Run("powershell.exe",
+                "-NoProfile -NonInteractive -Command \"Get-DnsClientDohServerAddress | Select-Object ServerAddress,AutoUpgrade | ConvertTo-Json -Compress\"");
+            return code == 0 ? new StoredValue(true, "dohlist", output) : null;
+        });
+        if (list?.Data is not { } json) return null;
+        var known = ParseList(json);
         var states = new List<KeyValuePair<string, bool>>();
         foreach (var s in Valid)
         {
@@ -68,12 +73,21 @@ public sealed class DohAutoUpgradeAction : TweakAction
 
     public override void Restore(ActionContext c, StoredValue original) => Write(c, ParseStored(original.Data).Where(s => Valid.Contains(s.Key, StringComparer.OrdinalIgnoreCase)));
 
+    /// <summary>
+    /// One PowerShell run per server with errors as terminating errors: in one script, only the last command's result
+    /// would set the exit code. All servers are tried; the failures are reported together.
+    /// </summary>
     private static void Write(ActionContext c, IEnumerable<KeyValuePair<string, bool>> states)
     {
+        ReadCache.Invalidate(c, "doh:list");
+        var errors = new List<string>();
         // Addresses are validated as IP addresses above, so nothing else reaches the script.
-        var script = string.Join("; ", states.Select(s => $"Set-DnsClientDohServerAddress -ServerAddress '{s.Key}' -AutoUpgrade ${(s.Value ? "true" : "false")}"));
-        if (script.Length == 0) return;
-        var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{script}\"");
-        if (code != 0) throw new InvalidOperationException($"Set-DnsClientDohServerAddress failed ({code}): {output}");
+        foreach (var s in states)
+        {
+            var script = $"$ErrorActionPreference='Stop'; Set-DnsClientDohServerAddress -ServerAddress '{s.Key}' -AutoUpgrade ${(s.Value ? "true" : "false")}";
+            var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{script}\"");
+            if (code != 0) errors.Add($"{s.Key} ({code}): {output.Trim()}");
+        }
+        if (errors.Count > 0) throw new InvalidOperationException("Set-DnsClientDohServerAddress failed for " + string.Join("; ", errors));
     }
 }

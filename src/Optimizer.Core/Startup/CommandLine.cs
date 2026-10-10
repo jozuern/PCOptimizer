@@ -21,25 +21,52 @@ public static class CommandLine
         imagePath is { Length: > 0 } && ScriptHosts.Contains(Path.GetFileName(imagePath.Trim().Trim('"')));
 
     /// <summary>
-    /// A script host whose command could run anything: inline code (powershell -enc, cmd /c with no file), chained
-    /// commands, a URL, or a script outside System32/SysWOW64. A host that only runs files from those protected Windows
-    /// folders (Windows' own tasks: cmd /c %SystemRoot%\system32\x.cmd) is not flagged; its files are signed or
-    /// writable only by TrustedInstaller.
+    /// rundll32 entry points that start another program, file or URL given as an argument (signed proxies for any
+    /// program).
     /// </summary>
-    public static bool RunsUnverifiedScript(string? command, string? imagePath, Func<string, string>? expand = null)
+    private static readonly HashSet<string> ProxyExports = new(StringComparer.OrdinalIgnoreCase)
     {
-        if (!IsScriptHost(imagePath) || string.IsNullOrWhiteSpace(command)) return false;
+        "ShellExec_RunDLL", "ShellExec_RunDLLA", "ShellExec_RunDLLW", "FileProtocolHandler", "OpenURL", "OpenURLA", "RouteTheCall",
+    };
+
+    /// <summary>
+    /// A script host whose command could run anything: inline code (powershell -enc, cmd /c with no file), chained
+    /// commands, a URL, another script host as an argument (cmd /c powershell -enc), or a script outside
+    /// System32/SysWOW64. A host that only runs files from those protected Windows folders (Windows' own tasks: cmd /c
+    /// %SystemRoot%\system32\x.cmd) is not flagged; its files are signed or writable only by TrustedInstaller. The host
+    /// is the program the line starts (rundll32 itself, not its DLL); a rundll32 line is flagged when it uses an entry
+    /// point that starts something else, or passes further files or URLs.
+    /// </summary>
+    public static bool RunsUnverifiedScript(string? command, Func<string, string>? expand = null)
+    {
+        if (string.IsNullOrWhiteSpace(command)) return false;
         expand ??= Environment.ExpandEnvironmentVariables;
-        var args = SplitFirst(expand(command.Trim())).Tail;
+        if (Program(command, expand) is not var (host, args) || !IsScriptHost(host)) return false;
+        if (IsRundll(host)) return RundllStartsSomethingElse(args);
         if (args.IndexOfAny(['&', '|', '^', '`', ';']) >= 0 || args.Contains("://", StringComparison.Ordinal)) return true;
         var tokens = Tokens(args).ToList();
+        if (tokens.Any(t => IsScriptHost(t))) return true;
         // PowerShell inline code: -Command / -EncodedCommand / -ec and their accepted prefixes ("-c", "-enc", "/e").
-        if (Path.GetFileName(imagePath!).StartsWith("p", StringComparison.OrdinalIgnoreCase)
+        if (Path.GetFileName(host).StartsWith("p", StringComparison.OrdinalIgnoreCase)
             && tokens.Any(t => t.Length >= 2 && t[0] is '-' or '/' && IsPrefixOf(t[1..], "command", "encodedcommand", "ec")))
             return true;
         var files = tokens.Select(t => t.Split(',')[0]).Where(t => t.Contains('\\')).ToList();
         if (files.Count == 0) return true; // inline code or a bare name looked up on PATH
         return !files.All(IsInProtectedSystemFolder);
+    }
+
+    /// <summary>
+    /// rundll32 runs the DLL's entry point; the DLL itself is judged by its signature (<see cref="ImagePath"/>). Flagged
+    /// only when the entry point is a known proxy or more files or URLs follow (rundll32 x.dll,Entry C:\Users\x.exe).
+    /// </summary>
+    private static bool RundllStartsSomethingElse(string args)
+    {
+        var tokens = Tokens(args).ToList();
+        if (tokens.Count == 0) return false;
+        var parts = tokens[0].Split(',', 2);
+        if (parts.Length == 2 && ProxyExports.Contains(parts[1].Trim())) return true;
+        if (args.Contains("://", StringComparison.Ordinal)) return true;
+        return tokens.Skip(1).Any(t => t.Contains('\\') && !IsInProtectedSystemFolder(t));
     }
 
     /// <summary>
@@ -88,6 +115,31 @@ public static class CommandLine
     /// </summary>
     public static string? ImagePath(string? command, Func<string, string>? expand = null, Func<string, bool>? exists = null)
     {
+        if (Parse(command, expand, exists) is not var (first, rest, system, ex)) return null;
+        if (IsRundll(first) && rest.Length > 0)
+        {
+            var dll = SplitFirst(rest).First.Split(',')[0];
+            return Qualify(dll, system, ex);
+        }
+        return Qualify(first, system, ex);
+    }
+
+    /// <summary>
+    /// The program a command line starts and its arguments, for running it (uninstall commands): unlike
+    /// <see cref="ImagePath"/>, a rundll32 line gives rundll32 itself with the DLL and entry point as arguments. Null
+    /// when empty.
+    /// </summary>
+    public static (string File, string Arguments)? Program(string? command, Func<string, string>? expand = null, Func<string, bool>? exists = null)
+    {
+        if (Parse(command, expand, exists) is not var (first, rest, system, ex)) return null;
+        return (Qualify(first, system, ex), rest);
+    }
+
+    private static bool IsRundll(string file) => Hosts.Any(h => Path.GetFileName(file).Equals(h, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>First token (the program, unquoted paths with spaces resolved) and the rest of the line.</summary>
+    private static (string First, string Tail, string Windows, Func<string, bool> Exists)? Parse(string? command, Func<string, string>? expand, Func<string, bool>? exists)
+    {
         if (string.IsNullOrWhiteSpace(command)) return null;
         expand ??= Environment.ExpandEnvironmentVariables;
         exists ??= File.Exists;
@@ -100,7 +152,7 @@ public static class CommandLine
             s = Path.Combine(system, s);
 
         var (first, rest) = SplitFirst(s);
-        // An unquoted path with spaces: take the longest prefix that exists (C:\Program Files\App\app.exe -arg).
+        // An unquoted path with spaces: take the longest prefix that exists (C:\Program Files\Apppp.exe -arg).
         if (!s.StartsWith('"') && !exists(first))
         {
             var parts = s.Split(' ');
@@ -115,13 +167,7 @@ public static class CommandLine
                 }
             }
         }
-
-        if (Hosts.Any(h => Path.GetFileName(first).Equals(h, StringComparison.OrdinalIgnoreCase)) && rest.Length > 0)
-        {
-            var dll = SplitFirst(rest).First.Split(',')[0];
-            return Qualify(dll, system, exists);
-        }
-        return Qualify(first, system, exists);
+        return (first, rest, system, exists);
     }
 
     private static (string First, string Tail) SplitFirst(string s)

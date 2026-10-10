@@ -12,7 +12,9 @@ public static class Wmi
         var managementScope = new ManagementScope(scope, new ConnectionOptions { Timeout = TimeSpan.FromSeconds(20) });
         using var searcher = new ManagementObjectSearcher(managementScope, new ObjectQuery(wql));
         searcher.Options.Timeout = TimeSpan.FromSeconds(20);
-        foreach (var obj in searcher.Get())
+        searcher.Options.Rewindable = false;
+        using var results = searcher.Get();
+        foreach (var obj in results)
         {
             using (obj)
             {

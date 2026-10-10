@@ -10,7 +10,8 @@ internal static partial class NativeWrite
 {
     // ---------- advapi32: services ----------
     internal const uint ScManagerConnect = 0x0001;
-    internal const uint ServiceQueryConfig = 0x0001, ServiceChangeConfig = 0x0002;
+    internal const uint ServiceQueryConfig = 0x0001, ServiceChangeConfig = 0x0002, ServiceQueryStatus = 0x0004;
+    internal const uint ServiceStopped = 1, ServiceRunning = 4;
     internal const uint ServiceNoChange = 0xFFFFFFFF;
     internal const uint ServiceConfigDelayedAutoStartInfo = 3;
 
@@ -32,6 +33,16 @@ internal static partial class NativeWrite
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct SERVICE_DELAYED_AUTO_START_INFO { public int fDelayedAutostart; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SERVICE_STATUS
+    {
+        public uint dwServiceType, dwCurrentState, dwControlsAccepted, dwWin32ExitCode, dwServiceSpecificExitCode, dwCheckPoint, dwWaitHint;
+    }
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool QueryServiceStatus(IntPtr service, out SERVICE_STATUS status);
 
     [DllImport("advapi32.dll", EntryPoint = "ChangeServiceConfig2W", SetLastError = true)]
     internal static extern bool ChangeServiceConfig2(IntPtr service, uint infoLevel, ref SERVICE_DELAYED_AUTO_START_INFO info);

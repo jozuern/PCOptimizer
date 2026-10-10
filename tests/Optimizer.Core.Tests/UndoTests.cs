@@ -54,6 +54,49 @@ public class UndoTests
         Assert.Null(fx.Store.Get("latency.mmcss"));
     }
 
+    /// <summary>
+    /// The data folder is shared by every Windows account. A backup of one account's own settings is kept for that
+    /// account; another account neither sees it nor takes its originals, while backups of PC-wide settings are shared.
+    /// </summary>
+    [Fact]
+    public void BackupsOfAnAccountsOwnSettingsStayWithThatAccount()
+    {
+        var root = TestFolders.Create("peruser");
+        try
+        {
+            var alice = new BackupStore(root, secure: false, userSid: "S-1-5-21-1-1-1-1001");
+            var bob = new BackupStore(root, secure: false, userSid: "S-1-5-21-1-1-1-1002");
+            BackupEntry Entry(Hive hive) => new()
+            {
+                TargetKey = new RegistryAction { Hive = hive, Path = @"Software\Test", Name = "V" }.TargetKey,
+                Description = "V", Original = new StoredValue(true, "dword", "1"), Applied = new StoredValue(true, "dword", "0"),
+            };
+            alice.Save(new TweakBackup { TweakId = "personalize.darkMode", Entries = [Entry(Hive.User)] });
+            alice.Save(new TweakBackup { TweakId = "power.hibernateOff", Entries = [Entry(Hive.Machine)] });
+
+            Assert.Equal("S-1-5-21-1-1-1-1001", alice.Get("personalize.darkMode")!.Owner);
+            Assert.Null(bob.Get("personalize.darkMode"));
+            Assert.Equal(["power.hibernateOff"], bob.All().Select(b => b.TweakId));
+            Assert.Equal(2, alice.All().Count);
+
+            // Bob applies the same tweak: his own backup, Alice's stays as it was.
+            bob.Save(new TweakBackup { TweakId = "personalize.darkMode", Entries = [Entry(Hive.User)] });
+            Assert.Equal("S-1-5-21-1-1-1-1002", bob.Get("personalize.darkMode")!.Owner);
+            Assert.Equal("S-1-5-21-1-1-1-1001", alice.Get("personalize.darkMode")!.Owner);
+            bob.Archive("personalize.darkMode");
+            Assert.Null(bob.Get("personalize.darkMode"));
+            Assert.NotNull(alice.Get("personalize.darkMode"));
+
+            Assert.True(BackupStore.IsPerUser(Entry(Hive.User).TargetKey));
+            Assert.True(BackupStore.IsPerUser("spi:stickykeys:hotkey"));
+            Assert.False(BackupStore.IsPerUser(Entry(Hive.Machine).TargetKey));
+        }
+        finally
+        {
+            TestFolders.Delete(root);
+        }
+    }
+
     [Fact]
     public async Task PowerSettingKeepsTheOriginalOfEveryPlanItChanged()
     {

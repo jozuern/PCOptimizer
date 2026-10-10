@@ -87,9 +87,11 @@ public static class DeElevatedLauncher
             def.Principal.LogonType = 3; // TASK_LOGON_INTERACTIVE_TOKEN: runs in the user's session with the user's token
             def.Principal.RunLevel = 0;  // TASK_RUNLEVEL_LUA: not elevated
             def.Settings.DisallowStartIfOnBatteries = false;
-            def.Settings.ExecutionTimeLimit = "PT1M";
-            dynamic action = def.Actions.Create(0); // TASK_ACTION_EXEC
             var isUrl = target.Contains("://", StringComparison.Ordinal);
+            // Task Scheduler ends a task's program when the time limit is reached: a link only starts the browser, but
+            // an uninstaller or installer can run as long as the user needs (PT0S = no limit).
+            def.Settings.ExecutionTimeLimit = isUrl ? "PT1M" : "PT0S";
+            dynamic action = def.Actions.Create(0); // TASK_ACTION_EXEC
             action.Path = isUrl ? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe") : target;
             // The link in its escaped form: a quote inside the raw text could otherwise end the argument early.
             action.Arguments = isUrl ? $"\"{(Uri.TryCreate(target, UriKind.Absolute, out var uri) ? uri.AbsoluteUri : target)}\"" : arguments ?? "";

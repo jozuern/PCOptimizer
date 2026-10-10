@@ -22,6 +22,23 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
 
     public Task EnsureLoadedAsync() => _load ??= ReloadAsync();
 
+    /// <summary>
+    /// Runs a page operation that changes the system (see <see cref="Services.ChangeRunner.RunExclusiveAsync"/>): the page
+    /// shows it as working, no tweak, scan or update runs at the same time, and an error is logged and shown.
+    /// </summary>
+    protected async Task<bool> RunWorkAsync(string what, Func<Task> work)
+    {
+        IsWorking = true;
+        try
+        {
+            return await Owner.Runner.RunExclusiveAsync(what, work);
+        }
+        finally
+        {
+            IsWorking = false;
+        }
+    }
+
     partial void OnIsLoadingChanged(bool value) => LoadingChanged();
 
     /// <summary>For "nothing found" texts that must stay hidden while the page still loads.</summary>
@@ -131,7 +148,7 @@ public abstract partial class SwitchRow : ObservableObject
 
 // ---------------- Graphics & network ----------------
 
-public sealed record DnsResultRow(string Name, string Server, string Median, string Best, string Answered, bool IsBest);
+public sealed record DnsResultRow(string Name, string Server, string Median, string Best, string Answered);
 
 public sealed partial class NetworkViewModel(MainViewModel owner, AppServices services) : PageViewModel(owner)
 {
@@ -212,10 +229,11 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
             // A preset for the fastest server, unless it is already in use.
             _fastestPresetId = best is null ? null : DnsBenchmark.PresetFor(best.Server);
             var preset = DnsOptions.FirstOrDefault(o => o.Tweak.Id == _fastestPresetId);
-            FastestText = preset is not null && !preset.IsOn ? Loc.Instance.Format("Net_UseFastest", preset.Tweak.Subject ?? best!.Name) : null;
+            // Offered only when that preset can be switched on now (another preset of this app blocks it until undone).
+            FastestText = preset is { IsOn: false, CanToggle: true } ? Loc.Instance.Format("Net_UseFastest", preset.Tweak.Subject ?? best!.Name) : null;
             foreach (var r in results)
                 DnsResults.Add(new DnsResultRow(r.Name, r.Server.ToString(), r.MedianMs is { } m ? $"{m:0.0} ms" : Loc.Instance["Net_NoAnswer"],
-                    r.BestMs is { } b ? $"{b:0.0} ms" : "", $"{r.Answered}/{r.Sent}", ReferenceEquals(r, best)));
+                    r.BestMs is { } b ? $"{b:0.0} ms" : "", $"{r.Answered}/{r.Sent}"));
             BenchmarkStatus = Loc.Instance["Net_BenchmarkDone"];
         }
         catch (Exception ex)
@@ -280,6 +298,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         });
         Items.Clear();
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
+        _cameBack = cameBack.Select(r => r.Name).ToList();
         CameBackText = cameBack.Count == 0 ? null : Loc.Instance.Format("Debloat_CameBack", string.Join(", ", cameBack.Select(r => r.Name)));
         Removed.Clear();
         foreach (var r in removed.OrderByDescending(r => r.RemovedAt)) Removed.Add(new RemovedRow(r.Name, r.RemovedAt.LocalDateTime.ToString("g"), r.StoreLink));
@@ -299,16 +318,24 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         if (item is null || !item.CanRemove) return;
         var confirm = item.Item.Entry.CanReinstall ? "Debloat_ConfirmText" : "Debloat_ConfirmTextNoStore";
         if (!dialogs.Ask(Loc.Instance.Format("Debloat_ConfirmTitle", item.Name), Loc.Instance.Format(confirm, item.Text), Loc.Instance["Debloat_Remove"])) return;
-        IsWorking = true;
-        try
+        await RunWorkAsync($"remove {item.Item.Entry.Name}", async () =>
         {
             var error = await Task.Run(() => Service.Remove(item.Item.Installed, item.Item.Entry));
-            Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", item.Name) : Loc.Instance.Format("Result_Error", error));
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+            Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", item.Name) : Loc.Instance.Format("Result_Error", error),
+                error is null ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Error);
+        });
+        await ReloadAsync();
+    }
+
+    private IReadOnlyList<string> _cameBack = [];
+
+    /// <summary>The user installed the apps again on purpose (for example with the Store link): stop the notice for them.</summary>
+    [RelayCommand]
+    private async Task DismissCameBackAsync()
+    {
+        var names = _cameBack;
+        await Task.Run(() => Service.Forget(names));
+        CameBackText = null;
         await ReloadAsync();
     }
 
@@ -379,10 +406,9 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         if (selected.Count == 0) return;
         var list = string.Join("\n", selected.Select(r => $"{r.Title}: {Size(r.Bytes)}"));
         if (!dialogs.Ask(Loc.Instance["Cleanup_ConfirmTitle"], Loc.Instance.Format("Cleanup_ConfirmText", list), Loc.Instance["Cleanup_Clean"])) return;
-        IsWorking = true;
         long freed = 0;
         var skipped = 0;
-        try
+        await RunWorkAsync("cleanup", async () =>
         {
             foreach (var r in selected)
             {
@@ -390,12 +416,8 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
                 freed += result.FreedBytes;
                 skipped += result.Skipped;
             }
-            Owner.ShowResult(Loc.Instance.Format("Cleanup_Done", Size(freed), skipped));
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+            Owner.ShowResult(Loc.Instance.Format("Cleanup_Done", Size(freed), skipped), Wpf.Ui.Controls.InfoBarSeverity.Success);
+        });
         await ReloadAsync();
     }
 
@@ -403,31 +425,22 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
     private async Task ComponentCleanupAsync()
     {
         if (!dialogs.Ask(Labels.Current.Get(Lang, "cleanup.componentStore"), Loc.Instance["Cleanup_ComponentText"], Loc.Instance["Cleanup_Clean"])) return;
-        IsWorking = true;
         ToolOutput = Loc.Instance["Tools_Running"];
-        try
-        {
-            var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.ComponentStoreCleanup(services.Context.Processes));
-            ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim().Split('\n').LastOrDefault() ?? code.ToString());
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+        if (!await RunWorkAsync("component store cleanup", async () =>
+            {
+                var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.ComponentStoreCleanup(services.Context.Processes));
+                ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim().Split('\n').LastOrDefault() ?? code.ToString());
+            }))
+            ToolOutput = "";
     }
 
     [RelayCommand]
     private async Task DeliveryOptimizationCleanupAsync()
     {
-        IsWorking = true;
-        try
+        await RunWorkAsync("delivery optimization cleanup", async () =>
         {
             var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.DeliveryOptimizationCleanup(services.Context.Processes));
             ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim());
-        }
-        finally
-        {
-            IsWorking = false;
-        }
+        });
     }
 }

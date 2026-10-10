@@ -6,9 +6,6 @@ namespace Optimizer.Core.Apps;
 public sealed record DriverRow(string Device, string Class, string? Provider, string? Manufacturer, string? Version, DateTime? Date, string? Inf, string DeviceId)
 {
     public int? AgeDays(DateTime today) => Date is { } d ? (int)(today - d.Date).TotalDays : null;
-
-    /// <summary>Third-party driver package (oemNN.inf) rather than one that ships with Windows.</summary>
-    public bool IsOem => Inf?.StartsWith("oem", StringComparison.OrdinalIgnoreCase) == true;
 }
 
 /// <summary>

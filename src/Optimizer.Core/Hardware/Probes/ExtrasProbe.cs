@@ -214,7 +214,8 @@ public static class ExtrasProbe
     {
         var list = new List<NvmeLink>();
         var nvme = Wmi.Query("SELECT DeviceId, FriendlyName FROM MSFT_PhysicalDisk WHERE BusType = 17", @"root\Microsoft\Windows\Storage")
-            .ToDictionary(r => r.Str("DeviceId"), r => r.Str("FriendlyName"));
+            // Pooled disks (Storage Spaces) can repeat or leave out the id: one name per id, never an exception.
+            .Where(r => r.Str("DeviceId").Length > 0).GroupBy(r => r.Str("DeviceId")).ToDictionary(g => g.Key, g => g.First().Str("FriendlyName"));
         foreach (var d in Wmi.Query("SELECT Index, PNPDeviceID, Model FROM Win32_DiskDrive"))
         {
             if (!nvme.TryGetValue(d.Int("Index")?.ToString() ?? "", out var name)) continue;

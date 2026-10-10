@@ -1,4 +1,5 @@
 using Optimizer.Core.Actions;
+using Optimizer.Core.Backup;
 using Optimizer.Core.Docs;
 using Optimizer.Core.Logging;
 using Optimizer.Core.Tweaks;
@@ -30,11 +31,23 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>Raised after any change was written or undone (also when it failed half-way), so pages refresh their state.</summary>
     public event EventHandler<TweakDefinition?>? Changed;
 
-    public string Title(TweakDefinition t)
+    public string Title(TweakDefinition t) => TitleOf(t, Loc.Instance.Language);
+
+    /// <summary>The explanation page's title, with the subject for tweaks that share a page (DNS presets, services).</summary>
+    public static string TitleOf(TweakDefinition t, string lang)
     {
-        var lang = Loc.Instance.Language;
         var title = DocStore.Get(t.DocId, lang)?.Title ?? DocStore.Get(t.DocId, "en")?.Title ?? t.Id;
         return t.Subject is { Length: > 0 } s ? $"{title}: {s}" : title;
+    }
+
+    /// <summary>
+    /// A block reason as text. Conflicts and requirements name another tweak by id; the user sees its title instead.
+    /// </summary>
+    public static string BlockText(Block b, string lang)
+    {
+        var detail = b.Detail ?? "";
+        if (b.ReasonKey is "block.conflict" or "block.requires" && TweakCatalog.Current.Get(detail) is { } other) detail = TitleOf(other, lang);
+        return Labels.Current.Get(lang, b.ReasonKey) + detail;
     }
 
     public string Summary(TweakDefinition t)
@@ -73,11 +86,20 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         }
     }
 
+    /// <summary>
+    /// A page operation that changes the system outside the tweak engine (remove an app, clean up, uninstall, a quick
+    /// fix): runs as the only change, like an apply, and an unexpected error is logged and shown. False when it did not
+    /// run or failed.
+    /// </summary>
+    public Task<bool> RunExclusiveAsync(string what, Func<Task> work) => ExclusiveAsync(what, async () =>
+    {
+        await work();
+        return true;
+    }, false);
+
     /// <summary>Confirms and applies one tweak. Returns true when something was written.</summary>
     public Task<bool> ApplyAsync(TweakDefinition t) => ExclusiveAsync($"apply {t.Id}", async () =>
     {
-        var lang = Loc.Instance.Language;
-        var labels = Labels.Current;
         var applied = appliedIds();
         var currentFacts = facts();
         var status = await Task.Run(() => services.Engine.Detect(t, currentFacts, applied));
@@ -115,7 +137,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var warnings = new List<string>();
         if (t.Preview) warnings.Add(labels.Get(lang, "preview.warning"));
         if (t.IsBootCritical) warnings.Add(labels.Get(lang, "undo.bootCritical"));
-        warnings.AddRange(status.Blocks.Where(b => b.ReasonKey is not ("block.antiCheat" or "block.expertMode")).Select(b => labels.Get(lang, b.ReasonKey) + (b.Detail ?? "")));
+        warnings.AddRange(status.Blocks.Where(b => b.ReasonKey is not ("block.antiCheat" or "block.expertMode")).Select(b => BlockText(b, lang)));
         if (t.EffectiveRisk == Risk.Expert && !expert) warnings.Add(labels.Get(lang, "block.expertMode"));
         var antiCheat = status.Blocks.FirstOrDefault(b => b.ReasonKey == "block.antiCheat") is { } ac ? labels.Get(lang, ac.ReasonKey) + ac.Detail : null;
         return new ConfirmRequest(title, summary, preview, badges, warnings, antiCheat, false);
@@ -125,7 +147,16 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     public Task<bool> UndoAsync(TweakDefinition t) => ExclusiveAsync($"undo {t.Id}", async () =>
     {
         var lang = Loc.Instance.Language;
-        var backup = services.Store.Get(t.Id);
+        TweakBackup? backup;
+        try
+        {
+            backup = services.Store.Get(t.Id);
+        }
+        catch (BackupUnreadableException ex)
+        {
+            Report(Loc.Instance.Format("Result_Error", ex.Message), InfoBarSeverity.Error);
+            return false;
+        }
         if (backup is null)
         {
             Report(services.Store.IsDamaged(t.Id)
@@ -203,7 +234,8 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var failed = results.Count(r => r.Result.Outcome == ApplyOutcome.Failed);
         var skipped = results.Count - ok - failed;
         Report(Loc.Instance.Format("Result_Batch", ok, failed, skipped), failed > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
-        if (ok > 0 || failed > 0) Changed?.Invoke(this, tweaks[0]);
+        // Several changes at once: null makes the app read everything again (a single page-level item would not).
+        if (ok > 0 || failed > 0) Changed?.Invoke(this, tweaks.Count == 1 ? tweaks[0] : null);
         return results;
     }, []);
 
@@ -215,7 +247,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
             ApplyOutcome.Applied => Loc.Instance.Format(t.Restart ? "Result_AppliedRestart" : t.SignOut ? "Result_AppliedSignOut" : "Result_Applied", title),
             ApplyOutcome.AppliedIneffective => Loc.Instance.Format("Result_Ineffective", title),
             ApplyOutcome.NothingToDo => Loc.Instance["Result_NothingToDo"],
-            ApplyOutcome.Blocked => string.Join(" ", (result.Blocks ?? []).Select(b => Labels.Current.Get(lang, b.ReasonKey) + (b.Detail ?? ""))),
+            ApplyOutcome.Blocked => string.Join(" ", (result.Blocks ?? []).Select(b => BlockText(b, lang))),
             // Only reached when a restore point was requested but could not be created: nothing was changed.
             ApplyOutcome.NeedsRestorePointDecision => Loc.Instance["Result_NoRestorePoint"],
             // The engine keeps the backup when part of the change could not be rolled back: then say so.

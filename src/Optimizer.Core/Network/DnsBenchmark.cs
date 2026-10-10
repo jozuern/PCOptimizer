@@ -5,10 +5,7 @@ using System.Net.Sockets;
 
 namespace Optimizer.Core.Network;
 
-public sealed record DnsServerResult(string Name, IPAddress Server, double? MedianMs, double? BestMs, int Answered, int Sent)
-{
-    public double SuccessRate => Sent == 0 ? 0 : (double)Answered / Sent;
-}
+public sealed record DnsServerResult(string Name, IPAddress Server, double? MedianMs, double? BestMs, int Answered, int Sent);
 
 /// <summary>
 /// Opt-in DNS benchmark: sends plain UDP DNS queries (RFC 1035, type A) for common domains to each server and
@@ -61,14 +58,24 @@ public static class DnsBenchmark
             progress?.Report(name);
             var times = new List<double>();
             var sent = 0;
-            // The first round warms the server's cache like normal use does; all rounds count.
-            for (var r = 0; r < rounds; r++)
+            var missedInARow = 0;
+            // The first round warms the server's cache like normal use does; all rounds count. A server that does not
+            // answer three times in a row is given up (blocked port 53): each miss costs a full second.
+            for (var r = 0; r < rounds && !(missedInARow >= 3 && times.Count == 0); r++)
             {
                 foreach (var domain in Domains)
                 {
                     ct.ThrowIfCancellationRequested();
                     sent++;
-                    if (await QueryAsync(address, domain, TimeSpan.FromSeconds(1), ct) is { } ms) times.Add(ms);
+                    if (await QueryAsync(address, domain, TimeSpan.FromSeconds(1), ct) is { } ms)
+                    {
+                        times.Add(ms);
+                        missedInARow = 0;
+                    }
+                    else if (++missedInARow >= 3 && times.Count == 0)
+                    {
+                        break;
+                    }
                 }
             }
             times.Sort();

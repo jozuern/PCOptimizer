@@ -20,8 +20,15 @@ public sealed class OnBatteryCheck : IFindingCheck
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            // ACLineStatus 255 ("unknown status") is not "on battery".
-            Status = p.Power.OnAc switch { true => FindingStatus.Ok, false => FindingStatus.Problem, null => FindingStatus.Unknown },
+            // ACLineStatus 255 ("unknown status") is not "on battery". A laptop without a graphics card is not a gaming
+            // laptop: on battery it is only information.
+            Status = p.Power.OnAc switch
+            {
+                true => FindingStatus.Ok,
+                // GPUs not read: treated as a gaming laptop, as before.
+                false => p.Gpus is { } gpus && !gpus.Any(g => g.Kind == GpuKind.Discrete) ? FindingStatus.Info : FindingStatus.Problem,
+                null => FindingStatus.Unknown,
+            },
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =

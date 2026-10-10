@@ -47,6 +47,8 @@ public class DebloatServicesAppsTests
         Assert.False(CatalogData.Current.Appx.IsProtected("Microsoft.Edge.GameAssist"));
         Assert.True(CatalogData.Current.Appx.IsProtected("Microsoft.MicrosoftEdge.Stable"));
         Assert.True(CatalogData.Current.Appx.IsProtected("Microsoft.Edge.GameAssistant"));
+        // An exception is always one exact package: "!Microsoft.Edge*" would unprotect all of Edge.
+        Assert.All(CatalogData.Current.Appx.Protected.Where(p => p.StartsWith('!')), p => Assert.False(p.EndsWith('*'), p));
     }
 
     [Fact]
@@ -165,12 +167,26 @@ public class DebloatServicesAppsTests
     [InlineData(@"mshta.exe https://example.invalid/x.hta", true)]
     [InlineData(@"wscript.exe ""C:\Users\x\AppData\Roaming\x.vbs""", true)]
     [InlineData(@"C:\Program Files\App\app.exe --minimized", false)]
+    // A script host started by another one, and rundll32 entry points that start something else.
+    [InlineData(@"cmd.exe /c C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -enc SQBFAFgA", true)]
+    [InlineData(@"rundll32.exe C:\Windows\System32\shell32.dll,ShellExec_RunDLL C:\Users\Public\x.exe", true)]
+    [InlineData(@"rundll32.exe url.dll,FileProtocolHandler https://example.invalid/x", true)]
+    [InlineData(@"rundll32.exe C:\Windows\System32\x.dll,Entry C:\Users\Public\payload.bin", true)]
+    [InlineData(@"""C:\Windows\system32\rundll32.exe"" C:\Windows\system32\AppxDeploymentClient.dll,AppxPreStageCleanupRunTask", false)]
     public void ScriptHostEntriesAreFlaggedUnlessTheyOnlyRunSystemFiles(string command, bool flagged)
     {
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         var c = command.Replace(@"C:\Windows", windows, StringComparison.OrdinalIgnoreCase);
-        var image = CommandLine.ImagePath(c);
-        Assert.Equal(flagged, CommandLine.RunsUnverifiedScript(c, image));
+        Assert.Equal(flagged, CommandLine.RunsUnverifiedScript(c));
+    }
+
+    [Fact]
+    public void ProgramKeepsRundllAsTheProgramWithItsArguments()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var (file, args) = CommandLine.Program($@"RunDll32 {windows}\system32\x.dll,LaunchSetup ""C:\Program Files\App\setup.exe"" -removeonly")!.Value;
+        Assert.Equal(Path.Combine(windows, @"System32\RunDll32"), file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? file[..^4] : file, ignoreCase: true);
+        Assert.Equal($@"{windows}\system32\x.dll,LaunchSetup ""C:\Program Files\App\setup.exe"" -removeonly", args);
     }
 
     [Fact]
@@ -266,5 +282,40 @@ public class DebloatServicesAppsTests
         Assert.Null(OptionalFeatureAction.ReadState(fx.Processes, "Missing"));
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal("Disabled", state);
+    }
+
+    /// <summary>
+    /// The uninstall guard looks at every OneDrive account: Documents moved into the work account (Business1) blocks
+    /// it, even when the personal account is listed first. A scan that stops at its limit blocks too.
+    /// </summary>
+    [Fact]
+    public void OneDriveGuardChecksEveryAccountAndAnIncompleteScan()
+    {
+        using var r = new SandboxRegistry();
+        var root = TestFolders.Create("onedrive");
+        try
+        {
+            var personal = Path.Combine(root, "OneDrive");
+            var work = Path.Combine(root, "OneDrive - Contoso");
+            Directory.CreateDirectory(personal);
+            Directory.CreateDirectory(Path.Combine(work, "Documents"));
+            for (var i = 0; i < 5; i++) File.WriteAllText(Path.Combine(work, $"f{i}.txt"), "x");
+            const string accounts = @"Software\Microsoft\OneDrive\Accounts";
+            const string shell = @"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders";
+            RegistryValue.Write(r, Hive.User, accounts + @"\Personal", "UserFolder", "string", personal);
+            RegistryValue.Write(r, Hive.User, accounts + @"\Business1", "UserFolder", "string", work);
+            RegistryValue.Write(r, Hive.User, shell, "Personal", "string", Path.Combine(work, "Documents"));
+
+            Assert.Equal(["Personal"], OneDrive.Read(r, root).RedirectedFolders);
+
+            RegistryValue.Write(r, Hive.User, shell, "Personal", "string", Path.Combine(root, "Documents"));
+            var cut = OneDrive.Read(r, root, maxFiles: 3);
+            Assert.True(cut.ScanTruncated);
+            Assert.Equal("block.oneDriveScanIncomplete", (cut with { SetupPath = "x" }).BlockKey);
+        }
+        finally
+        {
+            TestFolders.Delete(root);
+        }
     }
 }

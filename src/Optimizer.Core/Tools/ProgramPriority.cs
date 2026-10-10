@@ -13,7 +13,8 @@ namespace Optimizer.Core.Tools;
 public enum CpuPriority { Low = 1, BelowNormal = 5, AboveNormal = 6, High = 3 }
 
 /// <summary>A start priority rule for one program file name.</summary>
-public sealed record PriorityRule(string Exe, CpuPriority? Cpu, bool LowIo);
+/// <param name="OtherCpu">A CpuPriorityClass this app does not offer (Normal, Realtime), set by another program.</param>
+public sealed record PriorityRule(string Exe, CpuPriority? Cpu, bool LowIo, int? OtherCpu = null);
 
 /// <summary>
 /// Persistent start priorities without a background program: Windows reads PerfOptions when the program starts.
@@ -29,18 +30,25 @@ public static partial class ProgramPriority
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9 ._\-]{0,99}\.exe$", RegexOptions.IgnoreCase)]
     private static partial Regex ExeRegex();
 
-    /// <summary>Every program with a CpuPriorityClass or an I/O priority in PerfOptions.</summary>
+    /// <summary>
+    /// Every program with a CpuPriorityClass or an I/O priority in PerfOptions. Rules from other programs with a class
+    /// this app does not offer (Realtime) are listed too, so they can be seen and removed. Names the app cannot handle
+    /// (characters outside <see cref="IsValidExe"/>) are left out.
+    /// </summary>
     public static IReadOnlyList<PriorityRule> Read(IRegistryRoots registry)
     {
         var list = new List<PriorityRule>();
         using var root = registry.Open(Hive.Machine, Ifeo, writable: false);
         foreach (var exe in root?.GetSubKeyNames() ?? [])
         {
+            if (!IsValidExe(exe)) continue;
             using var perf = root!.OpenSubKey($@"{exe}\PerfOptions");
             if (perf is null) continue;
-            CpuPriority? cpu = perf.GetValue("CpuPriorityClass") is int c && Enum.IsDefined(typeof(CpuPriority), c) ? (CpuPriority)c : null;
+            var raw = perf.GetValue("CpuPriorityClass") as int?;
+            CpuPriority? cpu = raw is { } c && Enum.IsDefined(typeof(CpuPriority), c) ? (CpuPriority)c : null;
+            int? other = raw is not null && cpu is null ? raw : null;
             var lowIo = perf.GetValue("IoPriority") is int io && io < 2;
-            if (cpu is not null || lowIo) list.Add(new PriorityRule(exe, cpu, lowIo));
+            if (cpu is not null || other is not null || lowIo) list.Add(new PriorityRule(exe, cpu, lowIo, other));
         }
         return list.OrderBy(r => r.Exe, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -59,7 +67,9 @@ public static partial class ProgramPriority
     {
         if (!IsValidExe(exe)) throw new ArgumentException($"invalid program name {exe}");
         var actions = new List<TweakAction> { Value(exe, "CpuPriorityClass", (uint)cpu) };
-        if (lowIo) actions.Add(Value(exe, "IoPriority", 1));
+        // Without low disk priority, a value left from an earlier rule is removed (undo puts it back).
+        actions.Add(lowIo ? Value(exe, "IoPriority", 1)
+            : new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "IoPriority", Delete = true });
         return new TweakDefinition
         {
             Id = $"priority.{TweakIds.Slug(exe.ToLowerInvariant())}",

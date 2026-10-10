@@ -81,7 +81,7 @@ public sealed class TweakItemViewModel : InspectorItem
         var hard = status.Blocks.Where(b => !b.CanOverride).ToList();
         // "Needs administrator rights" applies to every row; the page shows it once as a banner instead.
         var first = status.Blocks.FirstOrDefault(b => b.ReasonKey != "block.notElevated");
-        BlockText = first is null ? null : labels.Get(lang, first.ReasonKey) + (first.Detail ?? "");
+        BlockText = first is null ? null : ChangeRunner.BlockText(first, lang);
         var canChange = status.State is not (TweakState.NotApplicable or TweakState.Unsupported or TweakState.EnforcedByPolicy);
         IsOn = status.IsOn;
         HasBackup = status.HasBackup;

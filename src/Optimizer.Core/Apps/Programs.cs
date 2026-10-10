@@ -90,39 +90,35 @@ public static class Programs
             uninstall, productCode, hive == Hive.User, $@"{(hive == Hive.Machine ? "HKLM" : "HKCU")}\{path}\{sub}");
     }
 
-    /// <summary>Null when the program has no usable uninstall command.</summary>
-    public static UninstallCommand? Command(DesktopProgram p, Func<string, bool>? isAdminOnly = null)
+    /// <summary>
+    /// Null when the program has no usable uninstall command. Windows Installer entries always use System32's msiexec
+    /// with /x; a per-user entry (HKCU, which any program of the user can write) runs it as the signed-in user, so a
+    /// planted entry cannot make an elevated msiexec remove a program installed for the whole PC. Other uninstallers run
+    /// elevated only when the program and, for rundll32 lines, its DLL are in folders only administrators can change.
+    /// </summary>
+    public static UninstallCommand? Command(DesktopProgram p, Func<string, bool>? isAdminOnly = null, Func<string, bool>? exists = null)
     {
         isAdminOnly ??= TrustedPath.IsAdminOnlyWritable;
-        if (p.ProductCode is { } code)
-            return new UninstallCommand(UninstallMode.WindowsInstaller, ProcessHardening.ResolveSystemTool("msiexec.exe"), $"/x {code}");
+        var msiMode = p.PerUser ? UninstallMode.AsUser : UninstallMode.WindowsInstaller;
+        var msiexec = ProcessHardening.ResolveSystemTool("msiexec.exe");
+        if (p.ProductCode is { } productCode) return new UninstallCommand(msiMode, msiexec, $"/x {productCode}");
         if (string.IsNullOrWhiteSpace(p.UninstallString)) return null;
         var expanded = Environment.ExpandEnvironmentVariables(p.UninstallString.Trim());
+        if (CommandLine.Program(expanded, s => s, exists) is not var (file, args)) return null;
         // "MsiExec.exe /I{GUID}" or "/X{GUID}" without the WindowsInstaller flag: always the remove action of System32's msiexec.
-        if (CommandLine.ImagePath(expanded) is { } image && Path.GetFileName(image).Equals("msiexec.exe", StringComparison.OrdinalIgnoreCase))
+        if (Path.GetFileName(file).Equals("msiexec.exe", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(file).Equals("msiexec", StringComparison.OrdinalIgnoreCase))
         {
             var start = expanded.IndexOf('{');
             var end = start >= 0 ? expanded.IndexOf('}', start) : -1;
             return start >= 0 && end > start && Guid.TryParse(expanded[start..(end + 1)], out var g)
-                ? new UninstallCommand(UninstallMode.WindowsInstaller, ProcessHardening.ResolveSystemTool("msiexec.exe"), $"/x {g.ToString("B").ToUpperInvariant()}")
+                ? new UninstallCommand(msiMode, msiexec, $"/x {g.ToString("B").ToUpperInvariant()}")
                 : null;
         }
-        if (CommandLine.ImagePath(expanded) is not { } exe) return null;
-        var args = Arguments(expanded, exe);
-        var elevated = !p.PerUser && isAdminOnly(exe);
-        return new UninstallCommand(elevated ? UninstallMode.Elevated : UninstallMode.AsUser, exe, args);
-    }
-
-    /// <summary>The text after the program path, with or without quotes around the path.</summary>
-    public static string Arguments(string command, string exe)
-    {
-        var c = command.TrimStart();
-        if (c.StartsWith('"'))
-        {
-            var close = c.IndexOf('"', 1);
-            return close > 0 ? c[(close + 1)..].Trim() : "";
-        }
-        return c.Length > exe.Length && c.StartsWith(exe, StringComparison.OrdinalIgnoreCase) ? c[exe.Length..].Trim() : "";
+        // For a rundll32 line the DLL is the code that runs: it must be admin-only too.
+        var image = CommandLine.ImagePath(expanded, s => s, exists);
+        var elevated = !p.PerUser && isAdminOnly(file)
+            && (image is null || string.Equals(image, file, StringComparison.OrdinalIgnoreCase) || isAdminOnly(image));
+        return new UninstallCommand(elevated ? UninstallMode.Elevated : UninstallMode.AsUser, file, args);
     }
 }
 

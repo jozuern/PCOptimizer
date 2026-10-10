@@ -16,7 +16,11 @@ public sealed class RegistryAction : TweakAction
     /// <summary>dword, qword, string, expandString, multiString, binary.</summary>
     public string Kind { get; init; } = "dword";
 
-    /// <summary>Number, string, hex string (binary) or string array (multiString).</summary>
+    /// <summary>
+    /// Number, string, hex string (binary) or string array (multiString). A delete action has none: the empty element is
+    /// left out when the action is stored with a backup (it cannot be written as JSON).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public JsonElement Value { get; init; }
 
     /// <summary>true = the tweak removes the value.</summary>

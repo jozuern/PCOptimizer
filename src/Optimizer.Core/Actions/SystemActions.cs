@@ -190,11 +190,22 @@ public sealed class PowerSchemeAction : TweakAction
     private void RestoreCore(ActionContext c, StoredValue original, Guid? appliedPlan)
     {
         var active = c.Power.ActiveScheme();
-        var created = DuplicateFrom is not null && Name is not null ? c.Power.Schemes().Where(s => s.Name == Name).Select(s => s.Id).ToList() : [];
-        // A plan this action created and activated, found by its GUID (the name may have been changed since).
-        if (DuplicateFrom is not null && appliedPlan is { } plan && !created.Contains(plan) && c.Power.SchemeExists(plan) &&
-            !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
-            created.Add(plan);
+        List<Guid> created = [];
+        if (DuplicateFrom is not null && Name is not null)
+        {
+            // The plan this action created and activated, found by its GUID (the name may have been changed since). Only
+            // that plan is removed: another plan with the same name may be the user's own copy. Without the GUID (a
+            // rollback right after a failed apply) the plans with the name are the ones just created.
+            if (appliedPlan is { } plan)
+            {
+                if (c.Power.SchemeExists(plan) && !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
+                    created.Add(plan);
+            }
+            else
+            {
+                created = c.Power.Schemes().Where(s => s.Name == Name).Select(s => s.Id).ToList();
+            }
+        }
         var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate));
         if (ours)
         {

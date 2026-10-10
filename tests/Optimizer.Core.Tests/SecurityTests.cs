@@ -96,6 +96,47 @@ public class SecurityTests
         Assert.Equal(Path.Combine(Environment.SystemDirectory, "bcdedit.exe"), ProcessHardening.ResolveSystemTool("bcdedit.exe"));
     }
 
+    /// <summary>windir, ComSpec and PATH come from Windows, not from HKCU\Environment; TEMP is the app's admin-only folder.</summary>
+    [Fact]
+    public void ElevatedToolsGetWindowsPathsAndTheAppsTemp()
+    {
+        var windows = Path.GetDirectoryName(Environment.SystemDirectory)!;
+        var temp = TempFolder("tooltemp");
+        var before = ProcessHardening.TempFolder;
+        try
+        {
+            ProcessHardening.TempFolder = temp;
+            var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("dism.exe"));
+            psi.Environment["windir"] = @"C:\Users\me\fakewin";
+            psi.Environment["ComSpec"] = @"C:\Users\me\cmd.exe";
+            psi.Environment["PATH"] = @"C:\Users\me\AppData\Local\Microsoft\WindowsApps;" + Environment.SystemDirectory;
+            psi.Environment["TEMP"] = @"C:\Users\me\AppData\Local\Temp";
+            ProcessHardening.Apply(psi);
+            Assert.Equal(windows, psi.Environment["windir"]);
+            Assert.Equal(windows, psi.Environment["SystemRoot"]);
+            Assert.Equal(Path.Combine(Environment.SystemDirectory, "cmd.exe"), psi.Environment["ComSpec"]);
+            var path = psi.Environment["PATH"]!.Split(';');
+            Assert.Equal(Environment.SystemDirectory, path[0]);
+            Assert.DoesNotContain(path, p => p.Contains(@"\Users\", StringComparison.OrdinalIgnoreCase) || p.Contains('%'));
+            Assert.Equal(temp, psi.Environment["TEMP"]);
+            Assert.Equal(temp, psi.Environment["TMP"]);
+        }
+        finally
+        {
+            ProcessHardening.TempFolder = before;
+            TestFolders.Delete(temp);
+        }
+    }
+
+    [Theory]
+    [InlineData("1", true)]
+    [InlineData(" 1 ", true)]
+    [InlineData("0", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void AConfiguredProfilerIsRecognized(string? value, bool expected) =>
+        Assert.Equal(expected, ProcessHardening.ProfilerRequested(n => n == "CORECLR_ENABLE_PROFILING" ? value : null));
+
     // ---------------- Data folder ----------------
 
     private static string TempFolder(string name) => TestFolders.Create(name);
@@ -131,6 +172,51 @@ public class SecurityTests
         finally
         {
             TestFolders.Delete(root);
+        }
+    }
+
+    /// <summary>
+    /// The data folder is created locked in one step and never adopts what another account put there: a folder owned by
+    /// the user is replaced, a planted file inside a trusted folder is deleted instead of given a new owner. Without
+    /// administrator rights the folder cannot get the Administrators owner, and Lock fails closed.
+    /// </summary>
+    [Fact]
+    public void LockCreatesALockedFolderAndNeverAdoptsForeignEntries()
+    {
+        var parent = TempFolder("lock");
+        try
+        {
+            var root = Path.Combine(parent, "data");
+            if (!DataPaths.ProcessIsElevated)
+            {
+                Assert.False(Backup.SecureFolder.Lock(root));
+                return;
+            }
+            Assert.True(Backup.SecureFolder.Lock(root));
+            Assert.True(Backup.SecureFolder.IsLocked(new DirectoryInfo(root)));
+            Assert.True(Backup.SecureFolder.IsOwnedByAdmins(new DirectoryInfo(root)));
+
+            var planted = Path.Combine(root, "planted.json");
+            File.WriteAllText(planted, "{}");
+            OwnByUser(planted);
+            Assert.True(Backup.SecureFolder.Lock(root));
+            Assert.False(File.Exists(planted));
+
+            // A root created by the user is removed and created again, not taken over with its content.
+            var foreign = Path.Combine(parent, "foreign");
+            Directory.CreateDirectory(foreign);
+            File.WriteAllText(Path.Combine(foreign, "settings.json"), "{}");
+            var info = new DirectoryInfo(foreign);
+            var security = info.GetAccessControl();
+            security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User!);
+            info.SetAccessControl(security);
+            Assert.True(Backup.SecureFolder.PrepareRoot(foreign));
+            Assert.False(File.Exists(Path.Combine(foreign, "settings.json")));
+            Assert.True(Backup.SecureFolder.IsLocked(new DirectoryInfo(foreign)));
+        }
+        finally
+        {
+            TestFolders.Delete(parent);
         }
     }
 

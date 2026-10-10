@@ -152,13 +152,48 @@ public class CleanupStorageTests : IDisposable
         var win = Path.Combine(_root, "Windows");
         Directory.CreateDirectory(Path.Combine(win, "SoftwareDistribution"));
         Directory.CreateDirectory(Path.Combine(win, @"System32\catroot2"));
-        var processes = new FakeProcesses { Handler = (f, a) => (a.StartsWith("stop bits", StringComparison.Ordinal) ? 2 : 0, "") };
-        var steps = UpdateRepair.Run(processes, windowsDir: win, now: new DateTime(2026, 10, 9, 12, 0, 0));
+        // The fake service follows net stop and net start; bits was already stopped (net.exe returns 2).
+        var services = new FakeServices();
+        foreach (var name in UpdateRepair.Services) services.Running[name] = name != "bits";
+        var processes = new FakeProcesses
+        {
+            Handler = (f, a) =>
+            {
+                var parts = a.Split(' ');
+                if (parts[0] == "stop") services.Running[parts[1]] = false;
+                if (parts[0] == "start") services.Running[parts[1]] = true;
+                return (a.StartsWith("stop bits", StringComparison.Ordinal) ? 2 : 0, "");
+            },
+        };
+        var steps = UpdateRepair.Run(processes, services, windowsDir: win, now: new DateTime(2026, 10, 9, 12, 0, 0), settle: TimeSpan.Zero);
         Assert.All(steps, s => Assert.True(s.Ok, s.Key));
         Assert.True(Directory.Exists(Path.Combine(win, "SoftwareDistribution.old-20261009-120000")));
         Assert.True(Directory.Exists(Path.Combine(win, @"System32\catroot2.old-20261009-120000")));
         Assert.Equal(4, processes.Calls.Count(c => c.Contains(" stop ")));
         Assert.Equal(3, processes.Calls.Count(c => c.Contains(" start ")));
         Assert.All(steps, s => Assert.True(Labels.Current.Has("en", s.Key) && Labels.Current.Has("de", s.Key), s.Key));
+    }
+
+    /// <summary>net.exe returns 2 also for "access denied": a service that does not run afterwards is a failed step.</summary>
+    [Fact]
+    public void UpdateRepairReportsAServiceThatDidNotStart()
+    {
+        var win = Path.Combine(_root, "Windows2");
+        Directory.CreateDirectory(win);
+        var services = new FakeServices();
+        var processes = new FakeProcesses
+        {
+            Handler = (f, a) =>
+            {
+                var parts = a.Split(' ');
+                if (parts[0] == "stop") services.Running[parts[1]] = false;
+                if (parts[0] == "start" && parts[1] != "wuauserv") services.Running[parts[1]] = true;
+                return (a == "start wuauserv" ? 2 : 0, a == "start wuauserv" ? "System error 5 has occurred." : "");
+            },
+        };
+        var steps = UpdateRepair.Run(processes, services, windowsDir: win, settle: TimeSpan.Zero);
+        var failed = Assert.Single(steps, s => !s.Ok);
+        Assert.Equal("repair.start.wuauserv", failed.Key);
+        Assert.Contains("System error 5", failed.Detail);
     }
 }

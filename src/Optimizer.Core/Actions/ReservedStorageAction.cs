@@ -14,13 +14,13 @@ public sealed partial class ReservedStorageAction : TweakAction
     public override string Describe(ActionContext c) => "Reserved storage (DISM /Set-ReservedStorageState)";
     public override StoredValue Desired(ActionContext c) => new(true, "reservedstorage", Enabled ? "Enabled" : "Disabled");
 
-    public override StoredValue? Read(ActionContext c)
+    public override StoredValue? Read(ActionContext c) => ReadCache.Get(c, TargetKey, () =>
     {
         var (code, output) = c.Processes.Run("dism.exe", "/Online /English /Get-ReservedStorageState", TimeSpan.FromMinutes(2));
         if (code != 0) return null;
         var m = StateRegex().Match(output);
         return m.Success ? new StoredValue(true, "reservedstorage", m.Groups[1].Value.Equals("enabled", StringComparison.OrdinalIgnoreCase) ? "Enabled" : "Disabled") : null;
-    }
+    });
 
     public override void Apply(ActionContext c) => Set(c, Enabled);
 
@@ -29,8 +29,9 @@ public sealed partial class ReservedStorageAction : TweakAction
         if (original.Data is "Enabled" or "Disabled") Set(c, original.Data == "Enabled");
     }
 
-    private static void Set(ActionContext c, bool enabled)
+    private void Set(ActionContext c, bool enabled)
     {
+        ReadCache.Invalidate(c, TargetKey);
         var (code, output) = c.Processes.Run("dism.exe", $"/Online /English /Set-ReservedStorageState /State:{(enabled ? "Enabled" : "Disabled")}", TimeSpan.FromMinutes(5));
         if (code != 0) throw new InvalidOperationException($"DISM failed ({code}): {output.Trim()}");
     }

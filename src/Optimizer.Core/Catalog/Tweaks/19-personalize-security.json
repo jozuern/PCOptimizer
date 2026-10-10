@@ -596,6 +596,7 @@
         ]
       },
       "risk": "moderate",
+      "preview": true,
       "restart": true,
       "actions": [
         {

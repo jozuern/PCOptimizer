@@ -14,8 +14,10 @@
                 </StackPanel>
             </DockPanel>
             <ui:InfoBar Title="" Message="{l:Tr Debloat_NotUndoable}" Severity="Informational" IsOpen="True" IsClosable="False" Margin="0,0,0,8" />
-            <ui:InfoBar Title="" Message="{Binding Debloat.CameBackText}" Severity="Warning" IsClosable="False" Margin="0,0,0,8"
+            <ui:InfoBar Title="" Message="{Binding Debloat.CameBackText}" Severity="Warning" IsClosable="False" Margin="0,0,0,4"
                         IsOpen="{Binding Debloat.CameBackText, Converter={StaticResource NullToBool}}" />
+            <ui:Button Content="{l:Tr Debloat_CameBackDismiss}" Command="{Binding Debloat.DismissCameBackCommand}" Margin="0,0,0,8"
+                       Visibility="{Binding Debloat.CameBackText, Converter={StaticResource NullToVisibility}}" />
             <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Visibility="{Binding Debloat.IsLoading, Converter={StaticResource BoolToVisibility}}" />
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Debloat_Empty}" Visibility="{Binding Debloat.ItemsEmpty, Converter={StaticResource BoolToVisibility}}" />
 

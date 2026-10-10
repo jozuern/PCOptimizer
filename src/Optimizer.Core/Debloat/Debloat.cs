@@ -163,24 +163,59 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
     /// <summary>Package names come from the catalog, but never pass anything but [A-Za-z0-9._-] into a script.</summary>
     public static bool IsSafeName(string name) => name.Length is > 0 and < 128 && name.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-');
 
-    public IReadOnlyList<RemovedApp> Removed()
+    public IReadOnlyList<RemovedApp> Removed() => ReadRemoved(out _);
+
+    /// <summary><paramref name="damaged"/>: the file exists but its content cannot be parsed.</summary>
+    private IReadOnlyList<RemovedApp> ReadRemoved(out bool damaged)
     {
+        damaged = false;
         try
         {
             return File.Exists(LogFile) ? JsonSerializer.Deserialize<List<RemovedApp>>(File.ReadAllText(LogFile)) ?? [] : [];
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        catch (JsonException ex)
+        {
+            damaged = true;
+            Log.Warn("debloat", $"removed-apps log unreadable: {ex.Message}");
+            return [];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Log.Warn("debloat", $"removed-apps log unreadable: {ex.Message}");
             return [];
         }
     }
 
+    /// <summary>
+    /// Takes apps off the removed list (the user installed them again on purpose): the "came back" notice stops for
+    /// them, and a later removal records them again.
+    /// </summary>
+    public void Forget(IEnumerable<string> names)
+    {
+        var set = names.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var list = ReadRemoved(out var damaged);
+        if (damaged || !list.Any(r => set.Contains(r.Name))) return;
+        Write(list.Where(r => !set.Contains(r.Name)).ToList());
+    }
+
+    private void Write(List<RemovedApp> list)
+    {
+        var temp = LogFile + ".tmp";
+        File.WriteAllText(temp, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
+        File.Move(temp, LogFile, overwrite: true);
+    }
+
+    /// <summary>
+    /// Written to a temporary file and moved over the log, so a power loss leaves the old or the new list. A log that
+    /// cannot be parsed is kept aside (.damaged) instead of being replaced by a list with only the new app: it holds the
+    /// Store links of the apps removed before.
+    /// </summary>
     private void Record(RemovedApp app)
     {
-        var list = Removed().Where(r => !string.Equals(r.Name, app.Name, StringComparison.OrdinalIgnoreCase)).Append(app).ToList();
+        var list = ReadRemoved(out var damaged).Where(r => !string.Equals(r.Name, app.Name, StringComparison.OrdinalIgnoreCase)).Append(app).ToList();
         Directory.CreateDirectory(dataFolder);
-        File.WriteAllText(LogFile, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
+        if (damaged) File.Move(LogFile, $"{LogFile}-{DateTime.Now:yyyyMMdd-HHmmss}.damaged", overwrite: true);
+        Write(list);
     }
 }
 
@@ -193,37 +228,76 @@ public sealed record OneDriveState(string? SetupPath, string? UserFolder, IReadO
     public bool Installed => SetupPath is not null;
     public bool KnownFolderMove => RedirectedFolders.Count > 0;
 
-    /// <summary>Label key of the reason uninstall is blocked, or null.</summary>
-    public string? BlockKey => !Installed ? "block.oneDriveNotInstalled" : KnownFolderMove ? "block.oneDriveKfm" : CloudOnlyFiles > 0 ? "block.oneDriveCloudOnly" : null;
+    /// <summary>
+    /// Label key of the reason uninstall is blocked, or null. A scan that stopped at its file limit blocks too: files
+    /// that exist only online may be among those not looked at.
+    /// </summary>
+    public string? BlockKey => !Installed ? "block.oneDriveNotInstalled" : KnownFolderMove ? "block.oneDriveKfm"
+        : CloudOnlyFiles > 0 ? "block.oneDriveCloudOnly" : ScanTruncated ? "block.oneDriveScanIncomplete" : null;
 }
 
 public static class OneDrive
 {
     private const uint RecallOnDataAccess = 0x00400000, RecallOnOpen = 0x00040000, Offline = 0x00001000;
 
+    private const string Accounts = @"Software\Microsoft\OneDrive\Accounts";
+
+    /// <summary>
+    /// Every signed-in account counts (Personal, Business1, Business2 and further ones): folders moved into any of them
+    /// and files that exist only online in any of them block the uninstall.
+    /// </summary>
     public static OneDriveState Read(IRegistryRoots registry, string? profilePath, int maxFiles = 200_000)
     {
-        string? userFolder = null;
-        foreach (var account in new[] { "Personal", "Business1", "Business2" })
+        var userFolders = UserFolders(registry);
+        var redirected = new List<string>();
+        foreach (var name in new[] { "Desktop", "Personal", "My Pictures", "My Music", "My Video" })
         {
-            var v = RegistryValue.Read(registry, Hive.User, $@"Software\Microsoft\OneDrive\Accounts\{account}", "UserFolder");
-            if (v is { Existed: true, Data: { Length: > 0 } folder }) { userFolder = folder; break; }
+            var v = RegistryValue.Read(registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders", name);
+            var expanded = Expand(v.Data, profilePath);
+            if (expanded is not null && userFolders.Any(f => IsBelow(expanded, f))) redirected.Add(name);
         }
 
-        var redirected = new List<string>();
-        if (userFolder is not null)
+        var cloudOnly = 0;
+        var truncated = false;
+        foreach (var folder in userFolders.Where(Directory.Exists))
         {
-            foreach (var name in new[] { "Desktop", "Personal", "My Pictures", "My Music", "My Video" })
+            var (count, cut) = CountCloudOnly(folder, maxFiles);
+            cloudOnly += count;
+            truncated |= cut;
+        }
+        // System32\OneDriveSetup.exe exists on every Windows; OneDrive is installed only when OneDrive.exe exists.
+        return new OneDriveState(IsInstalled(profilePath) ? FindSetup(profilePath) : null, userFolders.FirstOrDefault(), redirected, cloudOnly, truncated);
+    }
+
+    private static List<string> UserFolders(IRegistryRoots registry)
+    {
+        var folders = new List<string>();
+        Microsoft.Win32.RegistryKey? key;
+        try
+        {
+            key = registry.Open(Hive.User, Accounts, writable: false);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return folders;
+        }
+        using (key)
+        {
+            foreach (var account in key?.GetSubKeyNames() ?? [])
             {
-                var v = RegistryValue.Read(registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders", name);
-                var expanded = Expand(v.Data, profilePath);
-                if (expanded is not null && expanded.StartsWith(userFolder, StringComparison.OrdinalIgnoreCase)) redirected.Add(name);
+                var v = RegistryValue.Read(registry, Hive.User, $@"{Accounts}\{account}", "UserFolder");
+                if (v is { Existed: true, Data: { Length: > 0 } folder } && !folders.Contains(folder, StringComparer.OrdinalIgnoreCase)) folders.Add(folder);
             }
         }
+        return folders;
+    }
 
-        var (cloudOnly, truncated) = userFolder is not null && Directory.Exists(userFolder) ? CountCloudOnly(userFolder, maxFiles) : (0, false);
-        // System32\OneDriveSetup.exe exists on every Windows; OneDrive is installed only when OneDrive.exe exists.
-        return new OneDriveState(IsInstalled(profilePath) ? FindSetup(profilePath) : null, userFolder, redirected, cloudOnly, truncated);
+    /// <summary>The folder itself or a folder below it (C:\Users\x\OneDrive matches, C:\Users\x\OneDriveOld does not).</summary>
+    private static bool IsBelow(string path, string folder)
+    {
+        var p = path.TrimEnd('\\');
+        var f = folder.TrimEnd('\\');
+        return p.Equals(f, StringComparison.OrdinalIgnoreCase) || p.StartsWith(f + "\\", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IsInstalled(string? profilePath)

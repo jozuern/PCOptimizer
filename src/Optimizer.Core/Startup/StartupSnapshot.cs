@@ -18,7 +18,7 @@ public sealed record SnapshotDiff(DateTimeOffset TakenAt, IReadOnlySet<string> N
 /// </summary>
 public static class StartupSnapshot
 {
-    public static string DefaultFile => Path.Combine(DataPaths.Root, "startup-snapshot.json");
+    public static string DefaultFile => DataPaths.StartupSnapshot;
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
@@ -33,15 +33,19 @@ public static class StartupSnapshot
         File.Move(temp, file, overwrite: true);
     }
 
+    /// <summary>Null when there is no snapshot or it cannot be read (damaged, locked, no access).</summary>
     public static StartupSnapshotData? Load(string file)
     {
         if (!File.Exists(file)) return null;
         try
         {
-            return JsonSerializer.Deserialize<StartupSnapshotData>(File.ReadAllText(file), Json);
+            var data = JsonSerializer.Deserialize<StartupSnapshotData>(File.ReadAllText(file), Json);
+            // An edited file can have "Entries": null.
+            return data is null ? null : data with { Entries = data.Entries ?? [] };
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
         {
+            Logging.Log.Warn("startup", $"snapshot {file} not readable: {ex.Message}");
             return null;
         }
     }

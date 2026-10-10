@@ -18,7 +18,6 @@ public partial class ConfirmWindow : FluentWindow
         BadgeText.Text = string.Join(", ", request.Badges);
         BadgeText.Visibility = request.Badges.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         WarningList.ItemsSource = request.AntiCheatWarning is null ? request.Warnings : request.Warnings.Append(request.AntiCheatWarning).ToList();
-        var lang = Loc.Instance.Language;
         ChangeList.ItemsSource = request.Changes
             .Select(c => c with { Before = Show(c.Before), After = Show(c.After) })
             .ToList();

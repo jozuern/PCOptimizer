@@ -26,16 +26,20 @@ public static class RamSpeed
     /// Ryzen 1000 at 1866. The module's own speed (Win32_PhysicalMemory.Speed) decides the unit: a value is MHz when the
     /// module speed is below the JEDEC minimum too (the firmware uses MHz for both), or when twice the value still fits
     /// the module speed (a real 3600 MT/s on a DDR5-4800 module does not). Without the module speed, only values no real
-    /// configuration uses are doubled, and the range where both readings are plausible stays unknown.
+    /// configuration uses are doubled, and the range where both readings are plausible stays unknown. Values below the
+    /// lowest real speed are doubled in every case (XMP on: DDR4-3200 as 1600 next to a module speed of 2133).
     /// </summary>
     public static int? NormalizeConfigured(int? value, string type, int? moduleSpeed)
     {
         if (value is null or <= 0) return null;
         if (JedecMinimum(type) is not { } min) return value;
+        // Below the lowest speed any real configuration runs at, the value is MHz whatever the module reports. With XMP
+        // or EXPO on, the module speed is the JEDEC rate, so twice an MHz value (DDR4-3200 as 1600) is above it.
+        var lowestReal = type == "DDR5" ? 3600 : 1866;
+        if (value < lowestReal) return value * 2;
         if (moduleSpeed is { } speed and > 0)
             return value < min && (speed < min * 0.95 || value * 2 <= speed * 1.05) ? value * 2 : value;
-        var lowestReal = type == "DDR5" ? 3600 : 1866;
-        return value < lowestReal ? value * 2 : value < min ? null : value;
+        return value < min ? null : value;
     }
 
     public static int? NormalizeConfigured(MemoryModule m) => NormalizeConfigured(m.ConfiguredMts, m.Type, m.SpeedMts);

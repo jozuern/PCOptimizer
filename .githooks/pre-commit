@@ -15,8 +15,19 @@ if [ -z "$current" ]; then
     exit 1
 fi
 
+version_of() { sed -n 's|.*<Version>\([0-9]*\.[0-9]*\.[0-9]*\)</Version>.*|\1|p' | head -n 1; }
+
 if git diff --cached -U0 -- "$csproj" | grep -q '^+.*<Version>'; then
-    exit 0
+    # A version set in this commit must still be above the last commit's (a lower one comes back from a merge or a
+    # partial commit that staged an old csproj).
+    staged=$(git show ":$csproj" | version_of)
+    head=$(git show "HEAD:$csproj" 2>/dev/null | version_of)
+    if [ -n "$head" ] && [ "$staged" != "$head" ] && [ "$(printf '%s\n%s\n' "$head" "$staged" | sort -V | tail -n 1)" = "$staged" ]; then
+        exit 0
+    fi
+    if [ -z "$head" ]; then exit 0; fi
+    echo "pre-commit: the staged version $staged is not above $head. Raise it or unstage the csproj." >&2
+    exit 1
 fi
 
 # The hook stages the csproj: unstaged edits in it would end up in this commit without being chosen.

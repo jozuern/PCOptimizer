@@ -14,7 +14,12 @@ public static class UpdateRepair
 {
     public static readonly string[] Services = ["wuauserv", "bits", "cryptsvc", "msiserver"];
 
-    public static IReadOnlyList<RepairStep> Run(IProcessRunner processes, IProgress<RepairStep>? progress = null, string? windowsDir = null, DateTime? now = null)
+    /// <summary>
+    /// Each step is judged by the service's state afterwards: net.exe returns 2 for "not started" and "already running",
+    /// but also for "access denied" and "could not be started", so its exit code says little.
+    /// </summary>
+    public static IReadOnlyList<RepairStep> Run(IProcessRunner processes, IServiceManager services, IProgress<RepairStep>? progress = null,
+        string? windowsDir = null, DateTime? now = null, TimeSpan? settle = null)
     {
         var steps = new List<RepairStep>();
         void Add(RepairStep s)
@@ -29,9 +34,9 @@ public static class UpdateRepair
 
         foreach (var s in Services)
         {
-            // "net stop" returns 2 when the service is not running, which is fine here.
             var (code, output) = processes.Run("net.exe", $"stop {s} /y", TimeSpan.FromMinutes(2));
-            Add(new RepairStep($"repair.stop.{s}", code is 0 or 2, code is 0 or 2 ? null : output.Trim()));
+            var stopped = WaitFor(services, s, running: false, settle ?? TimeSpan.FromSeconds(15));
+            Add(new RepairStep($"repair.stop.{s}", stopped, stopped ? null : Detail(code, output)));
         }
 
         foreach (var folder in new[] { Path.Combine(win, "SoftwareDistribution"), Path.Combine(win, @"System32\catroot2") })
@@ -58,9 +63,23 @@ public static class UpdateRepair
         {
             if (s == "msiserver") continue; // Windows Installer starts on demand
             var (code, output) = processes.Run("net.exe", $"start {s}", TimeSpan.FromMinutes(2));
-            // 2 = already running
-            Add(new RepairStep($"repair.start.{s}", code is 0 or 2, code is 0 or 2 ? null : output.Trim()));
+            var running = WaitFor(services, s, running: true, settle ?? TimeSpan.FromSeconds(15));
+            Add(new RepairStep($"repair.start.{s}", running, running ? null : Detail(code, output)));
         }
         return steps;
+    }
+
+    private static string Detail(int code, string output) => output.Trim() is { Length: > 0 } text ? text : $"exit code {code}";
+
+    /// <summary>Waits until the service is in the wanted state (a service can still be stopping or starting).</summary>
+    private static bool WaitFor(IServiceManager services, string name, bool running, TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+        while (true)
+        {
+            if (services.IsRunning(name) == running) return true;
+            if (DateTime.UtcNow >= until) return false;
+            Thread.Sleep(250);
+        }
     }
 }

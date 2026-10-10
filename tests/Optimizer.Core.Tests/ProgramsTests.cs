@@ -66,7 +66,40 @@ public class ProgramsTests
     [InlineData(@"""C:\A B\u.exe"" /x /y", @"C:\A B\u.exe", "/x /y")]
     [InlineData(@"C:\Tools\u.exe --remove", @"C:\Tools\u.exe", "--remove")]
     [InlineData(@"C:\Tools\u.exe", @"C:\Tools\u.exe", "")]
-    public void ArgumentsFollowThePath(string command, string exe, string expected) => Assert.Equal(expected, Programs.Arguments(command, exe));
+    // Unquoted path with spaces, and a path written without .exe.
+    [InlineData(@"C:\Program Files\App X\unins000.exe /SILENT", @"C:\Program Files\App X\unins000.exe", "/SILENT")]
+    [InlineData(@"C:\Program Files\App X\unins000 /SILENT", @"C:\Program Files\App X\unins000.exe", "/SILENT")]
+    public void ArgumentsFollowThePath(string command, string exe, string expected)
+    {
+        var program = new DesktopProgram("App", null, null, null, null, command, null, false, "k");
+        var cmd = Programs.Command(program, _ => true, f => f.Equals(@"C:\Program Files\App X\unins000.exe", StringComparison.OrdinalIgnoreCase))!;
+        Assert.Equal(exe, cmd.File);
+        Assert.Equal(expected, cmd.Arguments);
+    }
+
+    /// <summary>A planted HKCU entry must not make an elevated msiexec remove a program installed for the whole PC.</summary>
+    [Fact]
+    public void PerUserWindowsInstallerEntriesRunAsTheUser()
+    {
+        var msi = new DesktopProgram("Contoso", null, null, null, null, "MsiExec.exe /X{11111111-2222-3333-4444-555555555555}", "{11111111-2222-3333-4444-555555555555}", true, "k");
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(msi, _ => true)!.Mode);
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(msi with { ProductCode = null }, _ => true)!.Mode);
+    }
+
+    /// <summary>rundll32 lines run rundll32 with the DLL as argument; elevated only when the DLL is admin-only too.</summary>
+    [Fact]
+    public void RundllUninstallersRunRundllWithTheirArguments()
+    {
+        var line = @"RunDll32 C:\PROGRA~2\COMMON~1\INSTAL~1\Ctor.dll,LaunchSetup ""C:\Program Files (x86)\App\setup.exe"" -removeonly";
+        var program = new DesktopProgram("Old app", null, null, null, null, line, null, false, "k");
+        var rundll = Path.Combine(Environment.SystemDirectory, "RunDll32.exe");
+        var cmd = Programs.Command(program, _ => true)!;
+        Assert.Equal(rundll, cmd.File, ignoreCase: true);
+        Assert.Equal(@"C:\PROGRA~2\COMMON~1\INSTAL~1\Ctor.dll,LaunchSetup ""C:\Program Files (x86)\App\setup.exe"" -removeonly", cmd.Arguments);
+        Assert.Equal(UninstallMode.Elevated, cmd.Mode);
+        // The DLL in a user-writable folder: not elevated, although rundll32 itself is in System32.
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(program, f => f.Equals(rundll, StringComparison.OrdinalIgnoreCase))!.Mode);
+    }
 
     [Fact]
     public void System32IsTrustedAndTempIsNot()

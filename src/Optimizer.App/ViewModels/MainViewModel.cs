@@ -423,7 +423,8 @@ public sealed partial class MainViewModel : ObservableObject
             OpenReleasePage();
             return;
         }
-        if (IsBusy || Updating)
+        // Any change (tweaks and page operations such as uninstalls) or scan must be finished first.
+        if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating)
         {
             ShowResult(Loc.Instance["Update_Busy"]);
             return;
@@ -449,7 +450,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
             // A change may have started while the download ran: never replace the exe in the middle of it.
-            if (IsBusy)
+            if (ChangeGate.Instance.Busy)
             {
                 ShowResult(Loc.Instance["Update_Busy"]);
                 return;
@@ -877,22 +878,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task EnableRestorePointsAsync()
     {
-        ChangeGate.Instance.Busy = true;
-        IsBusy = true;
-        try
-        {
-            await Task.Run(() => _services.RestorePoints.Enable());
-        }
-        catch (Exception ex)
-        {
-            Log.Error("ui", "enabling System Restore failed", ex);
-            ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
-        }
-        finally
-        {
-            IsBusy = false;
-            ChangeGate.Instance.Busy = false;
-        }
+        // The same gate as every change: one at a time, errors logged and shown.
+        await Runner.RunExclusiveAsync("enable System Restore", () => Task.Run(() => _services.RestorePoints.Enable()));
         await RefreshChangesStateAsync();
     }
 
@@ -904,7 +891,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            if (t?.Category is "Startup" or "Services" or "Features")
+            if (t?.Category is "Startup" or "Services" or "Features" or "Priorities")
             {
                 await RefreshChangesStateAsync();
                 return;

@@ -90,6 +90,22 @@ public static class Log
         }
     }
 
+    /// <summary>Session logs kept: every start writes one, so older ones are removed (the newest are kept for bug reports).</summary>
+    public const int KeptFiles = 30;
+
+    private static void Prune()
+    {
+        try
+        {
+            foreach (var old in new DirectoryInfo(Directory).GetFiles("session-*.jsonl").OrderByDescending(f => f.Name, StringComparer.Ordinal).Skip(KeptFiles))
+                old.Delete();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // An older log in use or not removable: try again at the next start.
+        }
+    }
+
     private static void Append(LogEntry entry)
     {
         try
@@ -98,6 +114,7 @@ public static class Log
             {
                 System.IO.Directory.CreateDirectory(Directory);
                 _file = Path.Combine(Directory, $"session-{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}.jsonl");
+                Prune();
             }
             File.AppendAllText(_file, JsonSerializer.Serialize(entry) + Environment.NewLine);
         }

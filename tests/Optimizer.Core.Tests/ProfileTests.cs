@@ -283,7 +283,11 @@ public class ProfileTests
     public void OnBatteryCheckReportsGamingOnBattery()
     {
         var c = CatalogData.Current;
-        Assert.Equal(FindingStatus.Problem, new OnBatteryCheck().Evaluate(Laptop(onAc: false, null), c).Single().Status);
+        // A gaming laptop (with a graphics card) on battery is a problem; one without is information only.
+        var gaming = Laptop(onAc: false, null) with { Gpus = [TestData.Gpu("NVIDIA GeForce RTX 4060 Laptop GPU", Vendor.Nvidia, 8L << 30) with { Kind = GpuKind.Discrete }] };
+        Assert.Equal(FindingStatus.Problem, new OnBatteryCheck().Evaluate(gaming, c).Single().Status);
+        Assert.Equal(FindingStatus.Problem, new OnBatteryCheck().Evaluate(Laptop(onAc: false, null), c).Single().Status); // GPUs unknown
+        Assert.Equal(FindingStatus.Info, new OnBatteryCheck().Evaluate(Laptop(onAc: false, null) with { Gpus = [] }, c).Single().Status);
         Assert.Equal(FindingStatus.Ok, new OnBatteryCheck().Evaluate(Laptop(onAc: true, null), c).Single().Status);
         Assert.Empty(new OnBatteryCheck().Evaluate(Laptop(true, null) with { System = new SystemInfo("V", "M", [3], false, false, false) }, c));
     }

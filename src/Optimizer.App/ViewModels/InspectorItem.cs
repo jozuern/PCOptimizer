@@ -29,18 +29,26 @@ public abstract class InspectorItem : ObservableObject
     private Task<string>? _markdownTask;
     private static readonly Dictionary<(string Key, string Lang), string> Cache = [];
 
+    private static int _generation;
+
     private async Task<string> BuildMarkdownAsync()
     {
         var cacheKey = (Key, Optimizer.App.Services.Loc.Instance.Language);
         if (Cache.TryGetValue(cacheKey, out var cached)) return _markdown = cached;
+        var generation = _generation;
         var factory = _markdownFactory;
         var text = factory is null ? "" : await Task.Run(factory);
-        Cache[cacheKey] = text;
+        // A build that started before a scan or change cleared the cache holds old values: used once, not cached.
+        if (generation == _generation) Cache[cacheKey] = text;
         return _markdown = text;
     }
 
     /// <summary>After a scan or a change the "What changes" values are different: documents are built again.</summary>
-    public static void ClearMarkdownCache() => Cache.Clear();
+    public static void ClearMarkdownCache()
+    {
+        _generation++;
+        Cache.Clear();
+    }
 
     protected Func<string> MarkdownFactory { init => _markdownFactory = value; }
     public string StatusText { get; protected init; } = "";

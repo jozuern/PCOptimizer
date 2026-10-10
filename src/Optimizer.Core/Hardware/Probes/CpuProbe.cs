@@ -31,7 +31,8 @@ public static partial class CpuProbe
             model,
             stepping,
             Math.Max(sockets, coreCount),
-            row.Int("NumberOfLogicalProcessors") ?? Environment.ProcessorCount,
+            // Every socket counts, as for the cores.
+            rows.Sum(r => r.Int("NumberOfLogicalProcessors") ?? 0) is > 0 and var threads ? threads : Environment.ProcessorCount,
             row.Int("MaxClockSpeed") ?? 0,
             row.Str("SocketDesignation"),
             current,

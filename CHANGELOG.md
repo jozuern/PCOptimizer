@@ -42,6 +42,14 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - Tweaks that use an undocumented value are marked "Undocumented value" and either cite proof that it works or stay in Preview; the lint enforces it.
 - Explanation pages need a Sources section, and every source must be cited in the text.
 
+### Second audit ([report](docs/audit-2026-10-10-2.md))
+
+- **Security:** the data folder is created locked in one step and never takes over files another account put there. The app refuses to run elevated with a .NET profiler set in the environment, and startup hooks are off. Tools the app starts get an admin-only TEMP and Windows' own paths instead of values from the user's environment. A per-user uninstall entry for a Windows Installer package runs msiexec as the user. Uninstallers in folders with generic write rights for users no longer run elevated.
+- **Shared PCs:** backups of an account's own settings are kept per account, so a second Windows account cannot take over or undo the first account's changes.
+- **One change at a time:** removing apps, cleanup, uninstalls, winget, quick fixes, repairs and the sensor driver install now wait for each other, for tweaks, for scans and for the self-update.
+- **Fixes:** "Move to the Recycle Bin" asks before a file too large for the Recycle Bin is deleted for good; system files such as pagefile.sys are no longer offered. The OneDrive guard checks every account. "Renew IP address" always renews after a release. The Windows Update repair reports a service that did not start. DNS over HTTPS reports a server that could not be set. Startup entries that run PowerShell through cmd or a file through rundll32 are marked, logon tasks with quoted paths and shortcuts are checked by their file, and one bad StartupApproved value no longer hides the Run entries. "RX Vega 10/11 Graphics" counts as integrated graphics. XMP and EXPO speeds reported in MHz are read correctly. Rules for program start priorities set by other programs are listed and can be removed.
+- **Speed:** DISM and PowerShell reads are shared within a scan and an apply, and the hardware scan does not wait for threads on PCs with few cores.
+
 ### New tweaks (documented settings)
 
 100 tweaks added from the review of other tweak tools ([feature reference](docs/windows-tweak-tools-feature-reference.md)), each a setting Microsoft, Google or Brave documents, with an explanation page in English and German:

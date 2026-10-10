@@ -4,13 +4,13 @@
 
 A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
 
-> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, not yet on real Windows installations: the [VM test plan](docs/vm-test-plan.md) has not been run. Tweaks marked **Preview** are the risky ones that most need that test. Create a restore point or a backup before you change anything, and start with the recommended items. Laptop profiles, battery checks and AMD-specific checks have not been checked on real hardware.
+> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, and parts of the [VM test plan](docs/vm-test-plan.md) have run on a Hyper-V VM ([results](docs/vm-test-results-2026-10-10.md)); the features added since then are not VM-tested yet. Tweaks marked **Preview** are the risky ones that most need that test. Create a restore point or a backup before you change anything, and start with the recommended items. Laptop profiles, battery checks and AMD-specific checks have not been checked on real hardware.
 
 <p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, profile, recommended changes and findings"></p>
 
 ## Download
 
-Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start.
+Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the `.sig` signature file against the key built into the app. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start.
 
 ## What it does
 

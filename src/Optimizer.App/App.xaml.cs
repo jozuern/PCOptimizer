@@ -49,7 +49,7 @@ public partial class App : Application
             else
             {
                 // The app keeps running; say that something failed and where to report it instead of failing silently.
-                (MainWindow.DataContext as MainViewModel)?.ShowResult(Loc.Instance["Error_Unexpected"]);
+                (MainWindow.DataContext as MainViewModel)?.ShowResult(Loc.Instance["Error_Unexpected"], Wpf.Ui.Controls.InfoBarSeverity.Error);
             }
         };
 

@@ -39,7 +39,7 @@ public sealed record StartupEntry(
     /// Runs PowerShell, cmd, mshta or a similar script host: Microsoft-signed, but the command decides what runs, so
     /// such entries are never hidden as "Microsoft".
     /// </summary>
-    public bool RunsScriptHost => CommandLine.RunsUnverifiedScript(Command, ImagePath);
+    public bool RunsScriptHost => CommandLine.RunsUnverifiedScript(Command);
 }
 
 /// <summary>Reads every autostart location the app knows (Autoruns-style), through the swappable registry and task interfaces.</summary>
@@ -145,7 +145,8 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             {
                 var name = Path.GetFileName(file);
                 var target = file.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? ShortcutTarget(file) : file;
-                yield return new StartupEntry(StartupKind.StartupFolder, Path.GetFileNameWithoutExtension(file), target, target, dir, hive,
+                // The command is target plus arguments; the image is the file it starts (judged by signature, script host).
+                yield return new StartupEntry(StartupKind.StartupFolder, Path.GetFileNameWithoutExtension(file), target, CommandLine.ImagePath(target), dir, hive,
                     ApprovedState(hive, "StartupFolder", name), $"folder:{hive}:{name}")
                 {
                     Target = $@"{Approved}\StartupFolder|{name}",
@@ -182,11 +183,15 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
     // ---------------- Scheduled tasks ----------------
 
     public IEnumerable<StartupEntry> LogonTasks() =>
-        tasks.List().Where(t => t.AtLogon || t.AtBoot).Select(t => new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'),
-            t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim(), CommandLine.ImagePath(t.Command is null ? null : $"\"{t.Command}\" {t.Arguments}".Trim()),
-            t.Path, Hive.Machine, t.Enabled, $"task:{t.Path}")
+        tasks.List().Where(t => t.AtLogon || t.AtBoot).Select(t =>
         {
-            Target = t.Path,
+            // A task's program path is often stored with quotes already: quote it only once.
+            var command = t.Command is null ? null : $"\"{t.Command.Trim().Trim('"')}\" {t.Arguments}".Trim();
+            return new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), command, CommandLine.ImagePath(command),
+                t.Path, Hive.Machine, t.Enabled, $"task:{t.Path}")
+            {
+                Target = t.Path,
+            };
         });
 
     // ---------------- Services and drivers ----------------
@@ -281,6 +286,16 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
                 Suspicious = !normal,
             };
         }
+
+        // A Shell value in the user's own Winlogon key replaces Explorer for that user and needs no administrator
+        // rights to set; Windows does not create it.
+        using var user = Open(Hive.User, @"Software\Microsoft\Windows NT\CurrentVersion\Winlogon");
+        if (user?.GetValue("Shell")?.ToString() is { Length: > 0 } shell)
+            yield return new StartupEntry(StartupKind.Winlogon, "Shell", shell, CommandLine.ImagePath(shell.Split(',')[0]), @"HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon",
+                Hive.User, null, "winlogon:user:Shell")
+            {
+                Suspicious = true,
+            };
     }
 
     public IEnumerable<StartupEntry> ImageHijacks()
@@ -352,8 +367,14 @@ public sealed class StartupApprovedAction : TweakAction
     public string Name { get; init; } = "";
     public bool Enabled { get; init; }
 
+    /// <summary>
+    /// Disabled when the first byte of the binary value has bit 0 set. Anything else (missing, another type, text that
+    /// is not hex) counts as enabled, as Task Manager treats it: the key can be written without administrator rights,
+    /// and an exception here would end the scan of the Run keys and hide every later entry.
+    /// </summary>
     public static bool IsEnabled(StoredValue raw) =>
-        !raw.Existed || raw.Data is not { Length: >= 2 } hex || (Convert.ToByte(hex[..2], 16) & 0x1) == 0;
+        !raw.Existed || raw.Kind != "binary" || raw.Data is not { Length: >= 2 } hex
+        || !byte.TryParse(hex.AsSpan(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var first) || (first & 0x1) == 0;
 
     public override string TargetKey => $"startupapproved:{Hive}:{Path}\\{Name}".ToLowerInvariant();
     public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}";

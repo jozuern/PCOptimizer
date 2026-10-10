@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Explanation lint: warning in Debug builds, error in Release builds.</summary>
+/// <summary>Explanation lint and user-visible text rules: every finding fails the test, in every build configuration.</summary>
 public partial class DocLintTests(ITestOutputHelper output)
 {
     [Fact]
@@ -70,6 +70,12 @@ public partial class DocLintTests(ITestOutputHelper output)
             foreach (Match m in XamlKeyPattern().Matches(File.ReadAllText(file))) used.Add(m.Groups[1].Value);
         foreach (var p in Catalog.CatalogData.Current.Profiles.Profiles) used.UnionWith([$"Profile_{p.Id}", $"ProfileDesc_{p.Id}"]);
         foreach (var type in new[] { "Temperature", "Load", "Clock", "Power", "Fan" }) used.Add($"SensorType_{type}");
+        // Quick fix cards build their keys from the fix id; the question only for fixes that ask first.
+        foreach (var fix in Tools.QuickFixes.All)
+        {
+            used.UnionWith([$"Quick_{fix.Id}", $"Quick_{fix.Id}Hint", $"Quick_{fix.Id}Done"]);
+            if (fix.Confirm) used.Add($"Quick_{fix.Id}Confirm");
+        }
         missing.AddRange(used.Where(k => !en.Contains(k)).Select(k => $"{k}: used but not defined"));
 
         foreach (var m in missing) output.WriteLine(m);

@@ -93,14 +93,17 @@ public sealed class UnexpectedRestartCheck : IFindingCheck
     {
         var events = p.Extras?.UnexpectedShutdowns;
         var stop = events?.FirstOrDefault(e => e.BugcheckCode != 0);
-        var status = events is null ? FindingStatus.Unknown : events.Count == 0 ? FindingStatus.Ok : FindingStatus.Problem;
+        // One shutdown with the power button held down and no Stop error is a user action (a hang ended by hand, a
+        // forced power off): information, not a stability problem.
+        var oneForcedOff = events is { Count: 1 } && events[0] is { BugcheckCode: 0, PowerButton: true };
+        var status = events is null ? FindingStatus.Unknown : events.Count == 0 ? FindingStatus.Ok : oneForcedOff ? FindingStatus.Info : FindingStatus.Problem;
         var last = events?.FirstOrDefault();
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Advisor,
             Status = status,
-            Variant = status != FindingStatus.Problem ? null : stop is not null ? "stop" : "power",
+            Variant = status is not (FindingStatus.Problem or FindingStatus.Info) ? null : stop is not null ? "stop" : "power",
             Impact = 3,
             Effects = [Effect.Stability],
             Facts = events is null

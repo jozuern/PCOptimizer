@@ -28,6 +28,14 @@ public static class Program
             NativeLibraryGuard.Install(SingleFileRuntime.TrustedFolders(AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string, runtimeBase));
         }
 
+        // A profiler set in the user's environment (HKCU\Environment) was loaded before this line; an elevated app
+        // with code from a user-writable place in it must not go on. Startup hooks are off (StartupHookSupport=false).
+        if (DataPaths.ProcessIsElevated && ProcessHardening.ProfilerRequested(Environment.GetEnvironmentVariable))
+        {
+            ShowError(Text("Startup_ProfilerSet"));
+            return 1;
+        }
+
         // Files the app creates must be owned by Administrators, or the data folder would distrust them (UAC off,
         // built-in Administrator, Administrator protection).
         if (DataPaths.ProcessIsElevated) DefaultOwner.SetAdministrators();
@@ -37,6 +45,9 @@ public static class Program
             return 1;
         }
         Log.EnableFile();
+        // Tools started elevated get an admin-only TEMP instead of the user's (DISM, installers and uninstallers run
+        // code from their TEMP).
+        if (DataPaths.ProcessIsElevated) ProcessHardening.UseTempFolder(DataPaths.Temp);
 
         var start = SingleFileRuntime.Decide(bundle, Environment.GetEnvironmentVariable(SingleFileRuntime.ExtractVariable), runtimeBase,
             Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1", DataPaths.ProcessIsElevated);
@@ -71,6 +82,8 @@ public static class Program
             using var hold = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.Read);
             var start = new ProcessStartInfo(exe) { UseShellExecute = false };
             foreach (var a in args) start.ArgumentList.Add(a);
+            // The restarted process must not inherit startup hooks, profilers or runtime switches from the user's environment.
+            ProcessHardening.RemoveCodeLoadingVariables(start.Environment, SingleFileRuntime.ExtractVariable);
             start.Environment[SingleFileRuntime.ExtractVariable] = runtimeBase;
             start.Environment[SingleFileRuntime.RestartedVariable] = "1";
             using var child = Process.Start(start);

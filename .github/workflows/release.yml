@@ -90,6 +90,15 @@ jobs:
         name: release-exe
         path: release
 
+    # Only the public key the app checks updates with (no project code runs in this job).
+    - name: Get the app's update key
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        sparse-checkout: src/Optimizer.Core/Updates/update-key.pem
+        sparse-checkout-cone-mode: false
+        path: key
+        persist-credentials: false
+
     - name: Checksum and update signature
       shell: pwsh
       env:
@@ -106,6 +115,14 @@ jobs:
           $ecdsa.ImportFromPem($env:UPDATE_SIGNING_KEY)
           $signature = $ecdsa.SignData($statement, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
         } finally { $ecdsa.Dispose() }
+        # A secret from another key would ship a release every installed copy rejects: check against the app's key.
+        $public = [System.Security.Cryptography.ECDsa]::Create()
+        try {
+          $public.ImportFromPem((Get-Content -Raw key/src/Optimizer.Core/Updates/update-key.pem))
+          if (-not $public.VerifyData($statement, $signature, [System.Security.Cryptography.HashAlgorithmName]::SHA256)) {
+            Write-Error "The signature does not match src/Optimizer.Core/Updates/update-key.pem: UPDATE_SIGNING_KEY is not the app's key"; exit 1
+          }
+        } finally { $public.Dispose() }
         [Convert]::ToBase64String($signature) | Set-Content -Encoding ascii release/PCOptimizer.exe.sig
         "SHA-256: $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 

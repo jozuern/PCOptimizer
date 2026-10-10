@@ -506,9 +506,12 @@ public class AdvisorCheckTests
         Assert.Equal((FindingStatus.Problem, "stop", "0x0000009F"), (crash.Status, crash.Variant, crash.Params["stopCode"]));
         AssertRenders(crash);
 
+        // One forced power off (power button held, no Stop error) is the user's own action: information only.
         var power = One(new UnexpectedRestartCheck(), WithShutdowns(new UnexpectedShutdown(DateTime.UtcNow, 0, true)));
-        Assert.Equal(("power", "yes"), (power.Variant, power.Params["powerButton"]));
+        Assert.Equal((FindingStatus.Info, "power", "yes"), (power.Status, power.Variant, power.Params["powerButton"]));
         AssertRenders(power);
+        var twice = One(new UnexpectedRestartCheck(), WithShutdowns(new UnexpectedShutdown(DateTime.UtcNow, 0, true), new UnexpectedShutdown(DateTime.UtcNow, 0, false)));
+        Assert.Equal(FindingStatus.Problem, twice.Status);
     }
 
     [Fact]

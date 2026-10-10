@@ -41,5 +41,27 @@ public class ProgramPriorityTests
         Assert.Equal(new PriorityRule("backup.exe", CpuPriority.Low, true), Assert.Single(ProgramPriority.Read(fx.Registry)));
         Assert.True(low.Undocumented && low.Preview && low.AntiCheatSensitive);
         Assert.DoesNotContain(Enum.GetValues<CpuPriority>(), p => (int)p == 4); // never realtime
+
+        // The same program again without low disk priority: the earlier value goes, undo brings it back.
+        var again = ProgramPriority.Tweak("backup.exe", CpuPriority.BelowNormal, lowIo: false);
+        await fx.Engine.ApplyAsync(again, Facts, new HashSet<string>(), Options);
+        Assert.Equal(new PriorityRule("backup.exe", CpuPriority.BelowNormal, false), Assert.Single(ProgramPriority.Read(fx.Registry)));
+    }
+
+    /// <summary>A rule another program set (Realtime) is listed and can be removed with a backup, so it can come back.</summary>
+    [Fact]
+    public async Task ARuleFromAnotherProgramIsListedAndRemovable()
+    {
+        using var fx = new EngineFixture();
+        RegistryValue.Write(fx.Registry, Hive.Machine, $@"{StartupScanner.Ifeo}\game.exe\PerfOptions", "CpuPriorityClass", "dword", "4");
+        RegistryValue.Write(fx.Registry, Hive.Machine, $@"{StartupScanner.Ifeo}\bad name+.exe\PerfOptions", "CpuPriorityClass", "dword", "3");
+        var rule = Assert.Single(ProgramPriority.Read(fx.Registry)); // names the app cannot handle are left out
+        Assert.Equal(new PriorityRule("game.exe", null, false, 4), rule);
+
+        var remove = ProgramPriority.RemoveTweak("game.exe");
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(remove, Facts, new HashSet<string>(), Options)).Outcome);
+        Assert.Empty(ProgramPriority.Read(fx.Registry));
+        Assert.True(fx.Engine.Revert(remove).Success);
+        Assert.Equal(4, Assert.Single(ProgramPriority.Read(fx.Registry)).OtherCpu);
     }
 }

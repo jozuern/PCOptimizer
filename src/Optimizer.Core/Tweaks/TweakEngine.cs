@@ -109,7 +109,21 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     private Dictionary<string, TweakBackup>? _backups;
 
-    private TweakBackup? BackupOf(string id) => _backups is { } cached ? cached.GetValueOrDefault(id) : store.Get(id);
+    private TweakBackup? BackupOf(string id) => _backups is { } cached ? cached.GetValueOrDefault(id) : PeekBackup(id);
+
+    /// <summary>For display and checks only: a backup that is locked right now counts as absent (apply and undo fail instead).</summary>
+    private TweakBackup? PeekBackup(string id)
+    {
+        try
+        {
+            return store.Get(id);
+        }
+        catch (BackupUnreadableException ex)
+        {
+            Log.Warn("engine", ex.Message);
+            return null;
+        }
+    }
 
     public TweakStatus Detect(TweakDefinition t, Facts facts, IReadOnlySet<string>? appliedIds = null) =>
         BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>());
@@ -274,7 +288,16 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             _restorePointDone = true;
         }
 
-        var backup = store.Get(t.Id) ?? new TweakBackup
+        TweakBackup? existing;
+        try
+        {
+            existing = store.Get(t.Id);
+        }
+        catch (BackupUnreadableException ex)
+        {
+            return new ApplyResult(ApplyOutcome.Failed, changes, ex.Message);
+        }
+        var backup = existing ?? new TweakBackup
         {
             TweakId = t.Id,
             WindowsBuild = windowsBuild,
@@ -306,6 +329,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
         // First-original rule: an entry is written once and never overwritten by a later apply.
         var before = new Dictionary<string, StoredValue>();
+        var added = new HashSet<string>(StringComparer.Ordinal);
         foreach (var a in actions)
         {
             var current = SafeRead(a);
@@ -314,7 +338,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             if (a.TakesEffectAfterRestart && pendingUndo?.Entries.FirstOrDefault(e => e.TargetKey == a.TargetKey) is { } restored) current = restored.Original;
             before[a.TargetKey] = current;
             if (backup.Entry(a.TargetKey) is not { } entry)
+            {
                 backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+                added.Add(a.TargetKey);
+            }
             entry.Action = JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
         }
         // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
@@ -355,7 +382,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 }
                 if (stuck.Count > 0)
                 {
-                    // Part of the change is still on the system: keep the backup so Undo can restore it later.
+                    // Part of the change is still on the system: keep the backup so Undo can restore it later. Entries this
+                    // run added for targets that were rolled back cleanly are dropped; they would later read as "reset
+                    // by Windows" and raise a drift notice.
+                    backup.Entries.RemoveAll(e => added.Contains(e.TargetKey) && !stuck.Any(s => s.TargetKey == e.TargetKey));
                     foreach (var s in stuck)
                         if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeRead(s);
                     backup.LastApplied = DateTimeOffset.Now;
@@ -398,7 +428,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (restorePoints.IsEnabled() != true) return false;
         // Lift the 24 h limit through a normal, backed-up tweak, so undo puts the original value back.
         var freq = _catalog.Get(RestorePointFrequencyTweak);
-        var lifted = freq is not null && store.Get(freq.Id) is null &&
+        var lifted = freq is not null && PeekBackup(freq.Id) is null && !store.IsDamaged(freq.Id) &&
                      (await ApplyAsync(freq, facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true })).Outcome
                      is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective;
         var created = await restorePoints.CreateAsync($"PCOptimizer {DateTime.Now:yyyy-MM-dd HH:mm}");
@@ -411,7 +441,15 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     public RevertResult Revert(TweakDefinition t)
     {
-        var backup = store.Get(t.Id);
+        TweakBackup? backup;
+        try
+        {
+            backup = store.Get(t.Id);
+        }
+        catch (BackupUnreadableException ex)
+        {
+            return new RevertResult(false, [], [ex.Message]);
+        }
         if (backup is null)
             return store.IsDamaged(t.Id)
                 ? new RevertResult(false, [], [$"The backup file {store.DamagedFile(t.Id)} is damaged; the original values cannot be read from it."])
@@ -426,7 +464,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // Every entry of the backup is restored, also targets the tweak no longer expands to (through the stored action).
         foreach (var entry in Enumerable.Reverse(backup.Entries))
         {
-            var a = current.GetValueOrDefault(entry.TargetKey) ?? StoredAction(entry);
+            // The action that wrote the change first: a later catalog version can change an action under the same target
+            // (for example write only one side of a power setting), and undo must restore what was written then.
+            var a = StoredAction(entry) ?? current.GetValueOrDefault(entry.TargetKey);
             if (a is null)
             {
                 kept.Add(entry);
@@ -459,6 +499,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         }
         if (kept.Count == 0)
         {
+            DeleteExports(backup);
             store.Archive(t.Id);
         }
         else
@@ -470,6 +511,26 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // Restored values that take effect after a restart: shown as "off after restart" until then.
         if (restartBound.Count > 0) store.SavePendingUndo(new PendingUndo { TweakId = t.Id, Entries = restartBound });
         return new RevertResult(errors.Count == 0, skipped, errors);
+    }
+
+    /// <summary>
+    /// The BCD and power plan exports made before the change: kept while the change is in place (a manual way back),
+    /// removed with its complete undo, so the exports folder does not grow with every apply.
+    /// </summary>
+    private void DeleteExports(TweakBackup backup)
+    {
+        foreach (var file in backup.Exports)
+        {
+            try
+            {
+                if (Path.GetDirectoryName(Path.GetFullPath(file)) is { } dir && dir.Equals(Path.GetFullPath(ctx.ExportFolder).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+                    File.Delete(file);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                Log.Warn("engine", $"export {file} not removed: {ex.Message}");
+            }
+        }
     }
 
     private static TweakAction? StoredAction(BackupEntry entry)
@@ -531,7 +592,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public TweakDefinition? Resolve(string id)
     {
         if (_catalog.Get(id) is { } t) return t;
-        if (store.Get(id) is not { } backup) return null;
+        if (PeekBackup(id) is not { } backup) return null;
         if (backup.Definition is { } json)
         {
             try
@@ -575,12 +636,13 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var list = new List<TweakAction>();
         IReadOnlyList<NicAdapter>? adapters = null;
         Guid? activeScheme = null;
+        IReadOnlyList<string>? nics = null;
         foreach (var a in t.Actions)
         {
             switch (a)
             {
                 case RegistryAction r when r.Path.Contains("{nic}", StringComparison.Ordinal):
-                    foreach (var id in ctx.NetworkInterfaceIds)
+                    foreach (var id in nics ??= ctx.CurrentNetworkInterfaceIds())
                         list.Add(new RegistryAction
                         {
                             Hive = r.Hive, Path = r.Path.Replace("{nic}", id), Name = r.Name, Kind = r.Kind, Value = r.Value, Delete = r.Delete,
@@ -588,7 +650,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                         });
                     break;
                 case DnsAction d when d.InterfaceGuid == "{nic}":
-                    foreach (var id in ctx.NetworkInterfaceIds)
+                    foreach (var id in nics ??= ctx.CurrentNetworkInterfaceIds())
                         list.Add(new DnsAction { InterfaceGuid = id, Servers = d.Servers });
                     break;
                 case PowerSettingAction p when p.Scheme is null:

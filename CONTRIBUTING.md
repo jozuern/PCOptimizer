@@ -86,8 +86,9 @@ Every NuGet package that ships in the exe needs its license text in `src/Optimiz
 
 Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
 
+0. Once per repository: the release workflow signs every release for the in-app update. Create the key pair with `scripts/new-update-key.ps1`, store the private key as the repository secret `UPDATE_SIGNING_KEY` and commit the public key as `src/Optimizer.Core/Updates/update-key.pem`. The workflow stops when the secret does not match that public key.
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
-3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and creates a **draft** release. Check it, then publish it on GitHub.
+3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and a signature file (`.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
 
 The exe is not code signed yet. Signing (Azure Trusted Signing or an OV certificate) fits in the release workflow between publish and upload.

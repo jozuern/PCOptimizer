@@ -12,14 +12,22 @@ public sealed partial class StartupScanner
 {
     private static string Root(Hive hive) => hive == Hive.Machine ? "HKLM" : "HKCU";
 
-    /// <summary>A DLL named without a folder ("localspl.dll", "msv1_0") is loaded from System32.</summary>
-    public static string? SystemFile(string? name, bool addDll = true)
+    /// <summary>
+    /// A DLL named without a folder ("localspl.dll", "msv1_0") is loaded from System32; for the 32-bit registrations
+    /// (WOW6432Node, the 32-bit Winsock catalog) from SysWOW64, and a path into System32 is redirected there too.
+    /// </summary>
+    public static string? SystemFile(string? name, bool addDll = true, bool wow64 = false)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
         var expanded = Environment.ExpandEnvironmentVariables(name.Trim().Trim('"'));
-        if (Path.IsPathRooted(expanded)) return expanded;
+        var system32 = Environment.SystemDirectory;
+        var syswow64 = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+        if (Path.IsPathRooted(expanded))
+            return wow64 && syswow64.Length > 0 && expanded.StartsWith(system32 + "\\", StringComparison.OrdinalIgnoreCase)
+                ? Path.Combine(syswow64, expanded[(system32.Length + 1)..])
+                : expanded;
         if (addDll && !Path.HasExtension(expanded)) expanded += ".dll";
-        return Path.Combine(Environment.SystemDirectory, expanded);
+        return Path.Combine(wow64 && syswow64.Length > 0 ? syswow64 : system32, expanded);
     }
 
     private static string[] Strings(object? value, bool split) => value switch
@@ -146,18 +154,23 @@ public sealed partial class StartupScanner
                 };
                 if (dll is null || !seen.Add(dll)) continue;
                 var name = e!.GetValue("DisplayString")?.ToString() is { Length: > 0 } d ? ResolveIndirect(d) ?? d : Path.GetFileName(dll);
-                yield return new StartupEntry(StartupKind.WinsockProvider, name, dll, SystemFile(dll), $@"HKLM\{path}", Hive.Machine, null, $"winsock:{catalog}:{dll}");
+                // Catalog_Entries is the 32-bit catalog (loaded into 32-bit programs), Catalog_Entries64 the 64-bit one.
+                var wow64 = !catalog.EndsWith("64", StringComparison.Ordinal);
+                yield return new StartupEntry(StartupKind.WinsockProvider, name, dll, SystemFile(dll, wow64: wow64), $@"HKLM\{path}", Hive.Machine, null, $"winsock:{catalog}:{dll}");
             }
         }
     }
 
-    /// <summary>PackedCatalogItem starts with the provider DLL path as a zero-terminated ANSI string.</summary>
+    /// <summary>
+    /// PackedCatalogItem starts with the provider DLL path as a zero-terminated ANSI string. Read as Latin-1, so a path
+    /// with umlauts keeps its letters instead of turning into "?".
+    /// </summary>
     public static string? PackedPath(byte[] packed)
     {
         var end = Array.IndexOf(packed, (byte)0);
         if (end <= 0) return null;
-        var text = Encoding.ASCII.GetString(packed, 0, end).Trim();
-        return text.Length > 0 && text.All(c => c >= ' ' && c < 127) ? text : null;
+        var text = Encoding.Latin1.GetString(packed, 0, end).Trim();
+        return text.Length > 0 && !text.Any(char.IsControl) ? text : null;
     }
 
     /// <summary>Print monitors: DLLs the print spooler (a SYSTEM service) loads.</summary>
@@ -213,7 +226,8 @@ public sealed partial class StartupScanner
             {
                 // Only file names: the key also holds DWORD settings (MidisrvTransferComplete).
                 if (key!.GetValue(name) is not string { Length: > 0 } dll) continue;
-                yield return new StartupEntry(StartupKind.Codec, name, dll, SystemFile(dll), $@"HKLM\{path}", Hive.Machine, null, $"codec:{path}:{name}");
+                var wow64 = path.Contains("WOW6432Node", StringComparison.OrdinalIgnoreCase);
+                yield return new StartupEntry(StartupKind.Codec, name, dll, SystemFile(dll, wow64: wow64), $@"HKLM\{path}", Hive.Machine, null, $"codec:{path}:{name}");
             }
         }
     }
@@ -225,8 +239,11 @@ public sealed partial class StartupScanner
     public static IEnumerable<StartupEntry> WmiConsumers()
     {
         var list = new List<StartupEntry>();
-        using var searcher = new System.Management.ManagementObjectSearcher(@"root\subscription", "SELECT * FROM __EventConsumer");
-        foreach (var o in searcher.Get().OfType<System.Management.ManagementObject>())
+        // A damaged WMI repository can hang a query: give up after 15 seconds instead of blocking the page.
+        var options = new System.Management.EnumerationOptions { Timeout = TimeSpan.FromSeconds(15), ReturnImmediately = true, Rewindable = false };
+        using var searcher = new System.Management.ManagementObjectSearcher(@"root\subscription", "SELECT * FROM __EventConsumer", options);
+        using var results = searcher.Get();
+        foreach (var o in results.OfType<System.Management.ManagementObject>())
         {
             using (o)
             {
@@ -235,7 +252,9 @@ public sealed partial class StartupScanner
                 var name = o["Name"]?.ToString() ?? cls;
                 var command = cls == "CommandLineEventConsumer"
                     ? o["CommandLineTemplate"]?.ToString() ?? o["ExecutablePath"]?.ToString()
-                    : o["ScriptFileName"]?.ToString() ?? "(script)";
+                    : o["ScriptFileName"]?.ToString() is { Length: > 0 } file ? file
+                    : o["ScriptText"]?.ToString() is { Length: > 0 } text ? "(script) " + text.ReplaceLineEndings(" ")[..Math.Min(120, text.ReplaceLineEndings(" ").Length)]
+                    : "(script)";
                 list.Add(new StartupEntry(StartupKind.WmiConsumer, name, command, CommandLine.ImagePath(command), $@"WMI root\subscription\{cls}", Hive.Machine, null, $"wmi:{cls}:{name}")
                 {
                     Suspicious = true,

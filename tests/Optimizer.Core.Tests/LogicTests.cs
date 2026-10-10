@@ -120,6 +120,8 @@ public class RamTests
     [InlineData(2400, "DDR5", null, 4800)]   // module speed unknown: no real DDR5 configuration runs that low
     [InlineData(3600, "DDR5", null, null)]   // could be 3600 MT/s or 7200 MT/s reported as MHz
     [InlineData(6000, "DDR5", null, 6000)]
+    [InlineData(1600, "DDR4", 2133, 3200)]   // XMP on: the module speed is the JEDEC rate, the value is MHz
+    [InlineData(3000, "DDR5", 4800, 6000)]   // EXPO on, the same
     public void NormalizesMhzReports(int value, string type, int? moduleSpeed, int? expected) =>
         Assert.Equal(expected, RamSpeed.NormalizeConfigured(value, type, moduleSpeed));
 

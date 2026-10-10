@@ -74,7 +74,7 @@ public sealed partial class OptionalCapabilityAction : TweakAction
 
     public static TweakDefinition Tweak(FeatureEntry f, bool installed) => new()
     {
-        Id = $"capability.{(installed ? "on" : "off")}.{f.Name.ToLowerInvariant().Replace('~', '.')}",
+        Id = $"capability.{(installed ? "on" : "off")}.{TweakIds.Slug(f.Name)}",
         Docs = "capability.change",
         Subject = f.Title,
         Category = "Features",

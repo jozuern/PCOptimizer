@@ -45,7 +45,7 @@ jobs:
         function Version($text) { if ($text -match '<Version>([0-9.]+)</Version>') { $Matches[1] } }
         $now = Version (Get-Content $csproj -Raw)
         $before = Version ((git show "HEAD~1:$csproj") -join "`n")
-        if ($before -and $now -eq $before) { Write-Error "<Version> is still ${now}: enable the pre-commit hook (git config core.hooksPath .githooks)"; exit 1 }
+        if ($before -and [version]$now -le [version]$before) { Write-Error "<Version> ${now} is not above ${before}: enable the pre-commit hook (git config core.hooksPath .githooks)"; exit 1 }
 
     - name: Install .NET (version from global.json)
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6

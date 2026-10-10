@@ -1038,4 +1038,12 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Prio_Low" xml:space="preserve"><value>Low</value></data>
   <data name="Prio_LowIo" xml:space="preserve"><value>low disk priority</value></data>
   <data name="Prio_InvalidName" xml:space="preserve"><value>Enter only the program file name, for example game.exe, without a folder.</value></data>
+  <data name="Startup_ProfilerSet" xml:space="preserve"><value>A .NET profiler is set in your environment variables (CORECLR_ENABLE_PROFILING). It loads a program into every .NET app, so PCOptimizer does not run as administrator with it. Remove the CORECLR_ variables in System &gt; About &gt; Advanced system settings &gt; Environment Variables and start PCOptimizer again. Nothing was changed.</value></data>
+  <data name="Programs_RestorePointName" xml:space="preserve"><value>PCOptimizer: before uninstalling programs</value></data>
+  <data name="Programs_NoRestorePointTitle" xml:space="preserve"><value>No restore point</value></data>
+  <data name="Programs_NoRestorePointText" xml:space="preserve"><value>Windows did not create a restore point: System Protection is off, or one was already created in the last 24 hours. Uninstall without a new restore point?</value></data>
+  <data name="Programs_MaybeStillRunning" xml:space="preserve"><value>Still listed. Many uninstallers keep running in their own window after starting: when it is done, select Refresh.</value></data>
+  <data name="Startup_SnapshotWait" xml:space="preserve"><value>The list is still loading. Try again when it is complete.</value></data>
+  <data name="Prio_Other" xml:space="preserve"><value>Priority class {0}, set by another program</value></data>
+  <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>I installed them again myself</value></data>
 </root>

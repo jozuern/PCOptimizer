@@ -99,7 +99,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `personalize.startRecentlyAddedHidden` | Start: no recently added apps | safe | sign out | registry | |
 | `personalize.startMostUsedHidden` | Start: no most used apps | safe | sign out | registry | |
 | `system.longPaths` | Long file paths | safe | restart | registry | |
-| `security.lsaProtection` | LSA protection on | moderate | restart | registry | |
+| `security.lsaProtection` | LSA protection on | moderate, preview | restart | registry | |
 | `security.defenderSandbox` | Microsoft Defender in a sandbox | safe | restart | registry | |
 | `personalize.desktopThisPc` | This PC icon on the desktop | safe, preview | sign out | registry | |
 | `personalize.titleBarShakeOff` | No minimizing by shaking a window | safe | sign out | registry | |
@@ -358,3 +358,15 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | DNS benchmark | Runs, shows results, changes nothing | |
 | Tools | Winsock reset (restart needed), Explorer restart, DNS flush, Windows Update repair | |
 | Health | SFC and DISM with live output; frame time benchmark with PresentMon; throttle check; PawnIO install from the Health page and uninstall with winget | |
+| Desktop program uninstaller | Uninstall one machine-wide program (restore point first, runs elevated) and one per-user program (runs as the signed-in user); an MSI entry under HKCU runs msiexec as the user; the list updates after Refresh | |
+| Update all (winget) | Runs `winget upgrade --all`, shows the output, programs are updated | |
+| .NET Desktop Runtimes | Install .NET Desktop Runtime 8 and 10 from the Apps page | |
+| Quick fixes | Each of the 10: renew IP (connection back afterwards, also when one adapter fails to release), TCP/IP reset (restart needed), audio, Bluetooth and Search restart, graphics driver restart (screen flashes, apps keep running), time sync, performance counters, chkdsk /scan (output shown), recovery environment on | |
+| Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |
+| Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
+| Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |
+| Startup snapshot | Save a snapshot, install a program that adds a Run entry, compare: only that entry is "new"; save while the list loads is refused | |
+| DNS "Use the fastest" | After the benchmark, the fastest preset is applied; with another preset already applied the button is not offered | |
+| Edge Game Assist | Listed on Debloat when installed; removing it keeps Edge | |
+| Data folder | Create `C:\ProgramData\PCOptimizer` as a standard user with a file in it before the first start: the app deletes the folder and creates a locked one | |
+| Two Windows accounts | Account A applies dark mode, account B starts the app: B sees dark mode as not applied by the app and can apply and undo it without touching A's backup | |

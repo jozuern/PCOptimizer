@@ -18,8 +18,10 @@ public sealed class AppServices
         Os = BuildInfo.Read();
         var root = BackupStore.DefaultRoot;
         // Not elevated (Debug build): read-only use, the ProgramData ACL cannot be set and nothing can be applied anyway.
-        Store = new BackupStore(root, secure: Elevation.IsElevated);
-        Context = SystemNotify.CreateContext(Elevation.SessionUserSid ?? Elevation.ProcessUserSid, Store.ExportFolder, ActiveInterfaceIds());
+        // Backups of the account's own settings are kept per account (the data folder is shared by every account).
+        var sid = Elevation.SessionUserSid ?? Elevation.ProcessUserSid;
+        Store = new BackupStore(root, secure: Elevation.IsElevated, userSid: sid);
+        Context = SystemNotify.CreateContext(sid, Store.ExportFolder, CurrentInterfaceIds);
         RestorePoints = new RestorePointService(Context.Processes);
         Engine = new TweakEngine(Context, Store, RestorePoints, Optimizer.Core.Platform.AppInfo.Text, Os.Build, Os.BuildString);
 
@@ -40,6 +42,20 @@ public sealed class AppServices
     /// Connected physical adapters ("{nic}" values and DNS presets): virtual switches, VPN and the host's Hyper-V adapters
     /// are left alone, so a VPN keeps its own DNS servers. Inside a Hyper-V guest its synthetic adapter counts.
     /// </summary>
+    private IReadOnlyList<string> _interfaceIds = [];
+    private DateTime _interfaceIdsAt = DateTime.MinValue;
+
+    /// <summary>Read again at most every 10 seconds: a scan expands many tweaks, and an adapter can connect after the start.</summary>
+    private IReadOnlyList<string> CurrentInterfaceIds()
+    {
+        if (DateTime.UtcNow - _interfaceIdsAt > TimeSpan.FromSeconds(10))
+        {
+            _interfaceIds = ActiveInterfaceIds();
+            _interfaceIdsAt = DateTime.UtcNow;
+        }
+        return _interfaceIds;
+    }
+
     private static IReadOnlyList<string> ActiveInterfaceIds()
     {
         try

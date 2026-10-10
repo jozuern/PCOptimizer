@@ -1038,4 +1038,12 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Prio_Low" xml:space="preserve"><value>Niedrig</value></data>
   <data name="Prio_LowIo" xml:space="preserve"><value>niedrige Datenträgerpriorität</value></data>
   <data name="Prio_InvalidName" xml:space="preserve"><value>Gib nur den Namen der Programmdatei ein, zum Beispiel game.exe, ohne Ordner.</value></data>
+  <data name="Startup_ProfilerSet" xml:space="preserve"><value>In deinen Umgebungsvariablen ist ein .NET-Profiler gesetzt (CORECLR_ENABLE_PROFILING). Er lädt ein Programm in jede .NET-App, daher läuft PCOptimizer damit nicht als Administrator. Entferne die CORECLR_-Variablen unter System &gt; Info &gt; Erweiterte Systemeinstellungen &gt; Umgebungsvariablen und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
+  <data name="Programs_RestorePointName" xml:space="preserve"><value>PCOptimizer: vor dem Deinstallieren von Programmen</value></data>
+  <data name="Programs_NoRestorePointTitle" xml:space="preserve"><value>Kein Wiederherstellungspunkt</value></data>
+  <data name="Programs_NoRestorePointText" xml:space="preserve"><value>Windows hat keinen Wiederherstellungspunkt angelegt: Der Computerschutz ist aus, oder in den letzten 24 Stunden wurde schon einer angelegt. Ohne neuen Wiederherstellungspunkt deinstallieren?</value></data>
+  <data name="Programs_MaybeStillRunning" xml:space="preserve"><value>Steht noch in der Liste. Viele Deinstallationsprogramme laufen nach dem Start in einem eigenen Fenster weiter: Wähle danach Aktualisieren.</value></data>
+  <data name="Startup_SnapshotWait" xml:space="preserve"><value>Die Liste wird noch geladen. Versuche es erneut, wenn sie vollständig ist.</value></data>
+  <data name="Prio_Other" xml:space="preserve"><value>Prioritätsklasse {0}, von einem anderen Programm gesetzt</value></data>
+  <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>Ich habe sie selbst wieder installiert</value></data>
 </root>

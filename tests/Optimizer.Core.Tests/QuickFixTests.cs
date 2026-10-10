@@ -3,7 +3,7 @@ using Optimizer.Core.Tools;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Quick fixes run only Windows tools from System32, in order, and stop at the first failing step.</summary>
+/// <summary>Quick fixes run only Windows tools from System32, in order, and stop at the first failing step unless a step must always run.</summary>
 public class QuickFixTests
 {
     [Fact]
@@ -29,16 +29,27 @@ public class QuickFixTests
         Assert.True(ok);
         Assert.Equal(["ipconfig.exe /release", "ipconfig.exe /renew"], runner.Calls);
 
-        var failing = new FakeProcesses { Handler = (file, _) => file == "ipconfig.exe" ? (1, "no adapter") : null };
+        // A failed /release must not leave the PC without an address: /renew still runs.
+        var failing = new FakeProcesses { Handler = (_, args) => args == "/release" ? (1, "one adapter failed") : null };
         var (ok2, output) = QuickFixes.Run(failing, QuickFixes.Get("IpRenew"));
         Assert.False(ok2);
-        Assert.Equal("no adapter", output);
-        Assert.Single(failing.Calls);
+        Assert.Equal("one adapter failed", output);
+        Assert.Equal(["ipconfig.exe /release", "ipconfig.exe /renew"], failing.Calls);
+
+        // Other fixes stop at the first failure.
+        var stop = new FakeProcesses { Handler = (file, _) => file == "powershell.exe" ? (1, "W32Time missing") : null };
+        Assert.False(QuickFixes.Run(stop, QuickFixes.Get("TimeSync")).Ok);
+        Assert.Single(stop.Calls);
     }
 
     [Fact]
-    public void DiskScanChecksTheSystemDriveOnline() =>
+    public void DiskScanChecksTheSystemDriveOnline()
+    {
         Assert.Equal(Path.GetPathRoot(Environment.SystemDirectory)!.TrimEnd('\\') + " /scan", QuickFixes.Get("DiskScan").Steps.Single().Arguments);
+        // chkdsk returns 1 when it fixed errors; 3 means problems remain.
+        Assert.True(QuickFixes.Run(new FakeProcesses { Handler = (_, _) => (1, "fixed") }, QuickFixes.Get("DiskScan")).Ok);
+        Assert.False(QuickFixes.Run(new FakeProcesses { Handler = (_, _) => (3, "queued") }, QuickFixes.Get("DiskScan")).Ok);
+    }
 }
 
 /// <summary>DoH auto-upgrade through the documented cmdlets, with each server's previous state restored on undo.</summary>
@@ -86,6 +97,46 @@ public class DohTests
         Assert.Null(only.Actions[0].Read(fx.Context));
         Assert.Contains("149.112.112.112", action.Servers);
         Assert.Equal("1.1.1.1=1;8.8.8.8=0", Actions.DohAutoUpgradeAction.Format(new Dictionary<string, bool> { ["8.8.8.8"] = false, ["1.1.1.1"] = true }));
+    }
+
+    /// <summary>Each server is set in its own run, so a failure is not hidden by a later success; all are tried.</summary>
+    [Fact]
+    public void AFailingServerIsReportedAndTheOthersStillSet()
+    {
+        using var fx = new EngineFixture();
+        var state = new DohState();
+        fx.Processes.Handler = (f, a) => a.Contains("'8.8.8.8'") ? (1, "access denied") : state.Handle(f, a);
+        var action = new Actions.DohAutoUpgradeAction { Servers = ["1.1.1.1", "8.8.8.8", "9.9.9.9"] };
+        var ex = Assert.Throws<InvalidOperationException>(() => action.Apply(fx.Context));
+        Assert.Contains("8.8.8.8", ex.Message);
+        Assert.True(state.Servers["1.1.1.1"]);
+        Assert.True(state.Servers["9.9.9.9"]);
+        Assert.All(fx.Processes.Calls.Where(c => c.Contains("Set-DnsClientDohServerAddress")), c => Assert.Contains("$ErrorActionPreference='Stop'", c));
+    }
+
+    /// <summary>Every DoH server in the catalog is a valid IP address (a typo would be dropped silently).</summary>
+    [Fact]
+    public void CatalogServersAreAddresses()
+    {
+        var action = Assert.IsType<Actions.DohAutoUpgradeAction>(Tweaks.TweakCatalog.Current.Tweaks.Single(x => x.Id == "network.dohAutoUpgrade").Actions.Single());
+        Assert.All(action.Servers, s => Assert.True(System.Net.IPAddress.TryParse(s, out _), s));
+    }
+
+    /// <summary>With the cache on (the app's runner), a scan reads once; a write drops the cached value.</summary>
+    [Fact]
+    public void SlowReadsAreSharedUntilAWrite()
+    {
+        using var fx = new EngineFixture();
+        Actions.ReadCache.Enable(fx.Processes, TimeSpan.FromMinutes(5));
+        var state = new DohState();
+        fx.Processes.Handler = state.Handle;
+        var action = new Actions.DohAutoUpgradeAction { Servers = ["1.1.1.1"] };
+        action.Read(fx.Context);
+        action.Read(fx.Context);
+        Assert.Equal(1, fx.Processes.Calls.Count(c => c.Contains("Get-DnsClientDohServerAddress")));
+        action.Apply(fx.Context);
+        Assert.Equal("1.1.1.1=1", action.Read(fx.Context)!.Data);
+        Assert.Equal(2, fx.Processes.Calls.Count(c => c.Contains("Get-DnsClientDohServerAddress")));
     }
 }
 

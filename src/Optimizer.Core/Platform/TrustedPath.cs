@@ -28,19 +28,41 @@ public static class TrustedPath
             var full = Path.GetFullPath(path);
             if (!File.Exists(full) || !SafeDelete.HasNoLinks(full)) return false;
             if (!Check(new FileInfo(full).GetAccessControl())) return false;
-            for (var dir = new DirectoryInfo(Path.GetDirectoryName(full)!); dir is not null; dir = dir.Parent)
-            {
-                // The drive root lets users create folders by default; what matters is that they cannot change the folders below.
-                if (dir.Parent is null) break;
-                if ((dir.Attributes & FileAttributes.ReparsePoint) != 0 || !Check(dir.GetAccessControl())) return false;
-            }
-            return true;
+            return FolderChainIsAdminOnly(new DirectoryInfo(Path.GetDirectoryName(full)!));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or System.Security.SecurityException)
         {
             return false;
         }
     }
+
+    /// <summary>A folder (for example a PATH entry) in which only Administrators, SYSTEM or TrustedInstaller can add or change files.</summary>
+    public static bool IsAdminOnlyWritableFolder(string folder)
+    {
+        try
+        {
+            var dir = new DirectoryInfo(Path.GetFullPath(folder));
+            return dir.Exists && FolderChainIsAdminOnly(dir);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            return false;
+        }
+    }
+
+    private static bool FolderChainIsAdminOnly(DirectoryInfo start)
+    {
+        for (var dir = start; dir is not null; dir = dir.Parent)
+        {
+            // The drive root lets users create folders by default; what matters is that they cannot change the folders below.
+            if (dir.Parent is null) break;
+            if ((dir.Attributes & FileAttributes.ReparsePoint) != 0 || !Check(dir.GetAccessControl())) return false;
+        }
+        return true;
+    }
+
+    /// <summary>GENERIC_ALL and GENERIC_WRITE: some installers write these generic bits into an entry instead of file rights.</summary>
+    private const int GenericWriting = 0x10000000 | 0x40000000;
 
     private static bool Check(FileSystemSecurity security)
     {
@@ -52,7 +74,7 @@ public static class TrustedPath
             if ((rule.PropagationFlags & PropagationFlags.InheritOnly) != 0) continue;
             // CREATOR OWNER rights only reach files someone creates, which the other rules decide.
             if (rule.IdentityReference == CreatorOwner) continue;
-            if ((rule.FileSystemRights & Changing) != 0) return false;
+            if ((rule.FileSystemRights & Changing) != 0 || ((int)rule.FileSystemRights & GenericWriting) != 0) return false;
         }
         return true;
     }
