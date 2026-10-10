@@ -4,7 +4,7 @@
 Denies Store apps access to account info, contacts, calendar, call history, email, messages, tasks and other apps' diagnostics.
 
 ## How it works
-The App privacy policies "Let Windows apps access ..." are set to "Force Deny" for these data types [1][2]. Desktop programs (Discord, Steam, browsers) are not affected; camera and microphone stay as they are.
+The App privacy policies for these data types, such as "Let Windows apps access contacts", are set to "Force Deny" [1][2]. Desktop programs (Discord, Steam, browsers) are not affected; camera and microphone stay as they are.
 
 ## Why it can help
 Less data leaves this PC. No measurable effect on performance.

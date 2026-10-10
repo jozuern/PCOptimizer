@@ -16,9 +16,29 @@ public static class CommandLine
         "bitsadmin.exe", "wmic.exe", "hh.exe", "msxsl.exe", "bash.exe", "wsl.exe",
     };
 
-    /// <summary>True when the image is a script host (PowerShell, cmd, mshta and similar).</summary>
-    public static bool IsScriptHost(string? imagePath) =>
-        imagePath is { Length: > 0 } && ScriptHosts.Contains(Path.GetFileName(imagePath.Trim().Trim('"')));
+    /// <summary>
+    /// Built-in Windows programs that start another program, installer or file given on the command line (explorer.exe
+    /// C:\Users\Public\x.exe, msiexec /i, pcalua -a). Without arguments, or with arguments that only name Windows' own
+    /// files, they are what they seem; Windows' shell entry is plain explorer.exe.
+    /// </summary>
+    private static readonly HashSet<string> Launchers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "explorer.exe", "pcalua.exe", "msiexec.exe", "cmstp.exe", "odbcconf.exe", "mavinject.exe", "control.exe", "schtasks.exe",
+        "regedit.exe", "reg.exe", "msdt.exe", "presentationhost.exe", "sc.exe", "at.exe", "runonce.exe",
+    };
+
+    /// <summary>True when the image is a script host (PowerShell, cmd, mshta and similar), with or without ".exe".</summary>
+    public static bool IsScriptHost(string? imagePath) => FileName(imagePath) is { } name && ScriptHosts.Contains(name);
+
+    private static bool IsLauncher(string? imagePath) => FileName(imagePath) is { } name && Launchers.Contains(name);
+
+    /// <summary>The file name, with ".exe" added when it has no extension ("powershell" runs powershell.exe).</summary>
+    private static string? FileName(string? imagePath)
+    {
+        if (imagePath is not { Length: > 0 }) return null;
+        var name = Path.GetFileName(imagePath.Trim().Trim('"'));
+        return name.Length == 0 ? null : Path.HasExtension(name) ? name : name + ".exe";
+    }
 
     /// <summary>
     /// rundll32 entry points that start another program, file or URL given as an argument (signed proxies for any
@@ -37,12 +57,23 @@ public static class CommandLine
     /// is the program the line starts (rundll32 itself, not its DLL); a rundll32 line is flagged when it uses an entry
     /// point that starts something else, or passes further files or URLs.
     /// </summary>
-    public static bool RunsUnverifiedScript(string? command, Func<string, string>? expand = null)
+    public static bool RunsUnverifiedScript(string? command, Func<string, string>? expand = null) =>
+        RunsUntrustedCode(command, IsInProtectedSystemFolder, expand);
+
+    /// <summary>
+    /// Like <see cref="RunsUnverifiedScript"/>, with the caller's rule for a trusted file (an elevated uninstall trusts
+    /// files only administrators can change). A script with a path that is not trusted, or with "..", or an alternate
+    /// data stream, is untrusted.
+    /// </summary>
+    public static bool RunsUntrustedCode(string? command, Func<string, bool> trusted, Func<string, string>? expand = null, Func<string, bool>? exists = null)
     {
         if (string.IsNullOrWhiteSpace(command)) return false;
         expand ??= Environment.ExpandEnvironmentVariables;
-        if (Program(command, expand) is not var (host, args) || !IsScriptHost(host)) return false;
-        if (IsRundll(host)) return RundllStartsSomethingElse(args);
+        if (Program(command, expand, exists) is not var (host, args)) return false;
+        bool Trusted(string file) => !file.Contains("..", StringComparison.Ordinal) && file.IndexOf(':', 2) < 0 && trusted(file);
+        if (IsLauncher(host)) return LauncherStartsSomethingElse(args, Trusted);
+        if (!IsScriptHost(host)) return false;
+        if (IsRundll(host)) return RundllStartsSomethingElse(args, Trusted);
         if (args.IndexOfAny(['&', '|', '^', '`', ';']) >= 0 || args.Contains("://", StringComparison.Ordinal)) return true;
         var tokens = Tokens(args).ToList();
         if (tokens.Any(t => IsScriptHost(t))) return true;
@@ -52,21 +83,33 @@ public static class CommandLine
             return true;
         var files = tokens.Select(t => t.Split(',')[0]).Where(t => t.Contains('\\')).ToList();
         if (files.Count == 0) return true; // inline code or a bare name looked up on PATH
-        return !files.All(IsInProtectedSystemFolder);
+        return !files.All(Trusted);
     }
 
     /// <summary>
     /// rundll32 runs the DLL's entry point; the DLL itself is judged by its signature (<see cref="ImagePath"/>). Flagged
     /// only when the entry point is a known proxy or more files or URLs follow (rundll32 x.dll,Entry C:\Users\x.exe).
     /// </summary>
-    private static bool RundllStartsSomethingElse(string args)
+    private static bool RundllStartsSomethingElse(string args, Func<string, bool> trusted)
     {
         var tokens = Tokens(args).Where(t => !t.StartsWith('/') && !t.StartsWith('-')).ToList();
         if (tokens.Count == 0) return false;
         var parts = tokens[0].Split(',', 2);
         if (parts.Length == 2 && ProxyExports.Contains(parts[1].Trim())) return true;
         if (args.Contains("://", StringComparison.Ordinal)) return true;
-        return tokens.Skip(1).Any(t => t.Contains('\\') && !IsInProtectedSystemFolder(t));
+        return tokens.Skip(1).Any(t => t.Contains('\\') && !trusted(t));
+    }
+
+    /// <summary>
+    /// A launcher (<see cref="Launchers"/>) is flagged when it is given a URL, a script host, or a file that is not
+    /// trusted; switches, GUIDs and shell: names are left alone.
+    /// </summary>
+    private static bool LauncherStartsSomethingElse(string args, Func<string, bool> trusted)
+    {
+        if (args.Contains("://", StringComparison.Ordinal)) return true;
+        var tokens = Tokens(args).Select(t => t.Split(',')[0]).ToList();
+        if (tokens.Any(t => IsScriptHost(t))) return true;
+        return tokens.Any(t => t.Contains('\\') && !trusted(t));
     }
 
     /// <summary>
@@ -79,10 +122,13 @@ public static class CommandLine
         @"Microsoft\Crypto\RSA\MachineKeys", "LogFiles", @"config\systemprofile",
     ];
 
-    /// <summary>A file in System32 or SysWOW64 (or a subfolder only administrators can write to), without "..".</summary>
+    /// <summary>
+    /// A file in System32 or SysWOW64 (or a subfolder only administrators can write to), without ".." and without an
+    /// alternate data stream (System32\Tasks:x.vbs is a stream on a folder users can write to, not a file below System32).
+    /// </summary>
     public static bool IsInProtectedSystemFolder(string file)
     {
-        if (file.Contains("..", StringComparison.Ordinal)) return false;
+        if (file.Contains("..", StringComparison.Ordinal) || file.IndexOf(':', 2) >= 0) return false;
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         foreach (var root in new[] { Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") })
         {
@@ -151,11 +197,13 @@ public static class CommandLine
             s = Path.Combine(system, s);
 
         var (first, rest) = SplitFirst(s);
-        // An unquoted path with spaces: take the longest prefix that exists (C:\Program Files\Apppp.exe -arg).
+        // An unquoted path with spaces is resolved like CreateProcess and the service manager do: the shortest prefix that
+        // exists, each also with ".exe" (C:\Program.exe before C:\Program Files\App\app.exe). Taking the longest would
+        // show the intended program while Windows runs a planted C:\Tools\My.exe for C:\Tools\My App\app.exe.
         if (!s.StartsWith('"') && !exists(first))
         {
             var parts = s.Split(' ');
-            for (var n = parts.Length; n > 1; n--)
+            for (var n = 1; n <= parts.Length; n++)
             {
                 var candidate = string.Join(' ', parts.Take(n));
                 if (exists(candidate) || exists(candidate + ".exe"))
@@ -184,8 +232,10 @@ public static class CommandLine
     private static string Qualify(string file, string windows, Func<string, bool> exists)
     {
         if (Path.IsPathRooted(file)) return file;
-        // Bare names (for example "ctfmon.exe") are found in System32 or the Windows folder like CreateProcess does.
-        foreach (var dir in new[] { Path.Combine(windows, "System32"), windows })
+        // Bare names (for example "ctfmon.exe") are found in System32 or the Windows folder like CreateProcess does, then
+        // in Windows' own folders of the PATH ("powershell" lives in System32\WindowsPowerShell\v1.0).
+        var system = Path.Combine(windows, "System32");
+        foreach (var dir in new[] { system, windows, Path.Combine(system, "Wbem"), Path.Combine(system, @"WindowsPowerShell\v1.0"), Path.Combine(system, "OpenSSH") })
         {
             var candidate = Path.Combine(dir, file);
             if (exists(candidate)) return candidate;

@@ -923,7 +923,9 @@ public sealed class ThrottleCheck : IFindingCheck
     {
         if (p.Extras?.LastThrottle is not { } t) yield break; // not measured yet: the Health page offers the check
         var gpuThermal = t.GpuThermal;
-        var status = t.CpuThrottled || gpuThermal ? FindingStatus.Problem : t.GpuPower ? FindingStatus.Info : FindingStatus.Ok;
+        // Without enough processor load the run says nothing about the processor: not "no throttling".
+        var status = t.CpuThrottled || gpuThermal || t.GpuSlowdown ? FindingStatus.Problem
+            : t.GpuPower || !t.CpuJudged ? FindingStatus.Info : FindingStatus.Ok;
         // An old measurement says little about today (dust, a new cooler, another season): shown, but not as a problem.
         var stale = DateTimeOffset.Now - t.Measured > MaxAge;
         if (stale && status == FindingStatus.Problem) status = FindingStatus.Info;
@@ -933,7 +935,8 @@ public sealed class ThrottleCheck : IFindingCheck
             Id = Id,
             Kind = FindingKind.Finding,
             Status = status,
-            Variant = stale ? "stale" : t.CpuThrottled ? "cpu" : gpuThermal ? "gpuThermal" : t.GpuPower ? "gpuPower" : null,
+            Variant = stale ? "stale" : t.CpuThrottled ? "cpu" : gpuThermal ? "gpuThermal" : t.GpuSlowdown ? "gpuSlowdown"
+                : t.GpuPower ? "gpuPower" : !t.CpuJudged ? "noLoad" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
@@ -945,6 +948,8 @@ public sealed class ThrottleCheck : IFindingCheck
                 new("fact.cpuLowestLimit", t.CpuLowestLimit is { } l ? $"{l:0} %" : "@unknown"),
                 new("fact.gpuThermalShare", Share("thermal")),
                 new("fact.gpuPowerShare", Share("powerLimit")),
+                new("fact.gpuSlowdownShare", t.GpuReasonShare.Count == 0 ? "@unknown"
+                    : $"{t.GpuReasonShare.Where(r => r.Key is "powerBrake" or "hardwareSlowdown").Sum(r => r.Value) * 100:0} %"),
                 new("fact.gpuMaxTemp", t.GpuMaxTempC is { } temp ? $"{temp} °C" : "@unknown"),
             ],
             Params = new Dictionary<string, string>

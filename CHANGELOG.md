@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (preview)
 
 Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from a code audit (open items in [TODO](docs/TODO.md)), plus a speed pass.
 
@@ -11,6 +11,11 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - Reading all tweak states takes under a second instead of about 8: NVIDIA driver settings share one driver session for a few seconds instead of opening one per setting, and backups are read once per pass.
 - The Tweaks and Advisor lists build only the cards in view. Opening Tweaks, switching the category, the profile or "Only recommended" and turning on Expert mode take 3 to 6 times less time.
 - Explanations in the details pane are built in the background, and slow work (process lists, page loads, changes) no longer runs on the UI thread.
+- The first results show about 3 seconds after the start instead of 5.5 (published exe on the test PC, without administrator rights). The scan starts while the window is still being built, the extra checks run beside the hardware probes, the tweak reads that start PowerShell, DISM or bcdedit begin with the scan instead of one after another after it, the scheduled task list is read from each task's XML on four threads, and the steps after the scan return to the window only once.
+- Switching the language builds the rows of the opened pages from what they already read, instead of reading startup entries, services, programs, drivers, AppX packages, folder sizes and Windows features again: about 0.3 seconds instead of 2.
+- Switching the theme no longer builds the rows again (status colors follow the theme by themselves), and profile and Expert mode switches leave the hardware rows, and the Network rows until that page is opened, as they are: each takes about half the time.
+- After the first scan, the Startup, Services, Apps, Debloat and Cleanup pages load their data in the background, one after another while the window is idle, so they open with their rows instead of a loading state. Tools still reads its Windows features when it is opened (DISM takes about 12 seconds).
+- The background CPU sample starts after the scan and the tools the app started, so neither counts as background activity. The log file stays open for the session instead of being opened for every entry, and one Storage query serves the three checks that read the drives.
 
 ### Security
 
@@ -49,6 +54,15 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - **One change at a time:** removing apps, cleanup, uninstalls, winget, quick fixes, repairs and the sensor driver install now wait for each other, for tweaks, for scans and for the self-update.
 - **Fixes:** "Move to the Recycle Bin" asks before a file too large for the Recycle Bin is deleted for good; system files such as pagefile.sys are no longer offered. The OneDrive guard checks every account. "Renew IP address" always renews after a release. The Windows Update repair reports a service that did not start. DNS over HTTPS reports a server that could not be set. Startup entries that run PowerShell through cmd or a file through rundll32 are marked, logon tasks with quoted paths and shortcuts are checked by their file, and one bad StartupApproved value no longer hides the Run entries. "RX Vega 10/11 Graphics" counts as integrated graphics. XMP and EXPO speeds reported in MHz are read correctly. Rules for program start priorities set by other programs are listed and can be removed.
 - **Speed:** DISM and PowerShell reads are shared within a scan and an apply, and the hardware scan does not wait for threads on PCs with few cores.
+
+### Third audit ([report](docs/audit-2026-10-10-3.md))
+
+- **Security:** the elevated start also refuses .NET diagnostic ports, notification profilers, EventPipe traces and crash dumps set in the user's environment. Elevated tools find Windows PowerShell on their PATH again. Files signed for other vendors through Microsoft's driver program no longer count as Microsoft's. Startup entries that start a file through explorer, msiexec, pcalua and similar Windows programs are marked, as are PowerShell without ".exe" and scripts in alternate data streams; unquoted paths are resolved the way Windows runs them. An uninstaller run through cmd or a script host runs elevated only when the script is in an admin-only folder. Paths on network shares are never trusted.
+- **Undo:** applying a tweak again keeps the undo step of the first apply, so a later catalog version cannot leave part of the change behind. A backup that lost its per-account entries leaves no stale copy. A failed apply no longer leaves entries that later show as "reset by Windows", a backup found damaged during an apply blocks it, an apply whose values could not be read changes nothing, a rollback removes only a power plan it created, and the DirectX settings value keeps everything else stored in it.
+- **Checks and tools:** the frame time benchmark reads the capture of the included PresentMon (it reported "no frames" for every run). The throttle check says when the processor was not busy enough to judge it, and reports a graphics card slowed by its power supply. The storage analysis protects the real Xbox game folders and Epic, GOG and Ubisoft games, and waits for the PC scan; hard links no longer count as duplicates, and Stop ends the hashing of a large file. The background CPU check no longer overstates processes.
+- **App:** turning on sensors no longer freezes the window. A failed service start type change shows the real start type again. Startup and driver rows no longer show empty parts. Switches have names for screen readers.
+- **Content:** "Optimizations for windowed games", "End task" in the taskbar, Location access off and Network throttling off use values Microsoft does not document: marked as such and in Preview until tested. "Prevent device encryption" is an Expert option. Show file extensions and Transparency effects off cite the Microsoft pages that name their values.
+- **Build:** the publish restore runs in locked mode again, merges raise the version, the hooks keep LF line endings, and the release signing key is kept in a GitHub environment that allows only version tags and waits for approval.
 
 ### New tweaks (documented settings)
 

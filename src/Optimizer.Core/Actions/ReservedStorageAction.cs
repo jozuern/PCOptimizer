@@ -12,6 +12,7 @@ public sealed partial class ReservedStorageAction : TweakAction
 
     public override string TargetKey => "dism:reservedstorage";
     public override string Describe(ActionContext c) => "Reserved storage (DISM /Set-ReservedStorageState)";
+    public override EarlyRead EarlyRead => EarlyRead.WithScan;
     public override StoredValue Desired(ActionContext c) => new(true, "reservedstorage", Enabled ? "Enabled" : "Disabled");
 
     public override StoredValue? Read(ActionContext c) => ReadCache.Get(c, TargetKey, () =>
@@ -29,12 +30,11 @@ public sealed partial class ReservedStorageAction : TweakAction
         if (original.Data is "Enabled" or "Disabled") Set(c, original.Data == "Enabled");
     }
 
-    private void Set(ActionContext c, bool enabled)
+    private void Set(ActionContext c, bool enabled) => ReadCache.Writing(c, TargetKey, () =>
     {
-        ReadCache.Invalidate(c, TargetKey);
         var (code, output) = c.Processes.Run("dism.exe", $"/Online /English /Set-ReservedStorageState /State:{(enabled ? "Enabled" : "Disabled")}", TimeSpan.FromMinutes(5));
         if (code != 0) throw new InvalidOperationException($"DISM failed ({code}): {output.Trim()}");
-    }
+    });
 
     [GeneratedRegex(@"Reserved storage is (enabled|disabled)", RegexOptions.IgnoreCase)]
     private static partial Regex StateRegex();

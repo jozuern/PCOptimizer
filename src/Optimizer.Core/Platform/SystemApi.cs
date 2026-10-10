@@ -199,13 +199,16 @@ public sealed class SystemPowerManager(IProcessRunner processes) : IPowerManager
 /// <summary>bcdedit wrapper. Element identifiers are read from "/enum {current} /v" (identifiers are not localized).</summary>
 public sealed class SystemBcdStore(IProcessRunner processes) : IBcdStore
 {
-    public IReadOnlyDictionary<string, string> CurrentValues()
+    private const string CacheKey = "bcd:current";
+
+    /// <summary>Shared through <see cref="ReadCache"/>: the findings and every BCD tweak of a scan read the same list.</summary>
+    public IReadOnlyDictionary<string, string> CurrentValues() => ReadCache.Get(processes, CacheKey, () =>
     {
         var (code, output) = processes.Run("bcdedit.exe", "/enum {current} /v");
         // bcdedit needs admin rights; failing loudly makes BCD tweaks "unknown" instead of wrongly "applied".
         if (code != 0) throw new InvalidOperationException($"bcdedit /enum failed ({code})");
         return Parse(output);
-    }
+    });
 
     /// <summary>"element    value" lines; the localized header lines start with a capital letter and are skipped.</summary>
     public static IReadOnlyDictionary<string, string> Parse(string output)
@@ -224,11 +227,11 @@ public sealed class SystemBcdStore(IProcessRunner processes) : IBcdStore
     public void Delete(string element) => Run($"/deletevalue {{current}} {element}");
     public void Export(string file) => Run($"/export \"{file}\"");
 
-    private void Run(string args)
+    private void Run(string args) => ReadCache.Writing(processes, CacheKey, () =>
     {
         var (code, output) = processes.Run("bcdedit.exe", args);
         if (code != 0) throw new InvalidOperationException($"bcdedit {args} failed ({code}): {output}");
-    }
+    });
 }
 
 /// <summary>Task Scheduler 2.0 via its COM API (late-bound).</summary>
@@ -278,21 +281,45 @@ public sealed class SystemTaskScheduler : ITaskScheduler
     // TASK_TRIGGER_BOOT = 8, TASK_TRIGGER_LOGON = 9, TASK_ACTION_EXEC = 0 (taskschd.h)
     private const int TriggerBoot = 8, TriggerLogon = 9, ActionExec = 0;
 
-    private static IReadOnlyList<ScheduledTaskInfo> ReadList()
+    private static dynamic Connect()
     {
-        var list = new List<ScheduledTaskInfo>();
         var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Task Scheduler not available");
         dynamic service = Activator.CreateInstance(type)!;
         service.Connect();
+        return service;
+    }
+
+    /// <summary>
+    /// Every task of every folder. The folders are listed first, then read by up to four threads, each with its own
+    /// connection (no COM object is shared between threads); from a single-threaded apartment one after another.
+    /// Sorted by path, so the order does not depend on which thread finished first.
+    /// </summary>
+    private static IReadOnlyList<ScheduledTaskInfo> ReadList()
+    {
+        var service = Connect();
+        var folders = new List<string>();
         var stack = new Stack<dynamic>();
         stack.Push(service.GetFolder("\\"));
         while (stack.Count > 0)
         {
             var folder = stack.Pop();
+            folders.Add((string)folder.Path);
             try
             {
                 foreach (var sub in folder.GetFolders(0)) stack.Push(sub);
-                foreach (var task in folder.GetTasks(1 /* TASK_ENUM_HIDDEN */))
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("tasks", $"unreadable folder: {ex.Message}");
+            }
+        }
+
+        var list = new System.Collections.Concurrent.ConcurrentBag<ScheduledTaskInfo>();
+        void ReadFolder(dynamic connection, string path)
+        {
+            try
+            {
+                foreach (var task in connection.GetFolder(path).GetTasks(1 /* TASK_ENUM_HIDDEN */))
                 {
                     try
                     {
@@ -309,10 +336,53 @@ public sealed class SystemTaskScheduler : ITaskScheduler
                 Log.Warn("tasks", $"unreadable folder: {ex.Message}");
             }
         }
-        return list;
+        if (Thread.CurrentThread.GetApartmentState() == ApartmentState.MTA)
+            Parallel.ForEach(folders, new ParallelOptions { MaxDegreeOfParallelism = 4 }, () => (object?)null, (path, _, connection) =>
+            {
+                connection ??= Connect();
+                ReadFolder(connection, path);
+                return connection;
+            }, _ => { });
+        else
+            foreach (var path in folders) ReadFolder(service, path);
+        return list.OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    private static readonly System.Xml.Linq.XNamespace TaskNamespace = "http://schemas.microsoft.com/windows/2004/02/mit/task";
+
+    /// <summary>
+    /// Triggers, the first program action and the author from the task's XML: one COM call instead of about ten
+    /// late-bound ones per task (the list took about a second, most of it in those calls). An author that is a
+    /// resource string ("$(@%SystemRoot%\system32\x.dll,-101)") is read through COM, which resolves it. A task whose
+    /// XML cannot be read is described property by property as before.
+    /// </summary>
     private static ScheduledTaskInfo Describe(dynamic task)
+    {
+        string path = task.Path;
+        bool enabled = task.Enabled;
+        DateTime lastRun = task.LastRunTime;
+        var lastRunOrNull = lastRun.Year < 2000 ? (DateTime?)null : lastRun;
+        System.Xml.Linq.XElement? root;
+        try
+        {
+            root = System.Xml.Linq.XDocument.Parse((string)task.Xml).Root;
+        }
+        catch (System.Xml.XmlException)
+        {
+            root = null;
+        }
+        if (root is null || root.Name.Namespace != TaskNamespace) return DescribeByProperties(task, path, enabled, lastRunOrNull);
+
+        var ns = TaskNamespace;
+        var triggers = root.Element(ns + "Triggers")?.Elements().Select(e => e.Name.LocalName).ToList() ?? [];
+        var exec = root.Element(ns + "Actions")?.Elements(ns + "Exec").FirstOrDefault();
+        var author = root.Element(ns + "RegistrationInfo")?.Element(ns + "Author")?.Value;
+        if (author?.StartsWith("$(", StringComparison.Ordinal) == true) author = (string?)task.Definition.RegistrationInfo.Author;
+        return new ScheduledTaskInfo(path, enabled, author, exec?.Element(ns + "Command")?.Value, exec?.Element(ns + "Arguments")?.Value,
+            triggers.Contains("LogonTrigger"), triggers.Contains("BootTrigger"), lastRunOrNull);
+    }
+
+    private static ScheduledTaskInfo DescribeByProperties(dynamic task, string path, bool enabled, DateTime? lastRun)
     {
         var definition = task.Definition;
         bool logon = false, boot = false;
@@ -330,16 +400,12 @@ public sealed class SystemTaskScheduler : ITaskScheduler
             arguments = action.Arguments;
             break;
         }
-        DateTime lastRun = task.LastRunTime;
-        return new ScheduledTaskInfo((string)task.Path, (bool)task.Enabled, (string?)definition.RegistrationInfo.Author, command, arguments, logon, boot,
-            lastRun.Year < 2000 ? null : lastRun);
+        return new ScheduledTaskInfo(path, enabled, (string?)definition.RegistrationInfo.Author, command, arguments, logon, boot, lastRun);
     }
 
     private static dynamic GetTask(string path)
     {
-        var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Task Scheduler not available");
-        dynamic service = Activator.CreateInstance(type)!;
-        service.Connect();
+        var service = Connect();
         var i = path.LastIndexOf('\\');
         var folder = service.GetFolder(i <= 0 ? "\\" : path[..i]);
         return folder.GetTask(path[(i + 1)..]);
@@ -406,6 +472,7 @@ public sealed class SystemProcessRunner : IProcessRunner
             StandardErrorEncoding = ToolEncoding,
         };
         ProcessHardening.Apply(psi);
+        var watch = Stopwatch.StartNew();
         using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Cannot start {file}");
         var stdout = p.StandardOutput.ReadToEndAsync();
         var stderr = p.StandardError.ReadToEndAsync();
@@ -418,7 +485,7 @@ public sealed class SystemProcessRunner : IProcessRunner
         if (!Task.WaitAll([stdout, stderr], TimeSpan.FromSeconds(10)))
             Log.Warn("command", $"{file} {arguments}: output still open after the tool ended; using what was read");
         var output = (stdout.IsCompletedSuccessfully ? stdout.Result : "") + (stderr.IsCompletedSuccessfully ? stderr.Result : "");
-        Log.Info("command", $"{file} {arguments}", new { exitCode = p.ExitCode, output = output.Length > 2000 ? output[..2000] : output });
+        Log.Info("command", $"{file} {arguments}", new { exitCode = p.ExitCode, ms = watch.ElapsedMilliseconds, output = output.Length > 2000 ? output[..2000] : output });
         return (p.ExitCode, output);
     }
 }

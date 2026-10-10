@@ -313,6 +313,9 @@
         ]
       },
       "risk": "safe",
+      "conflictsWith": [
+        "personalize.hibernateInPowerMenu"
+      ],
       "actions": [
         {
           "type": "hibernation",

@@ -26,7 +26,7 @@ public static class TrustedPath
         try
         {
             var full = Path.GetFullPath(path);
-            if (!File.Exists(full) || !SafeDelete.HasNoLinks(full)) return false;
+            if (!IsOnLocalFixedDrive(full) || !File.Exists(full) || !SafeDelete.HasNoLinks(full)) return false;
             if (!Check(new FileInfo(full).GetAccessControl())) return false;
             return FolderChainIsAdminOnly(new DirectoryInfo(Path.GetDirectoryName(full)!));
         }
@@ -41,13 +41,24 @@ public static class TrustedPath
     {
         try
         {
-            var dir = new DirectoryInfo(Path.GetFullPath(folder));
-            return dir.Exists && FolderChainIsAdminOnly(dir);
+            var full = Path.GetFullPath(folder);
+            var dir = new DirectoryInfo(full);
+            return IsOnLocalFixedDrive(full) && dir.Exists && FolderChainIsAdminOnly(dir);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or System.Security.SecurityException)
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// A path on a local fixed drive with a drive letter. On a share or mapped drive the server reports owner and
+    /// permissions, so they prove nothing, and the folder walk ends at the share root.
+    /// </summary>
+    public static bool IsOnLocalFixedDrive(string fullPath)
+    {
+        if (fullPath.StartsWith(@"\\", StringComparison.Ordinal) || fullPath.Length < 3 || fullPath[1] != ':') return false;
+        return new DriveInfo(fullPath[..1]).DriveType == DriveType.Fixed;
     }
 
     private static bool FolderChainIsAdminOnly(DirectoryInfo start)

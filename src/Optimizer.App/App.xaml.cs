@@ -31,8 +31,14 @@ public partial class App : Application
     private bool _userMismatch;
     private bool _preferenceHooked;
 
+    // Developer aid (--perf): when each step of the start finished.
+    private readonly List<(string Name, DateTime At)> _startMarks = [];
+
+    private void Mark(string name) => _startMarks.Add((name, DateTime.Now));
+
     protected override async void OnStartup(StartupEventArgs e)
     {
+        Mark("WPF started");
         base.OnStartup(e);
         DispatcherUnhandledException += (_, ex) =>
         {
@@ -85,6 +91,7 @@ public partial class App : Application
         if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, MainViewModel.UpdatesFolder);
 
         var services = new AppServices();
+        Mark("services ready");
         _sessionSid = services.UserSid;
         _userMismatch = services.Elevation.UserMismatch;
 
@@ -98,11 +105,15 @@ public partial class App : Application
         // Developer aid for screenshots: start with this profile for the session (never saved).
         var vm = new MainViewModel(_settings, services, new Dialogs()) { ProfileOverride = args.Value("--profile") };
         if (args.Value("--expert") is "on") vm.EnableExpertForSession();
+        Mark("view model ready");
+        // The scan starts before the window is built: its probes run on other threads while WPF creates the window and
+        // the page (about a third of a second), and the results only reach the view model.
+        var scan = vm.ScanAsync();
         var window = new MainWindow(vm);
         MainWindow = window;
+        Mark("window built");
+        window.ContentRendered += (_, _) => Mark("window drawn");
         ApplyTheme(args.Value("--theme") ?? _settings.Theme, save: false);
-        // The scan starts before the window is built: its probes run on other threads while WPF creates the page.
-        var scan = vm.ScanAsync();
         window.Show();
         // "System" theme: WPF-UI's watcher switches the brushes when Windows changes its mode; content built from brushes follows.
         ApplicationThemeManager.Changed += (_, _) => Dispatcher.BeginInvoke(RefreshThemedContent);
@@ -114,11 +125,25 @@ public partial class App : Application
             SaveScreenshot(window, scanningShot);
         }
         await scan;
+        Mark("first scan shown");
+        var preload = vm.PreloadPagesAsync();
+        preload.Forget("page preload");
         // Developer aid: time the interactions that felt slow (page switches, filters, profile, rebuild) until the UI is idle.
         if (args.Value("--perf") is { } perfFile)
         {
-            await WritePerfReportAsync(vm, perfFile);
-            Shutdown(0);
+            // A failure must end the run: the dispatcher handler keeps a shown window open, and nobody would close it.
+            try
+            {
+                await preload;
+                Mark("pages loaded in the background");
+                await WritePerfReportAsync(vm, perfFile);
+                Shutdown(0);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("app", "perf report failed", ex);
+                Shutdown(1);
+            }
             return;
         }
 
@@ -127,58 +152,73 @@ public partial class App : Application
 
         if (args.Value("--screenshot") is { } shot)
         {
-            if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
-            if (args.Value("--pane") is "closed") window.Nav.IsPaneOpen = false;
-            if (args.Value("--select") is { } id)
-                vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
-            if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
-            if (args.Value("--category") is { } cat) vm.SelectedCategory = vm.Categories.FirstOrDefault(c => c.Key == cat) ?? vm.SelectedCategory;
-            await Task.Delay(1500); // pages that load their own data (startup, services, apps)
-            if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
-            // The inspector document is built in the background: wait for it before the picture.
-            if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
+            // A failure must end the run: the dispatcher handler keeps a shown window open, and nobody would close it.
+            try
+            {
+                await SaveScreenshotsAsync(args, vm, window, services, shot);
+                Shutdown(0);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("app", "screenshot failed", ex);
+                Shutdown(1);
+            }
+        }
+    }
+
+    /// <summary>Developer aid (--screenshot and the switches that go with it): renders the window and dialogs to PNG files.</summary>
+    private async Task SaveScreenshotsAsync(CliArgs args, MainViewModel vm, MainWindow window, AppServices services, string shot)
+    {
+        if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
+        if (args.Value("--pane") is "closed") window.Nav.IsPaneOpen = false;
+        if (args.Value("--select") is { } id)
+            vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
+        if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
+        if (args.Value("--category") is { } cat) vm.SelectedCategory = vm.Categories.FirstOrDefault(c => c.Key == cat) ?? vm.SelectedCategory;
+        await Task.Delay(1500); // pages that load their own data (startup, services, apps)
+        if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
+        // The inspector document is built in the background: wait for it before the picture.
+        if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        // Developer aid: switch the theme while the page is open, as Settings does (checks text that keeps old colors).
+        if (args.Value("--switch-theme") is { } switchTo)
+        {
+            ApplyTheme(switchTo, save: false);
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-            // Developer aid: switch the theme while the page is open, as Settings does (checks text that keeps old colors).
-            if (args.Value("--switch-theme") is { } switchTo)
-            {
-                ApplyTheme(switchTo, save: false);
-                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-            }
-            // Developer aid: show the bottom of long pages (Settings > About), or scroll down by a number of pixels.
-            if (args.Value("--scroll") is { } scroll && (scroll == "end" || double.TryParse(scroll, CultureInfo.InvariantCulture, out _)))
-            {
-                foreach (var sv in Descendants<System.Windows.Controls.ScrollViewer>(window))
-                    if (scroll == "end") sv.ScrollToEnd();
-                    else sv.ScrollToVerticalOffset(double.Parse(scroll, CultureInfo.InvariantCulture));
-                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-            }
+        }
+        // Developer aid: show the bottom of long pages (Settings > About), or scroll down by a number of pixels.
+        if (args.Value("--scroll") is { } scroll && (scroll == "end" || double.TryParse(scroll, CultureInfo.InvariantCulture, out _)))
+        {
+            foreach (var sv in Descendants<System.Windows.Controls.ScrollViewer>(window))
+                if (scroll == "end") sv.ScrollToEnd();
+                else sv.ScrollToVerticalOffset(double.Parse(scroll, CultureInfo.InvariantCulture));
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        }
+        await Task.Delay(400);
+        SaveScreenshot(window, shot);
+
+        // Developer aid: render the confirmation dialog of a tweak without applying anything.
+        if (args.Value("--confirm") is { } confirmId && services.Catalog.Get(confirmId) is { } ct && args.Value("--confirm-shot") is { } confirmShot)
+        {
+            var request = ChangeRunner.ConfirmRequestFor(ct, services.Engine.Detect(ct, vm.Facts, vm.AppliedIds()), vm.ExpertMode,
+                vm.Runner.Title(ct), vm.Runner.Summary(ct), services.Engine.Preview(ct));
+            var dlg = new ConfirmWindow(request) { Owner = window };
+            dlg.Show();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await Task.Delay(400);
-            SaveScreenshot(window, shot);
+            SaveScreenshot(dlg, confirmShot);
+            dlg.Close();
+        }
 
-            // Developer aid: render the confirmation dialog of a tweak without applying anything.
-            if (args.Value("--confirm") is { } confirmId && services.Catalog.Get(confirmId) is { } ct && args.Value("--confirm-shot") is { } confirmShot)
-            {
-                var request = ChangeRunner.ConfirmRequestFor(ct, services.Engine.Detect(ct, vm.Facts, vm.AppliedIds()), vm.ExpertMode,
-                    vm.Runner.Title(ct), vm.Runner.Summary(ct), services.Engine.Preview(ct));
-                var dlg = new ConfirmWindow(request) { Owner = window };
-                dlg.Show();
-                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                await Task.Delay(400);
-                SaveScreenshot(dlg, confirmShot);
-                dlg.Close();
-            }
-
-            // Developer aid: render the Licenses window (Settings > About).
-            if (args.Value("--licenses-shot") is { } licensesShot)
-            {
-                var lic = new LicensesWindow(_ => { }) { Owner = window };
-                lic.Show();
-                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                await Task.Delay(400);
-                SaveScreenshot(lic, licensesShot);
-                lic.Close();
-            }
-            Shutdown(0);
+        // Developer aid: render the Licenses window (Settings > About).
+        if (args.Value("--licenses-shot") is { } licensesShot)
+        {
+            var lic = new LicensesWindow(_ => { }) { Owner = window };
+            lic.Show();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            await Task.Delay(400);
+            SaveScreenshot(lic, licensesShot);
+            lic.Close();
         }
     }
 
@@ -316,30 +356,74 @@ public partial class App : Application
     private async Task WritePerfReportAsync(MainViewModel vm, string path)
     {
         var lines = new List<string>();
-        async Task Measure(string name, Action action)
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Mark("idle after the first scan");
+        // The start, counted from the process start (a single-file exe that restarts itself: from the second process).
+        DateTime processStart;
+        using (var self = System.Diagnostics.Process.GetCurrentProcess()) processStart = self.StartTime;
+        lines.Add("start (ms after the process started)");
+        foreach (var (name, at) in _startMarks) lines.Add($"{at:HH:mm:ss.fff} {(at - processStart).TotalMilliseconds,6:0} ms  {name}");
+        // What the scan spent its time on: the probe times and every tool it started, from the session log.
+        lines.AddRange(["", "scan steps and tools (session log)"]);
+        foreach (var entry in Log.Snapshot(Log.MaxEntries).Where(e => e.Source is "scan" or "command"))
+        {
+            var ms = entry.Data is { } data && System.Text.RegularExpressions.Regex.Match(data, @"""ms"":(\d+)") is { Success: true } m ? m.Groups[1].Value : "";
+            lines.Add($"{entry.Time:HH:mm:ss.fff} {ms,6} ms  {entry.Source}: {(entry.Message.Length > 110 ? entry.Message[..110] : entry.Message)}");
+        }
+        lines.AddRange(["", "interactions (until the UI is idle)"]);
+
+        async Task Measure(string name, Action action, Func<Task>? settled = null)
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             var watch = System.Diagnostics.Stopwatch.StartNew();
             action();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-            lines.Add($"{watch.ElapsedMilliseconds,6} ms  {name}");
+            var idle = watch.ElapsedMilliseconds;
+            if (settled is null)
+            {
+                lines.Add($"{idle,6} ms  {name}");
+                return;
+            }
+            // Work that goes on in the background after the UI is idle again (pages that read their data again).
+            await settled();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            lines.Add($"{idle,6} ms  {name} (done after {watch.ElapsedMilliseconds} ms)");
         }
+        Task PagesLoaded() => Task.WhenAll(vm.Pages.Select(p => p.Loading));
+
         foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (first time)", () => vm.CurrentPage = page);
         await Task.Delay(3000); // pages that load their own data finish in the background
+        await PagesLoaded();
         foreach (var page in Enum.GetValues<Page>()) await Measure($"open {page} (again)", () => vm.CurrentPage = page);
         lines.Add($"rows: apps {vm.Apps.Apps.Count}, drivers {vm.Apps.Drivers.Count}, startup {vm.Startup.Rows.Count}, services {vm.ServicesPage.Rows.Count}, tasks {vm.ServicesPage.Tasks.Count}");
         vm.CurrentPage = Page.Tweaks;
-        await Measure("Tweaks: rebuild as for Expert mode", () => { vm.Rebuild(); vm.Network.Rebuild(); });
+        await Measure("Tweaks: rebuild after a scan", () => { vm.Rebuild(); vm.Network.Rebuild(); });
         await Measure("Tweaks: category filter", () => vm.SelectedCategory = vm.Categories.Skip(1).FirstOrDefault());
         await Measure("Tweaks: all categories", () => vm.SelectedCategory = vm.Categories.FirstOrDefault());
         await Measure("Tweaks: only recommended on", () => vm.OnlyRecommended = true);
         await Measure("Tweaks: only recommended off", () => vm.OnlyRecommended = false);
         var start = vm.SelectedProfile;
         foreach (var option in vm.ProfileOptions.Where(o => o != start).Take(2).Append(start).OfType<ProfileOption>())
-            await Measure($"Tweaks: profile {option.Id}", () => vm.SelectedProfile = option);
+            await Measure($"Tweaks: profile {option.Id}", () => vm.SetProfileForSession(option));
+        var expert = vm.ExpertMode;
+        await Measure($"Tweaks: Expert mode {(expert ? "off" : "on")}", () => vm.SetExpertModeForSession(!expert));
+        await Measure($"Tweaks: Expert mode {(expert ? "on" : "off")}", () => vm.SetExpertModeForSession(expert));
         vm.CurrentPage = Page.Advisor;
         await Measure("Advisor: show passed on", () => vm.ShowPassed = true);
         await Measure("Advisor: show passed off", () => vm.ShowPassed = false);
+
+        // Switches in Settings, on the Settings page as a user would; nothing is saved.
+        vm.CurrentPage = Page.Settings;
+        var language = Loc.Instance.Language;
+        var other = language == "de" ? "en" : "de";
+        await Measure($"Settings: language {other}", () => Loc.Instance.SetLanguage(other), PagesLoaded);
+        await Measure($"Settings: language {language}", () => Loc.Instance.SetLanguage(language), PagesLoaded);
+        var dark = ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark;
+        await Measure($"Settings: theme {(dark ? "Light" : "Dark")}", () => ApplyTheme(dark ? "Light" : "Dark", save: false));
+        await Measure($"Settings: theme {(dark ? "Dark" : "Light")}", () => ApplyTheme(dark ? "Dark" : "Light", save: false));
+        vm.CurrentPage = Page.Tweaks;
+        await Measure($"Tweaks: theme {(dark ? "Light" : "Dark")}", () => ApplyTheme(dark ? "Light" : "Dark", save: false));
+        await Measure($"Tweaks: theme {(dark ? "Dark" : "Light")}", () => ApplyTheme(dark ? "Dark" : "Light", save: false));
         System.IO.File.WriteAllLines(path, lines);
     }
 

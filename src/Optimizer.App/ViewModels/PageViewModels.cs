@@ -11,16 +11,29 @@ using Optimizer.Core.Tweaks;
 namespace Optimizer.App.ViewModels;
 
 /// <summary>Shared plumbing: lazy first load, busy state, the owner for results and the inspector.</summary>
-public abstract partial class PageViewModel(MainViewModel owner) : ObservableObject
+public abstract partial class PageViewModel : ObservableObject
 {
     private Task? _load;
 
-    protected MainViewModel Owner { get; } = owner;
+    protected PageViewModel(MainViewModel owner)
+    {
+        Owner = owner;
+        // What a page read may no longer be true after any change (a switch on the page changes only its own row).
+        owner.Runner.Changed += (_, _) => _dataStale = true;
+    }
+
+    protected MainViewModel Owner { get; }
+
+    /// <summary>A change was made since the last full load: a language switch reads the page again instead of relabeling.</summary>
+    private bool _dataStale;
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _isWorking;
 
     public Task EnsureLoadedAsync() => _load ??= ReloadAsync();
+
+    /// <summary>The page was opened (or its data loaded ahead) at least once.</summary>
+    protected bool WasLoaded => _load is not null;
 
     /// <summary>
     /// Runs a page operation that changes the system (see <see cref="Services.ChangeRunner.RunExclusiveAsync"/>): the page
@@ -36,6 +49,7 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
         finally
         {
             IsWorking = false;
+            _dataStale = true;
         }
     }
 
@@ -46,46 +60,67 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
     {
     }
 
-    /// <summary>After a language switch: a page that was opened builds its rows again in the new language.</summary>
+    /// <summary>
+    /// After a language switch: a page that was opened builds its rows again in the new language, from the data it
+    /// already read (<see cref="RelabelAsync"/>).
+    /// </summary>
     public void OnLanguageChanged()
     {
-        if (_load is not null) ReloadAsync().Forget($"{GetType().Name} language switch");
+        if (_load is not null) RunAsync(fullLoad: false).Forget($"{GetType().Name} language switch");
     }
 
     private Task? _running;
     private bool _reloadRequested;
+    private bool _relabelRequested;
+
+    /// <summary>The load that runs now, or a finished task (the --perf report waits for page loads with it).</summary>
+    public Task Loading => _running ?? Task.CompletedTask;
 
     /// <summary>
     /// One load at a time: a reload asked for while one runs (Refresh, the first load and a reload after a change can
     /// overlap) runs once after it, so two loads never fill the same list at once.
     /// </summary>
     [RelayCommand]
-    public Task ReloadAsync()
+    public Task ReloadAsync() => RunAsync(fullLoad: true);
+
+    /// <summary>
+    /// A relabel asked for while a load runs follows that load (its rows may be in the old language); a reload asked for
+    /// during a relabel replaces the relabel.
+    /// </summary>
+    private Task RunAsync(bool fullLoad)
     {
         if (_running is { IsCompleted: false })
         {
-            _reloadRequested = true;
+            if (fullLoad) _reloadRequested = true;
+            else _relabelRequested = true;
             return _running;
         }
-        return _running = ReloadUntilCurrentAsync();
+        return _running = RunUntilCurrentAsync(fullLoad);
     }
 
-    private async Task ReloadUntilCurrentAsync()
+    private async Task RunUntilCurrentAsync(bool fullLoad)
     {
-        do
+        while (true)
         {
             _reloadRequested = false;
-            await ReloadOnceAsync();
+            _relabelRequested = false;
+            await RunOnceAsync(fullLoad);
+            if (_reloadRequested) fullLoad = true;
+            else if (_relabelRequested) fullLoad = false;
+            else return;
         }
-        while (_reloadRequested);
     }
 
-    private async Task ReloadOnceAsync()
+    private async Task RunOnceAsync(bool fullLoad)
     {
-        IsLoading = true;
+        if (_dataStale) fullLoad = true;
+        // A change during this load marks the data stale again.
+        if (fullLoad) _dataStale = false;
+        // Relabeling reads nothing: no loading state, the rows only change their text.
+        if (fullLoad) IsLoading = true;
         try
         {
-            await LoadAsync();
+            await (fullLoad ? LoadAsync() : RelabelAsync());
         }
         catch (Exception ex)
         {
@@ -94,11 +129,18 @@ public abstract partial class PageViewModel(MainViewModel owner) : ObservableObj
         }
         finally
         {
-            IsLoading = false;
+            if (fullLoad) IsLoading = false;
         }
     }
 
+    /// <summary>Reads the system and builds the rows.</summary>
     protected abstract Task LoadAsync();
+
+    /// <summary>
+    /// Builds the rows again in the current language from what <see cref="LoadAsync"/> read last. Pages whose reading is
+    /// slow (tools, the startup list, folder sizes) override it; the others read again.
+    /// </summary>
+    protected virtual Task RelabelAsync() => LoadAsync();
 
     protected string Lang => Loc.Instance.Language;
 }
@@ -174,12 +216,20 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
 
     protected override Task LoadAsync()
     {
-        Rebuild();
+        BuildRows();
         return Task.CompletedTask;
     }
 
-    /// <summary>Rebuilt after every scan (device states come from the main scan).</summary>
+    /// <summary>
+    /// Rebuilt after every scan and switch (device states come from the main scan), once the page was opened: until
+    /// then nobody sees the rows, and opening the page builds them.
+    /// </summary>
     public void Rebuild()
+    {
+        if (WasLoaded) BuildRows();
+    }
+
+    private void BuildRows()
     {
         var lang = Lang;
         var engine = services.Engine;
@@ -196,17 +246,24 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         foreach (var t in Owner.CatalogItems(t => t.Id.StartsWith("network.dns.", StringComparison.Ordinal))) DnsOptions.Add(t);
         foreach (var t in Owner.CatalogItems(t => t.Id.StartsWith("nvidia.", StringComparison.Ordinal))) GpuTweaks.Add(t);
         HasNvidia = Owner.Profile?.Gpus?.Any(g => g.Vendor == Optimizer.Core.Hardware.Vendor.Nvidia) == true;
+        ShowCurrentDnsAsync().Forget("current DNS servers");
+        OnPropertyChanged(nameof(ShowDeviceTweaks));
+        OnPropertyChanged(nameof(GameProfilesEmpty));
+    }
+
+    /// <summary>The DNS servers in use, read off the UI thread (it asks every network adapter).</summary>
+    private async Task ShowCurrentDnsAsync()
+    {
+        IReadOnlyList<System.Net.IPAddress> servers;
         try
         {
-            var servers = DnsBenchmark.CurrentServers();
-            CurrentDns = servers.Count == 0 ? Loc.Instance["Net_NoDns"] : string.Join(", ", servers);
+            servers = await Task.Run(DnsBenchmark.CurrentServers);
         }
         catch (Exception)
         {
-            CurrentDns = Loc.Instance["Net_NoDns"];
+            servers = [];
         }
-        OnPropertyChanged(nameof(ShowDeviceTweaks));
-        OnPropertyChanged(nameof(GameProfilesEmpty));
+        CurrentDns = servers.Count == 0 ? Loc.Instance["Net_NoDns"] : string.Join(", ", servers);
     }
 
     private string? _fastestPresetId;
@@ -296,20 +353,43 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     protected override void LoadingChanged() => OnPropertyChanged(nameof(ItemsEmpty));
     public bool RemovedEmpty => Removed.Count == 0;
 
+    private sealed record DebloatData(
+        IReadOnlyList<Optimizer.Core.Debloat.DebloatItem> Offered,
+        IReadOnlyList<Optimizer.Core.Debloat.RemovedApp> Removed,
+        Optimizer.Core.Debloat.OneDriveState OneDrive,
+        IReadOnlyList<Optimizer.Core.Debloat.RemovedApp> CameBack);
+
+    private DebloatData? _data;
+
     protected override async Task LoadAsync()
     {
-        var lang = Lang;
         var profile = Owner.Profile;
         var elevated = services.Elevation.IsElevated;
-        var (offered, removed, oneDrive, cameBack) = await Task.Run(() =>
+        _data = await Task.Run(() =>
         {
             var service = Service;
             var installed = service.ListInstalled(allUsers: elevated);
             var offer = profile is null ? [] : Optimizer.Core.Debloat.DebloatService.Offer(Optimizer.Core.Catalog.CatalogData.Current.Appx, installed, profile, Optimizer.Core.Catalog.CatalogData.Current);
             var state = Optimizer.Core.Debloat.OneDrive.Read(services.Context.Registry, services.ProfilePath);
             var removedList = service.Removed();
-            return (offer, removedList, state, Optimizer.Core.Debloat.DebloatService.CameBack(removedList, installed));
+            return new DebloatData(offer, removedList, state, Optimizer.Core.Debloat.DebloatService.CameBack(removedList, installed));
         });
+        Show(_data);
+    }
+
+    // A language switch builds the rows from the app list already read (listing the apps starts PowerShell).
+    protected override Task RelabelAsync()
+    {
+        if (_data is null) return LoadAsync();
+        Show(_data);
+        return Task.CompletedTask;
+    }
+
+    private void Show(DebloatData data)
+    {
+        var lang = Lang;
+        var elevated = services.Elevation.IsElevated;
+        var (offered, removed, oneDrive, cameBack) = data;
         Items.Clear();
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
         _cameBack = cameBack.Select(r => r.Name).ToList();
@@ -367,8 +447,21 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
             return;
         }
         if (!dialogs.Ask(Loc.Instance["Debloat_OneDriveTitle"], Loc.Instance["Debloat_OneDriveConfirm"], Loc.Instance["Debloat_Remove"])) return;
-        var path = Optimizer.Core.Debloat.OneDrive.Uninstall(state, services.Elevation);
-        Owner.ShowResult(path == Optimizer.Core.Platform.DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Error", "OneDriveSetup") : Loc.Instance["Debloat_OneDriveStarted"]);
+        // Through the change gate like every other change: not while a tweak, a scan or an update runs.
+        await RunWorkAsync("OneDrive uninstall", () =>
+        {
+            try
+            {
+                var path = Optimizer.Core.Debloat.OneDrive.Uninstall(state, services.Elevation);
+                Owner.ShowResult(path == Optimizer.Core.Platform.DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Error", "OneDriveSetup") : Loc.Instance["Debloat_OneDriveStarted"]);
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                // OneDriveSetup.exe could not be started (removed or blocked meanwhile).
+                Owner.ShowResult(Loc.Instance.Format("Result_Error", $"OneDriveSetup: {ex.Message}"), Wpf.Ui.Controls.InfoBarSeverity.Error);
+            }
+            return Task.CompletedTask;
+        });
     }
 
     [RelayCommand]
@@ -389,6 +482,16 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     [ObservableProperty] private bool _selected = category.DefaultSelected;
     [ObservableProperty] private string _sizeText = "";
     [ObservableProperty] private long _bytes;
+
+    /// <summary>The last size reading (kept for a language switch, which builds the rows again).</summary>
+    public Optimizer.Core.Cleanup.CleanupScan? Scan { get; private set; }
+
+    public void SetScan(Optimizer.Core.Cleanup.CleanupScan scan)
+    {
+        Scan = scan;
+        Bytes = scan.Bytes;
+        SizeText = Loc.Instance.Format("Cleanup_Size", CleanupViewModel.Size(scan.Bytes), scan.Files);
+    }
 }
 
 public sealed partial class CleanupViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
@@ -402,17 +505,36 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
 
     protected override async Task LoadAsync()
     {
-        var lang = Lang;
-        var categories = Optimizer.Core.Cleanup.CleanupEngine.Categories(services.ProfilePath, services.UserSid);
-        Rows.Clear();
-        foreach (var c in categories) Rows.Add(new CleanupRow(c, lang));
-        foreach (var row in Rows.ToList())
-        {
-            var scan = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Scan(row.Category));
-            row.Bytes = scan.Bytes;
-            row.SizeText = Loc.Instance.Format("Cleanup_Size", Size(scan.Bytes), scan.Files);
-        }
+        // The categories look up folders (and the Windows folder's size), so off the UI thread like the sizes.
+        var profilePath = services.ProfilePath;
+        var userSid = services.UserSid;
+        var categories = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Categories(profilePath, userSid));
+        var rows = BuildRows(categories);
+        // The folders are measured side by side; each row shows its size as soon as it is known.
+        await Task.WhenAll(rows.Select(async row => row.SetScan(await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Scan(row.Category)))));
         UpdateTotal();
+    }
+
+    // A language switch builds the rows again with the sizes already measured.
+    protected override Task RelabelAsync()
+    {
+        if (Rows.Count == 0 || Rows.Any(r => r.Scan is null)) return LoadAsync();
+        var scans = Rows.Select(r => r.Scan!).ToList();
+        var rows = BuildRows(Rows.Select(r => r.Category).ToList());
+        for (var i = 0; i < rows.Count; i++) rows[i].SetScan(scans[i]);
+        UpdateTotal();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>New rows in the current language; a row the user ticked or cleared keeps that choice (also after cleaning).</summary>
+    private List<CleanupRow> BuildRows(IReadOnlyList<Optimizer.Core.Cleanup.CleanupCategory> categories)
+    {
+        var lang = Lang;
+        var selected = Rows.GroupBy(r => r.Category.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Selected, StringComparer.Ordinal);
+        Rows.Clear();
+        foreach (var c in categories)
+            Rows.Add(new CleanupRow(c, lang) { Selected = selected.TryGetValue(c.Id, out var on) ? on : c.DefaultSelected });
+        return Rows.ToList();
     }
 
     private void UpdateTotal() => TotalText = Loc.Instance.Format("Cleanup_Total", Size(Rows.Where(r => r.Selected).Sum(r => r.Bytes)));
@@ -450,7 +572,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         if (!await RunWorkAsync("component store cleanup", async () =>
             {
                 var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.ComponentStoreCleanup(services.Context.Processes));
-                ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim().Split('\n').LastOrDefault() ?? code.ToString());
+                ToolOutput = code == 0 ? Loc.Instance["Tools_Done"] : Loc.Instance.Format("Result_Error", output.Trim().Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0) ?? code.ToString());
             }))
             ToolOutput = "";
     }

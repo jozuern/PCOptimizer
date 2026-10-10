@@ -174,6 +174,7 @@ public sealed class StorageCatalog
 {
     public List<string> SmrModels { get; init; } = [];
     public double LowFreeSpaceFraction { get; init; } = 0.10;
+    public List<string> Sources { get; init; } = [];
 
     public bool IsSmr(string model) => SmrModels.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase));
 }

@@ -139,7 +139,8 @@
       ],
       "sources": [
         "https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic",
-        "https://learn.microsoft.com/en-us/windows/apps/design/style/mica"
+        "https://learn.microsoft.com/en-us/windows/apps/design/style/mica",
+        "https://learn.microsoft.com/en-us/windows/apps/develop/settings/settings-common"
       ],
       "recommendReasonKey": "rec.integratedGraphics",
       "recommendWhen": {
@@ -172,11 +173,14 @@
       ],
       "sources": [
         "https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01",
-        "https://learn.microsoft.com/en-us/windows/advanced-settings/"
+        "https://learn.microsoft.com/en-us/windows/advanced-settings/",
+        "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gppref/3c837e92-016e-4148-86e5-b4f0381a757f"
       ]
     },
     {
       "id": "explorer.endTask",
+      "undocumented": true,
+      "preview": true,
       "category": "Explorer",
       "impact": {
         "gaming": 0,

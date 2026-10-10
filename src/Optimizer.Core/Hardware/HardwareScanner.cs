@@ -44,15 +44,17 @@ public sealed class HardwareScanner(CatalogData catalog)
     /// <param name="waitForBackgroundSample">
     /// False: return as soon as everything else is read and leave the 3 second CPU sample in <see cref="PendingBackgroundSample"/>.
     /// </param>
+    /// <param name="sampleAfter">Other work of the app the CPU sample must not overlap (tools it started meanwhile).</param>
     public async Task<HardwareProfile> ScanAsync(IProgress<string>? progress = null, CancellationToken ct = default, HardwareProfile? previous = null,
-        bool waitForBackgroundSample = true)
+        bool waitForBackgroundSample = true, Task? sampleAfter = null)
     {
         EnsureThreads();
         var errors = new ConcurrentDictionary<string, string>();
         var sw = Stopwatch.StartNew();
 
-        async Task<T?> Run<T>(string name, Func<T> probe) where T : class
+        async Task<T?> Run<T>(string name, Func<T> probe, TimeSpan? limit = null) where T : class
         {
+            var timeLimit = limit ?? ProbeTimeLimit;
             var work = Task.Run(() =>
             {
                 ct.ThrowIfCancellationRequested();
@@ -73,19 +75,19 @@ public sealed class HardwareScanner(CatalogData catalog)
             }, ct);
             try
             {
-                return await work.WaitAsync(ProbeTimeLimit, ct);
+                // Not back on the caller's thread: the app starts the scan on the UI thread, which is busy building the
+                // window meanwhile, and the extras wait for some of these results.
+                return await work.WaitAsync(timeLimit, ct).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
-                errors[name] = $"no answer within {ProbeTimeLimit.TotalSeconds:0} s";
+                errors[name] = $"no answer within {timeLimit.TotalSeconds:0} s";
                 Log.Error("scan", $"{name} timed out");
                 return null;
             }
         }
 
         if (previous is null) SystemTaskScheduler.ForgetList();
-        // The background CPU sample takes a fixed 3 seconds of measuring: started first, it overlaps every other probe.
-        var processSample = previous is null ? Task.Run(() => Tools.ProcessSampler.SampleAsync(ExtrasProbe.SampleWindow)) : null;
 
         var os = BuildInfo.Read();
         var elevation = Run("Elevation", ElevationInfo.Read);
@@ -102,13 +104,19 @@ public sealed class HardwareScanner(CatalogData catalog)
         var system = Run("System", SystemProbe.Read);
         // Null (no battery or no usable driver data) is a valid result, not a probe error.
         var battery = Run<BatteryHealth>("Battery", () => BatteryProbe.Read()!);
+        // The extras start with the probes (the startup programs and installed programs alone take a second); their few
+        // parts that need a probe's result wait for it. Two time limits: a probe it waits for may use up one of them.
+        var extrasTask = Run("Extras", () => ExtrasProbe.Read(catalog, cpu, gpus, firmware, displays, elevation, previous?.Extras), 2 * ProbeTimeLimit);
 
-        await Task.WhenAll(elevation, managed, cpu, gpus, memory, displays, firmware, power, storage, network, software, system, battery);
+        await Task.WhenAll(elevation, managed, cpu, gpus, memory, displays, firmware, power, storage, network, software, system, battery, extrasTask).ConfigureAwait(false);
 
         var gpuList = gpus.Result;
-        var extras = await Run("Extras", () => ExtrasProbe.Read(catalog, cpu.Result, gpuList, firmware.Result, displays.Result, elevation.Result?.IsElevated == true,
-            elevation.Result?.SessionUserSid ?? elevation.Result?.ProcessUserSid, previous?.Extras, processSample, waitForBackgroundSample));
-        PendingBackgroundSample = processSample is { IsCompleted: false } && !waitForBackgroundSample ? processSample : null;
+        var extras = extrasTask.Result;
+        // The background CPU sample measures other programs for a fixed 3 seconds. It starts once the scan's own work is
+        // done (the probes, and the virus scanner checking the files they open, would count as background activity);
+        // a rescan after a change keeps the last sample.
+        var sample = previous is null ? SampleAfterAsync(sampleAfter) : null;
+        PendingBackgroundSample = waitForBackgroundSample ? null : sample;
         var displayList = displays.Result?.Select(d => d with { AdapterName = MatchAdapter(d.AdapterDevicePath, gpuList) }).ToList();
 
         var profile = new HardwareProfile
@@ -131,7 +139,39 @@ public sealed class HardwareScanner(CatalogData catalog)
             ProbeErrors = new Dictionary<string, string>(errors),
         };
         Log.Info("scan", "scan finished", new { ms = sw.ElapsedMilliseconds, errors = errors.Count });
+        if (waitForBackgroundSample && sample is not null) profile = WithBackgroundSample(profile, await SampleOrNullAsync(sample).ConfigureAwait(false));
         return profile;
+    }
+
+    private static async Task<IReadOnlyList<Tools.ProcessCpu>> SampleAfterAsync(Task? before)
+    {
+        if (before is not null)
+        {
+            try
+            {
+                await before.ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // Only the start of the sample waits for it.
+                Log.Debug("scan", $"work before the CPU sample failed: {ex.Message}");
+            }
+        }
+        return await Task.Run(() => Tools.ProcessSampler.SampleAsync(ExtrasProbe.SampleWindow)).ConfigureAwait(false);
+    }
+
+    /// <summary>A failed sample leaves the background activity check without data, like a failed part of the extras.</summary>
+    private static async Task<IReadOnlyList<Tools.ProcessCpu>?> SampleOrNullAsync(Task<IReadOnlyList<Tools.ProcessCpu>> sample)
+    {
+        try
+        {
+            return await sample.ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("scan", $"extras/processes: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>"\\?\PCI#VEN_10DE&amp;DEV_1F02&amp;...#4&amp;1f822d9d&amp;0&amp;0008#{guid}" ↔ GPU PNPDeviceID.</summary>

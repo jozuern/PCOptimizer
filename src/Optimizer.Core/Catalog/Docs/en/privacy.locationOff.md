@@ -4,7 +4,7 @@
 Turns off location services for the whole PC, like the Location services switch in Settings.
 
 ## How it works
-The device-wide consent value for location is set to Deny. This is the value behind Settings > Privacy & security > Location > Location services, which only administrators can change [1]. Windows and apps then get no device location [1]. Microsoft's guide for managing connections from Windows names the same switch for turning off location on a device [2].
+The device-wide consent value for location is set to Deny, the value Windows stores for Settings > Privacy & security > Location > Location services, a switch only administrators can change [1]. Windows and apps then get no device location [1]. Microsoft describes the switch but does not document the registry value behind it. Until a test on real Windows confirms the effect, the tweak is a Preview. Microsoft's guide for managing connections from Windows names the same switch for turning off location on a device [2].
 
 ## Why it can help
 No location lookups in the background. No performance effect.

@@ -28,11 +28,11 @@ public static class Program
             NativeLibraryGuard.Install(SingleFileRuntime.TrustedFolders(AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string, runtimeBase));
         }
 
-        // A profiler set in the user's environment (HKCU\Environment) was loaded before this line; an elevated app
-        // with code from a user-writable place in it must not go on. Startup hooks are off (StartupHookSupport=false).
-        if (DataPaths.ProcessIsElevated && ProcessHardening.ProfilerRequested(Environment.GetEnvironmentVariable))
+        // A profiler or diagnostic port set in the user's environment (HKCU\Environment) was active before this line; an
+        // elevated app with code from a user-writable place in it must not go on. Startup hooks are off (StartupHookSupport=false).
+        if (DataPaths.ProcessIsElevated && ProcessHardening.DiagnosticsRequested(Environment.GetEnvironmentVariable) is { } variable)
         {
-            ShowError(Text("Startup_ProfilerSet"));
+            ShowError(string.Format(Text("Startup_ProfilerSet"), variable));
             return 1;
         }
 

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace Optimizer.App.Views;
@@ -35,21 +36,30 @@ public sealed class InverseBoolConverter : IValueConverter
 }
 
 /// <summary>Theme brush by resource key (status colors follow the Windows theme; items are rebuilt after a theme switch).</summary>
-public sealed class ResourceKeyToBrushConverter : IValueConverter
+/// <summary>
+/// Foreground from a theme brush, by resource key or by status ("Ok", "Problem", ...). It is set as a resource reference
+/// (like {DynamicResource}), so the color follows a theme switch without building the rows again. Icons, text and
+/// controls all share TextElement.ForegroundProperty.
+/// </summary>
+public static class ThemeBrush
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is string key ? Application.Current.TryFindResource(key) as Brush : null;
+    public static readonly DependencyProperty KeyProperty = DependencyProperty.RegisterAttached(
+        "Key", typeof(string), typeof(ThemeBrush), new PropertyMetadata(null, (d, e) => Apply(d, e.NewValue as string)));
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
-}
+    public static readonly DependencyProperty StatusProperty = DependencyProperty.RegisterAttached(
+        "Status", typeof(string), typeof(ThemeBrush), new PropertyMetadata(null, (d, e) => Apply(d, e.NewValue is string s ? ViewModels.StatusIcons.BrushKey(s) : null)));
 
-/// <summary>"Ok"/"Problem"/... -> theme brush, for small records that only carry a status string.</summary>
-public sealed class StatusToBrushConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is string s ? Application.Current.TryFindResource(ViewModels.StatusIcons.BrushKey(s)) as Brush : null;
+    public static string? GetKey(DependencyObject d) => (string?)d.GetValue(KeyProperty);
+    public static void SetKey(DependencyObject d, string? value) => d.SetValue(KeyProperty, value);
+    public static string? GetStatus(DependencyObject d) => (string?)d.GetValue(StatusProperty);
+    public static void SetStatus(DependencyObject d, string? value) => d.SetValue(StatusProperty, value);
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+    private static void Apply(DependencyObject d, string? key)
+    {
+        if (d is not FrameworkElement element) return;
+        if (key is null) element.ClearValue(TextElement.ForegroundProperty);
+        else element.SetResourceReference(TextElement.ForegroundProperty, key);
+    }
 }
 
 public sealed class StatusToSymbolConverter : IValueConverter

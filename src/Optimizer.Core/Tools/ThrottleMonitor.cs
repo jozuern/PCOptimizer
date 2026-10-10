@@ -22,9 +22,22 @@ public sealed record ThrottleResult(
     /// <summary>A share above 10 % of busy samples counts as real throttling (short dips are normal).</summary>
     public const double Significant = 0.10;
 
-    public bool CpuThrottled => CpuBusyShare > 0.2 && CpuLimitedShare > Significant;
+    /// <summary>
+    /// Share of busy samples (above 50 % processor utility) needed to say anything about the processor. A game on a
+    /// processor with many cores often stays below that: then the run cannot show processor throttling either way.
+    /// </summary>
+    public const double MinBusyShare = 0.2;
+
+    public bool CpuJudged => CpuBusyShare > MinBusyShare;
+    public bool CpuThrottled => CpuJudged && CpuLimitedShare > Significant;
     public bool GpuThermal => GpuReasonShare.TryGetValue("thermal", out var t) && t > Significant;
     public bool GpuPower => GpuReasonShare.TryGetValue("powerLimit", out var p) && p > Significant;
+
+    /// <summary>
+    /// The card's hardware cut its clocks to half or less for a reason other than heat: an external power brake (for
+    /// example from the power supply) or power draw spikes (NVML HW slowdown). That is a fault, not normal behavior.
+    /// </summary>
+    public bool GpuSlowdown => GpuReasonShare.Where(r => r.Key is "powerBrake" or "hardwareSlowdown").Sum(r => r.Value) > Significant;
 }
 
 /// <summary>
@@ -124,50 +137,45 @@ public sealed class ThrottleMonitor : IDisposable
     [DllImport("pdh.dll")] private static extern uint PdhCloseQuery(IntPtr query);
 }
 
-public sealed record ProcessCpu(string Name, int Pid, double CpuShare, long WorkingSetBytes, string? Path);
+public sealed record ProcessCpu(string Name, int Pid, double CpuShare, long WorkingSetBytes);
 
 /// <summary>CPU use per process over a short window (F11, "background hogs"). Share = fraction of all logical processors.</summary>
 public static class ProcessSampler
 {
     public static async Task<IReadOnlyList<ProcessCpu>> SampleAsync(TimeSpan window, CancellationToken ct = default)
     {
+        // A snapshot of 300 processes takes a moment while a scan runs: each process is read somewhere inside it, so the
+        // window is measured from the middle of one snapshot to the middle of the next (from the end of the first, a
+        // slow first snapshot would inflate every share).
+        var start1 = Stopwatch.GetTimestamp();
         var first = Snapshot();
-        var sw = Stopwatch.StartNew();
+        var end1 = Stopwatch.GetTimestamp();
         await Task.Delay(window, ct);
-        var second = Snapshot(first);
-        var elapsed = sw.Elapsed.TotalMilliseconds * Environment.ProcessorCount;
+        var start2 = Stopwatch.GetTimestamp();
+        var second = Snapshot();
+        var end2 = Stopwatch.GetTimestamp();
+        var elapsed = Stopwatch.GetElapsedTime(start1 + (end1 - start1) / 2, start2 + (end2 - start2) / 2).TotalMilliseconds * Environment.ProcessorCount;
         var own = Environment.ProcessId;
         var list = new List<ProcessCpu>();
-        foreach (var (pid, (name, cpu, ws, path)) in second)
+        foreach (var (pid, (name, cpu, ws)) in second)
         {
-            if (pid is 0 or 4 || pid == own || !first.TryGetValue(pid, out var before)) continue;
+            if (pid is 0 or 4 || pid == own || !first.TryGetValue(pid, out var before) || before.Name != name) continue;
             var share = (cpu - before.Cpu).TotalMilliseconds / elapsed;
-            if (share > 0) list.Add(new ProcessCpu(name, pid, share, ws, path));
+            if (share > 0) list.Add(new ProcessCpu(name, pid, share, ws));
         }
         return list.OrderByDescending(p => p.CpuShare).ToList();
     }
 
-    /// <param name="earlier">A snapshot of a moment ago: the path of a process still running is taken from it (reading MainModule is slow).</param>
-    private static Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet, string? Path)> Snapshot(
-        Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet, string? Path)>? earlier = null)
+    private static Dictionary<int, (string Name, TimeSpan Cpu, long WorkingSet)> Snapshot()
     {
-        var map = new Dictionary<int, (string, TimeSpan, long, string?)>();
+        var map = new Dictionary<int, (string, TimeSpan, long)>();
         foreach (var p in Process.GetProcesses())
         {
             using (p)
             {
                 try
                 {
-                    string? path = earlier is not null && earlier.TryGetValue(p.Id, out var known) && known.Name == p.ProcessName ? known.Path : null;
-                    try
-                    {
-                        path ??= p.MainModule?.FileName;
-                    }
-                    catch (Exception)
-                    {
-                        // protected or 32/64-bit mismatch: name only
-                    }
-                    map[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64, path);
+                    map[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64);
                 }
                 catch (Exception)
                 {

@@ -17,8 +17,6 @@
             <v:BoolToVisibilityConverter x:Key="InverseBoolToVisibility" Invert="True" />
             <v:NullToVisibilityConverter x:Key="NullToVisibility" />
             <v:InverseBoolConverter x:Key="InverseBool" />
-            <v:ResourceKeyToBrushConverter x:Key="KeyToBrush" />
-            <v:StatusToBrushConverter x:Key="StatusToBrush" />
             <v:StatusToSymbolConverter x:Key="StatusToSymbol" />
             <v:CountToVisibilityConverter x:Key="CountToVisibility" />
             <v:NullToBoolConverter x:Key="NullToBool" />
@@ -110,7 +108,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>
@@ -138,7 +136,7 @@
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>
@@ -153,7 +151,7 @@
                                           Margin="0,4,0,0" Visibility="{Binding AgainstNote, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </ui:CardControl.Header>
-                    <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" >
+                    <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" >
                         <ui:ToggleSwitch.IsEnabled>
                             <MultiBinding Converter="{StaticResource AllTrue}">
                                 <Binding Path="CanToggle" />

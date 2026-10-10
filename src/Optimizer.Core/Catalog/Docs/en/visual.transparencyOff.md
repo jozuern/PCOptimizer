@@ -4,7 +4,7 @@
 Turns off the blurred, translucent backgrounds (acrylic and Mica) in Start, taskbar and apps.
 
 ## How it works
-Acrylic blurs the content behind menus, flyouts and panels, which Microsoft calls GPU-intensive [1]. Mica tints window backgrounds with the wallpaper, which it samples only once [2]. EnableTransparency = 0 switches both to solid colors, like Settings > Personalization > Colors > Transparency effects [1][2].
+Acrylic blurs the content behind menus, flyouts and panels, which Microsoft calls GPU-intensive [1]. Mica tints window backgrounds with the wallpaper, which it samples only once [2]. EnableTransparency = 0 switches both to solid colors, like Settings > Personalization > Colors > Transparency effects [1][2]. Microsoft's settings reference lists EnableTransparency in the user's Themes\Personalize key as the value for the transparency effect on windows and surfaces [3].
 
 ## Why it can help
 Slightly less GPU work for acrylic surfaces on the desktop; most relevant on integrated graphics and on battery.
@@ -21,3 +21,4 @@ Keep it on if you like the look and have a dedicated graphics card.
 ## Sources
 1. https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic
 2. https://learn.microsoft.com/en-us/windows/apps/design/style/mica
+3. https://learn.microsoft.com/en-us/windows/apps/develop/settings/settings-common

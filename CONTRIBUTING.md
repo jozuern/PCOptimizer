@@ -11,7 +11,7 @@ PCOptimizer is source-available under the [PolyForm Strict License 1.0.0](LICENS
 ```powershell
 dotnet build                     # Debug: asInvoker manifest, runs without UAC (TPM and some counters show "Unknown")
 dotnet test                      # unit tests + explanation lint, also the read-only checks of this PC (Category=Hardware)
-dotnet test -c Release --filter "Category!=Hardware"   # what CI runs
+dotnet build -c Release && dotnet test -c Release --no-build --filter "Category!=Hardware"   # what CI runs (the build also compiles the app and its XAML)
 dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifacts/publish/PCOptimizer.exe
 ```
 
@@ -31,7 +31,7 @@ Developer switches (all read-only):
 | `--confirm <tweak id> --confirm-shot <file.png>` | renders the confirmation dialog of a tweak (nothing is applied) |
 | `--licenses-shot <file.png>` | renders the Licenses window |
 | `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors) |
-| `--perf <file.txt>` | times page switches, filters, profile changes and a full rebuild until the UI is idle, writes the result and exits |
+| `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |
 | `--profile <id>` | start with a profile: gaming, laptopGaming, battery, office, quiet, lowEnd (saved only when changed in the app) |
 | `--preview-drift on` | shows the "changes reset" banner with sample entries (nothing is read or changed) |
 | `--expert on` | Expert mode for this session |
@@ -48,7 +48,7 @@ docs/                 privacy, third-party notices, VM test plan, explanation st
 .github/workflows/    CI (build, tests without Category=Hardware, single-exe artifact) and the tag-triggered release
 ```
 
-Data: `%ProgramData%\PCOptimizer` when elevated; Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon and captures), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`.
+Data: `%ProgramData%\PCOptimizer` when elevated; Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change; an account's own settings under `users\<SID>`, undone changes in `history\`, undo that waits for a restart in `pending-undo\`), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon; its capture files are deleted once read), `temp\` (TEMP for the tools the app starts, emptied at every start), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`, `startup-snapshot.json`, `tcpip-reset.log`.
 
 Native libraries: `NativeLibraryGuard` resolves P/Invoke targets to System32 or the protected runtime folder and refuses a DLL of that name next to the exe. New P/Invokes need nothing extra; never load a DLL by a path a standard user can write to.
 
@@ -57,6 +57,7 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 ## Testing changes safely
 
 - `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\PCOptimizerTest` and fake system APIs. Nothing on the real system changes.
+- Run the tests once from an elevated terminal before changing security code: the data folder lock (`SecureFolder`) is only exercised elevated, as on the CI runners; a normal terminal checks only that it fails safely.
 - `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors).
 - Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md) (the last run: [docs/vm-test-results-2026-10-10.md](docs/vm-test-results-2026-10-10.md)). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
 - Not yet checked on real hardware: NVIDIA driver settings and network adapter properties (section 5 of the VM test plan), the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
@@ -84,12 +85,12 @@ Every NuGet package that ships in the exe needs its license text in `src/Optimiz
 
 ## Releases
 
-Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
+Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`; a merge commit without conflicts runs the same hook through `pre-merge-commit`, and CI checks the version against every parent of the pushed commit. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
 
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
-3. The release workflow builds, runs the tests, publishes the single exe with a SHA-256 file and a signature file (`PCOptimizer.exe.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
+3. The release workflow builds, runs the tests and publishes the single exe. The release job then waits for your approval (Actions > the run > Review deployments), because it uses the `release` environment; after it, it adds a SHA-256 file and a signature file (`PCOptimizer.exe.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
 
-The in-app update installs a release only when its signature matches the public key in `src/Optimizer.Core/Updates/update-key.pem`. The release workflow signs with the private key from the repository secret `UPDATE_SIGNING_KEY` and stops when the secret is missing or does not match that public key. Create the key pair once with `scripts/new-update-key.ps1`; the script says how to store the private key. Replace it only when it is lost or leaked: versions with the old public key then reject new releases, and users have to download the next version by hand.
+The in-app update installs a release only when its signature matches the public key in `src/Optimizer.Core/Updates/update-key.pem`. The release workflow signs with the private key from the secret `UPDATE_SIGNING_KEY` of the GitHub environment `release` and stops when the secret is missing or does not match that public key. Keep the secret in that environment, not in the repository (a repository secret is readable by a workflow on any pushed branch or tag), and let the environment allow only `v*.*.*` tags and require your approval (both are set up). The repository rulesets "Release tags" (only administrators create, move or delete `v*` tags) and "Protect main" (no deletion, no force push) cover the rest. Create the key pair once with `scripts/new-update-key.ps1`; the script says how to store the private key. Replace it only when it is lost or leaked: versions with the old public key then reject new releases, and users have to download the next version by hand.
 
 The exe is not code signed yet. Signing (Azure Trusted Signing or an OV certificate) fits in the release workflow between publish and upload.

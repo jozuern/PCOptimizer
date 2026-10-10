@@ -24,6 +24,58 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
 
     private static readonly HashSet<string> FindingIds = DocLint.RequiredDocIds().ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The data files are read leniently (maintainer "_comment" keys); a misspelled property would be ignored and turn a
+    /// rule into a no-op ("recomendWhen" in profiles.json). Without the comments, every property must map.
+    /// </summary>
+    [Fact]
+    public void DataFilesHaveNoUnknownProperties()
+    {
+        var types = new Dictionary<string, Type>
+        {
+            ["appx.json"] = typeof(Debloat.AppxCatalog), ["services.json"] = typeof(Services.ServiceCatalog), ["apps.json"] = typeof(Apps.AppCatalog),
+            ["features.json"] = typeof(Tools.FeatureCatalog), ["profiles.json"] = typeof(Profiles.ProfileCatalog), ["gpu.json"] = typeof(Catalog.GpuCatalog),
+            ["cpu.json"] = typeof(Catalog.CpuCatalog), ["ram.json"] = typeof(Catalog.RamCatalog), ["anticheat.json"] = typeof(Catalog.AntiCheatCatalog),
+            ["bios.json"] = typeof(Catalog.BiosCatalog), ["storage.json"] = typeof(Catalog.StorageCatalog), ["extras.json"] = typeof(Catalog.ExtrasCatalog),
+        };
+        var files = Catalog.CatalogData.ResourceNames("Catalog.Data.").Select(n => n["Catalog.Data.".Length..]).Where(n => n != "labels.json").ToList();
+        Assert.Equal(files.Order(), types.Keys.Order());
+        var strict = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true, ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true,
+            UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow,
+        };
+        static void StripComments(System.Text.Json.Nodes.JsonNode? node)
+        {
+            if (node is System.Text.Json.Nodes.JsonObject o)
+            {
+                o.Remove("_comment");
+                foreach (var (_, child) in o) StripComments(child);
+            }
+            else if (node is System.Text.Json.Nodes.JsonArray a)
+            {
+                foreach (var child in a) StripComments(child);
+            }
+        }
+        var errors = new List<string>();
+        foreach (var (file, type) in types)
+        {
+            var node = System.Text.Json.Nodes.JsonNode.Parse(Catalog.CatalogData.ReadResourceText("Catalog.Data." + file),
+                documentOptions: new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true });
+            StripComments(node);
+            try
+            {
+                System.Text.Json.JsonSerializer.Deserialize(node, type, strict);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                errors.Add($"{file}: {ex.Message}");
+            }
+        }
+        foreach (var e in errors) output.WriteLine(e);
+        Assert.Empty(errors);
+    }
+
     private static bool IsKnownFact(string fact)
     {
         if (KnownFacts.Contains(fact)) return true;

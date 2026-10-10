@@ -163,6 +163,25 @@ public sealed partial class MainViewModel : ObservableObject
         };
     }
 
+    /// <summary>Every page that loads its own data.</summary>
+    public IReadOnlyList<PageViewModel> Pages => [Network, Debloat, Cleanup, Startup, ServicesPage, Apps, Tools, Health];
+
+    /// <summary>
+    /// After the first scan, the pages that read slow data of their own (startup entries, services, programs and
+    /// drivers, AppX packages, folder sizes) load it in the background, one after another and only while the window is
+    /// idle, so they open with their rows instead of a loading state. Everything here only reads; a page the user opens
+    /// meanwhile starts its own load at once. Tools is not among them: its two DISM lists take about 12 seconds of
+    /// processor time when elevated, too much to spend on every start for a page that is opened rarely.
+    /// </summary>
+    public async Task PreloadPagesAsync()
+    {
+        foreach (var page in new PageViewModel[] { Startup, ServicesPage, Apps, Debloat, Cleanup })
+        {
+            await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            await page.EnsureLoadedAsync();
+        }
+    }
+
     public AppServices Services => _services;
     public ChangeRunner Runner { get; }
     public NetworkViewModel Network { get; }
@@ -272,6 +291,20 @@ public sealed partial class MainViewModel : ObservableObject
         Network.Rebuild();
     }
 
+    /// <summary>Developer aid (--perf): switches the profile as the picker does, without saving it.</summary>
+    public void SetProfileForSession(ProfileOption option)
+    {
+        if (option.Id == _usage.Id) return;
+#pragma warning disable MVVMTK0034
+        _selectedProfile = option;
+#pragma warning restore MVVMTK0034
+        OnPropertyChanged(nameof(SelectedProfile));
+        _usage = _catalog.Profiles.Get(option.Id);
+        ApplyProfile();
+        Rebuild();
+        Network.Rebuild();
+    }
+
     [RelayCommand]
     private void UseSuggestedProfile()
     {
@@ -316,6 +349,17 @@ public sealed partial class MainViewModel : ObservableObject
         }
         _settings.ExpertMode = value;
         _settings.Save();
+        Rebuild();
+        Network.Rebuild();
+    }
+
+    /// <summary>Developer aid (--perf): switches Expert mode for this session as the switch does, without the question and without saving.</summary>
+    public void SetExpertModeForSession(bool value)
+    {
+#pragma warning disable MVVMTK0034
+        _expertMode = value;
+#pragma warning restore MVVMTK0034
+        OnPropertyChanged(nameof(ExpertMode));
         Rebuild();
         Network.Rebuild();
     }
@@ -544,9 +588,6 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Navigate(Page page) => CurrentPage = page;
-
-    [RelayCommand]
     private void SetLanguage(string lang)
     {
         _settings.Language = lang;
@@ -625,20 +666,41 @@ public sealed partial class MainViewModel : ObservableObject
             var previous = _reuseSlowParts ? Profile : null;
             _reuseSlowParts = false;
             var scanner = new HardwareScanner(_catalog);
-            // The page is ready without the 3 second background CPU sample; that one check follows when it is done.
-            var profile = await scanner.ScanAsync(progress, previous: previous, waitForBackgroundSample: false);
-            pendingSample = scanner.PendingBackgroundSample;
-            // A quick rescan after a change reuses the last finished sample.
-            if (profile.Extras is { BackgroundCpu: null } && pendingSample is null && _lastBackgroundSample is { } last)
-                profile = HardwareScanner.WithBackgroundSample(profile, last);
+            var engine = _services.Engine;
+            var visible = _services.Catalog.Visible;
             var registry = _services.Context.Registry;
             var bcd = _services.BcdElements;
-            _findings = await Task.Run(() => new FindingEngine(_catalog, registry, bcd).Evaluate(profile));
+            var lastSample = _lastBackgroundSample;
+            // The tweak reads that start PowerShell, DISM or bcdedit run beside the probes; the detection after the scan
+            // then finds them done (one after another they took longer than the whole hardware scan).
+            var toolReads = engine.PrefetchReads(visible, Optimizer.Core.Actions.EarlyRead.WithScan);
+            toolReads.Forget("early tool reads");
+            // Scan and findings in one trip to the background: at the start the UI thread is busy drawing the window,
+            // and a return to it in between waited for that.
+            var (profile, findings) = await Task.Run(async () =>
+            {
+                // The page is ready without the 3 second background CPU sample; that one check follows when it is done.
+                // The CPU sample starts after the tools of the early reads ended (they would count as background activity).
+                var scanned = await scanner.ScanAsync(progress, previous: previous, waitForBackgroundSample: false, sampleAfter: toolReads).ConfigureAwait(false);
+                // The scan's own NVIDIA read is closed now: the detection's opens while the findings are evaluated.
+                engine.PrefetchReads(visible, Optimizer.Core.Actions.EarlyRead.AfterScan).Forget("early NVIDIA reads");
+                // A quick rescan after a change reuses the last finished sample.
+                if (scanned.Extras is { BackgroundCpu: null } && scanner.PendingBackgroundSample is null && lastSample is { } last)
+                    scanned = HardwareScanner.WithBackgroundSample(scanned, last);
+                var step = System.Diagnostics.Stopwatch.StartNew();
+                var evaluated = new FindingEngine(_catalog, registry, bcd).Evaluate(scanned);
+                Log.Debug("scan", "findings evaluated", new { ms = step.ElapsedMilliseconds });
+                return (scanned, evaluated);
+            });
+            pendingSample = scanner.PendingBackgroundSample;
+            _findings = findings;
             Profile = profile;
             await RefreshTweaksAsync();
             _lastScanTime = DateTime.Now;
+            var rows = System.Diagnostics.Stopwatch.StartNew();
             Rebuild();
             Network.Rebuild();
+            Log.Debug("scan", "rows built", new { ms = rows.ElapsedMilliseconds });
         }
         catch (Exception ex)
         {
@@ -725,27 +787,31 @@ public sealed partial class MainViewModel : ObservableObject
         if (Profile is null) return;
         InspectorItem.ClearMarkdownCache();
         var profile = Profile;
+        var findings = _findings;
         var engine = _services.Engine;
         var registry = _services.Context.Registry;
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        (_facts, _tweakStates, _deviceStates) = await Task.Run(() =>
+        var visible = _services.Catalog.Visible;
+        var store = _services.Store;
+        // One trip to the background and back (each return to the UI thread waits for what it is drawing).
+        (_facts, _tweakStates, _deviceStates, _drift, var count) = await Task.Run(() =>
         {
-            var facts = FactsBuilder.Build(profile, _findings, _catalog, registry);
-            var catalog = engine.DetectAll(_services.Catalog.Visible, facts);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var facts = FactsBuilder.Build(profile, findings, _catalog, registry);
+            var catalog = engine.DetectAll(visible, facts);
             var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
-            return (facts, catalog, device);
+            Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });
+            // The states just read are not read again (runtime tweaks of other pages are).
+            var known = catalog.Concat(device).GroupBy(s => s.Tweak.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().State, StringComparer.Ordinal);
+            var drift = engine.CheckDrift(facts, known);
+            return (facts, catalog, device, drift, store.All().Count);
         });
-        Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });
         EnsureProfile();
         ApplyProfile();
-        var facts = _facts;
-        _drift = await Task.Run(() => engine.CheckDrift(facts));
         foreach (var d in _drift)
             Log.Warn("drift", $"{d.Tweak.Id} is no longer in place", new { d.AppliedOn, d.Current, d.WindowsUpdatedSince });
 
         // Once per Windows update: say so when all changes survived it (a reset shows in the drift banner instead).
         var current = _services.Os.BuildString;
-        var count = await Task.Run(() => _services.Store.All().Count);
         if (_settings.LastSeenWindowsVersion is { } last && last != current && count > 0 && _drift.Count == 0)
             _updateNotice = Loc.Instance.Format("WinUpdated_AllGood", last, current, count);
         if (_settings.LastSeenWindowsVersion != current)
@@ -856,6 +922,9 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Switch on a tweak row: on = apply (confirmation first), off = undo. The switch shows the real state.</summary>
     public async Task ToggleAsync(TweakItemViewModel item, bool on)
     {
+        // Called from the switch's binding setter: the confirmation dialog must not open inside the click and the
+        // switch's property update (undo reaches ShowDialog before its first await), as SwitchRow.RunAsync does.
+        await Task.Yield();
         try
         {
             if (!CanChange) ShowResult(Loc.Instance["Change_Busy"]);
@@ -1001,18 +1070,12 @@ public sealed partial class MainViewModel : ObservableObject
     // ---------------- building view state ----------------
 
     /// <summary>
-    /// Theme switched (in Settings or by Windows): rows and status colors are rebuilt, and properties whose value did
-    /// not change are raised again, so their brushes are looked up in the new theme.
+    /// Theme switched (in Settings or by Windows). Status colors are resource references (<see cref="Views.ThemeBrush"/>)
+    /// and follow by themselves, so no rows are built again; the window renders the inspector document again.
     /// </summary>
-    public void OnThemeChanged()
-    {
-        Rebuild();
-        Network.Rebuild();
-        NotifyScore();
-        Health.OnThemeChanged();
-    }
+    public void OnThemeChanged() => Health.OnThemeChanged();
 
-    /// <summary>Recreates all language-dependent items (after a scan, a language switch or a theme switch).</summary>
+    /// <summary>Recreates all language-dependent items (after a scan, a language switch, a profile or Expert mode switch).</summary>
     public void Rebuild()
     {
         var selectedKey = SelectedItem?.Key;
@@ -1028,12 +1091,26 @@ public sealed partial class MainViewModel : ObservableObject
         BuildBanners();
         BuildSummary();
         BuildChanges();
-        HardwareSections.Clear();
-        if (Profile is not null)
-            foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
+        BuildHardware();
 
         RestoreSelection(selectedKey);
         OnPropertyChanged(nameof(AboutText));
+    }
+
+    private (HardwareProfile? Profile, string Language) _hardwareShown;
+
+    /// <summary>
+    /// The hardware page shows the scan result only (no profile, Expert mode or theme brushes): built again for a new
+    /// scan or language, so a switch elsewhere does not recreate its rows.
+    /// </summary>
+    private void BuildHardware()
+    {
+        var shown = (Profile, Loc.Instance.Language);
+        if (ReferenceEquals(_hardwareShown.Profile, shown.Profile) && _hardwareShown.Language == shown.Language) return;
+        _hardwareShown = shown;
+        HardwareSections.Clear();
+        if (Profile is not null)
+            foreach (var s in HardwareReport.Build(Profile, Loc.Instance)) HardwareSections.Add(s);
     }
 
     /// <summary>

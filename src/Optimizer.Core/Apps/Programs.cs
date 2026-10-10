@@ -114,10 +114,13 @@ public static class Programs
                 ? new UninstallCommand(msiMode, msiexec, $"/x {g.ToString("B").ToUpperInvariant()}")
                 : null;
         }
-        // For a rundll32 line the DLL is the code that runs: it must be admin-only too.
+        // For a rundll32 line the DLL is the code that runs: it must be admin-only too. A script host or launcher (cmd /c
+        // uninstall.cmd, wscript x.vbs) runs the files it is given: each of them must be admin-only, and inline code runs
+        // as the user, or a script a vendor left writable would run elevated after any program of the user changed it.
         var image = CommandLine.ImagePath(expanded, s => s, exists);
         var elevated = !p.PerUser && isAdminOnly(file)
-            && (image is null || string.Equals(image, file, StringComparison.OrdinalIgnoreCase) || isAdminOnly(image));
+            && (image is null || string.Equals(image, file, StringComparison.OrdinalIgnoreCase) || isAdminOnly(image))
+            && !CommandLine.RunsUntrustedCode(expanded, isAdminOnly, s => s, exists);
         return new UninstallCommand(elevated ? UninstallMode.Elevated : UninstallMode.AsUser, file, args);
     }
 }

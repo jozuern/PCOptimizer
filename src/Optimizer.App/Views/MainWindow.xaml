@@ -76,11 +76,11 @@
                     Visibility="{Binding SelectedItem, Converter={StaticResource NullToVisibility}}">
                 <DockPanel Margin="24,16,8,0">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,16,8" DataContext="{Binding SelectedItem}">
-                        <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon Dismiss20}" ToolTip="Esc"
+                        <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon Dismiss20}" ToolTip="Esc" AutomationProperties.Name="{l:Tr Common_Close}"
                                    Command="{Binding DataContext.CloseInspectorCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="20" Margin="0,0,8,0"
-                                           Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                                           v:ThemeBrush.Key="{Binding StatusBrushKey}" />
                             <ui:TextBlock FontTypography="BodyStrong" Text="{Binding StatusText}" VerticalAlignment="Center" />
                             <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ImpactText}" Margin="16,0,0,0" VerticalAlignment="Center"
                                           ToolTip="{Binding ImpactTooltip}" />

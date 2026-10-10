@@ -40,6 +40,21 @@ public sealed record ChangeLine(string Target, string Before, string After)
     public override string ToString() => Target;
 }
 
+/// <summary>When the scan starts a slow read of an action, so that the tweak detection finds it done.</summary>
+public enum EarlyRead
+{
+    None,
+
+    /// <summary>Starts a tool (PowerShell, DISM, bcdedit) and shares the result through <see cref="ReadCache"/>: read beside the hardware probes.</summary>
+    WithScan,
+
+    /// <summary>
+    /// Opens the NVIDIA driver settings, which stay open for a few seconds: read right after the hardware probes, whose
+    /// own NVIDIA read must not run at the same time (the driver settings are never opened twice at once).
+    /// </summary>
+    AfterScan,
+}
+
 /// <summary>
 /// One step of a tweak. Every action can read its current state, describe the change, apply it and restore a
 /// stored original. Actions never decide policy (that is the engine's and the guard rules' job).
@@ -94,6 +109,9 @@ public abstract class TweakAction
     /// until then (memory compression). The engine stores the desired value as applied and undoes it also before the restart.
     /// </summary>
     public virtual bool TakesEffectAfterRestart => false;
+
+    /// <summary>Whether the scan reads this action's state ahead of the tweak detection (<see cref="Tweaks.TweakEngine.PrefetchReads"/>).</summary>
+    public virtual EarlyRead EarlyRead => EarlyRead.None;
 
     public virtual ActionState State(ActionContext c)
     {

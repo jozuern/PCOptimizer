@@ -4,7 +4,7 @@
 Schaltet die Standortdienste für den ganzen PC ab, wie der Schalter „Standortdienste“ in den Einstellungen.
 
 ## So funktioniert es
-Der geräteweite Einwilligungswert für den Standort wird auf „Deny“ gesetzt. Das ist der Wert hinter Einstellungen > Datenschutz und Sicherheit > Standort > Standortdienste, den nur Administratoren ändern können [1]. Windows und Apps bekommen dann keinen Gerätestandort mehr [1]. Microsofts Anleitung zum Verwalten der Verbindungen von Windows nennt denselben Schalter, um den Standort für ein Gerät abzuschalten [2].
+Der geräteweite Einwilligungswert für den Standort wird auf „Deny“ gesetzt, der Wert, den Windows für Einstellungen > Datenschutz und Sicherheit > Standort > Standortdienste speichert, einen Schalter, den nur Administratoren ändern können [1]. Windows und Apps bekommen dann keinen Gerätestandort mehr [1]. Microsoft beschreibt den Schalter, der Registry-Wert dahinter ist aber nicht dokumentiert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau. Microsofts Anleitung zum Verwalten der Verbindungen von Windows nennt denselben Schalter, um den Standort für ein Gerät abzuschalten [2].
 
 ## Warum es helfen kann
 Keine Standortabfragen im Hintergrund. Kein Effekt auf die Leistung.

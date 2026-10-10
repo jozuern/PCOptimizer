@@ -115,7 +115,7 @@ public class StartupTests
         RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32", "msacm.imaadpcm", "string", "imaadp32.acm");
         RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32", "MidisrvTransferComplete", "dword", "1");
 
-        var all = new StartupScanner(fx.Registry, fx.Tasks, null).ScanAll(includeServicesAndDrivers: false, includeWmi: false);
+        var all = new StartupScanner(fx.Registry, fx.Tasks, null) { CommonStartupFolder = Path.Combine(fx.BackupRoot, "no-startup") }.ScanAll(includeServicesAndDrivers: false, includeWmi: false);
         StartupEntry One(StartupKind kind) => Assert.Single(all, e => e.Kind == kind);
         Assert.Equal(@"C:\Tools\cleanup.exe", One(StartupKind.RunOnce).ImagePath);
         Assert.Equal("Contoso Setup", One(StartupKind.ActiveSetup).Name); // {BBBB} is no longer installed
@@ -202,7 +202,7 @@ public class StartupTests
             lnk.Arguments = @"/c echo C:\Test\file.txt";
             lnk.Save();
 
-            var entry = Assert.Single(new StartupScanner(fx.Registry, fx.Tasks, profile).StartupFolders(), e => e.Name == "PcoTest");
+            var entry = Assert.Single(new StartupScanner(fx.Registry, fx.Tasks, profile) { CommonStartupFolder = Path.Combine(profile, "no-startup") }.StartupFolders(), e => e.Name == "PcoTest");
             Assert.Equal(cmd, entry.ImagePath, ignoreCase: true); // was the whole command line, so the signature check said "File not found"
         }
         finally
@@ -223,6 +223,37 @@ public class StartupTests
         var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\App\app.exe", @"C:\Tools\helper.dll", @"C:\Drivers\x.sys" };
         Assert.Equal(expected, CommandLine.ImagePath(command, s => s, files.Contains));
     }
+
+    /// <summary>
+    /// An unquoted path with spaces runs the shortest prefix that exists, as CreateProcess and the service manager do: a
+    /// planted C:\Tools\My.exe runs instead of C:\Tools\My App\app.exe, and the scanner must show that file.
+    /// </summary>
+    [Fact]
+    public void UnquotedPathsResolveToTheFileWindowsRuns()
+    {
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Tools\My App\app.exe", @"C:\Tools\My.exe" };
+        Assert.Equal(@"C:\Tools\My.exe", CommandLine.ImagePath(@"C:\Tools\My App\app.exe -min", s => s, files.Contains));
+        files.Remove(@"C:\Tools\My.exe");
+        Assert.Equal(@"C:\Tools\My App\app.exe", CommandLine.ImagePath(@"C:\Tools\My App\app.exe -min", s => s, files.Contains));
+    }
+
+    [Fact]
+    public void BarePowerShellResolvesToItsSystemFolder()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var ps = Path.Combine(windows, @"System32\WindowsPowerShell\v1.0\powershell.exe");
+        Assert.Equal(ps, CommandLine.ImagePath("powershell -w hidden -enc SQBFAFgA", s => s, f => f.Equals(ps, StringComparison.OrdinalIgnoreCase)), ignoreCase: true);
+    }
+
+    [Theory]
+    [InlineData("Microsoft Windows", true)]
+    [InlineData("Microsoft Corporation", true)]
+    [InlineData("Microsoft Windows Publisher", true)]
+    [InlineData("Microsoft Windows Hardware Compatibility Publisher", false)] // signs other vendors' drivers (WHQL, attestation)
+    [InlineData("Microsoft Windows Early Launch Anti-malware Publisher", false)]
+    [InlineData("Microsoft Corporation Fake Ltd", false)]
+    public void OnlyMicrosoftsOwnSignersCountAsMicrosoft(string publisher, bool microsoft) =>
+        Assert.Equal(microsoft, new SignatureInfo(SignatureStatus.Signed, publisher, false).IsMicrosoft);
 
     [Fact]
     public void VirusTotalParsingAndThresholds()

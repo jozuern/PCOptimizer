@@ -225,6 +225,8 @@ Same VM on build 26300.9550, restored from the `clean` checkpoint (System Protec
 
 ## Preview review
 
+Tweaks that became previews after this run (the personalization settings added later, `security.lsaProtection`, `network.dohAutoUpgrade`, `expert.legacyBootMenu`, further DNS presets, and the values marked undocumented by the third audit) were not part of it and are untested.
+
 After sections 1 to 4 and 6, each of the 26 Preview tweaks was decided on. Same VM, build 26300.9550, restored from `clean`, version 0.4.7, apply and undo through the console runner. Where the effect could only be seen in Windows, it was read where a user sees it: in Settings, in File Explorer, in Start search, or through `SystemParametersInfo` after signing in again.
 
 | Tweak | Check | Result |

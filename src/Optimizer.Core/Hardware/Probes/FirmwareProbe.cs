@@ -17,12 +17,25 @@ public static class FirmwareProbe
             _ => isUefi ? TriState.Unknown : TriState.No,
         };
 
-        // The WMI queries go to different namespaces and each one costs a connection: they run side by side.
-        var tpm = Task.Run(ReadTpm);
-        var deviceGuard = Task.Run(ReadDeviceGuard);
-        var bios = Task.Run(() => Row("SELECT Manufacturer, SMBIOSBIOSVersion, ReleaseDate FROM Win32_BIOS"));
-        var board = Task.Run(() => Row("SELECT Manufacturer, Product FROM Win32_BaseBoard"));
-        var style = Task.Run(ReadSystemDiskStyle);
+        // The WMI queries go to different namespaces and each one costs a connection: they run side by side. Slow parts
+        // are logged: elevated, Win32_Tpm takes most of a second (its provider asks the TPM for every property).
+        static Task<T> Timed<T>(string part, Func<T> read) => Task.Run(() =>
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                return read();
+            }
+            finally
+            {
+                if (watch.ElapsedMilliseconds > 250) Logging.Log.Debug("scan", $"firmware/{part} took {watch.ElapsedMilliseconds} ms");
+            }
+        });
+        var tpm = Timed("tpm", ReadTpm);
+        var deviceGuard = Timed("deviceguard", ReadDeviceGuard);
+        var bios = Timed("bios", () => Row("SELECT Manufacturer, SMBIOSBIOSVersion, ReleaseDate FROM Win32_BIOS"));
+        var board = Timed("board", () => Row("SELECT Manufacturer, Product FROM Win32_BaseBoard"));
+        var style = Timed("diskstyle", ReadSystemDiskStyle);
         Task.WaitAll(tpm, deviceGuard, bios, board, style);
 
         var (tpmPresent, tpmSpec, tpmReady, tpmMaker) = tpm.Result;

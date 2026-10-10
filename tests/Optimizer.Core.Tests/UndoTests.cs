@@ -97,6 +97,37 @@ public class UndoTests
         }
     }
 
+    /// <summary>
+    /// A partial undo of a tweak with a per-user and a PC-wide entry leaves only the PC-wide one: that backup moves to the
+    /// shared folder, and the account's older copy (with both entries) must not be read first or survive the archive.
+    /// </summary>
+    [Fact]
+    public void ABackupThatLosesItsPerUserEntriesLeavesNoStaleCopy()
+    {
+        var root = TestFolders.Create("peruser-partial");
+        try
+        {
+            var store = new BackupStore(root, secure: false, userSid: "S-1-5-21-1-1-1-1001");
+            BackupEntry Entry(Hive hive) => new()
+            {
+                TargetKey = new RegistryAction { Hive = hive, Path = @"Software\Test", Name = "V" }.TargetKey,
+                Description = "V", Original = new StoredValue(true, "dword", "1"), Applied = new StoredValue(true, "dword", "0"),
+            };
+            store.Save(new TweakBackup { TweakId = "test.mixed", Entries = [Entry(Hive.User), Entry(Hive.Machine)] });
+            store.Save(new TweakBackup { TweakId = "test.mixed", Entries = [Entry(Hive.Machine)] });
+
+            Assert.Equal([Entry(Hive.Machine).TargetKey], store.Get("test.mixed")!.Entries.Select(e => e.TargetKey));
+            Assert.Single(store.All());
+            store.Archive("test.mixed");
+            Assert.Null(store.Get("test.mixed"));
+            Assert.Empty(store.All());
+        }
+        finally
+        {
+            TestFolders.Delete(root);
+        }
+    }
+
     [Fact]
     public async Task PowerSettingKeepsTheOriginalOfEveryPlanItChanged()
     {
@@ -118,6 +149,49 @@ public class UndoTests
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal(0u, fx.Power.Ac[(FakePower.Balanced, sub, key)]);
         Assert.Equal(1u, fx.Power.Ac[(FakePower.High, sub, key)]);
+    }
+
+    /// <summary>
+    /// A later catalog version writes less under the same target (mains only). Applying it again after Windows reset
+    /// the mains value must not replace the stored action: undo restores what the first version changed, battery too.
+    /// </summary>
+    [Fact]
+    public async Task ReapplyWithANewerDefinitionKeepsTheFirstUndoAction()
+    {
+        using var fx = new EngineFixture();
+        var sub = PowerAliases.Resolve("SUB_PROCESSOR");
+        var key = PowerAliases.Resolve("PERFBOOSTMODE");
+        fx.Power.Ac[(FakePower.Balanced, sub, key)] = 0;
+        fx.Power.Dc[(FakePower.Balanced, sub, key)] = 0;
+        var v1 = Tweak("test.boost", new PowerSettingAction { Subgroup = "SUB_PROCESSOR", Setting = "PERFBOOSTMODE", Ac = 2, Dc = 2 });
+        var v2 = Tweak("test.boost", new PowerSettingAction { Subgroup = "SUB_PROCESSOR", Setting = "PERFBOOSTMODE", Ac = 2 });
+
+        await fx.Engine.ApplyAsync(v1, Facts, new HashSet<string>(), Options);
+        fx.Power.Ac[(FakePower.Balanced, sub, key)] = 0; // reset by Windows
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(v2, Facts, new HashSet<string>(), Options)).Outcome);
+
+        Assert.True(fx.Engine.Revert(v2).Success);
+        Assert.Equal(0u, fx.Power.Ac[(FakePower.Balanced, sub, key)]);
+        Assert.Equal(0u, fx.Power.Dc[(FakePower.Balanced, sub, key)]);
+    }
+
+    /// <summary>A token tweak changes only its token: parts it cannot read and other tokens come back exactly.</summary>
+    [Fact]
+    public async Task TokenTweaksKeepTheRestOfTheValue()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"Software\PCOTest\DirectX";
+        const string original = "VRROptimizeEnable=0;SomeFlag;AutoHDREnable=1;";
+        RegistryValue.Write(fx.Registry, Hive.User, path, "Settings", "string", original);
+        var t = Tweak("test.token", new RegistryTokenAction { Hive = Hive.User, Path = path, Name = "Settings", Token = "SwapEffectUpgradeEnable", Value = "1" });
+
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        Assert.Equal(original + "SwapEffectUpgradeEnable=1;", RegistryValue.Read(fx.Registry, Hive.User, path, "Settings").Data);
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal(original, RegistryValue.Read(fx.Registry, Hive.User, path, "Settings").Data);
+
+        Assert.Equal("A=2;B=1;", RegistryTokenAction.WithToken("A=1;B=1;", "a", "2"));
+        Assert.Equal("B=1;", RegistryTokenAction.WithToken("A=1;B=1;A=3;", "A", null));
     }
 
     [Fact]

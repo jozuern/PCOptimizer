@@ -57,6 +57,8 @@
     },
     {
       "id": "gpu.windowedOptimizations",
+      "undocumented": true,
+      "preview": true,
       "category": "Graphics",
       "impact": {
         "gaming": 1,

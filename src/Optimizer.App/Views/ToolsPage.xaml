@@ -93,7 +93,7 @@
                                                   Visibility="{Binding Note, Converter={StaticResource NullToVisibility}}" />
                                 </StackPanel>
                             </ui:CardControl.Header>
-                            <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}" >
+                            <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" >
                                 <ui:ToggleSwitch.IsEnabled>
                                     <MultiBinding Converter="{StaticResource AllTrue}">
                                         <Binding Path="CanToggle" />

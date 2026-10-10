@@ -69,6 +69,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 |---|---|---|---|---|---|
 | `security.vbsOff` | Virtualization-based security and memory integrity off | expert, boot-critical, anti-cheat sensitive, preview | restart | registry | |
 | `leftover.usePlatformClock` | Remove forced platform clock (useplatformclock) | expert, boot-critical, preview | restart | bcd | |
+| `security.deviceEncryptionPrevented` | No automatic device encryption | expert, preview |  | registry | |
 | `expert.legacyBootMenu` | Classic F8 boot menu | expert, boot-critical, preview | restart | bcd | |
 
 ## 3. Tweaks that need a restart or sign-out
@@ -82,7 +83,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `memory.sysmainOff` | SysMain (Superfetch) off | moderate | restart | service | |
 | `memory.pagefileSystemManaged` | Page file managed by Windows | moderate | restart | registry | |
 | `storage.lastAccessOff` | NTFS last-access timestamps off | safe | restart | registry | |
-| `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe | restart | registry | |
+| `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | safe, preview | restart | registry | |
 | `network.preferIpv4` | Prefer IPv4 over IPv6 | safe | restart | registryBits | |
 | `privacy.telemetryOff` | Telemetry to minimum | moderate | restart | registry, service, scheduledTask | |
 | `visual.bestPerformance` | Visual effects: best performance | safe | sign out | registry, registryBinaryBits | |
@@ -120,7 +121,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `power.pcieAspmOff` | PCIe link power management off | safe |  | powerSetting | |
 | `power.fastStartupOff` | Fast Startup off | safe |  | registry | |
 | `power.hibernateOff` | Hibernation off | safe |  | hibernation | |
-| `gpu.windowedOptimizations` | Optimizations for windowed games | safe |  | registryToken | |
+| `gpu.windowedOptimizations` | Optimizations for windowed games | safe, preview |  | registryToken | |
 | `gpu.gameMode` | Game Mode on | safe |  | registry | |
 | `gpu.gameDvrOff` | Game Bar captures off | safe, preview |  | registry | |
 | `input.mouseAccelOff` | Mouse acceleration off | safe |  | registry | |
@@ -130,13 +131,13 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `network.deliveryOptimizationP2POff` | Delivery Optimization peer-to-peer off | safe |  | registry | |
 | `privacy.activityHistoryOff` | Activity history off | safe |  | registry | |
 | `privacy.consumerFeaturesOff` | Consumer features off | safe |  | registry | |
-| `privacy.locationOff` | Location access off | safe |  | registry | |
+| `privacy.locationOff` | Location access off | safe, preview |  | registry | |
 | `background.backgroundAppsOff` | Background apps off | moderate |  | registry | |
 | `background.aiOff` | Recall snapshots off | moderate |  | registry | |
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
-| `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
+| `explorer.endTask` | "End task" in the taskbar menu | safe, preview |  | registry | |
 | `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
 | `network.dns.google` | Public DNS servers | safe |  | dns | |
 | `network.dns.quad9` | Public DNS servers | safe |  | dns | |
@@ -230,7 +231,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.oneDriveFolderBackupOff` | OneDrive: no backup of Desktop, Documents and Pictures | safe |  | registry | |
 | `background.oneDriveSyncOff` | OneDrive file sync off | moderate |  | registry | |
 | `updates.featureUpdatesDeferred` | Feature updates one year later | safe |  | registry | |
-| `updates.storeAutoUpdateOff` | Microsoft Store: no automatic app updates | safe |  | registry | |
+| `updates.storeAutoUpdateOff` | Microsoft Store: no automatic app updates | moderate |  | registry | |
 | `storage.appArchivingOff` | No automatic archiving of unused apps | safe |  | registry | |
 | `focus.updateNotificationsReduced` | Fewer Windows Update notifications | safe |  | registry | |
 | `focus.toastsOff` | No pop-up notifications from apps | safe |  | registry | |
@@ -253,7 +254,6 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `security.remoteAssistanceOff` | Remote Assistance requests off | safe |  | registry | |
 | `security.projectionToPcOff` | No wireless projection to this PC | safe |  | registry | |
 | `security.autoPlayOff` | AutoPlay off on all drives | safe |  | registry | |
-| `security.deviceEncryptionPrevented` | No automatic device encryption | moderate |  | registry | |
 | `background.pcaOff` | Program Compatibility Assistant off | safe |  | registry | |
 | `network.smbThrottlingOff` | Network file transfers: no SMB throttling | safe |  | registry | |
 | `battery.noIndexingOnBattery` | No search indexing on battery | safe |  | registry | |
@@ -305,7 +305,11 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Tweak | Title | Check |
 |---|---|---|
 | `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support) |
+| `gpu.windowedOptimizations` | Optimizations for windowed games | the effect the explanation page describes |
 | `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
+| `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | the effect the explanation page describes |
+| `privacy.locationOff` | Location access off | the effect the explanation page describes |
+| `explorer.endTask` | "End task" in the taskbar menu | the effect the explanation page describes |
 | `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
 | `personalize.darkMode` | Dark mode for Windows and apps | the effect the explanation page describes |
 | `personalize.accentTitleBars` | Accent color on title bars | the effect the explanation page describes |

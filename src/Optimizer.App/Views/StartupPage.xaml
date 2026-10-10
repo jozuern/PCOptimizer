@@ -58,7 +58,7 @@
                     <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0">
-                                <ui:ToggleSwitch IsChecked="{Binding SwitchState, Mode=TwoWay}"
+                                <ui:ToggleSwitch AutomationProperties.Name="{Binding Name}" IsChecked="{Binding SwitchState, Mode=TwoWay}"
                                                  Visibility="{Binding CanToggle, Converter={StaticResource BoolToVisibility}}" >
                                     <ui:ToggleSwitch.IsEnabled>
                                         <MultiBinding Converter="{StaticResource AllTrue}">
@@ -77,7 +77,7 @@
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{l:Tr Startup_New}" Margin="0,2,0,0"
                                               Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}}" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0">
-                                    <Run Text="{Binding KindText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding PublisherText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding SignatureText, Mode=OneWay}" />
+                                    <Run Text="{Binding MetaText, Mode=OneWay}" />
                                 </ui:TextBlock>
                                 <TextBlock Style="{StaticResource Mono}" Text="{Binding Command}" Margin="0,4,0,0" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ScriptHostNote}" TextWrapping="Wrap"

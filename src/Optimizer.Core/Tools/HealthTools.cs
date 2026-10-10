@@ -65,7 +65,7 @@ public static class DiskHealthReader
         }
 
         var list = new List<DiskHealth>();
-        foreach (var d in Wmi.Query("SELECT DeviceId, FriendlyName, MediaType, BusType, HealthStatus FROM MSFT_PhysicalDisk", Scope))
+        foreach (var d in Wmi.PhysicalDisks())
         {
             counters.TryGetValue(d.Str("DeviceId"), out var c);
             list.Add(new DiskHealth(

@@ -5,6 +5,41 @@ namespace Optimizer.Core.Hardware;
 /// <summary>Small read-only WMI wrapper. Returns property bags so probes stay testable and free of COM objects.</summary>
 public static class Wmi
 {
+    private static readonly TimeSpan PhysicalDiskLifetime = TimeSpan.FromSeconds(10);
+    private static readonly Lock PhysicalDiskGate = new();
+    private static (DateTime At, Lazy<List<Dictionary<string, object?>>> Rows)? _physicalDisks;
+
+    /// <summary>
+    /// MSFT_PhysicalDisk (DeviceId, FriendlyName, Model, MediaType, BusType, Size, HealthStatus). The storage probe, the
+    /// drive health and the NVMe links of one scan all need it, and the Storage provider is slow to answer: one query
+    /// is shared for a few seconds, and callers that ask while it runs wait for it. Callers must not change the rows.
+    /// </summary>
+    public static List<Dictionary<string, object?>> PhysicalDisks()
+    {
+        Lazy<List<Dictionary<string, object?>>> rows;
+        lock (PhysicalDiskGate)
+        {
+            if (_physicalDisks is not { } cached || DateTime.UtcNow - cached.At >= PhysicalDiskLifetime)
+            {
+                cached = (DateTime.UtcNow, new Lazy<List<Dictionary<string, object?>>>(() =>
+                    Query("SELECT DeviceId, FriendlyName, Model, MediaType, BusType, Size, HealthStatus FROM MSFT_PhysicalDisk", @"root\Microsoft\Windows\Storage")));
+                _physicalDisks = cached;
+            }
+            rows = cached.Rows;
+        }
+        try
+        {
+            return rows.Value;
+        }
+        catch (Exception)
+        {
+            // A failed query is not kept: the next caller asks WMI again.
+            lock (PhysicalDiskGate)
+                if (_physicalDisks is { } failed && ReferenceEquals(failed.Rows, rows)) _physicalDisks = null;
+            throw;
+        }
+    }
+
     public static List<Dictionary<string, object?>> Query(string wql, string scope = @"root\cimv2")
     {
         var rows = new List<Dictionary<string, object?>>();

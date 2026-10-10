@@ -4,7 +4,7 @@
 Turns off a packet limit that MMCSS applied to network traffic while audio or video played (documented for Windows Vista). Unverified on Windows 11. Effect disputed.
 
 ## How it works
-In Windows Vista, the Multimedia Class Scheduler Service (MMCSS) told the network stack to pass on at most 10 received packets per millisecond while multimedia playback ran, so network processing could not interrupt audio [1]. NetworkThrottlingIndex sets this limit; 0xFFFFFFFF turns it off [2]. Current Microsoft documentation of MMCSS does not mention the value [3], so it is unverified whether Windows 11 still applies the limit. Takes effect after a restart.
+In Windows Vista, the Multimedia Class Scheduler Service (MMCSS) told the network stack to pass on at most 10 received packets per millisecond while multimedia playback ran, so network processing could not interrupt audio [1]. NetworkThrottlingIndex sets this limit; 0xFFFFFFFF turns it off [2]. Current Microsoft documentation of MMCSS does not mention the value [3], so it is unverified whether Windows 11 still applies the limit. Microsoft does not document the value for current Windows versions, so the tweak is a Preview. Takes effect after a restart.
 
 ## Why it can help
 If the limit is active, it slows fast transfers that receive many packets per second, for example copying large files over the local network while music plays.

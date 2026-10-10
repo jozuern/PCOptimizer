@@ -51,6 +51,34 @@ public partial class DocLintTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// No control characters in sources: a shell edit turns "\v" or "\a" in a path literal into a vertical tab or a bell
+    /// (ProcessHardening once had "WindowsPowerShell", vertical tab, "1.0"), which compiles and silently breaks the path.
+    /// </summary>
+    [Fact]
+    public void SourcesHaveNoControlCharacters()
+    {
+        string[] extensions = [".cs", ".xaml", ".json", ".resx", ".md", ".yml", ".props", ".csproj", ".ps1"];
+        var offenders = new List<string>();
+        foreach (var top in new[] { "src", "tests", "docs", ".github", "scripts" })
+        {
+            var folder = Path.Combine(RepoPaths.Root, top);
+            if (!Directory.Exists(folder)) continue;
+            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                var relative = Path.GetRelativePath(RepoPaths.Root, file);
+                if (!extensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase) ||
+                    relative.Split(Path.DirectorySeparatorChar).Any(p => p is "bin" or "obj")) continue;
+                var lines = File.ReadAllLines(file);
+                for (var i = 0; i < lines.Length; i++)
+                    if (lines[i].Any(c => c < ' ' && c != '\t' && c != '\r'))
+                        offenders.Add($"{relative}:{i + 1}");
+            }
+        }
+        foreach (var o in offenders) output.WriteLine(o);
+        Assert.Empty(offenders);
+    }
+
+    /// <summary>
     /// Every UI string key exists in English and German: the keys of both resource files match, every key the code or
     /// XAML names is defined, and so are the keys built at run time (profile names and descriptions, sensor types).
     /// </summary>

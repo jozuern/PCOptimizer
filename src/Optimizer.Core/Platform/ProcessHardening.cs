@@ -64,7 +64,7 @@ public static class ProcessHardening
     private static string BuildSystemPath(string windows)
     {
         var system = Environment.SystemDirectory;
-        var parts = new List<string> { system, windows, Path.Combine(system, "Wbem"), Path.Combine(system, @"WindowsPowerShell1.0"), Path.Combine(system, "OpenSSH") };
+        var parts = new List<string> { system, windows, Path.Combine(system, "Wbem"), Path.Combine(system, @"WindowsPowerShell\v1.0"), Path.Combine(system, "OpenSSH") };
         try
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment");
@@ -137,11 +137,24 @@ public static class ProcessHardening
     }
 
     /// <summary>
-    /// Set when a .NET profiler is configured for this process (CORECLR_ENABLE_PROFILING). The profiler DLL is loaded by
-    /// the runtime before any of the app's code runs, so an elevated start with it set refuses to go on.
+    /// Runtime switches that let another program into this process or make it write files, read by the .NET runtime
+    /// from the environment before any of the app's code runs: profilers (also notification profilers), a diagnostic
+    /// port the runtime connects to (a client there can attach a profiler), EventPipe traces and crash dumps written to
+    /// a path of the user's choice.
     /// </summary>
-    public static bool ProfilerRequested(Func<string, string?> getVariable) =>
-        getVariable("CORECLR_ENABLE_PROFILING") is { } v && v.Trim() != "0" && v.Trim().Length > 0;
+    private static readonly string[] EnablingVariables =
+    [
+        "CORECLR_ENABLE_PROFILING", "DOTNET_ENABLE_PROFILING", "CORECLR_ENABLE_NOTIFICATION_PROFILERS", "DOTNET_ENABLE_NOTIFICATION_PROFILERS",
+        "DOTNET_DiagnosticPorts", "COMPlus_DiagnosticPorts", "DOTNET_EnableEventPipe", "COMPlus_EnableEventPipe",
+        "DOTNET_DbgEnableMiniDump", "COMPlus_DbgEnableMiniDump",
+    ];
+
+    /// <summary>
+    /// The first variable of <see cref="EnablingVariables"/> that is set (not empty, not 0), or null. An elevated start
+    /// with one set refuses to go on; what the runtime loaded before that has run already (SECURITY.md, Known limits).
+    /// </summary>
+    public static string? DiagnosticsRequested(Func<string, string?> getVariable) =>
+        EnablingVariables.FirstOrDefault(name => getVariable(name) is { } v && v.Trim().Length > 0 && v.Trim() != "0");
 
     /// <summary>Ends the process and its children; a process that already exited or cannot be ended is left alone.</summary>
     public static void KillTree(Process process)

@@ -527,7 +527,7 @@
           "none"
         ]
       },
-      "risk": "safe",
+      "risk": "moderate",
       "appliesTo": {
         "when": {
           "not": {

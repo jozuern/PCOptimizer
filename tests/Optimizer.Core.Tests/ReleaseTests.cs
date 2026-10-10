@@ -93,8 +93,11 @@ public class ReleaseTests
         var hash = new string('a', 64);
         var version = new Version(1, 2, 3);
         var signature = sign(UpdateSignature.Statement(version, hash));
-        // The release workflow signs exactly this text.
+        // The release workflow signs exactly this text, with the lowercase hash.
         Assert.Equal("PCOptimizer 1.2.3\n" + hash + "\n", System.Text.Encoding.UTF8.GetString(UpdateSignature.Statement(version, hash.ToUpperInvariant())));
+        var workflow = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "release.yml"));
+        Assert.Contains("GetBytes(\"PCOptimizer $version`n$hash`n\")", workflow);
+        Assert.Contains(".Hash.ToLowerInvariant()", workflow);
         Assert.True(UpdateSignature.Verify(version, hash, signature, pem));
         Assert.True(UpdateSignature.Verify(version, hash.ToUpperInvariant(), signature + "\n", pem));
         Assert.False(UpdateSignature.Verify(version, hash, signature, otherPem));            // another key
@@ -240,7 +243,10 @@ public class ReleaseTests
             // runtime.<rid>.* packages carry native files for other platforms; the win-x64 exe does not contain them.
             if (id.StartsWith("runtime.", StringComparison.OrdinalIgnoreCase)) continue;
             if (!listed.TryGetValue(id, out var v) || v != version) missing.Add($"{id} {version} (licenses.json)");
-            if (!notices.Contains(id, StringComparison.OrdinalIgnoreCase)) missing.Add($"{id} (THIRD-PARTY-NOTICES.md)");
+            // The id as a whole name: "WPF-UI" inside "WPF-UI.Abstractions" does not count for WPF-UI.
+            if (!System.Text.RegularExpressions.Regex.IsMatch(notices, $@"(?<![\w.-]){System.Text.RegularExpressions.Regex.Escape(id)}(?![\w-]|\.[A-Za-z])",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                missing.Add($"{id} (THIRD-PARTY-NOTICES.md)");
         }
         // The self-contained runtime comes from the SDK that global.json pins, not from a package reference.
         var runtime = $"{Environment.Version.Major}.{Environment.Version.Minor}.{Environment.Version.Build}";

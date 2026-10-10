@@ -1,0 +1,6 @@
+# Shell hooks and scripts need LF on every checkout: "#!/bin/sh" followed by CR fails ("bad interpreter") under WSL
+# git or any shell that does not ignore CR, and then every commit is blocked. Keys keep LF so their bytes never depend
+# on core.autocrlf.
+.githooks/* text eol=lf
+*.sh text eol=lf
+*.pem text eol=lf

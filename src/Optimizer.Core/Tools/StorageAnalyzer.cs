@@ -145,16 +145,21 @@ public static class StorageAnalyzer
         }, ct);
     }
 
-    /// <summary>Candidates of equal size are compared by the hash of the first 64 KB, then by the full SHA-256.</summary>
+    /// <summary>
+    /// Candidates of equal size are compared by the hash of the first 64 KB, then by the full SHA-256. Hard links to one
+    /// file count once: recycling one of the paths would free nothing.
+    /// </summary>
     public static IReadOnlyList<DuplicateGroup> FindDuplicates(IEnumerable<List<string>> sameSize, CancellationToken ct)
     {
         var result = new List<DuplicateGroup>();
-        foreach (var group in sameSize)
+        foreach (var candidates in sameSize)
         {
             ct.ThrowIfCancellationRequested();
-            foreach (var quick in group.GroupBy(p => Hash(p, 64 * 1024)).Where(g => g.Key is not null && g.Count() > 1))
+            var group = candidates.GroupBy(p => Startup.SignatureVerifier.FileId(p) ?? p, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+            if (group.Count < 2) continue;
+            foreach (var quick in group.GroupBy(p => Hash(p, 64 * 1024, ct)).Where(g => g.Key is not null && g.Count() > 1))
             {
-                foreach (var full in quick.GroupBy(p => Hash(p, long.MaxValue)).Where(g => g.Key is not null && g.Count() > 1))
+                foreach (var full in quick.GroupBy(p => Hash(p, long.MaxValue, ct)).Where(g => g.Key is not null && g.Count() > 1))
                 {
                     var paths = full.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
                     // A file can be deleted while the others are hashed: the size of one that is still there.
@@ -180,15 +185,24 @@ public static class StorageAnalyzer
     /// <summary>Files Windows marks as system files (pagefile.sys, hiberfil.sys, swapfile.sys in the drive root) are never offered.</summary>
     private static bool IsSystemFile(FileInfo f) => (f.Attributes & FileAttributes.System) != 0;
 
-    private static string? Hash(string path, long maxBytes)
+    /// <summary>SHA-256 of the first <paramref name="maxBytes"/> bytes, read in 1 MB parts so Stop ends hashing a large file.</summary>
+    private static string? Hash(string path, long maxBytes, CancellationToken ct)
     {
         try
         {
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            if (maxBytes >= stream.Length) return Convert.ToHexString(SHA256.HashData(stream));
-            var buffer = new byte[maxBytes];
-            var read = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
-            return Convert.ToHexString(SHA256.HashData(buffer.AsSpan(0, read)));
+            using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            var buffer = new byte[1 << 20];
+            long total = 0;
+            while (total < maxBytes)
+            {
+                ct.ThrowIfCancellationRequested();
+                var read = stream.Read(buffer, 0, (int)Math.Min(buffer.Length, maxBytes - total));
+                if (read == 0) break;
+                hash.AppendData(buffer, 0, read);
+                total += read;
+            }
+            return Convert.ToHexString(hash.GetHashAndReset());
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

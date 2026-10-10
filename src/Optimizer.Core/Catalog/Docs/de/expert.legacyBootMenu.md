@@ -4,7 +4,7 @@
 Bringt das Menü Erweiterte Optionen zurück, das sich beim Start mit F8 öffnet, für den abgesicherten Modus, ohne Windows erst zu starten. Ändert die Startkonfiguration.
 
 ## So funktioniert es
-Die Startkonfiguration bootmenupolicy bestimmt den Typ des Startmenüs: Standard ist ab Windows 10 voreingestellt, mit Legacy ist das Menü Erweiterte Optionen (F8) verfügbar [1]. Mit Standard erscheint das Menü nur in bestimmten Fällen, etwa nach einem Startfehler [1]. Die App setzt Legacy.
+Die Startkonfiguration bootmenupolicy bestimmt den Typ des Startmenüs: Standard ist ab Windows 10 voreingestellt, mit Legacy ist das Menü Erweiterte Optionen (F8) verfügbar [1]. Mit Standard erscheint das Menü nur in bestimmten Fällen, etwa nach einem Startfehler [1]. Die App setzt Legacy. Das Menü ändert sich beim nächsten Neustart.
 
 ## Warum es helfen kann
 Wenn Windows nicht mehr richtig startet, erreichst du den abgesicherten Modus mit F8, statt auf die automatische Reparatur zu warten.

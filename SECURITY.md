@@ -18,7 +18,7 @@ Fixes ship in a new release, and the report is credited in the release notes if 
 
 ## Known limits
 
-- A .NET profiler set in the user's environment variables (`CORECLR_ENABLE_PROFILING`, `CORECLR_PROFILER_PATH`) is loaded by the .NET runtime before any code of the app runs. The app refuses to continue as administrator when such a profiler is set, but the profiler's code has run by then. Startup hooks (`DOTNET_STARTUP_HOOKS`) are turned off in the build.
+- The .NET runtime reads some switches from the user's environment variables before any code of the app runs: a profiler (`CORECLR_ENABLE_PROFILING`, notification profilers), a diagnostic port it connects to (`DOTNET_DiagnosticPorts`, where a client can attach a profiler), EventPipe traces and crash dumps written to a chosen path. The app refuses to continue as administrator when one of them is set, but code loaded through them has run by then; .NET has no setting in the app itself that turns them off. Startup hooks (`DOTNET_STARTUP_HOOKS`) are turned off in the build.
 
 ## Supported versions
 

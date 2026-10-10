@@ -80,7 +80,22 @@ public static class PresentMon
             Log.Warn("presentmon", $"no output (exit {code})");
             return null;
         }
-        return Parse(File.ReadLines(csv));
+        try
+        {
+            return Parse(File.ReadLines(csv));
+        }
+        finally
+        {
+            // Only the stats are kept; a CSV per capture would pile up in the data folder.
+            try
+            {
+                File.Delete(csv);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Log.Warn("presentmon", $"capture file not deleted: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
@@ -92,8 +107,9 @@ public static class PresentMon
         using var e = csvLines.GetEnumerator();
         if (!e.MoveNext()) return null;
         var header = e.Current.Split(',');
-        var msIndex = Array.FindIndex(header, h => h.Trim() == "MsBetweenPresents");
-        var modeIndex = Array.FindIndex(header, h => h.Trim() == "PresentMode");
+        // The --v1_metrics header of PresentMon 2.x spells it "msBetweenPresents", the v2 header "MsBetweenPresents".
+        var msIndex = Array.FindIndex(header, h => h.Trim().Equals("MsBetweenPresents", StringComparison.OrdinalIgnoreCase));
+        var modeIndex = Array.FindIndex(header, h => h.Trim().Equals("PresentMode", StringComparison.OrdinalIgnoreCase));
         if (msIndex < 0) return null;
         var times = new List<double>();
         var modes = new Dictionary<string, int>();

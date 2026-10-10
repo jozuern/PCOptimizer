@@ -115,10 +115,10 @@
                                 <StackPanel>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Device}" TextWrapping="Wrap" />
                                     <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0">
-                                        <Run Text="{Binding ClassText, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding Provider, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Version, Mode=OneWay}" />
+                                        <Run Text="{Binding MetaText, Mode=OneWay}" />
                                     </ui:TextBlock>
                                     <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,4,0,0">
-                                        <Run Text="{Binding Date, Mode=OneWay}" /><Run Text=", " /><Run Text="{Binding Age, Mode=OneWay}" />
+                                        <Run Text="{Binding DateText, Mode=OneWay}" />
                                     </ui:TextBlock>
                                 </StackPanel>
                             </ui:CardControl.Header>

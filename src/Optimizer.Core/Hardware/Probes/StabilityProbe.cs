@@ -38,7 +38,8 @@ public static class StabilityProbe
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
-            RedirectStandardError = true,
+            // Not redirected: nothing reads it, and a full stderr pipe would block wevtutil until the timeout.
+            RedirectStandardError = false,
             CreateNoWindow = true,
         };
         ProcessHardening.Apply(start);

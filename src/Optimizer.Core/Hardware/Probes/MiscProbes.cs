@@ -41,7 +41,7 @@ public static class StorageProbe
     public static StorageInfo Read(CatalogData catalog)
     {
         const string ns = @"root\Microsoft\Windows\Storage";
-        var disks = Wmi.Query("SELECT DeviceId, FriendlyName, Model, MediaType, BusType, Size, HealthStatus FROM MSFT_PhysicalDisk", ns)
+        var disks = Wmi.PhysicalDisks()
             .Select(r =>
             {
                 var name = r.Str("FriendlyName");
@@ -125,13 +125,76 @@ public static partial class SoftwareProbe
         if (Reg.HklmKeyExists(@"SOFTWARE\WOW6432Node\Ubisoft\Launcher")) launchers.Add("Ubisoft Connect");
 
         foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
-        {
-            // Xbox app library marker file on drive roots.
-            if (File.Exists(Path.Combine(drive.RootDirectory.FullName, ".GamingRoot"))) libraries.Add(drive.RootDirectory.FullName + " (Xbox)");
-        }
+            libraries.AddRange(XboxLibraries(drive.RootDirectory.FullName));
 
         var libs = libraries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return new SoftwareInfo(antiCheats, launchers, libs) { Games = SteamGames(libs) };
+        return new SoftwareInfo(antiCheats, launchers, libs) { Games = SteamGames(libs), OtherGameFolders = OtherLauncherGames() };
+    }
+
+    /// <summary>
+    /// The Xbox app's library folders on a drive. Its ".GamingRoot" marker in the drive root names them (after an 8 byte
+    /// header, folder names relative to the root in UTF-16, separated by zeros); "XboxGames" is the default name. Only
+    /// folders that exist are returned.
+    /// </summary>
+    public static IReadOnlyList<string> XboxLibraries(string driveRoot)
+    {
+        var marker = Path.Combine(driveRoot, ".GamingRoot");
+        if (!File.Exists(marker)) return [];
+        var found = new List<string>();
+        try
+        {
+            var bytes = File.ReadAllBytes(marker);
+            if (bytes.Length > 8 && bytes.Length < 64 * 1024)
+                foreach (var name in System.Text.Encoding.Unicode.GetString(bytes, 8, (bytes.Length - 8) & ~1).Split('\0', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var relative = name.Trim().TrimStart('\\');
+                    if (relative.Length == 0 || relative.Contains(':') || relative.Contains("..", StringComparison.Ordinal) || relative.Any(char.IsControl)) continue;
+                    var folder = Path.Combine(driveRoot, relative);
+                    if (Directory.Exists(folder)) found.Add(folder);
+                }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            Logging.Log.Warn("probe", $"Xbox library marker {marker} not readable: {ex.Message}");
+        }
+        var standard = Path.Combine(driveRoot, "XboxGames");
+        if (found.Count == 0 && Directory.Exists(standard)) found.Add(standard);
+        return found;
+    }
+
+    /// <summary>
+    /// Install folders of games from Epic (launcher manifests), GOG and Ubisoft Connect (machine-wide registry), so the
+    /// storage analyzer never offers their files for deletion. Steam and Xbox libraries are in GameLibraryPaths.
+    /// </summary>
+    private static IReadOnlyList<string> OtherLauncherGames()
+    {
+        var folders = new List<string>();
+        var manifests = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Epic\EpicGamesLauncher\Data\Manifests");
+        try
+        {
+            if (Directory.Exists(manifests))
+                foreach (var item in Directory.EnumerateFiles(manifests, "*.item"))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(item));
+                        if (doc.RootElement.TryGetProperty("InstallLocation", out var location) && location.GetString() is { Length: > 0 } path) folders.Add(path);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException)
+                    {
+                        // an unreadable manifest: skipped
+                    }
+                }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logging.Log.Warn("probe", $"Epic manifests not readable: {ex.Message}");
+        }
+        foreach (var id in Reg.HklmSubKeys(@"SOFTWARE\WOW6432Node\GOG.com\Games"))
+            if (Reg.HklmString($@"SOFTWARE\WOW6432Node\GOG.com\Games\{id}", "path") is { Length: > 0 } path) folders.Add(path);
+        foreach (var id in Reg.HklmSubKeys(@"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs"))
+            if (Reg.HklmString($@"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\{id}", "InstallDir") is { Length: > 0 } path) folders.Add(path.Replace('/', '\\'));
+        return folders.Where(f => Path.IsPathFullyQualified(f) && Directory.Exists(f)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     private static IEnumerable<string> SteamLibraries(string steamPath)
@@ -152,7 +215,7 @@ public static partial class SoftwareProbe
     private static List<InstalledGame> SteamGames(IEnumerable<string> libraries)
     {
         var games = new List<InstalledGame>();
-        foreach (var lib in libraries.Where(l => !l.EndsWith("(Xbox)", StringComparison.Ordinal)))
+        foreach (var lib in libraries)
         {
             var apps = Path.Combine(lib, "steamapps");
             if (!Directory.Exists(apps)) continue;

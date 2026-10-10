@@ -4,7 +4,7 @@
 Schaltet eine Paketgrenze ab, die MMCSS während Audio- oder Videowiedergabe für Netzwerkverkehr setzte (für Windows Vista dokumentiert). Unter Windows 11 unbelegt. Wirkung umstritten.
 
 ## So funktioniert es
-In Windows Vista wies der Multimedia Class Scheduler Service (MMCSS) den Netzwerkstapel an, während einer Multimedia-Wiedergabe höchstens 10 empfangene Pakete pro Millisekunde weiterzugeben, damit die Netzwerkverarbeitung den Ton nicht unterbricht [1]. NetworkThrottlingIndex legt diese Grenze fest, 0xFFFFFFFF schaltet sie ab [2]. Die aktuelle Microsoft-Dokumentation zu MMCSS erwähnt den Wert nicht [3]. Ob Windows 11 die Grenze noch anwendet, ist daher unbelegt. Wirkt nach einem Neustart.
+In Windows Vista wies der Multimedia Class Scheduler Service (MMCSS) den Netzwerkstapel an, während einer Multimedia-Wiedergabe höchstens 10 empfangene Pakete pro Millisekunde weiterzugeben, damit die Netzwerkverarbeitung den Ton nicht unterbricht [1]. NetworkThrottlingIndex legt diese Grenze fest, 0xFFFFFFFF schaltet sie ab [2]. Die aktuelle Microsoft-Dokumentation zu MMCSS erwähnt den Wert nicht [3]. Ob Windows 11 die Grenze noch anwendet, ist daher unbelegt. Für aktuelle Windows-Versionen ist der Wert nicht dokumentiert, daher ist die Option eine Vorschau. Wirkt nach einem Neustart.
 
 ## Warum es helfen kann
 Ist die Grenze aktiv, bremst sie schnelle Übertragungen mit vielen Paketen pro Sekunde, etwa das Kopieren großer Dateien im lokalen Netz, während Musik läuft.

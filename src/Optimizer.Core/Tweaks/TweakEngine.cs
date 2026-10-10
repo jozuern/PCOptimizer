@@ -125,6 +125,29 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         }
     }
 
+    /// <summary>
+    /// Starts the slow reads of <paramref name="when"/> side by side in the background (a tool takes up to seconds, the
+    /// NVIDIA driver settings a quarter of a second to open), so that the tweak detection after the hardware scan finds
+    /// them done instead of waiting for each in turn. Only for the app's context (its runner keeps results in
+    /// <see cref="ReadCache"/>; test fakes do not). A read that fails is left for the detection to report.
+    /// </summary>
+    public Task PrefetchReads(IEnumerable<TweakDefinition> tweaks, EarlyRead when)
+    {
+        if (!ReadCache.IsEnabled(ctx.Processes)) return Task.CompletedTask;
+        var actions = tweaks.SelectMany(t => t.Actions).Where(a => a.EarlyRead == when).ToList();
+        return Task.WhenAll(actions.Select(a => Task.Run(() =>
+        {
+            try
+            {
+                a.Read(ctx);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug("engine", $"early read of {a.TargetKey} failed: {ex.Message}");
+            }
+        })));
+    }
+
     public TweakStatus Detect(TweakDefinition t, Facts facts, IReadOnlySet<string>? appliedIds = null) =>
         BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>());
 
@@ -297,6 +320,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         {
             return new ApplyResult(ApplyOutcome.Failed, changes, ex.Message);
         }
+        // Get found the file damaged only now (after the preflight) and moved it aside: it still holds the originals.
+        if (existing is null && store.IsDamaged(t.Id))
+            return new ApplyResult(ApplyOutcome.Blocked, changes, Blocks: [new Block("block.backupDamaged", store.DamagedFile(t.Id))]);
         var backup = existing ?? new TweakBackup
         {
             TweakId = t.Id,
@@ -342,8 +368,12 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
                 added.Add(a.TargetKey);
             }
-            entry.Action = JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
+            // The action that wrote the change first restores it (Revert): a later catalog version can write less under
+            // the same target (one side of a power setting), and its action would leave the rest changed for good.
+            entry.Action ??= JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
         }
+        // Nothing could be read (a tool timed out after the state check): no originals, so nothing may be written.
+        if (before.Count == 0) return Fail(t, changes, "The current values could not be read; nothing was changed.");
         // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
         // definition is what detection compares against; each entry restores itself through its own action.
         if (_catalog.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
@@ -393,9 +423,13 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     store.Save(backup);
                     return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)") with { LeftChanged = true };
                 }
-                // Remove entries this run added if nothing of this tweak remains applied.
+                // Everything was rolled back: the entries this run added go (with an earlier backup still applied they would
+                // read as "reset by Windows"), and the backup goes to history when nothing of this tweak remains applied.
+                backup.Entries.RemoveAll(e => added.Contains(e.TargetKey));
                 if (backup.Entries.All(e => before.TryGetValue(e.TargetKey, out var b) && b.SameAs(e.Original)))
                     store.Archive(t.Id);
+                else
+                    store.Save(backup);
                 return Fail(t, changes, ex.Message);
             }
         }
@@ -574,13 +608,15 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     /// Every change this app made (catalog and runtime tweaks) whose values are no longer in place. Run after each scan;
     /// a Windows update between apply and now is reported as the likely cause.
     /// </summary>
-    public IReadOnlyList<DriftItem> CheckDrift(Facts facts)
+    /// <param name="known">States the scan just read with the same facts (by tweak id): those tweaks are not read again.</param>
+    public IReadOnlyList<DriftItem> CheckDrift(Facts facts, IReadOnlyDictionary<string, TweakState>? known = null)
     {
         var list = new List<DriftItem>();
         foreach (var backup in store.All())
         {
             if (Resolve(backup.TweakId) is not { } t) continue;
-            if (DetectState(t, facts) != TweakState.RevertedByWindows) continue;
+            var state = known is not null && known.TryGetValue(t.Id, out var read) ? read : DetectState(t, facts);
+            if (state != TweakState.RevertedByWindows) continue;
             // Older backups only know the build number of their first apply (compared by build only).
             var appliedOn = backup.AppliedOnVersion ?? (backup.WindowsBuild > 0 ? backup.WindowsBuild.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
             list.Add(new DriftItem(t, backup, appliedOn, WindowsVersion));

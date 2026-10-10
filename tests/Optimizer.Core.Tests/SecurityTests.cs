@@ -135,7 +135,31 @@ public class SecurityTests
     [InlineData("", false)]
     [InlineData(null, false)]
     public void AConfiguredProfilerIsRecognized(string? value, bool expected) =>
-        Assert.Equal(expected, ProcessHardening.ProfilerRequested(n => n == "CORECLR_ENABLE_PROFILING" ? value : null));
+        Assert.Equal(expected ? "CORECLR_ENABLE_PROFILING" : null, ProcessHardening.DiagnosticsRequested(n => n == "CORECLR_ENABLE_PROFILING" ? value : null));
+
+    [Theory]
+    [InlineData("DOTNET_DiagnosticPorts", @"\\.\pipe\x,connect,suspend")]
+    [InlineData("COMPlus_DiagnosticPorts", "x")]
+    [InlineData("CORECLR_ENABLE_NOTIFICATION_PROFILERS", "1")]
+    [InlineData("DOTNET_ENABLE_PROFILING", "1")]
+    [InlineData("DOTNET_EnableEventPipe", "1")]
+    [InlineData("DOTNET_DbgEnableMiniDump", "1")]
+    public void OtherRuntimeDiagnosticsAreRecognized(string name, string value)
+    {
+        // Windows environment names are case-insensitive.
+        string? Get(string n) => n.Equals(name, StringComparison.OrdinalIgnoreCase) ? value : null;
+        Assert.Equal(name, ProcessHardening.DiagnosticsRequested(Get), StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void HarmlessDotnetVariablesDoNotBlockTheStart()
+    {
+        var set = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1", ["DOTNET_ROOT"] = @"C:\Program Files\dotnet", ["DOTNET_EnableEventPipe"] = "0",
+        };
+        Assert.Null(ProcessHardening.DiagnosticsRequested(n => set.GetValueOrDefault(n)));
+    }
 
     // ---------------- Data folder ----------------
 

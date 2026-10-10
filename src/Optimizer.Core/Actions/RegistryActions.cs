@@ -252,20 +252,39 @@ public sealed class RegistryTokenAction : TweakAction
 
     public override StoredValue Desired(ActionContext c) => new(true, "token", Value);
 
-    public override void Apply(ActionContext c)
-    {
-        var tokens = Parse(CurrentString(c));
-        tokens[Token] = Value;
-        RegistryValue.Write(c.Registry, Hive, Path, Name, "string", Format(tokens));
-    }
+    public override void Apply(ActionContext c) =>
+        RegistryValue.Write(c.Registry, Hive, Path, Name, "string", WithToken(CurrentString(c), Token, Value));
 
     public override void Restore(ActionContext c, StoredValue original)
     {
-        var tokens = Parse(CurrentString(c));
-        if (original.Existed) tokens[Token] = original.Data ?? "";
-        else tokens.Remove(Token);
-        if (tokens.Count == 0) RegistryValue.Delete(c.Registry, Hive, Path, Name);
-        else RegistryValue.Write(c.Registry, Hive, Path, Name, "string", Format(tokens));
+        var current = CurrentString(c);
+        var restored = WithToken(current, Token, original.Existed ? original.Data ?? "" : null);
+        // Nothing left in the value (only this token was in it): removed, as before the first apply.
+        if (restored.Length == 0) RegistryValue.Delete(c.Registry, Hive, Path, Name);
+        else RegistryValue.Write(c.Registry, Hive, Path, Name, "string", restored);
+    }
+
+    /// <summary>
+    /// The value with only this token set (null: removed); every other part stays as it was, also parts this app cannot
+    /// read (no "="), so undo gives back what Windows or another program stored.
+    /// </summary>
+    public static string WithToken(string? raw, string token, string? value)
+    {
+        var parts = new List<string>();
+        var found = false;
+        foreach (var part in (raw ?? "").Split(';').Select(p => p.Trim()).Where(p => p.Length > 0))
+        {
+            var eq = part.IndexOf('=');
+            if (eq > 0 && part[..eq].Trim().Equals(token, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!found && value is not null) parts.Add($"{part[..eq].Trim()}={value}");
+                found = true;
+                continue;
+            }
+            parts.Add(part);
+        }
+        if (!found && value is not null) parts.Add($"{token}={value}");
+        return string.Concat(parts.Select(p => p + ";"));
     }
 }
 

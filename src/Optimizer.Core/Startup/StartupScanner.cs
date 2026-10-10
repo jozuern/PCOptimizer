@@ -133,9 +133,12 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
 
     // ---------------- Startup folders ----------------
 
+    /// <summary>The Startup folder for all users; null = Windows' own (tests point it at a temp folder).</summary>
+    public string? CommonStartupFolder { get; init; }
+
     public IEnumerable<StartupEntry> StartupFolders()
     {
-        var common = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\StartUp");
+        var common = CommonStartupFolder ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\StartUp");
         var folders = new List<(string Dir, Hive Hive)> { (common, Hive.Machine) };
         if (profilePath is not null) folders.Add((Path.Combine(profilePath, @"AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"), Hive.User));
         foreach (var (dir, hive) in folders)

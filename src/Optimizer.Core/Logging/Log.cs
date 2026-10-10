@@ -106,6 +106,10 @@ public static class Log
         }
     }
 
+    // Open for the whole session: opening and closing the file for every entry (and the virus scan after each close)
+    // made every logging thread wait behind the disk. Each line is flushed, so a crash still leaves the full log.
+    private static StreamWriter? _writer;
+
     private static void Append(LogEntry entry)
     {
         try
@@ -116,11 +120,25 @@ public static class Log
                 _file = Path.Combine(Directory, $"session-{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}.jsonl");
                 Prune();
             }
-            File.AppendAllText(_file, JsonSerializer.Serialize(entry) + Environment.NewLine);
+            _writer ??= new StreamWriter(new FileStream(_file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete), new System.Text.UTF8Encoding(false))
+            {
+                AutoFlush = true,
+            };
+            _writer.WriteLine(JsonSerializer.Serialize(entry));
         }
         catch
         {
-            // Disk issue: keep the in-memory log only.
+            // Disk issue: keep the in-memory log only (the next entry tries a new writer).
+            var broken = _writer;
+            _writer = null;
+            try
+            {
+                broken?.Dispose();
+            }
+            catch
+            {
+                // Closing flushes and can fail the same way; logging never throws.
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ public sealed class DohAutoUpgradeAction : TweakAction
 
     public override string TargetKey => "doh:autoupgrade:" + string.Join(",", Servers.Order(StringComparer.Ordinal)).ToLowerInvariant();
     public override string Describe(ActionContext c) => "DNS over HTTPS automatic upgrade (Set-DnsClientDohServerAddress)";
+    public override EarlyRead EarlyRead => EarlyRead.WithScan;
 
     private IEnumerable<string> Valid => Servers.Where(s => IPAddress.TryParse(s, out _)).Order(StringComparer.Ordinal);
 
@@ -77,9 +78,8 @@ public sealed class DohAutoUpgradeAction : TweakAction
     /// One PowerShell run per server with errors as terminating errors: in one script, only the last command's result
     /// would set the exit code. All servers are tried; the failures are reported together.
     /// </summary>
-    private static void Write(ActionContext c, IEnumerable<KeyValuePair<string, bool>> states)
+    private static void Write(ActionContext c, IEnumerable<KeyValuePair<string, bool>> states) => ReadCache.Writing(c, "doh:list", () =>
     {
-        ReadCache.Invalidate(c, "doh:list");
         var errors = new List<string>();
         // Addresses are validated as IP addresses above, so nothing else reaches the script.
         foreach (var s in states)
@@ -89,5 +89,5 @@ public sealed class DohAutoUpgradeAction : TweakAction
             if (code != 0) errors.Add($"{s.Key} ({code}): {output.Trim()}");
         }
         if (errors.Count > 0) throw new InvalidOperationException("Set-DnsClientDohServerAddress failed for " + string.Join("; ", errors));
-    }
+    });
 }

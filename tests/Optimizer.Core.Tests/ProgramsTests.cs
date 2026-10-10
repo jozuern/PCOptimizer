@@ -101,6 +101,20 @@ public class ProgramsTests
         Assert.Equal(UninstallMode.AsUser, Programs.Command(program, f => f.Equals(rundll, StringComparison.OrdinalIgnoreCase))!.Mode);
     }
 
+    /// <summary>
+    /// cmd.exe is admin-only, but the script it runs decides what happens: a script a vendor left user-writable, or
+    /// inline code, must not run elevated.
+    /// </summary>
+    [Fact]
+    public void ScriptUninstallersRunElevatedOnlyWithAdminOnlyScripts()
+    {
+        var cmd = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+        var program = new DesktopProgram("Vendor", null, null, null, null, $@"{cmd} /c ""C:\ProgramData\Vendor\uninstall.cmd""", null, false, "k");
+        Assert.Equal(UninstallMode.Elevated, Programs.Command(program, _ => true)!.Mode);
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(program, f => !f.StartsWith(@"C:\ProgramData", StringComparison.OrdinalIgnoreCase))!.Mode);
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(program with { UninstallString = $"{cmd} /c del /q x" }, _ => true)!.Mode);
+    }
+
     [Fact]
     public void System32IsTrustedAndTempIsNot()
     {
@@ -117,5 +131,16 @@ public class ProgramsTests
         {
             TestFolders.Delete(folder);
         }
+    }
+
+    /// <summary>On a share the server reports owner and permissions: never trusted, whatever it claims.</summary>
+    [Theory]
+    [InlineData(@"\\server\share\app\uninstall.exe")]
+    [InlineData(@"\\?\UNC\server\share\uninstall.exe")]
+    [InlineData(@"\\localhost\C$\Windows\System32\notepad.exe")]
+    public void NetworkPathsAreNeverTrusted(string path)
+    {
+        Assert.False(TrustedPath.IsOnLocalFixedDrive(path));
+        Assert.False(TrustedPath.IsAdminOnlyWritable(path));
     }
 }

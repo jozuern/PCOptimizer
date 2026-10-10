@@ -83,6 +83,101 @@ public class TransactionTests
         Assert.Null(fx.Store.Get(t.Id));
     }
 
+    /// <summary>
+    /// A failed apply that rolled back cleanly leaves an earlier backup as it was: the entry this run added for the new
+    /// target would later read as "reset by Windows".
+    /// </summary>
+    [Fact]
+    public async Task AFailedReapplyLeavesTheEarlierBackupAsItWas()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\PCOTest\Reapply";
+        await fx.Engine.ApplyAsync(Tweak("test.reapply", Reg(path, "Value", 1)), Facts, new HashSet<string>(), Options);
+        fx.Services.Start["SvcB"] = ServiceStart.Automatic;
+        fx.Services.FailOnWrite.Add("SvcB");
+        var wider = Tweak("test.reapply", Reg(path, "Value", 1), new ServiceAction { Name = "SvcB", StartType = ServiceStart.Disabled });
+
+        Assert.Equal(ApplyOutcome.Failed, (await fx.Engine.ApplyAsync(wider, Facts, new HashSet<string>(), Options)).Outcome);
+        var backup = fx.Store.Get("test.reapply")!;
+        Assert.Single(backup.Entries);
+        Assert.NotEqual(TweakState.RevertedByWindows, fx.Engine.DetectState(wider, Facts));
+    }
+
+    /// <summary>A rollback removes only a plan this apply created, not an existing plan with the same name.</summary>
+    [Fact]
+    public async Task RollbackKeepsAPlanThatExistedBefore()
+    {
+        using var fx = new EngineFixture();
+        var existing = Guid.NewGuid();
+        fx.Power.SchemeNames[existing] = "PCOptimizer Test";
+        fx.Services.Start["SvcC"] = ServiceStart.Automatic;
+        fx.Services.FailOnWrite.Add("SvcC");
+        var t = Tweak("test.planfail", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" },
+            new ServiceAction { Name = "SvcC", StartType = ServiceStart.Disabled });
+
+        Assert.Equal(ApplyOutcome.Failed, (await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options)).Outcome);
+        Assert.True(fx.Power.SchemeNames.ContainsKey(existing));
+        Assert.Equal(FakePower.Balanced, fx.Power.Active);
+    }
+
+    /// <summary>
+    /// "Apply recommended": a tweak that is not batch-safe is skipped, and without a restore point the batch stops before
+    /// the first change. The run after the user's decision applies each tweak exactly once; a tweak that fails rolls back
+    /// only itself.
+    /// </summary>
+    [Fact]
+    public async Task ApplyRecommendedSkipsUnsafeTweaksAndStopsBeforeChangingAnything()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\PCOTest\Batch";
+        var a = Tweak("test.batchA", Reg(path, "A", 1));
+        var preview = new TweakDefinition
+        {
+            Id = "test.batchPreview", Category = "Test", Hidden = true, Preview = true,
+            Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] }, Actions = [Reg(path, "P", 1)],
+        };
+        fx.Services.Start["SvcBatch"] = ServiceStart.Automatic;
+        fx.Services.FailOnWrite.Add("SvcBatch");
+        var failing = Tweak("test.batchFail", Reg(path, "F", 1), new ServiceAction { Name = "SvcBatch", StartType = ServiceStart.Disabled });
+        var b = Tweak("test.batchB", Reg(path, "B", 1));
+        TweakDefinition[] batch = [a, preview, failing, b];
+
+        fx.RestorePoints.Enabled = false;
+        var first = await fx.Engine.ApplyBatchAsync(batch, Facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true });
+        Assert.Equal(ApplyOutcome.NeedsRestorePointDecision, Assert.Single(first).Result.Outcome);
+        Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, "A").Existed);
+
+        var second = await fx.Engine.ApplyBatchAsync(batch, Facts, new HashSet<string>(), Options);
+        Assert.Equal([ApplyOutcome.Applied, ApplyOutcome.Blocked, ApplyOutcome.Failed, ApplyOutcome.Applied], second.Select(r => r.Result.Outcome));
+        Assert.Contains(second[1].Result.Blocks!, x => x.ReasonKey == "block.notBatchSafe");
+        Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, "P").Existed);
+        Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, "F").Existed); // rolled back with its failed service
+        Assert.Equal("1", RegistryValue.Read(fx.Registry, Hive.Machine, path, "B").Data);
+
+        // Once more: everything already applied is left alone.
+        var third = await fx.Engine.ApplyBatchAsync([a, b], Facts, new HashSet<string>(), Options);
+        Assert.All(third, r => Assert.Equal(ApplyOutcome.NothingToDo, r.Result.Outcome));
+    }
+
+    /// <summary>A backup file another process holds open is not "no backup": apply and undo refuse instead of guessing.</summary>
+    [Fact]
+    public async Task ALockedBackupBlocksApplyAndUndo()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\PCOTest\Locked";
+        var t = Tweak("test.locked", Reg(path, "Value", 1));
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        using (new FileStream(Path.Combine(fx.Store.BackupFolder, "test.locked.json"), FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert.Throws<BackupUnreadableException>(() => fx.Store.Get(t.Id));
+            Assert.True(fx.Store.Exists(t.Id));
+            Assert.False(fx.Engine.Revert(t).Success);
+            RegistryValue.Write(fx.Registry, Hive.Machine, path, "Value", "dword", "0");
+            Assert.Equal(ApplyOutcome.Failed, (await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options)).Outcome);
+        }
+        Assert.NotNull(fx.Store.Get(t.Id)); // the originals are still there
+    }
+
     [Fact]
     public async Task OnlyTheSideThatIsStillAsAppliedIsUndone()
     {

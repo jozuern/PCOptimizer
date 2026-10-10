@@ -195,7 +195,9 @@ public sealed class BackupStore
 
     /// <summary>
     /// A backup with any per-user target goes to the account's folder and records the account; a copy in the shared
-    /// folder (from an older version, or saved before its first per-user entry) is removed.
+    /// folder (from an older version, or saved before its first per-user entry) is removed. A backup without per-user
+    /// targets (left after a partial undo) goes to the shared folder, and the account's copy is removed: it would be
+    /// read first and bring back entries that were already restored.
     /// </summary>
     public void Save(TweakBackup backup)
     {
@@ -209,6 +211,7 @@ public sealed class BackupStore
             return;
         }
         WriteDurably(FileIn(BackupFolder, backup.TweakId), JsonSerializer.Serialize(backup, Json));
+        if (UserFolder is { } folder && FileIn(folder, backup.TweakId) is var own && File.Exists(own)) File.Delete(own);
     }
 
     /// <summary>
@@ -249,6 +252,11 @@ public sealed class BackupStore
         var file = FileFor(tweakId);
         if (!File.Exists(file)) return;
         File.Move(file, Path.Combine(HistoryFolder, $"{Sanitize(tweakId)}-{DateTime.Now:yyyyMMdd-HHmmss}.json"), overwrite: true);
+        // A second copy of this account's backup (written by a version that kept both) would surface as a change that is
+        // still applied.
+        var shared = FileIn(BackupFolder, tweakId);
+        if (shared != file && File.Exists(shared) && Trusted(shared) && TryRead(shared).Backup is { } other && !OfAnotherAccount(other))
+            File.Move(shared, Path.Combine(HistoryFolder, $"{Sanitize(tweakId)}-{DateTime.Now:yyyyMMdd-HHmmss}-shared.json"), overwrite: true);
     }
 
     // ---------------- undo that takes effect after a restart ----------------

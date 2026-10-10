@@ -34,6 +34,19 @@ public class BenchmarkHealthTests
         Assert.False(PresentMon.IsSafeProcessName("x.exe\" --output_file C:\\Windows\\a"));
     }
 
+    /// <summary>The header PresentMon 2.6.0 writes with --v1_metrics (from the vendored exe): lowercase "msBetweenPresents".</summary>
+    [Fact]
+    public void PresentMonV1HeaderOfTheVendoredBuildIsRead()
+    {
+        const string header = "Application,ProcessID,SwapChainAddress,Runtime,SyncInterval,PresentFlags,Dropped,TimeInSeconds,msInPresentAPI,msBetweenPresents,AllowsTearing,PresentMode";
+        Assert.Contains("--v1_metrics", PresentMon.Arguments("game.exe", "out.csv", 10));
+        var rows = Enumerable.Range(0, 100).Select(i => $"game.exe,1,0x1,DXGI,0,0,0,{i},0.1,10.0,0,Hardware: Independent Flip");
+        var s = PresentMon.Parse([header, .. rows])!;
+        Assert.Equal(100, s.Frames);
+        Assert.Equal(100.0, s.AverageFps, 3);
+        Assert.Equal("Hardware: Independent Flip", s.PresentMode);
+    }
+
     [Fact]
     public void BenchmarkComparisonNeedsSeparatedRanges()
     {
@@ -109,6 +122,17 @@ public class BenchmarkHealthTests
         Assert.Equal(FindingStatus.Info, new ThrottleCheck().Evaluate(P(new HardwareExtras { LastThrottle = gpuPowerOnly }), CatalogData.Current).Single().Status);
         Assert.Empty(new ThrottleCheck().Evaluate(P(new HardwareExtras()), CatalogData.Current));
 
+        // A game on many cores keeps total utility below 50 %: no busy samples, so no verdict on the processor.
+        var idleCpu = throttle with { CpuLimitedShare = 0, CpuBusyShare = 0.05, GpuReasonShare = new Dictionary<string, double>() };
+        var noLoad = new ThrottleCheck().Evaluate(P(new HardwareExtras { LastThrottle = idleCpu }), CatalogData.Current).Single();
+        Assert.Equal((FindingStatus.Info, "noLoad"), (noLoad.Status, noLoad.Variant));
+        AssertRenders(noLoad);
+        // An external power brake (power supply) is a fault, not the normal power limit.
+        var brake = throttle with { CpuLimitedShare = 0, GpuReasonShare = new Dictionary<string, double> { ["thermal"] = 0, ["powerLimit"] = 0, ["powerBrake"] = 0.3, ["hardwareSlowdown"] = 0 } };
+        var slowdown = new ThrottleCheck().Evaluate(P(new HardwareExtras { LastThrottle = brake }), CatalogData.Current).Single();
+        Assert.Equal((FindingStatus.Problem, "gpuSlowdown"), (slowdown.Status, slowdown.Variant));
+        AssertRenders(slowdown);
+
         var disks = new[] { new DiskHealth("Samsung SSD 970 EVO Plus", "SSD", "NVMe", "Healthy", 40, 70, 93, 0, 0, 12000), new DiskHealth("ST2000", "HDD", "SATA", "Unhealthy", 35, 50, null, 10, 2, 40000) };
         var f28 = new DiskHealthCheck().Evaluate(P(new HardwareExtras { DiskHealth = disks }), CatalogData.Current).ToList();
         Assert.All(f28, f => Assert.Equal(FindingStatus.Problem, f.Status));
@@ -120,7 +144,7 @@ public class BenchmarkHealthTests
         Assert.Equal(FindingStatus.Info, f16.Status);
         AssertRenders(f16);
 
-        var sample = new[] { new ProcessCpu("MsMpEng", 1, 0.12, 1, null), new ProcessCpu("OneDrive", 2, 0.06, 1, null), new ProcessCpu("dwm", 3, 0.2, 1, null), new ProcessCpu("tiny", 4, 0.01, 1, null) };
+        var sample = new[] { new ProcessCpu("MsMpEng", 1, 0.12, 1), new ProcessCpu("OneDrive", 2, 0.06, 1), new ProcessCpu("dwm", 3, 0.2, 1), new ProcessCpu("tiny", 4, 0.01, 1) };
         var f11 = new BackgroundCpuCheck().Evaluate(P(new HardwareExtras { BackgroundCpu = sample }), CatalogData.Current).Single();
         Assert.Equal(FindingStatus.Info, f11.Status);
         Assert.Equal("MsMpEng, OneDrive", f11.Params["names"]);

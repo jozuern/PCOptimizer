@@ -234,4 +234,7 @@ public sealed record InstalledGame(string Name, string Launcher, string InstallD
 public sealed record SoftwareInfo(IReadOnlyList<AntiCheatPresence> AntiCheats, IReadOnlyList<string> Launchers, IReadOnlyList<string> GameLibraryPaths)
 {
     public IReadOnlyList<InstalledGame> Games { get; init; } = [];
+
+    /// <summary>Install folders of games from other launchers (Epic, GOG, Ubisoft Connect); protected in the storage analyzer.</summary>
+    public IReadOnlyList<string> OtherGameFolders { get; init; } = [];
 }

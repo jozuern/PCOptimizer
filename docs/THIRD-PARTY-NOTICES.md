@@ -32,8 +32,8 @@ scripts are copied from GPL projects):
 
 | Project | License | Note |
 |---|---|---|
-| Chris Titus Tech WinUtil | MIT | Cross-check for the values of privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, privacy.locationOff, network.deliveryOptimizationP2POff, visual.bestPerformance, explorer.fileExtensions and explorer.endTask, which cite Microsoft documentation; source for the undocumented values of gpu.gameDvrOff and explorer.classicContextMenu, which are marked as such in the app. Values are reused; descriptions are our own. |
-| O&O ShutUp10++ | Freeware, closed source | Idea for the privacy core set only. All privacy entries use the documented Group Policy and Policy CSP values from Microsoft's own documentation, cited per entry. |
+| Chris Titus Tech WinUtil | MIT | Cross-check for the values of privacy.telemetryOff, privacy.activityHistoryOff, privacy.consumerFeaturesOff, network.deliveryOptimizationP2POff, visual.bestPerformance and explorer.fileExtensions, which cite Microsoft documentation; source or cross-check for the undocumented values of gpu.gameDvrOff, explorer.classicContextMenu, privacy.locationOff and explorer.endTask, which are marked as such in the app. Values are reused; descriptions are our own. |
+| O&O ShutUp10++ | Freeware, closed source | Idea for the privacy core set only. The privacy entries use Group Policy and Policy CSP values or other values named in Microsoft's own documentation, cited per entry; the few values Microsoft does not document are marked as undocumented in the app. |
 | Microsoft PC Manager, Wintoys | Freeware, closed source | Feature ideas only (cleanup categories, storage analyzer, repair tools). Nothing copied. |
 | Sysinternals Autoruns | Sysinternals license | Feature idea only (autostart locations, signature check). Nothing copied. |
 | Atlas OS playbook | GPLv3 | Reference only. Nothing copied verbatim. |

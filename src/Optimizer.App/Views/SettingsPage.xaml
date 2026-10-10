@@ -46,7 +46,7 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_ExpertHint}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ExpertMode}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Settings_Expert}" IsChecked="{Binding ExpertMode}" />
             </ui:CardControl>
 
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="VirusTotal" />
@@ -91,7 +91,7 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Update_Hint}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding CheckForUpdates}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Update_AtStart}" IsChecked="{Binding CheckForUpdates}" />
             </ui:CardControl>
             <ui:Card Padding="16,12">
                 <WrapPanel>

@@ -164,12 +164,24 @@ public sealed class PowerSchemeAction : TweakAction
 
     public override StoredValue? Read(ActionContext c) => new(true, "scheme", c.Power.ActiveScheme().ToString());
 
+    /// <summary>
+    /// The plans that existed before <see cref="Apply"/> ran on this instance, and the plan it activated: a rollback
+    /// removes only newer plans, and switches back when the activated plan is still active.
+    /// </summary>
+    private HashSet<Guid>? _schemesBeforeApply;
+    private Guid? _activated;
+
     public override void Apply(ActionContext c)
     {
+        if (DuplicateFrom is not null && Name is not null) _schemesBeforeApply = c.Power.Schemes().Select(s => s.Id).ToHashSet();
         var target = Target(c);
         if (target is null && DuplicateFrom is not null && Name is not null)
             target = c.Power.Duplicate(PowerAliases.Resolve(DuplicateFrom), Name);
-        if (target is { } t) c.Power.SetActive(t);
+        if (target is { } t)
+        {
+            _activated = t;
+            c.Power.SetActive(t);
+        }
     }
 
     /// <summary>
@@ -195,7 +207,8 @@ public sealed class PowerSchemeAction : TweakAction
         {
             // The plan this action created and activated, found by its GUID (the name may have been changed since). Only
             // that plan is removed: another plan with the same name may be the user's own copy. Without the GUID (a
-            // rollback right after a failed apply) the plans with the name are the ones just created.
+            // rollback right after a failed apply) the plans with the name that did not exist before this apply are the
+            // ones just created; a plan an earlier apply created (and the user may have customized) stays.
             if (appliedPlan is { } plan)
             {
                 if (c.Power.SchemeExists(plan) && !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
@@ -203,10 +216,11 @@ public sealed class PowerSchemeAction : TweakAction
             }
             else
             {
-                created = c.Power.Schemes().Where(s => s.Name == Name).Select(s => s.Id).ToList();
+                created = c.Power.Schemes().Where(s => s.Name == Name && _schemesBeforeApply?.Contains(s.Id) != true).Select(s => s.Id).ToList();
             }
         }
-        var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate));
+        var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate)) ||
+                   (appliedPlan is null && _activated == active);
         if (ours)
         {
             // The previous plan may have been deleted in the meantime: Balanced exists on every PC.
@@ -225,6 +239,8 @@ public sealed class BcdAction : TweakAction
     public string Element { get; init; } = "";
     public string? Value { get; init; }
     public bool Delete { get; init; }
+
+    public override EarlyRead EarlyRead => EarlyRead.WithScan;
 
     /// <summary>
     /// Only for backups written before values were read (they stored "set"): the value written back on undo when the
@@ -345,23 +361,25 @@ public sealed class MemoryCompressionAction : TweakAction
     // Enable-MMAgent and Disable-MMAgent change the setting for the next start; Get-MMAgent shows the running state.
     public override bool TakesEffectAfterRestart => true;
 
-    public override StoredValue? Read(ActionContext c)
+    public override EarlyRead EarlyRead => EarlyRead.WithScan;
+
+    public override StoredValue? Read(ActionContext c) => ReadCache.Get(c, TargetKey, () =>
     {
         var (code, output) = c.Processes.Run("powershell.exe", "-NoProfile -NonInteractive -Command \"(Get-MMAgent).MemoryCompression\"");
         var text = output.Trim();
         return code == 0 && text is "True" or "False" ? new StoredValue(true, "bool", text) : null;
-    }
+    });
 
     public override void Apply(ActionContext c) => Run(c, Enabled);
 
     public override void Restore(ActionContext c, StoredValue original) => Run(c, original.Data == "True");
 
-    private static void Run(ActionContext c, bool on)
+    private void Run(ActionContext c, bool on) => ReadCache.Writing(c, TargetKey, () =>
     {
         var verb = on ? "Enable-MMAgent" : "Disable-MMAgent";
         var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{verb} -MemoryCompression\"");
         if (code != 0) throw new InvalidOperationException($"{verb} failed ({code}): {output}");
-    }
+    });
 }
 
 /// <summary>Display mode (refresh rate) for one display; used by the one-click fix for F1.</summary>

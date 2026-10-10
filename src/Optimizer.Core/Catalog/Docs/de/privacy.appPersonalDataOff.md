@@ -4,7 +4,7 @@
 Verweigert Store-Apps den Zugriff auf Kontoinfos, Kontakte, Kalender, Anrufliste, E-Mail, Nachrichten, Aufgaben und die Diagnose anderer Apps.
 
 ## So funktioniert es
-Die Richtlinien „Windows-App-Zugriff auf ... zulassen“ (zum Beispiel „Windows-App-Zugriff auf Kontakte zulassen“) werden für diese Datenarten auf „Verweigern erzwingen“ gesetzt [1][2]. Desktopprogramme (Discord, Steam, Browser) sind nicht betroffen; Kamera und Mikrofon bleiben, wie sie sind.
+Die App-Datenschutzrichtlinien für diese Datenarten, etwa „Windows-App-Zugriff auf Kontakte zulassen“, werden auf „Verweigern erzwingen“ gesetzt [1][2]. Desktopprogramme (Discord, Steam, Browser) sind nicht betroffen; Kamera und Mikrofon bleiben, wie sie sind.
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.

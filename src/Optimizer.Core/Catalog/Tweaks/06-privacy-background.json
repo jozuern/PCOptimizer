@@ -160,6 +160,8 @@
     },
     {
       "id": "privacy.locationOff",
+      "undocumented": true,
+      "preview": true,
       "category": "Privacy",
       "impact": {
         "gaming": 0,

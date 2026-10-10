@@ -92,7 +92,7 @@
                             <DataTemplate>
                                 <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                     <DockPanel>
-                                        <ui:ToggleSwitch DockPanel.Dock="Right" IsChecked="{Binding SwitchState, Mode=TwoWay}" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <ui:ToggleSwitch DockPanel.Dock="Right" AutomationProperties.Name="{Binding Name}" IsChecked="{Binding SwitchState, Mode=TwoWay}" Margin="16,0,0,0" VerticalAlignment="Center">
                                             <ui:ToggleSwitch.IsEnabled>
                                                 <MultiBinding Converter="{StaticResource AllTrue}">
                                                     <Binding Path="CanToggle" />

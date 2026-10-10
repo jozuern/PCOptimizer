@@ -566,6 +566,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_Stopped" xml:space="preserve">
     <value>Analyse angehalten.</value>
   </data>
+  <data name="Storage_WaitForScan" xml:space="preserve">
+    <value>Warte, bis die Prüfung des PCs fertig ist: Sie findet die Spieleordner, die die Analyse nie zum Löschen anbietet.</value>
+  </data>
   <data name="Storage_Largest" xml:space="preserve">
     <value>Größte Dateien</value>
   </data>
@@ -701,6 +704,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   </data>
   <data name="Throttle_Verdict_Bad" xml:space="preserve">
     <value>Drosselung gefunden; siehe den Befund auf der Übersicht.</value>
+  </data>
+  <data name="Throttle_Verdict_NoLoad" xml:space="preserve">
+    <value>Der Prozessor war zu wenig ausgelastet, um seine Drosselung zu beurteilen. Miss erneut, während ein Spiel oder ein Lasttest ihn stärker auslastet.</value>
   </data>
   <data name="Bench_Title" xml:space="preserve">
     <value>Bildraten-Benchmark</value>
@@ -1048,7 +1054,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Prio_Low" xml:space="preserve"><value>Niedrig</value></data>
   <data name="Prio_LowIo" xml:space="preserve"><value>niedrige Datenträgerpriorität</value></data>
   <data name="Prio_InvalidName" xml:space="preserve"><value>Gib nur den Namen der Programmdatei ein, zum Beispiel game.exe, ohne Ordner.</value></data>
-  <data name="Startup_ProfilerSet" xml:space="preserve"><value>In deinen Umgebungsvariablen ist ein .NET-Profiler gesetzt (CORECLR_ENABLE_PROFILING). Er lädt ein Programm in jede .NET-App, daher läuft PCOptimizer damit nicht als Administrator. Entferne die CORECLR_-Variablen unter System &gt; Info &gt; Erweiterte Systemeinstellungen &gt; Umgebungsvariablen und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
+  <data name="Startup_ProfilerSet" xml:space="preserve"><value>In deinen Umgebungsvariablen ist eine .NET-Diagnoseeinstellung gesetzt ({0}). Sie kann ein Programm in jede .NET-App laden, daher läuft PCOptimizer damit nicht als Administrator. Entferne die Variable unter System &gt; Info &gt; Erweiterte Systemeinstellungen &gt; Umgebungsvariablen und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
   <data name="Programs_RestorePointName" xml:space="preserve"><value>PCOptimizer: vor dem Deinstallieren von Programmen</value></data>
   <data name="Programs_NoRestorePointTitle" xml:space="preserve"><value>Kein Wiederherstellungspunkt</value></data>
   <data name="Programs_NoRestorePointText" xml:space="preserve"><value>Windows hat keinen Wiederherstellungspunkt angelegt: Der Computerschutz ist aus, oder in den letzten 24 Stunden wurde schon einer angelegt. Ohne neuen Wiederherstellungspunkt deinstallieren?</value></data>
@@ -1056,4 +1062,5 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Startup_SnapshotWait" xml:space="preserve"><value>Die Liste wird noch geladen. Versuche es erneut, wenn sie vollständig ist.</value></data>
   <data name="Prio_Other" xml:space="preserve"><value>Prioritätsklasse {0}, von einem anderen Programm gesetzt</value></data>
   <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>Ich habe sie selbst wieder installiert</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Schließen</value></data>
 </root>

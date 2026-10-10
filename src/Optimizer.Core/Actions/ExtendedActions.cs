@@ -25,6 +25,8 @@ public sealed class NvidiaDrsAction : TweakAction
 
     public override StoredValue Desired(ActionContext c) => Value is { } v ? Stored(v) : StoredValue.Missing;
 
+    public override EarlyRead EarlyRead => EarlyRead.AfterScan;
+
     public override StoredValue? Read(ActionContext c)
     {
         if (!c.Nvidia.Available) return null;

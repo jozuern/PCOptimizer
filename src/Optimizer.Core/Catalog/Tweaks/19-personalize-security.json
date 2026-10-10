@@ -300,6 +300,9 @@
         ]
       },
       "risk": "safe",
+      "conflictsWith": [
+        "power.hibernateOff"
+      ],
       "actions": [
         {
           "type": "registry",
@@ -850,7 +853,8 @@
           "none"
         ]
       },
-      "risk": "moderate",
+      "risk": "expert",
+      "preview": true,
       "actions": [
         {
           "type": "registry",

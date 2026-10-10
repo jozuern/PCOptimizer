@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Optimizer.App.Services;
 using Optimizer.Core.Actions;
 using Optimizer.Core.Apps;
+using Optimizer.Core.Backup;
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Docs;
 using Optimizer.Core.Findings.Checks;
@@ -62,9 +63,12 @@ public sealed partial class StartupRow : SwitchRow
     /// <summary>Hidden by "Hide Microsoft entries" only when signed by Microsoft and nothing else needs a look.</summary>
     public bool IsPlainMicrosoft => IsMicrosoft && !Entry.Suspicious && !Entry.RunsScriptHost;
 
-    [ObservableProperty] private string _publisherText = "";
-    [ObservableProperty] private string _signatureText = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(MetaText))] private string _publisherText = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(MetaText))] private string _signatureText = "";
     [ObservableProperty] private bool _isMicrosoft;
+
+    /// <summary>Kind, publisher and signature; parts not known yet (signatures load after the list) are left out.</summary>
+    public string MetaText => string.Join(", ", new[] { KindText, PublisherText, SignatureText }.Where(x => x.Length > 0));
     [ObservableProperty] private bool _needsAttention;
     [ObservableProperty] private string? _virusTotalText;
     [ObservableProperty] private string? _virusTotalUrl;
@@ -112,11 +116,21 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     partial void OnHideMicrosoftChanged(bool value) => Filter();
     partial void OnSelectedKindChanged(FilterOption? value) => Filter();
 
+    private IReadOnlyList<StartupEntry>? _entries;
+
     protected override async Task LoadAsync()
     {
-        var lang = Lang;
         var scanner = new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath);
-        var entries = await Task.Run(() => scanner.ScanAll());
+        _entries = await Task.Run(() => scanner.ScanAll());
+        await ShowAsync(_entries);
+    }
+
+    // A language switch builds the rows from the entries already read; the signatures come from the verifier's cache.
+    protected override Task RelabelAsync() => _entries is { } entries ? ShowAsync(entries) : LoadAsync();
+
+    private async Task ShowAsync(IReadOnlyList<StartupEntry> entries)
+    {
+        var lang = Lang;
         _all = entries.Select(e => new StartupRow(e, lang, services, runner)).ToList();
         if (_compareAfterLoad && await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is { } snapshot)
             ShowComparison(StartupSnapshot.Compare(snapshot, entries));
@@ -136,13 +150,11 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
             OnPropertyChanged(nameof(SelectedKind));
         }
         Filter();
-        // Signatures in the background: Microsoft entries are hidden once verified.
+        // Signatures in the background, shown together: Microsoft entries are hidden once verified.
         var rows = _all.ToList();
-        await Task.Run(() => Parallel.ForEach(rows, new ParallelOptions { MaxDegreeOfParallelism = 4 }, row =>
-        {
-            var sig = SignatureVerifier.Verify(row.Entry.ImagePath);
-            System.Windows.Application.Current.Dispatcher.Invoke(() => row.SetSignature(sig, lang));
-        }));
+        var signatures = await Task.Run(() => rows.AsParallel().AsOrdered().WithDegreeOfParallelism(4)
+            .Select(row => SignatureVerifier.Verify(row.Entry.ImagePath)).ToList());
+        for (var i = 0; i < rows.Count; i++) rows[i].SetSignature(signatures[i], lang);
         Filter();
     }
 
@@ -214,6 +226,8 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         finally
         {
             IsCheckingVirusTotal = false;
+            _vtCancel?.Dispose();
+            _vtCancel = null;
         }
     }
 
@@ -282,7 +296,7 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     {
         if (row?.Entry.ImagePath is not { } path || !File.Exists(path))
         {
-            VirusTotalStatus = Loc.Instance["Startup_FileMissing"];
+            Owner.ShowResult(Loc.Instance["Startup_FileMissing"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
             return;
         }
         DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", services.Elevation);
@@ -376,11 +390,21 @@ public sealed partial class ServiceRowVm : ObservableObject
 
     private async Task ChangeAsync(StartOption? oldValue, StartOption newValue)
     {
-        var written = await _page.ChangeStartAsync(this, newValue.Start);
-        if (written) return;
-        _suppress = true;
-        Selected = oldValue; // cancelled: show the real start type again
-        _suppress = false;
+        var written = false;
+        try
+        {
+            written = await _page.ChangeStartAsync(this, newValue.Start);
+        }
+        finally
+        {
+            // Cancelled or failed (also by an exception): show the real start type again, not one that was never written.
+            if (!written)
+            {
+                _suppress = true;
+                Selected = oldValue;
+                _suppress = false;
+            }
+        }
     }
 }
 
@@ -402,20 +426,36 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
 
     private IReadOnlyList<ScheduledTaskInfo> _taskList = [];
 
+    private IReadOnlyList<ServiceRow>? _serviceRows;
+
     protected override async Task LoadAsync()
     {
-        var lang = Lang;
-        var rows = await Task.Run(() =>
+        _serviceRows = await Task.Run(() =>
         {
             var list = ServiceManager.List(services.Context.Services, CatalogData.Current.Services);
             // Signature decides "Microsoft" for services the catalog does not explain.
             return list.AsParallel().WithDegreeOfParallelism(4).Select(r => r.Note is null ? r with { Signature = SignatureVerifier.Verify(r.File) } : r).ToList();
         });
-        _all = rows.OrderBy(r => r.DisplayName, StringComparer.CurrentCultureIgnoreCase).Select(r => new ServiceRowVm(r, lang, this)).ToList();
-        Filter();
+        ShowServices(_serviceRows);
 
         _taskList = await Task.Run(() => services.Context.Tasks.List());
         FillTasks();
+    }
+
+    // A language switch builds the rows from the services and tasks already read.
+    protected override Task RelabelAsync()
+    {
+        if (_serviceRows is null) return LoadAsync();
+        ShowServices(_serviceRows);
+        FillTasks();
+        return Task.CompletedTask;
+    }
+
+    private void ShowServices(IReadOnlyList<ServiceRow> rows)
+    {
+        var lang = Lang;
+        _all = rows.OrderBy(r => r.DisplayName, StringComparer.CurrentCultureIgnoreCase).Select(r => new ServiceRowVm(r, lang, this)).ToList();
+        Filter();
     }
 
     private void FillTasks()
@@ -449,7 +489,18 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
     {
         // Back to the original start type of a change this app made: undo that change instead.
         var id = ServiceManager.ChangeId(ServiceManager.StartTypeOwner(row.Name));
-        if (services.Store.Get(id) is { } previous && previous.Entries.FirstOrDefault()?.Original.Data == start.ToString()
+        TweakBackup? previousBackup;
+        try
+        {
+            previousBackup = services.Store.Get(id);
+        }
+        catch (BackupUnreadableException ex)
+        {
+            // Locked by another process right now: deciding without it could record a changed value as the original.
+            Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
+            return false;
+        }
+        if (previousBackup is { } previous && previous.Entries.FirstOrDefault()?.Original.Data == start.ToString()
             && Owner.ResolveTweak(id) is { } t)
             return await runner.UndoAsync(t) && await ReloadThenTrue();
         if (ServiceManager.Change(row.Row, start) is not { } tweak) return false;
@@ -498,6 +549,11 @@ public sealed record DriverItem(string Device, string ClassText, string Provider
 {
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Device;
+
+    /// <summary>Class, provider and version; a driver without provider or version shows no empty part.</summary>
+    public string MetaText => string.Join(", ", new[] { ClassText, $"{Provider} {Version}".Trim() }.Where(x => x.Length > 0));
+
+    public string DateText => string.Join(", ", new[] { Date, Age }.Where(x => x.Length > 0));
 }
 
 /// <summary>A desktop program in the uninstall list.</summary>
@@ -651,19 +707,40 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
     [ObservableProperty] private string _output = "";
     [ObservableProperty] private bool _wingetMissing;
 
+    private IReadOnlyList<DriverRow>? _drivers;
+
     protected override async Task LoadAsync()
+    {
+        (_winget, _wingetForUser) = await Task.Run(() => (Winget.FindTrusted(), Winget.FindForUser(services.ProfilePath)));
+        WingetMissing = _winget is null && _wingetForUser is null;
+        ShowApps();
+        await LoadProgramsAsync();
+        _drivers = await Task.Run(DriverInventory.Read);
+        ShowDrivers(_drivers);
+    }
+
+    // A language switch builds the rows from the programs and drivers already read.
+    protected override Task RelabelAsync()
+    {
+        if (_drivers is null) return LoadAsync();
+        ShowApps();
+        FilterPrograms();
+        ShowDrivers(_drivers);
+        return Task.CompletedTask;
+    }
+
+    private void ShowApps()
     {
         var lang = Lang;
         var programs = Owner.Profile?.Extras?.Programs ?? [];
-        (_winget, _wingetForUser) = await Task.Run(() => (Winget.FindTrusted(), Winget.FindForUser(services.ProfilePath)));
-        WingetMissing = _winget is null && _wingetForUser is null;
         Apps.Clear();
         foreach (var a in CatalogData.Current.Apps.Apps) Apps.Add(new AppRow(a, lang, a.IsInstalled(programs)));
-        await LoadProgramsAsync();
+    }
 
+    private void ShowDrivers(IReadOnlyList<DriverRow> drivers)
+    {
         var vendor = CatalogData.Current.Bios.NormalizeVendor(Owner.Profile?.Firmware?.BoardManufacturer);
         var board = BiosAgeCheck.SupportUrl(vendor);
-        var drivers = await Task.Run(DriverInventory.Read);
         Drivers.Clear();
         var today = DateTime.Today;
         foreach (var d in drivers)
@@ -866,20 +943,36 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     protected override async Task LoadAsync()
     {
         // Asking a drive whether it is ready can take seconds (a sleeping disk): off the UI thread.
-        var libraries = Owner.Profile?.Software?.GameLibraryPaths;
-        var (drives, protectedRoots) = await Task.Run(() => (
-            DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).Select(d => d.RootDirectory.FullName).ToList(),
-            StorageAnalyzer.ProtectedRoots(libraries)));
+        var drives = await Task.Run(() => DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).Select(d => d.RootDirectory.FullName).ToList());
         Drives.Clear();
         foreach (var d in drives) Drives.Add(d);
         SelectedDrive ??= Drives.FirstOrDefault();
-        _protected = protectedRoots;
 
-        var lang = Lang;
         RebuildTexts();
         await LoadPriorityRulesAsync();
-        var states = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes)
+        _featureStates = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes)
             .Concat(OptionalCapabilityAction.ReadAll(services.Context.Processes)).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase));
+        ShowFeatures(_featureStates);
+    }
+
+    private Dictionary<string, string>? _featureStates;
+
+    // A language switch builds the rows again without DISM (two lists that take seconds); the priority rules are a quick read.
+    protected override async Task RelabelAsync()
+    {
+        if (_featureStates is null)
+        {
+            await LoadAsync();
+            return;
+        }
+        RebuildTexts();
+        ShowFeatures(_featureStates);
+        await LoadPriorityRulesAsync();
+    }
+
+    private void ShowFeatures(Dictionary<string, string> states)
+    {
+        var lang = Lang;
         Features.Clear();
         foreach (var f in CatalogData.Current.Features.Features)
             if (states.TryGetValue(f.Name, out var s)) Features.Add(new FeatureRow(f, s == "Enabled", lang, services, runner));
@@ -890,7 +983,14 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [RelayCommand]
     private async Task ScanStorageAsync()
     {
-        if (SelectedDrive is null) return;
+        // One scan at a time: a second one (Scan pressed again, or the rescan after recycling) would mix its rows in.
+        if (SelectedDrive is null || IsScanningStorage) return;
+        // Game folders come from the PC scan; without it they could be offered for deletion.
+        if (Owner.Profile?.Software is not { } software)
+        {
+            StorageStatus = Loc.Instance["Storage_WaitForScan"];
+            return;
+        }
         _scanCancel = new CancellationTokenSource();
         IsScanningStorage = true;
         LargestFiles.Clear();
@@ -898,6 +998,8 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         Duplicates.Clear();
         try
         {
+            // Read for every analysis: a scan since the page opened may have found a new library.
+            _protected = await Task.Run(() => StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders)));
             var progress = new Progress<(int Files, long Bytes)>(p => StorageStatus = Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes)));
             var report = await StorageAnalyzer.ScanAsync(SelectedDrive, _protected, progress: progress, ct: _scanCancel.Token);
             foreach (var f in report.LargestFiles)
@@ -918,6 +1020,8 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         finally
         {
             IsScanningStorage = false;
+            _scanCancel.Dispose();
+            _scanCancel = null;
         }
     }
 
@@ -927,6 +1031,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [RelayCommand]
     private async Task RecycleSelectedAsync()
     {
+        if (IsScanningStorage) return; // the lists are being refilled
         var selected = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanDelete).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (selected.Count == 0) return;
         var text = Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10)));
@@ -1141,6 +1246,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         finally
         {
             IsToolRunning = false;
+            _toolCancel.Dispose();
+            _toolCancel = null;
         }
     }
 
@@ -1168,7 +1275,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             {
                 Optimizer.Core.Tools.HealthStore.SaveThrottle(Optimizer.Core.Tools.HealthStore.DefaultFolder, result);
                 ThrottleResult = Describe(result);
-                await Owner.ScanAsync(); // updates the throttling finding
+                // Updates the throttling finding; while a change or an update runs the next scan does it.
+                if (Owner.ScanCommand.CanExecute(null)) await Owner.ScanAsync();
             }
             else
             {
@@ -1183,6 +1291,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         {
             IsThrottleRunning = false;
             ThrottleStatus = "";
+            _throttleCancel.Dispose();
+            _throttleCancel = null;
         }
     }
 
@@ -1194,7 +1304,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         r.GpuReasonShare.TryGetValue("thermal", out var th) && r.GpuReasonShare.TryGetValue("powerLimit", out var pw)
             ? Loc.Instance.Format("Throttle_Gpu", $"{th * 100:0}", $"{pw * 100:0}")
             : Loc.Instance["Throttle_GpuNone"],
-        r.CpuThrottled || r.GpuThermal ? Loc.Instance["Throttle_Verdict_Bad"] : Loc.Instance["Throttle_Verdict_Ok"]);
+        r.CpuThrottled || r.GpuThermal || r.GpuSlowdown ? Loc.Instance["Throttle_Verdict_Bad"]
+            : !r.CpuJudged ? Loc.Instance["Throttle_Verdict_NoLoad"] : Loc.Instance["Throttle_Verdict_Ok"]);
 
     // Benchmark
 
@@ -1299,19 +1410,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     {
         if (value)
         {
-            try
-            {
-                _sensors = new Sensors();
-                _timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-                _timer.Tick += (_, _) => ReadSensorsAsync().Forget("sensor reading");
-                _timer.Start();
-                ReadSensorsAsync().Forget("sensor reading");
-            }
-            catch (Exception ex)
-            {
-                Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
-                SensorsOn = false;
-            }
+            StartSensorsAsync().Forget("sensors");
         }
         else
         {
@@ -1322,6 +1421,35 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             _sensors = null;
             SensorRows.Clear();
         }
+    }
+
+    /// <summary>
+    /// Opening the sensor library enumerates processor, board, drives, memory and battery and can take seconds: done off
+    /// the UI thread. Switched off (or off and on again) meanwhile: the copy that is not needed is closed.
+    /// </summary>
+    private async Task StartSensorsAsync()
+    {
+        Sensors opened;
+        try
+        {
+            opened = await Task.Run(() => new Sensors());
+        }
+        catch (Exception ex)
+        {
+            Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
+            SensorsOn = false;
+            return;
+        }
+        if (!SensorsOn || _sensors is not null)
+        {
+            opened.Dispose();
+            return;
+        }
+        _sensors = opened;
+        _timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _timer.Tick += (_, _) => ReadSensorsAsync().Forget("sensor reading");
+        _timer.Start();
+        ReadSensorsAsync().Forget("sensor reading");
     }
 
     private bool _readingSensors;

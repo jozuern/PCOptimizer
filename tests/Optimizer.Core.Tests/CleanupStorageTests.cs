@@ -22,6 +22,22 @@ public class CleanupStorageTests : IDisposable
 
     public void Dispose() => TestFolders.Delete(_root);
 
+    /// <summary>The Xbox library is a real folder named in .GamingRoot (was "D:\ (Xbox)", which no file path starts with).</summary>
+    [Fact]
+    public void XboxLibrariesAreRealFolders()
+    {
+        Assert.Empty(Hardware.Probes.SoftwareProbe.XboxLibraries(_root));
+        Directory.CreateDirectory(Path.Combine(_root, "Games", "Xbox"));
+        byte[] marker = [.. "RGBX"u8, 1, 0, 0, 0, .. System.Text.Encoding.Unicode.GetBytes("Games\\Xbox\0")];
+        System.IO.File.WriteAllBytes(Path.Combine(_root, ".GamingRoot"), marker);
+        Assert.Equal([Path.Combine(_root, "Games", "Xbox")], Hardware.Probes.SoftwareProbe.XboxLibraries(_root));
+
+        // A marker this version cannot read: the default folder name.
+        System.IO.File.WriteAllBytes(Path.Combine(_root, ".GamingRoot"), [1, 2, 3]);
+        Directory.CreateDirectory(Path.Combine(_root, "XboxGames"));
+        Assert.Equal([Path.Combine(_root, "XboxGames")], Hardware.Probes.SoftwareProbe.XboxLibraries(_root));
+    }
+
     private string File(string relative, int bytes, DateTime? written = null)
     {
         var path = Path.Combine(_root, relative);
@@ -148,6 +164,23 @@ public class CleanupStorageTests : IDisposable
         Assert.True(StorageAnalyzer.IsProtected(@"D:\swapfile.sys", [], appData: false));
         Assert.False(StorageAnalyzer.IsProtected(@"D:\Backup\pagefile.sys", [], appData: false)); // only the drive root is Windows'
     }
+
+    /// <summary>Two hard links to one file are one file: recycling one path frees nothing.</summary>
+    [Fact]
+    public void HardLinksAreNotDuplicates()
+    {
+        var a = File(@"links\a.bin", 2 << 20);
+        var link = Path.Combine(_root, @"links\a-link.bin");
+        Assert.True(CreateHardLink(link, a, IntPtr.Zero));
+        Assert.Empty(StorageAnalyzer.FindDuplicates([[a, link]], CancellationToken.None));
+        var copy = File(@"links\copy.bin", 2 << 20);
+        var dup = Assert.Single(StorageAnalyzer.FindDuplicates([[a, link, copy]], CancellationToken.None));
+        Assert.Equal(2, dup.Paths.Count);
+        Assert.Contains(copy, dup.Paths);
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern bool CreateHardLink(string newFile, string existingFile, IntPtr security);
 
     [Fact]
     public void UpdateRepairRenamesAndRestartsServices()

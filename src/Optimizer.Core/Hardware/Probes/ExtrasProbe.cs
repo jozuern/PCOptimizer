@@ -20,14 +20,17 @@ public static class ExtrasProbe
 
     private const string NicClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
 
+    /// <param name="cpu">
+    /// This and the other probe tasks are the scan's own, still running: a part that needs one of them waits for it, the
+    /// rest start at once.
+    /// </param>
     /// <param name="reuse">
     /// The previous result, after a change made by this app: parts that no tweak or fix can change (installed programs,
     /// drive health, shutdown history, the background process sample, AGESA, TPM, NVMe links) are taken from it
     /// instead of being read again.
     /// </param>
-    public static HardwareExtras Read(CatalogData catalog, CpuInfo? cpu, IReadOnlyList<GpuInfo>? gpus, FirmwareInfo? firmware, IReadOnlyList<DisplayInfo>? displays,
-        bool elevated, string? userSid, HardwareExtras? reuse = null, Task<IReadOnlyList<Tools.ProcessCpu>>? processSample = null,
-        bool waitForSample = true)
+    public static HardwareExtras Read(CatalogData catalog, Task<CpuInfo?> cpu, Task<IReadOnlyList<GpuInfo>?> gpus, Task<FirmwareInfo?> firmware,
+        Task<IReadOnlyList<DisplayInfo>?> displays, Task<ElevationInfo?> elevation, HardwareExtras? reuse = null)
     {
         Task<T?> Part<T>(string part, Func<T> f) => Task.Run(() =>
         {
@@ -47,16 +50,27 @@ public static class ExtrasProbe
                 if (watch.ElapsedMilliseconds > 250) Log.Debug("scan", $"extras/{part} took {watch.ElapsedMilliseconds} ms");
             }
         });
+        // A part that needs another probe's result starts when that probe is done (without holding a thread meanwhile).
+        async Task<T?> After<TProbe, T>(string part, Task<TProbe> probe, Func<TProbe, T> f)
+        {
+            var result = await probe.ConfigureAwait(false);
+            return await Part(part, () => f(result)).ConfigureAwait(false);
+        }
         Task<T?> Reused<T>(T? value) => Task.FromResult(value);
+
+        // The elevation probe answers at once; the user's programs and startup entries need its SID.
+        var info = elevation.GetAwaiter().GetResult();
+        var elevated = info?.IsElevated == true;
+        var userSid = info?.SessionUserSid ?? info?.ProcessUserSid;
 
         var nics = Part("nics", ReadNics);
         var agesa = reuse is not null ? Reused(reuse.Agesa is { } v ? (Version: v, Source: reuse.AgesaSource ?? "") : ((Version Version, string Source)?)null)
-            : cpu?.Vendor == Vendor.Amd ? Part("agesa", () => FindAgesa(FirmwareExtras.SmbiosStrings())) : Reused<(Version Version, string Source)?>(null);
+            : After("agesa", cpu, c => c?.Vendor == Vendor.Amd ? FindAgesa(FirmwareExtras.SmbiosStrings()) : null);
         // Read with the rest of the TPM in the firmware probe (one Win32_Tpm query per scan).
-        var tpm = Reused(firmware?.TpmManufacturer);
+        var tpm = After("tpm", firmware, f => f?.TpmManufacturer);
         var trim = Part("trim", () => new TrimSetting(Reg.HklmInt(@"SYSTEM\CurrentControlSet\Control\FileSystem", "DisableDeleteNotification")));
-        var secureBoot = elevated && firmware?.SecureBoot == TriState.Yes
-            ? reuse is not null ? Reused(reuse.SecureBootCerts) : Part("secureboot", FirmwareExtras.ReadSecureBootCerts)
+        var secureBoot = elevated
+            ? After("secureboot", firmware, f => f?.SecureBoot != TriState.Yes ? null : reuse is not null ? reuse.SecureBootCerts : FirmwareExtras.ReadSecureBootCerts())
             : Reused<SecureBootCerts>(null);
         var overlay = Part("overlay", FirmwareExtras.EffectiveOverlay);
         var wifi = Part("wifi", Wlan.Connections);
@@ -64,20 +78,16 @@ public static class ExtrasProbe
         var overlays = Part("overlays", () => RunningOverlays(catalog));
         var services = Part("services", () => catalog.Extras.AllServiceNames
             .Where(s => Reg.HklmKeyExists($@"SYSTEM\CurrentControlSet\Services\{s}")).ToHashSet(StringComparer.OrdinalIgnoreCase));
-        var nvidia = Part("nvidia", () => ReadNvidia(displays));
+        var nvidia = After("nvidia", displays, ReadNvidia);
         var programs = reuse is not null ? Reused(reuse.Programs) : Part("programs", () => InstalledPrograms.Read(userSid));
         var startup = Part("startup", () => ReadStartupPrograms(userSid));
         var disks = reuse is not null ? Reused(reuse.DiskHealth) : Part("diskhealth", Tools.DiskHealthReader.Read);
         var virtualization = Part("virtualization", StabilityProbe.ReadVirtualization);
         var shutdowns = reuse is not null ? Reused(reuse.UnexpectedShutdowns) : Part("shutdowns", StabilityProbe.ReadUnexpectedShutdowns);
-        // The 3 second sample usually started with the scan (it only measures, so it can run beside the other probes).
-        var processes = reuse is not null ? Reused(reuse.BackgroundCpu)
-            : processSample is { IsCompleted: false } && !waitForSample ? Reused<IReadOnlyList<Tools.ProcessCpu>>(null)
-            : Part("processes", () => (processSample ?? Tools.ProcessSampler.SampleAsync(SampleWindow)).GetAwaiter().GetResult());
         var throttle = Part("throttle", () => Tools.HealthStore.LoadThrottle(Tools.HealthStore.DefaultFolder));
         var nicList = nics.GetAwaiter().GetResult() ?? [];
-        var msi = Part("msi", () => ReadMsiDevices(gpus, nicList));
-        Task.WaitAll(agesa, tpm, trim, secureBoot, overlay, wifi, nvme, overlays, services, nvidia, programs, startup, disks, virtualization, shutdowns, processes, throttle, msi);
+        var msi = After("msi", gpus, g => ReadMsiDevices(g, nicList));
+        Task.WaitAll(agesa, tpm, trim, secureBoot, overlay, wifi, nvme, overlays, services, nvidia, programs, startup, disks, virtualization, shutdowns, throttle, msi);
 
         return new HardwareExtras
         {
@@ -99,7 +109,8 @@ public static class ExtrasProbe
             DiskHealth = disks.Result ?? [],
             Virtualization = virtualization.Result,
             UnexpectedShutdowns = shutdowns.Result,
-            BackgroundCpu = processes.Result,
+            // The 3 second sample runs after the scan (HardwareScanner); a rescan after a change keeps the last one.
+            BackgroundCpu = reuse?.BackgroundCpu,
             LastThrottle = throttle.Result,
         };
     }
@@ -213,7 +224,7 @@ public static class ExtrasProbe
     private static List<NvmeLink> ReadNvmeLinks()
     {
         var list = new List<NvmeLink>();
-        var nvme = Wmi.Query("SELECT DeviceId, FriendlyName FROM MSFT_PhysicalDisk WHERE BusType = 17", @"root\Microsoft\Windows\Storage")
+        var nvme = Wmi.PhysicalDisks().Where(r => r.Int("BusType") == 17)
             // Pooled disks (Storage Spaces) can repeat or leave out the id: one name per id, never an exception.
             .Where(r => r.Str("DeviceId").Length > 0).GroupBy(r => r.Str("DeviceId")).ToDictionary(g => g.Key, g => g.First().Str("FriendlyName"));
         foreach (var d in Wmi.Query("SELECT Index, PNPDeviceID, Model FROM Win32_DiskDrive"))

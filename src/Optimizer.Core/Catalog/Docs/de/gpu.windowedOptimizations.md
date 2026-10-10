@@ -4,7 +4,7 @@
 Lässt ältere DirectX-10- und -11-Spiele im Fenster- oder randlosen Modus das Flip-Ausgabemodell nutzen, was die Latenz meist senkt.
 
 ## So funktioniert es
-Ältere Spiele geben Bilder mit dem „Blt“-Modell aus, bei dem der Desktop-Compositor jedes Bild kopiert. Mit dieser Einstellung stellt Windows sie auf das Flip-Modell um, das Bilder ohne die zusätzliche Kopie an den Bildschirm gibt [1][2]. Die App setzt SwapEffectUpgradeEnable=1 in deinen DirectX-Einstellungen und behält deine übrigen Werte.
+Ältere Spiele geben Bilder mit dem „Blt“-Modell aus, bei dem der Desktop-Compositor jedes Bild kopiert. Mit dieser Einstellung stellt Windows sie auf das Flip-Modell um, das Bilder ohne die zusätzliche Kopie an den Bildschirm gibt [1][2]. Die App setzt SwapEffectUpgradeEnable=1 in deinen DirectX-Einstellungen und behält deine übrigen Werte. Microsoft beschreibt den Schalter [1][2], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
 
 ## Warum es helfen kann
 Spiele im Fenster- oder randlosen Modus sparen sich die zusätzliche Kopie, was die Bildlatenz senkt [2].

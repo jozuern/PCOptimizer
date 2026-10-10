@@ -77,6 +77,10 @@ jobs:
   release:
     needs: build
     runs-on: windows-2025
+    # The signing key is a secret of this environment, not of the repository: only jobs that name the environment
+    # get it, and the environment allows only v*.*.* tags and waits for the owner's approval. A workflow on another
+    # branch or tag cannot read it.
+    environment: release
     permissions:
       contents: write
 

@@ -9,8 +9,17 @@ public enum SignatureStatus { Signed, Unsigned, Invalid, NotFound, Error }
 /// <summary>Authenticode result; <see cref="Catalog"/> = signed through a Windows catalog file (most Windows binaries).</summary>
 public sealed record SignatureInfo(SignatureStatus Status, string? Publisher, bool Catalog)
 {
-    public bool IsMicrosoft => Status == SignatureStatus.Signed && Publisher is { } p &&
-                               (p.StartsWith("Microsoft Windows", StringComparison.OrdinalIgnoreCase) || p.StartsWith("Microsoft Corporation", StringComparison.OrdinalIgnoreCase));
+    /// <summary>
+    /// Signers of Microsoft's own files. Exact names: "Microsoft Windows Hardware Compatibility Publisher" (WHQL and
+    /// attestation signing) and "Microsoft Windows Early Launch Anti-malware Publisher" sign other vendors' drivers and
+    /// files, so a name prefix would count those as Microsoft's.
+    /// </summary>
+    private static readonly HashSet<string> MicrosoftSigners = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Microsoft Windows", "Microsoft Corporation", "Microsoft Windows Publisher",
+    };
+
+    public bool IsMicrosoft => Status == SignatureStatus.Signed && Publisher is { } p && MicrosoftSigners.Contains(p.Trim());
 }
 
 /// <summary>
@@ -67,6 +76,22 @@ public static class SignatureVerifier
         var changed = GetFileInformationByHandleEx(handle, 0 /* FileBasicInfo */, out basic, (uint)Marshal.SizeOf<FILE_BASIC_INFO>()) ? basic.ChangeTime : 0;
         return $"{info.VolumeSerialNumber:X}:{info.FileIndexHigh:X}{info.FileIndexLow:X8}:{((long)info.FileSizeHigh << 32) | info.FileSizeLow}:" +
                $"{((long)info.LastWriteTime.dwHighDateTime << 32) | (uint)info.LastWriteTime.dwLowDateTime}:{changed}";
+    }
+
+    /// <summary>Volume serial and file id: equal for two paths that are hard links to the same file. Null when not readable.</summary>
+    internal static string? FileId(string path)
+    {
+        try
+        {
+            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return GetFileInformationByHandle(stream.SafeFileHandle, out var info)
+                ? $"{info.VolumeSerialNumber:X}:{info.FileIndexHigh:X}{info.FileIndexLow:X8}"
+                : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

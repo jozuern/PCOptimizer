@@ -82,6 +82,7 @@ public static class DeElevatedLauncher
             dynamic service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
             service.Connect();
             folder = service.GetFolder("\\");
+            DeleteLeftovers(folder);
             dynamic def = service.NewTask(0);
             def.Principal.UserId = user;
             def.Principal.LogonType = 3; // TASK_LOGON_INTERACTIVE_TOKEN: runs in the user's session with the user's token
@@ -98,6 +99,7 @@ public static class DeElevatedLauncher
             dynamic task = folder.RegisterTaskDefinition(name, def, 6 /* CREATE_OR_UPDATE */, null, null, 3 /* INTERACTIVE_TOKEN */, null);
             task.Run(null);
             // The task is deleted once it has started; waiting for that happens off the UI thread.
+            lock (Pending) Pending.Add(name);
             DeleteLater(name);
             name = null;
             return true;
@@ -120,6 +122,9 @@ public static class DeElevatedLauncher
         }
     }
 
+    /// <summary>One-time tasks of this process that are still waiting for <see cref="DeleteLater"/>.</summary>
+    private static readonly HashSet<string> Pending = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Deletes the one-time task after it had time to start, on a background thread with its own connection.</summary>
     private static void DeleteLater(string name) => Task.Run(async () =>
     {
@@ -134,7 +139,34 @@ public static class DeElevatedLauncher
         {
             Logging.Log.Warn("launcher", $"one-time task {name} not deleted: {ex.Message}");
         }
+        finally
+        {
+            lock (Pending) Pending.Remove(name);
+        }
     });
+
+    /// <summary>
+    /// One-time tasks an earlier run left behind (the app ended within the 3 seconds before <see cref="DeleteLater"/>):
+    /// they have no trigger and never run again, but stay in the Task Scheduler root until deleted.
+    /// </summary>
+    private static void DeleteLeftovers(dynamic folder)
+    {
+        try
+        {
+            var names = new List<string>();
+            foreach (dynamic task in folder.GetTasks(1 /* TASK_ENUM_HIDDEN */)) names.Add((string)task.Name);
+            foreach (var name in names.Where(n => n.StartsWith("PCOptimizer-open-", StringComparison.OrdinalIgnoreCase)))
+            {
+                lock (Pending)
+                    if (Pending.Contains(name)) continue;
+                folder.DeleteTask(name, 0);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logging.Log.Warn("launcher", $"leftover one-time tasks not removed: {ex.Message}");
+        }
+    }
 
     // ---------------- COM interfaces (vtable order matters) ----------------
 
