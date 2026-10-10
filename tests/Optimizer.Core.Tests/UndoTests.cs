@@ -242,6 +242,33 @@ public class CatalogRuleTests
         Assert.True(TweakEngine.AppliesTo(t, new Facts().Set("os.build", 26300).Set("os.edition", "Enterprise")));
     }
 
+    [Theory]
+    [InlineData("updates.driversExcluded", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "ExcludeWUDriversInQualityUpdate")]
+    [InlineData("privacy.deviceMetadataOff", @"SOFTWARE\Policies\Microsoft\Windows\Device Metadata", "PreventDeviceMetadataFromNetwork")]
+    [InlineData("system.registryBackup", @"SYSTEM\CurrentControlSet\Control\Session Manager\Configuration Manager", "EnablePeriodicBackup")]
+    public async Task NewPolicyTweaksWriteOneValueAndUndoRemovesIt(string id, string path, string name)
+    {
+        using var fx = new EngineFixture();
+        var t = TweakCatalog.Current.Get(id)!;
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true).Set("os.edition", "Professional");
+        var options = new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true };
+
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, facts, new HashSet<string>(), options)).Outcome);
+        Assert.Equal("1", RegistryValue.Read(fx.Registry, Hive.Machine, path, name).Data);
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, name).Existed);
+    }
+
+    [Theory]
+    [InlineData("updates.driversExcluded")]
+    [InlineData("privacy.deviceMetadataOff")]
+    public void PoliciesMicrosoftListsForProAndUpAreNotOfferedOnHome(string id)
+    {
+        var t = TweakCatalog.Current.Get(id)!;
+        Assert.False(TweakEngine.AppliesTo(t, new Facts().Set("os.build", 26300).Set("os.edition", "Core")));
+        Assert.True(TweakEngine.AppliesTo(t, new Facts().Set("os.build", 26300).Set("os.edition", "Professional")));
+    }
+
     [Fact]
     public void VbsTweakShowsNoGainWhenVbsIsAlreadyOff()
     {

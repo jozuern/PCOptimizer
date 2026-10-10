@@ -47,9 +47,11 @@ docs/                 privacy, third-party notices, VM test plan, explanation st
 .github/workflows/    CI (build, tests without Category=Hardware, single-exe artifact) and the tag-triggered release
 ```
 
-Data: `%ProgramData%\PCOptimizer` when elevated (locked to Administrators and SYSTEM, links removed on start); Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead: `backups\` (originals per change), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon and captures), `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`.
+Data: `%ProgramData%\PCOptimizer` when elevated; Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon and captures), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`.
 
-Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/profiles.json` (profiles: per-profile impact of tweaks and findings, recommendations, what works against each), `Data/labels.json` (generated text, EN and DE), `Docs/{en,de}/*.md` (one explanation page per tweak and check). Entries marked `verified: false` (BIOS menu paths, one anti-cheat) say so on their explanation page.
+Native libraries: `NativeLibraryGuard` resolves P/Invoke targets to System32 or the protected runtime folder and refuses a DLL of that name next to the exe. New P/Invokes need nothing extra; never load a DLL by a path a standard user can write to.
+
+Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/profiles.json` (profiles: per-profile impact of tweaks and findings, recommendations, what works against each), `Data/labels.json` (generated text, EN and DE), `Docs/{en,de}/*.md` (one explanation page per tweak and check). Entries marked `verified: false` (one anti-cheat, some service names) say so on their explanation page. Tweaks the evidence does not support are listed in [docs/not-included.md](docs/not-included.md) instead of the catalog.
 
 ## Testing changes safely
 
@@ -57,6 +59,14 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 - `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors).
 - Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
 - Not yet checked on real hardware: the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
+
+## Adding a tweak
+
+1. Catalog entry in `Catalog/Tweaks/*.json`: documented setting only (Microsoft or the hardware vendor), correct risk, `restart`/`signOut`, `bootCritical`, `antiCheatSensitive`, impact 0 to 5 with basis `situational` or `disputed` (`measured` only with a cited measurement), sources you opened. Set `"preview": true` when it is risky and not yet tested on real Windows; Expert and boot-critical tweaks must be previews (`CatalogRuleTests`).
+2. EN and DE explanation pages following [docs/explanation-style-guide.md](docs/explanation-style-guide.md); the docs lint checks the structure, summary length, sources, typography and banned words.
+3. A sandbox test for apply and undo (see `UndoTests` and `EngineTests`).
+4. Regenerate the VM test plan tables: run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`. The counts in README.md are checked against the catalog (`DocsConsistencyTests`).
+5. A tweak that is removed later stays undoable: undo uses the action stored with each backup entry.
 
 ## New dependencies
 

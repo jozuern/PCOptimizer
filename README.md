@@ -2,9 +2,11 @@
 
 # PCOptimizer
 
-A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
+A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
 
-> **Status: preview (0.3).** Apply and undo are tested against a registry sandbox, not yet on many real PCs. Create a restore point or a backup before you change anything, and start with the recommended items. Laptop profiles, battery checks and AMD-specific checks are not yet checked on real hardware.
+> **Status: preview (0.4).** Apply and undo are tested against a registry sandbox and fake system interfaces, not yet on real Windows installations: the [VM test plan](docs/vm-test-plan.md) has not been run. Tweaks marked **Preview** are the risky ones that most need that test. Create a restore point or a backup before you change anything, and start with the recommended items. Laptop profiles, battery checks and AMD-specific checks have not been checked on real hardware.
+
+<p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, profile, recommended changes and findings"></p>
 
 ## Download
 
@@ -12,20 +14,36 @@ Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer
 
 ## What it does
 
-- **Scan:** 46 read-only checks (problems, BIOS and hardware advice, game access per anti-cheat). Each comes with what was found, why it matters, how to fix it and sources, in English and German.
-- **Tweaks:** 99 catalog tweaks with gaming impact from 0 to 5, risk and sources, plus tweaks built for this PC: per-game NVIDIA profiles, MSI mode and interrupt affinity per device (Expert), startup entries, services, Windows features.
+- **Scan:** 48 read-only checks (problems, BIOS and hardware advice, game access per anti-cheat). Each comes with what was found, why it matters, how to fix it and sources, in English and German. A check that cannot read something says "unknown" and gives no advice.
+- **Tweaks:** 86 catalog tweaks with gaming impact from 0 to 5, how solid the evidence is (situational or disputed), risk and sources, plus tweaks built for this PC: per-game NVIDIA profiles, MSI mode per device and interrupt affinity for the graphics card (Expert), startup entries, services, Windows features.
 - **Profiles:** Gaming, Laptop gaming, Battery, Office, Quiet and cool, Older PC. A profile changes nothing by itself; it decides what "Apply recommended" includes and which impact is shown.
-- **Apply recommended:** one confirmation for the fixes of detected problems and the tweaks that fit this PC, each with its reason. Expert, boot-critical, anti-cheat sensitive and not fully reversible items are never included.
+- **Apply recommended:** one confirmation for the fixes of detected problems and the tweaks that fit this PC, each with its reason. Expert, boot-critical, anti-cheat sensitive, Preview and not fully reversible items are never included.
 - **Undo:** every change is backed up first (plus a restore point once per session), verified after applying and listed on the Changes page with Undo, also after a restart. After a Windows update the app lists changes Windows reset and offers to apply them again.
-- **Graphics & network:** NVIDIA driver settings through the documented driver settings API, VRR state, network adapter power saving, DNS presets and an opt-in DNS benchmark.
-- **Debloat, cleanup, startup, services:** a reviewed list of 34 inbox apps, 11 cleanup categories that never follow links, an Autoruns-style startup list with signature checks, service start types with explanations.
+- **Graphics & network:** NVIDIA driver settings through the documented driver settings interface (NVAPI), VRR state, network adapter power saving, DNS presets and an opt-in DNS benchmark.
+- **Debloat, cleanup, startup, services:** a reviewed list of 34 inbox apps (with an honest note when the Store no longer offers an app), 11 cleanup categories that never follow links, an Autoruns-style startup list with signature checks, service start types with explanations.
 - **Tools and health:** storage analyzer, Windows features, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
 
-The app does not use undocumented driver settings, never recommends turning off security features that anti-cheats require, and keeps changes that weaken security or touch the boot configuration in Expert mode.
+The app uses only settings that Microsoft or the hardware vendor documents (or, where noted on the explanation page, the value behind a documented Windows option). It never recommends turning off security features that anti-cheats require, and keeps changes that weaken security or touch the boot configuration in Expert mode.
+
+<p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page with impact, risk and badges, and the explanation of the selected tweak"></p>
 
 ## Privacy
 
 No telemetry, no accounts. The app goes online only for features you start or turn on (update check, VirusTotal lookup, DNS benchmark, app installs). Details: [docs/PRIVACY.md](docs/PRIVACY.md).
+
+## FAQ
+
+**Why is tweak X not included?** Many popular tweaks do nothing on Windows 11, use settings nobody documents, or cost more than they bring. [docs/not-included.md](docs/not-included.md) lists them with the reason and sources, including the ones earlier versions offered.
+
+**What does "Preview" mean?** The tweak is risky enough that it needs testing on real Windows before it can be called safe, and that test has not been done yet. Apply it on its own, after a restore point, and check the result.
+
+**Will it make my games faster?** Sometimes. The biggest gains come from fixing real problems the scan finds (a monitor at 60 Hz, memory without XMP, the wrong power plan). Most tweaks change little; each page says how solid the evidence is, and the benchmark on the Health page lets you measure your own games.
+
+**Can I undo everything?** Every change the app makes is backed up and can be undone on the Changes page, also after a restart or an update of the app. Removing an inbox app cannot be undone by the app; the Store link stays where the Store still offers it.
+
+**Does it work on Windows 11 Home?** Yes. Some Group Policy based tweaks only work on Pro, Enterprise or Education; the app does not offer them on Home.
+
+**Why does it need administrator rights?** Most settings it changes are machine-wide. Its data folder (`%ProgramData%\PCOptimizer`) is locked to administrators, and links or files planted there by other accounts are removed before use.
 
 ## License
 

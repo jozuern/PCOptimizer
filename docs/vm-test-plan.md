@@ -33,7 +33,7 @@ For each tweak: apply it alone, check that the state shows **On** and that the c
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 83 catalog tweaks. Preview tweaks have not been tested on real Windows yet; test them first.
+The tables below cover all 86 catalog tweaks. Preview tweaks have not been tested on real Windows yet; test them first.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -63,6 +63,7 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `privacy.appCompatTelemetryOff` | Application compatibility telemetry off | moderate | restart | registry | |
 | `privacy.phoneLinkOff` | Phone-PC linking off | moderate | restart | registry | |
 | `privacy.crossDeviceOff` | Continue experiences on other devices off | moderate | restart | registry | |
+| `system.registryBackup` | Registry backup to the RegBack folder | safe | restart | registry | |
 
 ## 4. Other tweaks
 
@@ -127,6 +128,8 @@ Turn on Expert mode. Take a checkpoint before **each** of these, apply it alone,
 | `office.clipboardHistoryOn` | Clipboard history on | safe |  | registry | |
 | `office.launchToThisPc` | File Explorer opens to This PC | safe |  | registry | |
 | `background.edgeBoostOff` | Microsoft Edge: no startup boost, no background mode | safe |  | registry | |
+| `updates.driversExcluded` | Drivers not included with Windows Update | moderate |  | registry | |
+| `privacy.deviceMetadataOff` | No automatic download of device apps | safe |  | registry | |
 
 ## 5. Tweaks that need real hardware
 
