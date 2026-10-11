@@ -264,7 +264,6 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<ChangeRecordItem> ChangeRecords { get; } = [];
     public ObservableCollection<LogLine> ChangeLog { get; } = [];
     public ObservableCollection<Banner> Banners { get; } = [];
-    public ObservableCollection<SummaryItem> Summary { get; } = [];
     public ObservableCollection<HwSection> HardwareSections { get; } = [];
     public ObservableCollection<HwTile> HardwareTiles { get; } = [];
 
@@ -1131,7 +1130,6 @@ public sealed partial class MainViewModel : ObservableObject
         FillTweaks();
         BuildRecommendations();
         BuildBanners();
-        BuildSummary();
         BuildChanges();
         BuildHardware();
 
@@ -1261,7 +1259,18 @@ public sealed partial class MainViewModel : ObservableObject
             .ThenByDescending(p => p.Impact)
             .ThenBy(p => p.Tweak.Category, StringComparer.Ordinal)
             .ToList();
-        foreach (var p in list) Tweaks.Add(new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage));
+        // Headings follow the order of the list (recommended, works against the profile, then by impact), so the
+        // first row of each band carries one.
+        string? last = null;
+        foreach (var p in list)
+        {
+            var band = p.Recommended ? Loc.Instance["Tweaks_GroupRecommended"]
+                : p.Flagged ? Loc.Instance["Tweaks_GroupAgainstOn"]
+                : p.WorksAgainst ? Loc.Instance["Impact_Against"]
+                : Loc.Instance.Format("Tweaks_GroupImpact", p.Impact);
+            Tweaks.Add(new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage) { GroupHeader = band == last ? null : band });
+            last = band;
+        }
         var visible = VisibleTweaks().ToList();
         TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn), visible.Count(p => p.Recommended));
     }
@@ -1391,25 +1400,5 @@ public sealed partial class MainViewModel : ObservableObject
             if (!e.IsElevated) Banners.Add(new Banner(Loc.Instance["Banner_NotElevated"], true));
             if (e.ShowSeparateAdminBanner) Banners.Add(new Banner(Loc.Instance.Format("Banner_SeparateAdmin", e.ProcessUser, e.SessionUser), true));
         }
-    }
-
-    private void BuildSummary()
-    {
-        Summary.Clear();
-        if (Profile is not { } p) return;
-        var l = Loc.Instance;
-        if (p.Cpu is { } cpu) Summary.Add(new SummaryItem(l["Sum_Cpu"], cpu.Name));
-        if (p.Gpus is { } gpus)
-            Summary.Add(new SummaryItem(l["Sum_Gpu"], string.Join("\n", gpus.Where(g => g.Kind is not GpuKind.Virtual).Select(g => g.Name))));
-        if (p.Memory is { } m)
-        {
-            var first = m.Modules.FirstOrDefault();
-            var speed = first is null ? "" : $" {first.Type}-{Optimizer.Core.Findings.Checks.RamSpeed.NormalizeConfigured(first)}";
-            Summary.Add(new SummaryItem(l["Sum_Memory"], $"{m.TotalBytes / (double)(1L << 30):0} GB{speed}, {m.Modules.Count} " + l["Sum_Modules"]));
-        }
-        if (p.Displays is { Count: > 0 } d)
-            Summary.Add(new SummaryItem(l["Sum_Displays"], string.Join("\n", d.Select(x => $"{x.FriendlyName}, {x.Width} × {x.Height}, {x.CurrentRefresh.Hz:0.##} Hz"))));
-        if (p.Firmware is { } fw) Summary.Add(new SummaryItem(l["Sum_Board"], $"{fw.BoardManufacturer} {fw.BoardProduct}\nBIOS {fw.BiosVersion}"));
-        Summary.Add(new SummaryItem(l["Sum_Windows"], $"Windows 11 {p.Os.DisplayVersion} {p.Os.Edition}\nBuild {p.Os.BuildString}"));
     }
 }

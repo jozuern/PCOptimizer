@@ -33,6 +33,21 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
 
     public string Title(TweakDefinition t) => TitleOf(t, Loc.Instance.Language);
 
+    // HKU\<SID of this process>: the hive that this process sees as HKCU.
+    private static readonly string? OwnHive = System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value is { } sid ? $@"HKU\{sid}" : null;
+
+    /// <summary>
+    /// A registry path of the signed-in user as people know it ("HKCU\Software\...") instead of "HKU\S-1-5-21-...\Software\...".
+    /// Only when this app runs as that user: with a separate administrator account the SID stays, since HKCU would be
+    /// that account's hive.
+    /// </summary>
+    public static string ShortTarget(string target) =>
+        OwnHive is { } own && target.StartsWith(own, StringComparison.OrdinalIgnoreCase) && (target.Length == own.Length || target[own.Length] == '\\')
+            ? "HKCU" + target[own.Length..]
+            : target;
+
+    public static IReadOnlyList<ChangeLine> ShortTargets(IReadOnlyList<ChangeLine> lines) => lines.Select(c => c with { Target = ShortTarget(c.Target) }).ToList();
+
     /// <summary>The explanation page's title, with the subject for tweaks that share a page (DNS presets, services).</summary>
     public static string TitleOf(TweakDefinition t, string lang)
     {

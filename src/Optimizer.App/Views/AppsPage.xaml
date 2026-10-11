@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="{StaticResource PagePadding}">
@@ -17,11 +18,18 @@
             <ui:Button Content="{l:Tr Apps_GetAppInstaller}" Icon="{ui:SymbolIcon Open20}" Margin="0,0,0,8"
                        Command="{Binding OpenLinkCommand}" CommandParameter="https://apps.microsoft.com/detail/9nblggh4nns1"
                        Visibility="{Binding Apps.WingetMissing, Converter={StaticResource BoolToVisibility}}" />
-            <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Apps.IsLoading, Converter={StaticResource BoolToVisibility}}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding Apps.IsLoading, Converter={StaticResource BoolToVisibility}}">
+                <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Apps_Loading}" VerticalAlignment="Center" />
+            </StackPanel>
 
             <ItemsControl ItemsSource="{Binding Apps.Apps}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
+                        <!-- Category heading above the first app of each category -->
+                        <DockPanel>
+                        <ui:TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}" Text="{Binding GroupHeader}" Margin="0,12,0,8"
+                                      Visibility="{Binding GroupHeader, Converter={StaticResource NullToVisibility}}" />
                         <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <ui:CardControl.Icon>
                                 <ui:SymbolIcon Symbol="{Binding Symbol}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
@@ -30,7 +38,6 @@
                                 <StackPanel>
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" />
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Text}" Margin="0,4,0,0" />
-                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Category}" Margin="0,4,0,0" />
                                 </StackPanel>
                             </ui:CardControl.Header>
                             <StackPanel Orientation="Horizontal">
@@ -53,6 +60,7 @@
                                            Command="{Binding DataContext.Apps.InstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                             </StackPanel>
                         </ui:CardControl>
+                        </DockPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -67,7 +75,7 @@
                 <ui:TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}" Text="{Binding Apps.ProgramsText}" VerticalAlignment="Center" Margin="12,0,0,0" />
                 <ui:TextBox PlaceholderText="{l:Tr Programs_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Apps.ProgramSearch, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
-            <ItemsControl ItemsSource="{Binding Apps.ProgramRows}" MaxHeight="520" Style="{StaticResource VirtualCardList}">
+            <ItemsControl ItemsSource="{Binding Apps.ProgramRows}" MaxHeight="520" Style="{StaticResource VirtualCardList}" v:ScrollChain.Enabled="True">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">

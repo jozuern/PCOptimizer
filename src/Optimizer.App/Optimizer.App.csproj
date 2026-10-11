@@ -12,7 +12,7 @@
     <StartupObject>Optimizer.App.Program</StartupObject>
     <!-- DOTNET_STARTUP_HOOKS from the user's environment would run code in the elevated app before Main. -->
     <StartupHookSupport>false</StartupHookSupport>
-    <Version>0.5.4</Version>
+    <Version>0.6.0</Version>
     <Product>PCOptimizer</Product>
     <Authors>Joshua Zürn</Authors>
     <Company>Joshua Zürn</Company>

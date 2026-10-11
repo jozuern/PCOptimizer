@@ -65,21 +65,6 @@
                 </StackPanel>
             </ui:Card>
 
-            <!-- System files -->
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Health_SystemFiles}" />
-            <ui:Card Padding="16,12">
-                <StackPanel>
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Health_SystemFilesHint}" />
-                    <WrapPanel Margin="0,8,0,0">
-                        <ui:Button Content="{l:Tr Health_Sfc}" Command="{Binding Health.SfcCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Health_DismScan}" Command="{Binding Health.DismScanCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Health_DismRestore}" Command="{Binding Health.DismRestoreCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Health.StopToolCommand}" Visibility="{Binding Health.IsToolRunning, Converter={StaticResource BoolToVisibility}}" />
-                    </WrapPanel>
-                    <TextBox Style="{StaticResource OutputBox}" Text="{Binding Health.ToolOutput, Mode=OneWay}" Visibility="{Binding Health.ToolOutput, Converter={StaticResource NullToVisibility}}" />
-                </StackPanel>
-            </ui:Card>
-
             <!-- Drives -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Health_Disks}" />
             <ItemsControl ItemsSource="{Binding Health.Disks}">

@@ -139,9 +139,11 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         // Built again after a language switch; the chosen kind stays selected.
         if (Kinds.Count == 0 || _kindsLang != lang)
         {
-            var selectedKey = SelectedKind?.Key ?? "";
+            // First view: the programs that start at sign-in (what Task Manager shows); every location is one choice away.
+            var selectedKey = SelectedKind?.Key ?? SignInKey;
             _kindsLang = lang;
             Kinds.Clear();
+            Kinds.Add(new FilterOption(SignInKey, Loc.Instance["Startup_SignInKinds"]));
             Kinds.Add(new FilterOption("", Loc.Instance["Startup_AllKinds"]));
             foreach (var k in Enum.GetValues<StartupKind>())
                 Kinds.Add(new FilterOption(k.ToString(), Labels.Current.Get(lang, $"startupKind.{k}")));
@@ -160,15 +162,19 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         Filter();
     }
 
+    private const string SignInKey = "signIn";
+
+    private static bool IsSignIn(StartupEntry e) => e.Kind is StartupKind.RunKey or StartupKind.StartupFolder or StartupKind.LogonTask;
+
     private void Filter()
     {
-        var kind = SelectedKind?.Key ?? "";
+        var kind = SelectedKind?.Key ?? SignInKey;
         var q = Search.Trim();
         bool Matches(StartupRow r) => q.Length == 0 || r.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)
             || r.Command?.Contains(q, StringComparison.OrdinalIgnoreCase) == true || r.Location.Contains(q, StringComparison.OrdinalIgnoreCase)
             || r.MetaText.Contains(q, StringComparison.CurrentCultureIgnoreCase);
         Rows.Clear();
-        foreach (var r in _all.Where(r => (kind.Length == 0 || r.Entry.Kind.ToString() == kind) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && Matches(r))
+        foreach (var r in _all.Where(r => (kind.Length == 0 || (kind == SignInKey ? IsSignIn(r.Entry) : r.Entry.Kind.ToString() == kind)) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && Matches(r))
                      .OrderByDescending(r => r.IsNew).ThenByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
         var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);
@@ -535,6 +541,9 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
     public string Category { get; } = Labels.Current.Get(lang, $"appCategory.{app.Category}");
     public bool PerUser => App.Scope == "user";
 
+    /// <summary>Category heading above the first app of each category (the catalog lists them grouped).</summary>
+    public string? GroupHeader { get; init; }
+
     public Wpf.Ui.Controls.SymbolRegular Symbol => App.Category switch
     {
         "launchers" => Wpf.Ui.Controls.SymbolRegular.Games24,
@@ -740,7 +749,12 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         var lang = Lang;
         var programs = Owner.Profile?.Extras?.Programs ?? [];
         Apps.Clear();
-        foreach (var a in CatalogData.Current.Apps.Apps) Apps.Add(new AppRow(a, lang, a.IsInstalled(programs)));
+        string? last = null;
+        foreach (var a in CatalogData.Current.Apps.Apps)
+        {
+            Apps.Add(new AppRow(a, lang, a.IsInstalled(programs)) { GroupHeader = a.Category == last ? null : Labels.Current.Get(lang, $"appCategory.{a.Category}") });
+            last = a.Category;
+        }
     }
 
     private void ShowDrivers(IReadOnlyList<DriverRow> drivers)
@@ -945,6 +959,21 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
 
     /// <summary>Repairs that run documented Windows commands (restart a service or device, renew network state, rebuild a cache).</summary>
     [ObservableProperty] private IReadOnlyList<QuickFixRow> _quickFixRows = QuickFixes.All.Select(f => new QuickFixRow(f)).ToList();
+
+    // The page shows the quick fixes in three groups: network, restart a part of Windows, repair Windows.
+    private static readonly string[] NetworkFixes = ["IpRenew", "TcpIpReset"];
+    private static readonly string[] RestartFixes = ["AudioRestart", "BluetoothRestart", "SearchRestart", "GraphicsRestart"];
+
+    public IEnumerable<QuickFixRow> QuickNetworkRows => QuickFixRows.Where(r => NetworkFixes.Contains(r.Fix.Id));
+    public IEnumerable<QuickFixRow> QuickRestartRows => QuickFixRows.Where(r => RestartFixes.Contains(r.Fix.Id));
+    public IEnumerable<QuickFixRow> QuickRepairRows => QuickFixRows.Where(r => !NetworkFixes.Contains(r.Fix.Id) && !RestartFixes.Contains(r.Fix.Id));
+
+    partial void OnQuickFixRowsChanged(IReadOnlyList<QuickFixRow> value)
+    {
+        OnPropertyChanged(nameof(QuickNetworkRows));
+        OnPropertyChanged(nameof(QuickRestartRows));
+        OnPropertyChanged(nameof(QuickRepairRows));
+    }
 
     protected override async Task LoadAsync()
     {

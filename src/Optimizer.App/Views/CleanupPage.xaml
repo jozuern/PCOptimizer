@@ -27,7 +27,7 @@
             <ItemsControl ItemsSource="{Binding Cleanup.Rows}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ui:Card Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
+                        <ui:Card x:Name="Row" Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <DockPanel>
                                 <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SizeText}" VerticalAlignment="Center" Margin="16,0,0,0" />
                                 <CheckBox IsChecked="{Binding Selected}" VerticalAlignment="Top"
@@ -40,6 +40,11 @@
                                 </CheckBox>
                             </DockPanel>
                         </ui:Card>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter TargetName="Row" Property="Opacity" Value="0.6" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

@@ -62,14 +62,20 @@
                                       Margin="0,4,0,0" Visibility="{Binding Debloat.OneDriveBlock, Converter={StaticResource NullToVisibility}}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Debloat_Uninstall}" Appearance="Secondary" IsEnabled="{Binding Debloat.CanUninstallOneDrive}" Command="{Binding Debloat.UninstallOneDriveCommand}" />
+                <ui:Button Content="{l:Tr Debloat_Uninstall}" Appearance="Secondary" IsEnabled="{Binding Debloat.CanUninstallOneDrive}" Command="{Binding Debloat.UninstallOneDriveCommand}"
+                           Visibility="{Binding Debloat.OneDriveInstalled, Converter={StaticResource BoolToVisibility}}" />
             </ui:CardControl>
 
             <!-- Edge: guided only -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="Microsoft Edge" />
-            <ui:Card Padding="16,12">
-                <ui:TextBlock FontTypography="Body" Text="{l:Tr Debloat_EdgeText}" TextWrapping="Wrap" />
-            </ui:Card>
+            <ui:CardControl Padding="{StaticResource CardPadding}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Info24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Debloat_EdgeText}" />
+                </ui:CardControl.Header>
+            </ui:CardControl>
 
             <!-- Removed apps -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Debloat_RemovedTitle}" />

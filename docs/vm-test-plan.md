@@ -331,10 +331,10 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Cleanup | Each of the 11 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
 | Storage analyzer | Delete one duplicate: it goes to the Recycle Bin; Windows and program folders cannot be selected | |
 | Apps | Install one per-user app (runs as the signed-in user) and one machine-wide app with winget | |
-| DNS presets | Apply Cloudflare, check `Get-DnsClientServerAddress`, undo: DHCP or the old servers are back | |
+| DNS presets | Choose Cloudflare in the DNS servers list, check `Get-DnsClientServerAddress`; choose Google: Cloudflare is undone first (its own confirmation), then Google is applied; choose Automatic: DHCP or the old servers are back; cancel a dialog: the list shows the servers in use again | |
 | DNS benchmark | Runs, shows results, changes nothing | |
-| Tools | Winsock reset (restart needed), Explorer restart, DNS flush, Windows Update repair | |
-| Health | SFC and DISM with live output; frame time benchmark with PresentMon; throttle check; PawnIO install from the Health page and uninstall with winget | |
+| Tools | Winsock reset (restart needed), Explorer restart, DNS flush, Windows Update repair, SFC and DISM with live output | |
+| Health | Frame time benchmark with PresentMon; throttle check; PawnIO install from the Health page and uninstall with winget | |
 | Desktop program uninstaller | Uninstall one machine-wide program (restore point first, runs elevated) and one per-user program (runs as the signed-in user); an MSI entry under HKCU runs msiexec as the user; the list updates after Refresh | |
 | Update all (winget) | Runs `winget upgrade --all`, shows the output, programs are updated | |
 | .NET Desktop Runtimes | Install .NET Desktop Runtime 8 and 10 from the Apps page | |
@@ -343,7 +343,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
 | Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |
 | Startup snapshot | Save a snapshot, install a program that adds a Run entry, compare: only that entry is "new"; save while the list loads is refused | |
-| DNS "Use the fastest" | After the benchmark, the fastest preset is applied; with another preset already applied the button is not offered | |
+| DNS "Use the fastest" | After the benchmark, the fastest preset is applied; with another preset of this app applied, that one is undone first | |
 | Edge Game Assist | Listed on Debloat when installed; removing it keeps Edge | |
 | Data folder | Create `C:\ProgramData\PCOptimizer` as a standard user with a file in it before the first start: the app deletes the folder and creates a locked one | |
 | Two Windows accounts | Account A applies dark mode, account B starts the app: B sees dark mode as not applied by the app and can apply and undo it without touching A's backup | |

@@ -103,3 +103,47 @@ public sealed class LayoutWidthConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>
+/// A scrolling list inside a scrolling page: once the list is at its top or bottom, the mouse wheel scrolls the page
+/// instead of stopping (the list would otherwise trap the wheel). Set on the inner ItemsControl.
+/// </summary>
+public static class ScrollChain
+{
+    public static readonly DependencyProperty EnabledProperty =
+        DependencyProperty.RegisterAttached("Enabled", typeof(bool), typeof(ScrollChain), new PropertyMetadata(false, OnEnabledChanged));
+
+    public static bool GetEnabled(DependencyObject d) => (bool)d.GetValue(EnabledProperty);
+
+    public static void SetEnabled(DependencyObject d, bool value) => d.SetValue(EnabledProperty, value);
+
+    private static void OnEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not UIElement element) return;
+        element.PreviewMouseWheel -= OnPreviewMouseWheel;
+        if ((bool)e.NewValue) element.PreviewMouseWheel += OnPreviewMouseWheel;
+    }
+
+    private static void OnPreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        if (sender is not DependencyObject list || Descendant<System.Windows.Controls.ScrollViewer>(list) is not { } inner) return;
+        var atEnd = e.Delta > 0 ? inner.VerticalOffset <= 0 : inner.VerticalOffset >= inner.ScrollableHeight - 0.5;
+        if (!atEnd) return;
+        var outer = VisualTreeHelper.GetParent(list);
+        while (outer is not null and not System.Windows.Controls.ScrollViewer) outer = VisualTreeHelper.GetParent(outer);
+        if (outer is not System.Windows.Controls.ScrollViewer page) return;
+        e.Handled = true;
+        page.RaiseEvent(new System.Windows.Input.MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta) { RoutedEvent = UIElement.MouseWheelEvent, Source = list });
+    }
+
+    private static T? Descendant<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            if (Descendant<T>(child) is { } deeper) return deeper;
+        }
+        return null;
+    }
+}

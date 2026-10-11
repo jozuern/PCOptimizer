@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0 (preview)
+
+A pass over the interface for public use.
+
+### Interface
+
+- The navigation pane groups its pages under Optimize, Clean up and Maintain; System info sits next to Settings. Graphics & network and Services & tasks have icons that no longer look like the Settings gear or a phone.
+- The Tweaks list has headings: recommended for this PC, changes that work against the profile, then one per impact level.
+- The tags on a tweak (Preview, Undocumented value, Moderate risk, Anti-cheat and the others) explain themselves in a tooltip.
+- DNS is one choice (Automatic, Cloudflare, Google, Quad9, OpenDNS, AdGuard DNS) instead of six switches of which only one could be on. Choosing another set of servers undoes the one this app set first, and "Use the fastest" after the DNS test works the same way.
+- The NVIDIA profiles per game and the device interrupt settings take one line per entry, and the per-game list comes after DNS.
+- The details pane and the confirmation dialog show registry paths of the signed-in user as `HKCU\...` when the app runs as that user, and a value that is not set as "not set (Windows default)".
+- Tools groups its quick fixes into network fixes, restarting a part of Windows and repairing Windows; the system file check (SFC, DISM) moved there from Health, next to the Windows Update repair and the drive check.
+- Startup opens on the programs that start at sign-in; every other location is still one choice away in the list.
+- Apps & drivers shows a heading per category and a label while it loads, and the list of installed programs passes the mouse wheel on to the page at its top and bottom.
+- Overview no longer repeats the hardware summary (System info has it), and an empty recommendation box takes one line.
+- Smaller things: Cleanup dims empty categories and writes file counts with thousands separators, Debloat shows no greyed-out button when OneDrive is not installed, the app's notes on the Services page are no longer drawn like links, read-only start types show a lock, Settings has an intro and keeps the update switch and "Check now" in one card, and the Changes page names its list "Changes you can undo".
+
 ## 0.5.0 (preview)
 
 Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from a code audit (open items in [TODO](docs/TODO.md)), plus a speed pass.

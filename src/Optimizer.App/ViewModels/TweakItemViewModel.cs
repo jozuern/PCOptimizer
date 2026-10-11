@@ -61,16 +61,21 @@ public sealed class TweakItemViewModel : InspectorItem
         }
 
         // Tags under the title; risks (caution color) first, then facts about the change.
+        // Each tag explains itself in its tooltip.
         var badges = new List<Badge>();
-        if (t.EffectiveRisk != Risk.Safe) badges.Add(new(labels.Get(lang, $"badge.risk{t.EffectiveRisk}"), true));
-        if (t.IsBootCritical) badges.Add(new(labels.Get(lang, "badge.bootCritical"), true));
-        if (t.AntiCheatSensitive) badges.Add(new(labels.Get(lang, "badge.antiCheat"), true));
-        if (t.Reversibility != Reversibility.Reversible) badges.Add(new(labels.Get(lang, $"reversibility.{t.Reversibility}"), true));
-        if (t.Preview) badges.Add(new(labels.Get(lang, "badge.preview"), false));
-        if (t.Undocumented) badges.Add(new(labels.Get(lang, "badge.undocumented"), false));
-        if (t.Impact.Basis == "disputed") badges.Add(new(labels.Get(lang, "badge.disputed"), false));
-        if (t.Restart) badges.Add(new(labels.Get(lang, "badge.restart"), false));
-        if (t.SignOut) badges.Add(new(labels.Get(lang, "badge.signOut"), false));
+        if (t.EffectiveRisk != Risk.Safe)
+            badges.Add(new(labels.Get(lang, $"badge.risk{t.EffectiveRisk}"), true,
+                t.EffectiveRisk == Risk.Expert ? Loc.Instance["Badge_TipExpert"] : Loc.Instance["Badge_TipModerate"]));
+        if (t.IsBootCritical) badges.Add(new(labels.Get(lang, "badge.bootCritical"), true, Loc.Instance["Badge_TipBoot"]));
+        if (t.AntiCheatSensitive) badges.Add(new(labels.Get(lang, "badge.antiCheat"), true, Loc.Instance["Badge_TipAntiCheat"]));
+        if (t.Reversibility != Reversibility.Reversible)
+            badges.Add(new(labels.Get(lang, $"reversibility.{t.Reversibility}"), true,
+                t.Reversibility == Reversibility.Reinstall ? Loc.Instance["Badge_TipReinstall"] : Loc.Instance["Badge_TipPermanent"]));
+        if (t.Preview) badges.Add(new(labels.Get(lang, "badge.preview"), false, Loc.Instance["Badge_TipPreview"]));
+        if (t.Undocumented) badges.Add(new(labels.Get(lang, "badge.undocumented"), false, Loc.Instance["Badge_TipUndocumented"]));
+        if (t.Impact.Basis == "disputed") badges.Add(new(labels.Get(lang, "badge.disputed"), false, Loc.Instance["Badge_TipDisputed"]));
+        if (t.Restart) badges.Add(new(labels.Get(lang, "badge.restart"), false, Loc.Instance["Badge_TipRestart"]));
+        if (t.SignOut) badges.Add(new(labels.Get(lang, "badge.signOut"), false, Loc.Instance["Badge_TipSignOut"]));
         Badges = badges;
         BadgesText = string.Join(", ", badges.Select(b => b.Text));
         IsRecommended = profiled?.Recommended ?? status.Recommended;
@@ -112,7 +117,7 @@ public sealed class TweakItemViewModel : InspectorItem
         MarkdownFactory = () =>
         {
             if (page is null) return $"# {heading}";
-            var changes = engine.Preview(t);
+            var changes = ChangeRunner.ShortTargets(engine.Preview(t));
             var notes = new List<string>();
             if (t.Scope == TweakScope.User || t.Actions.OfType<Optimizer.Core.Actions.RegistryAction>().Any(a => a.Hive == Optimizer.Core.Actions.Hive.User))
                 notes.Add(labels.Get(lang, "changes.userScope"));
@@ -137,6 +142,9 @@ public sealed class TweakItemViewModel : InspectorItem
         : RowAction.Apply;
 
     public RowAction Action { get; }
+
+    /// <summary>Heading above the first row of a band on the Tweaks page (recommended, by impact); null for the other rows.</summary>
+    public string? GroupHeader { get; init; }
 
     public TweakStatus Status_ { get; }
     public TweakDefinition Tweak => Status_.Tweak;
@@ -180,8 +188,11 @@ public sealed class TweakItemViewModel : InspectorItem
     }
 }
 
-/// <summary>A tag on a tweak row (Preview, Restart, Moderate risk); <paramref name="Caution"/> draws it in the caution color.</summary>
-public sealed record Badge(string Text, bool Caution)
+/// <summary>
+/// A tag on a tweak row (Preview, Restart, Moderate risk); <paramref name="Caution"/> draws it in the caution color,
+/// <paramref name="Tip"/> says what it means.
+/// </summary>
+public sealed record Badge(string Text, bool Caution, string? Tip = null)
 {
     // What screen readers announce for this item in a list.
     public override string ToString() => Text;

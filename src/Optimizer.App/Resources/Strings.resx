@@ -17,8 +17,7 @@
   <data name="Dash_ShowAll" xml:space="preserve"><value>Show passed checks</value></data>
   <data name="Dash_GameAccess" xml:space="preserve"><value>Game access</value></data>
   <data name="Dash_GameAccessHint" xml:space="preserve"><value>What kernel anti-cheats check before a game starts. Not part of the impact rating.</value></data>
-  <data name="Dash_YourPc" xml:space="preserve"><value>Your PC</value></data>
-  <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; hardware advisor</value></data>
+  <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; hardware</value></data>
   <data name="Advisor_Hint" xml:space="preserve"><value>Things only you can change: BIOS settings, slots, firmware updates. Each item explains how.</value></data>
   <data name="Hw_Title" xml:space="preserve"><value>System info</value></data>
   <data name="Hw_Hint" xml:space="preserve"><value>Everything the scanner read. Nothing was changed.</value></data>
@@ -62,12 +61,6 @@
   <data name="Lang_En" xml:space="preserve"><value>English</value></data>
   <data name="Lang_De" xml:space="preserve"><value>Deutsch</value></data>
   <data name="Impact_Critical" xml:space="preserve"><value>Critical</value></data>
-  <data name="Sum_Cpu" xml:space="preserve"><value>Processor</value></data>
-  <data name="Sum_Gpu" xml:space="preserve"><value>Graphics</value></data>
-  <data name="Sum_Memory" xml:space="preserve"><value>Memory</value></data>
-  <data name="Sum_Displays" xml:space="preserve"><value>Displays</value></data>
-  <data name="Sum_Windows" xml:space="preserve"><value>Windows</value></data>
-  <data name="Sum_Board" xml:space="preserve"><value>Mainboard</value></data>
   <data name="Dash_Title" xml:space="preserve"><value>Overview</value></data>
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
@@ -105,13 +98,13 @@
   <data name="Result_UndoAll" xml:space="preserve"><value>Changes undone: {0}.</value></data>
   <data name="Changes_Title" xml:space="preserve"><value>Changes</value></data>
   <data name="Changes_Hint" xml:space="preserve"><value>Everything this app changed, with the original values it keeps. Undo restores them.</value></data>
-  <data name="Changes_Empty" xml:space="preserve"><value>No changes yet.</value></data>
+  <data name="Changes_Empty" xml:space="preserve"><value>No changes yet. What you change with this app shows up here, with the original values and an Undo button.</value></data>
   <data name="Changes_UndoAll" xml:space="preserve"><value>Undo all</value></data>
   <data name="Changes_Entries" xml:space="preserve"><value>Values: {0}</value></data>
   <data name="Changes_Safety" xml:space="preserve"><value>Safety net</value></data>
   <data name="Changes_RestorePoints" xml:space="preserve"><value>System Protection</value></data>
   <data name="Changes_EnableRp" xml:space="preserve"><value>Turn on (5 % of the drive)</value></data>
-  <data name="Changes_Backups" xml:space="preserve"><value>Backup folder</value></data>
+  <data name="Changes_Backups" xml:space="preserve"><value>Changes you can undo</value></data>
   <data name="Changes_Log" xml:space="preserve"><value>Change log (this session)</value></data>
   <data name="Changes_LogEmpty" xml:space="preserve"><value>No changes in this session.</value></data>
   <data name="Rp_On" xml:space="preserve"><value>On. A restore point is created before the first change of each session.</value></data>
@@ -140,7 +133,6 @@
   <data name="Rp_Continue" xml:space="preserve"><value>Continue without</value></data>
   <data name="UndoAll_Title" xml:space="preserve"><value>Undo all changes?</value></data>
   <data name="UndoAll_Text" xml:space="preserve"><value>Changes to undo: {0}. Values Windows has changed since are left as they are.</value></data>
-  <data name="Sum_Modules" xml:space="preserve"><value>modules</value></data>
   <data name="Busy" xml:space="preserve"><value>Working</value></data>
   <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start PCOptimizer as administrator to apply or undo them.</value></data>
   <data name="Nav_Network" xml:space="preserve">
@@ -201,7 +193,7 @@
     <value>Fixes for detected problems and the tweaks whose conditions match this PC. Only safe and fully reversible changes; everything is shown before it is applied.</value>
   </data>
   <data name="Rec_Empty" xml:space="preserve">
-    <value>Nothing to recommend right now.</value>
+    <value>Nothing to recommend right now. Safe, reversible changes that fit this PC and profile show up here.</value>
   </data>
   <data name="Rec_None" xml:space="preserve">
     <value>There is nothing recommended to apply.</value>
@@ -243,7 +235,7 @@
     <value>DNS</value>
   </data>
   <data name="Net_DnsHint" xml:space="preserve">
-    <value>Current IPv4 DNS servers of the active adapters. DNS only affects how fast names are looked up, not your ping in games.</value>
+    <value>DNS only affects how fast names are looked up, not your ping in games. Choosing other servers asks first and can be undone.</value>
   </data>
   <data name="Net_NoDns" xml:space="preserve">
     <value>No DNS servers found.</value>
@@ -346,7 +338,7 @@ The app is removed for all users and new accounts. Microsoft no longer offers it
     <value>Temporary files and caches with their size. Nothing is deleted until you choose it. Files in use and links to other folders are always skipped.</value>
   </data>
   <data name="Cleanup_Size" xml:space="preserve">
-    <value>{0}, files: {1}</value>
+    <value>{0}, files: {1:N0}</value>
   </data>
   <data name="Cleanup_Total" xml:space="preserve">
     <value>Selected: {0}</value>
@@ -549,7 +541,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Tools</value>
   </data>
   <data name="Tools_Hint" xml:space="preserve">
-    <value>Storage analyzer, Windows features, Windows Update repair and quick fixes.</value>
+    <value>Storage analyzer, Windows features, program priorities, network fixes and Windows repair.</value>
   </data>
   <data name="Storage_Title" xml:space="preserve">
     <value>Storage analyzer</value>
@@ -633,9 +625,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Repair_Partial" xml:space="preserve">
     <value>Some steps failed. Restart the PC and try again.</value>
   </data>
-  <data name="Quick_Title" xml:space="preserve">
-    <value>Quick fixes</value>
-  </data>
   <data name="Quick_Dns" xml:space="preserve">
     <value>Flush DNS cache</value>
   </data>
@@ -676,7 +665,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Health</value>
   </data>
   <data name="Health_Hint" xml:space="preserve">
-    <value>Checks under load and repair tools: throttling, frame rate benchmark, system files, drives and live sensors.</value>
+    <value>Checks under load and live readings: throttling, frame rate benchmark, drives and sensors.</value>
   </data>
   <data name="Throttle_Title" xml:space="preserve">
     <value>Throttle check</value>
@@ -1069,4 +1058,33 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Prio_Other" xml:space="preserve"><value>Priority class {0}, set by another program</value></data>
   <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>I installed them again myself</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Nav_GroupOptimize" xml:space="preserve"><value>Optimize</value></data>
+  <data name="Nav_GroupCleanUp" xml:space="preserve"><value>Clean up</value></data>
+  <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain</value></data>
+  <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Recommended for this PC</value></data>
+  <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>On, but works against this profile</value></data>
+  <data name="Tweaks_GroupImpact" xml:space="preserve"><value>Impact {0} of 5</value></data>
+  <data name="Badge_TipModerate" xml:space="preserve"><value>Can have side effects on some PCs. The details list them.</value></data>
+  <data name="Badge_TipExpert" xml:space="preserve"><value>Trades security or stability for performance. Shown only in Expert mode and never recommended automatically.</value></data>
+  <data name="Badge_TipBoot" xml:space="preserve"><value>Changes the boot configuration. A restore point is created first.</value></data>
+  <data name="Badge_TipAntiCheat" xml:space="preserve"><value>Some kernel anti-cheat systems check this setting and can refuse to start games.</value></data>
+  <data name="Badge_TipReinstall" xml:space="preserve"><value>Undo needs a reinstall, for example from the Microsoft Store.</value></data>
+  <data name="Badge_TipPermanent" xml:space="preserve"><value>Cannot be undone by this app.</value></data>
+  <data name="Badge_TipPreview" xml:space="preserve"><value>Tested only in a sandbox so far, not yet on a real Windows installation. Apply it on its own and check the result.</value></data>
+  <data name="Badge_TipUndocumented" xml:space="preserve"><value>Uses a value Microsoft does not document. The details say how it was checked.</value></data>
+  <data name="Badge_TipDisputed" xml:space="preserve"><value>Measurements disagree on whether this helps. The details show the sources.</value></data>
+  <data name="Badge_TipRestart" xml:space="preserve"><value>Takes effect after a restart.</value></data>
+  <data name="Badge_TipSignOut" xml:space="preserve"><value>Takes effect after you sign out and in again.</value></data>
+  <data name="Net_DnsServers" xml:space="preserve"><value>DNS servers</value></data>
+  <data name="Net_DnsInUse" xml:space="preserve"><value>In use:</value></data>
+  <data name="Net_DnsCustom" xml:space="preserve"><value>None of the choices matches: the servers were set by hand or by another program.</value></data>
+  <data name="Net_DnsAutomatic" xml:space="preserve"><value>Automatic (from the router)</value></data>
+  <data name="Common_Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Quick_GroupNetwork" xml:space="preserve"><value>Network fixes</value></data>
+  <data name="Quick_GroupRestart" xml:space="preserve"><value>Restart a part of Windows</value></data>
+  <data name="Quick_GroupRepair" xml:space="preserve"><value>Repair Windows</value></data>
+  <data name="Apps_Loading" xml:space="preserve"><value>Checking installed apps and drivers</value></data>
+  <data name="Startup_SignInKinds" xml:space="preserve"><value>Programs at sign-in</value></data>
+  <data name="Cleanup_Nothing" xml:space="preserve"><value>Empty</value></data>
+  <data name="Settings_Hint" xml:space="preserve"><value>Language, theme, Expert mode, optional online features and diagnostics.</value></data>
 </root>

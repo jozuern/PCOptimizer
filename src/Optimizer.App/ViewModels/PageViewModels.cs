@@ -214,6 +214,68 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
     public bool ShowDeviceTweaks => Owner.ExpertMode && DeviceTweaks.Count > 0;
     public bool GameProfilesEmpty => GameProfiles.Count == 0;
 
+    /// <summary>The DNS presets as one choice: only one can be in use, so a list of switches said the wrong thing.</summary>
+    public ObservableCollection<DnsChoice> DnsChoices { get; } = [];
+
+    /// <summary>Shown when no preset matches the servers in use (set by hand or by another program).</summary>
+    [ObservableProperty] private bool _dnsIsCustom;
+
+    private DnsChoice? _selectedDns;
+
+    /// <summary>Bound to the DNS combo box: choosing an entry undoes the preset this app set (if any) and applies the new one.</summary>
+    public DnsChoice? SelectedDns
+    {
+        get => _selectedDns;
+        set
+        {
+            if (value is null || ReferenceEquals(value, _selectedDns)) return;
+            _selectedDns = value;
+            OnPropertyChanged();
+            ChooseDnsAsync(value).Forget("DNS choice");
+        }
+    }
+
+    /// <summary>Opens the explanation of the DNS presets (one page for all of them) in the details pane.</summary>
+    [RelayCommand]
+    private void ShowDnsDetails() => Owner.SelectedItem = (SelectedDns ?? DnsChoices.FirstOrDefault())?.Item;
+
+    private void ShowDnsSelection()
+    {
+        _selectedDns = DnsChoices.FirstOrDefault(c => c.Item.IsOn);
+        DnsIsCustom = _selectedDns is null && DnsChoices.Count > 0;
+        OnPropertyChanged(nameof(SelectedDns));
+    }
+
+    private async Task ChooseDnsAsync(DnsChoice choice)
+    {
+        // Not inside the combo box's selection change: the confirmation dialog opens from here.
+        await Task.Yield();
+        try
+        {
+            if (choice.Item.IsOn) return;
+            if (!ChangeGate.Instance.CanChange)
+            {
+                Owner.ShowResult(Loc.Instance["Change_Busy"]);
+                return;
+            }
+            // Presets block each other while one has a backup: undo the one this app set first.
+            if (DnsChoices.FirstOrDefault(c => c.Item.HasBackup && !ReferenceEquals(c, choice)) is { } current)
+            {
+                if (!await Owner.Runner.UndoAsync(current.Item.Tweak)) return;
+                // Undo brings back the servers from before, which may already be the choice (usually automatic).
+                var facts = Owner.Facts;
+                var applied = Owner.AppliedIds();
+                if ((await Task.Run(() => services.Engine.Detect(choice.Item.Tweak, facts, applied))).IsOn) return;
+            }
+            await Owner.Runner.ApplyAsync(choice.Item.Tweak);
+        }
+        finally
+        {
+            // A cancelled dialog shows the servers in use again; after a change the rescan rebuilds the list.
+            ShowDnsSelection();
+        }
+    }
+
     protected override Task LoadAsync()
     {
         BuildRows();
@@ -244,6 +306,11 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         GpuTweaks.Clear();
         DnsOptions.Clear();
         foreach (var t in Owner.CatalogItems(t => t.Id.StartsWith("network.dns.", StringComparison.Ordinal))) DnsOptions.Add(t);
+        DnsChoices.Clear();
+        // Automatic (from the router) first, then the public resolvers in catalog order.
+        foreach (var t in DnsOptions.OrderBy(t => t.Tweak.Subject is null ? 0 : 1))
+            DnsChoices.Add(new DnsChoice(t, t.Tweak.Subject ?? Loc.Instance["Net_DnsAutomatic"]));
+        ShowDnsSelection();
         foreach (var t in Owner.CatalogItems(t => t.Id.StartsWith("nvidia.", StringComparison.Ordinal))) GpuTweaks.Add(t);
         HasNvidia = Owner.Profile?.Gpus?.Any(g => g.Vendor == Optimizer.Core.Hardware.Vendor.Nvidia) == true;
         ShowCurrentDnsAsync().Forget("current DNS servers");
@@ -273,7 +340,7 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
     [RelayCommand]
     private void UseFastest()
     {
-        if (DnsOptions.FirstOrDefault(o => o.Tweak.Id == _fastestPresetId) is { } preset) preset.SwitchState = true;
+        if (DnsChoices.FirstOrDefault(c => c.Item.Tweak.Id == _fastestPresetId) is { } preset) SelectedDns = preset;
         FastestText = null;
     }
 
@@ -293,8 +360,8 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
             // A preset for the fastest server, unless it is already in use.
             _fastestPresetId = best is null ? null : DnsBenchmark.PresetFor(best.Server);
             var preset = DnsOptions.FirstOrDefault(o => o.Tweak.Id == _fastestPresetId);
-            // Offered only when that preset can be switched on now (another preset of this app blocks it until undone).
-            FastestText = preset is { IsOn: false, CanToggle: true } ? Loc.Instance.Format("Net_UseFastest", preset.Tweak.Subject ?? best!.Name) : null;
+            // Offered unless it is in use already; choosing it undoes another preset of this app first.
+            FastestText = preset is { IsOn: false } ? Loc.Instance.Format("Net_UseFastest", preset.Tweak.Subject ?? best!.Name) : null;
             foreach (var r in results)
                 DnsResults.Add(new DnsResultRow(r.Name, r.Server.ToString(), r.MedianMs is { } m ? $"{m:0.0} ms" : Loc.Instance["Net_NoAnswer"],
                     r.BestMs is { } b ? $"{b:0.0} ms" : "", $"{r.Answered}/{r.Sent}"));
@@ -309,6 +376,13 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
             IsWorking = false;
         }
     }
+}
+
+/// <summary>One entry of the DNS combo box: the preset's row (state, explanation) and its short name.</summary>
+public sealed record DnsChoice(TweakItemViewModel Item, string Name)
+{
+    // What screen readers announce for this item in a combo box.
+    public override string ToString() => Name;
 }
 
 // ---------------- Debloat ----------------
@@ -348,6 +422,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     [ObservableProperty] private string? _oneDriveBlock;
     [ObservableProperty] private string? _cameBackText;
     [ObservableProperty] private bool _canUninstallOneDrive;
+    [ObservableProperty] private bool _oneDriveInstalled;
 
     public bool ItemsEmpty => !IsLoading && Items.Count == 0;
 
@@ -404,6 +479,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
         // "Not installed" is already the description; repeating it as a warning adds nothing.
         OneDriveBlock = oneDrive.Installed && oneDrive.BlockKey is { } b ? Labels.Current.Get(lang, b) : null;
         CanUninstallOneDrive = oneDrive.BlockKey is null;
+        OneDriveInstalled = oneDrive.Installed;
         OneDriveText = oneDrive.Installed
             ? Loc.Instance.Format("Debloat_OneDriveInstalled", oneDrive.UserFolder ?? Loc.Instance["Debloat_OneDriveNotSignedIn"])
             : Loc.Instance["Debloat_OneDriveMissing"];
@@ -491,8 +567,12 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     {
         Scan = scan;
         Bytes = scan.Bytes;
-        SizeText = Loc.Instance.Format("Cleanup_Size", CleanupViewModel.Size(scan.Bytes), scan.Files);
+        SizeText = scan.Bytes == 0 && scan.Files == 0 ? Loc.Instance["Cleanup_Nothing"] : Loc.Instance.Format("Cleanup_Size", CleanupViewModel.Size(scan.Bytes), scan.Files);
+        IsEmpty = scan.Bytes == 0 && scan.Files == 0;
     }
+
+    /// <summary>Nothing to clean in this category: the row is drawn dimmed.</summary>
+    [ObservableProperty] private bool _isEmpty;
 }
 
 public sealed partial class CleanupViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)

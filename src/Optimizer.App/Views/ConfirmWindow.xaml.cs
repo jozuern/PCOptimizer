@@ -19,7 +19,7 @@ public partial class ConfirmWindow : FluentWindow
         BadgeText.Visibility = request.Badges.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         WarningList.ItemsSource = request.AntiCheatWarning is null ? request.Warnings : request.Warnings.Append(request.AntiCheatWarning).ToList();
         ChangeList.ItemsSource = request.Changes
-            .Select(c => c with { Before = Show(c.Before), After = Show(c.After) })
+            .Select(c => c with { Target = ChangeRunner.ShortTarget(c.Target), Before = Show(c.Before), After = Show(c.After) })
             .ToList();
         NewHeader.Text = Loc.Instance[request.IsUndo ? "Confirm_Restore" : "Confirm_New"];
         ApplyButton.Content = Loc.Instance[request.IsUndo ? "Confirm_Undo" : "Confirm_Apply"];

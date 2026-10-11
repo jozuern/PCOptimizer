@@ -145,7 +145,7 @@
 
             <!-- Badge on a tweak row: neutral facts (Preview, Restart) in a subtle tag, risks in the caution color -->
             <DataTemplate x:Key="BadgeTag">
-                <Border x:Name="Tag" CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1"
+                <Border x:Name="Tag" CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1" ToolTip="{Binding Tip}"
                         Background="{DynamicResource SubtleFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                     <TextBlock x:Name="TagText" Text="{Binding Text}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </Border>
@@ -157,7 +157,11 @@
                 </DataTemplate.Triggers>
             </DataTemplate>
 
+            <!-- Heading above the first row of a band (Tweaks page only; null elsewhere) -->
             <DataTemplate x:Key="TweakRow">
+                <DockPanel>
+                <ui:TextBlock DockPanel.Dock="Top" FontTypography="BodyStrong" Text="{Binding GroupHeader}" Margin="0,16,0,8"
+                              Visibility="{Binding GroupHeader, Converter={StaticResource NullToVisibility}}" />
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
@@ -196,6 +200,7 @@
                         </ui:ToggleSwitch.IsEnabled>
                     </ui:ToggleSwitch>
                 </ui:CardControl>
+                </DockPanel>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
