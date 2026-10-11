@@ -5,6 +5,8 @@
 # Reads the SHA-256 and the date of the GitHub release, writes the four files in the folder layout winget-pkgs expects
 # (manifests/j/jozuern/PCOptimizer/<version>/) and validates them with "winget validate". Submit the folder as one pull
 # request per version (doc/Authoring.md in winget-pkgs), for example with "wingetcreate submit <folder>".
+# No "Commands": winget would rename the exe to the command name; without it the link in WinGet\Links is named
+# after the exe, and "pcoptimizer" starts it all the same.
 param(
     [Parameter(Mandatory)][string]$Version,
     [string]$OutDir = (Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\winget")
@@ -38,8 +40,6 @@ ManifestType: version
 
 Write-Manifest "$id.installer.yaml" "installer" @"
 InstallerType: portable
-Commands:
-- pcoptimizer
 MinimumOSVersion: 10.0.26100.0
 ReleaseDate: $date
 Installers:
