@@ -28,8 +28,9 @@ Developer switches (all read-only):
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
 | `--category <key>` | Tweaks page filtered to one category before the screenshot (e.g. `Privacy`) |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
-| `--confirm <tweak id> --confirm-shot <file.png>` | renders the confirmation dialog of a tweak (nothing is applied) |
-| `--licenses-shot <file.png>` | renders the Licenses window |
+| `--confirm <tweak id> --confirm-shot <file.png>` | with `--screenshot`: renders the confirmation dialog of a tweak (nothing is applied) |
+| `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
+| `--licenses-shot <file.png>` | with `--screenshot`: renders the Licenses window |
 | `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors, and switches that keep the old accent) |
 | `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |
 | `--profile <id>` | start with a profile: gaming, laptopGaming, battery, office, quiet, lowEnd (saved only when changed in the app) |

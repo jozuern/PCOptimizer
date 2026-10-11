@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3 (preview)
+
+- The question dialogs (update, restore point and the others) and the confirmation dialog of a change are laid out like Windows 11 dialogs: title and text on top, the buttons side by side in a footer band at the bottom, without the empty space under the buttons. Long button labels wrap instead of being cut off ("Einschalten und fortfahren" in German).
+- In dark mode the footer band is set off from the text above it, as it already was in light mode.
+
 ## 0.6.1 (preview)
 
 - The in-app update is offered also when the exe has another name than `PCOptimizer.exe`, for example `PCOptimizer (1).exe` after a second download in the browser. Until now such a copy got only the link to the download page. The update replaces the file under the name it has. Versions up to 0.6.0 still need the exe renamed to `PCOptimizer.exe` to update themselves to this one.
