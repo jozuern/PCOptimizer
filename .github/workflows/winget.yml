@@ -1,0 +1,66 @@
+# winget: when a release is published (the draft from release.yml turned into a release), submit its manifest to
+# microsoft/winget-pkgs as package jozuern.PCOptimizer with Microsoft's wingetcreate. wingetcreate copies the last
+# manifest in winget-pkgs, puts in the new version, URL, SHA-256, date and release notes link, and opens the pull
+# request from the token owner's fork. A volunteer moderator merges it; winget offers the version after that.
+#
+# The token is a classic personal access token with only the public_repo scope (wingetcreate supports no fine-grained
+# token), stored as secret WINGET_CREATE_GITHUB_TOKEN of the environment "winget", which only v*.*.* tags may use.
+# No project code runs here. To submit a release again (for example after a failed run): Actions > winget > Run
+# workflow, "Use workflow from" the tag.
+# wingetcreate is pinned to a release and its SHA-256; to update it, take both from
+# gh api repos/microsoft/winget-create/releases/latest (asset wingetcreate.exe, field digest).
+
+name: winget
+
+on:
+  release:
+    types: [ released ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winget-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: windows-2025
+    environment: winget
+
+    env:
+      TAG: ${{ github.ref_name }}
+      WINGETCREATE_URL: https://github.com/microsoft/winget-create/releases/download/v1.12.13.0/wingetcreate.exe
+      WINGETCREATE_SHA256: 24042bd37915805615e6cf969ac57c6439124c3fe85823327f5f3fb24bd9ffea
+
+    steps:
+    - name: Release of a version tag
+      shell: pwsh
+      run: |
+        if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { Write-Error "$env:TAG is not a version tag (v1.2.3)"; exit 1 }
+        $release = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json isDraft,isPrerelease,publishedAt | ConvertFrom-Json
+        if ($release.isDraft -or $release.isPrerelease) { Write-Error "$env:TAG is a draft or a pre-release"; exit 1 }
+        "RELEASE_DATE=$(([datetime]$release.publishedAt).ToUniversalTime().ToString('yyyy-MM-dd'))" >> $env:GITHUB_ENV
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Download wingetcreate
+      shell: pwsh
+      run: |
+        Invoke-WebRequest $env:WINGETCREATE_URL -OutFile wingetcreate.exe
+        $hash = (Get-FileHash wingetcreate.exe -Algorithm SHA256).Hash
+        if ($hash -ne $env:WINGETCREATE_SHA256) { Write-Error "wingetcreate.exe has SHA-256 $hash, expected $env:WINGETCREATE_SHA256"; exit 1 }
+
+    - name: Submit the manifest
+      shell: pwsh
+      run: |
+        $version = $env:TAG.Substring(1)
+        $repo = "https://github.com/$env:GITHUB_REPOSITORY"
+        .\wingetcreate.exe update jozuern.PCOptimizer --version $version `
+          --urls "$repo/releases/download/$env:TAG/PCOptimizer.exe|x64" `
+          --release-date $env:RELEASE_DATE --release-notes-url "$repo/releases/tag/$env:TAG" `
+          --prtitle "Update: jozuern.PCOptimizer to $version" --submit
+        if ($LASTEXITCODE -ne 0) { Write-Error "wingetcreate failed ($LASTEXITCODE)"; exit 1 }
+      env:
+        WINGET_CREATE_GITHUB_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}
