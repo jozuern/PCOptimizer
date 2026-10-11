@@ -526,11 +526,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>
     /// Self-update only replaces the published single-file exe running elevated. A Debug build has PCOptimizer.dll next
-    /// to its exe and gets the download page instead.
+    /// to its exe and gets the download page instead. The exe's own name does not matter: browsers save a second download
+    /// as "PCOptimizer (1).exe", and the update replaces the file under the name it has.
     /// </summary>
     public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
-        Environment.ProcessPath is { } exe && System.IO.Path.GetFileName(exe).Equals("PCOptimizer.exe", StringComparison.OrdinalIgnoreCase) &&
-        !System.IO.File.Exists(System.IO.Path.ChangeExtension(exe, ".dll"));
+        Environment.ProcessPath is { } exe && System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
+        !System.IO.File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exe) ?? "", typeof(MainViewModel).Assembly.GetName().Name + ".dll"));
 
     [ObservableProperty] private bool _updating;
 

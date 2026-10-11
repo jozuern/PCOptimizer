@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 (preview)
+
+- The in-app update is offered also when the exe has another name than `PCOptimizer.exe`, for example `PCOptimizer (1).exe` after a second download in the browser. Until now such a copy got only the link to the download page. The update replaces the file under the name it has. Versions up to 0.6.0 still need the exe renamed to `PCOptimizer.exe` to update themselves to this one.
+
 ## 0.6.0 (preview)
 
 A pass over the interface for public use.
