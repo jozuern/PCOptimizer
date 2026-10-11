@@ -41,18 +41,10 @@
                                 </StackPanel>
                             </ui:CardControl.Header>
                             <StackPanel Orientation="Horizontal">
-                                <ui:TextBlock FontTypography="Caption" Text="{Binding StateText}" VerticalAlignment="Center" Margin="0,0,12,0">
-                                    <ui:TextBlock.Style>
-                                        <Style TargetType="ui:TextBlock">
-                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Installed}" Value="True">
-                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ui:TextBlock.Style>
-                                </ui:TextBlock>
+                                <!-- Installed: a check mark in the success color carries the state, the text stays readable in both themes -->
+                                <ui:SymbolIcon Symbol="CheckmarkCircle20" Filled="True" FontSize="16" Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,8,0"
+                                               VerticalAlignment="Center" Visibility="{Binding Installed, Converter={StaticResource BoolToVisibility}}" />
+                                <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StateText}" VerticalAlignment="Center" Margin="0,0,12,0" />
                                 <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,12,0" Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVisibility}}" />
                                 <ui:Button Content="{l:Tr Apps_Install}" Icon="{ui:SymbolIcon ArrowDownload20}"
                                            Visibility="{Binding Installed, Converter={StaticResource InverseBoolToVisibility}}"

@@ -10,7 +10,7 @@ Die Richtlinie AllowWindowsInkWorkspace hat drei Werte: 0 Zugriff auf den Ink-Ar
 Auf PCs ohne Stift braucht man die Funktion nicht; auf Stift-PCs öffnet die Stifttaste sie nicht mehr aus Versehen.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Stift-Kurzbefehle, die den Ink-Arbeitsbereich öffnen, funktionieren nicht mehr.

@@ -10,7 +10,7 @@ Die Richtlinie „Telefon-PC-Verbindung auf diesem Gerät“ wird abgeschaltet [
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Smartphone-Link und das Fortsetzen von Aufgaben vom Smartphone funktionieren nicht mehr.

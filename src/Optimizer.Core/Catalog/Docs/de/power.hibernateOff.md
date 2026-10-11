@@ -1,7 +1,7 @@
 # Ruhezustand aus
 
 ## Zusammenfassung
-Schaltet den Ruhezustand ab und löscht hiberfil.sys, deren Größe einem Anteil deines Arbeitsspeichers entspricht. Das gibt diesen Speicherplatz frei. Schaltet auch den Schnellstart ab.
+Schaltet den Ruhezustand ab und löscht hiberfil.sys, deren Größe einem Anteil deines RAMs entspricht. Das gibt diesen Speicherplatz frei. Schaltet auch den Schnellstart ab.
 
 ## So funktioniert es
 Die App führt powercfg /hibernate off aus [1]. Windows löscht die Ruhezustandsdatei und entfernt Ruhezustand und Schnellstart. Rückgängig machen führt powercfg /hibernate on aus.

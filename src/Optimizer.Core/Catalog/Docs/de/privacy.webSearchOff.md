@@ -10,7 +10,7 @@ Die Benutzerrichtlinie „Anzeige der letzten Sucheinträge im Datei-Explorer-Su
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Im Web suchst du dann im Browser statt im Startmenü. Der Datei-Explorer schlägt keine früheren Suchen mehr vor.

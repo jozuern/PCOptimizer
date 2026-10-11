@@ -12,7 +12,7 @@ Prüft das System-Ereignisprotokoll auf unerwartete Abschaltungen (Kernel-Power-
 :::
 
 ## Warum das wichtig ist
-Schaltet sich der PC unerwartet ab, protokolliert Windows beim nächsten Start das Ereignis 41. Ursache ist eine Unterbrechung der Stromversorgung oder ein Stop-Fehler (Bluescreen) [1]. Ohne Stop-Fehlercode nennt Microsoft das Netzteil, einen Hänger, der mit dem Netzschalter beendet wurde, Übertaktung, den Arbeitsspeicher und Überhitzung als Prüfpunkte [1]. Jede unerwartete Abschaltung kostet ungespeicherte Arbeit und kann Dateien beschädigen [1].
+Schaltet sich der PC unerwartet ab, protokolliert Windows beim nächsten Start das Ereignis 41. Ursache ist eine Unterbrechung der Stromversorgung oder ein Stop-Fehler (Bluescreen) [1]. Ohne Stop-Fehlercode nennt Microsoft das Netzteil, einen Hänger, der mit dem Netzschalter beendet wurde, Übertaktung, den RAM und Überhitzung als Prüfpunkte [1]. Jede unerwartete Abschaltung kostet ungespeicherte Arbeit und kann Dateien beschädigen [1].
 
 ## Wie wir es erkennen
 Wir lesen die Kernel-Power-Ereignisse mit der ID 41 der letzten 30 Tage aus dem System-Protokoll. Enthält das Ereignis einen Stop-Fehlercode (`BugcheckCode`), ist Windows abgestürzt; ist `PowerButtonTimestamp` gesetzt, wurde der PC durch langes Drücken des Netzschalters ausgeschaltet [1].
@@ -31,7 +31,7 @@ Mindestens eine dieser Abschaltungen erfolgte über den Netzschalter.
 1. Ist der Strom ausgefallen oder hast du den PC absichtlich mit dem Netzschalter ausgeschaltet, gibt es nichts zu beheben.
 2. Prüfe sonst, ob das Netzteil genug Leistung für die eingebauten Teile hat [1].
 3. **BitLocker:** Prüfe vor einer Änderung im BIOS, ob BitLocker oder die Geräteverschlüsselung an ist. Wenn ja, setze den Schutz vorher aus (Start > **BitLocker verwalten** > **Schutz anhalten**) oder halte den Wiederherstellungsschlüssel bereit. Oft ist er in deinem Microsoft-Konto gespeichert [3][4].
-4. Schalte Übertaktung und Speicherprofile (XMP oder EXPO) testweise ab und prüfe die Temperaturen unter Last (Drosselungsprüfung auf der Seite Zustand) [1].
+4. Schalte Übertaktung und Speicherprofile (XMP oder EXPO) testweise ab und prüfe die Temperaturen unter Last (Throttling-Test auf der Seite Zustand) [1].
 :::
 ::: variant default
 Nichts zu tun.

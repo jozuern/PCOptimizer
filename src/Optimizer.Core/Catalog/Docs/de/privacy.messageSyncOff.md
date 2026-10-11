@@ -10,7 +10,7 @@ Die Richtlinie „Synchronisierung von Nachrichtendienstcloud zulassen“ wird a
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Nur für Geräte mit Mobilfunkmodem relevant.

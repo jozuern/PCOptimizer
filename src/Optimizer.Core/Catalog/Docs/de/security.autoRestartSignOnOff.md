@@ -10,7 +10,7 @@ Standardmäßig meldet Windows nach einem Neustart oder Herunterfahren den letzt
 Apps deines Kontos starten nicht im Hintergrund, bevor du am PC bist.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Nach einem Update-Neustart warten Apps, die bei der Anmeldung starten, bis du dich selbst anmeldest.

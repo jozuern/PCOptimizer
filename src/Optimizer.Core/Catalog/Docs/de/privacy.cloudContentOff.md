@@ -4,10 +4,10 @@
 Windows zeigt Standardinhalte statt Inhalten aus der Cloud, keine Hinweise zum Zustand deines Microsoft-Kontos und keine Windows-Tipps. Nur Enterprise und Education.
 
 ## So funktioniert es
-Drei Geräterichtlinien [1]: "Cloudoptimierte Inhalte deaktivieren" lässt Windows die Standardinhalte zeigen; "Inhalte zum Zustand von Consumerkonten aus der Cloud deaktivieren" tut das für Inhalte zu deinem privaten Konto; "Keine Windows-Tipps anzeigen" (DisableSoftLanding) schaltet Windows-Tipps aus [1]. Microsoft unterstützt sie nur auf Enterprise und Education, deshalb bietet die App die Option nur dort an [1].
+Drei Geräterichtlinien [1]: „Cloudoptimierte Inhalte deaktivieren“ lässt Windows die Standardinhalte zeigen; „Inhalte zum Zustand von Consumerkonten aus der Cloud deaktivieren“ tut das für Inhalte zu deinem privaten Konto; „Keine Windows-Tipps anzeigen“ (DisableSoftLanding) schaltet Windows-Tipps aus [1]. Microsoft unterstützt sie nur auf Enterprise und Education, deshalb bietet die App die Option nur dort an [1].
 
 ## Warum es helfen kann
-Weniger Werbung und Erinnerungen aus der Cloud in Windows. Eine Datenschutzeinstellung ohne Einfluss auf Bildrate oder Latenz.
+Weniger Werbung und Erinnerungen aus der Cloud in Windows. Eine Datenschutzeinstellung ohne Einfluss auf Framerate oder Latenz.
 
 ## Belege
 Von Microsoft beschriebene Windows-Richtlinien [1].

@@ -10,7 +10,7 @@ Die Startkonfiguration bootmenupolicy bestimmt den Typ des Startmenüs: Standard
 Wenn Windows nicht mehr richtig startet, erreichst du den abgesicherten Modus mit F8, statt auf die automatische Reparatur zu warten.
 
 ## Belege
-Von Microsoft beschrieben [1]. Es ändert nur das Startmenü; kein Einfluss auf Bildrate oder Latenz.
+Von Microsoft beschrieben [1]. Es ändert nur das Startmenü; kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Auf PCs, die sehr schnell starten, bleibt wenig Zeit für F8. Änderungen an der Startkonfiguration sind Expertenänderungen: Die App sichert den Startspeicher vorher, und Rückgängig setzt das Menü wieder auf Standard.

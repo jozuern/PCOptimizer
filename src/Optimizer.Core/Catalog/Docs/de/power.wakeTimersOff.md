@@ -1,16 +1,16 @@
-# Keine Zeitgeber zur Aktivierung
+# Keine Zeitgeber zur Aktivierung (Wake Timer)
 
 ## Zusammenfassung
 Geplante Aufgaben, Wartung und Updates können den PC nicht mehr aus dem Energiesparmodus wecken. Hilft, wenn sich ein PC nachts einschaltet. Gilt für den aktiven Energiesparplan.
 
 ## So funktioniert es
-Die Energieeinstellung "Zeitgeber zur Aktivierung zulassen" entscheidet, ob das System Wecken per Zeitgeber nutzt, etwa um Updates zu installieren [1]. Die App setzt sie für Netz- und Akkubetrieb des aktiven Energiesparplans auf 0 (deaktiviert) [1]. Sonst plant Windows um 3 Uhr eine Regelwartung, die den PC über einen solchen Zeitgeber wecken kann [2].
+Die Energieeinstellung „Zeitgeber zur Aktivierung zulassen“ entscheidet, ob das System Wecken per Zeitgeber nutzt, etwa um Updates zu installieren [1]. Die App setzt sie für Netz- und Akkubetrieb des aktiven Energiesparplans auf 0 (deaktiviert) [1]. Sonst plant Windows um 3 Uhr eine Regelwartung, die den PC über einen solchen Zeitgeber wecken kann [2].
 
 ## Warum es helfen kann
 Der PC bleibt nachts im Energiesparmodus: keine Lüfter, kein Lärm, kein leerer Akku in der Tasche.
 
 ## Belege
-Eine von Microsoft beschriebene Energieeinstellung [1][2]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Energieeinstellung [1][2]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Wartung und Updates laufen, wenn du den PC das nächste Mal nutzt; direkt nach dem Aufwachen kann etwas mehr los sein. Aufgaben, die den PC wecken sollen, etwa Aufnahmen oder Sicherungen, wecken ihn nicht mehr.

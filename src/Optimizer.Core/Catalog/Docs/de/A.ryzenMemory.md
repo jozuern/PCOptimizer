@@ -2,7 +2,7 @@
 
 ## Zusammenfassung
 ::: variant aboveSync
-Der Speicher läuft mit {{speed}} MT/s, über dem Bereich, in dem der Ryzen-Speichercontroller meist synchron läuft. Prüfe, dass er nicht auf halben Takt gewechselt hat.
+Der Speicher läuft mit {{speed}} MT/s, über dem Bereich, in dem der Ryzen-Speichercontroller meist synchron läuft. Prüfe, ob er auf halben Takt gewechselt hat.
 :::
 ::: variant slowKit
 Der Speicher läuft mit {{speed}} MT/s, unter dem Bereich, in dem Ryzen meist am besten läuft ({{low}} bis {{high}} MT/s).
@@ -28,7 +28,7 @@ Wir lesen die eingestellte Speichergeschwindigkeit und die Nenngeschwindigkeit a
 ::: variant aboveSync
 1. **BitLocker:** Prüfe, bevor du BIOS-Einstellungen änderst, ob BitLocker oder die Geräteverschlüsselung an ist. Wenn ja, setze den Schutz vorher aus (Start > **BitLocker verwalten** > **Schutz anhalten**) oder halte den Wiederherstellungsschlüssel bereit. Oft ist er in deinem Microsoft-Konto gespeichert. Nach einem BIOS-Update oder einer Änderung am TPM oder an der Startkonfiguration kann Windows beim nächsten Start danach fragen [5][6].
 ::: if am4
-2. Prüfe im BIOS, dass **FCLK** auf die Hälfte der Speichergeschwindigkeit steht (bei DDR4-4000: 2000 MHz). Läuft das System so nicht stabil, kann eine niedrigere Speichergeschwindigkeit mit 1:1 die bessere Wahl sein.
+2. Prüfe im BIOS, ob **FCLK** auf der Hälfte der Speichergeschwindigkeit steht (bei DDR4-4000: 2000 MHz). Läuft das System so nicht stabil, kann eine niedrigere Speichergeschwindigkeit mit 1:1 die bessere Wahl sein.
 :::
 ::: if am5
 2. Suche im BIOS nach **UCLK DIV1 MODE** (Bezeichnung je nach Hersteller) und stelle **UCLK = MEMCLK** ein. Läuft das System so nicht stabil, kann eine niedrigere Speichergeschwindigkeit mit 1:1 die bessere Wahl sein.

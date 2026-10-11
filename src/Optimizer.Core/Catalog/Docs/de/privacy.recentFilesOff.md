@@ -1,16 +1,16 @@
 # Keine zuletzt geöffneten Dateien in Start, Sprunglisten und Explorer
 
 ## Zusammenfassung
-Schaltet die Einstellung "Zuletzt geöffnete Elemente in Start, Sprunglisten und Datei-Explorer anzeigen" aus, dort erscheinen keine zuletzt geöffneten Dateien mehr.
+Schaltet die Einstellung „Zuletzt geöffnete Elemente in Start, Sprunglisten und Datei-Explorer anzeigen“ aus, dort erscheinen keine zuletzt geöffneten Dateien mehr.
 
 ## So funktioniert es
-Microsoft nennt Start_TrackDocs = 0 unter HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced als Registry-Weg, die empfohlenen Dateien in Start abzuschalten; es ist der Schalter "Zuletzt geöffnete Elemente in Start, Sprunglisten und Datei-Explorer anzeigen" unter Einstellungen > Personalisierung > Start [1].
+Microsoft nennt Start_TrackDocs = 0 unter HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced als Registry-Wert, mit dem sich die empfohlenen Dateien in Start abschalten lassen; es ist der Schalter „Zuletzt geöffnete Elemente in Start, Sprunglisten und Datei-Explorer anzeigen“ unter Einstellungen > Personalisierung > Start [1].
 
 ## Warum es helfen kann
 Wer deinen Bildschirm mitbenutzt oder sieht, erfährt nicht, welche Dateien du zuletzt geöffnet hast.
 
 ## Belege
-Von Microsoft beschrieben [1]. Die Liste liegt auf diesem PC, es geht also darum, was andere sehen. Eine Datenschutzeinstellung ohne Einfluss auf Bildrate oder Latenz.
+Von Microsoft beschrieben [1]. Die Liste liegt auf diesem PC, es geht also darum, was andere sehen. Eine Datenschutzeinstellung ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Kein schneller Zugriff auf zuletzt geöffnete Dateien aus Start, Sprunglisten der Taskleiste oder der Startseite des Explorers.

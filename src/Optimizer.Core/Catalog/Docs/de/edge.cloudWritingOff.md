@@ -4,10 +4,10 @@
 Text in Webformularen geht nicht mehr für Vorhersagen und erweiterte Prüfung an Microsoft-Dienste; die lokale Rechtschreibprüfung bleibt. Gilt nicht in Edge-Profilen mit privatem Microsoft-Konto.
 
 ## So funktioniert es
-TextPredictionEnabled auf aus beendet die Vorhersagen, die der Microsoft-Dienst Turing für lange Textfelder erzeugt [1]. MicrosoftEditorProofingEnabled auf aus überlässt die Rechtschreibprüfung lokalen Prüfern statt dem Dienst Microsoft Editor [2]. Seit Edge 116 wendet Edge diese Richtlinien laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [3]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
+TextPredictionEnabled = 0 beendet die Vorhersagen, die der Microsoft-Dienst Turing für lange Textfelder erzeugt [1]. MicrosoftEditorProofingEnabled = 0 überlässt die Rechtschreibprüfung lokalen Prüfern statt dem Dienst Microsoft Editor [2]. Seit Edge 116 wendet Edge diese Richtlinien laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [3]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
 
 ## Warum es helfen kann
-Text, den du in Webformularen schreibst, bleibt auf dem PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Text, den du in Webformularen schreibst, bleibt auf dem PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Von Microsoft beschriebene Edge-Richtlinien [1][2]. Laut Microsoft liefert die lokale Prüfung weniger ausführliche Ergebnisse [2].

@@ -7,10 +7,10 @@ F체gt dem Ein/Aus-Men체 in Start den Ruhezustand hinzu, wenn der PC ihn unterst�
 Die Richtlinie ShowHibernateOption = 1 zeigt den Ruhezustand im Men체 der Energieoptionen, sofern die Hardware ihn unterst체tzt [1]. Ohne die Richtlinie w채hlst du das in den Energieoptionen der Systemsteuerung [1].
 
 ## Warum es helfen kann
-Der Ruhezustand speichert offene Apps auf dem Datentr채ger und schaltet den PC ganz aus, anders als der Energiesparmodus braucht er dann keinen Strom.
+Der Ruhezustand speichert offene Apps auf dem Datentr채ger und schaltet den PC ganz aus; anders als im Energiesparmodus braucht er dann keinen Strom.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Die Auswahl in der Systemsteuerung ist gesperrt. Der Eintrag erscheint nur, wo die Hardware den Ruhezustand unterst체tzt [1].

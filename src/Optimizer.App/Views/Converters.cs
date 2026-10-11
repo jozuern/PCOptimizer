@@ -159,3 +159,13 @@ public static class ScrollChain
         return null;
     }
 }
+
+/// <summary>Tweaks page list: a group heading or a tweak row, in one virtualized list.</summary>
+public sealed class TweakListTemplateSelector : System.Windows.Controls.DataTemplateSelector
+{
+    public DataTemplate? Group { get; set; }
+    public DataTemplate? Tweak { get; set; }
+
+    public override DataTemplate? SelectTemplate(object? item, DependencyObject container) =>
+        item is ViewModels.TweakGroupRow ? Group : Tweak;
+}

@@ -185,12 +185,18 @@ public partial class App : Application
     {
         if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
         if (args.Value("--pane") is "closed") window.Nav.IsPaneOpen = false;
+        if (double.TryParse(args.Value("--width"), CultureInfo.InvariantCulture, out var width)) window.Width = Math.Max(window.MinWidth, width);
         if (args.Value("--select") is { } id)
             vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
         if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
-        if (args.Value("--category") is { } cat) vm.SelectedCategory = vm.Categories.FirstOrDefault(c => c.Key == cat) ?? vm.SelectedCategory;
+        if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
-        if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak) vm.SelectedItem = tweak;
+        if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak)
+        {
+            vm.SelectedItem = tweak;
+            // Its card in view: open the group it is in.
+            if (vm.TweakRows.OfType<TweakGroupRow>().FirstOrDefault(g => g.Items.Contains(tweak)) is { } group) vm.OpenTweakGroup(group.Key);
+        }
         // The inspector document is built in the background: wait for it before the picture.
         if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -431,8 +437,13 @@ public partial class App : Application
         lines.Add($"rows: apps {vm.Apps.Apps.Count}, drivers {vm.Apps.Drivers.Count}, startup {vm.Startup.Rows.Count}, services {vm.ServicesPage.Rows.Count}, tasks {vm.ServicesPage.Tasks.Count}");
         vm.CurrentPage = Page.Tweaks;
         await Measure("Tweaks: rebuild after a scan", () => { vm.Rebuild(); vm.Network.Rebuild(); });
-        await Measure("Tweaks: category filter", () => vm.SelectedCategory = vm.Categories.Skip(1).FirstOrDefault());
-        await Measure("Tweaks: all categories", () => vm.SelectedCategory = vm.Categories.FirstOrDefault());
+        await Measure("Tweaks: expand all groups", () => vm.OpenAllTweakGroupsCommand.Execute(null));
+        await Measure("Tweaks: collapse all groups", () => vm.CloseAllTweakGroupsCommand.Execute(null));
+        if (vm.TweakRows.OfType<TweakGroupRow>().MaxBy(g => g.Items.Count) is { } largest)
+        {
+            await Measure($"Tweaks: open group {largest.Key}", () => vm.ToggleTweakGroupCommand.Execute(largest));
+            await Measure($"Tweaks: close group {largest.Key}", () => vm.ToggleTweakGroupCommand.Execute(largest));
+        }
         await Measure("Tweaks: only recommended on", () => vm.OnlyRecommended = true);
         await Measure("Tweaks: only recommended off", () => vm.OnlyRecommended = false);
         var start = vm.SelectedProfile;
@@ -495,7 +506,9 @@ public partial class App : Application
         {
             var background = window.TryFindResource("ApplicationBackgroundBrush") as Brush ?? Brushes.Black;
             dc.DrawRectangle(background, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
-            dc.DrawRectangle(new VisualBrush(root), null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            // The window's own area, 1:1: content drawn past the edge (after --width) would otherwise squeeze the picture.
+            var area = new Rect(0, 0, root.ActualWidth, root.ActualHeight);
+            dc.DrawRectangle(new VisualBrush(root) { ViewboxUnits = BrushMappingMode.Absolute, Viewbox = area }, null, area);
         }
         var bitmap = new RenderTargetBitmap(w, h, dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
         bitmap.Render(visual);

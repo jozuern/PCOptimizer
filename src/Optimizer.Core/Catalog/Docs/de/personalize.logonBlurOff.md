@@ -4,13 +4,13 @@
 Zeigt den Hintergrund des Anmeldebildschirms ohne den Milchglas-Unschärfeeffekt.
 
 ## So funktioniert es
-Die Richtlinie "Klaren Anmeldehintergrund anzeigen" (DisableAcrylicBackgroundOnLogon = 1) unter System > Anmelden schaltet die Acryl-Unschärfe auf dem Hintergrund des Anmeldebildschirms aus [1].
+Die Richtlinie „Klaren Anmeldehintergrund anzeigen“ (DisableAcrylicBackgroundOnLogon = 1) unter System > Anmelden schaltet die Acryl-Unschärfe auf dem Hintergrund des Anmeldebildschirms aus [1].
 
 ## Warum es helfen kann
 Du siehst dein Sperrbildschirmbild auch auf dem Anmeldebildschirm scharf.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Frage der Optik; kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Frage der Optik; kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Keine außer der Optik.

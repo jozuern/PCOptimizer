@@ -4,7 +4,7 @@
 Verhindert, dass Store-Apps im Hintergrund laufen. Desktop-Programme sind nicht betroffen. Der Effekt auf Spiele ist umstritten und meist null.
 
 ## So funktioniert es
-Die Richtlinie „Windows-Apps im Hintergrund ausführen lassen“ wird für alle Store-Apps auf „Ablehnen erzwingen“ gesetzt [2]. Sonst regelt Windows 11 das pro App unter Einstellungen > Apps > Installierte Apps > Erweiterte Optionen [1].
+Die Richtlinie „Windows-Apps im Hintergrund ausführen lassen“ wird für alle Store-Apps auf „Verweigern erzwingen“ gesetzt [2]. Sonst regelt Windows 11 das pro App unter Einstellungen > Apps > Installierte Apps > Erweiterte Optionen [1].
 
 ## Warum es helfen kann
 Weniger Store-Apps, die im Hintergrund aufwachen.

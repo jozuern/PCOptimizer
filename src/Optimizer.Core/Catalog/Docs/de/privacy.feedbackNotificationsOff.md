@@ -10,7 +10,7 @@ Die Richtlinie „Feedbackbenachrichtigungen nicht mehr anzeigen“ schaltet die
 Weniger Unterbrechungen: Windows fragt nicht mehr nach Feedback. Wie viele Diagnosedaten gesendet werden, ändert sich dadurch nicht. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Über den Feedback-Hub kannst du weiterhin selbst Feedback senden.

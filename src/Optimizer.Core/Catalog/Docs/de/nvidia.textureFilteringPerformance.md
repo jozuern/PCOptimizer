@@ -1,7 +1,7 @@
 # NVIDIA-Texturfilterung: hohe Leistung
 
 ## Zusammenfassung
-Stellt die Qualität der Texturfilterung auf „Hohe Leistung“. NVIDIA nennt keine Zahlen zum Gewinn an Bildrate, eine Messung haben wir nicht gefunden. Umstritten.
+Stellt die Qualität der Texturfilterung auf „Hohe Leistung“. NVIDIA nennt keine Zahlen zum FPS-Gewinn, eine Messung haben wir nicht gefunden. Umstritten.
 
 ## So funktioniert es
 Die Einstellung „Texturfilterung - Qualität“ steuert Optimierungen des Treibers beim Abtasten von Texturen; „Qualität“ ist der Standard bei GeForce-Produkten [1]. „Hohe Leistung“ erlaubt die stärksten Optimierungen [1]. Die App schreibt den Wert aus NVIDIAs Header-Datei der Treibereinstellungen ins globale Profil [2].
@@ -10,7 +10,7 @@ Die Einstellung „Texturfilterung - Qualität“ steuert Optimierungen des Trei
 Auf älteren oder sehr schwachen Grafikkarten kann eine günstigere Texturfilterung etwas GPU-Zeit sparen.
 
 ## Belege
-NVIDIA beschreibt „Hohe Leistung“ als Option mit der höchsten Bildrate, nennt aber keine Zahlen [1]. Eine veröffentlichte Messung des Gewinns auf aktuellen Grafikkarten haben wir nicht gefunden. Deshalb ist die Wirkung mit 0 bewertet.
+NVIDIA beschreibt „Hohe Leistung“ als Option mit der höchsten Framerate, nennt aber keine Zahlen [1]. Eine veröffentlichte Messung des Gewinns auf aktuellen Grafikkarten haben wir nicht gefunden. Deshalb ist die Wirkung mit 0 bewertet.
 
 ## Nachteile & Risiken
 Texturen können schlechter aussehen, etwa in der Entfernung unschärfer wirken.

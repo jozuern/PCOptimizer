@@ -10,7 +10,7 @@ Mit der Richtlinie AllowProjectionToPC = 0 ist die Projektion auf diesen PC nich
 Der PC meldet sich bei Geräten in der Nähe nicht als drahtloser Bildschirm.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Du kannst diesen PC nicht als drahtlosen Bildschirm für ein Handy oder einen anderen PC nutzen.

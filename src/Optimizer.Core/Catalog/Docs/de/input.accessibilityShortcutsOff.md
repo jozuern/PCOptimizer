@@ -10,7 +10,7 @@ Jede dieser Tastatur-Hilfen hat ein Kennzeichen für ihr Tastenkürzel [1][2][3]
 In Spielen, die viel Umschalt nutzen, öffnen fünf schnelle Anschläge den Dialog der Einrastfunktion und können dich aus dem Spiel holen.
 
 ## Belege
-Von Microsoft beschriebene Windows-Schnittstellen [1][2][3][4]. Es verhindert eine Unterbrechung, Bildrate und Latenz ändern sich nicht.
+Von Microsoft beschriebene Windows-Schnittstellen [1][2][3][4]. Es verhindert eine Unterbrechung, Framerate und Latenz ändern sich nicht.
 
 ## Nachteile & Risiken
 Wer diese Funktionen braucht, schaltet sie unter Einstellungen > Barrierefreiheit > Tastatur ein statt per Tastenkürzel.

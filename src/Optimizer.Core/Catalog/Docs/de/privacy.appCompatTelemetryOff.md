@@ -10,7 +10,7 @@ Die Richtlinien „Anwendungstelemetrie deaktivieren“ und „Inventory Collect
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Microsoft erhält weniger Daten, um Kompatibilitätsprobleme vor Funktionsupdates zu erkennen.

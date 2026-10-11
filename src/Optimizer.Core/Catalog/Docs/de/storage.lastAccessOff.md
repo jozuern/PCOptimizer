@@ -4,7 +4,7 @@
 Verhindert, dass NTFS die Zeit des letzten Zugriffs auf Dateien und Ordner aktualisiert. Wirkt nach einem Neustart. Kein messbarer Effekt in Spielen.
 
 ## So funktioniert es
-NTFS speichert, wann eine Datei oder ein Ordner zuletzt aufgerufen wurde. Die Zeit liegt zunächst im Arbeitsspeicher und wird später auf das Laufwerk geschrieben, spätestens nach einer Stunde [1]. Seit Windows 10 Version 1803 kann Windows diese Einstellung selbst verwalten („System Managed“). Der Wert 0x80000001 bedeutet „vom Benutzer verwaltet, Aktualisierung aus“ [2], damit bleibt deine Wahl bestehen. Wirkt nach einem Neustart [1].
+NTFS speichert, wann eine Datei oder ein Ordner zuletzt aufgerufen wurde. Die Zeit liegt zunächst im RAM und wird später auf das Laufwerk geschrieben, spätestens nach einer Stunde [1]. Seit Windows 10 Version 1803 kann Windows diese Einstellung selbst verwalten („System Managed“). Der Wert 0x80000001 bedeutet „vom Benutzer verwaltet, Aktualisierung aus“ [2], damit bleibt deine Wahl bestehen. Wirkt nach einem Neustart [1].
 
 ## Warum es helfen kann
 Laut Microsoft beschleunigt das Abschalten den Zugriff auf Dateien und Ordner [1], weil NTFS weniger Metadaten schreibt.

@@ -10,7 +10,7 @@ Mit der Windows-Update-Richtlinie für Funktionsupdates kann ein PC das nächste
 Eine neue Windows-Version erreicht dich nach einem Jahr Fehlerbehebung, und Hersteller von Spielen, Treibern und Anti-Cheat hatten Zeit, sie zu unterstützen.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Update-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Update-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Neue Windows-Funktionen kommen ein Jahr später. Wenn der Support deiner Windows-Version endet, aktualisiere selbst. Rückgängig entfernt die Richtlinie.

@@ -10,7 +10,7 @@ Drei Windows-Richtlinien unter SOFTWARE\Microsoft\Windows\CurrentVersion\Policie
 Paint bleibt ein einfaches Malprogramm, und nichts, was du dort zeichnest oder tippst, geht an einen KI-Dienst.
 
 ## Belege
-Von Microsoft beschriebene Windows-Richtlinien [1]. Für das generative Radieren und das Entfernen des Hintergrunds gibt es keine Richtlinie, sie bleiben. Kein Einfluss auf Bildrate oder Latenz.
+Von Microsoft beschriebene Windows-Richtlinien [1]. Für das generative Radieren und das Entfernen des Hintergrunds gibt es keine Richtlinie, sie bleiben. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Die KI-Schaltflächen in Paint fallen weg.

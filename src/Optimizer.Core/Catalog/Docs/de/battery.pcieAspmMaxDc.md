@@ -1,7 +1,7 @@
 # PCIe-Energiesparen im Akkubetrieb: maximal
 
 ## Zusammenfassung
-Setzt die PCIe-Energieverwaltung im Akkubetrieb auf „Maximale Energieeinsparungen“, den Standard im Plan „Ausbalanciert“. Ändert nur etwas, wenn ein Tool oder der Hersteller ihn gesenkt hat.
+Setzt die PCIe-Energieverwaltung im Akkubetrieb auf „Maximale Energieeinsparungen“, den Standard im Plan „Ausbalanciert“. Ändert nur etwas, wenn ein Tool oder der Hersteller den Wert gesenkt hat.
 
 ## So funktioniert es
 Active State Power Management (ASPM) lässt PCIe-Verbindungen (SSD, WLAN-Karte, Grafik) im Leerlauf in Stromsparzustände wechseln [1]. Der Energieplan hat getrennte Werte für Netz- und Akkubetrieb; die App setzt den Akkuwert auf 2 (maximale Energieeinsparungen).

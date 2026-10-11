@@ -37,8 +37,8 @@ Die App geht nur für die folgenden Funktionen ins Internet, und nur wenn du sie
 | DNS-Benchmark (Grafik & Netzwerk) | Wenn du ihn startest | DNS-Anfragen nach zehn bekannten Domains (Google, YouTube, Steam, Twitch, Discord, Microsoft, Reddit, Amazon, Wikipedia, Epic Games) an deine aktuellen DNS-Server und an Cloudflare, Google, Quad9, OpenDNS und AdGuard DNS. |
 | DNS-Vorgaben (Grafik & Netzwerk) | Wenn du eine anwendest | Die App sendet nichts. Dein PC nutzt danach diesen Anbieter für DNS, der Anbieter sieht also die Namen, die dein PC nachschlägt. |
 | App-Installationen und -Updates, der PawnIO-Sensortreiber | Wenn du etwas installierst oder "Alle Apps aktualisieren" wählst | winget lädt das Paket aus seiner Quelle (Microsofts winget-Verzeichnis und die Server des Herstellers). |
-| Hinzufügen einer optionalen Funktion oder Einschalten eines Windows-Features (Werkzeuge) | Wenn du eine hinzufügst | DISM lädt die Funktion, oder die Dateien eines Features wie .NET Framework 3.5, über Windows Update. |
-| Uhr synchronisieren (Werkzeuge > Schnelle Hilfen) | Wenn du es startest | Der Windows-Zeitdienst fragt seinen eingestellten Zeitserver (`time.windows.com`, wenn du nichts geändert hast) nach der Uhrzeit. |
+| Hinzufügen einer optionalen Funktion oder Einschalten eines Windows-Features (Tools) | Wenn du eine hinzufügst | DISM lädt die Funktion, oder die Dateien eines Features wie .NET Framework 3.5, über Windows Update. |
+| Uhr synchronisieren (Tools) | Wenn du es startest | Der Windows-Zeitdienst fragt seinen eingestellten Zeitserver (`time.windows.com`, wenn du nichts geändert hast) nach der Uhrzeit. |
 | Reparatur mit DISM (Zustand) | Wenn du sie startest | Windows lädt Reparaturdateien von Windows Update. |
 | Links (Store-Seiten, Treiberseiten, Quellen, GitHub) | Wenn du einen anklickst | Öffnet sich in deinem Browser. |
 

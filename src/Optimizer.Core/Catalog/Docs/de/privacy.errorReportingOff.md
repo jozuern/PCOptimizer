@@ -10,7 +10,7 @@ Die Richtlinie „Windows-Fehlerberichterstattung deaktivieren“ wird gesetzt [
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Absturzberichte erreichen Microsoft und App-Hersteller nicht mehr, und Windows bietet keine Lösungen für bekannte Probleme mehr an.

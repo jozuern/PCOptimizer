@@ -4,13 +4,13 @@
 Die Druck-Taste kopiert den ganzen Bildschirm in die Zwischenablage, statt das Snipping Tool zu öffnen, wie vor Windows 11 Build 22621.1928.
 
 ## So funktioniert es
-Seit Windows 11 Build 22621.1928 öffnet die Druck-Taste standardmäßig das Snipping Tool [1]. Ist der Schalter "Druck-Taste zum Öffnen der Bildschirmaufnahme verwenden" aus, kopiert die Taste den Bildschirm in die Zwischenablage [1]. Die App setzt PrintScreenKeyForSnippingEnabled auf 0. Je nach anderen Apps braucht die Änderung eine Abmeldung oder einen Neustart [1]. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+Seit Windows 11 Build 22621.1928 öffnet die Druck-Taste standardmäßig das Snipping Tool [1]. Ist der Schalter „Druck-Taste zum Öffnen der Bildschirmaufnahme verwenden“ aus, kopiert die Taste den Bildschirm in die Zwischenablage [1]. Die App setzt PrintScreenKeyForSnippingEnabled auf 0. Je nach anderen Apps braucht die Änderung eine Abmeldung oder einen Neustart [1]. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Ein Druck kopiert den Bildschirm ohne Auswahlschritt, etwa um ihn direkt in einen Chat einzufügen.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Einen Bildschirmausschnitt nimmst du mit Windows + Umschalt + S auf.

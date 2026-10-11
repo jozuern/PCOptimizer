@@ -1,4 +1,4 @@
-# Netzwerk-Drosselung aus (NetworkThrottlingIndex)
+# Network Throttling aus (NetworkThrottlingIndex)
 
 ## Zusammenfassung
 Schaltet eine Paketgrenze ab, die MMCSS während Audio- oder Videowiedergabe für Netzwerkverkehr setzte (für Windows Vista dokumentiert). Unter Windows 11 unbelegt. Wirkung umstritten.
@@ -13,7 +13,7 @@ Ist die Grenze aktiv, bremst sie schnelle Übertragungen mit vielen Paketen pro 
 Die einzige Beschreibung von Microsoft ist ein Artikel von 2007 über Windows Vista. Danach blieb Internetverkehr selbst mit den schnellsten Anschlüssen dieser Zeit unter der Grenze [1]. Messungen unter Windows 11 oder Messungen mit Wirkung in Spielen sind uns nicht bekannt.
 
 ## Nachteile & Risiken
-Microsoft hat die Grenze eingeführt, weil starker Netzwerkverkehr in Tests auf PCs mit einem Prozessorkern Aussetzer bei Audio und Video verursachte [1]. Ohne sie kann das auf langsamer Hardware wieder passieren.
+Microsoft hat die Grenze eingeführt, weil starker Netzwerkverkehr in Tests auf PCs mit einem CPU-Kern Aussetzer bei Audio und Video verursachte [1]. Ohne sie kann das auf langsamer Hardware wieder passieren.
 
 ## Wann du es nicht nutzen solltest
 Für Online-Spiele nicht nötig. Knackt der Ton nach dem Anwenden bei großen Downloads, mach es rückgängig.

@@ -4,7 +4,7 @@
 Schaltet die Speicheroptimierung ein. Wird der Platz knapp, löscht sie temporäre Dateien und Dateien, die länger als 30 Tage im Papierkorb liegen.
 
 ## So funktioniert es
-Die Speicheroptimierung ist eine Windows-Funktion. Sie entfernt temporäre Dateien, die nicht in Gebrauch sind, und standardmäßig Dateien, die seit mehr als 30 Tagen im Papierkorb liegen [2]. Standardmäßig läuft sie, wenn auf dem Laufwerk wenig Platz frei ist [1][2]. Downloads bleiben unberührt, solange du diese Regel nicht einschaltest [2]. Die App schaltet den Schalter unter Einstellungen > System > Speicher ein. Dort kannst du die Regeln anpassen. Der Registrierungswert, den die App schreibt, ist der Wert hinter diesem Schalter. Microsoft dokumentiert ihn nicht eigens.
+Die Speicheroptimierung ist eine Windows-Funktion. Sie entfernt temporäre Dateien, die nicht in Gebrauch sind, und standardmäßig Dateien, die seit mehr als 30 Tagen im Papierkorb liegen [2]. Standardmäßig läuft sie, wenn auf dem Laufwerk wenig Platz frei ist [1][2]. Downloads bleiben unberührt, solange du diese Regel nicht einschaltest [2]. Die App schaltet den Schalter unter Einstellungen > System > Speicher ein. Dort kannst du die Regeln anpassen. Der Registry-Wert, den die App schreibt, ist der Wert hinter diesem Schalter. Microsoft dokumentiert ihn nicht eigens.
 
 ## Warum es helfen kann
 Hält Platz für Spiele-Updates und Shader-Caches frei, ohne dass du manuell aufräumen musst.

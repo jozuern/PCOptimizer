@@ -4,13 +4,13 @@
 Zeigt deine Akzentfarbe auf Titelleisten und Fensterrändern, wie der Schalter unter Einstellungen > Personalisierung > Farben.
 
 ## So funktioniert es
-Die Option "Akzentfarbe auf Titelleisten und Fensterrändern anzeigen" färbt die Leiste oben an jedem Fenster und seine Ränder [1]. Die App setzt ColorPrevalence auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+Die Option „Akzentfarbe auf Titelleisten und Fensterrändern anzeigen“ färbt die Leiste oben an jedem Fenster und seine Ränder [1]. Die App setzt ColorPrevalence auf 1. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Das aktive Fenster ist leichter zu erkennen.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Keine außer der Optik.

@@ -10,7 +10,7 @@ Ohne diese Richtlinien sucht Windows das fehlende Ziel einer Verknüpfung: Es du
 Kein Warten und keine Datenträgeraktivität auf langsamen oder Netzlaufwerken, wenn du eine alte Verknüpfung anklickst.
 
 ## Belege
-Von Microsoft beschriebene Windows-Richtlinien [1]. Kein Einfluss auf Bildrate oder Latenz.
+Von Microsoft beschriebene Windows-Richtlinien [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Eine Verknüpfung zu einer verschobenen Datei wird nicht automatisch repariert; du legst eine neue an.

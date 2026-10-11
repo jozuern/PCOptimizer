@@ -7,7 +7,7 @@ Edge sendet Microsoft nur die erforderlichen Diagnosedaten, die es sicher und ak
 Die Richtlinie DiagnosticData kennt drei Stufen: 0 aus, 1 erforderliche Daten, 2 optionale Daten [1]. Zu den optionalen Daten gehören die Nutzung des Browsers, besuchte Websites und Absturzberichte [1]. Die App setzt Stufe 1. Stufe 0 empfiehlt Microsoft nicht, deshalb nutzt die App sie nicht [1]. Edge übernimmt die Änderung nach einem Neustart des Browsers [1].
 
 ## Warum es helfen kann
-Weniger Daten über dein Surfen verlassen diesen PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Weniger Daten über dein Surfen verlassen diesen PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Eine von Microsoft beschriebene Edge-Richtlinie [1]. Anders als viele Edge-Richtlinien gilt sie auch für Profile, die mit einem Microsoft-Konto angemeldet sind [1].

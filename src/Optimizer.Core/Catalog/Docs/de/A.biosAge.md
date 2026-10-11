@@ -9,7 +9,7 @@ Prüft das Alter des BIOS.
 :::
 
 ## Warum das wichtig ist
-BIOS-Updates bringen neuen Prozessor-Microcode, Kompatibilitäts- und Sicherheitskorrekturen. Intel und AMD liefern zum Beispiel Korrekturen für die Prozessorstabilität und gegen Systemhänger über BIOS-Updates aus [1][2]. Manche Updates ergänzen Funktionen wie Smart Access Memory (Resizable BAR) [3]. Nicht jedes Update ist für Spiele wichtig, und wenn der Hersteller für ein älteres Mainboard keine Updates mehr veröffentlicht, gibt es eben nichts Neueres. Deshalb ist das eine Information, kein Problem.
+BIOS-Updates bringen neuen CPU-Microcode, Kompatibilitäts- und Sicherheitskorrekturen. Intel und AMD liefern zum Beispiel Korrekturen für die CPU-Stabilität und gegen Systemhänger über BIOS-Updates aus [1][2]. Manche Updates ergänzen Funktionen wie Smart Access Memory (Resizable BAR) [3]. Nicht jedes Update ist für Spiele wichtig, und wenn der Hersteller für ein älteres Mainboard keine Updates mehr veröffentlicht, gibt es eben nichts Neueres. Deshalb ist das eine Information, kein Problem.
 
 ## Wie wir es erkennen
 Wir lesen Datum und Version des BIOS aus Windows.

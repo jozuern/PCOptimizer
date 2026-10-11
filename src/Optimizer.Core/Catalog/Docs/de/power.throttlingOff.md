@@ -4,7 +4,7 @@
 Verhindert, dass Windows Hintergrundprozesse im Stromsparmodus ausführt. Vor allem auf Laptops und CPUs mit Effizienzkernen relevant.
 
 ## So funktioniert es
-Mit Power Throttling stuft Windows Hintergrundarbeit als EcoQoS ein und versucht, sie sparsamer auszuführen, etwa mit niedrigerem Takt oder auf Effizienzkernen [1]. Der Wert PowerThrottlingOff = 1 ist der Registrierungswert der Windows-Richtlinie „Power Throttling deaktivieren“ und schaltet das systemweit ab [2]. Steht der Windows-Energiemodus auf „Beste Leistung“, nimmt Windows ohnehin alle Apps vom Power Throttling aus [3].
+Mit Power Throttling stuft Windows Hintergrundarbeit als EcoQoS ein und versucht, sie sparsamer auszuführen, etwa mit niedrigerem Takt oder auf Effizienzkernen [1]. Der Wert PowerThrottlingOff = 1 ist der Registry-Wert der Windows-Richtlinie „Power Throttling deaktivieren“ und schaltet das systemweit ab [2]. Steht der Windows-Energiemodus auf „Beste Leistung“, nimmt Windows ohnehin alle Apps vom Power Throttling aus [3].
 
 ## Warum es helfen kann
 Programme, die neben einem Spiel laufen, etwa Voice-Chat, Overlays oder Streaming-Software, werden sonst womöglich gebremst, wenn sie den Fokus verlieren.

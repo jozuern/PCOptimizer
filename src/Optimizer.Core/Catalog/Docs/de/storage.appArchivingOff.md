@@ -10,7 +10,7 @@ Standardmäßig sucht Windows regelmäßig nach selten genutzten Apps und archiv
 Selten genutzte Store-Apps und -Spiele bleiben startbereit, auch ohne Internetverbindung.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Ungenutzte Apps belegen weiter Speicherplatz.

@@ -4,13 +4,13 @@
 Verhindert, dass Windows regelmäßig den Standort dieses PCs sendet, damit du ihn in deinem Microsoft-Konto finden kannst.
 
 ## So funktioniert es
-Die Richtlinie „„Mein Gerät suchen“ aktivieren/deaktivieren“ wird abgeschaltet [1][2]. Auf Geräten mit aktivem Stift wird außerdem nicht mehr angezeigt, wo der Stift zuletzt benutzt wurde [1].
+Die Richtlinie „‚Mein Gerät suchen‘ aktivieren/deaktivieren“ wird abgeschaltet [1][2]. Auf Geräten mit aktivem Stift wird außerdem nicht mehr angezeigt, wo der Stift zuletzt benutzt wurde [1].
 
 ## Warum es helfen kann
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Du kannst diesen PC bei Verlust oder Diebstahl nicht mehr orten oder sperren.

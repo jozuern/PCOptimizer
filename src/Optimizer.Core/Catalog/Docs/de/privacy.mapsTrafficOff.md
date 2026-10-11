@@ -10,7 +10,7 @@ Zwei Richtlinien schalten das automatische Herunterladen von Karten und den Netz
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Heruntergeladene Offlinekarten werden nicht mehr automatisch aktualisiert. Die Windows-Karten-App ist abgekündigt und wurde im Juli 2025 aus dem Microsoft Store entfernt [3]; auf den meisten PCs ändert sich dadurch wenig.

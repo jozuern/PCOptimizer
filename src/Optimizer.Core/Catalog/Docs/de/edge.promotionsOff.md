@@ -4,10 +4,10 @@
 Schaltet Spotlight-Hintergründe und Tipps zu Microsoft-Diensten, Funktionsempfehlungen im Browser und die Adobe-Abo-Schaltfläche im PDF-Viewer aus.
 
 ## So funktioniert es
-SpotlightExperiencesAndRecommendationsEnabled auf aus beendet angepasste Hintergründe, Vorschläge, Benachrichtigungen und Tipps zu Microsoft-Diensten [1]. ShowRecommendationsEnabled auf aus beendet Dialoge, Flyouts und Banner, die Edge-Funktionen empfehlen [2]. ShowAcrobatSubscriptionButton auf aus blendet die Schaltfläche im PDF-Viewer aus, die Adobe-Abos anbietet [3]. Die erste Richtlinie gilt auch für Profile mit Microsoft-Konto; die anderen beiden wendet Edge laut Microsoft seit Edge 116 in solchen Profilen nicht an [4], dort bleibt deine eigene Einstellung.
+SpotlightExperiencesAndRecommendationsEnabled = 0 beendet angepasste Hintergründe, Vorschläge, Benachrichtigungen und Tipps zu Microsoft-Diensten [1]. ShowRecommendationsEnabled = 0 beendet Dialoge, Flyouts und Banner, die Edge-Funktionen empfehlen [2]. ShowAcrobatSubscriptionButton = 0 blendet die Schaltfläche im PDF-Viewer aus, die Adobe-Abos anbietet [3]. Die erste Richtlinie gilt auch für Profile mit Microsoft-Konto; die anderen beiden wendet Edge laut Microsoft seit Edge 116 in solchen Profilen nicht an [4], dort bleibt deine eigene Einstellung.
 
 ## Warum es helfen kann
-Weniger Einblendungen und Angebote beim Surfen. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Weniger Einblendungen und Angebote beim Surfen. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Von Microsoft beschriebene Edge-Richtlinien [1][2][3].

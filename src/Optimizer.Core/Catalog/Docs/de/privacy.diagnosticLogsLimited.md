@@ -10,7 +10,7 @@ Die Richtlinien „Diagnoseprotokollsammlung einschränken“ und „Absturzabbi
 Wenn du optionale Diagnosedaten sendest, verlassen weniger Daten diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Microsoft erhält weniger Details, um Abstürze auf deinem PC zu analysieren.

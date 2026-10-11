@@ -4,13 +4,13 @@
 Eingesteckte USB-Sticks, Discs und Speicherkarten starten keine Programme und öffnen keine Abfrage mehr von selbst.
 
 ## So funktioniert es
-Die automatische Wiedergabe liest ein Laufwerk, sobald ein Medium eingelegt wird, sodass Setup-Programme und Musik sofort starten [1]. Die Richtlinie "Automatische Wiedergabe deaktivieren" für alle Laufwerke (NoDriveTypeAutoRun = 255) schaltet sie auf allen Laufwerken aus [1].
+Die automatische Wiedergabe liest ein Laufwerk, sobald ein Medium eingelegt wird, sodass Setup-Programme und Musik sofort starten [1]. Die Richtlinie „Automatische Wiedergabe deaktivieren“ für alle Laufwerke (NoDriveTypeAutoRun = 255) schaltet sie auf allen Laufwerken aus [1].
 
 ## Warum es helfen kann
 Ein fremder USB-Stick kann beim Einstecken nichts von selbst starten.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Neue Laufwerke öffnest du selbst im Explorer; die Auswahl zur automatischen Wiedergabe in den Einstellungen gilt nicht mehr.

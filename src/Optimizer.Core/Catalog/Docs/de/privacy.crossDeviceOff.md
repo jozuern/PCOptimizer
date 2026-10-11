@@ -10,7 +10,7 @@ Die Richtlinie „Auf der Oberfläche dieses Geräts weiterarbeiten“ wird abge
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Teilen in der Nähe und das Übergeben von Aufgaben zwischen Geräten funktionieren nicht mehr.

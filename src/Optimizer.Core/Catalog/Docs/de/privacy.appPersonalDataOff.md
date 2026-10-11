@@ -10,7 +10,7 @@ Die App-Datenschutzrichtlinien für diese Datenarten, etwa „Windows-App-Zugrif
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Store-Apps, die diese Daten nutzen, können sie nicht mehr lesen, und die Schalter in den Einstellungen sind gesperrt. Geöffnete Apps bemerken die Änderung erst nach einem Neustart [1]. Die Windows-Apps Mail, Kalender und Kontakte werden nicht mehr unterstützt [3].

@@ -7,7 +7,7 @@ Windows lädt die Hersteller-Apps zu angeschlossenen Geräten, etwa Maus- oder H
 Wenn du ein Gerät anschließt, kann Windows Anwendungen herunterladen, die zu den Metadaten des Geräts gehören. Die App schaltet die dokumentierte Richtlinie „Automatischen Download von Anwendungen verhindern, die Gerätemetadaten zugeordnet sind“ ein (Computerkonfiguration > System > Geräteinstallation): PreventDeviceMetadataFromNetwork = 1 [1]. Sie hat Vorrang vor der Einstellung im Dialog Geräteinstallationseinstellungen.
 
 ## Warum es helfen kann
-Hersteller-Apps, die du nicht angefordert hast, werden nicht im Hintergrund installiert. Die Werkzeuge, die du willst, installierst du selbst.
+Hersteller-Apps, die du nicht angefordert hast, werden nicht im Hintergrund installiert. Die Tools, die du willst, installierst du selbst.
 
 ## Belege
 Microsoft dokumentiert, dass Windows diese Anwendungen dann nicht herunterlädt [1]. Es gibt keine Messung einer Wirkung auf Spiele, und es ist auch keine zu erwarten.

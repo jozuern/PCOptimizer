@@ -10,7 +10,7 @@ Mit der Richtlinie DisablePasswordReveal = 1 erscheint die Schaltfläche zum Anz
 Jemand an deinem PC kann ein getipptes, aber noch nicht bestätigtes Kennwort nicht anzeigen lassen.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Ein langes Kennwort lässt sich vor dem Absenden nicht prüfen.

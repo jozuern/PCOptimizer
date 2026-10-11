@@ -82,7 +82,6 @@
   <data name="Nav_Changes" xml:space="preserve"><value>Changes</value></data>
   <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Tweaks_Hint" xml:space="preserve"><value>Every change shows exactly what it does and can be undone. Recommended items fit this PC.</value></data>
-  <data name="Tweaks_All" xml:space="preserve"><value>All</value></data>
   <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks, {1} on, {2} recommended for this PC</value></data>
   <data name="Tweaks_OnlyRecommended" xml:space="preserve"><value>Only recommended</value></data>
   <data name="Tweak_TurnOn" xml:space="preserve"><value>Turn on</value></data>
@@ -772,6 +771,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Sensors_Title" xml:space="preserve">
     <value>Sensors</value>
   </data>
+  <data name="Sensors_Live" xml:space="preserve">
+    <value>Live readings</value>
+  </data>
   <data name="Sensors_Hint" xml:space="preserve">
     <value>Live temperatures, clocks, load and fans (LibreHardwareMonitor). Off until you switch it on. Processor and mainboard sensors need the signed PawnIO driver.</value>
   </data>
@@ -982,7 +984,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Bench_Low" xml:space="preserve"><value>1 % low {0}</value></data>
   <data name="Bench_Fps" xml:space="preserve"><value>{0} FPS</value></data>
   <data name="Bench_Stopped" xml:space="preserve"><value>Capture stopped. This run was not kept.</value></data>
-  <data name="Quick_Running" xml:space="preserve"><value>Running: {0}</value></data>
   <data name="Quick_IpRenew" xml:space="preserve"><value>Renew IP address</value></data>
   <data name="Quick_IpRenewHint" xml:space="preserve"><value>Releases and requests the IP address of every network adapter again (ipconfig). Helps when the PC has no valid address after a router restart.</value></data>
   <data name="Quick_IpRenewConfirm" xml:space="preserve"><value>The network connection drops for a few seconds while the address is renewed. Downloads and online games lose their connection.</value></data>
@@ -1077,7 +1078,16 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain</value></data>
   <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Recommended for this PC</value></data>
   <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>On, but works against this profile</value></data>
-  <data name="Tweaks_GroupImpact" xml:space="preserve"><value>Impact {0} of 5</value></data>
+  <data name="Tweaks_GroupCount" xml:space="preserve"><value>Tweaks: {0}, on: {1}</value></data>
+  <data name="Tweaks_OpenAll" xml:space="preserve"><value>Expand all</value></data>
+  <data name="Tweaks_CloseAll" xml:space="preserve"><value>Collapse all</value></data>
+  <data name="Tweaks_SectionPerformance" xml:space="preserve"><value>Performance and power</value></data>
+  <data name="Tweaks_SectionNetwork" xml:space="preserve"><value>Network</value></data>
+  <data name="Tweaks_SectionBackground" xml:space="preserve"><value>Background and notifications</value></data>
+  <data name="Tweaks_SectionPrivacy" xml:space="preserve"><value>Privacy</value></data>
+  <data name="Tweaks_SectionSecurity" xml:space="preserve"><value>Security and system</value></data>
+  <data name="Tweaks_SectionDesktop" xml:space="preserve"><value>Desktop and Explorer</value></data>
+  <data name="Tweaks_SectionBrowser" xml:space="preserve"><value>Browsers</value></data>
   <data name="Badge_TipModerate" xml:space="preserve"><value>Can have side effects on some PCs. The details list them.</value></data>
   <data name="Badge_TipExpert" xml:space="preserve"><value>Trades security or stability for performance. Shown only in Expert mode and never recommended automatically.</value></data>
   <data name="Badge_TipBoot" xml:space="preserve"><value>Changes the boot configuration. A restore point is created first.</value></data>

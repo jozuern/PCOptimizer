@@ -35,7 +35,7 @@
       "hypervisor": false,
       "recommend": null,
       "en": "Runs Linux tools on Windows. WSL 2 also needs the Virtual Machine Platform.",
-      "de": "Führt Linux-Werkzeuge unter Windows aus. WSL 2 braucht zusätzlich die VM-Plattform."
+      "de": "Führt Linux-Tools unter Windows aus. WSL 2 braucht zusätzlich die VM-Plattform."
     },
     {
       "name": "Containers-DisposableClientVM",

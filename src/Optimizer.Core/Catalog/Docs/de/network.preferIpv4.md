@@ -4,7 +4,7 @@
 Lässt Windows IPv4 vor IPv6 versuchen, wenn ein Server beides anbietet. IPv6 bleibt eingeschaltet. Microsoft empfiehlt das statt IPv6 abzuschalten.
 
 ## So funktioniert es
-Standardmäßig bevorzugt Windows IPv6-Adressen vor IPv4-Adressen [1]. Bit 0x20 des Registrierungswerts DisabledComponents ändert die Standard-Präfixrichtlinie, sodass IPv4 zuerst genutzt wird [1]. Die App setzt nur dieses Bit und behält die übrigen. Wirkt nach einem Neustart [1].
+Standardmäßig bevorzugt Windows IPv6-Adressen vor IPv4-Adressen [1]. Bit 0x20 des Registry-Werts DisabledComponents ändert die Standard-Präfixrichtlinie, sodass IPv4 zuerst genutzt wird [1]. Die App setzt nur dieses Bit und behält die übrigen. Wirkt nach einem Neustart [1].
 
 ## Warum es helfen kann
 Hilft in Netzen oder bei Spielservern, deren IPv6-Routen langsamer oder unzuverlässig sind.

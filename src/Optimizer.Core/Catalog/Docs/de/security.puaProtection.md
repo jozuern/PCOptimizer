@@ -13,10 +13,10 @@ Installer, die Adware oder Browseränderungen mitbringen, werden gestoppt, bevor
 Eine von Microsoft beschriebene Defender-Richtlinie [1]. Die Prüfung kostet nur beim Download oder der Installation etwas Zeit.
 
 ## Nachteile & Risiken
-Defender kann einen gewollten Download blockieren, etwa manche kostenlosen Werkzeuge mit Zusatzangeboten; du lässt ihn dann unter Windows-Sicherheit > Schutzverlauf zu.
+Defender kann einen gewollten Download blockieren, etwa manche kostenlosen Tools mit Zusatzangeboten; du lässt ihn dann unter Windows-Sicherheit > Schutzverlauf zu.
 
 ## Wann du es nicht nutzen solltest
-Wenn du ein anderes Virenschutzprogramm nutzt oder oft Werkzeuge installierst, die Defender als potenziell unerwünscht einstuft.
+Wenn du ein anderes Virenschutzprogramm nutzt oder oft Tools installierst, die Defender als potenziell unerwünscht einstuft.
 
 ## Quellen
 1. https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender

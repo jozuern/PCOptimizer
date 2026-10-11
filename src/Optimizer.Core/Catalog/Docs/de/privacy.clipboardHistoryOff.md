@@ -10,7 +10,7 @@ Die Richtlinie „Zwischenablageverlauf zulassen“ wird abgeschaltet [1].
 Kopierte Kennwörter und Texte bleiben nicht in einem Verlauf auf diesem PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Windows + V zeigt keine früher kopierten Einträge mehr.

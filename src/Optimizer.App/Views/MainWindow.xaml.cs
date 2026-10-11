@@ -52,6 +52,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
         Loaded += (_, _) => SetTitleBarIcon(System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX);
         DpiChanged += (_, e) => SetTitleBarIcon(e.NewDpi.DpiScaleX);
         vm.PropertyChanged += OnViewModelChanged;
+        SizeChanged += (_, _) => FitPanes();
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key == System.Windows.Input.Key.Escape) vm.SelectedItem = null;
@@ -73,12 +74,40 @@ public partial class MainWindow : FluentWindow, IServiceProvider
 
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.SelectedItem)) RenderDetails();
+        if (e.PropertyName == nameof(MainViewModel.SelectedItem))
+        {
+            RenderDetails();
+            FitPanes();
+        }
         if (e.PropertyName == nameof(MainViewModel.CurrentPage) && !_syncing && PageTypes.TryGetValue(_vm.CurrentPage, out var type))
         {
             _syncing = true;
             Nav.Navigate(type);
             _syncing = false;
+        }
+    }
+
+    /// <summary>Window width below which the open pane and the details pane together leave the page too narrow.</summary>
+    private const double NarrowWidth = 1320;
+
+    private bool _paneCollapsedForDetails;
+
+    /// <summary>
+    /// In a narrow window the open details pane takes the room of the navigation pane, which folds to the rail (as
+    /// NavigationView does in WinUI); it opens again when the details close or the window gets wide enough.
+    /// </summary>
+    private void FitPanes()
+    {
+        var crowded = _vm.SelectedItem is not null && ActualWidth > 0 && ActualWidth < NarrowWidth;
+        if (crowded && Nav.IsPaneOpen)
+        {
+            Nav.IsPaneOpen = false;
+            _paneCollapsedForDetails = true;
+        }
+        else if (!crowded && _paneCollapsedForDetails)
+        {
+            Nav.IsPaneOpen = true;
+            _paneCollapsedForDetails = false;
         }
     }
 

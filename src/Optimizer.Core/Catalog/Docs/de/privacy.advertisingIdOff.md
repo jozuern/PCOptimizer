@@ -10,7 +10,7 @@ Die Richtlinie „Werbe-ID deaktivieren“ sorgt dafür, dass Windows Apps keine
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Werbung in Apps ist nicht mehr personalisiert; die Menge bleibt gleich.

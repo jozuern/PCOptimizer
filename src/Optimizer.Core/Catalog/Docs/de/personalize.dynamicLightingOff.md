@@ -4,13 +4,13 @@
 Schaltet die dynamische Beleuchtung von Windows aus, damit die RGB-Software von Tastatur, Maus oder PC-Hersteller die Beleuchtung allein steuert.
 
 ## So funktioniert es
-"Dynamische Beleuchtung auf meinen Geräten verwenden" schaltet die Funktion ein oder aus; ist sie aus, verhalten sich Geräte wie ohne dynamische Beleuchtung [1]. Die App setzt AmbientLightingEnabled auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+„Dynamische Beleuchtung auf meinen Geräten verwenden“ schaltet die Funktion ein oder aus; ist sie aus, verhalten sich Geräte wie ohne dynamische Beleuchtung [1]. Die App setzt AmbientLightingEnabled auf 0. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Windows und die RGB-Software des Herstellers streiten nicht mehr um die Beleuchtung.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Effekte, die du unter Einstellungen > Personalisierung > Dynamische Beleuchtung eingestellt hast, enden.

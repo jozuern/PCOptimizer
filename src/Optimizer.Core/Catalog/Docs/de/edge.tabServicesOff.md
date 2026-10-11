@@ -4,10 +4,10 @@
 Edge schickt keine URLs und Titel deiner Tabs mehr an seinen Dienst, der Tabgruppen und Gruppennamen vorschlägt. Gilt nicht in Edge-Profilen mit privatem Microsoft-Konto.
 
 ## So funktioniert es
-Wenn du eine Tabgruppe anlegst oder bestimmte Funktionen zum Gruppieren ähnlicher Tabs nutzt, schickt Edge URLs, Seitentitel und bestehende Gruppen an seinen Dienst zum Ordnen von Tabs [1]. Mit der Richtlinie TabServicesEnabled auf aus werden keine Daten gesendet, und diese Vorschläge fallen weg [1]. Seit Edge 116 wendet Edge diese Richtlinie laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [2]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
+Wenn du eine Tabgruppe anlegst oder bestimmte Funktionen zum Gruppieren ähnlicher Tabs nutzt, schickt Edge URLs, Seitentitel und bestehende Gruppen an seinen Dienst zum Ordnen von Tabs [1]. Mit der Richtlinie TabServicesEnabled = 0 werden keine Daten gesendet, und diese Vorschläge fallen weg [1]. Seit Edge 116 wendet Edge diese Richtlinie laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [2]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
 
 ## Warum es helfen kann
-Deine offenen Tabs bleiben auf dem PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Deine offenen Tabs bleiben auf dem PC. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Eine von Microsoft beschriebene Edge-Richtlinie [1].

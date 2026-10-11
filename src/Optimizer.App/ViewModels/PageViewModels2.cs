@@ -890,7 +890,6 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [ObservableProperty] private string? _selectedDrive;
     [ObservableProperty] private string _storageStatus = "";
     [ObservableProperty] private bool _isScanningStorage;
-    [ObservableProperty] private string _quickOutput = "";
     [ObservableProperty] private string? _featuresNote;
 
     public ObservableCollection<PriorityRow> PriorityRules { get; } = [];
@@ -1103,7 +1102,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     private Task FlushDnsAsync() => RunWorkAsync("flush dns", async () =>
     {
         var (code, output) = await Task.Run(() => services.Context.Processes.Run("ipconfig.exe", "/flushdns"));
-        QuickOutput = code == 0 ? Loc.Instance["Quick_DnsFlushed"] : Loc.Instance.Format("Result_Error", output.Trim());
+        ShowQuickResult(code == 0, Loc.Instance["Quick_DnsFlushed"], output);
     });
 
     [RelayCommand]
@@ -1120,7 +1119,8 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
             await Task.Delay(1000);
             // Explorer must run as the signed-in user, never elevated.
             var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
-            QuickOutput = path == DeElevatedLauncher.Path.Failed ? Loc.Instance["Quick_ExplorerManual"] : Loc.Instance["Quick_ExplorerRestarted"];
+            if (path == DeElevatedLauncher.Path.Failed) Owner.ShowResult(Loc.Instance["Quick_ExplorerManual"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            else Owner.ShowResult(Loc.Instance["Quick_ExplorerRestarted"], Wpf.Ui.Controls.InfoBarSeverity.Success);
         });
     }
 
@@ -1129,16 +1129,23 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     {
         var fix = row.Fix;
         if (fix.Confirm && !dialogs.Ask(row.Title, Loc.Instance[$"Quick_{fix.Id}Confirm"], Loc.Instance["Cleanup_Run"])) return;
-        QuickOutput = Loc.Instance.Format("Quick_Running", row.Title);
-        if (!await RunWorkAsync($"quick fix {fix.Id}", async () =>
-            {
-                var (ok, output) = await Task.Run(() => QuickFixes.Run(services.Context.Processes, fix));
-                QuickOutput = !ok ? Loc.Instance.Format("Result_Error", output.Trim())
-                    : fix.ShowOutput ? Loc.Instance[$"Quick_{fix.Id}Done"] + "\n" + string.Join("\n", output.Trim().Split('\n').TakeLast(8))
-                    : Loc.Instance[$"Quick_{fix.Id}Done"];
-            }))
-            QuickOutput = "";
+        row.Output = null;
+        await RunWorkAsync($"quick fix {fix.Id}", async () =>
+        {
+            var (ok, output) = await Task.Run(() => QuickFixes.Run(services.Context.Processes, fix));
+            ShowQuickResult(ok, Loc.Instance[$"Quick_{fix.Id}Done"], output);
+            // A report worth reading (chkdsk, reagentc) stays in the card that ran it; the result bar closes by itself.
+            if (ok && fix.ShowOutput) row.Output = string.Join("\n", output.Trim().Split('\n').Select(l => l.TrimEnd()).TakeLast(8));
+        });
     }
+
+    /// <summary>
+    /// The outcome of a quick fix goes to the result bar at the bottom of the window: the cards sit high up on a long
+    /// page, so a line below the last card would be out of view.
+    /// </summary>
+    private void ShowQuickResult(bool ok, string done, string output) =>
+        Owner.ShowResult(ok ? done : Loc.Instance.Format("Result_Error", output.Trim()),
+            ok ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Error);
 
     [RelayCommand]
     private async Task WinsockResetAsync()
@@ -1147,7 +1154,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         await RunWorkAsync("winsock reset", async () =>
         {
             var (code, output) = await Task.Run(() => services.Context.Processes.Run("netsh.exe", "winsock reset"));
-            QuickOutput = code == 0 ? Loc.Instance["Quick_WinsockDone"] : Loc.Instance.Format("Result_Error", output.Trim());
+            ShowQuickResult(code == 0, Loc.Instance["Quick_WinsockDone"], output);
         });
     }
 }
@@ -1160,10 +1167,17 @@ public sealed record PriorityRow(PriorityRule Rule, string CpuText, string? IoTe
 }
 
 /// <summary>A quick fix card; title and hint come from the string resources in the current language.</summary>
-public sealed record QuickFixRow(QuickFix Fix)
+public sealed partial class QuickFixRow(QuickFix fix) : ObservableObject
 {
+    public QuickFix Fix { get; } = fix;
     public string Title => Loc.Instance[$"Quick_{Fix.Id}"];
     public string Hint => Loc.Instance[$"Quick_{Fix.Id}Hint"];
+
+    /// <summary>The last lines of the tool's report (chkdsk, reagentc), shown in the card that ran it.</summary>
+    [ObservableProperty] private string? _output;
+
+    // What screen readers announce for this item in a list.
+    public override string ToString() => Title;
 }
 
 // ---------------- Health ----------------

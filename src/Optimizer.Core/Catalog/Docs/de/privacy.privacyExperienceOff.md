@@ -10,7 +10,7 @@ Die Richtlinie DisablePrivacyExperience = 1 verhindert, dass die Datenschutzeins
 Funktionsupdates halten dich nicht erneut mit der Datenschutzseite auf, auf der schnelles Durchklicken Optionen wieder einschalten kann.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Datenschutzeinstellung ohne Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Datenschutzeinstellung ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Die Datenschutzoptionen prüfst du selbst unter Einstellungen > Datenschutz und Sicherheit.

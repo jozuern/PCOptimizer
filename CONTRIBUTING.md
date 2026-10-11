@@ -25,9 +25,10 @@ without focus or taskbar button, so they can run while you work; the PNGs are re
 | `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware, Settings |
 | `--shot-scanning <file.png>` | renders the window while the first scan still runs (score placeholders) |
 | `--pane closed` | collapses the navigation rail before the screenshot |
+| `--width <pixels>` | window width for the screenshot (for example 1040, the minimum, with `--select`) |
 | `--scroll end` or `--scroll <pixels>` | scrolls the page to the end, or down by that many pixels, before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
-| `--category <key>` | Tweaks page filtered to one category before the screenshot (e.g. `Privacy`) |
+| `--category <key>` | opens that category group on the Tweaks page before the screenshot (a section such as `privacy`, or a catalog category such as `Browser`); `--select` opens the group of the selected tweak |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
 | `--confirm <tweak id> --confirm-shot <file.png>` | with `--screenshot`: renders the confirmation dialog of a tweak (nothing is applied) |
 | `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
@@ -61,7 +62,7 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 - `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\PCOptimizerTest` and fake system APIs. Nothing on the real system changes.
 - Run the tests once from an elevated terminal before changing security code: the data folder lock (`SecureFolder`) is only exercised elevated, as on the CI runners; a normal terminal checks only that it fails safely.
 - `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors).
-- Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md) (the last run: [docs/vm-test-results-2026-10-10.md](docs/vm-test-results-2026-10-10.md)). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
+- Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
 - Not yet checked on real hardware: NVIDIA driver settings and network adapter properties (section 5 of the VM test plan), the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
 
 ## Adding a tweak

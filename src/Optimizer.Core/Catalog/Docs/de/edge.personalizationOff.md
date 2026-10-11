@@ -4,10 +4,10 @@
 Verhindert, dass Microsoft deinen Edge-Verlauf, Favoriten, Sammlungen und deine Nutzung sammelt, um Werbung, Suche, News und andere Microsoft-Dienste zu personalisieren.
 
 ## So funktioniert es
-Die Richtlinie PersonalizationReportingEnabled auf aus verhindert, dass Microsoft Verlauf, Favoriten und Sammlungen, Nutzung und andere Surfdaten aus Edge sammelt, um Werbung, Suche, News, Edge und andere Microsoft-Dienste zu personalisieren [1]. Der passende Schalter in den Edge-Einstellungen lässt sich dann nicht mehr einschalten [1].
+Die Richtlinie PersonalizationReportingEnabled = 0 verhindert, dass Microsoft Verlauf, Favoriten und Sammlungen, Nutzung und andere Surfdaten aus Edge sammelt, um Werbung, Suche, News, Edge und andere Microsoft-Dienste zu personalisieren [1]. Der passende Schalter in den Edge-Einstellungen lässt sich dann nicht mehr einschalten [1].
 
 ## Warum es helfen kann
-Weniger von deinem Surfen fließt in Werbung und personalisierte Inhalte. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Weniger von deinem Surfen fließt in Werbung und personalisierte Inhalte. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Eine von Microsoft beschriebene Edge-Richtlinie, die auch für Profile mit Microsoft-Konto gilt [1].

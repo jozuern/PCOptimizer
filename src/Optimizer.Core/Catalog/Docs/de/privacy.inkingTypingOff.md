@@ -10,7 +10,7 @@ Die Richtlinie „Automatisches Lernen deaktivieren“ verhindert, dass Windows 
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Textvorschläge und Handschrifterkennung lernen weniger von dir, und das bisher aufgebaute persönliche Wörterbuch wird gelöscht.

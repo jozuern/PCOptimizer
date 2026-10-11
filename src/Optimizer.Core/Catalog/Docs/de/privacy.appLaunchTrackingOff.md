@@ -10,7 +10,7 @@ Das ist der Schalter „Windows erlauben, Start- und Suchergebnisse durch Nachve
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Die Liste „Meistverwendet“ im Start wird nicht mehr aktualisiert.

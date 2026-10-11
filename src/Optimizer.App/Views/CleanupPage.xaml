@@ -29,7 +29,7 @@
                     <DataTemplate>
                         <ui:Card Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <DockPanel>
-                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SizeText}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                <ui:TextBlock x:Name="Size" DockPanel.Dock="Right" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding SizeText}" VerticalAlignment="Center" Margin="16,0,0,0" />
                                 <CheckBox x:Name="Pick" IsChecked="{Binding Checked}" VerticalAlignment="Top" AutomationProperties.Name="{Binding Title}"
                                           Command="{Binding DataContext.Cleanup.SelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
                                     <StackPanel>
@@ -42,10 +42,11 @@
                                 </CheckBox>
                             </DockPanel>
                         </ui:Card>
-                        <!-- Nothing to clean: the check box shows unticked and greyed out, "Empty" stands on the right -->
+                        <!-- Nothing to clean: the check box shows unticked and greyed out, "Empty" stands on the right in the same grey -->
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsEmpty}" Value="True">
                                 <Setter TargetName="Pick" Property="IsEnabled" Value="False" />
+                                <Setter TargetName="Size" Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>

@@ -7,10 +7,10 @@ Lässt diesen Dienst eines anderen Herstellers bei Bedarf (Manuell) statt mit Wi
 Der Starttyp wird im Dienststeuerungs-Manager auf Manuell gestellt [1]; der Dienst wird nicht deaktiviert, sein Programm kann ihn weiterhin starten. Rückgängig machen stellt den vorherigen Starttyp wieder her.
 
 ## Warum es helfen kann
-Programme, die mit Windows starten, machen die Anmeldung langsamer und belegen Arbeitsspeicher und manchmal Prozessorzeit im Hintergrund.
+Programme, die mit Windows starten, machen die Anmeldung langsamer und belegen RAM und manchmal CPU-Zeit im Hintergrund.
 
 ## Belege
-Die Anmeldung wird schneller; der Effekt auf die Bildrate hängt davon ab, was das Programm im Hintergrund tut.
+Die Anmeldung wird schneller; der Effekt auf die Framerate hängt davon ab, was das Programm im Hintergrund tut.
 
 ## Nachteile & Risiken
 Funktionen des Programms, die den Dienst direkt nach dem Start brauchen (zum Beispiel Updateprüfung oder Geräteerkennung), starten eventuell später oder gar nicht.

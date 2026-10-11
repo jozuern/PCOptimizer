@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.8 (preview)
+
+- The Tweaks page lists its tweaks in groups instead of one long list: Recommended for this PC and On, but works against this profile first and open, then seven sections, closed: Performance and power, Network, Background and notifications, Privacy, Security and system, Desktop and Explorer, Browsers. Each section combines related categories of the catalog (Performance and power holds power plans, graphics, input, memory, storage, battery and noise). Each group shows how many tweaks it has and how many are on; a click opens or closes it, and Expand all and Collapse all open or close every group. A search opens every group with a match. The category list above the tweaks is gone, because the sections take its place. Within a group the tweaks with the larger impact come first.
+- The section headings in the details pane (Summary, What changes, How it works and the others) are semibold in the text color and a little larger than the text below them. Until now they were smaller and paler than the text, so they were hard to find when skimming.
+- In a narrow window the navigation pane folds to the icon rail while the details pane is open, and opens again when the details close or the window gets wider. The Tweaks filters fit next to the details pane also in the smallest window.
+- Tools shows the result of a quick fix (Flush DNS cache, Restart Explorer, Reset TCP/IP and the others) in the result bar at the bottom of the window. Until now it appeared as a line under the last card of the page, out of view for the fixes at the top. The report of Check the system drive and Turn on the recovery environment stays in the card that ran it. Every Run button waits until the running fix has finished.
+- Health: the sensors card has a title (Live readings) and an icon like the other cards.
+- Apps & drivers marks installed apps with a check mark and readable text instead of small green text.
+- Cleanup greys out "Empty" together with the check box of an empty category.
+- German text reads more naturally and uses the English terms German gamers use: Scan for the whole run and Check for a single item ("Erneut scannen", "Bestandene Checks zeigen"), FPS and Framerate, Refresh-Rate, RAM, CPU-Takt, Throttling-Test, Input-Lag, Registry, Debloat and Tools as page names. Windows menu names stay as German Windows shows them, so paths still match the screen. Three German texts said the opposite of the English one and are fixed: removing an app cannot be undone by PCOptimizer (it read as if the app could not be undone), PCOptimizer does not remove Edge (it read as if Edge did not remove the app), and the Older PC profile is for a PC with little RAM or a hard disk. Many stiff, word-for-word sentences were rewritten, quotation marks are German („ and “) throughout, and policy options use Microsoft's German names („Verweigern erzwingen“).
+
 ## 0.6.5 (preview)
 
 - System info shows the names of its summary tiles (Processor, Graphics, Memory, Displays, Mainboard, Windows) again. Since 0.6.0 they showed internal text keys such as `Sum_Cpu`. The check for missing texts now also finds texts picked in a condition or read through a short local name, which is how this one got through.
@@ -48,7 +59,7 @@ A pass over the interface for public use.
 
 ## 0.5.0 (preview)
 
-Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md)) and from a code audit (open items in [TODO](docs/TODO.md)), plus a speed pass.
+Fixes from the first VM test run and from a code audit (open items in [TODO](docs/TODO.md)), plus a speed pass.
 
 ### Speed
 
@@ -65,7 +76,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 
 ### VM test run of 2026-10-11
 
-- 28 Preview tweaks are no longer Previews: a test on Windows 11 26H2 showed their effect where you see it (Settings, the taskbar, File Explorer, the desktop, the Print Screen key, the DNS settings, Windows Security) and its removal after undo ([results](docs/vm-test-results-2026-10-11.md)). Game Mode has a visible-effect proof too.
+- 28 Preview tweaks are no longer Previews: a test on Windows 11 26H2 showed their effect where you see it (Settings, the taskbar, File Explorer, the desktop, the Print Screen key, the DNS settings, Windows Security) and its removal after undo. Game Mode has a visible-effect proof too.
 - "Location access off" showed no effect in the test and "Lock screen: no fun facts and tips" also turned off Windows Spotlight: both stay Previews, and their explanations now say so.
 - The DISM checks on the Health page show umlauts again on German Windows: DISM writes the console code page, which was read as UTF-8.
 
@@ -106,7 +117,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - Tweaks that use an undocumented value are marked "Undocumented value" and either cite proof that it works or stay in Preview; the lint enforces it.
 - Explanation pages need a Sources section, and every source must be cited in the text.
 
-### Second audit ([report](docs/audit-2026-10-10-2.md))
+### Second audit
 
 - **Security:** the data folder is created locked in one step and never takes over files another account put there. The app refuses to run elevated with a .NET profiler set in the environment, and startup hooks are off. Tools the app starts get an admin-only TEMP and Windows' own paths instead of values from the user's environment. A per-user uninstall entry for a Windows Installer package runs msiexec as the user. Uninstallers in folders with generic write rights for users no longer run elevated.
 - **Shared PCs:** backups of an account's own settings are kept per account, so a second Windows account cannot take over or undo the first account's changes.
@@ -114,7 +125,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - **Fixes:** "Move to the Recycle Bin" asks before a file too large for the Recycle Bin is deleted for good; system files such as pagefile.sys are no longer offered. The OneDrive guard checks every account. "Renew IP address" always renews after a release. The Windows Update repair reports a service that did not start. DNS over HTTPS reports a server that could not be set. Startup entries that run PowerShell through cmd or a file through rundll32 are marked, logon tasks with quoted paths and shortcuts are checked by their file, and one bad StartupApproved value no longer hides the Run entries. "RX Vega 10/11 Graphics" counts as integrated graphics. XMP and EXPO speeds reported in MHz are read correctly. Rules for program start priorities set by other programs are listed and can be removed.
 - **Speed:** DISM and PowerShell reads are shared within a scan and an apply, and the hardware scan does not wait for threads on PCs with few cores.
 
-### Third audit ([report](docs/audit-2026-10-10-3.md))
+### Third audit
 
 - **Security:** the elevated start also refuses .NET diagnostic ports, notification profilers, EventPipe traces and crash dumps set in the user's environment. Elevated tools find Windows PowerShell on their PATH again. Files signed for other vendors through Microsoft's driver program no longer count as Microsoft's. Startup entries that start a file through explorer, msiexec, pcalua and similar Windows programs are marked, as are PowerShell without ".exe" and scripts in alternate data streams; unquoted paths are resolved the way Windows runs them. An uninstaller run through cmd or a script host runs elevated only when the script is in an admin-only folder. Paths on network shares are never trusted.
 - **Undo:** applying a tweak again keeps the undo step of the first apply, so a later catalog version cannot leave part of the change behind. A backup that lost its per-account entries leaves no stale copy. A failed apply no longer leaves entries that later show as "reset by Windows", a backup found damaged during an apply blocks it, an apply whose values could not be read changes nothing, a rollback removes only a power plan it created, and the DirectX settings value keeps everything else stored in it.
@@ -125,7 +136,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 
 ### New tweaks (documented settings)
 
-100 tweaks added from the review of other tweak tools ([feature reference](docs/windows-tweak-tools-feature-reference.md)), each a setting Microsoft, Google or Brave documents, with an explanation page in English and German:
+100 tweaks added from the review of other tweak tools, each a setting Microsoft, Google or Brave documents, with an explanation page in English and German:
 
 - **Browsers:** Microsoft Edge (diagnostic data, personalization, shopping, sidebar, setup and default browser prompts, new tab page, tips and offers, tracking prevention, address bar suggestions, error page services, network prediction, feedback, payment queries, password saving, sign-in, AI features, cloud text prediction, tab services, visual search), Google Chrome (AI features off or without model training, URL-keyed data collection, promotions, background mode) and Brave (Rewards, Wallet and VPN, Leo, analytics and pings, News, Talk and Playlist). Chrome and Brave tweaks appear only when the browser is installed. Edge pages say when Edge ignores a policy in profiles signed in with a personal Microsoft account.
 - **AI features:** Recall removed, Paint and Notepad AI features off.
@@ -169,7 +180,7 @@ Fixes from the first VM test run ([results](docs/vm-test-results-2026-10-10.md))
 - The three DNS presets are named after their resolver (Cloudflare, Google, Quad9). Before, all three rows read "Public DNS servers".
 - Startup: a Startup folder shortcut with arguments showed "File not found" and no publisher, because the whole command line was checked as a file. Windows tasks that call rundll32 with a switch first (Autochk) showed the same.
 - The storage analyzer no longer offers the page file, swap file, hibernation file and boot dump log in the root of a drive for deletion.
-- 13 tweaks are no longer marked Preview: the VM test showed that apply, the visible effect and undo work ([Preview review](docs/vm-test-results-2026-10-10.md#preview-review)). Expert and boot-critical tweaks, the NVIDIA and network adapter settings, HAGS, MPO, Game DVR and inking and typing stay Preview.
+- 13 tweaks are no longer marked Preview: the VM test showed that apply, the visible effect and undo work. Expert and boot-critical tweaks, the NVIDIA and network adapter settings, HAGS, MPO, Game DVR and inking and typing stay Preview.
 - Startup entries, services, tasks and the restore point frequency show On or Off on the Changes page like the other changes.
 - Counts read "Changes: 1" and "Files: 1" instead of "1 changes" and "1 files".
 - The undo confirmation no longer says that the original values are saved; it says that values which cannot be restored stay on the Changes page.

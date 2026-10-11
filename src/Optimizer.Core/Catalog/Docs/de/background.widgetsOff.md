@@ -10,7 +10,7 @@ Die Richtlinie AllowNewsAndInterests = 0 („Widgets zulassen“) deaktiviert di
 Das Widgets-Board lädt Webinhalte; mit der Richtlinie werden sie nicht mehr geladen.
 
 ## Belege
-Keine veröffentlichte Messung zeigt einen Effekt auf FPS oder Arbeitsspeicher. Der Nutzen ist vor allem weniger Ablenkung.
+Keine veröffentlichte Messung zeigt einen Effekt auf FPS oder RAM. Der Nutzen ist vor allem weniger Ablenkung.
 
 ## Nachteile & Risiken
 Kein Wetter und keine Nachrichten mehr in der Taskleiste.

@@ -4,10 +4,10 @@
 Bei Seiten, die nicht laden, fragt Edge keine Microsoft-Webdienste mehr nach ähnlichen Seiten oder einer Verbindungsprüfung. Gilt nicht in Edge-Profilen mit privatem Microsoft-Konto.
 
 ## So funktioniert es
-AlternateErrorPagesEnabled auf aus verhindert, dass Edge ähnliche Seiten vorschlägt, wenn eine Webseite nicht gefunden wird [1]. ResolveNavigationErrorsUseWebService auf aus lässt Edge die Verbindung mit Windows-eigenen Schnittstellen prüfen statt mit einer datenlosen Verbindung zu einem Webdienst, etwa im WLAN von Hotels und Flughäfen [2]. Seit Edge 116 wendet Edge diese Richtlinien laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [3]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
+AlternateErrorPagesEnabled = 0 verhindert, dass Edge ähnliche Seiten vorschlägt, wenn eine Webseite nicht gefunden wird [1]. ResolveNavigationErrorsUseWebService = 0 lässt Edge die Verbindung mit Windows-eigenen Schnittstellen prüfen statt mit einer datenlosen Verbindung zu einem Webdienst, etwa im WLAN von Hotels und Flughäfen [2]. Seit Edge 116 wendet Edge diese Richtlinien laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [3]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
 
 ## Warum es helfen kann
-Weniger Anfragen an Microsoft zu Adressen, die nicht funktioniert haben. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Weniger Anfragen an Microsoft zu Adressen, die nicht funktioniert haben. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Von Microsoft beschriebene Edge-Richtlinien [1][2].

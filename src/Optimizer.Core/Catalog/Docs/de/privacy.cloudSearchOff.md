@@ -10,7 +10,7 @@ Die Richtlinie „Cloudsuche zulassen“ wird abgeschaltet [1].
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Dateien aus OneDrive, SharePoint und anderen Cloudquellen deines Microsoft- oder Arbeitskontos erscheinen nicht mehr in der Windows-Suche.

@@ -7,7 +7,7 @@ Hält die Grafikkarte bei den meisten 3D-Anwendungen auf maximaler Leistung. Kan
 Standardmäßig senkt der Treiber den Grafiktakt bei geringer Last. „Maximale Leistung bevorzugen“ im globalen Profil weist ihn an, die GPU bei den meisten 3D-Anwendungen mit maximaler Leistung zu betreiben [1]. Die App schreibt den Wert aus NVIDIAs Header-Datei der Treibereinstellungen über die Schnittstelle für Treibereinstellungen [2].
 
 ## Warum es helfen kann
-In leichten oder älteren Spielen kann die Karte zwischen den Bildern heruntertakten und braucht Zeit zum Hochtakten. Das kann ungleichmäßige Frametimes verursachen.
+In leichten oder älteren Spielen kann die Karte zwischen den Frames heruntertakten und braucht Zeit zum Hochtakten. Das kann ungleichmäßige Frametimes verursachen.
 
 ## Belege
 Die Wirkung hängt von der Situation ab; in anspruchsvollen Spielen läuft die Karte ohnehin mit vollem Takt, und es ändert sich nichts.

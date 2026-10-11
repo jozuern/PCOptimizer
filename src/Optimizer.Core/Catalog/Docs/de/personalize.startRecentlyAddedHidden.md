@@ -10,7 +10,7 @@ Die Richtlinie HideRecentlyAddedApps = 1 verhindert, dass das Startmenü eine Li
 Ein aufgeräumtes Startmenü, auch wenn Installer Hilfs-Apps hinzufügen, die du nie startest.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Neue Apps findest du in der vollständigen Liste oder indem du ihren Namen tippst.

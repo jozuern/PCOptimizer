@@ -7,7 +7,7 @@ Setzt die Tracking-Verhinderung auf Streng: blockiert die meisten Tracker aller 
 Die Richtlinie TrackingPrevention hat vier Stufen: 0 aus, 1 einfach, 2 ausgewogen und 3 streng [1]. Ausgewogen blockiert schädliche Tracker und Tracker von Seiten, die du nicht besucht hast; streng blockiert schädliche Tracker und die meisten Tracker aller Seiten, und laut Microsoft funktionieren dann Teile mancher Seiten nicht [1]. Seit Edge 116 wendet Edge diese Richtlinie laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [2]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
 
 ## Warum es helfen kann
-Weniger Tracker können dir von Seite zu Seite folgen. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Weniger Tracker können dir von Seite zu Seite folgen. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Eine von Microsoft beschriebene Edge-Richtlinie [1].

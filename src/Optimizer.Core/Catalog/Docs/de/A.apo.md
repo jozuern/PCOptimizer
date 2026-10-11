@@ -18,7 +18,7 @@ Wir haben die Dienste von Intel Dynamic Tuning Technology, nach denen wir suchen
 :::
 
 ## Wie wir es erkennen
-Wir gleichen den Prozessornamen mit der Liste geprüfter Modelle ab und suchen nach den Diensten von Dynamic Tuning. Ob APO aktiv ist, lässt sich nicht zuverlässig lesen.
+Wir gleichen den CPU-Namen mit der Liste geprüfter Modelle ab und suchen nach den Diensten von Dynamic Tuning. Ob APO aktiv ist, lässt sich nicht zuverlässig lesen.
 
 ## So behebst du es
 ::: ifnot laptop

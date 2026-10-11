@@ -10,7 +10,7 @@ Die Richtlinie ShowOrHideMostUsedApps hat drei Werte: 0 Benutzer entscheidet, 1 
 Wer auf dein Startmenü schaut, sieht nicht, welche Apps du am meisten nutzt.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Der Schalter in den Einstellungen bleibt gesperrt, bis du die Änderung rückgängig machst.

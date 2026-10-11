@@ -4,7 +4,7 @@
 Zeigt im Datei-Explorer Dateierweiterungen wie .exe oder .zip an. Eine Bedien- und Sicherheitseinstellung ohne Leistungseffekt.
 
 ## So funktioniert es
-HideFileExt = 0 zeigt die Erweiterungen bekannter Dateitypen an, wie Datei-Explorer > Ansicht > Anzeigen > Dateinamenerweiterungen [1] oder Einstellungen > System > Erweitert > Datei-Explorer > Dateierweiterungen anzeigen (vor Version 25H2 „Für Entwickler“) [2]. Microsofts Spezifikation der Gruppenrichtlinien-Einstellungen nennt HideFileExt in den erweiterten Explorer-Einstellungen des Benutzers als Registrierungswert hinter dieser Option [3].
+HideFileExt = 0 zeigt die Erweiterungen bekannter Dateitypen an, wie Datei-Explorer > Ansicht > Anzeigen > Dateinamenerweiterungen [1] oder Einstellungen > System > Erweitert > Datei-Explorer > Dateierweiterungen anzeigen (vor Version 25H2 „Für Entwickler“) [2]. Microsofts Spezifikation der Gruppenrichtlinien-Einstellungen nennt HideFileExt in den erweiterten Explorer-Einstellungen des Benutzers als Registry-Wert hinter dieser Option [3].
 
 ## Warum es helfen kann
 Du siehst, was eine Datei wirklich ist, etwa ein gefälschtes „dokument.pdf.exe“.

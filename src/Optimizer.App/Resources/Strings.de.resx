@@ -8,50 +8,50 @@
   <data name="Nav_Advisor" xml:space="preserve"><value>BIOS &amp; Hardware</value></data>
   <data name="Nav_Hardware" xml:space="preserve"><value>Systeminfo</value></data>
   <data name="Nav_Settings" xml:space="preserve"><value>Einstellungen</value></data>
-  <data name="Scan_Running" xml:space="preserve"><value>Dein PC wird geprüft</value></data>
-  <data name="Scan_Probe" xml:space="preserve"><value>Lese: {0}</value></data>
-  <data name="Scan_Again" xml:space="preserve"><value>Erneut prüfen</value></data>
-  <data name="Dash_Findings" xml:space="preserve"><value>Befunde</value></data>
+  <data name="Scan_Running" xml:space="preserve"><value>Dein PC wird gescannt</value></data>
+  <data name="Scan_Probe" xml:space="preserve"><value>Wird gelesen: {0}</value></data>
+  <data name="Scan_Again" xml:space="preserve"><value>Erneut scannen</value></data>
+  <data name="Dash_Findings" xml:space="preserve"><value>Ergebnisse</value></data>
   <data name="Dash_Problems" xml:space="preserve"><value>Gefundene Probleme: {0}</value></data>
-  <data name="Dash_CountsHint" xml:space="preserve"><value>Manuelle Prüfungen betreffen Dinge, die nur du ändern kannst, im BIOS oder an der Hardware. BIOS &amp; Hardware listet sie auf.</value></data>
+  <data name="Dash_CountsHint" xml:space="preserve"><value>Manuelle Checks betreffen Dinge, die nur du ändern kannst, im BIOS oder an der Hardware. BIOS &amp; Hardware listet sie auf.</value></data>
   <data name="Dash_NoProblems" xml:space="preserve"><value>Keine Probleme gefunden</value></data>
-  <data name="Dash_ShowAll" xml:space="preserve"><value>Bestandene Prüfungen zeigen</value></data>
+  <data name="Dash_ShowAll" xml:space="preserve"><value>Bestandene Checks zeigen</value></data>
   <data name="Dash_GameAccess" xml:space="preserve"><value>Spielzugang</value></data>
   <data name="Dash_GameAccessHint" xml:space="preserve"><value>Was Kernel-Anti-Cheats vor dem Spielstart prüfen. Nicht Teil der Wirkungsbewertung.</value></data>
   <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; Hardware</value></data>
   <data name="Advisor_Hint" xml:space="preserve"><value>Dinge, die nur du ändern kannst: BIOS-Einstellungen, Steckplätze, Firmware-Updates. Jeder Punkt erklärt, wie es geht.</value></data>
   <data name="Hw_Title" xml:space="preserve"><value>Systeminfo</value></data>
-  <data name="Hw_Hint" xml:space="preserve"><value>Alles, was der Scanner gelesen hat. Es wurde nichts verändert.</value></data>
+  <data name="Hw_Hint" xml:space="preserve"><value>Alles, was der Scan ausgelesen hat. Es wurde nichts geändert.</value></data>
   <data name="Hw_Os" xml:space="preserve"><value>Windows</value></data>
-  <data name="Hw_Cpu" xml:space="preserve"><value>Prozessor</value></data>
+  <data name="Hw_Cpu" xml:space="preserve"><value>CPU</value></data>
   <data name="Hw_Gpu" xml:space="preserve"><value>Grafik</value></data>
-  <data name="Hw_Memory" xml:space="preserve"><value>Arbeitsspeicher</value></data>
+  <data name="Hw_Memory" xml:space="preserve"><value>RAM</value></data>
   <data name="Hw_Displays" xml:space="preserve"><value>Bildschirme</value></data>
   <data name="Hw_Firmware" xml:space="preserve"><value>Firmware &amp; Sicherheit</value></data>
   <data name="Hw_Board" xml:space="preserve"><value>Mainboard</value></data>
   <data name="Hw_Power" xml:space="preserve"><value>Energie</value></data>
-  <data name="Hw_Storage" xml:space="preserve"><value>Speicher</value></data>
+  <data name="Hw_Storage" xml:space="preserve"><value>Laufwerke</value></data>
   <data name="Hw_Network" xml:space="preserve"><value>Netzwerk</value></data>
   <data name="Hw_Software" xml:space="preserve"><value>Spiele &amp; Anti-Cheat</value></data>
   <data name="Hw_Errors" xml:space="preserve"><value>Fehler beim Auslesen</value></data>
   <data name="Hw_Copy" xml:space="preserve"><value>Kopieren</value></data>
   <data name="Hw_Copied" xml:space="preserve"><value>Systeminfo kopiert. Sie enthält deinen Windows-Benutzernamen und Geräte-IDs: prüfe sie, bevor du sie veröffentlichst.</value></data>
   <data name="Hw_ShowDetails" xml:space="preserve"><value>Technische Details</value></data>
-  <data name="Advisor_PassedHidden" xml:space="preserve"><value>Ausgeblendete bestandene Prüfungen: {0}</value></data>
+  <data name="Advisor_PassedHidden" xml:space="preserve"><value>Ausgeblendete bestandene Checks: {0}</value></data>
   <data name="Tweaks_Search" xml:space="preserve"><value>Tweaks suchen</value></data>
   <data name="Startup_Search" xml:space="preserve"><value>Nach Name, Datei oder Herausgeber suchen</value></data>
-  <data name="Banner_NotValidated" xml:space="preserve"><value>Windows-Build {0} ist neuer als die Builds, auf denen diese Version geprüft wurde. Die Prüfungen laufen normal, einzelne können aber ungenau sein.</value></data>
+  <data name="Banner_NotValidated" xml:space="preserve"><value>Windows-Build {0} ist neuer als die Builds, auf denen diese Version geprüft wurde. Die Checks laufen normal, einzelne können aber ungenau sein.</value></data>
   <data name="Banner_Insider" xml:space="preserve"><value>Windows-Insider-Build erkannt ({0}).</value></data>
   <data name="Banner_Managed" xml:space="preserve"><value>Dieser PC wird von einer Organisation verwaltet (Domäne, Entra ID oder MDM). Richtlinien können Einstellungen überschreiben.</value></data>
   <data name="Banner_SeparateAdmin" xml:space="preserve"><value>Die App läuft als {0}, angemeldet ist aber {1}. Benutzereinstellungen gehören zu {1}.</value></data>
   <data name="Banner_NotElevated" xml:space="preserve"><value>Läuft ohne Administratorrechte. Einige Werte (zum Beispiel TPM) erscheinen als unbekannt.</value></data>
   <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home und Pro erhalten seit dem 13. Oktober 2026 keine Updates mehr. Aktualisiere auf 25H2 oder 26H2.</value></data>
-  <data name="Startup_RuntimeFolderUnsafe" xml:space="preserve"><value>Das Programm konnte seine Laufzeitbibliotheken nicht in seinen geschützten Ordner verschieben und startet deshalb nicht mit Administratorrechten. Falls die Umgebungsvariablen {0} oder {1} für dein Konto gesetzt sind, entferne sie und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
-  <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>Der Datenordner {0} wurde von einem anderen Konto angelegt und lässt sich nicht entfernen. Schließe alle Programme, lösche den Ordner und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
+  <data name="Startup_RuntimeFolderUnsafe" xml:space="preserve"><value>Das Programm konnte seine Laufzeitbibliotheken nicht in seinen geschützten Ordner verschieben und startet deshalb nicht mit Administratorrechten. Falls die Umgebungsvariablen {0} oder {1} für dein Konto gesetzt sind, entferne sie und starte PCOptimizer erneut. Es wurde nichts geändert.</value></data>
+  <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>Der Datenordner {0} wurde von einem anderen Konto angelegt und lässt sich nicht entfernen. Schließe alle Programme, lösche den Ordner und starte PCOptimizer erneut. Es wurde nichts geändert.</value></data>
   <data name="Tweaks_ShowNotApplicable" xml:space="preserve"><value>Tweaks zeigen, die nicht zu diesem PC passen</value></data>
   <data name="Gate_Title" xml:space="preserve"><value>Windows-Version nicht unterstützt</value></data>
-  <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer braucht Windows 11 24H2 (Build 26100) oder neuer. Dieser PC nutzt Build {0}. Bitte aktualisiere zuerst Windows. Es wurde nichts verändert.</value></data>
-  <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer unterstützt nur x64-PCs. ARM64-PCs werden nicht unterstützt. Es wurde nichts verändert.</value></data>
+  <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer braucht Windows 11 24H2 (Build 26100) oder neuer. Dieser PC nutzt Build {0}. Bitte aktualisiere zuerst Windows. Es wurde nichts geändert.</value></data>
+  <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer unterstützt nur x64-PCs. ARM64-PCs werden nicht unterstützt. Es wurde nichts geändert.</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="Settings_Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="Settings_Theme" xml:space="preserve"><value>Design</value></data>
@@ -71,18 +71,17 @@
   <data name="Verdict_Fair" xml:space="preserve"><value>Einige Punkte lohnen sich</value></data>
   <data name="Verdict_Poor" xml:space="preserve"><value>Deutliche Probleme gefunden</value></data>
   <data name="Count_Problems" xml:space="preserve"><value>Probleme</value></data>
-  <data name="Count_Advisor" xml:space="preserve"><value>manuelle Prüfungen</value></data>
+  <data name="Count_Advisor" xml:space="preserve"><value>manuelle Checks</value></data>
   <data name="Count_Passed" xml:space="preserve"><value>bestanden</value></data>
-  <data name="Headline_Scanning" xml:space="preserve"><value>Prüfung läuft</value></data>
+  <data name="Headline_Scanning" xml:space="preserve"><value>Scan läuft</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
-  <data name="LastScan" xml:space="preserve"><value>Letzte Prüfung {0}</value></data>
+  <data name="LastScan" xml:space="preserve"><value>Letzter Scan {0}</value></data>
   <data name="Scan_Idle" xml:space="preserve"><value>Bereit</value></data>
-  <data name="Empty_List" xml:space="preserve"><value>Hier gibt es nichts zu tun. Mit „Bestandene Prüfungen zeigen“ siehst du alle Prüfungen.</value></data>
+  <data name="Empty_List" xml:space="preserve"><value>Hier gibt es nichts zu tun. Mit „Bestandene Checks zeigen“ siehst du alle Checks.</value></data>
   <data name="Nav_Tweaks" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Nav_Changes" xml:space="preserve"><value>Änderungen</value></data>
   <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Tweaks_Hint" xml:space="preserve"><value>Jede Änderung zeigt genau, was sie tut, und lässt sich rückgängig machen. Empfohlene Punkte passen zu diesem PC.</value></data>
-  <data name="Tweaks_All" xml:space="preserve"><value>Alle</value></data>
   <data name="Tweaks_Summary" xml:space="preserve"><value>{0} Tweaks, {1} an, {2} für diesen PC empfohlen</value></data>
   <data name="Tweaks_OnlyRecommended" xml:space="preserve"><value>Nur empfohlene</value></data>
   <data name="Tweak_TurnOn" xml:space="preserve"><value>Einschalten</value></data>
@@ -94,7 +93,7 @@
   <data name="Result_AppliedSignOut" xml:space="preserve"><value>Angewendet: {0}. Melde dich ab und wieder an, um abzuschließen.</value></data>
   <data name="Result_Ineffective" xml:space="preserve"><value>Angewendet, aber Windows nutzt den neuen Wert nicht: {0}</value></data>
   <data name="Result_NothingToDo" xml:space="preserve"><value>Nichts zu ändern, die Einstellung ist bereits gesetzt.</value></data>
-  <data name="Result_Failed" xml:space="preserve"><value>Nicht angewendet. Nichts blieb halb geändert. Grund: {0}</value></data>
+  <data name="Result_Failed" xml:space="preserve"><value>Nicht angewendet. Es bleibt nichts halb geändert zurück. Grund: {0}</value></data>
   <data name="Result_Undone" xml:space="preserve"><value>Rückgängig gemacht: {0}</value></data>
   <data name="Result_UndoneSkipped" xml:space="preserve"><value>Rückgängig gemacht: {0}. Windows hatte {1} der Werte bereits geändert, sie bleiben wie sie sind.</value></data>
   <data name="Result_UndoAll" xml:space="preserve"><value>Rückgängig gemachte Änderungen: {0}.</value></data>
@@ -135,14 +134,14 @@
   <data name="Rp_Enable" xml:space="preserve"><value>Einschalten und fortfahren</value></data>
   <data name="Rp_Continue" xml:space="preserve"><value>Ohne fortfahren</value></data>
   <data name="UndoAll_Title" xml:space="preserve"><value>Alle Änderungen rückgängig machen?</value></data>
-  <data name="UndoAll_Text" xml:space="preserve"><value>Rückgängig zu machende Änderungen: {0}. Werte, die Windows seitdem geändert hat, bleiben wie sie sind.</value></data>
+  <data name="UndoAll_Text" xml:space="preserve"><value>Änderungen, die rückgängig gemacht werden: {0}. Werte, die Windows seitdem geändert hat, bleiben wie sie sind.</value></data>
   <data name="Busy" xml:space="preserve"><value>Wird ausgeführt</value></data>
   <data name="Banner_AdminToApply" xml:space="preserve"><value>Änderungen brauchen Administratorrechte. Starte PCOptimizer als Administrator, um sie anzuwenden oder rückgängig zu machen.</value></data>
   <data name="Nav_Network" xml:space="preserve">
     <value>Grafik &amp; Netzwerk</value>
   </data>
   <data name="Nav_Debloat" xml:space="preserve">
-    <value>Entrümpeln</value>
+    <value>Debloat</value>
   </data>
   <data name="Nav_Cleanup" xml:space="preserve">
     <value>Bereinigen</value>
@@ -157,7 +156,7 @@
     <value>Apps &amp; Treiber</value>
   </data>
   <data name="Nav_Tools" xml:space="preserve">
-    <value>Werkzeuge</value>
+    <value>Tools</value>
   </data>
   <data name="Nav_Health" xml:space="preserve">
     <value>Zustand</value>
@@ -166,7 +165,7 @@
     <value>Aktualisieren</value>
   </data>
   <data name="Common_Stop" xml:space="preserve">
-    <value>Stopp</value>
+    <value>Anhalten</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
     <value>Speichern</value>
@@ -238,7 +237,7 @@
     <value>DNS</value>
   </data>
   <data name="Net_DnsHint" xml:space="preserve">
-    <value>DNS beeinflusst nur, wie schnell Namen aufgelöst werden, nicht deinen Ping in Spielen. Andere Server zu wählen fragt vorher nach und lässt sich rückgängig machen.</value>
+    <value>DNS beeinflusst nur, wie schnell Namen aufgelöst werden, nicht deinen Ping in Spielen. Bevor andere Server eingestellt werden, fragt die App nach, und die Änderung lässt sich rückgängig machen.</value>
   </data>
   <data name="Net_NoDns" xml:space="preserve">
     <value>Keine DNS-Server gefunden.</value>
@@ -247,13 +246,13 @@
     <value>DNS-Test</value>
   </data>
   <data name="Net_BenchmarkHint" xml:space="preserve">
-    <value>Sendet je 20 kleine DNS-Anfragen an jeden Server (deine aktuellen, Cloudflare, Google, Quad9) und misst die Antwortzeit. Läuft nur, wenn du ihn startest.</value>
+    <value>Sendet 20 kleine DNS-Anfragen an jeden Server (deine aktuellen, Cloudflare, Google, Quad9) und misst die Antwortzeit. Läuft nur, wenn du ihn startest.</value>
   </data>
   <data name="Net_RunBenchmark" xml:space="preserve">
     <value>Test starten</value>
   </data>
   <data name="Net_Testing" xml:space="preserve">
-    <value>Teste {0}</value>
+    <value>{0} wird getestet</value>
   </data>
   <data name="Net_BenchmarkDone" xml:space="preserve">
     <value>Fertig. Mittlere Antwortzeit, beste Zeit, beantwortete Anfragen.</value>
@@ -271,13 +270,13 @@
     <value>MSI-Modus und Interrupt-Affinität pro Gerät. Umstritten, startkritisch und nur mit Benchmark vorher und nachher sinnvoll.</value>
   </data>
   <data name="Debloat_Title" xml:space="preserve">
-    <value>Entrümpeln</value>
+    <value>Debloat</value>
   </data>
   <data name="Debloat_Hint" xml:space="preserve">
     <value>Vorinstallierte Apps, die du entfernen kannst. Nur Apps aus einer geprüften Liste werden angeboten; Teile von Windows und Apps, die Spiele brauchen, nie.</value>
   </data>
   <data name="Debloat_NotUndoable" xml:space="preserve">
-    <value>Das Entfernen einer App kann diese App nicht rückgängig machen. Für Apps, die es noch im Microsoft Store gibt, enthält die Liste der entfernten Apps einen Link zum Neuinstallieren.</value>
+    <value>PCOptimizer kann das Entfernen einer App nicht rückgängig machen. Für Apps, die es noch im Microsoft Store gibt, enthält die Liste der entfernten Apps einen Link zum Neuinstallieren.</value>
   </data>
   <data name="Debloat_Empty" xml:space="preserve">
     <value>Keine der Apps aus der Liste ist installiert.</value>
@@ -305,7 +304,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie n
     <value>Entfernte Apps</value>
   </data>
   <data name="Debloat_RemovedEmpty" xml:space="preserve">
-    <value>Mit dieser App wurden keine Apps entfernt.</value>
+    <value>Mit PCOptimizer wurden noch keine Apps entfernt.</value>
   </data>
   <data name="Debloat_Reinstall" xml:space="preserve">
     <value>Microsoft Store</value>
@@ -332,7 +331,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie n
     <value>Deinstallieren</value>
   </data>
   <data name="Debloat_EdgeText" xml:space="preserve">
-    <value>Microsoft Edge entfernt diese App nicht: Windows und viele Apps nutzen seine WebView2-Komponente. Im Europäischen Wirtschaftsraum kannst du Edge unter Einstellungen &gt; Apps &gt; Installierte Apps deinstallieren. Um es nicht mehr zu nutzen, wähle unter Einstellungen &gt; Apps &gt; Standard-Apps einen anderen Standardbrowser.</value>
+    <value>PCOptimizer entfernt Microsoft Edge nicht: Windows und viele Apps brauchen die WebView2-Komponente von Edge. Im Europäischen Wirtschaftsraum kannst du Edge unter Einstellungen &gt; Apps &gt; Installierte Apps deinstallieren. Um es nicht mehr zu nutzen, wähle unter Einstellungen &gt; Apps &gt; Standard-Apps einen anderen Standardbrowser.</value>
   </data>
   <data name="Cleanup_Title" xml:space="preserve">
     <value>Bereinigen</value>
@@ -358,7 +357,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie n
 Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprungen.</value>
   </data>
   <data name="Cleanup_Done" xml:space="preserve">
-    <value>{0} freigegeben. Übersprungene Dateien, weil sie in Benutzung waren: {1}.</value>
+    <value>{0} freigegeben. In Benutzung und daher übersprungen: {1}.</value>
   </data>
   <data name="Cleanup_More" xml:space="preserve">
     <value>Weitere Bereinigung</value>
@@ -373,7 +372,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Windows entfernt alte Komponentenversionen. Bisher installierte Updates lassen sich danach nicht mehr deinstallieren. Das kann einige Minuten dauern.</value>
   </data>
   <data name="Cleanup_DoTitle" xml:space="preserve">
-    <value>Cache der Übermittlungsoptimierung</value>
+    <value>Cache der Übermittlungsoptimierung (Delivery Optimization)</value>
   </data>
   <data name="Cleanup_DoHint" xml:space="preserve">
     <value>Updatedateien, die Windows zum Teilen mit anderen PCs aufbewahrt. Kann gelöscht werden; Windows lädt Benötigtes neu.</value>
@@ -400,13 +399,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Windows-Einträge ausblenden</value>
   </data>
   <data name="Startup_Summary" xml:space="preserve">
-    <value>Einträge: {0}. Programme anderer Hersteller bei der Anmeldung: {1}. Brauchen Aufmerksamkeit (unsigniert oder ungewöhnlich): {2}.</value>
+    <value>Einträge: {0}. Programme anderer Hersteller bei der Anmeldung: {1}. Auffällig (nicht signiert oder ungewöhnlich): {2}.</value>
   </data>
   <data name="Startup_NoPublisher" xml:space="preserve">
     <value>Kein Herausgeber</value>
   </data>
   <data name="Startup_ReadOnly" xml:space="preserve">
-    <value>Nur angezeigt</value>
+    <value>Nur Anzeige</value>
   </data>
   <data name="Vt_Check" xml:space="preserve">
     <value>Mit VirusTotal prüfen</value>
@@ -418,13 +417,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Trage zuerst deinen VirusTotal-API-Schlüssel in den Einstellungen ein.</value>
   </data>
   <data name="Vt_Progress" xml:space="preserve">
-    <value>Prüfe {0} von {1}</value>
+    <value>Wird geprüft: {0} von {1}</value>
   </data>
   <data name="Vt_Done" xml:space="preserve">
-    <value>VirusTotal-Prüfung abgeschlossen.</value>
+    <value>VirusTotal-Check abgeschlossen.</value>
   </data>
   <data name="Vt_Stopped" xml:space="preserve">
-    <value>VirusTotal-Prüfung angehalten.</value>
+    <value>VirusTotal-Check angehalten.</value>
   </data>
   <data name="Vt_SettingsHint" xml:space="preserve">
     <value>Optional. Mit deinem eigenen kostenlosen API-Schlüssel von virustotal.com kann die Seite Autostart Datei-Hashes nachschlagen. Der Schlüssel wird für dein Windows-Konto verschlüsselt gespeichert.</value>
@@ -454,7 +453,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Alle Windows-Dienste zeigen</value>
   </data>
   <data name="Svc_Rules" xml:space="preserve">
-    <value>Windows-Dienste sind schreibgeschützt, außer die App erklärt sie, und dann wird nur Manuell angeboten. Dienste anderer Hersteller lassen sich auf Manuell oder Deaktiviert stellen.</value>
+    <value>Windows-Dienste lassen sich hier nicht ändern, außer die App erklärt sie; dann wird nur Manuell angeboten. Dienste anderer Hersteller lassen sich auf Manuell oder Deaktiviert stellen.</value>
   </data>
   <data name="Svc_ReadOnly" xml:space="preserve">
     <value>Hier nicht änderbar</value>
@@ -487,7 +486,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Apps &amp; Treiber</value>
   </data>
   <data name="Apps_Hint" xml:space="preserve">
-    <value>Gängige Gaming-Apps und Werkzeuge, installiert mit winget aus den offiziellen Quellen. Darunter die Treiber mit ihrem Alter und der Bezugsquelle für Updates.</value>
+    <value>Gängige Gaming-Apps und Tools, installiert mit winget aus den offiziellen Quellen. Darunter die Treiber mit ihrem Alter und der Bezugsquelle für Updates.</value>
   </data>
   <data name="Apps_NoWinget" xml:space="preserve">
     <value>winget (App-Installer) wurde nicht gefunden. Installiere „App-Installer“ aus dem Microsoft Store.</value>
@@ -502,7 +501,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Wird installiert</value>
   </data>
   <data name="Apps_StartedForUser" xml:space="preserve">
-    <value>Für dein Konto gestartet. Starte den Scan erneut, wenn es fertig ist.</value>
+    <value>Für dein Konto gestartet. Starte den Scan erneut, wenn die Installation fertig ist.</value>
   </data>
   <data name="Apps_Failed" xml:space="preserve">
     <value>Installation fehlgeschlagen (winget-Code {0}).</value>
@@ -541,7 +540,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Chipsatz und System</value>
   </data>
   <data name="Tools_Title" xml:space="preserve">
-    <value>Werkzeuge</value>
+    <value>Tools</value>
   </data>
   <data name="Tools_Hint" xml:space="preserve">
     <value>Speicheranalyse, Windows-Features, Programmprioritäten, Netzwerkhilfen und Windows-Reparatur.</value>
@@ -568,7 +567,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Analyse angehalten.</value>
   </data>
   <data name="Storage_WaitForScan" xml:space="preserve">
-    <value>Warte, bis die Prüfung des PCs fertig ist: Sie findet die Spieleordner, die die Analyse nie zum Löschen anbietet.</value>
+    <value>Warte, bis der Scan fertig ist: Er findet die Spieleordner, die die Analyse nie zum Löschen anbietet.</value>
   </data>
   <data name="Storage_Largest" xml:space="preserve">
     <value>Größte Dateien</value>
@@ -608,7 +607,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Ausschalten empfohlen.</value>
   </data>
   <data name="Feat_Hypervisor" xml:space="preserve">
-    <value>Startet eingeschaltet den Windows-Hypervisor.</value>
+    <value>Startet den Windows-Hypervisor, wenn es eingeschaltet ist.</value>
   </data>
   <data name="Repair_Title" xml:space="preserve">
     <value>Windows Update reparieren</value>
@@ -668,46 +667,46 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Zustand</value>
   </data>
   <data name="Health_Hint" xml:space="preserve">
-    <value>Prüfungen unter Last und Live-Werte: Drosselung, Bildraten-Benchmark, Laufwerke und Sensoren.</value>
+    <value>Tests unter Last und Live-Werte: Throttling, FPS-Benchmark, Laufwerke und Sensoren.</value>
   </data>
   <data name="Throttle_Title" xml:space="preserve">
-    <value>Drosselungsprüfung</value>
+    <value>Throttling-Test</value>
   </data>
   <data name="Throttle_Hint" xml:space="preserve">
-    <value>Starte die Prüfung und spiele dann ein anspruchsvolles Spiel. Die App misst einmal pro Sekunde die Grenzen von Prozessor und Grafikkarte. Es wird nichts geändert.</value>
+    <value>Starte den Test und spiele dann ein anspruchsvolles Spiel. Die App misst einmal pro Sekunde die Limits von CPU und GPU. Es wird nichts geändert.</value>
   </data>
   <data name="Throttle_Start" xml:space="preserve">
-    <value>Prüfung starten</value>
+    <value>Test starten</value>
   </data>
   <data name="Throttle_Sample" xml:space="preserve">
-    <value>Messwerte: {0}, Prozessorgrenze {1}, Prozessorauslastung {2}, GPU {3}</value>
+    <value>Messwerte: {0}, CPU-Limit {1}, CPU-Auslastung {2}, GPU {3}</value>
   </data>
   <data name="Throttle_TooShort" xml:space="preserve">
     <value>Zu wenige Messwerte. Miss mindestens 10 Sekunden beim Spielen.</value>
   </data>
   <data name="Throttle_Result" xml:space="preserve">
-    <value>Letzte Prüfung {0}. Messwerte: {1}. Prozessor ausgelastet {2} %, begrenzt {3} % der ausgelasteten Zeit. {4} {5}</value>
+    <value>Letzter Test {0}. Messwerte: {1}. CPU ausgelastet: {2} % der Zeit, davon begrenzt: {3} %. {4} {5}</value>
   </data>
   <data name="Throttle_Gpu" xml:space="preserve">
-    <value>Grafikkarte an der Temperaturgrenze {0} %, am Leistungslimit {1} %.</value>
+    <value>GPU am Temperaturlimit {0} %, am Power-Limit {1} %.</value>
   </data>
   <data name="Throttle_GpuNone" xml:space="preserve">
-    <value>Grenzen der Grafikkarte wurden nicht gemeldet; nur NVIDIA-Grafikkarten melden sie.</value>
+    <value>Die GPU hat ihre Limits nicht gemeldet; das tun nur NVIDIA-Grafikkarten.</value>
   </data>
   <data name="Throttle_NotReported" xml:space="preserve">
     <value>nicht gemeldet</value>
   </data>
   <data name="Throttle_Verdict_Ok" xml:space="preserve">
-    <value>Keine Drosselung gefunden.</value>
+    <value>Kein Throttling gefunden.</value>
   </data>
   <data name="Throttle_Verdict_Bad" xml:space="preserve">
-    <value>Drosselung gefunden; siehe den Befund auf der Übersicht.</value>
+    <value>Throttling gefunden; siehe das Ergebnis auf der Übersicht.</value>
   </data>
   <data name="Throttle_Verdict_NoLoad" xml:space="preserve">
-    <value>Der Prozessor war zu wenig ausgelastet, um seine Drosselung zu beurteilen. Miss erneut, während ein Spiel oder ein Lasttest ihn stärker auslastet.</value>
+    <value>Die CPU war zu wenig ausgelastet, um Throttling zu beurteilen. Miss erneut, während ein Spiel oder ein Lasttest sie stärker auslastet.</value>
   </data>
   <data name="Bench_Title" xml:space="preserve">
-    <value>Bildraten-Benchmark</value>
+    <value>FPS-Benchmark</value>
   </data>
   <data name="Bench_Hint" xml:space="preserve">
     <value>Misst Frametimes mit Intel PresentMon. Nimm mindestens drei Durchläufe vor (A) und drei nach (B) einer Änderung auf, in derselben Szene. Eine Änderung zählt nur, wenn sich die Bereiche der Durchläufe nicht überschneiden.</value>
@@ -722,10 +721,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Leeren</value>
   </data>
   <data name="Bench_Capturing" xml:space="preserve">
-    <value>Nehme {0} {1} Sekunden lang auf. Spiel weiter.</value>
+    <value>{0} wird {1} Sekunden lang aufgenommen. Spiel weiter.</value>
   </data>
   <data name="Bench_NoFrames" xml:space="preserve">
-    <value>Keine Bilder aufgenommen. Läuft das Spiel im Vordergrund?</value>
+    <value>Keine Frames aufgenommen. Läuft das Spiel im Vordergrund?</value>
   </data>
   <data name="Bench_Done" xml:space="preserve">
     <value>Durchlauf gespeichert.</value>
@@ -772,14 +771,17 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Sensors_Title" xml:space="preserve">
     <value>Sensoren</value>
   </data>
+  <data name="Sensors_Live" xml:space="preserve">
+    <value>Live-Messwerte</value>
+  </data>
   <data name="Sensors_Hint" xml:space="preserve">
-    <value>Live-Temperaturen, Takte, Auslastung und Lüfter (LibreHardwareMonitor). Aus, bis du es einschaltest. Prozessor- und Mainboard-Sensoren brauchen den signierten PawnIO-Treiber.</value>
+    <value>Live-Temperaturen, Takte, Auslastung und Lüfter (LibreHardwareMonitor). Aus, bis du es einschaltest. CPU- und Mainboard-Sensoren brauchen den signierten PawnIO-Treiber.</value>
   </data>
   <data name="Sensors_PawnIoOn" xml:space="preserve">
     <value>Der PawnIO-Treiber ist installiert.</value>
   </data>
   <data name="Sensors_PawnIoOff" xml:space="preserve">
-    <value>Der PawnIO-Treiber ist nicht installiert: Prozessor- und Mainboard-Sensoren sind nicht verfügbar. Installiere ihn mit der Schaltfläche hier oder unter Apps &amp; Treiber.</value>
+    <value>Der PawnIO-Treiber ist nicht installiert: CPU- und Mainboard-Sensoren sind nicht verfügbar. Installiere ihn mit der Schaltfläche hier oder unter Apps &amp; Treiber.</value>
   </data>
   <data name="Sensors_InstallPawnIo" xml:space="preserve">
     <value>PawnIO installieren</value>
@@ -788,7 +790,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>PawnIO installieren?</value>
   </data>
   <data name="Sensors_PawnIoText" xml:space="preserve">
-    <value>PawnIO ist ein signierter Kerneltreiber, mit dem Sensorprogramme Prozessor- und Mainboard-Sensoren lesen können. Er wird mit winget (namazso.PawnIO) installiert. Die Deinstallation unter Einstellungen &gt; Apps entfernt das Programm, der Treiber kann aber in Windows bleiben. Um auch ihn zu entfernen, suche in pnputil /enum-drivers die oem-Datei mit dem Originalnamen pawnio.inf und führe pnputil /delete-driver &lt;Datei&gt; /uninstall aus.</value>
+    <value>PawnIO ist ein signierter Kerneltreiber, mit dem Sensorprogramme CPU- und Mainboard-Sensoren lesen können. Er wird mit winget (namazso.PawnIO) installiert. Die Deinstallation unter Einstellungen &gt; Apps entfernt das Programm, der Treiber kann aber in Windows bleiben. Um auch ihn zu entfernen, suche in pnputil /enum-drivers die oem-Datei mit dem Originalnamen pawnio.inf und führe pnputil /delete-driver &lt;Datei&gt; /uninstall aus.</value>
   </data>
   <data name="SensorType_Temperature" xml:space="preserve">
     <value>Temperatur</value>
@@ -815,7 +817,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Nach dem Windows-Update auf {0} sind diese Änderungen nicht mehr aktiv: {1}</value>
   </data>
   <data name="Drift_BannerOther" xml:space="preserve">
-    <value>Diese Änderungen sind nicht mehr aktiv, von Windows oder einem anderen Programm zurückgesetzt: {0}</value>
+    <value>Diese Änderungen sind nicht mehr aktiv, weil Windows oder ein anderes Programm sie zurückgesetzt hat: {0}</value>
   </data>
   <data name="Drift_More" xml:space="preserve">
     <value>und {0} weitere</value>
@@ -839,13 +841,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Windows wurde von {0} auf {1} aktualisiert. Jede Änderung dieser App ist weiterhin aktiv. Änderungen: {2}.</value>
   </data>
   <data name="Startup_ScriptHost" xml:space="preserve">
-    <value>Startet einen Skript-Host (PowerShell, cmd, mshta oder ähnlich). Das Programm selbst ist von Microsoft signiert, aber die Befehlszeile bestimmt, was ausgeführt wird: Schadsoftware startet oft so, manche seriöse Tools auch. Prüfe den Befehl.</value>
+    <value>Startet einen Skript-Host (PowerShell, cmd, mshta oder ähnlich). Das Programm selbst ist von Microsoft signiert, aber die Befehlszeile bestimmt, was ausgeführt wird: Schadsoftware startet oft so, manche seriösen Tools auch. Prüfe den Befehl.</value>
   </data>
   <data name="Result_NoRestorePoint" xml:space="preserve">
     <value>Es konnte kein Wiederherstellungspunkt erstellt werden, daher wurde nichts geändert. Versuche es gleich noch einmal oder wähle „Ohne fortfahren“ (die Sicherung der Originalwerte wird in jedem Fall angelegt).</value>
   </data>
   <data name="Storage_RecycleOtherAccount" xml:space="preserve">
-    <value>Diese App läuft unter einem anderen Konto ({0}). Die Dateien landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Betrachte das Löschen als endgültig.</value>
+    <value>Diese App läuft unter einem anderen Konto ({0}). Die Dateien landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Geh davon aus, dass die Dateien endgültig gelöscht sind.</value>
   </data>
   <data name="Profile_Label" xml:space="preserve">
     <value>Profil</value>
@@ -872,7 +874,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Älterer PC</value>
   </data>
   <data name="ProfileDesc_gaming" xml:space="preserve">
-    <value>Höchste Bildraten und geringste Latenz.</value>
+    <value>Höchste FPS und geringste Latenz.</value>
   </data>
   <data name="ProfileDesc_laptopGaming" xml:space="preserve">
     <value>Volle Leistung am Netzteil, ohne Einstellungen, die unterwegs den Akku leeren.</value>
@@ -887,7 +889,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Weniger Wärme und Lüfterlärm, auf Kosten der Spitzenleistung.</value>
   </data>
   <data name="ProfileDesc_lowEnd" xml:space="preserve">
-    <value>Hält einen PC mit wenig Arbeitsspeicher oder Festplatte reaktionsschnell.</value>
+    <value>Hält einen PC mit wenig RAM oder einer Festplatte (HDD) reaktionsschnell.</value>
   </data>
   <data name="Profile_Suggested" xml:space="preserve">
     <value>Für diesen PC vorgeschlagen: {0}</value>
@@ -905,7 +907,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Nur dieses Profil</value>
   </data>
   <data name="Impact_TooltipGoal" xml:space="preserve">
-    <value>Auswirkung auf {0}: {1} von 5</value>
+    <value>Wirkung auf {0}: {1} von 5</value>
   </data>
   <data name="Impact_Against" xml:space="preserve">
     <value>Wirkt gegen dieses Profil</value>
@@ -917,13 +919,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Änderungen auf diesem PC, die gegen dieses Profil wirken</value>
   </data>
   <data name="Rec_AgainstHint" xml:space="preserve">
-    <value>Rückgängig gibt es für Änderungen dieser App. Andere hat Windows, ein anderes Tool oder du selbst gesetzt.</value>
+    <value>Rückgängig machen lässt sich nur, was diese App geändert hat. Den Rest haben Windows, ein anderes Tool oder du selbst eingestellt.</value>
   </data>
   <data name="Dash_ScoreFor" xml:space="preserve">
-    <value>Bereitschaft: {0}</value>
+    <value>Eignung für {0}</value>
   </data>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
-    <value>Beruht nur auf erkannten Problemen, gewichtet nach ihrer Auswirkung auf {0}. Tweaks bringen nie Punkte.</value>
+    <value>Beruht nur auf erkannten Problemen, gewichtet nach ihrer Wirkung auf {0}. Tweaks bringen nie Punkte.</value>
   </data>
   <data name="About_License" xml:space="preserve"><value>Kostenlos für private und andere nichtkommerzielle Nutzung unter der PolyForm Strict License 1.0.0. Ändern, Weitergeben oder Verkaufen nur mit Erlaubnis des Autors. Ohne Gewährleistung.</value></data>
   <data name="About_Licenses" xml:space="preserve"><value>Lizenzen</value></data>
@@ -935,7 +937,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Update_AtStart" xml:space="preserve"><value>Beim Start nach einer neuen Version suchen</value></data>
   <data name="Update_Hint" xml:space="preserve"><value>Fragt bei GitHub, ob es eine neuere Version gibt. Ein Update wird nur heruntergeladen, wenn du es bestätigst.</value></data>
   <data name="Update_CheckNow" xml:space="preserve"><value>Jetzt prüfen</value></data>
-  <data name="Update_Checking" xml:space="preserve"><value>Frage bei GitHub nach der neuesten Version.</value></data>
+  <data name="Update_Checking" xml:space="preserve"><value>Die neueste Version wird bei GitHub abgefragt.</value></data>
   <data name="Update_UpToDate" xml:space="preserve"><value>Version {0} ist die neueste Version.</value></data>
   <data name="Update_Available" xml:space="preserve"><value>Version {0} ist verfügbar.</value></data>
   <data name="Update_NoRelease" xml:space="preserve"><value>Es wurde noch keine Version veröffentlicht.</value></data>
@@ -945,12 +947,12 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Apps_GetAppInstaller" xml:space="preserve"><value>App Installer holen</value></data>
   <data name="Update_Install" xml:space="preserve"><value>Jetzt aktualisieren</value></data>
   <data name="Update_ConfirmTitle" xml:space="preserve"><value>Auf Version {0} aktualisieren?</value></data>
-  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer lädt Version {0} aus dem GitHub-Release, prüft, dass der Release-Schlüssel des Projekts sie signiert hat, ersetzt diese exe und startet neu. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
+  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer lädt Version {0} aus dem GitHub-Release, prüft, ob der Release-Schlüssel des Projekts sie signiert hat, ersetzt diese exe und startet neu. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
   <data name="Update_Restart" xml:space="preserve"><value>Aktualisieren und neu starten</value></data>
-  <data name="Update_Downloading" xml:space="preserve"><value>Lade Version {0} herunter: {1} %</value></data>
+  <data name="Update_Downloading" xml:space="preserve"><value>Version {0} wird heruntergeladen: {1} %</value></data>
   <data name="Update_Failed" xml:space="preserve"><value>Das Update konnte nicht heruntergeladen werden. Versuch es später noch einmal oder nutze die Download-Seite.</value></data>
   <data name="Update_BadChecksum" xml:space="preserve"><value>Die heruntergeladene Datei passt nicht zur Prüfsumme des Release und wurde gelöscht. Es wurde nichts geändert.</value></data>
-  <data name="Update_BadSignature" xml:space="preserve"><value>Das heruntergeladene Update ist nicht mit dem Release-Schlüssel von PCOptimizer signiert und wurde gelöscht. Es wurde nichts verändert. Nutze die Downloadseite und melde das.</value></data>
+  <data name="Update_BadSignature" xml:space="preserve"><value>Das heruntergeladene Update ist nicht mit dem Release-Schlüssel von PCOptimizer signiert und wurde gelöscht. Es wurde nichts geändert. Nutze die Downloadseite und melde das.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>Das Update wurde heruntergeladen, aber diese exe konnte nicht ersetzt werden ({0}). Nutze stattdessen die Download-Seite.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und aktualisiere dann.</value></data>
   <data name="Update_WingetText" xml:space="preserve"><value>PCOptimizer wurde mit winget installiert, deshalb installiert winget die Version {0}. PCOptimizer schließt sich, winget aktualisiert es in einem eigenen Fenster, und PCOptimizer startet neu; Windows fragt wie bei jedem Start nach Administratorrechten. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
@@ -972,7 +974,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Error_Unexpected" xml:space="preserve"><value>Etwas ist schiefgelaufen und wurde protokolliert. Du kannst es unter Einstellungen &gt; Diagnose melden.</value></data>
   <data name="Score_Pending" xml:space="preserve"><value>Die Bewertung erscheint, wenn der Scan fertig ist.</value></data>
   <data name="Dash_ProblemsPending" xml:space="preserve"><value>Gefundene Probleme</value></data>
-  <data name="Change_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung oder Prüfung fertig ist.</value></data>
+  <data name="Change_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung oder der Scan fertig ist.</value></data>
   <data name="Result_Error" xml:space="preserve"><value>Hat nicht funktioniert: {0}</value></data>
   <data name="Result_UndoIncomplete" xml:space="preserve"><value>Rückgängig machen unvollständig: {0}. Nicht wiederhergestellt: {1}. Der Rest bleibt auf der Seite Änderungen.</value></data>
   <data name="Result_UndoAllIncomplete" xml:space="preserve"><value>Rückgängig gemacht: {0}. Nicht vollständig rückgängig gemacht: {1}. Sie bleiben mit dem Grund auf der Seite Änderungen.</value></data>
@@ -982,7 +984,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Bench_Low" xml:space="preserve"><value>1-%-Low {0}</value></data>
   <data name="Bench_Fps" xml:space="preserve"><value>{0} FPS</value></data>
   <data name="Bench_Stopped" xml:space="preserve"><value>Aufzeichnung gestoppt. Dieser Durchlauf wurde nicht übernommen.</value></data>
-  <data name="Quick_Running" xml:space="preserve"><value>Läuft: {0}</value></data>
   <data name="Quick_IpRenew" xml:space="preserve"><value>IP-Adresse erneuern</value></data>
   <data name="Quick_IpRenewHint" xml:space="preserve"><value>Gibt die IP-Adresse jedes Netzwerkadapters frei und fordert sie neu an (ipconfig). Hilft, wenn der PC nach einem Router-Neustart keine gültige Adresse hat.</value></data>
   <data name="Quick_IpRenewConfirm" xml:space="preserve"><value>Die Netzwerkverbindung bricht für einige Sekunden ab, während die Adresse erneuert wird. Downloads und Onlinespiele verlieren die Verbindung.</value></data>
@@ -1007,12 +1008,12 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Quick_TimeSync" xml:space="preserve"><value>Uhr jetzt synchronisieren</value></data>
   <data name="Quick_TimeSyncHint" xml:space="preserve"><value>Startet den Windows-Zeitdienst und gleicht die Uhr mit dem Zeitserver ab (w32tm). Eine falsche Uhr stört Anmeldungen und sichere Verbindungen.</value></data>
   <data name="Quick_TimeSyncDone" xml:space="preserve"><value>Uhr synchronisiert.</value></data>
-  <data name="Quick_PerfCounters" xml:space="preserve"><value>Leistungsindikatoren neu aufbauen</value></data>
+  <data name="Quick_PerfCounters" xml:space="preserve"><value>Leistungsindikatoren (Performance Counter) neu aufbauen</value></data>
   <data name="Quick_PerfCountersHint" xml:space="preserve"><value>Stellt die Einstellungen der Leistungsindikatoren aus den Systemdateien wieder her (lodctr /r). Hilft, wenn Task-Manager, Sensoren oder Benchmarks keine Daten zeigen.</value></data>
   <data name="Quick_PerfCountersDone" xml:space="preserve"><value>Leistungsindikatoren neu aufgebaut.</value></data>
   <data name="Quick_DiskScan" xml:space="preserve"><value>Systemlaufwerk prüfen</value></data>
   <data name="Quick_DiskScanHint" xml:space="preserve"><value>Prüft das Systemlaufwerk auf Dateisystemfehler, während Windows weiterläuft (chkdsk /scan). Kann einige Minuten dauern.</value></data>
-  <data name="Quick_DiskScanDone" xml:space="preserve"><value>Laufwerksprüfung fertig. chkdsk meldet:</value></data>
+  <data name="Quick_DiskScanDone" xml:space="preserve"><value>Laufwerks-Check fertig. chkdsk meldet:</value></data>
   <data name="Quick_RecoveryEnable" xml:space="preserve"><value>Wiederherstellungsumgebung einschalten</value></data>
   <data name="Quick_RecoveryEnableHint" xml:space="preserve"><value>Schaltet die Windows-Wiederherstellungsumgebung ein (reagentc /enable), die Windows für die Starthilfe und das Zurücksetzen des PCs braucht.</value></data>
   <data name="Quick_RecoveryEnableDone" xml:space="preserve"><value>Fertig. reagentc meldet:</value></data>
@@ -1028,7 +1029,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Startup_CopyLocation" xml:space="preserve"><value>Ort kopieren</value></data>
   <data name="Startup_FileMissing" xml:space="preserve"><value>Die Datei dieses Eintrags existiert nicht.</value></data>
   <data name="Programs_Title" xml:space="preserve"><value>Installierte Programme</value></data>
-  <data name="Programs_Hint" xml:space="preserve"><value>Desktopprogramme aus der Deinstallationsliste von Windows. Deinstallieren startet das eigene Deinstallationsprogramm mit seinem Fenster. Vor der ersten Deinstallation einer Sitzung legt die App einen Wiederherstellungspunkt an, wenn der Computerschutz an ist. Store-Apps stehen auf der Seite Entrümpeln.</value></data>
+  <data name="Programs_Hint" xml:space="preserve"><value>Desktopprogramme aus der Deinstallationsliste von Windows. Deinstallieren startet das eigene Deinstallationsprogramm mit seinem Fenster. Vor der ersten Deinstallation einer Sitzung legt die App einen Wiederherstellungspunkt an, wenn der Computerschutz an ist. Store-Apps stehen auf der Seite Debloat.</value></data>
   <data name="Programs_Search" xml:space="preserve"><value>Programme suchen</value></data>
   <data name="Programs_Count" xml:space="preserve"><value>{0} Programme</value></data>
   <data name="Programs_Uninstall" xml:space="preserve"><value>Deinstallieren</value></data>
@@ -1052,7 +1053,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Drv_CleanHint" xml:space="preserve"><value>Wenn du die Grafikkartenmarke wechselst oder ein Treiber immer wieder Probleme macht, entfernt Display Driver Uninstaller (DDU) den alten Treiber vollständig, bevor du den neuen installierst. Der Autor empfiehlt den abgesicherten Modus und vorher eine Sicherung oder einen Wiederherstellungspunkt. PCOptimizer entfernt selbst keine Treiber.</value></data>
   <data name="Drv_CleanOpen" xml:space="preserve"><value>DDU-Seite öffnen</value></data>
   <data name="Prio_Title" xml:space="preserve"><value>Startprioritäten für Programme</value></data>
-  <data name="Prio_Hint" xml:space="preserve"><value>Windows startet das Programm jedes Mal mit dieser CPU-Priorität, ohne Hintergrundprogramm. Sinnvoll für ein Spiel, das mit beschäftigten Hintergrundprogrammen konkurriert, oder damit ein Sicherungs- oder Download-Werkzeug sich zurückhält. Nicht dokumentierte Werte: Vorschau, und manche Anti-Cheat-Systeme prüfen diese Stelle.</value></data>
+  <data name="Prio_Hint" xml:space="preserve"><value>Windows startet das Programm jedes Mal mit dieser CPU-Priorität, ohne Hintergrundprogramm. Sinnvoll für ein Spiel, das mit beschäftigten Hintergrundprogrammen konkurriert, oder damit ein Backup- oder Download-Tool sich zurückhält. Nicht dokumentierte Werte: Vorschau, und manche Anti-Cheat-Systeme prüfen diese Stelle.</value></data>
   <data name="Prio_ExePlaceholder" xml:space="preserve"><value>Programmdatei, zum Beispiel game.exe</value></data>
   <data name="Prio_LowIoOption" xml:space="preserve"><value>Niedrige Datenträgerpriorität</value></data>
   <data name="Prio_Add" xml:space="preserve"><value>Regel hinzufügen</value></data>
@@ -1063,7 +1064,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Prio_Low" xml:space="preserve"><value>Niedrig</value></data>
   <data name="Prio_LowIo" xml:space="preserve"><value>niedrige Datenträgerpriorität</value></data>
   <data name="Prio_InvalidName" xml:space="preserve"><value>Gib nur den Namen der Programmdatei ein, zum Beispiel game.exe, ohne Ordner.</value></data>
-  <data name="Startup_ProfilerSet" xml:space="preserve"><value>In deinen Umgebungsvariablen ist eine .NET-Diagnoseeinstellung gesetzt ({0}). Sie kann ein Programm in jede .NET-App laden, daher läuft PCOptimizer damit nicht als Administrator. Entferne die Variable unter System &gt; Info &gt; Erweiterte Systemeinstellungen &gt; Umgebungsvariablen und starte PCOptimizer erneut. Es wurde nichts verändert.</value></data>
+  <data name="Startup_ProfilerSet" xml:space="preserve"><value>In deinen Umgebungsvariablen ist eine .NET-Diagnoseeinstellung gesetzt ({0}). Sie kann ein Programm in jede .NET-App laden, daher läuft PCOptimizer damit nicht als Administrator. Entferne die Variable unter System &gt; Info &gt; Erweiterte Systemeinstellungen &gt; Umgebungsvariablen und starte PCOptimizer erneut. Es wurde nichts geändert.</value></data>
   <data name="Programs_RestorePointName" xml:space="preserve"><value>PCOptimizer: vor dem Deinstallieren von Programmen</value></data>
   <data name="Programs_NoRestorePointTitle" xml:space="preserve"><value>Kein Wiederherstellungspunkt</value></data>
   <data name="Programs_NoRestorePointText" xml:space="preserve"><value>Windows hat keinen Wiederherstellungspunkt angelegt: Der Computerschutz ist aus, oder in den letzten 24 Stunden wurde schon einer angelegt. Ohne neuen Wiederherstellungspunkt deinstallieren?</value></data>
@@ -1077,7 +1078,16 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Pflegen</value></data>
   <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Für diesen PC empfohlen</value></data>
   <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>An, wirkt aber gegen dieses Profil</value></data>
-  <data name="Tweaks_GroupImpact" xml:space="preserve"><value>Wirkung {0} von 5</value></data>
+  <data name="Tweaks_GroupCount" xml:space="preserve"><value>Tweaks: {0}, an: {1}</value></data>
+  <data name="Tweaks_OpenAll" xml:space="preserve"><value>Alle aufklappen</value></data>
+  <data name="Tweaks_CloseAll" xml:space="preserve"><value>Alle zuklappen</value></data>
+  <data name="Tweaks_SectionPerformance" xml:space="preserve"><value>Leistung und Energie</value></data>
+  <data name="Tweaks_SectionNetwork" xml:space="preserve"><value>Netzwerk</value></data>
+  <data name="Tweaks_SectionBackground" xml:space="preserve"><value>Hintergrund und Benachrichtigungen</value></data>
+  <data name="Tweaks_SectionPrivacy" xml:space="preserve"><value>Datenschutz</value></data>
+  <data name="Tweaks_SectionSecurity" xml:space="preserve"><value>Sicherheit und System</value></data>
+  <data name="Tweaks_SectionDesktop" xml:space="preserve"><value>Desktop und Explorer</value></data>
+  <data name="Tweaks_SectionBrowser" xml:space="preserve"><value>Browser</value></data>
   <data name="Badge_TipModerate" xml:space="preserve"><value>Kann auf manchen PCs Nebenwirkungen haben. Die Details nennen sie.</value></data>
   <data name="Badge_TipExpert" xml:space="preserve"><value>Tauscht Sicherheit oder Stabilität gegen Leistung. Nur im Expertenmodus sichtbar und nie automatisch empfohlen.</value></data>
   <data name="Badge_TipBoot" xml:space="preserve"><value>Ändert die Startkonfiguration. Vorher wird ein Wiederherstellungspunkt erstellt.</value></data>
@@ -1091,7 +1101,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Badge_TipSignOut" xml:space="preserve"><value>Wirkt nach Ab- und wieder Anmelden.</value></data>
   <data name="Net_DnsServers" xml:space="preserve"><value>DNS-Server</value></data>
   <data name="Net_DnsInUse" xml:space="preserve"><value>In Verwendung:</value></data>
-  <data name="Net_DnsCustom" xml:space="preserve"><value>Keine der Auswahlen passt: Die Server wurden von Hand oder von einem anderen Programm gesetzt.</value></data>
+  <data name="Net_DnsCustom" xml:space="preserve"><value>Keine der Optionen passt: Die Server wurden von Hand oder von einem anderen Programm gesetzt.</value></data>
   <data name="Net_DnsAutomatic" xml:space="preserve"><value>Automatisch (vom Router)</value></data>
   <data name="Common_Details" xml:space="preserve"><value>Details</value></data>
   <data name="Quick_GroupNetwork" xml:space="preserve"><value>Netzwerk reparieren</value></data>

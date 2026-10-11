@@ -4,7 +4,7 @@
 Die Indizierung der Windows-Suche pausiert, solange das Notebook im Akkubetrieb läuft, und macht am Netzteil weiter.
 
 ## So funktioniert es
-Die Richtlinie "Indizierung im Akkubetrieb verhindern, um Energie zu sparen" pausiert die Indizierung, solange der Computer im Akkubetrieb läuft; ohne sie folgt die Indizierung dem Standardverhalten [1]. Laut Microsoft fährt die Indizierung schon seit Windows Vista bei niedrigem Energiestand zurück [1].
+Die Richtlinie „Indizierung im Akkubetrieb verhindern, um Energie zu sparen“ pausiert die Indizierung, solange der Computer im Akkubetrieb läuft; ohne sie folgt die Indizierung dem Standardverhalten [1]. Laut Microsoft fährt die Indizierung schon seit Windows Vista bei niedrigem Energiestand zurück [1].
 
 ## Warum es helfen kann
 Das Indizieren neuer Dateien liest den Datenträger und nutzt den Prozessor; im Akkubetrieb wartet diese Arbeit auf das Netzteil.

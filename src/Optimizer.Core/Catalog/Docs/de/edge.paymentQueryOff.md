@@ -4,10 +4,10 @@
 Websites können Edge nicht mehr fragen, ob du Zahlungsmethoden gespeichert hast. Gilt nicht in Edge-Profilen mit privatem Microsoft-Konto.
 
 ## So funktioniert es
-Mit der Richtlinie PaymentMethodQueryEnabled auf aus erfahren Seiten, die PaymentRequest.canMakePayment oder hasEnrolledInstrument nutzen, dass keine Zahlungsmethoden verfügbar sind [1]. Seit Edge 116 wendet Edge diese Richtlinie laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [2]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
+Mit der Richtlinie PaymentMethodQueryEnabled = 0 erfahren Seiten, die PaymentRequest.canMakePayment oder hasEnrolledInstrument nutzen, dass keine Zahlungsmethoden verfügbar sind [1]. Seit Edge 116 wendet Edge diese Richtlinie laut Microsoft in einem Profil, das mit einem privaten Microsoft-Konto angemeldet ist, nicht an [2]: dort bleibt deine eigene Einstellung, auch wenn die App die Änderung als erledigt zeigt.
 
 ## Warum es helfen kann
-Ein Detail weniger, das Seiten über dich erfahren. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Bildrate noch Latenz.
+Ein Detail weniger, das Seiten über dich erfahren. Eine Einstellung für Datenschutz oder Bedienung; sie ändert weder Framerate noch Latenz.
 
 ## Belege
 Eine von Microsoft beschriebene Edge-Richtlinie [1].

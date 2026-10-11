@@ -1,13 +1,13 @@
 # Microsoft Edge: kein Startboost, kein Hintergrundmodus
 
 ## Zusammenfassung
-Verhindert, dass Microsoft Edge bei der Anmeldung startet und nach dem Schließen des letzten Fensters weiterläuft. Gibt Arbeitsspeicher und Prozessorzeit frei, wenn du Edge nicht nutzt.
+Verhindert, dass Microsoft Edge bei der Anmeldung startet und nach dem Schließen des letzten Fensters weiterläuft. Gibt RAM und CPU-Zeit frei, wenn du Edge nicht nutzt.
 
 ## So funktioniert es
 Zwei dokumentierte Edge-Richtlinien [1][2]: Der Startboost (StartupBoostEnabled) startet Edge-Prozesse bei der Anmeldung und nach dem Schließen des letzten Fensters im Hintergrund neu; der Hintergrundmodus (BackgroundModeEnabled) lässt Edge nach dem Schließen weiterlaufen. Die App schaltet beide aus. Edge übernimmt Richtlinienänderungen im laufenden Betrieb.
 
 ## Warum es helfen kann
-Edge-Prozesse ohne offenes Fenster belegen Arbeitsspeicher und etwas Prozessorzeit, auch beim Spielen und im Akkubetrieb. Auf PCs mit wenig Arbeitsspeicher bleibt so mehr für die Apps, die du nutzt.
+Edge-Prozesse ohne offenes Fenster belegen RAM und etwas CPU-Zeit, auch beim Spielen und im Akkubetrieb. Auf PCs mit wenig RAM bleibt so mehr für die Apps, die du nutzt.
 
 ## Belege
 Beide Richtlinien sind von Microsoft dokumentiert [1][2]. Ohne die Richtlinien kann der Startboost je nach Einrichtung an oder aus sein, der Hintergrundmodus ist aus, solange du ihn nicht eingeschaltet hast [1][2]. Wie viel Speicher die ruhenden Prozesse belegen, hängt von Erweiterungen und offenen Sitzungen ab.

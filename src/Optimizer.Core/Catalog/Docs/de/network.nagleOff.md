@@ -4,7 +4,7 @@
 Lässt Windows jedes empfangene TCP-Segment sofort bestätigen, statt zu warten. Betrifft nur TCP-Verbindungen. Wirkung in Spielen umstritten.
 
 ## So funktioniert es
-Standardmäßig bestätigt Windows jedes zweite TCP-Segment oder ein einzelnes Segment, sobald ein 200-ms-Timer abläuft, um weniger Pakete zu senden [1]. TcpAckFrequency = 1 unter jeder aktiven Netzwerkschnittstelle lässt Windows jedes Segment sofort bestätigen [1]. Der Nagle-Algorithmus ist ein anderer Mechanismus auf der Senderseite: Er hält kleine Pakete zurück, solange frühere Daten unbestätigt sind [2]. Programme schalten ihn für ihre eigenen Verbindungen mit der Option TCP_NODELAY ab [3]. Einen Registrierungswert, der Nagle für das ganze System abschaltet, dokumentiert Microsoft nicht. Die App setzt deshalb keinen.
+Standardmäßig bestätigt Windows jedes zweite TCP-Segment oder ein einzelnes Segment, sobald ein 200-ms-Timer abläuft, um weniger Pakete zu senden [1]. TcpAckFrequency = 1 unter jeder aktiven Netzwerkschnittstelle lässt Windows jedes Segment sofort bestätigen [1]. Der Nagle-Algorithmus ist ein anderer Mechanismus auf der Senderseite: Er hält kleine Pakete zurück, solange frühere Daten unbestätigt sind [2]. Programme schalten ihn für ihre eigenen Verbindungen mit der Option TCP_NODELAY ab [3]. Einen Registry-Wert, der Nagle für das ganze System abschaltet, dokumentiert Microsoft nicht. Die App setzt deshalb keinen.
 
 ## Warum es helfen kann
 Sendet ein Spielserver kleine TCP-Nachrichten und wartet auf Bestätigungen, bevor er weitersendet, können schnellere Bestätigungen diese Wartezeit verkürzen.

@@ -4,13 +4,13 @@
 Apps können keine Benachrichtigungen mehr auf dem Sperrbildschirm zeigen, Nachrichtenvorschauen sind bei gesperrtem PC nicht sichtbar.
 
 ## So funktioniert es
-Die Richtlinie "Popupbenachrichtigungen auf dem Sperrbildschirm deaktivieren" (NoToastApplicationNotificationOnLockScreen = 1) verhindert, dass Anwendungen auf dem Sperrbildschirm Popup-Benachrichtigungen anzeigen [1].
+Die Richtlinie „Popupbenachrichtigungen auf dem Sperrbildschirm deaktivieren“ (NoToastApplicationNotificationOnLockScreen = 1) verhindert, dass Anwendungen auf dem Sperrbildschirm Popup-Benachrichtigungen anzeigen [1].
 
 ## Warum es helfen kann
 Niemand an deinem gesperrten PC kann Nachrichtenvorschauen lesen.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Neue Nachrichten siehst du erst nach der Anmeldung.

@@ -10,7 +10,7 @@ Die Richtlinie „Aktivierung von Online-Spracherkennungsdiensten durch Benutzer
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Diktieren in Apps, die Microsofts Onlinesprachdienst nutzen, funktioniert nicht mehr.

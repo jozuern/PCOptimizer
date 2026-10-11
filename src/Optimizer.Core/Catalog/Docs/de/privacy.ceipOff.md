@@ -10,7 +10,7 @@ Die Richtlinie „Programm zur Verbesserung der Benutzerfreundlichkeit deaktivie
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz. Windows 10 und 11 senden Diagnosedaten über einen neueren Dienst; dieses ältere Programm sendet unter Windows 11 vermutlich wenig oder nichts, was Microsoft aber nicht angibt.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz. Windows 10 und 11 senden Diagnosedaten über einen neueren Dienst; dieses ältere Programm sendet unter Windows 11 vermutlich wenig oder nichts, was Microsoft aber nicht angibt.
 
 ## Nachteile & Risiken
 Im normalen Betrieb keine.

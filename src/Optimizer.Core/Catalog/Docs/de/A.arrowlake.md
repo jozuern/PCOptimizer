@@ -15,7 +15,7 @@ Prüft, ob Core-Ultra-200S-Desktop-CPUs einen BIOS-Microcode mit Intels Korrektu
 Zum Start blieben Intel-Core-Ultra-200S-Prozessoren (Arrow Lake) in vielen Spielen hinter den Erwartungen zurück. Intel fand fünf Ursachen. Die meisten behebt ein aktuelles BIOS zusammen mit Windows-Updates bis Windows 11 Build 26100.2314 oder neuer. Die letzte braucht ein BIOS mit Microcode {{min}} und Intel CSME Firmware Kit 19.0.0.1854v2.2 oder neuer. Dafür erwartete Intel im Schnitt über etwa 35 Spiele eine weitere Verbesserung im einstelligen Prozentbereich [1]. Mainboards mit älterem BIOS fehlen diese Korrekturen.
 
 ## Wie wir es erkennen
-Wir lesen das Prozessormodell und die vom BIOS geladene Microcode-Revision. Modellliste und Mindestrevision stehen im Katalog.
+Wir lesen das CPU-Modell und die vom BIOS geladene Microcode-Revision. Modellliste und Mindestrevision stehen im Katalog.
 
 ## So behebst du es
 1. Öffne die Supportseite deines Mainboards ({{board}}).

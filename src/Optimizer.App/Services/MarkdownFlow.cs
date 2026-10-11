@@ -55,22 +55,22 @@ public static class MarkdownFlow
                 AddInlines(title.Inlines, h.Inline, ctx);
                 return title;
             case HeadingBlock h:
-                // Section: small caps overline with a hairline above
+                // Section: semibold in the text color with a hairline above, like the section headings of the pages. Not
+                // smaller or paler than the body text, so the sections stand out when the reader skims the pane.
                 var hp = new Paragraph
                 {
-                    FontSize = 12.5,
+                    FontSize = 15,
                     FontWeight = FontWeights.SemiBold,
-                    Foreground = ctx.Secondary,
+                    LineHeight = 22,
                     BorderBrush = ctx.Line,
                     BorderThickness = new Thickness(0, 1, 0, 0),
-                    Padding = new Thickness(0, 14, 0, 0),
-                    Margin = new Thickness(0, 14, 0, 6),
+                    Padding = new Thickness(0, 16, 0, 0),
+                    Margin = new Thickness(0, 16, 0, 4),
                 };
-                Typography.SetCapitals(hp, FontCapitals.AllSmallCaps);
                 AddInlines(hp.Inlines, h.Inline, ctx);
                 return hp;
             case ParagraphBlock p:
-                var para = new Paragraph { Margin = new Thickness(0, 0, 0, 9), LineHeight = 23 };
+                var para = new Paragraph { Margin = new Thickness(0, 0, 0, 8), LineHeight = 22 };
                 AddInlines(para.Inlines, p.Inline, ctx);
                 return para;
             case ListBlock l:

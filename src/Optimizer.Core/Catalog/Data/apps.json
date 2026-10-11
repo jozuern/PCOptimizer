@@ -81,7 +81,7 @@
       "scope": "machine",
       "detect": "^MSI Afterburner",
       "en": "Graphics card monitoring, fan curves and frame rate limits (with RivaTuner).",
-      "de": "Überwachung der Grafikkarte, Lüfterkurven und Bildratenlimits (mit RivaTuner)."
+      "de": "Überwachung der Grafikkarte, Lüfterkurven und FPS-Limits (mit RivaTuner)."
     },
     {
       "id": "REALiX.HWiNFO",
@@ -99,7 +99,7 @@
       "scope": "machine",
       "detect": "^CPUID CPU-Z",
       "en": "Processor, mainboard and memory details.",
-      "de": "Details zu Prozessor, Mainboard und Arbeitsspeicher."
+      "de": "Details zu CPU, Mainboard und RAM."
     },
     {
       "id": "TechPowerUp.GPU-Z",
@@ -145,7 +145,7 @@
       "scope": "machine",
       "detect": "^PowerToys",
       "en": "Microsoft utilities: window layouts, color picker, quick launcher and more.",
-      "de": "Microsoft-Werkzeuge: Fensterlayouts, Farbwähler, Schnellstarter und mehr."
+      "de": "Microsoft-Tools: Fensterlayouts, Farbwähler, Schnellstarter und mehr."
     },
     {
       "id": "Parsec.Parsec",
@@ -209,7 +209,7 @@
       "scope": "machine",
       "detect": "^Microsoft Windows Desktop Runtime - 10\\.",
       "en": "Runtime many Windows programs and tools need. Long-term support release.",
-      "de": "Laufzeit, die viele Windows-Programme und Werkzeuge brauchen. Version mit Langzeitsupport."
+      "de": "Laufzeit, die viele Windows-Programme und Tools brauchen. Version mit Langzeitsupport."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.8",

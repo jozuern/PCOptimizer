@@ -34,7 +34,7 @@
                 <StackPanel>
                     <WrapPanel>
                         <ComboBox ItemsSource="{Binding Health.Processes}" SelectedItem="{Binding Health.SelectedProcess}" MinWidth="220" Margin="0,0,8,0" />
-                        <ui:Button Icon="{ui:SymbolIcon ArrowSync20}" Command="{Binding Health.RefreshProcessesCommand}" ToolTip="{l:Tr Common_Refresh}" Margin="0,0,8,0" />
+                        <ui:Button Icon="{ui:SymbolIcon ArrowSync20}" Command="{Binding Health.RefreshProcessesCommand}" ToolTip="{l:Tr Common_Refresh}" AutomationProperties.Name="{l:Tr Common_Refresh}" Margin="0,0,8,0" />
                         <ComboBox ItemsSource="{Binding Health.CaptureOptions}" SelectedItem="{Binding Health.CaptureSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Bench_Before}" Command="{Binding Health.CaptureBeforeCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Bench_After}" Command="{Binding Health.CaptureAfterCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
@@ -89,16 +89,20 @@
             <!-- Sensors (opt-in) -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Sensors_Title}" />
             <ui:CardControl Padding="{StaticResource CardPadding}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Temperature24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
                 <ui:CardControl.Header>
                     <StackPanel>
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Sensors_Hint}" />
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Sensors_Live}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Sensors_Hint}" Margin="0,4,0,0" />
                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Health.PawnIoText}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
                     <ui:Button Content="{l:Tr Sensors_InstallPawnIo}" Margin="0,0,16,0" Command="{Binding Health.InstallPawnIoCommand}"
                                Visibility="{Binding Health.CanInstallPawnIo, Converter={StaticResource BoolToVisibility}}" />
-                    <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Sensors_Title}" IsChecked="{Binding Health.SensorsOn}" />
+                    <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Sensors_Live}" IsChecked="{Binding Health.SensorsOn}" />
                 </StackPanel>
             </ui:CardControl>
             <ItemsControl ItemsSource="{Binding Health.SensorRows}" Margin="0,8,0,0">

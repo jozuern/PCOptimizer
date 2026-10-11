@@ -10,7 +10,7 @@ Die Editor-Richtlinie DisableAIFeaturesInNotepad schreibt DisableAIFeatures = 1 
 Der Editor bleibt ein einfaches Textprogramm, und kein Text geht durch einen Fehlklick an einen KI-Dienst.
 
 ## Belege
-Eine von Microsoft beschriebene Editor-Richtlinie [1]. Kein Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Editor-Richtlinie [1]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Die KI-Schaltflächen im Editor fallen weg.

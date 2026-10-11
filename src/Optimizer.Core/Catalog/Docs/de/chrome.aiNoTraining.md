@@ -7,7 +7,7 @@ Behält die generativen KI-Funktionen von Chrome, erlaubt Google aber standardm�
 GenAiDefaultSettings legt den Standard für die abgedeckten generativen KI-Funktionen fest [1]. Mit 0, dem üblichen Standard, darf Google relevante Daten wie Eingaben, Ergebnisse und Feedback zum Verbessern seiner Modelle nutzen, auch mit Prüfung durch Menschen [1]. Die App setzt 1: Die Funktionen bleiben, ohne diese Nutzung [1]. Chrome liest die Richtlinie aus HKLM\SOFTWARE\Policies\Google\Chrome, auch auf PCs ohne Domäne [2].
 
 ## Warum es helfen kann
-Du behältst die Funktionen und gibst weniger Daten für das Training. Bildrate und Latenz ändern sich nicht.
+Du behältst die Funktionen und gibst weniger Daten für das Training. Framerate und Latenz ändern sich nicht.
 
 ## Belege
 Eine von Google beschriebene Chrome-Richtlinie [1]. Sie setzt einen Standard: Eine Richtlinie für eine einzelne Funktion hat Vorrang [1].

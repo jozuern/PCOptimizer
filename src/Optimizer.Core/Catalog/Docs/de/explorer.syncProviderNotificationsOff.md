@@ -1,16 +1,16 @@
 # Datei-Explorer: keine Hinweise von Synchronisierungsanbietern
 
 ## Zusammenfassung
-Blendet Infos und Vorschläge von Synchronisierungsanbietern (Cloudspeicher-Apps) im Explorer aus, wie das Kästchen "Benachrichtigungen des Synchronisierungsanbieters anzeigen".
+Blendet Infos und Vorschläge von Synchronisierungsanbietern (Cloudspeicher-Apps) im Explorer aus, wie das Kästchen „Benachrichtigungen des Synchronisierungsanbieters anzeigen“.
 
 ## So funktioniert es
-Seit Windows 11 Build 22572.100 kann der Explorer Benachrichtigungen von Synchronisierungsanbietern mit Infos und Vorschlägen zeigen [1]. Das Kästchen "Benachrichtigungen des Synchronisierungsanbieters anzeigen" liegt in den Ordneroptionen auf der Registerkarte Ansicht [1]. Die App setzt ShowSyncProviderNotifications auf 0. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+Seit Windows 11 Build 22572.100 kann der Explorer Benachrichtigungen von Synchronisierungsanbietern mit Infos und Vorschlägen zeigen [1]. Das Kästchen „Benachrichtigungen des Synchronisierungsanbieters anzeigen“ liegt in den Ordneroptionen auf der Registerkarte Ansicht [1]. Die App setzt ShowSyncProviderNotifications auf 0. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Keine Vorschläge zu neuen Funktionen über deinen Ordnern.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Keine bekannten; das Kästchen steuert nur diese Hinweise.

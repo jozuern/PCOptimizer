@@ -4,13 +4,13 @@
 Zeigt den vollständigen Ordnerpfad, etwa C:\Users\Name\Documents, im Titel des Explorers statt nur des Ordnernamens.
 
 ## So funktioniert es
-Das Kästchen "Vollständigen Pfad in der Titelleiste anzeigen" in den Ordneroptionen zeigt den ganzen Pfad des geöffneten Ordners [1]. Die App setzt FullPath auf 1. Die Anleitung startet den Explorer nach dem Setzen des Werts neu [1], daher wirkt die Änderung nach einem Neustart des Explorers oder einer Abmeldung. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+Das Kästchen „Vollständigen Pfad in der Titelleiste anzeigen“ in den Ordneroptionen zeigt den ganzen Pfad des geöffneten Ordners [1]. Die App setzt FullPath auf 1. Die Anleitung startet den Explorer nach dem Setzen des Werts neu [1], daher wirkt die Änderung nach einem Neustart des Explorers oder einer Abmeldung. Microsoft dokumentiert den Registry-Wert hinter dem Schalter nicht; die Anleitung [1] zeigt den Wert, den der Schalter schreibt. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Du siehst, wo du bist, etwa um Spielordner mit gleichem Namen zu unterscheiden.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Keine außer der Optik.

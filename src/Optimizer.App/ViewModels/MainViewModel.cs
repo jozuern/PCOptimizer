@@ -70,12 +70,29 @@ public sealed record HwTile(string Caption, string Value, string Detail, SymbolR
     public override string ToString() => $"{Caption}: {Value}, {Detail}";
 }
 
-public sealed record CategoryItem(string Key, string Text, int Count)
+/// <summary>
+/// Heading row of a group on the Tweaks page: recommended, on but working against the profile, or a category. A click
+/// opens or closes it; the rows of an open group follow it in the same list, so the list still builds only the cards
+/// in view.
+/// </summary>
+public sealed partial class TweakGroupRow(string key, string title, SymbolRegular icon, string summary, IReadOnlyList<TweakItemViewModel> items) : ObservableObject
 {
-    // What screen readers announce for this item in a list or combo box.
-    public override string ToString() => Text;
+    public string Key { get; } = key;
+    public string Title { get; } = title;
+    public SymbolRegular Icon { get; } = icon;
+    public string Summary { get; } = summary;
+    public IReadOnlyList<TweakItemViewModel> Items { get; } = items;
 
-    public string Display => $"{Text} ({Count})";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Chevron))]
+    private bool _isExpanded;
+
+    public SymbolRegular Chevron => IsExpanded ? SymbolRegular.ChevronUp20 : SymbolRegular.ChevronDown20;
+
+    /// <summary>What screen readers announce for the heading.</summary>
+    public string AutomationName => $"{Title}, {Summary}";
+
+    public override string ToString() => AutomationName;
 }
 
 public sealed record ChangeRecordItem(string TweakId, string Title, string When, string Details, string StateText, string Status, bool CanUndo)
@@ -225,7 +242,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _showPassed;
     [ObservableProperty] private InspectorItem? _selectedItem;
     [ObservableProperty] private FindingItemViewModel? _gameAccess;
-    [ObservableProperty] private CategoryItem? _selectedCategory;
     [ObservableProperty] private bool _onlyRecommended;
     /// <summary>Tweaks page: words in the title or summary (or the tweak id). Not saved.</summary>
     [ObservableProperty] private string _tweakSearch = "";
@@ -259,8 +275,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FindingItemViewModel> Findings { get; } = [];
     public ObservableCollection<FindingItemViewModel> AdvisorItems { get; } = [];
+    /// <summary>Every tweak that passes the filters, also those in closed groups (selection, details pane).</summary>
     public ObservableCollection<TweakItemViewModel> Tweaks { get; } = [];
-    public ObservableCollection<CategoryItem> Categories { get; } = [];
+
+    /// <summary>What the Tweaks page lists: each group's heading, followed by its tweaks when the group is open.</summary>
+    public ObservableCollection<object> TweakRows { get; } = [];
     public ObservableCollection<ChangeRecordItem> ChangeRecords { get; } = [];
     public ObservableCollection<LogLine> ChangeLog { get; } = [];
     public ObservableCollection<Banner> Banners { get; } = [];
@@ -293,15 +312,9 @@ public sealed partial class MainViewModel : ObservableObject
     public string? VirusTotalKey => Optimizer.Core.Startup.Dpapi.Unprotect(_settings.VirusTotalKey);
 
     partial void OnShowPassedChanged(bool value) => Rebuild();
-    partial void OnSelectedCategoryChanged(CategoryItem? value) => FillTweaks();
     partial void OnOnlyRecommendedChanged(bool value) => FillTweaks();
     partial void OnTweakSearchChanged(string value) => FillTweaks();
-
-    partial void OnOnlyProfileChanged(bool value)
-    {
-        BuildCategories();
-        FillTweaks();
-    }
+    partial void OnOnlyProfileChanged(bool value) => FillTweaks();
 
     /// <summary>The user picked another profile: re-rate everything (nothing on the PC changes).</summary>
     partial void OnSelectedProfileChanged(ProfileOption? value)
@@ -731,8 +744,13 @@ public sealed partial class MainViewModel : ObservableObject
         if (DeElevatedLauncher.Open(url, null, _services.Elevation) == DeElevatedLauncher.Path.Failed) ShowResult(url);
     }
 
+    // Takes any row: the Tweaks list reuses a card for a group heading and for a tweak, and while it switches the
+    // template the old card asks with the other kind of row (a typed command would throw).
     [RelayCommand]
-    private void Select(InspectorItem? item) => SelectedItem = item;
+    private void Select(object? row)
+    {
+        if (row is InspectorItem item) SelectedItem = item;
+    }
 
     [RelayCommand]
     private void CloseInspector() => SelectedItem = null;
@@ -1208,7 +1226,6 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEnglish));
         OnPropertyChanged(nameof(IsGerman));
 
-        BuildCategories();
         FillTweaks();
         BuildRecommendations();
         BuildBanners();
@@ -1308,53 +1325,156 @@ public sealed partial class MainViewModel : ObservableObject
                  .Where(p => p.Status.State != TweakState.NotApplicable || ShowPassed)
                  .Where(p => !profileFilter || !OnlyProfile || p.Relevant);
 
-    private void BuildCategories()
+    private const string RecommendedGroup = "recommended";
+    private const string AgainstGroup = "against";
+
+    private readonly List<TweakGroupRow> _tweakGroups = [];
+
+    /// <summary>Groups open on the Tweaks page this session: recommended and against the profile start open, the sections closed.</summary>
+    private readonly HashSet<string> _openGroups = [RecommendedGroup, AgainstGroup];
+
+    /// <summary>
+    /// The sections of the Tweaks page, in this order: the catalog's categories (two dozen, some with one or two tweaks)
+    /// combined by topic, gaming first. The categories stay in the catalog, the explanation pages and the tests.
+    /// </summary>
+    private static readonly (string Key, SymbolRegular Icon, string[] Categories)[] TweakSections =
+    [
+        ("performance", SymbolRegular.Flash24, ["Power", "Graphics", "Input", "Memory", "Storage", "Battery", "Quiet", "Leftovers", "Priorities", "Fixes"]),
+        ("network", SymbolRegular.Router24, ["Network"]),
+        ("background", SymbolRegular.Alert24, ["Background", "Focus", "Updates", "Services", "Startup"]),
+        ("privacy", SymbolRegular.EyeOff24, ["Privacy", "Permissions", "AI"]),
+        ("security", SymbolRegular.Shield24, ["Security", "System", "Expert", "Features"]),
+        ("desktop", SymbolRegular.Window24, ["Explorer", "Personalize", "Visual", "Productivity"]),
+        ("browser", SymbolRegular.Globe24, ["Browser"]),
+    ];
+
+    /// <summary>The section a catalog category belongs to; a category added later goes to Security and system until it gets one.</summary>
+    private static int SectionIndex(string category)
     {
-        var lang = Loc.Instance.Language;
-        var visible = VisibleTweaks().ToList();
-        var selected = SelectedCategory?.Key ?? "";
-        Categories.Clear();
-        Categories.Add(new CategoryItem("", Loc.Instance["Tweaks_All"], visible.Count));
-        foreach (var g in visible.GroupBy(p => p.Tweak.Category).OrderBy(g => g.Key, StringComparer.Ordinal))
-            Categories.Add(new CategoryItem(g.Key, Labels.Current.Get(lang, $"category.{g.Key}"), g.Count()));
-        // Set the field directly: the change handler would refill the list, which the caller does anyway.
-#pragma warning disable MVVMTK0034
-        _selectedCategory = Categories.FirstOrDefault(c => c.Key == selected) ?? Categories[0];
-#pragma warning restore MVVMTK0034
-        OnPropertyChanged(nameof(SelectedCategory));
+        var i = Array.FindIndex(TweakSections, s => s.Categories.Contains(category));
+        return i < 0 ? Array.FindIndex(TweakSections, s => s.Key == "security") : i;
     }
 
+    private Dictionary<string, int>? _categoryOrder;
+
+    /// <summary>
+    /// Fills the Tweaks page: recommended first, then applied changes that work against the profile, then the sections.
+    /// In a group the larger impact first, then by category in catalog order, so related tweaks stay together. A search
+    /// opens every group with a match.
+    /// </summary>
     private void FillTweaks()
     {
         var lang = Loc.Instance.Language;
-        var category = SelectedCategory?.Key ?? "";
         var q = TweakSearch.Trim();
         bool Matches(ProfiledTweak p) => q.Length == 0 || p.Tweak.Id.Contains(q, StringComparison.OrdinalIgnoreCase)
             || Runner.Title(p.Tweak).Contains(q, StringComparison.CurrentCultureIgnoreCase) || Runner.Summary(p.Tweak).Contains(q, StringComparison.CurrentCultureIgnoreCase);
+        _categoryOrder ??= _services.Catalog.Tweaks.Select(t => t.Category).Distinct()
+            .Select((c, i) => (c, i)).ToDictionary(x => x.c, x => x.i);
+        int CategoryOrder(string category) => _categoryOrder.TryGetValue(category, out var i) ? i : int.MaxValue;
+        int Order(string key) => key switch
+        {
+            RecommendedGroup => -2,
+            AgainstGroup => -1,
+            _ => Array.FindIndex(TweakSections, s => s.Key == key),
+        };
+
         Tweaks.Clear();
-        var list = VisibleTweaks()
-            .Where(p => category.Length == 0 || p.Tweak.Category == category)
+        _tweakGroups.Clear();
+        var groups = VisibleTweaks()
             .Where(p => !OnlyRecommended || p.Recommended)
             .Where(Matches)
-            .OrderByDescending(p => p.Recommended)
-            .ThenByDescending(p => p.Flagged) // applied changes that work against the profile stay visible
-            .ThenByDescending(p => p.Impact)
-            .ThenBy(p => p.Tweak.Category, StringComparer.Ordinal)
-            .ToList();
-        // Headings follow the order of the list (recommended, works against the profile, then by impact), so the
-        // first row of each band carries one.
-        string? last = null;
-        foreach (var p in list)
+            .GroupBy(p => p.Recommended ? RecommendedGroup : p.Flagged ? AgainstGroup : TweakSections[SectionIndex(p.Tweak.Category)].Key)
+            .OrderBy(g => Order(g.Key));
+        foreach (var g in groups)
         {
-            var band = p.Recommended ? Loc.Instance["Tweaks_GroupRecommended"]
-                : p.Flagged ? Loc.Instance["Tweaks_GroupAgainstOn"]
-                : p.WorksAgainst ? Loc.Instance["Impact_Against"]
-                : Loc.Instance.Format("Tweaks_GroupImpact", p.Impact);
-            Tweaks.Add(new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage) { GroupHeader = band == last ? null : band });
-            last = band;
+            var items = g.OrderByDescending(p => p.Impact)
+                .ThenBy(p => CategoryOrder(p.Tweak.Category))
+                .Select(p => new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage))
+                .ToList();
+            foreach (var item in items) Tweaks.Add(item);
+            var summary = Loc.Instance.Format("Tweaks_GroupCount", items.Count, items.Count(i => i.IsOn));
+            _tweakGroups.Add(new TweakGroupRow(g.Key, GroupTitle(g.Key), GroupIcon(g.Key), summary, items)
+            {
+                IsExpanded = q.Length > 0 || _openGroups.Contains(g.Key),
+            });
         }
+        ShowTweakRows();
         var visible = VisibleTweaks().ToList();
         TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn), visible.Count(p => p.Recommended));
+    }
+
+    private static string GroupTitle(string key) => key switch
+    {
+        RecommendedGroup => Loc.Instance["Tweaks_GroupRecommended"],
+        AgainstGroup => Loc.Instance["Tweaks_GroupAgainstOn"],
+        "performance" => Loc.Instance["Tweaks_SectionPerformance"],
+        "network" => Loc.Instance["Tweaks_SectionNetwork"],
+        "background" => Loc.Instance["Tweaks_SectionBackground"],
+        "privacy" => Loc.Instance["Tweaks_SectionPrivacy"],
+        "security" => Loc.Instance["Tweaks_SectionSecurity"],
+        "desktop" => Loc.Instance["Tweaks_SectionDesktop"],
+        _ => Loc.Instance["Tweaks_SectionBrowser"],
+    };
+
+    private static SymbolRegular GroupIcon(string key) => key switch
+    {
+        RecommendedGroup => SymbolRegular.ThumbLike24,
+        AgainstGroup => SymbolRegular.Warning24,
+        _ => TweakSections.First(s => s.Key == key).Icon,
+    };
+
+    private void ShowTweakRows()
+    {
+        TweakRows.Clear();
+        foreach (var g in _tweakGroups)
+        {
+            TweakRows.Add(g);
+            if (g.IsExpanded)
+                foreach (var t in g.Items) TweakRows.Add(t);
+        }
+    }
+
+    /// <summary>
+    /// Opens or closes one group; only its rows are added or removed, so the list keeps its scroll position. Takes any
+    /// row for the same reason as <see cref="Select"/>.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleTweakGroup(object? row)
+    {
+        if (row is not TweakGroupRow group) return;
+        group.IsExpanded = !group.IsExpanded;
+        if (group.IsExpanded) _openGroups.Add(group.Key);
+        else _openGroups.Remove(group.Key);
+        var at = TweakRows.IndexOf(group) + 1;
+        if (at == 0) return;
+        if (group.IsExpanded)
+            for (var i = 0; i < group.Items.Count; i++) TweakRows.Insert(at + i, group.Items[i]);
+        else
+            for (var i = 0; i < group.Items.Count; i++) TweakRows.RemoveAt(at);
+    }
+
+    [RelayCommand]
+    private void OpenAllTweakGroups() => SetAllTweakGroups(true);
+
+    [RelayCommand]
+    private void CloseAllTweakGroups() => SetAllTweakGroups(false);
+
+    private void SetAllTweakGroups(bool open)
+    {
+        foreach (var g in _tweakGroups)
+        {
+            g.IsExpanded = open;
+            if (open) _openGroups.Add(g.Key);
+            else _openGroups.Remove(g.Key);
+        }
+        ShowTweakRows();
+    }
+
+    /// <summary>Developer switch --category: opens that group on the Tweaks page (a section key or a catalog category).</summary>
+    public void OpenTweakGroup(string key)
+    {
+        if (_tweakGroups.All(g => g.Key != key)) key = TweakSections[SectionIndex(key)].Key;
+        if (_tweakGroups.FirstOrDefault(g => g.Key == key) is { IsExpanded: false } group) ToggleTweakGroup(group);
     }
 
     /// <summary>Rows for catalog tweaks shown on other pages (GPU settings, DNS), with the same Expert filter as the Tweaks page.</summary>

@@ -4,10 +4,10 @@
 Der Datei-Explorer öffnet „Dieser PC“ (Laufwerke und Ordner) statt „Start“ (zuletzt verwendete Dateien und Empfehlungen).
 
 ## So funktioniert es
-Die App setzt LaunchTo = 1 (Dieser PC), den Registrierungswert pro Benutzer hinter „Datei-Explorer öffnen für“ in den Ordneroptionen [1]. Microsoft dokumentiert diesen Wert nicht eigens; die Ordneroption schreibt ihn. Neue Explorer-Fenster nutzen ihn sofort.
+Die App setzt LaunchTo = 1 (Dieser PC), den Registry-Wert pro Benutzer hinter „Datei-Explorer öffnen für“ in den Ordneroptionen [1]. Microsoft dokumentiert diesen Wert nicht eigens; die Ordneroption schreibt ihn. Neue Explorer-Fenster nutzen ihn sofort.
 
 ## Warum es helfen kann
-„Start“ listet zuletzt verwendete und empfohlene Dateien, was bei vielen Dateien oder Cloud-Konten einen Moment dauern kann. „Dieser PC“ öffnet direkt Laufwerke und Ordner. Außerdem bleiben zuletzt genutzte Dateinamen vom Bildschirm fern, etwa beim Teilen des Bildschirms.
+„Start“ listet zuletzt verwendete und empfohlene Dateien, was bei vielen Dateien oder Cloud-Konten einen Moment dauern kann. „Dieser PC“ öffnet direkt Laufwerke und Ordner. Außerdem erscheinen zuletzt genutzte Dateinamen nicht auf dem Bildschirm, etwa beim Teilen des Bildschirms.
 
 ## Belege
 Eine Standard-Ordneroption; wie viel schneller es geht, hängt davon ab, wie viele zuletzt verwendete Dateien und Cloud-Konten „Start“ anzeigen muss.

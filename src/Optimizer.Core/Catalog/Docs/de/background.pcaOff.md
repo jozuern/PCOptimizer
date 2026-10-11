@@ -4,7 +4,7 @@
 Windows überwacht gestartete Programme nicht mehr auf Kompatibilitätsprobleme und bietet nach einem Fehler keine Kompatibilitätskorrekturen mehr an.
 
 ## So funktioniert es
-Der Programmkompatibilitäts-Assistent überwacht die Anwendungen des Benutzers und bietet bei einem möglichen Kompatibilitätsproblem Lösungen an [1]. Die Richtlinie "Programmkompatibilitäts-Assistent deaktivieren" (DisablePCA = 1) schaltet ihn aus [1].
+Der Programmkompatibilitäts-Assistent überwacht die Anwendungen des Benutzers und bietet bei einem möglichen Kompatibilitätsproblem Lösungen an [1]. Die Richtlinie „Programmkompatibilitäts-Assistent deaktivieren“ (DisablePCA = 1) schaltet ihn aus [1].
 
 ## Warum es helfen kann
 Eine Überwachung weniger im Hintergrund; alte Programme werden nicht durch Kompatibilitätskorrekturen geändert, die du nicht gewählt hast.

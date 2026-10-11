@@ -174,11 +174,7 @@
                 </DataTemplate.Triggers>
             </DataTemplate>
 
-            <!-- Heading above the first row of a band (Tweaks page only; null elsewhere) -->
             <DataTemplate x:Key="TweakRow">
-                <DockPanel>
-                <ui:TextBlock DockPanel.Dock="Top" FontTypography="BodyStrong" Text="{Binding GroupHeader}" Margin="0,16,0,8"
-                              Visibility="{Binding GroupHeader, Converter={StaticResource NullToVisibility}}" />
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
@@ -217,7 +213,6 @@
                         </ui:ToggleSwitch.IsEnabled>
                     </ui:ToggleSwitch>
                 </ui:CardControl>
-                </DockPanel>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

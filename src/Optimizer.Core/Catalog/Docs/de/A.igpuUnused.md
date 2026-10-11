@@ -2,14 +2,14 @@
 
 ## Zusammenfassung
 ::: status Info
-Die integrierte Grafik ({{igpu}}) ist aktiv, aber kein Bildschirm nutzt sie. Das ist in Ordnung und kostet keine Bildrate.
+Die integrierte Grafik ({{igpu}}) ist aktiv, aber kein Bildschirm nutzt sie. Das ist in Ordnung und kostet keine Framerate.
 :::
 ::: status Ok,Unknown,Problem,Unsupported
 Prüft, ob die integrierte Grafik des Prozessors auf einem Desktop mit Grafikkarte aktiv ist.
 :::
 
 ## Warum das wichtig ist
-Mit eingebauter Grafikkarte und ohne Bildschirm an der integrierten Grafik ist diese untätig. Sie ist nützlich für Videokodierung in Hardware (zum Beispiel Intel Quick Sync in OBS oder Videoschnittprogrammen) und für zusätzliche Monitoranschlüsse. Sind beide GPUs vorhanden, kann ein Spiel oder Programm die falsche wählen; Windows lässt dich die GPU pro App festlegen [1].
+Steckt eine Grafikkarte im PC und hängt kein Bildschirm an der integrierten Grafik, hat diese nichts zu tun. Sie ist nützlich für Videokodierung in Hardware (zum Beispiel Intel Quick Sync in OBS oder Videoschnittprogrammen) und für zusätzliche Monitoranschlüsse. Sind beide GPUs vorhanden, kann ein Spiel oder Programm die falsche wählen; Windows lässt dich die GPU pro App festlegen [1].
 
 ## Wie wir es erkennen
 Wir prüfen, ob eine integrierte und eine dedizierte GPU aktiv sind und kein Bildschirm an der integrierten hängt.
@@ -21,7 +21,7 @@ Wir prüfen, ob eine integrierte und eine dedizierte GPU aktiv sind und kein Bil
 4. Nur wenn du sie gar nicht brauchst: Schalte sie im BIOS ab (oft „iGPU Multi-Monitor“ oder „Integrated Graphics“ auf Disabled, die primäre Anzeige auf PCIe).
 
 ## So prüfst du die Behebung
-Keine Prüfung nötig, das ist eine Information.
+Nichts zu prüfen, das ist nur eine Information.
 
 ## Quellen
 1. https://support.microsoft.com/de-de/windows/hardware/display-graphics/optimizations-for-windowed-games-in-windows-11

@@ -143,9 +143,6 @@ public sealed class TweakItemViewModel : InspectorItem
 
     public RowAction Action { get; }
 
-    /// <summary>Heading above the first row of a band on the Tweaks page (recommended, by impact); null for the other rows.</summary>
-    public string? GroupHeader { get; init; }
-
     public TweakStatus Status_ { get; }
     public TweakDefinition Tweak => Status_.Tweak;
     public string Category { get; }

@@ -15,7 +15,7 @@ Prüft, ob Intel-Desktop-CPUs der 13./14. Generation einen BIOS-Microcode mit In
 Intel hat festgestellt, dass manche Core-Desktop-Prozessoren der 13. und 14. Generation zu hohe Spannungen anforderten. Das kann eine Taktschaltung in den Kernen altern lassen („Vmin Shift“) und zu Instabilität führen [1]. Die Ursache behebt Microcode 0x12B, der per BIOS-Update kommt [1]. Im Mai 2025 folgte 0x12F als Ergänzung für PCs, die tagelang unter leichter Last laufen [2]. Intel empfiehlt das neueste BIOS mit Microcode 0x12F oder neuer zusammen mit den Intel Default Settings [4]. Weil die Alterung unter zu hoher Spannung mit der Zeit zunimmt [1], sollte das Update so früh wie möglich drauf. Es geht hier um Stabilität, nicht um einen Leistungs-Tweak. Deshalb ist das Thema als kritisch markiert und bekommt keine Wirkungsbewertung.
 
 ## Wie wir es erkennen
-Wir lesen das Prozessormodell und die Microcode-Revision, die das BIOS geladen hat (`Firmware Record Version` im Registrierungsschlüssel des Prozessors, bei älteren Builds `Previous Update Revision`). Windows kann selbst neueren Microcode laden. Hier zählt aber die BIOS-Revision, weil die Korrektur ab dem Einschalten aktiv sein muss. Modellliste und Mindestrevision stehen im Katalog.
+Wir lesen das CPU-Modell und die Microcode-Revision, die das BIOS geladen hat (`Firmware Record Version` im Registry-Schlüssel des Prozessors, bei älteren Builds `Previous Update Revision`). Windows kann selbst neueren Microcode laden. Hier zählt aber die BIOS-Revision, weil die Korrektur ab dem Einschalten aktiv sein muss. Modellliste und Mindestrevision stehen im Katalog.
 
 ## So behebst du es
 1. Notiere dein Mainboard ({{board}}) und öffne die Supportseite des Herstellers.

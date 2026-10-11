@@ -4,10 +4,10 @@
 Chrome zeigt keine Werbung in eigener Sache, etwa Seiten zum Anmelden oder zum Festlegen als Standard, und keine Preisverfolgung für Produkte.
 
 ## So funktioniert es
-PromotionsEnabled auf aus beendet die Werbung von Chrome in eigener Sache, auch Begrüßungsseiten zum Anmelden, zum Festlegen als Standardbrowser und zu neuen Funktionen [1]. ShoppingListEnabled auf aus entfernt die Möglichkeit, den Preis eines Produkts auf der aktuellen Seite zu verfolgen [2]. Chrome liest die Richtlinien aus HKLM\SOFTWARE\Policies\Google\Chrome, auch auf PCs ohne Domäne [3].
+PromotionsEnabled = 0 beendet die Werbung von Chrome in eigener Sache, auch Begrüßungsseiten zum Anmelden, zum Festlegen als Standardbrowser und zu neuen Funktionen [1]. ShoppingListEnabled = 0 entfernt die Möglichkeit, den Preis eines Produkts auf der aktuellen Seite zu verfolgen [2]. Chrome liest die Richtlinien aus HKLM\SOFTWARE\Policies\Google\Chrome, auch auf PCs ohne Domäne [3].
 
 ## Warum es helfen kann
-Weniger Hinweise und Angebote beim Surfen. Bildrate und Latenz ändern sich nicht.
+Weniger Hinweise und Angebote beim Surfen. Framerate und Latenz ändern sich nicht.
 
 ## Belege
 Von Google beschriebene Chrome-Richtlinien [1][2].

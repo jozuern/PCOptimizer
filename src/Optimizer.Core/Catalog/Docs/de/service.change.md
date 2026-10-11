@@ -7,10 +7,10 @@
 Der Starttyp wird über den Dienststeuerungs-Manager geändert [1], wie in der Konsole Dienste. Ein Dienst auf Manuell kann weiterhin von einer App oder einem Windows-Auslöser gestartet werden. Rückgängig machen stellt den vorherigen Starttyp wieder her.
 
 ## Warum es helfen kann
-Dienste, die mit Windows starten, belegen Arbeitsspeicher und können im Hintergrund arbeiten. Bei Bedarf laufen sie nur, wenn etwas sie braucht.
+Dienste, die mit Windows starten, belegen RAM und können im Hintergrund arbeiten. Bei Bedarf laufen sie nur, wenn etwas sie braucht.
 
 ## Belege
-Die meisten Dienste nutzen im Leerlauf fast keine Prozessorzeit, der Effekt auf die Bildrate ist meist nicht messbar.
+Die meisten Dienste nutzen im Leerlauf fast keine CPU-Zeit, der Effekt auf die Framerate ist meist nicht messbar.
 
 ## Nachteile & Risiken
 Ein deaktivierter Dienst kann von nichts gestartet werden, das ihn braucht, was Funktionen beschädigen kann [1]. Manuell ist die sicherere Wahl.

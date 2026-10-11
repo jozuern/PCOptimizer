@@ -10,7 +10,7 @@ Jede Verbindung beginnt mit dem Auflösen eines Namens (zum Beispiel des Login-S
 Ein langsamer oder unzuverlässiger DNS-Server verzögert jede neue Verbindung: Launcher, Shopseiten, Matchmaking. Der DNS-Test auf der Netzwerkseite misst, welcher Server von deinem Anschluss aus am schnellsten antwortet.
 
 ## Belege
-DNS dient nur dazu, einen Server zu finden. Ist das Spiel verbunden, spielt DNS keine Rolle mehr, Ping und Bildrate ändern sich nicht. Deshalb ist die Wirkung mit 0 bewertet.
+DNS dient nur dazu, einen Server zu finden. Ist das Spiel verbunden, spielt DNS keine Rolle mehr, Ping und Framerate ändern sich nicht. Deshalb ist die Wirkung mit 0 bewertet.
 
 ## Nachteile & Risiken
 Die DNS-Server mancher Provider finden nahe Download-Server besser. Firmen- oder Schulnetze verlangen eventuell ihren eigenen DNS. Quad9 sperrt Domains, die es als schädlich einstuft [4]. Das trifft sehr selten auch eine harmlose Seite. Die Standardserver von AdGuard DNS blockieren Werbung und Tracker [6]: Manche Seiten oder Apps, die darauf angewiesen sind, funktionieren dann nicht vollständig.

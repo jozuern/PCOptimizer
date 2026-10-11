@@ -4,13 +4,13 @@
 Zeigt jedes Fenster als eigene Taskleistenschaltfläche mit Beschriftung, auf der Haupttaskleiste und auf weiteren Bildschirmen.
 
 ## So funktioniert es
-"Taskleistenschaltflächen gruppieren" bietet immer (Standard), wenn die Taskleiste voll ist, und nie, mit eigener Auswahl für weitere Bildschirme [1]. Die App setzt TaskbarGlomLevel und MMTaskbarGlomLevel auf 2 (nie). Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Ein Test unter echtem Windows 11 26H2 hat die Wirkung bestätigt, und Rückgängig machen hat sie wieder entfernt.
+„Taskleistenschaltflächen gruppieren“ bietet immer (Standard), wenn die Taskleiste voll ist, und nie, mit eigener Auswahl für weitere Bildschirme [1]. Die App setzt TaskbarGlomLevel und MMTaskbarGlomLevel auf 2 (nie). Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Auf einer echten Windows-11-Installation (26H2) haben wir geprüft: Die Änderung wirkt, und Rückgängig machen stellt den alten Zustand wieder her.
 
 ## Warum es helfen kann
 Du wechselst mit einem Klick ins richtige Fenster, statt es aus einer Gruppe zu wählen.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Mit vielen Fenstern werden die Schaltflächen klein und die Taskleiste scrollt [1].

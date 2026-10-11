@@ -10,7 +10,7 @@ Die Richtlinie „Suchhervorhebungen zulassen“ wird abgeschaltet [1].
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Die Suchstartseite zeigt keine täglichen Inhalte mehr.

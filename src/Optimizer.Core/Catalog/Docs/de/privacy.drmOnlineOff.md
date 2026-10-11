@@ -10,7 +10,7 @@ Die Richtlinie DisableOnline = 1 verhindert, dass Windows Media DRM für Lizenze
 Eine Komponente weniger, die sich von selbst online verbindet. Das betrifft nur alte DRM-geschützte Windows-Media-Dateien.
 
 ## Belege
-Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Datenschutzeinstellung ohne Einfluss auf Bildrate oder Latenz.
+Eine von Microsoft beschriebene Windows-Richtlinie [1]. Eine Datenschutzeinstellung ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Geschützte WMA- und WMV-Dateien, die eine neue Lizenz brauchen, spielen nicht mehr.

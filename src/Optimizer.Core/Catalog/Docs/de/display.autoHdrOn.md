@@ -4,13 +4,13 @@
 Ältere DirectX-11- und -12-Spiele, die nur SDR ausgeben, werden auf einem HDR-Bildschirm mit HDR dargestellt. HDR selbst muss an sein.
 
 ## So funktioniert es
-Auto HDR erweitert Farbraum und Helligkeit von SDR-Spielen mit DirectX 11 oder 12 auf einem HDR-fähigen Bildschirm; es liegt unter Einstellungen > System > Anzeige > HDR [1]. Die App setzt das Token AutoHDREnable in DirectXUserGlobalSettings, neben den Optimierungen für Spiele im Fenstermodus. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt den Wert, den Windows selbst für den Schalter speichert. Bis ein Test unter echtem Windows die Wirkung bestätigt, ist die Option eine Vorschau.
+Auto HDR erweitert Farbraum und Helligkeit von SDR-Spielen mit DirectX 11 oder 12 auf einem HDR-fähigen Bildschirm; es liegt unter Einstellungen > System > Anzeige > HDR [1]. Die App setzt das Token AutoHDREnable in DirectXUserGlobalSettings, neben den Optimierungen für Spiele im Fenstermodus. Microsoft beschreibt den Schalter [1], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Solange kein Test auf einer echten Windows-Installation die Wirkung bestätigt, bleibt die Option eine Vorschau.
 
 ## Warum es helfen kann
 Ältere Spiele sehen auf einem HDR-Monitor eher wie HDR-Spiele aus.
 
 ## Belege
-Eine persönliche Vorliebe ohne Einfluss auf Bildrate oder Latenz.
+Eine persönliche Vorliebe ohne Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Das Ergebnis hängt vom Spiel ab; manche wirken blass oder zu hell. Ohne HDR-Bildschirm oder mit HDR aus ändert sich nichts.

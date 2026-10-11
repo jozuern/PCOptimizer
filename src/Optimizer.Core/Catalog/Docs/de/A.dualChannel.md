@@ -1,14 +1,14 @@
-# Arbeitsspeicher im Single-Channel
+# RAM im Single-Channel
 
 ## Zusammenfassung
 ::: variant single
-Es steckt nur ein Speichermodul. Der Arbeitsspeicher läuft deshalb im Single-Channel mit halber Bandbreite.
+Es steckt nur ein Speichermodul. Der RAM läuft deshalb im Single-Channel mit halber Bandbreite.
 :::
 ::: variant sameChannel
-Alle Speichermodule stecken im selben Kanal. Der Arbeitsspeicher läuft deshalb im Single-Channel mit halber Bandbreite.
+Alle Speichermodule stecken im selben Kanal. Der RAM läuft deshalb im Single-Channel mit halber Bandbreite.
 :::
 ::: variant default
-Prüft, ob der Arbeitsspeicher im Dual-Channel läuft. Dafür müssen Module in beiden Kanälen stecken.
+Prüft, ob der RAM im Dual-Channel läuft. Dafür müssen Module in beiden Kanälen stecken.
 :::
 
 ## Warum das wichtig ist

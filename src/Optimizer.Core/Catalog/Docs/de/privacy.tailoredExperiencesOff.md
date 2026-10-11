@@ -10,7 +10,7 @@ Die Benutzerrichtlinie „Keine Diagnosedaten zur Personalisierung der Benutzere
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Tipps und Vorschläge richten sich nicht mehr danach, wie du Windows nutzt.

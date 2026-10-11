@@ -10,7 +10,7 @@ Die drei Dienste starten bei Bedarf (Manuell) statt mit Windows [2]. Sie werden 
 Weniger Dienste starten mit Windows, es gibt also etwas weniger Hintergrundaktivität.
 
 ## Belege
-Untätige Dienste nutzen fast keine Prozessorzeit; einen messbaren Bildratengewinn gibt es nicht, deshalb ist die Wirkung mit 0 bewertet. Microsofts Dienst-Empfehlungen für Windows Server 2016 stufen den Karten- und den Kompatibilitätsdienst als deaktivierbar ein [1]; für Windows 11 gibt es keine solche Liste.
+Untätige Dienste nutzen fast keine CPU-Zeit; einen messbaren FPS-Gewinn gibt es nicht, deshalb ist die Wirkung mit 0 bewertet. Microsofts Dienst-Empfehlungen für Windows Server 2016 stufen den Karten- und den Kompatibilitätsdienst als deaktivierbar ein [1]; für Windows 11 gibt es keine solche Liste.
 
 ## Nachteile & Risiken
 Die Karten-App ist abgekündigt, der Kartendienst hat daher wenig zu tun [3]. Die Überwachung verteilter Verknüpfungen läuft nicht mehr, Verknüpfungen zu Dateien, die du auf ein anderes Laufwerk oder einen anderen PC verschoben hast, werden nicht mehr automatisch repariert. Der Kompatibilitäts-Assistent arbeitet über seine Auslöser weiter.

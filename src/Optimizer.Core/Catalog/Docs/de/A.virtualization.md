@@ -2,7 +2,7 @@
 
 ## Zusammenfassung
 ::: variant antiCheat
-Die Hardware-Virtualisierung ist im BIOS aus. {{antiCheats}} kann Speicherintegrität oder virtualisierungsbasierte Sicherheit verlangen, die sie brauchen. Spiele starten dann womöglich nicht.
+Die Hardware-Virtualisierung ist im BIOS aus. {{antiCheats}} kann Speicherintegrität oder VBS verlangen, und beide brauchen die Virtualisierung. Spiele starten dann womöglich nicht.
 :::
 ::: variant off
 Die Hardware-Virtualisierung (Intel VT-x oder AMD-V) ist im BIOS aus. Speicherintegrität sowie Linux- oder Android-Apps unter Windows brauchen sie.
@@ -17,7 +17,7 @@ Die Speicherintegrität (Kernisolierung) ist eine Funktion der virtualisierungsb
 Die Virtualisierung im BIOS einzuschalten ändert die Spieleleistung für sich allein nicht. Ob du danach die Speicherintegrität einschaltest, ist eine eigene Entscheidung.
 
 ## Wie wir es erkennen
-Wir lesen aus Windows (WMI), ob der Prozessor Virtualisierung unterstützt (`Win32_Processor.VMMonitorModeExtensions`), ob die Firmware sie eingeschaltet hat (`VirtualizationFirmwareEnabled`) [5] und ob ein Hypervisor vorhanden ist (`Win32_ComputerSystem.HypervisorPresent`) [6]. Auf manchen PCs erscheinen die Prozessor-Werte als aus, während der Windows-Hypervisor läuft. Ein laufender Hypervisor zählt deshalb als „an“.
+Wir lesen aus Windows (WMI), ob der Prozessor Virtualisierung unterstützt (`Win32_Processor.VMMonitorModeExtensions`), ob die Firmware sie eingeschaltet hat (`VirtualizationFirmwareEnabled`) [5] und ob ein Hypervisor vorhanden ist (`Win32_ComputerSystem.HypervisorPresent`) [6]. Auf manchen PCs erscheinen die CPU-Werte als aus, während der Windows-Hypervisor läuft. Ein laufender Hypervisor zählt deshalb als „an“.
 
 ## So behebst du es
 1. **BitLocker:** Prüfe, bevor du BIOS-Einstellungen änderst, ob BitLocker oder die Geräteverschlüsselung an ist. Wenn ja, setze den Schutz vorher aus (Start > **BitLocker verwalten** > **Schutz anhalten**) oder halte den Wiederherstellungsschlüssel bereit. Oft ist er in deinem Microsoft-Konto gespeichert. Nach einem BIOS-Update oder einer Änderung am TPM oder an der Startkonfiguration kann Windows beim nächsten Start danach fragen [9][10].

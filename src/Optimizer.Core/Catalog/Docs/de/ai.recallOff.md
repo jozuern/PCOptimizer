@@ -13,7 +13,7 @@ Recall lässt sich nicht aus Versehen wieder einschalten, und seine Komponenten 
 Eine von Microsoft beschriebene Windows-Richtlinie [1]. Recall gibt es nur auf Copilot+ PCs; anderswo hat die Richtlinie nichts zu entfernen. Keine veröffentlichte Messung beim Spielen.
 
 ## Nachteile & Risiken
-Gespeicherte Recall-Snapshots werden gelöscht, Rückgängig holt sie nicht zurück [1]. Nach dem Rückgängigmachen lässt sich Recall über die Windows-Features wieder hinzufügen. Wenn nur keine neuen Snapshots entstehen sollen, nutze stattdessen "Recall-Snapshots aus".
+Gespeicherte Recall-Snapshots werden gelöscht, Rückgängig holt sie nicht zurück [1]. Nach dem Rückgängigmachen lässt sich Recall über die Windows-Features wieder hinzufügen. Wenn nur keine neuen Snapshots entstehen sollen, nutze stattdessen „Recall-Snapshots aus“.
 
 ## Wann du es nicht nutzen solltest
 Wenn du Recall nutzt oder später nutzen willst.

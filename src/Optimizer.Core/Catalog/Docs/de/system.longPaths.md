@@ -1,7 +1,7 @@
 # Lange Dateipfade
 
 ## Zusammenfassung
-Erlaubt Apps, die es unterstützen, Dateipfade mit mehr als 260 Zeichen. Hilft bei tief verschachtelten Projektordnern, etwa in Entwicklerwerkzeugen und Mod-Managern.
+Erlaubt Apps, die es unterstützen, Dateipfade mit mehr als 260 Zeichen. Hilft bei tief verschachtelten Projektordnern, etwa in Entwickler-Tools und Mod-Managern.
 
 ## So funktioniert es
 Windows begrenzt Pfade auf 260 Zeichen, außer LongPathsEnabled = 1 ist gesetzt und die App meldet in ihrem Manifest Unterstützung für lange Pfade [1][2]. Jeder Prozess liest den Wert einmal, ein Neustart sorgt dafür, dass alle Apps ihn sehen [1].
@@ -10,7 +10,7 @@ Windows begrenzt Pfade auf 260 Zeichen, außer LongPathsEnabled = 1 ist gesetzt 
 Kopieren oder Entpacken tief verschachtelter Ordner scheitert in Apps mit Unterstützung nicht mehr an zu langen Pfaden.
 
 ## Belege
-Von Microsoft beschrieben [1][2]. Kein Einfluss auf Bildrate oder Latenz.
+Von Microsoft beschrieben [1][2]. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Apps ohne Unterstützung für lange Pfade können solche Pfade weiter nicht nutzen [1].

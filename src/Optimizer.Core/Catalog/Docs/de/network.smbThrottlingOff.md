@@ -1,4 +1,4 @@
-# Dateiübertragungen im Netzwerk: keine SMB-Drosselung
+# Dateiübertragungen im Netzwerk: kein SMB-Throttling
 
 ## Zusammenfassung
 Lässt Windows Dateien von Netzwerkfreigaben auch über Verbindungen mit hoher Latenz mit voller Geschwindigkeit kopieren. Kein Einfluss auf Spiele oder Downloads aus dem Internet.
@@ -10,10 +10,10 @@ Der SMB-Client drosselt den Durchsatz auf Verbindungen mit hoher Latenz, um Zeit
 Kopieren zu oder von einem NAS oder einem anderen PC über VPN oder eine langsame Verbindung kann schneller werden.
 
 ## Belege
-Von Microsoft beschrieben [1]. Es betrifft nur SMB-Dateiübertragungen; lokale Netze mit niedriger Latenz erreichen die Drosselung selten.
+Von Microsoft beschrieben [1]. Es betrifft nur SMB-Dateiübertragungen; in lokalen Netzen mit niedriger Latenz greift das Throttling selten.
 
 ## Nachteile & Risiken
-Auf unzuverlässigen Verbindungen können Übertragungen in Zeitüberschreitungen laufen, die die Drosselung verhindern sollte.
+Auf unzuverlässigen Verbindungen können Übertragungen in Zeitüberschreitungen laufen, die das Throttling verhindern sollte.
 
 ## Wann du es nicht nutzen solltest
 Wenn du keine Dateien übers Netzwerk kopierst oder Übertragungen danach abbrechen.

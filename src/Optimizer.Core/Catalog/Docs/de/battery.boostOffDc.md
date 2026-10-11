@@ -1,4 +1,4 @@
-# Prozessor-Boost im Akkubetrieb aus
+# CPU-Boost im Akkubetrieb aus
 
 ## Zusammenfassung
 Im Akkubetrieb bleibt der Prozessor bei seinem Basistakt, statt darüber hinaus zu boosten. Am Netzteil ändert sich nichts.

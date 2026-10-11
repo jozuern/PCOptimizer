@@ -1,10 +1,10 @@
-# Prozessor-Turbo wiederherstellen
+# CPU-Turbo wiederherstellen
 
 ## Zusammenfassung
 Setzt im aktiven Plan den maximalen Leistungszustand auf 100 % und den Leistungssteigerungsmodus auf den Windows-Standard. So erreicht die CPU wieder ihren Boost-Takt.
 
 ## So funktioniert es
-Zwei Werte des aktiven Energiesparplans steuern den Boost: der maximale Leistungszustand des Prozessors (PROCTHROTTLEMAX), ein Prozentsatz der maximalen Prozessorleistung [2], und der Leistungssteigerungsmodus für Prozessoren (PERFBOOSTMODE). Steht der Modus auf „Deaktiviert“, geht der Prozessor nicht über seine Nennleistung hinaus [1]; ein maximaler Leistungszustand unter 100 % begrenzt die Leistung, die Windows anfordert. Die App setzt für den Netzbetrieb 100 % und den Modus 2, den auch die eingebauten Windows-Pläne nutzen. Je nach Prozessor heißt dieser Wert in Windows „Hoch“ oder „Aktiviert“ [1].
+Zwei Werte des aktiven Energiesparplans steuern den Boost: der maximale Leistungszustand des Prozessors (PROCTHROTTLEMAX), ein Prozentsatz der maximalen CPU-Leistung [2], und der Leistungssteigerungsmodus für Prozessoren (PERFBOOSTMODE). Steht der Modus auf „Deaktiviert“, geht der Prozessor nicht über seine Nennleistung hinaus [1]; ein maximaler Leistungszustand unter 100 % begrenzt die Leistung, die Windows anfordert. Die App setzt für den Netzbetrieb 100 % und den Modus 2, den auch die eingebauten Windows-Pläne nutzen. Je nach Prozessor heißt dieser Wert in Windows „Hoch“ oder „Aktiviert“ [1].
 
 ## Warum es helfen kann
 Aktuelle CPUs laufen in Spielen über ihrem Basistakt. Ist der Boost gesperrt, verlieren Spiele, die von der CPU begrenzt werden, FPS; Spiele, die von der Grafikkarte begrenzt werden, verlieren weniger.

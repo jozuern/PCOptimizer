@@ -10,7 +10,7 @@ Die Richtlinie „Nicht synchronisieren“ wird gesetzt, und Benutzer können si
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Einstellungen werden nicht mehr auf einen neuen PC übernommen.

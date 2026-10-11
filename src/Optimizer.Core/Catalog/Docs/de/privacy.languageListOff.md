@@ -10,7 +10,7 @@ Das ist der Schalter „Websites den Zugriff auf die eigene Sprachliste gestatte
 Weniger Daten verlassen diesen PC. Kein messbarer Einfluss auf die Leistung.
 
 ## Belege
-Datenschutzeinstellung; sie ändert weder Bildrate noch Latenz.
+Datenschutzeinstellung; sie ändert weder Framerate noch Latenz.
 
 ## Nachteile & Risiken
 Manche Websites wählen die Sprache dann anhand deines Browsers.

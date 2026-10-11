@@ -1,6 +1,6 @@
 # Open items
 
-Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, the [second](audit-2026-10-10-2.md) and the [third](audit-2026-10-10-3.md)); every other finding was checked against the code and is fixed. The third audit's report lists why each remaining item is open.
+Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, the second and the third); every other finding was checked against the code and is fixed.
 
 ## Code
 
@@ -17,11 +17,11 @@ Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, th
 
 ## Checks in the VM
 
-The run of 2026-10-11 ([results](vm-test-results-2026-10-11.md)) proved 28 previews and the visible effect of `gpu.gameMode`, confirmed the elevation boundary (H4, L-P4) and fixed the DISM umlauts. Still open:
+The run of 2026-10-11 proved 28 previews and the visible effect of `gpu.gameMode`, confirmed the elevation boundary (H4, L-P4) and fixed the DISM umlauts. Still open:
 
-- **`privacy.locationOff` has no effect:** Location services stays on and apps keep their access, also after a restart. Find the value behind the Settings switch on 26H2 ([F1](vm-test-results-2026-10-11.md#f1-privacylocationoff-has-no-effect)).
-- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it ([F2](vm-test-results-2026-10-11.md#f2-focuslockscreentipsoff-turns-off-windows-spotlight)).
-- **`privacy.inkingTypingOff` stays Preview:** in the VM, "Custom inking and typing dictionary" in Settings stayed on although both `RestrictImplicit*Collection` policies were set ([Preview review](vm-test-results-2026-10-10.md#preview-review)). Find out whether it needs a restart, another value or a different description.
+- **`privacy.locationOff` has no effect:** Location services stays on and apps keep their access, also after a restart. Find the value behind the Settings switch on 26H2.
+- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it.
+- **`privacy.inkingTypingOff` stays Preview:** in the VM, "Custom inking and typing dictionary" in Settings stayed on although both `RestrictImplicit*Collection` policies were set. Find out whether it needs a restart, another value or a different description.
 - **`gpu.gameDvrOff` stays Preview:** the VM detected it as Partial before and after apply. Find the value Windows does not take.
 - **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade` (Settings kept showing "Unencrypted" while Windows reported auto-upgrade on).
 - **Storage analysis before the first scan:** the refusal ("Wait until the PC scan has finished") could not be timed through UI Automation and is not confirmed.

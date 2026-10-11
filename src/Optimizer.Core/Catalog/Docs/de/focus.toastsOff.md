@@ -4,7 +4,7 @@
 Apps können keine Popup-Benachrichtigungen (Toasts) mehr zeigen, Nachrichten aus Chat-Apps erscheinen nicht mehr als Popup. Windows-Systembenachrichtigungen sind nicht betroffen.
 
 ## So funktioniert es
-Die Richtlinie "Popupbenachrichtigungen deaktivieren" (NoToastApplicationNotification = 1) verhindert, dass Anwendungen Popup-Benachrichtigungen anzeigen [1]. Windows-Systemfunktionen und Sprechblasen im Infobereich sind nicht betroffen, ein Neustart ist nicht nötig [1].
+Die Richtlinie „Popupbenachrichtigungen deaktivieren“ (NoToastApplicationNotification = 1) verhindert, dass Anwendungen Popup-Benachrichtigungen anzeigen [1]. Windows-Systemfunktionen und Sprechblasen im Infobereich sind nicht betroffen, ein Neustart ist nicht nötig [1].
 
 ## Warum es helfen kann
 Keine Einblendungen über Spielen, Videos oder Präsentationen, auch von Apps, die Nicht stören übergehen.
