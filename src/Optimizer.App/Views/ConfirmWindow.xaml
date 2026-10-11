@@ -3,23 +3,17 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:l="clr-namespace:Optimizer.App.Services"
-                 Width="760" SizeToContent="Height" MaxHeight="820" ResizeMode="NoResize"
+                 Width="760" MinHeight="0" SizeToContent="Height" MaxHeight="820" ResizeMode="NoResize"
                  WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
                  ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ui:TitleBar Grid.Row="0" Title="" ShowMinimize="False" ShowMaximize="False" ShowHelp="False" />
-        <DockPanel Grid.Row="1" Margin="24,8,24,24">
-            <!-- Buttons -->
-            <DockPanel DockPanel.Dock="Bottom" Margin="0,24,0,0" LastChildFill="False">
-                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
-                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
-                <ui:TextBlock x:Name="FooterText" DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
-            </DockPanel>
-
+        <DockPanel Grid.Row="1" Margin="24,0,24,24">
             <StackPanel DockPanel.Dock="Top">
                 <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
                 <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
@@ -69,5 +63,14 @@
                 </ItemsControl>
             </ScrollViewer>
         </DockPanel>
+        <!-- Footer band with the buttons, as in a Windows 11 content dialog -->
+        <Border Grid.Row="2" Padding="24" BorderThickness="0,1,0,0"
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <DockPanel LastChildFill="False">
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
+                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+                <ui:TextBlock x:Name="FooterText" DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
+            </DockPanel>
+        </Border>
     </Grid>
 </ui:FluentWindow>

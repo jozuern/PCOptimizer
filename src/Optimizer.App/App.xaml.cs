@@ -218,6 +218,28 @@ public partial class App : Application
             dlg.Close();
         }
 
+        // Developer aid: render the question dialog with two buttons (update) and with three (restore point).
+        if (args.Value("--message-shot") is { } messageShot)
+        {
+            var version = AppInfo.Version.ToString(3);
+            var dialogs = new[]
+            {
+                (messageShot, new MessageWindow(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_ConfirmText", version),
+                    Loc.Instance["Confirm_Cancel"], Loc.Instance["Update_Restart"])),
+                (System.IO.Path.ChangeExtension(messageShot, null) + "-3.png", new MessageWindow(Loc.Instance["Rp_AskTitle"], Loc.Instance["Rp_AskText"],
+                    Loc.Instance["Confirm_Cancel"], Loc.Instance["Rp_Continue"], Loc.Instance["Rp_Enable"])),
+            };
+            foreach (var (file, dlg) in dialogs)
+            {
+                dlg.Owner = window;
+                dlg.Show();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                await Task.Delay(400);
+                SaveScreenshot(dlg, file);
+                dlg.Close();
+            }
+        }
+
         // Developer aid: render the Licenses window (Settings > About).
         if (args.Value("--licenses-shot") is { } licensesShot)
         {
