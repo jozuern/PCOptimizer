@@ -950,6 +950,17 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the PCOptimizer release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
+  <data name="Update_WingetText" xml:space="preserve"><value>PCOptimizer was installed with winget, so winget installs version {0}. PCOptimizer closes, winget updates it in its own window and PCOptimizer starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
+  <data name="Update_WingetRunning" xml:space="preserve"><value>winget updates PCOptimizer. PCOptimizer starts again when winget has finished.</value></data>
+  <data name="Update_WingetFailed" xml:space="preserve"><value>winget did not update PCOptimizer (see above). A new version can take a day or two to reach winget. Press Enter to start PCOptimizer again</value></data>
+  <data name="Update_WingetManual" xml:space="preserve"><value>winget could not be started. Close PCOptimizer and run winget upgrade {0} in a terminal.</value></data>
+  <data name="StartMenu_Setting" xml:space="preserve"><value>Start menu entry</value></data>
+  <data name="StartMenu_Hint" xml:space="preserve"><value>Windows Search finds PCOptimizer only through an entry in the Start menu. The entry starts this exe where it is now.</value></data>
+  <data name="StartMenu_AskTitle" xml:space="preserve"><value>Add PCOptimizer to the Start menu?</value></data>
+  <data name="StartMenu_AskText" xml:space="preserve"><value>With an entry in the Start menu, Windows Search finds PCOptimizer. The entry starts this exe where it is now. You can remove it any time in Settings.</value></data>
+  <data name="StartMenu_Add" xml:space="preserve"><value>Add to Start menu</value></data>
+  <data name="StartMenu_Description" xml:space="preserve"><value>Checks and optimizes Windows for gaming and everyday use</value></data>
+  <data name="StartMenu_Failed" xml:space="preserve"><value>The Start menu entry could not be changed ({0}).</value></data>
   <data name="Settings_Report" xml:space="preserve"><value>Report a problem</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Copy log</value></data>
   <data name="Settings_ReportHint" xml:space="preserve"><value>Report a problem opens a bug report on GitHub with the app version and Windows build filled in. Nothing is sent until you submit it there (you need a GitHub account). Copy log puts this session's log on the clipboard to paste into it.</value></data>

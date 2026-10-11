@@ -122,6 +122,7 @@ public partial class App : Application
         Mark("window built");
         window.ContentRendered += (_, _) => Mark("window drawn");
         ApplyTheme(args.Value("--theme") ?? _settings.Theme, save: false);
+        if (args.Value("--screenshot") is not null || args.Value("--perf") is not null) KeepOffScreen(window);
         window.Show();
         // "System" theme: WPF-UI's watcher switches the brushes when Windows changes its mode; content built from brushes follows.
         ApplicationThemeManager.Changed += (_, _) => Dispatcher.BeginInvoke(RefreshThemedContent);
@@ -156,7 +157,12 @@ public partial class App : Application
         }
 
         // Opt-in release check (off by default); screenshots stay offline and reproducible.
-        if (args.Value("--screenshot") is null) vm.CheckForUpdatesAsync(atStart: true).Forget("update check");
+        if (args.Value("--screenshot") is null)
+        {
+            // Asked once, over the first results: a portable exe has no Start menu entry, so Windows Search misses it.
+            vm.OfferStartMenuEntry();
+            vm.CheckForUpdatesAsync(atStart: true).Forget("update check");
+        }
 
         if (args.Value("--screenshot") is { } shot)
         {
@@ -211,6 +217,7 @@ public partial class App : Application
             var request = ChangeRunner.ConfirmRequestFor(ct, services.Engine.Detect(ct, vm.Facts, vm.AppliedIds()), vm.ExpertMode,
                 vm.Runner.Title(ct), vm.Runner.Summary(ct), services.Engine.Preview(ct));
             var dlg = new ConfirmWindow(request) { Owner = window };
+            KeepOffScreen(dlg);
             dlg.Show();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await Task.Delay(400);
@@ -232,6 +239,7 @@ public partial class App : Application
             foreach (var (file, dlg) in dialogs)
             {
                 dlg.Owner = window;
+                KeepOffScreen(dlg);
                 dlg.Show();
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 await Task.Delay(400);
@@ -244,6 +252,7 @@ public partial class App : Application
         if (args.Value("--licenses-shot") is { } licensesShot)
         {
             var lic = new LicensesWindow(_ => { }) { Owner = window };
+            KeepOffScreen(lic);
             lic.Show();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await Task.Delay(400);
@@ -459,6 +468,20 @@ public partial class App : Application
             if (child is T match) yield return match;
             foreach (var deeper in Descendants<T>(child)) yield return deeper;
         }
+    }
+
+    /// <summary>
+    /// Developer runs (--screenshot, --perf) render from the visual tree, not from the screen: the window opens below the
+    /// primary monitor (so it keeps that monitor's DPI), without focus or taskbar button. Dialogs need it too: Windows
+    /// moves a window centered on an owner off the screen back onto it.
+    /// </summary>
+    private static void KeepOffScreen(Window window)
+    {
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        window.Left = 0;
+        window.Top = SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight + 100;
+        window.ShowActivated = false;
+        window.ShowInTaskbar = false;
     }
 
     private static void SaveScreenshot(Window window, string path)

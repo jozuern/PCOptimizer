@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.4 (preview)
+
+- On the first start the app asks once whether to add an entry to the Start menu, because Windows Search finds a portable exe only through such an entry. Settings > Appearance has a switch to add or remove it later. The entry goes into the Start menu of the signed-in user, also when the app runs under another administrator account.
+- Prepared for winget (package `jozuern.PCOptimizer`, not yet in winget). A copy installed with winget no longer replaces its own exe: "Update now" closes the app, runs `winget upgrade` in its own window as the signed-in user and starts the app again, so winget's record of the installed version stays right.
+
 ## 0.6.3 (preview)
 
 - The question dialogs (update, restore point and the others) and the confirmation dialog of a change are laid out like Windows 11 dialogs: title and text on top, the buttons side by side in a footer band at the bottom, without the empty space under the buttons. Long button labels wrap instead of being cut off ("Einschalten und fortfahren" in German).

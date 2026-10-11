@@ -473,6 +473,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(UpdateStatus));
         OnPropertyChanged(nameof(UpdateAvailable));
         OnPropertyChanged(nameof(CanSelfUpdate));
+        OnPropertyChanged(nameof(CanUpdateInApp));
         BuildBanners();
     }
 
@@ -530,8 +531,18 @@ public sealed partial class MainViewModel : ObservableObject
     /// as "PCOptimizer (1).exe", and the update replaces the file under the name it has.
     /// </summary>
     public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
-        Environment.ProcessPath is { } exe && System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
+        IsPublishedExe && !InstalledWithWinget;
+
+    /// <summary>The published single-file exe (a Debug or Release build has PCOptimizer.dll next to its exe).</summary>
+    public static bool IsPublishedExe { get; } = Environment.ProcessPath is { } exe &&
+        System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
         !System.IO.File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exe) ?? "", typeof(MainViewModel).Assembly.GetName().Name + ".dll"));
+
+    /// <summary>Installed as a winget package: winget installs the update, so its record of the version stays right.</summary>
+    public static bool InstalledWithWinget { get; } = Environment.ProcessPath is { } exe && WingetPackage.IsInstalledWithWinget(exe);
+
+    /// <summary>"Update now" is offered: the app replaces its exe, or hands the update to winget.</summary>
+    public bool CanUpdateInApp => CanSelfUpdate || (UpdateAvailable && InstalledWithWinget);
 
     [ObservableProperty] private bool _updating;
 
@@ -541,6 +552,11 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task UpdateNowAsync()
     {
+        if (InstalledWithWinget && UpdateAvailable && _release?.Latest is { } wingetVersion)
+        {
+            UpdateWithWinget(wingetVersion.ToString(3));
+            return;
+        }
         if (!CanSelfUpdate || _release is not { Latest: { } latest } release || Environment.ProcessPath is not { } exe)
         {
             OpenReleasePage();
@@ -601,6 +617,71 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Updating = false;
         }
+    }
+
+    /// <summary>
+    /// After confirmation: starts winget in its own window as the signed-in user and ends the app (winget cannot replace a
+    /// running exe). The window waits for the app to end, updates it and starts it again.
+    /// </summary>
+    private void UpdateWithWinget(string version)
+    {
+        if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating || Environment.ProcessPath is not { } exe)
+        {
+            ShowResult(Loc.Instance["Update_Busy"]);
+            return;
+        }
+        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_WingetText", version), Loc.Instance["Update_Restart"])) return;
+        var arguments = WingetPackage.UpdateArguments(Environment.ProcessId, exe, Loc.Instance["Update_WingetRunning"], Loc.Instance["Update_WingetFailed"]);
+        if (DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) == DeElevatedLauncher.Path.Failed)
+        {
+            ShowResult(Loc.Instance.Format("Update_WingetManual", WingetPackage.Id), InfoBarSeverity.Warning);
+            return;
+        }
+        Log.Info("update", "handed to winget, closing", new { version });
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    // ---------------- Start menu entry ----------------
+
+    private string? StartMenuFolder => StartMenuShortcut.ProgramsFolder(_services.Elevation, _services.ProfilePath);
+
+    /// <summary>The app has an entry in the signed-in user's Start menu, so Windows Search finds it.</summary>
+    public bool StartMenuEntry
+    {
+        get => StartMenuFolder is { } folder && StartMenuShortcut.Exists(folder);
+        set
+        {
+            if (value != StartMenuEntry) SetStartMenuEntry(value);
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Only the published exe gets an entry (a build folder is not where the app lives).</summary>
+    public bool CanAddToStartMenu => IsPublishedExe;
+
+    private void SetStartMenuEntry(bool on)
+    {
+        if (StartMenuFolder is not { } folder || Environment.ProcessPath is not { } exe) return;
+        try
+        {
+            if (on) StartMenuShortcut.Create(folder, exe, Loc.Instance["StartMenu_Description"]);
+            else StartMenuShortcut.Remove(folder);
+            Log.Info("startmenu", on ? "entry added" : "entry removed", new { folder });
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            Log.Error("startmenu", "entry not changed", ex);
+            ShowResult(Loc.Instance.Format("StartMenu_Failed", ex.Message), InfoBarSeverity.Warning);
+        }
+    }
+
+    /// <summary>First start of the published exe: asks once whether to add the Start menu entry.</summary>
+    public void OfferStartMenuEntry()
+    {
+        if (_settings.StartMenuAsked || !CanAddToStartMenu || StartMenuEntry) return;
+        _settings.StartMenuAsked = true;
+        _settings.Save();
+        if (_dialogs.Ask(Loc.Instance["StartMenu_AskTitle"], Loc.Instance["StartMenu_AskText"], Loc.Instance["StartMenu_Add"])) StartMenuEntry = true;
     }
 
     private System.Windows.Threading.DispatcherTimer? _resultTimer;
@@ -1383,7 +1464,7 @@ public sealed partial class MainViewModel : ObservableObject
             Banners.Add(new Banner(_updateNotice, false));
         }
         if (UpdateAvailable)
-            Banners.Add(CanSelfUpdate
+            Banners.Add(CanUpdateInApp
                 ? new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Install"], Action = UpdateNowCommand, ActionIcon = SymbolRegular.ArrowDownload20 }
                 : new Banner(UpdateStatus!, false) { ActionText = Loc.Instance["Update_Open"], Action = OpenReleasePageCommand, ActionIcon = SymbolRegular.Open20 });
         if (_profileAutoSet) Banners.Add(new Banner(Loc.Instance.Format("Profile_AutoSet", ProfileName(_usage)), false));

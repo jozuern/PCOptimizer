@@ -4,13 +4,13 @@
 
 A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German.
 
-> **Status: preview (0.5).** Apply and undo are tested against a registry sandbox and fake system interfaces, and the [VM test plan](docs/vm-test-plan.md) was run on Windows 11 26H2 in a Hyper-V virtual machine: the catalog tweaks (some do not apply in a virtual machine), the general flow and the pages that change the PC ([results](docs/vm-test-results-2026-10-10.md)). Not checked on real hardware yet: NVIDIA driver settings, network adapter properties, laptop profiles, battery checks and AMD-specific checks. Tweaks marked **Preview** are the risky ones. Create a restore point or a backup before you change anything, and start with the recommended items.
+> **Status: preview (0.6).** Apply and undo are tested against a registry sandbox and fake system interfaces, and the [VM test plan](docs/vm-test-plan.md) was run on Windows 11 26H2 in a Hyper-V virtual machine: the catalog tweaks (some do not apply in a virtual machine), the general flow and the pages that change the PC ([results](docs/vm-test-results-2026-10-10.md)). Not checked on real hardware yet: NVIDIA driver settings, network adapter properties, laptop profiles, battery checks and AMD-specific checks. Tweaks marked **Preview** are the risky ones. Create a restore point or a backup before you change anything, and start with the recommended items.
 
 <p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, profile, recommended changes and findings"></p>
 
 ## Download
 
-Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the release signature (`PCOptimizer.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start.
+Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the release signature (`PCOptimizer.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start. The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
 
 ## What it does
 

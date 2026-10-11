@@ -15,6 +15,9 @@ public sealed class AppSettings
     /// <summary>Opt-in: ask GitHub for the latest release at start. Off by default (no network request unless turned on).</summary>
     public bool CheckForUpdates { get; set; }
 
+    /// <summary>The first start asked whether to add the app to the Start menu (asked once, whatever the answer).</summary>
+    public bool StartMenuAsked { get; set; }
+
     /// <summary>VirusTotal API key, DPAPI-protected for the current user (never stored in clear text).</summary>
     public string? VirusTotalKey { get; set; }
 

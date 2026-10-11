@@ -342,6 +342,8 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |
 | Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
 | Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |
+| Start menu entry | First start of the published exe: the question appears once; "Add to Start menu" creates `PCOptimizer.lnk` in the signed-in user's Start menu and Windows Search finds PCOptimizer; the switch in Settings removes and adds it; the question does not come back on the next start | |
+| winget install and update | `winget install --manifest <folder>` with the manifest of the previous release (LocalManifestFiles on), start with `pcoptimizer`, Update now: the app closes, a PowerShell window runs `winget upgrade`, the app starts again after the UAC prompt and shows the new version; `winget list jozuern.PCOptimizer` shows it too. Before the new version is in winget: the window says so and waits for Enter, then the old version starts | |
 | Startup snapshot | Save a snapshot, install a program that adds a Run entry, compare: only that entry is "new"; save while the list loads is refused | |
 | DNS "Use the fastest" | After the benchmark, the fastest preset is applied; with another preset of this app applied, that one is undone first | |
 | Edge Game Assist | Listed on Debloat when installed; removing it keeps Edge | |

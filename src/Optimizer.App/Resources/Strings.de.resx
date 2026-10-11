@@ -950,6 +950,17 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Update_BadSignature" xml:space="preserve"><value>Das heruntergeladene Update ist nicht mit dem Release-Schlüssel von PCOptimizer signiert und wurde gelöscht. Es wurde nichts verändert. Nutze die Downloadseite und melde das.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>Das Update wurde heruntergeladen, aber diese exe konnte nicht ersetzt werden ({0}). Nutze stattdessen die Download-Seite.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und aktualisiere dann.</value></data>
+  <data name="Update_WingetText" xml:space="preserve"><value>PCOptimizer wurde mit winget installiert, deshalb installiert winget die Version {0}. PCOptimizer schließt sich, winget aktualisiert es in einem eigenen Fenster, und PCOptimizer startet neu; Windows fragt wie bei jedem Start nach Administratorrechten. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
+  <data name="Update_WingetRunning" xml:space="preserve"><value>winget aktualisiert PCOptimizer. PCOptimizer startet neu, wenn winget fertig ist.</value></data>
+  <data name="Update_WingetFailed" xml:space="preserve"><value>winget hat PCOptimizer nicht aktualisiert (siehe oben). Eine neue Version kann ein bis zwei Tage brauchen, bis winget sie anbietet. Drücke die Eingabetaste, um PCOptimizer wieder zu starten</value></data>
+  <data name="Update_WingetManual" xml:space="preserve"><value>winget konnte nicht gestartet werden. Schließe PCOptimizer und führe winget upgrade {0} in einem Terminal aus.</value></data>
+  <data name="StartMenu_Setting" xml:space="preserve"><value>Eintrag im Startmenü</value></data>
+  <data name="StartMenu_Hint" xml:space="preserve"><value>Die Windows-Suche findet PCOptimizer nur über einen Eintrag im Startmenü. Der Eintrag startet diese exe an ihrem jetzigen Ort.</value></data>
+  <data name="StartMenu_AskTitle" xml:space="preserve"><value>PCOptimizer zum Startmenü hinzufügen?</value></data>
+  <data name="StartMenu_AskText" xml:space="preserve"><value>Mit einem Eintrag im Startmenü findet die Windows-Suche PCOptimizer. Der Eintrag startet diese exe an ihrem jetzigen Ort. Du kannst ihn jederzeit in den Einstellungen entfernen.</value></data>
+  <data name="StartMenu_Add" xml:space="preserve"><value>Zum Startmenü hinzufügen</value></data>
+  <data name="StartMenu_Description" xml:space="preserve"><value>Prüft und optimiert Windows für Spiele und den Alltag</value></data>
+  <data name="StartMenu_Failed" xml:space="preserve"><value>Der Eintrag im Startmenü konnte nicht geändert werden ({0}).</value></data>
   <data name="Settings_Report" xml:space="preserve"><value>Problem melden</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Protokoll kopieren</value></data>
   <data name="Settings_ReportHint" xml:space="preserve"><value>Problem melden öffnet einen Fehlerbericht auf GitHub, in dem App-Version und Windows-Build schon eingetragen sind. Gesendet wird erst, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto). Protokoll kopieren legt das Protokoll dieser Sitzung in die Zwischenablage, damit du es einfügen kannst.</value></data>

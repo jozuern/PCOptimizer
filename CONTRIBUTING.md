@@ -15,7 +15,8 @@ dotnet build -c Release && dotnet test -c Release --no-build --filter "Category!
 dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifacts/publish/PCOptimizer.exe
 ```
 
-Developer switches (all read-only):
+Developer switches (all read-only). Runs with `--screenshot` or `--perf` open the window and its dialogs below the screen,
+without focus or taskbar button, so they can run while you work; the PNGs are rendered from the window, not the screen.
 
 | Switch | Effect |
 |---|---|
@@ -91,6 +92,9 @@ Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit ho
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
 3. The release workflow builds, runs the tests and publishes the single exe. The release job then waits for your approval (Actions > the run > Review deployments), because it uses the `release` environment; after it, it adds a SHA-256 file and a signature file (`PCOptimizer.exe.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
+4. winget: `pwsh scripts/winget-manifest.ps1 -Version 0.6.4` writes the manifest of the published release to `artifacts/winget` and validates it. Submit that folder to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) as one pull request per version (for example `wingetcreate submit <folder>`); a volunteer moderator approves it. The exe needs administrator rights, so the pipeline's start test as a standard user can fail (`Validation-Executable-Error`): say so in the pull request.
+
+A copy installed with winget (the exe sits in a folder named after the package id) does not replace itself: "Update now" runs `winget upgrade` as the signed-in user after the app has ended (`WingetPackage`). A version reaches winget only when its manifest is merged, which can take a day or two; until then winget users who click "Update now" get winget's message and the old version.
 
 The in-app update installs a release only when its signature matches the public key in `src/Optimizer.Core/Updates/update-key.pem`. The release workflow signs with the private key from the secret `UPDATE_SIGNING_KEY` of the GitHub environment `release` and stops when the secret is missing or does not match that public key. Keep the secret in that environment, not in the repository (a repository secret is readable by a workflow on any pushed branch or tag), and let the environment allow only `v*.*.*` tags and require your approval (both are set up). The repository rulesets "Release tags" (only administrators create, move or delete `v*` tags) and "Protect main" (no deletion, no force push) cover the rest. Create the key pair once with `scripts/new-update-key.ps1`; the script says how to store the private key. Replace it only when it is lost or leaked: versions with the old public key then reject new releases, and users have to download the next version by hand.
 
