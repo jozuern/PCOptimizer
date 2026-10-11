@@ -71,7 +71,7 @@
                                               Visibility="{Binding ReadOnlyNote, Converter={StaticResource NullToVisibility}}" />
                             </StackPanel>
                             <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Warning20" Filled="True" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Top"
-                                           Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToVisibility}}" />
+                                           Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToHidden}}" />
                             <StackPanel>
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextWrapping="Wrap" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{l:Tr Startup_New}" Margin="0,2,0,0"

@@ -46,7 +46,9 @@ public sealed class PowerSettingAction : TweakAction
 
     // Backups written before schemes were part of the key have no scheme; their key stays the same.
     public override string TargetKey => Scheme is { } s ? $"pwr:{s}:{Sub}:{Set}" : $"pwr:{Sub}:{Set}";
-    public override string Describe(ActionContext c) => $"Power plan {SchemeOf(c)}: {Setting} ({Subgroup})";
+    // The plan by the name Windows shows (its GUID only when it has none), as in the active-plan preview.
+    public override string Describe(ActionContext c) =>
+        $"Power plan {(SchemeOf(c) is var scheme && c.Power.Schemes().FirstOrDefault(s => s.Id == scheme).Name is { Length: > 0 } name ? name : scheme)}: {Setting} ({Subgroup})";
 
     public PowerSettingAction For(Guid scheme) => new() { Subgroup = Subgroup, Setting = Setting, Ac = Ac, Dc = Dc, Scheme = scheme };
 
@@ -163,6 +165,13 @@ public sealed class PowerSchemeAction : TweakAction
         new(true, "scheme", Target(c)?.ToString() ?? $"new:{Name}");
 
     public override StoredValue? Read(ActionContext c) => new(true, "scheme", c.Power.ActiveScheme().ToString());
+
+    /// <summary>The plan's name as Windows shows it, not its GUID; a plan still to be created by the name it gets.</summary>
+    protected override string Show(ActionContext c, StoredValue value)
+    {
+        if (value.Data is { } data && data.StartsWith("new:", StringComparison.Ordinal)) return data[4..];
+        return Guid.TryParse(value.Data, out var id) && c.Power.Schemes().FirstOrDefault(s => s.Id == id).Name is { Length: > 0 } name ? name : value.Display;
+    }
 
     /// <summary>
     /// The plans that existed before <see cref="Apply"/> ran on this instance, and the plan it activated: a rollback

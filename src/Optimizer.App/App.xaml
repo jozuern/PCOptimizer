@@ -15,6 +15,7 @@
 
             <v:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <v:BoolToVisibilityConverter x:Key="InverseBoolToVisibility" Invert="True" />
+            <v:BoolToVisibilityConverter x:Key="BoolToHidden" Off="Hidden" />
             <v:NullToVisibilityConverter x:Key="NullToVisibility" />
             <v:InverseBoolConverter x:Key="InverseBool" />
             <v:StatusToSymbolConverter x:Key="StatusToSymbol" />
@@ -23,6 +24,7 @@
             <v:AllTrueConverter x:Key="AllTrue" />
             <v:CountToVisibilityConverter x:Key="EmptyToVisibility" Invert="True" />
             <v:LayoutWidthConverter x:Key="LayoutWidth" />
+            <v:SameItemConverter x:Key="SameItem" />
 
             <!--
                 Fluent rules for every page: Segoe UI Variable type ramp (ui:TextBlock FontTypography), spacing only
@@ -114,9 +116,24 @@
 
 
 
+            <!-- A card that opens the details pane: an accent border marks the one the pane shows. -->
+            <Style x:Key="SelectableCard" TargetType="ui:CardControl" BasedOn="{StaticResource {x:Type ui:CardControl}}">
+                <Style.Triggers>
+                    <DataTrigger Value="True">
+                        <DataTrigger.Binding>
+                            <MultiBinding Converter="{StaticResource SameItem}">
+                                <Binding />
+                                <Binding Path="DataContext.SelectedItem" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                            </MultiBinding>
+                        </DataTrigger.Binding>
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
             <!-- Finding / advisor row: status icon, title, summary, impact line; Fix button when there is one -->
             <DataTemplate x:Key="FindingRow">
-                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
+                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
                         <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
@@ -162,7 +179,7 @@
                 <DockPanel>
                 <ui:TextBlock DockPanel.Dock="Top" FontTypography="BodyStrong" Text="{Binding GroupHeader}" Margin="0,16,0,8"
                               Visibility="{Binding GroupHeader, Converter={StaticResource NullToVisibility}}" />
-                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}"
+                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
                         <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />

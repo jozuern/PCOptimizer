@@ -221,25 +221,25 @@ public static class HardwareReport
         var f = new Fmt(l.Language);
         var tiles = new List<HwTile>();
         if (p.Cpu is { } c)
-            tiles.Add(new HwTile(l["Sum_Cpu"], c.Name, f.F("coresThreadsValue", c.Cores, c.Threads), SymbolRegular.DeveloperBoard24));
+            tiles.Add(new HwTile(l["Hw_Cpu"], c.Name, f.F("coresThreadsValue", c.Cores, c.Threads), SymbolRegular.DeveloperBoard24));
         if (p.Gpus?.Where(g => g.Kind is not GpuKind.Virtual).ToList() is { Count: > 0 } gpus)
         {
             var main = gpus.FirstOrDefault(g => g.Kind == GpuKind.Discrete) ?? gpus[0];
             var detail = string.Join(", ", new[] { main.VramBytes is { } v ? f.Gb(v) : "", (main.NvidiaDriverVersion ?? main.DriverVersion) is { } dv ? f.F("driverValue", dv) : "" }.Where(s => s.Length > 0));
-            tiles.Add(new HwTile(l["Sum_Gpu"], string.Join("\n", gpus.Select(g => g.Name)), detail, SymbolRegular.DesktopPulse24));
+            tiles.Add(new HwTile(l["Hw_Gpu"], string.Join("\n", gpus.Select(g => g.Name)), detail, SymbolRegular.DesktopPulse24));
         }
         if (p.Memory is { } m)
         {
             var first = m.Modules.FirstOrDefault();
             var detail = first is null ? "" : f.F("memoryValue", first.Type, RamSpeed.NormalizeConfigured(first), m.Modules.Count);
-            tiles.Add(new HwTile(l["Sum_Memory"], f.Gb(m.TotalBytes), detail, SymbolRegular.Ram20));
+            tiles.Add(new HwTile(l["Hw_Memory"], f.Gb(m.TotalBytes), detail, SymbolRegular.Ram20));
         }
         if (p.Displays is { Count: > 0 } d)
-            tiles.Add(new HwTile(l["Sum_Displays"], string.Join("\n", d.Select(x => x.FriendlyName)),
+            tiles.Add(new HwTile(l["Hw_Displays"], string.Join("\n", d.Select(x => x.FriendlyName)),
                 string.Join("\n", d.Select(x => $"{x.Width}×{x.Height}, {x.CurrentRefresh.Hz:0} Hz")), SymbolRegular.Desktop24));
         if (p.Firmware is { } fw)
-            tiles.Add(new HwTile(l["Sum_Board"], $"{fw.BoardManufacturer} {fw.BoardProduct}".Trim(), $"BIOS {fw.BiosVersion}".Trim(), SymbolRegular.DeveloperBoardLightning20));
-        tiles.Add(new HwTile(l["Sum_Windows"], $"Windows 11 {p.Os.DisplayVersion}", $"{p.Os.Edition}, Build {p.Os.BuildString}", SymbolRegular.Window24));
+            tiles.Add(new HwTile(l["Hw_Board"], $"{fw.BoardManufacturer} {fw.BoardProduct}".Trim(), $"BIOS {fw.BiosVersion}".Trim(), SymbolRegular.DeveloperBoardLightning20));
+        tiles.Add(new HwTile(l["Hw_Os"], $"Windows 11 {p.Os.DisplayVersion}", $"{p.Os.Edition}, Build {p.Os.BuildString}", SymbolRegular.Window24));
         return tiles;
     }
 

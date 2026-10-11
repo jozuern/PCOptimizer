@@ -93,7 +93,13 @@ public partial class DocLintTests(ITestOutputHelper output)
 
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")))
+        {
             foreach (Match m in CodeKeyPattern().Matches(File.ReadAllText(file))) used.Add(m.Groups[1].Value);
+            // Keys picked in a condition (x ? "A" : "B") or read through a local alias (var l = Loc.Instance; l["Hw_Cpu"])
+            // count too: every key-shaped literal on a line that reads the strings.
+            foreach (var line in File.ReadLines(file).Where(line => LocLinePattern().IsMatch(line)))
+                foreach (Match m in KeyLiteralPattern().Matches(line)) used.Add(m.Groups[1].Value);
+        }
         foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.xaml", SearchOption.AllDirectories).Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")))
             foreach (Match m in XamlKeyPattern().Matches(File.ReadAllText(file))) used.Add(m.Groups[1].Value);
         foreach (var p in Catalog.CatalogData.Current.Profiles.Profiles) used.UnionWith([$"Profile_{p.Id}", $"ProfileDesc_{p.Id}"]);
@@ -112,6 +118,12 @@ public partial class DocLintTests(ITestOutputHelper output)
 
     [GeneratedRegex(@"Loc\.Instance(?:\[|\.Format\()""(\w+)""")]
     private static partial Regex CodeKeyPattern();
+
+    [GeneratedRegex(@"Loc\.Instance|\bl\[""")]
+    private static partial Regex LocLinePattern();
+
+    [GeneratedRegex(@"""([A-Z][A-Za-z0-9]*_\w+)""")]
+    private static partial Regex KeyLiteralPattern();
 
     [GeneratedRegex(@"\{l:Tr (\w+)\}")]
     private static partial Regex XamlKeyPattern();

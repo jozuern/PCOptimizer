@@ -196,11 +196,43 @@ public static partial class DocStore
 }
 
 /// <summary>Language-neutral labels for generated content (facts, values, statuses): Catalog/Data/labels.json.</summary>
-public sealed class Labels
+public sealed partial class Labels
 {
     private readonly Dictionary<string, Dictionary<string, string>> _byLang;
 
-    private Labels(Dictionary<string, Dictionary<string, string>> byLang) => _byLang = byLang;
+    /// <summary>The English "target.*" templates as patterns, the most specific (most fixed text) first.</summary>
+    private readonly Lazy<IReadOnlyList<(string Key, Regex Pattern)>> _targets;
+
+    private Labels(Dictionary<string, Dictionary<string, string>> byLang)
+    {
+        _byLang = byLang;
+        _targets = new(() => (_byLang.TryGetValue("en", out var en) ? en : [])
+            .Where(kv => kv.Key.StartsWith("target.", StringComparison.Ordinal))
+            .OrderByDescending(kv => Placeholder().Replace(kv.Value, "").Length)
+            .Select(kv => (kv.Key, new Regex("^" + EscapedPlaceholder().Replace(Regex.Escape(kv.Value), "(?<p$1>.+?)") + "$", RegexOptions.CultureInvariant)))
+            .ToList());
+    }
+
+    /// <summary>
+    /// A change target in the UI language ("Service Spooler (start type)" becomes "Dienst Spooler (Starttyp)"). The
+    /// actions describe their targets in English, also in stored backups; a "target.*" label holds that English form with
+    /// {0}, {1} for the parts that stay as they are (names, paths, ids) and its translation. Registry paths and targets
+    /// without a template stay as they are.
+    /// </summary>
+    public string Target(string lang, string target)
+    {
+        if (lang == "en" || !_byLang.TryGetValue(lang, out var local)) return target;
+        foreach (var (key, pattern) in _targets.Value)
+            if (local.TryGetValue(key, out var template) && pattern.Match(target) is { Success: true } m)
+                return Placeholder().Replace(template, p => m.Groups["p" + p.Groups[1].Value].Value);
+        return target;
+    }
+
+    [GeneratedRegex(@"\{(\d)\}")]
+    private static partial Regex Placeholder();
+
+    [GeneratedRegex(@"\\\{(\d)\}")]
+    private static partial Regex EscapedPlaceholder();
 
     private static readonly Lazy<Labels> Lazy = new(() =>
         new Labels(JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(CatalogData.ReadResourceText("Catalog.Data.labels.json"))

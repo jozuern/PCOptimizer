@@ -38,7 +38,7 @@ public static class CleanupEngine
         var local = profilePath is null ? null : Path.Combine(profilePath, @"AppData\Local");
         var list = new List<CleanupCategory>
         {
-            new("cleanup.windowsTemp", [Path.Combine(win, "Temp")], MinAge: TempMinAge),
+            new("cleanup.windowsTemp", [Path.Combine(win, "Temp")], MinAge: TempMinAge, WarningKey: "cleanup.warn.temp"),
             new("cleanup.updateDownloads", [Path.Combine(win, @"SoftwareDistribution\Download")], MinAge: TimeSpan.FromDays(3), WarningKey: "cleanup.warn.updateDownloads"),
             new("cleanup.errorReports", [Path.Combine(programData, @"Microsoft\Windows\WER\ReportArchive"), Path.Combine(programData, @"Microsoft\Windows\WER\ReportQueue")]),
             new("cleanup.memoryDumps", [Path.Combine(win, "Minidump")], DefaultSelected: false),
@@ -46,7 +46,7 @@ public static class CleanupEngine
         };
         if (local is not null)
         {
-            list.Add(new("cleanup.userTemp", [Path.Combine(local, "Temp")], MinAge: TempMinAge));
+            list.Add(new("cleanup.userTemp", [Path.Combine(local, "Temp")], MinAge: TempMinAge, WarningKey: "cleanup.warn.temp"));
             list.Add(new("cleanup.thumbnails", [Path.Combine(local, @"Microsoft\Windows\Explorer")], Pattern: "thumbcache_*.db", Recursive: false));
             list.Add(new("cleanup.crashDumps", [Path.Combine(local, "CrashDumps")]));
             list.Add(new("cleanup.browserCache",

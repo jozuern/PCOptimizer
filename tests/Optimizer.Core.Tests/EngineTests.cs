@@ -173,6 +173,36 @@ public class EngineTests
     }
 
     [Fact]
+    public void PowerPlanPreviewShowsPlanNames()
+    {
+        using var fx = new EngineFixture();
+        fx.Power.Active = FakePower.High;
+        var line = Assert.Single(fx.Engine.Preview(T("power.balancedPlan")));
+        Assert.Equal(("High performance", "Balanced"), (line.Before, line.After));
+        Assert.Equal("PCOptimizer Gaming", Assert.Single(fx.Engine.Preview(T("power.gamingPlan"))).After);
+    }
+
+    [Fact]
+    public void ChangeTargetsShowInGerman()
+    {
+        var labels = Docs.Labels.Current;
+        Assert.Equal("Aktiver Energiesparplan", labels.Target("de", "Active power plan"));
+        Assert.Equal("Dienst Spooler (Starttyp)", labels.Target("de", "Service Spooler (start type)"));
+        Assert.Equal("Startkonfiguration {current}: disabledynamictick", labels.Target("de", "Boot configuration {current}: disabledynamictick"));
+        // The more specific template wins over the one that would also match ("adapter" as a name).
+        Assert.Equal("IPv4-DNS-Server des Adapters {abc}", labels.Target("de", "IPv4 DNS servers of adapter {abc}"));
+        Assert.Equal("Service Spooler (start type)", labels.Target("en", "Service Spooler (start type)"));
+        Assert.Equal(@"HKLM\SOFTWARE\Test\Value", labels.Target("de", @"HKLM\SOFTWARE\Test\Value"));
+
+        // Every target a catalog tweak shows is a registry path or has a German form.
+        using var fx = new EngineFixture();
+        var english = Catalog.Tweaks.SelectMany(t => fx.Engine.Preview(t)).Select(c => c.Target)
+            .Where(target => !target.StartsWith("HK", StringComparison.Ordinal) && labels.Target("de", target) == target)
+            .Distinct().ToList();
+        Assert.True(english.Count == 0, "no German form: " + string.Join("; ", english));
+    }
+
+    [Fact]
     public async Task ConflictBlocksWhileTheOtherChangeIsBackedUp()
     {
         using var fx = new EngineFixture();

@@ -563,16 +563,40 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     /// <summary>The last size reading (kept for a language switch, which builds the rows again).</summary>
     public Optimizer.Core.Cleanup.CleanupScan? Scan { get; private set; }
 
+    /// <summary>
+    /// The exact folders (with the file pattern where only some files go, like thumbcache_*.db): the ones found on this
+    /// PC once measured, every place the category looks before that or when none of them exists.
+    /// </summary>
+    [ObservableProperty] private string _foldersText = FoldersOf(category, category.Roots);
+
     public void SetScan(Optimizer.Core.Cleanup.CleanupScan scan)
     {
         Scan = scan;
         Bytes = scan.Bytes;
         SizeText = scan.Bytes == 0 && scan.Files == 0 ? Loc.Instance["Cleanup_Nothing"] : Loc.Instance.Format("Cleanup_Size", CleanupViewModel.Size(scan.Bytes), scan.Files);
         IsEmpty = scan.Bytes == 0 && scan.Files == 0;
+        FoldersText = FoldersOf(Category, scan.ExistingRoots.Count > 0 ? scan.ExistingRoots : Category.Roots);
     }
 
-    /// <summary>Nothing to clean in this category: the row is drawn dimmed.</summary>
+    private static string FoldersOf(Optimizer.Core.Cleanup.CleanupCategory c, IEnumerable<string> roots) =>
+        string.Join("\n", roots.Select(r => c.Pattern == "*" ? r : System.IO.Path.Combine(r, c.Pattern)));
+
+    /// <summary>Nothing to clean in this category: its check box shows unticked and greyed out.</summary>
     [ObservableProperty] private bool _isEmpty;
+
+    /// <summary>
+    /// What the check box shows: an empty category has nothing to delete, so it shows unticked (and cannot be ticked)
+    /// instead of ticked but greyed out. The choice itself stays for when the category fills up again.
+    /// </summary>
+    public bool Checked
+    {
+        get => Selected && !IsEmpty;
+        set => Selected = value;
+    }
+
+    partial void OnSelectedChanged(bool value) => OnPropertyChanged(nameof(Checked));
+
+    partial void OnIsEmptyChanged(bool value) => OnPropertyChanged(nameof(Checked));
 }
 
 public sealed partial class CleanupViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)

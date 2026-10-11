@@ -23,8 +23,11 @@ public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public bool Invert { get; set; }
 
+    /// <summary>Hidden keeps the space (an icon column that lines up the text of every row).</summary>
+    public Visibility Off { get; set; } = Visibility.Collapsed;
+
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        (value is true) ^ Invert ? Visibility.Visible : Visibility.Collapsed;
+        (value is true) ^ Invert ? Visibility.Visible : Off;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
@@ -92,6 +95,15 @@ public sealed class NullToBoolConverter : IValueConverter
 public sealed class AllTrueConverter : IMultiValueConverter
 {
     public object Convert(object?[] values, Type targetType, object? parameter, CultureInfo culture) => values.All(v => v is true);
+    public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+/// <summary>True when both values are the same object (a row and the item shown in the details pane).</summary>
+public sealed class SameItemConverter : IMultiValueConverter
+{
+    public object Convert(object?[] values, Type targetType, object? parameter, CultureInfo culture) =>
+        values.Length == 2 && values[0] is not null && ReferenceEquals(values[0], values[1]);
+
     public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 

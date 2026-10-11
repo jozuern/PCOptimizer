@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.5 (preview)
+
+- System info shows the names of its summary tiles (Processor, Graphics, Memory, Displays, Mainboard, Windows) again. Since 0.6.0 they showed internal text keys such as `Sum_Cpu`. The check for missing texts now also finds texts picked in a condition or read through a short local name, which is how this one got through.
+- The details pane starts with the title of the item, then its state, the action button and the explanation. Until now the button sat above the title.
+- The card whose details are open has an accent border, so it stays clear which entry the pane belongs to.
+- "What changes" for power plans shows the plan names as Windows shows them instead of their GUIDs, also for the settings of a plan.
+- "What changes", the confirmation and the undo dialog name their targets in German when the app is in German ("Dienst Spooler (Starttyp)", "Aktiver Energiesparplan"). Registry paths stay as they are.
+- Cleanup shows under each category the exact folders it deletes from, for example `C:\Users\<name>\AppData\Local\Temp` for the temporary files of your user account (the category had been called "Your temporary files"). Both temp categories say that files created or changed in the last 24 hours stay. An empty category shows its check box unticked instead of ticked but greyed out.
+- The group headings in the navigation pane (Optimize, Clean up, Maintain) are small, semibold and grey, so they no longer look like pages.
+- The Tweaks filters are laid out in two rows: search and the two lists on top, the switches below.
+- The Overview count card shows its numbers in the size of the score next to it and says where the manual checks are.
+- Storage analyzer, Throttle check, Frame rate benchmark and VirusTotal have their description under the section heading, like the other sections. In Settings, Expert mode sits under the heading Tweaks instead of a heading with its own name.
+- Startup lines up the text of every entry, also of the entries without a warning icon. On Graphics & network the DNS test card has an icon like the DNS servers card above it, so both titles start at the same place.
+
 ## 0.6.4 (preview)
 
 - On the first start the app asks once whether to add an entry to the Start menu, because Windows Search finds a portable exe only through such an entry. Settings > Appearance has a switch to add or remove it later. The entry goes into the Start menu of the signed-in user, also when the app runs under another administrator account.

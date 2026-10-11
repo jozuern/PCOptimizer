@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <!-- Lists of one kind (games, devices): one line per row, the section explains the rest. Click opens the details. -->
         <DataTemplate x:Key="CompactTweakRow">
-            <ui:CardControl Margin="0,0,0,2" Padding="16,6"
+            <ui:CardControl Margin="0,0,0,2" Padding="16,6" Style="{StaticResource SelectableCard}"
                             Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                 <ui:CardControl.Icon>
                     <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="16" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
@@ -58,7 +58,7 @@
                 </ui:CardControl.Icon>
                 <ui:CardControl.Header>
                     <StackPanel>
-                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Net_DnsServers}" />
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Net_DnsServers}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0">
                             <Run Text="{l:Tr Net_DnsInUse}" /><Run Text=" " /><Run Text="{Binding Network.CurrentDns, Mode=OneWay}" />
                         </ui:TextBlock>
@@ -74,7 +74,11 @@
                 </StackPanel>
             </ui:CardControl>
 
+            <!-- Icon column as in the DNS card above, so both titles start at the same place -->
             <ui:Card Padding="16,12" Margin="0,8,0,0">
+                <DockPanel>
+                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Gauge24" FontSize="24" Width="24" Margin="0,0,14,0" VerticalAlignment="Top"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 <StackPanel>
                     <DockPanel>
                         <ui:Button DockPanel.Dock="Right" Content="{l:Tr Net_RunBenchmark}" Icon="{ui:SymbolIcon Gauge20}" Command="{Binding Network.RunDnsBenchmarkCommand}"
@@ -108,6 +112,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </DockPanel>
             </ui:Card>
 
             <!-- NVIDIA profiles per game: after DNS, since the list can be long -->

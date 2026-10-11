@@ -80,7 +80,10 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding ScoreHint}" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:Card>
-                <ui:Card Grid.Column="2" Padding="24,16" VerticalAlignment="Stretch" VerticalContentAlignment="Top">
+                <ui:Card Grid.Column="2" Padding="24,16" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <!-- Numbers in the size of the score next to it; the line at the bottom says where the manual checks are -->
+                    <DockPanel>
+                        <ui:TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Caption}" Text="{l:Tr Dash_CountsHint}" Margin="0,8,0,0" />
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ProblemSummary}" />
                         <ItemsControl ItemsSource="{Binding Counts}" Margin="0,8,0,0">
@@ -91,14 +94,15 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
-                                        <ui:TextBlock FontTypography="Title" Text="{Binding Value}" v:ThemeBrush.Status="{Binding Status}" />
+                                    <StackPanel Margin="0,0,8,0">
+                                        <ui:TextBlock FontTypography="TitleLarge" Text="{Binding Value}" v:ThemeBrush.Status="{Binding Status}" />
                                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Label}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
+                    </DockPanel>
                 </ui:Card>
             </Grid>
 

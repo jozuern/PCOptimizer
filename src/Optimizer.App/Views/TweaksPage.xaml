@@ -17,22 +17,34 @@
             <ui:InfoBar Title="" Message="{l:Tr Banner_AdminToApply}" Severity="Warning" IsClosable="False"
                         IsOpen="{Binding IsElevated, Converter={StaticResource InverseBool}}" Margin="0,0,0,8" />
 
-            <!-- Filters and Apply recommended -->
+            <!-- Filters and Apply recommended: search and the two pickers on one row (the search box takes the rest), the
+                 switches below, so the bar keeps two rows also with the details pane open -->
             <ui:Card Padding="16,12" Margin="0,0,0,16">
-                <DockPanel>
-                    <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}"
-                               Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Top" />
-                    <WrapPanel Orientation="Horizontal">
-                        <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                    MinWidth="240" Margin="0,4,16,4" ClearButtonEnabled="True" />
-                        <ComboBox ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" ItemTemplate="{StaticResource ProfileItem}"
-                                  MinWidth="200" Margin="0,4,16,4" ToolTip="{l:Tr Profile_Label}" />
-                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="220" Margin="0,4,16,4" />
-                        <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyProfile}" IsChecked="{Binding OnlyProfile}" Margin="0,4,16,4" />
-                        <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyRecommended}" IsChecked="{Binding OnlyRecommended}" Margin="0,4,16,4" />
-                        <ui:ToggleSwitch Content="{l:Tr Tweaks_ShowNotApplicable}" IsChecked="{Binding ShowPassed}" Margin="0,4,0,4" />
-                    </WrapPanel>
-                </DockPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="160" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Margin="0,4,8,4" ClearButtonEnabled="True" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding ProfileOptions}" SelectedItem="{Binding SelectedProfile}" ItemTemplate="{StaticResource ProfileItem}"
+                              MinWidth="180" Margin="0,4,8,4" ToolTip="{l:Tr Profile_Label}" AutomationProperties.Name="{l:Tr Profile_Label}" />
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Display" MinWidth="200" Margin="0,4,0,4" />
+                    <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                        <ui:Button DockPanel.Dock="Right" Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}"
+                                   Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                        <WrapPanel>
+                            <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyProfile}" IsChecked="{Binding OnlyProfile}" Margin="0,4,24,4" />
+                            <ui:ToggleSwitch Content="{l:Tr Tweaks_OnlyRecommended}" IsChecked="{Binding OnlyRecommended}" Margin="0,4,24,4" />
+                            <ui:ToggleSwitch Content="{l:Tr Tweaks_ShowNotApplicable}" IsChecked="{Binding ShowPassed}" Margin="0,4,0,4" />
+                        </WrapPanel>
+                    </DockPanel>
+                </Grid>
             </ui:Card>
 
             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding TweaksSummary}" Margin="0,0,0,8" />

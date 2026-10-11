@@ -48,7 +48,8 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{l:Tr StartMenu_Setting}" IsChecked="{Binding StartMenuEntry}" IsEnabled="{Binding CanAddToStartMenu}" />
             </ui:CardControl>
 
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Expert}" />
+            <!-- The section names what Expert mode is about; the card itself is called Expert mode -->
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_SectionTweaks}" />
             <ui:CardControl Padding="{StaticResource CardPadding}">
                 <ui:CardControl.Icon>
                     <ui:SymbolIcon Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
@@ -63,10 +64,10 @@
             </ui:CardControl>
 
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="VirusTotal" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Vt_SettingsHint}" Margin="0,0,0,8" />
             <ui:Card Padding="16,12">
                 <StackPanel>
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Vt_SettingsHint}" />
-                    <WrapPanel Margin="0,8,0,0">
+                    <WrapPanel>
                         <ui:PasswordBox x:Name="VtKey" PlaceholderText="{l:Tr Vt_KeyPlaceholder}" MinWidth="320" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Save}" Click="SaveKey_Click" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Remove}" Appearance="Transparent" Click="RemoveKey_Click" Margin="0,0,8,0" />

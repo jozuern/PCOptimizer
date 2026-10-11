@@ -141,6 +141,9 @@ public abstract class TweakAction
     public ChangeLine Change(ActionContext c)
     {
         var current = Read(c);
-        return new ChangeLine(Describe(c), current?.Display ?? "(unavailable)", Desired(c).Display);
+        return new ChangeLine(Describe(c), current is null ? "(unavailable)" : Show(c, current), Show(c, Desired(c)));
     }
+
+    /// <summary>A value as the preview shows it. Actions that store an id (a power plan GUID) show its name instead.</summary>
+    protected virtual string Show(ActionContext c, StoredValue value) => value.Display;
 }

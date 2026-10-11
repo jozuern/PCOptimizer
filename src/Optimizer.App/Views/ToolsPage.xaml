@@ -27,10 +27,10 @@
 
             <!-- Storage analyzer -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Storage_Title}" Margin="0,0,0,8" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" Margin="0,0,0,8" />
             <ui:Card Padding="16,12">
                 <StackPanel>
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" />
-                    <WrapPanel Margin="0,8,0,0">
+                    <WrapPanel>
                         <ComboBox ItemsSource="{Binding Tools.Drives}" SelectedItem="{Binding Tools.SelectedDrive}" MinWidth="120" Margin="0,0,8,0" />
                         <ui:Button Appearance="Primary" Content="{l:Tr Storage_Scan}" Icon="{ui:SymbolIcon Search20}" Command="{Binding Tools.ScanStorageCommand}"
                                    IsEnabled="{Binding Tools.IsScanningStorage, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />

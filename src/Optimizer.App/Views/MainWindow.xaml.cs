@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
 using Optimizer.App.Services;
@@ -95,13 +96,15 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             return;
         }
         var pending = item.MarkdownAsync();
-        if (!pending.IsCompleted) Show($"# {item.Title}");
+        if (!pending.IsCompleted) DetailsViewer.Document = null;
         var markdown = await pending;
         if (ReferenceEquals(_vm.SelectedItem, item)) Show(markdown);
     }
 
     private void Show(string markdown)
     {
+        // The pane header shows the title (the row's, with its subject); the page's own heading would repeat it.
+        markdown = LeadingTitle().Replace(markdown, "", 1);
         Brush B(string key, Brush fallback) => TryFindResource(key) as Brush ?? fallback;
         DetailsViewer.Document = MarkdownFlow.Render(markdown,
             B("TextFillColorPrimaryBrush", Brushes.White),
@@ -109,6 +112,9 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             B("SubtleFillColorSecondaryBrush", Brushes.DimGray),
             B("DividerStrokeColorDefaultBrush", Brushes.DimGray));
     }
+
+    [GeneratedRegex(@"\A\s*#[ \t][^\r\n]*(\r?\n)?")]
+    private static partial Regex LeadingTitle();
 
     /// <summary>
     /// Title bar icon: the hand-tuned bitmap for the current scaling (16, 24 or 32 px for a 16 px slot), never a
