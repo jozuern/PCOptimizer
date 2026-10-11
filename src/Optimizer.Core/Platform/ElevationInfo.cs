@@ -28,11 +28,25 @@ public sealed record ElevationInfo(
         var (sessionUser, sessionSid) = ReadSessionUser();
         var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var processName = identity.Name;
-        // Administrator protection: elevation runs as a hidden system-managed account with a C:\Users\ADMIN_<name> profile.
-        var adminProtection = Path.GetFileName(profile).StartsWith("ADMIN_", StringComparison.OrdinalIgnoreCase) ||
-                              processName.Split('\\').Last().StartsWith("ADMIN_", StringComparison.OrdinalIgnoreCase);
+        var adminProtection = IsAdministratorProtection(Path.GetFileName(profile), processName,
+            Reg.HklmValue(PolicySystem, "TypeOfAdminApprovalMode") as int?);
         return new ElevationInfo(elevated, processName, identity.User?.Value, sessionUser, sessionSid, adminProtection);
     }
+
+    private const string PolicySystem = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System";
+
+    /// <summary>
+    /// Administrator protection: elevation runs as a hidden system-managed account named ADMIN_ and a suffix, with its
+    /// own profile. The name alone could be an ordinary account called ADMIN_x, so the policy must be on as well:
+    /// "User Account Control: Configure type of Admin Approval Mode" = 2, Admin Approval Mode with Administrator
+    /// protection (Microsoft's LocalPoliciesSecurityOptions CSP, values 1 legacy and 2). Microsoft does not document its
+    /// registry value; TypeOfAdminApprovalMode under Policies\System is the one Appinfo reads (call4cloud.nl, Administrator
+    /// Protection in Windows 25H2 Explained) and the one guides set to 2 to turn it on (kapilarya.com).
+    /// </summary>
+    internal static bool IsAdministratorProtection(string profileFolder, string processName, int? typeOfAdminApprovalMode) =>
+        typeOfAdminApprovalMode == 2 &&
+        (profileFolder.StartsWith("ADMIN_", StringComparison.OrdinalIgnoreCase) ||
+         processName.Split('\\').Last().StartsWith("ADMIN_", StringComparison.OrdinalIgnoreCase));
 
     private static (string?, string?) ReadSessionUser()
     {

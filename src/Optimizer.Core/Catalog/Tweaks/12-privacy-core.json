@@ -115,7 +115,11 @@
     {
       "id": "privacy.inkingTypingOff",
       "undocumented": true,
-      "preview": true,
+      "proof": [
+        "VM test on Windows 11 26H2, 2026-10-11: turning \"Custom inking and typing dictionary\" off in Settings wrote the per-user values RestrictImplicitInkCollection, RestrictImplicitTextCollection, HarvestContacts and AcceptedPrivacyPolicy; with the tweak applied Settings showed the switch Off, after undo On again",
+        "elevenforum.com tutorial 5564 and geekrewind.com (custom inking and typing dictionary): HarvestContacts 0 is the value of the switch off",
+        "elevenforum.com tutorial 7946 and winaero.com (typing insights): InsightsEnabled 0 turns typing insights off in Settings > Time & language > Typing"
+      ],
       "category": "Privacy",
       "impact": {
         "gaming": 0,
@@ -153,6 +157,30 @@
         {
           "type": "registry",
           "hive": "user",
+          "path": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitInkCollection",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitTextCollection",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Personalization\\Settings",
+          "name": "AcceptedPrivacyPolicy",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
           "path": "Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
           "name": "HarvestContacts",
           "kind": "dword",
@@ -170,7 +198,11 @@
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-textinput",
         "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
-        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-globalization"
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-globalization",
+        "https://www.elevenforum.com/t/enable-or-disable-custom-inking-and-typing-dictionary-in-windows-11.5564/",
+        "https://geekrewind.com/how-to-turn-on-or-off-custom-inking-and-typing-dictionary-in-windows-11/",
+        "https://www.elevenforum.com/t/enable-or-disable-typing-insights-in-windows-11.7946/",
+        "https://winaero.com/enable-disable-typing-insights-windows-10/"
       ]
     },
     {

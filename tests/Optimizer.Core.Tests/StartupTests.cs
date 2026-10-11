@@ -9,6 +9,7 @@ using Optimizer.Core.Findings;
 using Optimizer.Core.Findings.Checks;
 using Optimizer.Core.Hardware;
 using Optimizer.Core.Services;
+using Optimizer.Core.Platform;
 using Optimizer.Core.Startup;
 using Optimizer.Core.Tools;
 using Optimizer.Core.Tweaks;
@@ -254,6 +255,26 @@ public class StartupTests
     [InlineData("Microsoft Corporation Fake Ltd", false)]
     public void OnlyMicrosoftsOwnSignersCountAsMicrosoft(string publisher, bool microsoft) =>
         Assert.Equal(microsoft, new SignatureInfo(SignatureStatus.Signed, publisher, false).IsMicrosoft);
+
+    /// <summary>Paths of services and drivers expand with the machine's variables, never with a variable the user set.</summary>
+    [Fact]
+    public void SystemEntriesExpandWithTheMachineEnvironment()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        Assert.Equal(Path.Combine(windows, @"System32\svchost.exe"), MachineEnvironment.Expand(@"%SystemRoot%\System32\svchost.exe"));
+        Assert.Equal(Path.Combine(windows, @"System32\x.dll"), MachineEnvironment.Expand(@"%windir%\System32\x.dll"));
+        Assert.Equal(@"%PCO_NOT_A_MACHINE_VAR%\x.exe", MachineEnvironment.Expand(@"%PCO_NOT_A_MACHINE_VAR%\x.exe"));
+        var vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["SystemRoot"] = @"C:\Windows" };
+        Assert.Equal(@"C:\Windows\TEMP", MachineEnvironment.Expand(@"%systemroot%\TEMP", vars));
+    }
+
+    /// <summary>A certificate named "Microsoft Corporation" under a root someone added is not Microsoft's.</summary>
+    [Fact]
+    public void TheMicrosoftNameNeedsAMicrosoftRoot()
+    {
+        Assert.False(new SignatureInfo(SignatureStatus.Signed, "Microsoft Corporation", false, MicrosoftRoot: false).IsMicrosoft);
+        Assert.True(new SignatureInfo(SignatureStatus.Signed, "Microsoft Corporation", false, MicrosoftRoot: true).IsMicrosoft);
+    }
 
     [Fact]
     public void VirusTotalParsingAndThresholds()

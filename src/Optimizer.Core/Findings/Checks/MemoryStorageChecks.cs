@@ -12,7 +12,8 @@ public static class RamSpeed
         foreach (var d in c.Ram.Decoders)
         {
             var m = RegexCache.Get(d.Regex).Match(part);
-            if (m.Success && int.TryParse(m.Groups[1].Value, out var v)) return v * d.Multiplier;
+            if (m.Success && int.TryParse(m.Groups[1].Value, out var v))
+                return c.Ram.RatedAliases.TryGetValue((v * d.Multiplier).ToString(System.Globalization.CultureInfo.InvariantCulture), out var real) ? real : v * d.Multiplier;
         }
         return null;
     }
@@ -71,9 +72,11 @@ public static class RamSpeed
 /// <summary>
 /// Advisor: RAM running below its rated speed (XMP / EXPO / D.O.C.P off). Four DDR5 modules on a Ryzen are expected to
 /// run slower: AMD specifies DDR5-3600 for four modules (e.g. "4x1R DDR5-3600 4x2R DDR5-3600"), so that is information
-/// (variant "fourDimms"), not a missing setting.
+/// (variant "fourDimms"), not a missing setting. Intel 8th to 10th generation processors on a board without a Z chipset
+/// cannot run memory above the processor's specified speed (<see cref="IntelLockedMemory"/>): memory at exactly that
+/// speed is information too (variant "intelLocked"), since XMP cannot change it there.
 /// </summary>
-public sealed class XmpCheck : IFindingCheck
+public sealed class XmpCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.xmp";
 
@@ -98,15 +101,22 @@ public sealed class XmpCheck : IFindingCheck
         var vendor = c.Bios.NormalizeVendor(p.Firmware?.BoardManufacturer);
         var menu = c.Bios.Find(vendor, RamSpeed.Platform(p.Cpu, first.Type), "xmp");
         var laptop = p.IsLaptop;
-        var fourDimms = !laptop && p.Cpu?.Vendor == Vendor.Amd && first.Type == "DDR5" && p.Memory.Modules.Count >= 4 && minRated > FourDimmDdr5Mts;
+        // Four DDR5 modules: the speed AMD (Ryzen) or Intel (datasheet, single-rank) specifies for two modules per channel.
+        var fourDimmLimit = laptop || first.Type != "DDR5" || p.Memory.Modules.Count < 4 ? null
+            : p.Cpu?.Vendor == Vendor.Amd ? FourDimmDdr5Mts
+            : p.Cpu?.Vendor == Vendor.Intel ? c.Ram.FourDimmIntel.FirstOrDefault(r => RegexCache.Get(r.CpuPattern).IsMatch(p.Cpu.Name))?.Mts
+            : (int?)null;
+        var fourDimms = fourDimmLimit is { } limit && minRated > limit;
+        var intelLocked = !laptop && !fourDimms && status == FindingStatus.Problem && IntelLocked(p, minConfigured, c);
 
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Advisor,
             // Laptops rarely offer XMP; four DDR5 modules on AM5 run below the kit rating by AMD's specification.
-            Status = (laptop || fourDimms) && status == FindingStatus.Problem ? FindingStatus.Info : status,
-            Variant = laptop ? "laptop" : fourDimms && status == FindingStatus.Problem ? "fourDimms" : null,
+            // A non-Z Intel board of 8th to 10th generation runs memory at the processor's specified speed at most.
+            Status = (laptop || fourDimms || intelLocked) && status == FindingStatus.Problem ? FindingStatus.Info : status,
+            Variant = laptop ? "laptop" : fourDimms && status == FindingStatus.Problem ? (p.Cpu?.Vendor == Vendor.Intel ? "fourDimmsIntel" : "fourDimms") : intelLocked ? "intelLocked" : null,
             Impact = 4,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
@@ -124,13 +134,26 @@ public sealed class XmpCheck : IFindingCheck
                 ["menuPath"] = menu?.Path ?? "",
                 ["menuUnverified"] = menu is { Verified: false } ? "yes" : "",
                 ["board"] = $"{p.Firmware?.BoardManufacturer} {p.Firmware?.BoardProduct}".Trim(),
+                ["fourDimmMts"] = fourDimmLimit?.ToString() ?? "",
             },
         };
+    }
+
+    /// <summary>
+    /// An Intel 8th to 10th generation processor, a board not named as a Z370, Z390 or Z490 model (OEM boards often carry
+    /// only a part code), and memory at one of the speeds Intel specifies for these processors.
+    /// </summary>
+    private static bool IntelLocked(HardwareProfile p, int? configured, CatalogData c)
+    {
+        if (c.Ram.IntelLocked is not { } rule || p.Cpu is not { Vendor: Vendor.Intel } cpu || configured is not { } speed) return false;
+        if (!rule.CpuPatterns.Any(pattern => RegexCache.Get(pattern).IsMatch(cpu.Name))) return false;
+        if (rule.UnlockedBoardPattern.Length > 0 && RegexCache.Get(rule.UnlockedBoardPattern).IsMatch(p.Firmware?.BoardProduct ?? "")) return false;
+        return rule.SpecSpeeds.Any(s => Math.Abs(speed - s) <= s * c.Ram.SpeedToleranceFraction);
     }
 }
 
 /// <summary>Advisor: single channel or both DIMMs in the same channel.</summary>
-public sealed class DualChannelCheck : IFindingCheck
+public sealed class DualChannelCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.dualChannel";
     public IReadOnlyList<string> DocIds => [Id];
@@ -254,7 +277,7 @@ public sealed class GamesOnHddCheck : IFindingCheck
         {
             var root = Path.GetPathRoot(library);
             var volume = p.Storage.Volumes.FirstOrDefault(v => string.Equals(v.Root, root, StringComparison.OrdinalIgnoreCase));
-            var disk = volume?.DiskNumber is { } n ? p.Storage.Disks.FirstOrDefault(d => d.Number == n) : null;
+            var disk = p.Storage.DiskOf(volume);
             if (disk is null) continue;
             yield return new Finding
             {

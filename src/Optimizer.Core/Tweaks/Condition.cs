@@ -30,7 +30,8 @@ public sealed class Condition
     {
         if (All is not null) return All.All(c => c.Evaluate(facts));
         if (Any is not null) return Any.Any(c => c.Evaluate(facts));
-        if (Not is not null) return !Not.Evaluate(facts);
+        // Unknown facts never match, also negated: "not edition in [Home]" with the edition unknown says nothing.
+        if (Not is not null) return Not.CanEvaluate(facts) && !Not.Evaluate(facts);
         if (Fact is null) return true;
 
         var value = facts.Get(Fact);

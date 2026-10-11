@@ -70,4 +70,17 @@ public class WingetPackageTests
         Assert.Null(StartMenuShortcut.ProgramsFolder(mismatch, null));
         Assert.Equal(Environment.GetFolderPath(Environment.SpecialFolder.Programs), StartMenuShortcut.ProgramsFolder(null, @"C:\Users\a"));
     }
+
+    /// <summary>
+    /// Administrator protection needs the policy (TypeOfAdminApprovalMode 2) and the ADMIN_ account: an ordinary account
+    /// that happens to be called ADMIN_x is a separate admin account, which gets the banner.
+    /// </summary>
+    [Theory]
+    [InlineData("ADMIN_joshua", @"PC\ADMIN_joshua", 2, true)]
+    [InlineData("joshua", @"PC\ADMIN_k3xq", 2, true)]
+    [InlineData("ADMIN_tools", @"PC\ADMIN_tools", 1, false)]
+    [InlineData("ADMIN_tools", @"PC\ADMIN_tools", null, false)]
+    [InlineData("admin", @"PC\admin", 2, false)]
+    public void AdministratorProtectionNeedsThePolicyAndTheSystemManagedAccount(string profile, string process, int? policy, bool expected) =>
+        Assert.Equal(expected, ElevationInfo.IsAdministratorProtection(profile, process, policy));
 }

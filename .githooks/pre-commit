@@ -5,7 +5,8 @@
 # Skip for one commit (for example with --amend, where the amended commit already raised it):
 #   SKIP_VERSION_BUMP=1 git commit --amend ...
 # Merges and rebases: git runs the hook only for commits it creates through "git commit" (a merge commit, a conflict
-# resolved by hand); a rebase replays commits that already raised the version. CI checks every push to main.
+# resolved by hand); a rebase replays commits that already raised the version. A merge commit is raised above both
+# sides. CI checks every commit pushed to main.
 [ -n "$SKIP_VERSION_BUMP" ] && exit 0
 
 csproj=src/Optimizer.App/Optimizer.App.csproj
@@ -16,16 +17,22 @@ if [ -z "$current" ]; then
 fi
 
 version_of() { sed -n 's|.*<Version>\([0-9]*\.[0-9]*\.[0-9]*\)</Version>.*|\1|p' | head -n 1; }
+highest() { printf '%s\n' "$@" | sed '/^$/d' | sort -V | tail -n 1; }
+above() { [ "$1" != "$2" ] && [ "$(highest "$1" "$2")" = "$1" ]; }
 
-if git diff --cached -U0 -- "$csproj" | grep -q '^+.*<Version>'; then
-    # A version set in this commit must still be above the last commit's (a lower one comes back from a merge or a
-    # partial commit that staged an old csproj).
+head=$(git show "HEAD:$csproj" 2>/dev/null | version_of)
+# During a merge the other side may have raised the version too: the merge commit must be above both.
+merge=""
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+    merge=$(git show "MERGE_HEAD:$csproj" 2>/dev/null | version_of)
+fi
+floor=$(highest "$head" "$merge")
+
+if [ -z "$merge" ] && git diff --cached -U0 -- "$csproj" | grep -q '^+.*<Version>'; then
+    # A version set in this commit must still be above the last commit's (a lower one comes back from a partial commit
+    # that staged an old csproj).
     staged=$(git show ":$csproj" | version_of)
-    head=$(git show "HEAD:$csproj" 2>/dev/null | version_of)
-    if [ -n "$head" ] && [ "$staged" != "$head" ] && [ "$(printf '%s\n%s\n' "$head" "$staged" | sort -V | tail -n 1)" = "$staged" ]; then
-        exit 0
-    fi
-    if [ -z "$head" ]; then exit 0; fi
+    if [ -z "$head" ] || above "$staged" "$head"; then exit 0; fi
     echo "pre-commit: the staged version $staged is not above $head. Raise it or unstage the csproj." >&2
     exit 1
 fi
@@ -36,8 +43,15 @@ if ! git diff --quiet -- "$csproj"; then
     exit 1
 fi
 
-major=${current%%.*}
-rest=${current#*.}
+# A merge whose result is already above both sides (a version raised by hand while resolving) is kept.
+if [ -n "$merge" ]; then
+    staged=$(git show ":$csproj" | version_of)
+    if above "$staged" "$floor"; then exit 0; fi
+fi
+
+base=$(highest "$current" "$floor")
+major=${base%%.*}
+rest=${base#*.}
 minor=${rest%%.*}
 patch=${rest#*.}
 next="$major.$minor.$((patch + 1))"

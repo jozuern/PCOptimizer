@@ -157,11 +157,13 @@ public static class ExtrasProbe
             using (var key = Reg.OpenHklm(classKey))
             using (var ndi = Reg.OpenHklm($@"{classKey}\Ndi\params"))
             {
-                if (key is null || ndi is null) continue;
-                foreach (var param in ndi.GetSubKeyNames())
+                if (key is null) continue;
+                // A driver without advanced properties (no Ndi\params) still counts: the Wi-Fi band check must know that a
+                // cable is connected. Only its keyword lists stay empty.
+                foreach (var param in ndi?.GetSubKeyNames() ?? [])
                 {
                     if (key.GetValue(param) is { } v) keywords[param] = v.ToString() ?? "";
-                    using var en = ndi.OpenSubKey($@"{param}\enum");
+                    using var en = ndi!.OpenSubKey($@"{param}\enum");
                     if (en is not null) allowed[param] = en.GetValueNames();
                 }
             }

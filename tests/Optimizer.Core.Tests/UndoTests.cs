@@ -98,6 +98,47 @@ public class UndoTests
     }
 
     /// <summary>
+    /// What is left of a backup after its per-user entries were restored concerns the whole PC: it belongs to no account,
+    /// so another account sees it (and does not record changed values as originals). A shared backup an older version
+    /// wrote for one account is never overwritten or deleted by another.
+    /// </summary>
+    [Fact]
+    public void ASharedBackupIsNeverTakenOverByAnotherAccount()
+    {
+        var root = TestFolders.Create("peruser-owner");
+        try
+        {
+            var alice = new BackupStore(root, secure: false, userSid: "S-1-5-21-1-1-1-1001");
+            var bob = new BackupStore(root, secure: false, userSid: "S-1-5-21-1-1-1-1002");
+            BackupEntry Entry(Hive hive) => new()
+            {
+                TargetKey = new RegistryAction { Hive = hive, Path = @"Software\Test", Name = "V" }.TargetKey,
+                Description = "V", Original = new StoredValue(true, "dword", "1"), Applied = new StoredValue(true, "dword", "0"),
+            };
+            var mixed = new TweakBackup { TweakId = "test.mixed", Entries = [Entry(Hive.User), Entry(Hive.Machine)] };
+            alice.Save(mixed);
+            mixed.Entries.RemoveAt(0); // the per-user part was undone
+            alice.Save(mixed);
+            Assert.Null(bob.Get("test.mixed")!.Owner);
+            Assert.False(bob.HeldByAnotherAccount("test.mixed"));
+
+            // A shared backup with an owner (older version): Bob neither sees it nor may replace it.
+            var legacy = new TweakBackup { TweakId = "test.legacy", Owner = "S-1-5-21-1-1-1-1001", Entries = [Entry(Hive.Machine)] };
+            System.IO.File.WriteAllText(Path.Combine(root, "backups", "test.legacy.json"), System.Text.Json.JsonSerializer.Serialize(legacy));
+            Assert.Null(bob.Get("test.legacy"));
+            Assert.True(bob.HeldByAnotherAccount("test.legacy"));
+            Assert.Throws<IOException>(() => bob.Save(new TweakBackup { TweakId = "test.legacy", Entries = [Entry(Hive.Machine)] }));
+            bob.Save(new TweakBackup { TweakId = "test.legacy", Entries = [Entry(Hive.User)] });
+            Assert.Equal("S-1-5-21-1-1-1-1001", alice.Get("test.legacy")!.Owner);
+            Assert.Equal("S-1-5-21-1-1-1-1002", bob.Get("test.legacy")!.Owner);
+        }
+        finally
+        {
+            TestFolders.Delete(root);
+        }
+    }
+
+    /// <summary>
     /// A partial undo of a tweak with a per-user and a PC-wide entry leaves only the PC-wide one: that backup moves to the
     /// shared folder, and the account's older copy (with both entries) must not be read first or survive the archive.
     /// </summary>
@@ -205,6 +246,66 @@ public class UndoTests
         fx.Power.Active = FakePower.High; // the user picked another plan
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal(FakePower.High, fx.Power.Active); // the user's choice stays
+        Assert.DoesNotContain("PCOptimizer Test", fx.Power.SchemeNames.Values);
+    }
+
+    /// <summary>A value of a type .NET does not name (REG_DWORD_BIG_ENDIAN) comes back with its own type, not as REG_NONE.</summary>
+    [Fact]
+    public async Task UndoKeepsARawRegistryType()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\PCOTest\Raw";
+        byte[] original = [0, 0, 0, 7];
+        using (var key = fx.Registry.Open(Hive.Machine, path, writable: true, create: true)!)
+            Assert.Equal(0, RegSetValueExW(key.Handle, "Value", 0, 5 /* REG_DWORD_BIG_ENDIAN */, original, original.Length));
+        var t = Tweak("test.raw", Reg(path, "Value", 1));
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options)).Outcome);
+        Assert.Equal("raw:5", fx.Store.Get(t.Id)!.Entries.Single().Original.Kind);
+        Assert.True(fx.Engine.Revert(t).Success);
+        using (var key = fx.Registry.Open(Hive.Machine, path, writable: false)!)
+        {
+            Assert.Equal(0, RegQueryValueExW(key.Handle, "Value", IntPtr.Zero, out var type, IntPtr.Zero, IntPtr.Zero));
+            Assert.Equal(5u, type);
+            Assert.Equal(original, (byte[])key.GetValue("Value")!);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("advapi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int RegSetValueExW(Microsoft.Win32.SafeHandles.SafeRegistryHandle key, string name, int reserved, uint type, byte[] data, int size);
+
+    [System.Runtime.InteropServices.DllImport("advapi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int RegQueryValueExW(Microsoft.Win32.SafeHandles.SafeRegistryHandle key, string name, IntPtr reserved, out uint type, IntPtr data, IntPtr size);
+
+    /// <summary>A plan with the app's name that existed before the apply (an earlier run's, or the user's own) is only activated: undo switches back and keeps it.</summary>
+    [Fact]
+    public async Task ExistingPlanWithTheNameIsKeptOnUndo()
+    {
+        using var fx = new EngineFixture();
+        var existing = Guid.NewGuid();
+        fx.Power.SchemeNames[existing] = "PCOptimizer Test";
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        Assert.Equal(existing, fx.Power.Active);
+        Assert.Equal(PowerSchemeAction.ExistingKind, fx.Store.Get(t.Id)!.Entries.Single().Applied!.Kind);
+
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal(FakePower.Balanced, fx.Power.Active);
+        Assert.True(fx.Power.SchemeExists(existing));
+    }
+
+    /// <summary>Backups written before the kind was recorded ("scheme") keep the old behavior: the plan counts as created.</summary>
+    [Fact]
+    public async Task OlderBackupsStillRemoveTheirPlan()
+    {
+        using var fx = new EngineFixture();
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        var backup = fx.Store.Get(t.Id)!;
+        Assert.Equal(PowerSchemeAction.CreatedKind, backup.Entries.Single().Applied!.Kind);
+        backup.Entries.Single().Applied = backup.Entries.Single().Applied! with { Kind = "scheme" };
+        fx.Store.Save(backup);
+
+        Assert.True(fx.Engine.Revert(t).Success);
         Assert.DoesNotContain("PCOptimizer Test", fx.Power.SchemeNames.Values);
     }
 

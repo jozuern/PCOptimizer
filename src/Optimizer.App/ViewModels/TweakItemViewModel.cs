@@ -22,7 +22,7 @@ public sealed class TweakItemViewModel : InspectorItem
         Status_ = status;
         var t = status.Tweak;
         var labels = Labels.Current;
-        var page = DocStore.Get(t.DocId, lang) ?? DocStore.Get(t.DocId, "en");
+        var page = DocStore.GetOrEnglish(t.DocId, lang);
         var title = page?.Title ?? t.Id;
         Title = t.Subject is { Length: > 0 } s ? subjectAsTitle ? s : $"{title}: {s}" : title;
         Summary = subjectAsTitle && t.Subject is { Length: > 0 } ? "" : page?.Section(DocHeadings.Summary(page.Language))?.Body ?? "";
@@ -178,9 +178,10 @@ public sealed class TweakItemViewModel : InspectorItem
         }
     }
 
-    public void ResetSwitch()
+    /// <summary>Shows the real state again; after a change that was made, its new state until the rescan rebuilds the row.</summary>
+    public void ResetSwitch(bool? changedTo = null)
     {
-        _switch = IsOn;
+        _switch = changedTo ?? IsOn;
         OnPropertyChanged(nameof(SwitchState));
     }
 }

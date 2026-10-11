@@ -240,8 +240,10 @@ public class ReleaseTests
         {
             if (lib.Value.GetProperty("type").GetString() == "Project") continue;
             var (id, version) = (lib.Name, lib.Value.GetProperty("resolved").GetString());
-            // runtime.<rid>.* packages carry native files for other platforms; the win-x64 exe does not contain them.
-            if (id.StartsWith("runtime.", StringComparison.OrdinalIgnoreCase)) continue;
+            // runtime.<rid>.runtime.native.* packages carry native files for other platforms (the win-x64 exe does not
+            // contain them), runtime.native.* is the empty package that selects one of them. Any other "runtime." id counts.
+            if (System.Text.RegularExpressions.Regex.IsMatch(id, @"^runtime\.([a-z0-9-]+\.)?runtime\.native\.|^runtime\.native\.",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase)) continue;
             if (!listed.TryGetValue(id, out var v) || v != version) missing.Add($"{id} {version} (licenses.json)");
             // The id as a whole name: "WPF-UI" inside "WPF-UI.Abstractions" does not count for WPF-UI.
             if (!System.Text.RegularExpressions.Regex.IsMatch(notices, $@"(?<![\w.-]){System.Text.RegularExpressions.Regex.Escape(id)}(?![\w-]|\.[A-Za-z])",
@@ -254,5 +256,53 @@ public class ReleaseTests
             if (listed.GetValueOrDefault(pack) != runtime) missing.Add($"{pack} {runtime} (licenses.json)");
         if (!notices.Contains($"runtime {runtime}", StringComparison.Ordinal)) missing.Add($".NET runtime {runtime} (THIRD-PARTY-NOTICES.md)");
         Assert.Empty(missing);
+    }
+
+    /// <summary>
+    /// Files the sensor libraries carry inside their DLLs, reviewed for their own licenses: the PawnIO modules
+    /// (LGPL-2.1, pawnio-modules.txt) and the PCI and USB ID databases (BSD-3-Clause, pci-ids.txt, usb-ids.txt). A new
+    /// version that embeds something else fails here until its license is checked and listed.
+    /// </summary>
+    [Fact]
+    public void EmbeddedFilesOfDependenciesAreReviewed()
+    {
+        string[] reviewed =
+        [
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.AMDFamily0F.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.AMDFamily10.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.AMDFamily17.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.IntelMSR.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.IsaBridgeEC.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.LpcACPIEC.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.LpcCrOSEC.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.LpcIO.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.RyzenSMU.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.SmbusI801.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.SmbusNCT6793.bin",
+            "LibreHardwareMonitorLib: LibreHardwareMonitor.Resources.PawnIo.SmbusPIIX4.bin",
+            "DiskInfoToolkit: DiskInfoToolkit.Resources.pci.ids.gz",
+            "DiskInfoToolkit: DiskInfoToolkit.Resources.usb.ids.gz",
+        ];
+        var bin = AppContext.BaseDirectory;
+        var dlls = new[]
+        {
+            Path.Combine(bin, "runtimes", "win-x64", "lib", "net10.0", "LibreHardwareMonitorLib.dll"),
+            Path.Combine(bin, "DiskInfoToolkit.dll"), Path.Combine(bin, "RAMSPDToolkit-NDD.dll"), Path.Combine(bin, "BlackSharp.Core.dll"),
+            Path.Combine(bin, "HidSharp.dll"),
+        };
+        var found = new List<string>();
+        foreach (var dll in dlls)
+        {
+            Assert.True(File.Exists(dll), $"{dll} missing");
+            using var pe = new System.Reflection.PortableExecutable.PEReader(File.OpenRead(dll));
+            var reader = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+            foreach (var handle in reader.ManifestResources)
+            {
+                var name = reader.GetString(reader.GetManifestResource(handle).Name);
+                // Compiled .resx strings belong to the library itself.
+                if (!name.EndsWith(".resources", StringComparison.Ordinal)) found.Add($"{Path.GetFileNameWithoutExtension(dll)}: {name}");
+            }
+        }
+        Assert.Equal(reviewed.Order(StringComparer.Ordinal), found.Order(StringComparer.Ordinal));
     }
 }

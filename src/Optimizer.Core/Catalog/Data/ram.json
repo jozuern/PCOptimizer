@@ -1,5 +1,5 @@
 {
-  "_comment": "Part-number decoders > rated speed in MT/s. Unknown part numbers produce Unknown (no advice).",
+  "_comment": "Part-number decoders > rated speed in MT/s. Unknown part numbers produce Unknown (no advice). fourDimmIntel: DDR5 with two modules per channel, single-rank, per Intel's datasheets: 13th and 14th gen desktop (743844, SKU support matrix and SAGV points: 2DPC 1R 4000, 2R 3600), Core Ultra 200S (Arrow Lake S, SKU support matrix: 2DIMM 1R 4800, 2R 4400). Checked 2026-10-11.",
   "decoders": [
     { "brand": "Corsair", "regex": "^CM[A-Z]+\\d+GX[45]M\\d[A-Z]?(\\d{4})[CZ]\\d+", "multiplier": 1 },
     { "brand": "G.Skill", "regex": "^F[45]-(\\d{4})[CJ]\\d+", "multiplier": 1 },
@@ -9,5 +9,16 @@
     { "brand": "Patriot", "regex": "^PV[A-Z]*\\d+G(\\d{3})C\\d+", "multiplier": 10 }
   ],
   "channelPatterns": [ "Controller\\s*(\\d)\\s*-?\\s*Channel\\s*([A-H])", "Channel\\s*([A-H])", "CHANNEL\\s*([A-H])", "DIMM_?([A-H])\\d", "DDR\\d_([A-H])\\d" ],
-  "speedToleranceFraction": 0.03
+  "speedToleranceFraction": 0.03,
+  "fourDimmIntel": [
+    { "cpuPattern": "\\b1[34]th Gen Intel|\\bi[3579]-1[34]\\d{3}(?![0-9]*[HUP])", "mts": 4000 },
+    { "cpuPattern": "\\bUltra [579] 2[0-9]{2}(?![0-9HUV])", "mts": 4800 }
+  ],
+  "ratedAliases": { "2130": 2133, "2600": 2666, "2660": 2666, "2900": 2933, "2930": 2933 },
+  "intelLocked": {
+    "_comment": "A.xmp variant intelLocked. Intel ARK: B360, H370 (300 series), B460, H470 (400 series) 'Supports Memory Overclocking: No', Z490 'Yes'. Memory speed of the processor: i5-9400F DDR4-2666, i7-10700 DDR4-2933 (ARK). Checked 2026-10-11.",
+    "cpuPatterns": [ "\\bi[3579]-(?:[89]\\d{3}|10\\d{3})", "\\bPentium\\b.*\\bG(?:5[4-6]|6[4-6])\\d{2}\\b", "\\bCeleron\\b.*\\bG(?:49|59)\\d{2}\\b" ],
+    "unlockedBoardPattern": "\\bZ(?:37|39|49)0\\b",
+    "specSpeeds": [ 2400, 2666, 2933 ]
+  }
 }

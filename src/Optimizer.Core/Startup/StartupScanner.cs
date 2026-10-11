@@ -214,11 +214,12 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             if (!isDriver && !isService) continue;
             // Drivers: boot/system/automatic. Services: automatic only (manual services start on demand).
             if (isDriver ? start > 2 : start != 2) continue;
-            string? file = CommandLine.ImagePath(image);
+            // Started by the service manager: expanded with the machine's variables, not the signed-in user's.
+            string? file = CommandLine.ImagePath(image, Platform.MachineEnvironment.Expand);
             if (isService && file is not null && Path.GetFileName(file).Equals("svchost.exe", StringComparison.OrdinalIgnoreCase))
             {
                 using var p = key.OpenSubKey("Parameters");
-                if (p?.GetValue("ServiceDll", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is { } dll) file = CommandLine.ImagePath(dll);
+                if (p?.GetValue("ServiceDll", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is { } dll) file = CommandLine.ImagePath(dll, Platform.MachineEnvironment.Expand);
             }
             var display = ResolveIndirect(key.GetValue("DisplayName")?.ToString()) ?? name;
             yield return new StartupEntry(isDriver ? StartupKind.Driver : StartupKind.Service, display, image, file, $@"HKLM\{services}\{name}", Hive.Machine,
@@ -284,7 +285,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             if (value is null) continue;
             var normal = string.Equals(value.Trim().TrimEnd(','), expected.TrimEnd(','), StringComparison.OrdinalIgnoreCase)
                          || (name == "Userinit" && string.Equals(value.Trim().TrimEnd(','), Path.Combine(Environment.SystemDirectory, "userinit.exe"), StringComparison.OrdinalIgnoreCase));
-            yield return new StartupEntry(StartupKind.Winlogon, name, value, CommandLine.ImagePath(value.Split(',')[0]), $@"HKLM\{Winlogon}", Hive.Machine, null, $"winlogon:{name}")
+            yield return new StartupEntry(StartupKind.Winlogon, name, value, CommandLine.ImagePath(value.Split(',')[0], Platform.MachineEnvironment.Expand), $@"HKLM\{Winlogon}", Hive.Machine, null, $"winlogon:{name}")
             {
                 Suspicious = !normal,
             };
@@ -324,7 +325,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             if (key?.GetValue("AppInit_DLLs")?.ToString() is not { Length: > 0 } dlls) continue;
             var load = key.GetValue("LoadAppInit_DLLs") is int l && l != 0;
             foreach (var dll in dlls.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries))
-                yield return new StartupEntry(StartupKind.AppInit, Path.GetFileName(dll), dll, CommandLine.ImagePath(dll), $@"HKLM\{path}\AppInit_DLLs", Hive.Machine, null, $"appinit:{dll}")
+                yield return new StartupEntry(StartupKind.AppInit, Path.GetFileName(dll), dll, CommandLine.ImagePath(dll, Platform.MachineEnvironment.Expand), $@"HKLM\{path}\AppInit_DLLs", Hive.Machine, null, $"appinit:{dll}")
                 {
                     Suspicious = load,
                 };

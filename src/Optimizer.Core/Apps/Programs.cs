@@ -120,7 +120,7 @@ public static class Programs
         var image = CommandLine.ImagePath(expanded, s => s, exists);
         var elevated = !p.PerUser && isAdminOnly(file)
             && (image is null || string.Equals(image, file, StringComparison.OrdinalIgnoreCase) || isAdminOnly(image))
-            && !CommandLine.RunsUntrustedCode(expanded, isAdminOnly, s => s, exists);
+            && !CommandLine.RunsUntrustedCode(expanded, isAdminOnly, s => s, exists, interpreters: true);
         return new UninstallCommand(elevated ? UninstallMode.Elevated : UninstallMode.AsUser, file, args);
     }
 }

@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 
 namespace Optimizer.Core.Actions;
 
@@ -309,13 +311,29 @@ public static class RegistryValue
             RegistryValueKind.ExpandString => new StoredValue(true, "expandString", (string)value),
             RegistryValueKind.MultiString => new StoredValue(true, "multiString", string.Join("\n", (string[])value)),
             RegistryValueKind.Binary => new StoredValue(true, "binary", Convert.ToHexString((byte[])value)),
-            // REG_NONE and other raw types: keep the bytes, not the text "System.Byte[]".
+            // REG_NONE: keep the bytes, not the text "System.Byte[]".
+            RegistryValueKind.None when value is byte[] none => new StoredValue(true, "none", Convert.ToHexString(none)),
+            // Types .NET does not name (REG_DWORD_BIG_ENDIAN, REG_LINK, REG_RESOURCE_LIST and others): the type number with
+            // the bytes, so undo writes back the same type, not REG_NONE.
+            _ when value is byte[] raw && RawType(key, name) is { } type => new StoredValue(true, $"{RawPrefix}{type.ToString(CultureInfo.InvariantCulture)}", Convert.ToHexString(raw)),
             _ when value is byte[] raw => new StoredValue(true, "none", Convert.ToHexString(raw)),
             _ => new StoredValue(true, "string", value.ToString()),
         };
     }
 
     private const string MissingKeysPrefix = "missingKeys:";
+
+    /// <summary>Kind of a value with a type .NET does not name: "raw:" and the registry type number.</summary>
+    private const string RawPrefix = "raw:";
+
+    private static uint? RawType(RegistryKey key, string name) =>
+        RegQueryValueExW(key.Handle, name, IntPtr.Zero, out var type, IntPtr.Zero, IntPtr.Zero) == 0 ? type : null;
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
+    private static extern int RegQueryValueExW(SafeRegistryHandle key, string name, IntPtr reserved, out uint type, IntPtr data, IntPtr size);
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
+    private static extern int RegSetValueExW(SafeRegistryHandle key, string name, int reserved, uint type, byte[] data, int size);
 
     /// <summary>How many keys the change created, from an original read by <see cref="Read"/>; null when not recorded.</summary>
     public static int? CreatedKeys(StoredValue original)
@@ -392,6 +410,11 @@ public static class RegistryValue
                 break;
             case "none":
                 key.SetValue(name, Convert.FromHexString(data), RegistryValueKind.None);
+                break;
+            case not null when kind.StartsWith(RawPrefix, StringComparison.Ordinal) && uint.TryParse(kind.AsSpan(RawPrefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out var type):
+                var bytes = Convert.FromHexString(data);
+                var result = RegSetValueExW(key.Handle, name, 0, type, bytes, bytes.Length);
+                if (result != 0) throw new System.ComponentModel.Win32Exception(result, $"RegSetValueEx {name} failed");
                 break;
             default:
                 key.SetValue(name, data, RegistryValueKind.String);

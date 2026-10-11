@@ -11,7 +11,7 @@ namespace Optimizer.Core.Tests;
 public class StartupCleanupReadTests(ITestOutputHelper output)
 {
     private static readonly ElevationInfo Elevation = ElevationInfo.Read();
-    private static readonly ActionContext Ctx = SystemNotify.CreateContext(Elevation.SessionUserSid, Path.GetTempPath());
+    private static readonly ActionContext Ctx = ReadOnlyContext.Create(Elevation.SessionUserSid);
     private static string? Profile => Elevation.SessionUserSid is { } sid ? Reg.HklmString($@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath") : null;
 
     [Fact]
@@ -43,9 +43,25 @@ public class StartupCleanupReadTests(ITestOutputHelper output)
         try
         {
             var none = SignatureVerifier.Verify(unsigned);
-            output.WriteLine($"notepad {notepad}\nntoskrnl {kernel}\ntcpip {driver}\nunsigned {none}");
+            var shell = SignatureVerifier.Verify(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"));
+            var thirdParty = Directory.GetFiles(Path.Combine(sys, "drivers"), "nvhda64v.sys").Concat(Directory.GetFiles(Path.Combine(sys, "drivers"), "iaStor*.sys"))
+                .Select(SignatureVerifier.Verify).FirstOrDefault(s => s.Status == SignatureStatus.Signed);
+            output.WriteLine($"notepad {notepad}\nntoskrnl {kernel}\ntcpip {driver}\nexplorer {shell}\nthird-party driver {thirdParty}\nunsigned {none}");
             Assert.Equal(SignatureStatus.Signed, kernel.Status);
             Assert.True(kernel.IsMicrosoft);
+            // Microsoft's own files chain to a Microsoft root (when the chain can be read at all).
+            Assert.NotEqual(false, kernel.MicrosoftRoot);
+            Assert.NotEqual(false, notepad.MicrosoftRoot);
+            Assert.NotEqual(false, shell.MicrosoftRoot);
+            // Edge is signed by "Microsoft Corporation" under the Microsoft application root (2011).
+            var edge = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe");
+            if (File.Exists(edge))
+            {
+                var e = SignatureVerifier.Verify(edge);
+                output.WriteLine($"msedge {e}");
+                Assert.True(e.IsMicrosoft);
+            }
+            if (thirdParty is not null) Assert.False(thirdParty.IsMicrosoft);
             Assert.Equal(SignatureStatus.Signed, driver.Status);
             Assert.NotEqual(SignatureStatus.Signed, none.Status);
         }

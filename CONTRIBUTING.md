@@ -17,6 +17,8 @@ dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifac
 
 Developer switches (all read-only). Runs with `--screenshot` or `--perf` open the window and its dialogs below the screen,
 without focus or taskbar button, so they can run while you work; the PNGs are rendered from the window, not the screen.
+In an elevated run (the published exe) the files they write are only created new, never overwritten, and `--expert on`
+is ignored: whoever starts the exe names the paths, and the app writes with administrator rights.
 
 | Switch | Effect |
 |---|---|
@@ -37,7 +39,7 @@ without focus or taskbar button, so they can run while you work; the PNGs are re
 | `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |
 | `--profile <id>` | start with a profile: gaming, laptopGaming, battery, office, quiet, lowEnd (saved only when changed in the app) |
 | `--preview-drift on` | shows the "changes reset" banner with sample entries (nothing is read or changed) |
-| `--expert on` | Expert mode for this session |
+| `--expert on` | Expert mode for this session (runs without admin rights only) |
 
 ## Layout
 
@@ -61,7 +63,7 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 
 - `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\PCOptimizerTest` and fake system APIs. Nothing on the real system changes.
 - Run the tests once from an elevated terminal before changing security code: the data folder lock (`SecureFolder`) is only exercised elevated, as on the CI runners; a normal terminal checks only that it fails safely.
-- `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors).
+- `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors). They reach the adapters only through `ReadOnlyContext.Create` (tests project), whose write methods throw and whose tool runner refuses commands that change something; `ArchitectureTests` fails for any other way to the real adapters, and for a test that starts a tool without being listed there.
 - Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
 - Not yet checked on real hardware: NVIDIA driver settings and network adapter properties (section 5 of the VM test plan), the laptop profiles and battery checks (tested with simulated laptops only), battery capacity readings, Wi-Fi band, AMD-specific checks.
 
@@ -80,6 +82,7 @@ A value Microsoft or the vendor does not document is allowed only when all of th
 - The change is harmless and fully reversible, below Expert risk.
 - The tweak has `"undocumented": true` (the app shows an "Undocumented value" badge), and both explanation pages say that Microsoft does not document the value.
 - It is proven to work: `"proof"` names the test or source that showed the effect (a VM test result that checked the visible effect, not only the registry value). Without proof the tweak is `"preview": true`; the VM test plan lists what to check.
+- Several unofficial sources that document and prove a value count like an official source, for tweaks and for every other feature: they must be independent of each other (copies of one post count once) and show it working (a test, a screenshot, reverse engineering), not only repeat it. That counts as proof; the value still gets `"undocumented": true` and the sentence on both pages when Microsoft or the vendor does not document it, and the pages cite those sources.
 - It is not something risky that nobody documents (for example NVIDIA Ultra Low Latency through undocumented driver values, or forced Resizable BAR). Those stay in [docs/not-included.md](docs/not-included.md).
 
 ## New dependencies
@@ -88,12 +91,12 @@ Every NuGet package that ships in the exe needs its license text in `src/Optimiz
 
 ## Releases
 
-Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`; a merge commit without conflicts runs the same hook through `pre-merge-commit`, and CI checks the version against every parent of the pushed commit. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
+Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit hook in `.githooks`, a merge commit above both of its sides. A merge without conflicts stops before its commit (`pre-merge-commit`: git would not take a version raised there into the merge commit); finish it with `git commit --no-edit`, which raises the version. After a commit of named paths only (`git commit -- file`), `post-commit` sets the csproj in the index to the committed version. CI checks every commit of a push against each of its parents. Enable it once per clone with `git config core.hooksPath .githooks`. Change `<Version>` by hand for a new minor or major version; the hook keeps a version changed in the same commit. Skip it for one commit (for example `--amend`) with `SKIP_VERSION_BUMP=1 git commit`.
 
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
 3. The release workflow builds, runs the tests and publishes the single exe. The release job then waits for your approval (Actions > the run > Review deployments), because it uses the `release` environment; after it, it adds a SHA-256 file and a signature file (`PCOptimizer.exe.sig`) and creates a **draft** release. Check it, then publish it on GitHub.
-4. winget: publishing the release starts the workflow `winget`, which submits the manifest to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with Microsoft's `wingetcreate` (a pull request "Update: jozuern.PCOptimizer to x.y.z" from your fork); a volunteer moderator merges it. It needs the secret `WINGET_CREATE_GITHUB_TOKEN` of the environment `winget` (only `v*.*.*` tags): a classic personal access token with only the `public_repo` scope, because `wingetcreate` supports no fine-grained token. Renew it before it expires. To submit a release again, run the workflow by hand from its tag (Actions > winget > Run workflow). `pwsh scripts/winget-manifest.ps1 -Version x.y.z` writes and validates the same manifest locally, for a pull request by hand or a test with `Tools/SandboxTest.ps1` from winget-pkgs in Windows Sandbox. The exe needs administrator rights, so the pipeline's start test as a standard user can fail (`Validation-Executable-Error`): say so in the pull request.
+4. winget: publishing the release starts the workflow `winget`, which submits the manifest to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with Microsoft's `wingetcreate` (a pull request "Update: jozuern.PCOptimizer to x.y.z" from your fork); a volunteer moderator merges it. It needs the secret `WINGET_CREATE_GITHUB_TOKEN` of the environment `winget` (only `v*.*.*` tags): a classic personal access token with only the `public_repo` scope, because `wingetcreate` supports no fine-grained token. Renew it before it expires. Before it submits, the workflow checks that the release's `PCOptimizer.exe` matches its `.sha256` and that the checksum carries the app's update signature for this version, so an asset replaced after publishing never reaches winget. To submit a release again, run the workflow by hand from its tag (Actions > winget > Run workflow). `pwsh scripts/winget-manifest.ps1 -Version x.y.z` writes and validates the same manifest locally, for a pull request by hand or a test with `Tools/SandboxTest.ps1` from winget-pkgs in Windows Sandbox. The exe needs administrator rights, so the pipeline's start test as a standard user can fail (`Validation-Executable-Error`): say so in the pull request.
 
 A copy installed with winget (the exe sits in a folder named after the package id) does not replace itself: "Update now" runs `winget upgrade` as the signed-in user after the app has ended (`WingetPackage`). A version reaches winget only when its manifest is merged, which can take a day or two; until then winget users who click "Update now" get winget's message and the old version.
 

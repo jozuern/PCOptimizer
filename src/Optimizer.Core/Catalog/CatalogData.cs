@@ -66,6 +66,9 @@ public sealed class GpuCatalog
 {
     public Dictionary<string, string> PciVendors { get; init; } = [];
     public Dictionary<string, string> DiscretePatterns { get; init; } = [];
+
+    /// <summary>Per vendor: graphics the vendor no longer releases drivers for (F15 variant "legacy").</summary>
+    public Dictionary<string, string> LegacyPatterns { get; init; } = [];
     public List<string> VirtualPatterns { get; init; } = [];
     public List<string> BasicPatterns { get; init; } = [];
     public List<string> OnCardSwitchVendors { get; init; } = [];
@@ -109,6 +112,44 @@ public sealed class RamCatalog
     public List<RamDecoder> Decoders { get; init; } = [];
     public List<string> ChannelPatterns { get; init; } = [];
     public double SpeedToleranceFraction { get; init; } = 0.03;
+
+    /// <summary>
+    /// Decoded speeds that stand for a JEDEC speed: part numbers round it ("26" or "266" for DDR4-2666, "29" for 2933).
+    /// Keys are the decoded value, values the real speed.
+    /// </summary>
+    public Dictionary<string, int> RatedAliases { get; init; } = [];
+
+    /// <summary>
+    /// Intel processors and the DDR5 speed Intel specifies with two modules per channel (four modules), single-rank,
+    /// from the processor datasheets (A.xmp "fourDimms" on Intel). Dual-rank modules are specified lower.
+    /// </summary>
+    public List<FourDimmRule> FourDimmIntel { get; init; } = [];
+
+    /// <summary>Intel platforms whose non-Z chipsets cannot run memory above the processor's specification (A.xmp "intelLocked").</summary>
+    public IntelLockedMemory? IntelLocked { get; init; }
+}
+
+public sealed class FourDimmRule
+{
+    public string CpuPattern { get; init; } = "";
+    public int Mts { get; init; }
+}
+
+/// <summary>
+/// Intel 8th to 10th generation desktop processors: the H, B and Q chipsets of the 300 and 400 series do not support
+/// memory overclocking (Intel's specification pages: "Supports Memory Overclocking: No"), so memory runs at the
+/// processor's specified speed whatever XMP says. Only Z370, Z390 and Z490 boards can use XMP.
+/// </summary>
+public sealed class IntelLockedMemory
+{
+    /// <summary>Processor names of these generations (Core i3 to i9, Pentium Gold, Celeron).</summary>
+    public List<string> CpuPatterns { get; init; } = [];
+
+    /// <summary>Board names with a chipset that supports memory overclocking (Z370, Z390, Z490).</summary>
+    public string UnlockedBoardPattern { get; init; } = "";
+
+    /// <summary>The memory speeds Intel specifies for these processors (DDR4-2400, 2666, 2933).</summary>
+    public List<int> SpecSpeeds { get; init; } = [];
 }
 
 public sealed class RamDecoder

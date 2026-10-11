@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Updates;
 
@@ -76,23 +77,57 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
         ChecksumRegex().Match(text) is { Success: true } m ? m.Groups[1].Value : null;
 
     /// <summary>
-    /// Puts the new exe in place of the running one. Windows lets a running exe be renamed, so the running one moves to
-    /// ".old" (deleted on the next start) and the new one takes its name; on failure the old exe is put back.
+    /// Puts the new exe in place of the running one. It is first copied next to it as ".new" (a failed copy, a full disk
+    /// for example, leaves the running exe untouched); Windows lets a running exe be renamed, so the running one then
+    /// moves to ".old" (deleted on the next start) and ".new" takes its name; on failure the old exe is put back. The
+    /// folder is usually one the signed-in user can write to (Downloads): it stays held while the files move
+    /// (<see cref="SafeDelete.Pin"/>), leftovers are deleted through <see cref="SafeDelete"/>, and ".new" is created new
+    /// and checked for its real path, so no step follows a link the user put there.
     /// </summary>
     public static void Install(string newExe, string runningExe)
     {
+        var folder = Path.GetDirectoryName(Path.GetFullPath(runningExe))!;
+        using var pin = SafeDelete.Pin(folder) ?? throw new IOException($"{folder} is a link or cannot be held: not updated");
         var old = runningExe + ".old";
-        if (File.Exists(old)) File.Delete(old);
-        File.Move(runningExe, old);
+        var staged = runningExe + ".new";
+        DeleteIfThere(old);
+        DeleteIfThere(staged);
         try
         {
-            File.Copy(newExe, runningExe);
+            using (var source = File.OpenRead(newExe))
+            using (var target = SafeDelete.CreateNew(staged))
+                source.CopyTo(target);
         }
         catch
         {
-            File.Move(old, runningExe);
+            TryDelete(staged);
             throw;
         }
+        File.Move(runningExe, old);
+        try
+        {
+            File.Move(staged, runningExe);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                if (File.Exists(runningExe)) SafeDelete.DeleteFile(runningExe);
+                File.Move(old, runningExe);
+            }
+            catch (Exception restore) when (restore is IOException or UnauthorizedAccessException)
+            {
+                Logging.Log.Error("update", $"the previous exe could not be put back, it is {old}", restore);
+            }
+            TryDelete(staged);
+            Logging.Log.Error("update", "install failed", ex);
+            throw;
+        }
+    }
+
+    private static void DeleteIfThere(string path)
+    {
+        if (File.Exists(path) || Directory.Exists(path)) SafeDelete.DeleteFile(path);
     }
 
     /// <summary>
@@ -138,11 +173,12 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
         return request;
     }
 
+    /// <summary>Deletes without following links (the exe's folder is often one the signed-in user can write to).</summary>
     private static void TryDelete(string path)
     {
         try
         {
-            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(path)) SafeDelete.DeleteFile(path);
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }

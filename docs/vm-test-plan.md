@@ -11,6 +11,7 @@ The tweak tables in sections 2 to 5 are generated from the catalog: after a cata
 3. Copy the Release exe (`dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile`, then `artifacts/publish/PCOptimizer.exe`) into the VM.
 4. Take a checkpoint named **clean**. Go back to it whenever a test leaves the VM in a state you do not trust.
 5. Keep `%ProgramData%\PCOptimizer\logs` open: every apply, verify and undo is logged there. Attach the log to any bug report.
+6. The app recognizes the VM and leaves out the advice about physical hardware (memory channels and speed, BIOS age, Resizable BAR, PCIe and NVMe links, drive health, microcode): those checks are tested with simulated hardware in the unit tests and on real PCs.
 
 For each tweak: apply it alone, check that the state shows **On** and that the change is really there (Settings, regedit, `powercfg /q`, `sc qc`, `schtasks /query`, `bcdedit`), restart or sign out where the table says so, then **Undo** on the Changes page and check that the original value is back. Write OK or the problem into the Result column.
 
@@ -57,7 +58,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 211 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 219 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -77,7 +78,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | Tweak | Title | Risk | Then | Actions | Result |
 |---|---|---|---|---|---|
 | `power.throttlingOff` | Power throttling off | safe | restart | registry | |
-| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe, preview | restart | registry | |
+| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | safe | restart | registry | |
 | `gpu.mpoOff` | Multiplane overlay (MPO) off | moderate, preview | restart | registry | |
 | `memory.compressionOff` | Memory compression off | moderate | restart | memoryCompression | |
 | `memory.sysmainOff` | SysMain (Superfetch) off | moderate | restart | service | |
@@ -106,6 +107,8 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `personalize.titleBarShakeOff` | No minimizing by shaking a window | safe | sign out | registry | |
 | `input.printScreenSnippingOff` | Print Screen copies the screen again | safe | sign out | registry | |
 | `explorer.fullPathTitle` | File Explorer: full path in the title | safe | sign out | registry | |
+| `visual.wallpaperFullQuality` | Desktop wallpaper without JPEG recompression | safe | sign out | registry | |
+| `system.bsodDetails` | Blue screen shows technical details | safe | restart | registry | |
 
 ## 4. Other tweaks
 
@@ -121,9 +124,9 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `power.pcieAspmOff` | PCIe link power management off | safe |  | powerSetting | |
 | `power.fastStartupOff` | Fast Startup off | safe |  | registry | |
 | `power.hibernateOff` | Hibernation off | safe |  | hibernation | |
-| `gpu.windowedOptimizations` | Optimizations for windowed games | safe, preview |  | registryToken | |
+| `gpu.windowedOptimizations` | Optimizations for windowed games | safe |  | registryToken | |
 | `gpu.gameMode` | Game Mode on | safe |  | registry | |
-| `gpu.gameDvrOff` | Game Bar captures off | safe, preview |  | registry | |
+| `gpu.gameDvrOff` | Game Bar captures off | safe |  | registry | |
 | `input.mouseAccelOff` | Mouse acceleration off | safe |  | registry | |
 | `storage.trimOn` | TRIM on | safe |  | registry | |
 | `storage.storageSenseOn` | Storage Sense on | safe |  | registry | |
@@ -131,7 +134,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `network.deliveryOptimizationP2POff` | Delivery Optimization peer-to-peer off | safe |  | registry | |
 | `privacy.activityHistoryOff` | Activity history off | safe |  | registry | |
 | `privacy.consumerFeaturesOff` | Consumer features off | safe |  | registry | |
-| `privacy.locationOff` | Location access off | safe, preview |  | registry | |
+| `privacy.locationOff` | Location access off | safe |  | registry | |
 | `background.backgroundAppsOff` | Background apps off | moderate |  | registry | |
 | `background.aiOff` | Recall snapshots off | moderate |  | registry | |
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
@@ -148,7 +151,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.tailoredExperiencesOff` | Tailored experiences off | safe |  | registry | |
 | `privacy.feedbackNotificationsOff` | Feedback requests off | safe |  | registry | |
 | `privacy.diagnosticLogsLimited` | Limit diagnostic logs and memory dumps | safe |  | registry | |
-| `privacy.inkingTypingOff` | Inking and typing personalization off | safe, preview |  | registry | |
+| `privacy.inkingTypingOff` | Inking and typing personalization off | safe |  | registry | |
 | `privacy.onlineSpeechOff` | Online speech recognition off | safe |  | registry | |
 | `privacy.webSearchOff` | Web results in Start search off | safe |  | registry | |
 | `privacy.searchHighlightsOff` | Search highlights off | safe |  | registry | |
@@ -283,6 +286,12 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `focus.finishSetupOff` | No "Let's finish setting up your device" screen | safe |  | registry | |
 | `explorer.syncProviderNotificationsOff` | File Explorer: no sync provider notifications | safe |  | registry | |
 | `display.vrrOn` | Variable refresh rate for older full screen games | safe, preview |  | registryToken | |
+| `gpu.gameDvrPolicyOff` | Game Bar recording off by policy | safe |  | registry | |
+| `privacy.silentAppInstallsOff` | No automatic installs of suggested apps | safe, preview |  | registry | |
+| `explorer.homeGalleryHidden` | File Explorer: no Home and Gallery | safe |  | registry | |
+| `explorer.thisPcFolders` | File Explorer: user folders in This PC | safe |  | registry | |
+| `gpu.gameBarControllerOff` | Xbox button does not open Game Bar | safe |  | registry | |
+| `personalize.settingsHomeHidden` | Settings: no Home page | safe |  | registry | |
 
 ## 5. Tweaks that need real hardware
 
@@ -304,15 +313,11 @@ These tweaks use values Microsoft does not document and stay previews until a te
 
 | Tweak | Title | Check |
 |---|---|---|
-| `gpu.hags` | Hardware-accelerated GPU scheduling (HAGS) | Settings > System > Display > Graphics shows the switch on after the restart (needs a GPU with HAGS support) |
-| `gpu.windowedOptimizations` | Optimizations for windowed games | the effect the explanation page describes |
-| `gpu.gameDvrOff` | Game Bar captures off | Settings > Gaming > Captures shows background recording off; Win+Alt+R records nothing |
 | `network.throttlingIndex` | Network throttling off (NetworkThrottlingIndex) | the effect the explanation page describes |
-| `privacy.locationOff` | Location access off | the effect the explanation page describes |
-| `privacy.inkingTypingOff` | Inking and typing personalization off | Settings > Privacy & security > Inking & typing personalization shows both switches off |
 | `display.autoHdrOn` | Auto HDR on | the effect the explanation page describes |
 | `focus.lockScreenTipsOff` | Lock screen: no fun facts and tips | the effect the explanation page describes |
 | `display.vrrOn` | Variable refresh rate for older full screen games | the effect the explanation page describes |
+| `privacy.silentAppInstallsOff` | No automatic installs of suggested apps | the effect the explanation page describes |
 
 <!-- End of generated tables. -->
 
@@ -328,7 +333,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Windows features | Turn one optional feature on, restart, turn it off again | |
 | Debloat | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |
 | OneDrive | With Known Folder Move on: uninstall is blocked; without: uninstall works | |
-| Cleanup | Each of the 11 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
+| Cleanup | Each of the 12 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
 | Storage analyzer | Delete one duplicate: it goes to the Recycle Bin; Windows and program folders cannot be selected | |
 | Apps | Install one per-user app (runs as the signed-in user) and one machine-wide app with winget | |
 | DNS presets | Choose Cloudflare in the DNS servers list, check `Get-DnsClientServerAddress`; choose Google: Cloudflare is undone first (its own confirmation), then Google is applied; choose Automatic: DHCP or the old servers are back; cancel a dialog: the list shows the servers in use again | |

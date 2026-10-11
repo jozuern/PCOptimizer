@@ -11,7 +11,7 @@ namespace Optimizer.Core.Tests;
 /// </summary>
 public class SystemApiReadTests(ITestOutputHelper output)
 {
-    private static readonly ActionContext Ctx = SystemNotify.CreateContext(ElevationInfo.Read().SessionUserSid, Path.GetTempPath());
+    private static readonly ActionContext Ctx = ReadOnlyContext.Create(ElevationInfo.Read().SessionUserSid);
 
     [Fact]
     [Trait("Category", "Hardware")]

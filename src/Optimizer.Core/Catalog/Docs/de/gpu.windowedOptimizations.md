@@ -4,7 +4,7 @@
 Lässt ältere DirectX-10- und -11-Spiele im Fenster- oder randlosen Modus das Flip-Ausgabemodell nutzen, was die Latenz meist senkt.
 
 ## So funktioniert es
-Ältere Spiele geben Bilder mit dem „Blt“-Modell aus, bei dem der Desktop-Compositor jedes Bild kopiert. Mit dieser Einstellung stellt Windows sie auf das Flip-Modell um, das Bilder ohne die zusätzliche Kopie an den Bildschirm gibt [1][2]. Die App setzt SwapEffectUpgradeEnable=1 in deinen DirectX-Einstellungen und behält deine übrigen Werte. Microsoft beschreibt den Schalter [1][2], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Solange kein Test auf einer echten Windows-Installation die Wirkung bestätigt, bleibt die Option eine Vorschau.
+Ältere Spiele geben Bilder mit dem „Blt“-Modell aus, bei dem der Desktop-Compositor jedes Bild kopiert. Mit dieser Einstellung stellt Windows sie auf das Flip-Modell um, das Bilder ohne die zusätzliche Kopie an den Bildschirm gibt [1][2]. Die App setzt SwapEffectUpgradeEnable=1 in deinen DirectX-Einstellungen und behält deine übrigen Werte. Microsoft beschreibt den Schalter [1][2], der Registry-Wert dahinter ist aber nicht dokumentiert; die App schreibt denselben Wert, den Windows beim Umlegen des Schalters speichert. Zwei unabhängige Anleitungen zeigen, dass dieser Wert den Schalter einschaltet [3][4].
 
 ## Warum es helfen kann
 Spiele im Fenster- oder randlosen Modus sparen sich die zusätzliche Kopie, was die Bildlatenz senkt [2].
@@ -21,3 +21,5 @@ Ist Auto HDR an, erzwingt Windows diese Einstellung ohnehin. Dann gibt es nichts
 ## Quellen
 1. https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/
 2. https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952
+3. https://www.elevenforum.com/t/turn-on-or-off-optimizations-for-windowed-games-in-windows-11.4943/
+4. https://www.thewindowsclub.com/enable-optimizations-for-windowed-games-in-windows

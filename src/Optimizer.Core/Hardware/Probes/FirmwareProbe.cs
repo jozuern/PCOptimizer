@@ -6,7 +6,12 @@ namespace Optimizer.Core.Hardware.Probes;
 
 public static class FirmwareProbe
 {
-    public static FirmwareInfo Read()
+    /// <param name="previous">
+    /// The last result, after a change made by this app: TPM, BIOS, board and system disk style are taken from it (no
+    /// change of the app can alter them, and Win32_Tpm alone takes most of a second). Secure Boot and the virtualization
+    /// based security state are read again.
+    /// </param>
+    public static FirmwareInfo Read(FirmwareInfo? previous = null)
     {
         var isUefi = Native.GetFirmwareType(out var type) && type == Native.FirmwareTypeUefi;
 
@@ -31,8 +36,17 @@ public static class FirmwareProbe
                 if (watch.ElapsedMilliseconds > 250) Logging.Log.Debug("scan", $"firmware/{part} took {watch.ElapsedMilliseconds} ms");
             }
         });
-        var tpm = Timed("tpm", ReadTpm);
         var deviceGuard = Timed("deviceguard", ReadDeviceGuard);
+        if (previous is not null)
+        {
+            var (vbsNow, hvciNow, credGuardNow, mbecNow, dmaNow) = deviceGuard.Result;
+            return previous with
+            {
+                SecureBoot = secureBoot, VbsStatus = vbsNow, HvciRunning = hvciNow, CredentialGuardRunning = credGuardNow,
+                MbecAvailable = mbecNow, DmaProtectionAvailable = dmaNow,
+            };
+        }
+        var tpm = Timed("tpm", ReadTpm);
         var bios = Timed("bios", () => Row("SELECT Manufacturer, SMBIOSBIOSVersion, ReleaseDate FROM Win32_BIOS"));
         var board = Timed("board", () => Row("SELECT Manufacturer, Product FROM Win32_BaseBoard"));
         var style = Timed("diskstyle", ReadSystemDiskStyle);

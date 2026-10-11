@@ -111,6 +111,28 @@ public class BenchmarkHealthTests
         }
     }
 
+    /// <summary>The last throttle check survives a restart of the app; a damaged file reads as none.</summary>
+    [Fact]
+    public void ThrottleResultIsSavedAndReadBack()
+    {
+        var folder = TestFolders.Create("health");
+        try
+        {
+            Assert.Null(HealthStore.LoadThrottle(folder));
+            var result = new ThrottleResult(new DateTimeOffset(2026, 10, 11, 12, 0, 0, TimeSpan.Zero), 120, 0.4, 72, 0.8, new Dictionary<string, double> { ["thermal"] = 0.1 }, 76);
+            HealthStore.SaveThrottle(folder, result);
+            var read = HealthStore.LoadThrottle(folder)!;
+            Assert.Equal((result.Measured, result.Samples, result.CpuLimitedShare), (read.Measured, read.Samples, read.CpuLimitedShare));
+            Assert.False(File.Exists(Path.Combine(folder, "throttle.json.tmp")));
+            File.WriteAllText(Path.Combine(folder, "throttle.json"), "{\"Measured\":");
+            Assert.Null(HealthStore.LoadThrottle(folder));
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
+    }
+
     [Fact]
     public void StorageAndHealthFindingsRender()
     {
@@ -188,5 +210,27 @@ public class BenchmarkHealthTests
         if (cp is not (437 or 850)) return;
         byte[] dism = [0x41, 0x75, 0x73, 0x66, 0x81, 0x68, 0x72, 0x65, 0x6E, 0x20, 0x65, 0x72, 0x68, 0x94, 0x68, 0x74, 0x65, 0x20, 0xE1];
         Assert.Equal("Ausführen erhöhte ß", Optimizer.Core.Platform.StreamingProcess.Oem.GetString(dism));
+    }
+
+    /// <summary>
+    /// A program the tool started keeps the output pipe open after the tool ended (an installer starting the updated app):
+    /// the run ends with the tool, not with that program. Only cmd.exe and ping to the loopback address run.
+    /// </summary>
+    [Fact]
+    public async Task AToolEndsAlthoughAProgramItStartedKeepsTheOutputOpen()
+    {
+        var before = Optimizer.Core.Platform.StreamingProcess.OutputGrace;
+        Optimizer.Core.Platform.StreamingProcess.OutputGrace = TimeSpan.FromSeconds(1);
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var exit = await Optimizer.Core.Platform.StreamingProcess.RunAsync("cmd.exe", "/c start /b ping -n 20 127.0.0.1", null);
+            Assert.Equal(0, exit);
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"took {watch.Elapsed}");
+        }
+        finally
+        {
+            Optimizer.Core.Platform.StreamingProcess.OutputGrace = before;
+        }
     }
 }

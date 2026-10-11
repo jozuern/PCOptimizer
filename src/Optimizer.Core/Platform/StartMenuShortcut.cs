@@ -42,9 +42,18 @@ public static class StartMenuShortcut
         }
     }
 
-    public static void Create(string folder, string exe, string description)
+    /// <summary>
+    /// Writes the shortcut. The folder belongs to the signed-in user, who can replace it or a file in it with a link while
+    /// the elevated app writes: the shortcut is saved in the app's own temp folder first and then copied into a file that
+    /// is created new and checked for its real path (<see cref="SafeDelete.CreateNew"/>), so it can only land in the
+    /// Programs folder itself. An earlier shortcut is deleted through <see cref="SafeDelete"/> first.
+    /// </summary>
+    /// <param name="workFolder">Where the shortcut is saved first; null uses the tools' TEMP folder (admin-only in the app).</param>
+    public static void Create(string folder, string exe, string description, string? workFolder = null)
     {
-        Directory.CreateDirectory(folder);
+        if (!Directory.Exists(folder)) throw new DirectoryNotFoundException($"{folder} does not exist");
+        workFolder ??= ProcessHardening.TempFolder ?? Path.GetTempPath();
+        var draft = Path.Combine(workFolder, $"{Guid.NewGuid():N}.lnk");
         var link = (IShellLinkW)new ShellLink();
         try
         {
@@ -52,18 +61,30 @@ public static class StartMenuShortcut
             link.SetWorkingDirectory(Path.GetDirectoryName(exe) ?? "");
             link.SetDescription(description);
             link.SetIconLocation(exe, 0);
-            ((IPersistFile)link).Save(Path.Combine(folder, FileName), true);
+            ((IPersistFile)link).Save(draft, true);
         }
         finally
         {
             Marshal.FinalReleaseComObject(link);
         }
+        try
+        {
+            var bytes = File.ReadAllBytes(draft);
+            Remove(folder);
+            using var target = SafeDelete.CreateNew(Path.Combine(folder, FileName));
+            target.Write(bytes);
+        }
+        finally
+        {
+            File.Delete(draft);
+        }
     }
 
+    /// <summary>Deletes the shortcut through <see cref="SafeDelete"/>: a link in its path is refused instead of followed.</summary>
     public static void Remove(string folder)
     {
         var path = Path.Combine(folder, FileName);
-        if (File.Exists(path)) File.Delete(path);
+        if (File.Exists(path) || Directory.Exists(path)) SafeDelete.DeleteFile(path);
     }
 
     [ComImport, Guid("00021401-0000-0000-C000-000000000046")]

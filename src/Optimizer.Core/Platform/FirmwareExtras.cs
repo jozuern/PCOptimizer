@@ -20,7 +20,9 @@ public static partial class FirmwareExtras
     public static SecureBootCerts ReadSecureBootCerts()
     {
         var servicing = Reg.HklmValue(@"SYSTEM\CurrentControlSet\Control\SecureBoot\Servicing", "UEFICA2023Status")?.ToString();
-        if (!EnablePrivilege("SeSystemEnvironmentPrivilege")) return new SecureBootCerts(null, null, null, null, servicing);
+        // Enabled only for these two reads: an elevated process should not keep a privilege it no longer needs.
+        using var privilege = EnablePrivilege("SeSystemEnvironmentPrivilege");
+        if (privilege is null) return new SecureBootCerts(null, null, null, null, servicing);
         var kek = ReadVariable("KEK", GlobalVariableGuid);
         var db = ReadVariable("db", ImageSecurityDatabaseGuid);
         bool? Has(byte[]? data, string name) => data is null ? null : Contains(data, name);
@@ -140,19 +142,42 @@ public static partial class FirmwareExtras
 
     // ---------------- privilege helper ----------------
 
-    private static bool EnablePrivilege(string name)
+    /// <summary>
+    /// Enables the privilege for the current process until the result is disposed, which puts back the state before
+    /// (a privilege that was already on stays on). Null when the account does not hold it.
+    /// </summary>
+    private static PrivilegeScope? EnablePrivilege(string name)
     {
-        if (!OpenProcessToken(GetCurrentProcess(), 0x0020 | 0x0008 /* ADJUST_PRIVILEGES | QUERY */, out var token)) return false;
+        if (!OpenProcessToken(GetCurrentProcess(), 0x0020 | 0x0008 /* ADJUST_PRIVILEGES | QUERY */, out var token)) return null;
         try
         {
-            if (!LookupPrivilegeValue(null, name, out var luid)) return false;
+            if (!LookupPrivilegeValue(null, name, out var luid)) return null;
             var tp = new TOKEN_PRIVILEGES { PrivilegeCount = 1, Luid = luid, Attributes = 0x2 /* SE_PRIVILEGE_ENABLED */ };
-            if (!AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero)) return false;
-            return Marshal.GetLastWin32Error() == 0; // ERROR_NOT_ALL_ASSIGNED (1300) when the account lacks the privilege
+            var previous = new TOKEN_PRIVILEGES();
+            if (!AdjustTokenPrivileges(token, false, ref tp, (uint)Marshal.SizeOf<TOKEN_PRIVILEGES>(), ref previous, out _)) return null;
+            if (Marshal.GetLastWin32Error() != 0) return null; // ERROR_NOT_ALL_ASSIGNED (1300) when the account lacks the privilege
+            // "previous" lists the privilege only when this call changed it.
+            return new PrivilegeScope(previous.PrivilegeCount == 1 ? previous : null);
         }
         finally
         {
             CloseHandle(token);
+        }
+    }
+
+    private sealed class PrivilegeScope(TOKEN_PRIVILEGES? before) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (before is not { } state || !OpenProcessToken(GetCurrentProcess(), 0x0020 | 0x0008, out var token)) return;
+            try
+            {
+                AdjustTokenPrivileges(token, false, ref state, 0, IntPtr.Zero, IntPtr.Zero);
+            }
+            finally
+            {
+                CloseHandle(token);
+            }
         }
     }
 
@@ -173,4 +198,5 @@ public static partial class FirmwareExtras
     [DllImport("advapi32.dll", SetLastError = true)] private static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
     [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)] private static extern bool LookupPrivilegeValue(string? system, string name, out long luid);
     [DllImport("advapi32.dll", SetLastError = true)] private static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll, ref TOKEN_PRIVILEGES state, uint length, IntPtr previous, IntPtr returnLength);
+    [DllImport("advapi32.dll", SetLastError = true, EntryPoint = "AdjustTokenPrivileges")] private static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll, ref TOKEN_PRIVILEGES state, uint length, ref TOKEN_PRIVILEGES previous, out uint returnLength);
 }

@@ -579,9 +579,9 @@
     },
     {
       "name": "DiagTrack",
-      "mode": "manualOk",
-      "en": "Connected User Experiences and Telemetry: sends diagnostic data. See the telemetry tweak.",
-      "de": "Benutzererfahrung und Telemetrie im verbundenen Modus: sendet Diagnosedaten. Siehe den Telemetrie-Tweak."
+      "mode": "protected",
+      "en": "Connected User Experiences and Telemetry: sends diagnostic data. Turned off together with its policy by the tweak Telemetry to minimum (Tweaks, Privacy), which also undoes it; not changed here, so the two never record different originals.",
+      "de": "Benutzererfahrung und Telemetrie im verbundenen Modus: sendet Diagnosedaten. Wird zusammen mit seiner Richtlinie vom Tweak Telemetrie auf Minimum (Tweaks, Datenschutz) ausgeschaltet, der es auch rückgängig macht; hier nicht änderbar, damit beide nie unterschiedliche Ausgangswerte speichern."
     },
     {
       "name": "SysMain",

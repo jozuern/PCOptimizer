@@ -19,7 +19,8 @@ public sealed partial class StartupScanner
     public static string? SystemFile(string? name, bool addDll = true, bool wow64 = false)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
-        var expanded = Environment.ExpandEnvironmentVariables(name.Trim().Trim('"'));
+        // These files are loaded by Windows itself (boot, LSA, spooler, Winsock): the machine's variables, not the user's.
+        var expanded = Platform.MachineEnvironment.Expand(name.Trim().Trim('"'));
         var system32 = Environment.SystemDirectory;
         var syswow64 = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
         if (Path.IsPathRooted(expanded))
@@ -255,7 +256,7 @@ public sealed partial class StartupScanner
                     : o["ScriptFileName"]?.ToString() is { Length: > 0 } file ? file
                     : o["ScriptText"]?.ToString() is { Length: > 0 } text ? "(script) " + text.ReplaceLineEndings(" ")[..Math.Min(120, text.ReplaceLineEndings(" ").Length)]
                     : "(script)";
-                list.Add(new StartupEntry(StartupKind.WmiConsumer, name, command, CommandLine.ImagePath(command), $@"WMI root\subscription\{cls}", Hive.Machine, null, $"wmi:{cls}:{name}")
+                list.Add(new StartupEntry(StartupKind.WmiConsumer, name, command, CommandLine.ImagePath(command, Platform.MachineEnvironment.Expand), $@"WMI root\subscription\{cls}", Hive.Machine, null, $"wmi:{cls}:{name}")
                 {
                     Suspicious = true,
                 });

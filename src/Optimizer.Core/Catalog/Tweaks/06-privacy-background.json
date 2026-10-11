@@ -160,8 +160,6 @@
     },
     {
       "id": "privacy.locationOff",
-      "undocumented": true,
-      "preview": true,
       "category": "Privacy",
       "impact": {
         "gaming": 0,
@@ -171,19 +169,33 @@
         ]
       },
       "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
       "actions": [
         {
           "type": "registry",
           "hive": "machine",
-          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location",
-          "name": "Value",
-          "kind": "string",
-          "value": "Deny"
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+          "name": "DisableLocation",
+          "kind": "dword",
+          "value": 1
         }
       ],
       "sources": [
         "https://support.microsoft.com/en-us/windows/windows-location-service-and-privacy-3a8eee0a-5b0b-dc07-eede-2a5ca1c49088",
-        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-sensors"
       ]
     },
     {

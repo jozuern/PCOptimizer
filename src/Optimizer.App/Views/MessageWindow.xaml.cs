@@ -80,6 +80,31 @@ public sealed class Dialogs : IDialogs
     public bool Ask(string title, string text, string primary) =>
         MessageWindow.Show(Owner, title, text, Loc.Instance["Confirm_Cancel"], primary) == 1;
 
+    public string? PickSaveFile(string defaultName, string filterName, string extension)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = defaultName,
+            Filter = $"{filterName} (*{extension})|*{extension}",
+            DefaultExt = extension,
+            AddExtension = true,
+            OverwritePrompt = true,
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        };
+        return dialog.ShowDialog(Owner) == true ? dialog.FileName : null;
+    }
+
+    public string? PickOpenFile(string filterName, string extension)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = $"{filterName} (*{extension})|*{extension}",
+            CheckFileExists = true,
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        };
+        return dialog.ShowDialog(Owner) == true ? dialog.FileName : null;
+    }
+
     public bool ConfirmUndoAll(int count) =>
         MessageWindow.Show(Owner, Loc.Instance["UndoAll_Title"], Loc.Instance.Format("UndoAll_Text", count),
             Loc.Instance["Confirm_Cancel"], Loc.Instance["Changes_UndoAll"]) == 1;

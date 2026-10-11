@@ -245,6 +245,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // A backup file that cannot be read still holds the true originals: applying again would record the changed
         // values as originals and overwrite it.
         if (store.IsDamaged(t.Id)) blocks.Add(new Block("block.backupDamaged", store.DamagedFile(t.Id)));
+        if (store.HeldByAnotherAccount(t.Id)) blocks.Add(new Block("block.otherAccount"));
         foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
         if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
         return blocks;
@@ -323,6 +324,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // Get found the file damaged only now (after the preflight) and moved it aside: it still holds the originals.
         if (existing is null && store.IsDamaged(t.Id))
             return new ApplyResult(ApplyOutcome.Blocked, changes, Blocks: [new Block("block.backupDamaged", store.DamagedFile(t.Id))]);
+        // Another account's backup holds the originals: a new one would record that account's changed values instead.
+        if (existing is null && store.HeldByAnotherAccount(t.Id))
+            return new ApplyResult(ApplyOutcome.Blocked, changes, Blocks: [new Block("block.otherAccount")]);
         var backup = existing ?? new TweakBackup
         {
             TweakId = t.Id,
@@ -408,7 +412,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                         Log.Error("engine", $"rollback of {undo.TargetKey} failed", rex);
                     }
                     var now = SafeRead(undo);
-                    if (now is not null ? !now.SameAs(before[undo.TargetKey]) : !restored) stuck.Add(undo);
+                    // A change that takes effect after a restart still reads as before: only the restore itself tells.
+                    if (undo.TakesEffectAfterRestart ? !restored : now is not null ? !now.SameAs(before[undo.TargetKey]) : !restored) stuck.Add(undo);
                 }
                 if (stuck.Count > 0)
                 {
@@ -417,7 +422,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     // by Windows" and raise a drift notice.
                     backup.Entries.RemoveAll(e => added.Contains(e.TargetKey) && !stuck.Any(s => s.TargetKey == e.TargetKey));
                     foreach (var s in stuck)
-                        if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeRead(s);
+                        if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeApplied(s);
                     backup.LastApplied = DateTimeOffset.Now;
                     backup.AppliedOnVersion = WindowsVersion;
                     store.Save(backup);
@@ -437,7 +442,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // A change that takes effect after a restart still reads the old value: record what was written instead, or undo
         // would later take the new running value for a change by Windows and skip it.
         foreach (var a in done)
-            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.TakesEffectAfterRestart ? a.Desired(ctx) : SafeRead(a);
+            if (backup.Entry(a.TargetKey) is { } e) e.Applied = SafeApplied(a);
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
@@ -575,9 +580,23 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             var a = JsonSerializer.Deserialize<TweakAction>(json, TweakCatalog.JsonOptions);
             return a?.TargetKey == entry.TargetKey ? a : null;
         }
-        catch (JsonException ex)
+        // Not only JSON errors: TargetKey can throw too (a power setting alias a later version no longer knows), and one
+        // such entry must not stop the undo of the others (or Undo all).
+        catch (Exception ex)
         {
             Log.Warn("engine", $"stored action of {entry.TargetKey} unreadable: {ex.Message}");
+            return null;
+        }
+    }
+
+    private StoredValue? SafeApplied(TweakAction a)
+    {
+        try
+        {
+            return a.AppliedValue(ctx);
+        }
+        catch (Exception)
+        {
             return null;
         }
     }
@@ -628,7 +647,14 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public TweakDefinition? Resolve(string id)
     {
         if (_catalog.Get(id) is { } t) return t;
-        if (PeekBackup(id) is not { } backup) return null;
+        return PeekBackup(id) is { } backup ? Resolve(backup) : null;
+    }
+
+    /// <summary>Like <see cref="Resolve(string)"/>, from a backup already read (no second read of its file).</summary>
+    public TweakDefinition? Resolve(TweakBackup backup)
+    {
+        var id = backup.TweakId;
+        if (_catalog.Get(id) is { } t) return t;
         if (backup.Definition is { } json)
         {
             try

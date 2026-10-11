@@ -214,6 +214,27 @@ public class TransactionTests
         Assert.True(Labels.Current.Has("en", "block.backupDamaged") && Labels.Current.Has("de", "block.backupDamaged"));
     }
 
+    /// <summary>A damaged backup that cannot be moved aside (a scanner holds it) is not "no backup": apply and undo stop.</summary>
+    [Fact]
+    public async Task ADamagedBackupThatCannotBeMovedAsideIsNotIgnored()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\PCOTest\DamagedHeld";
+        var t = Tweak("test.damagedheld", Reg(path, "Value", 1));
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        var file = Path.Combine(fx.Store.BackupFolder, "test.damagedheld.json");
+        File.WriteAllText(file, "{\"TweakId\":\"test.dam");
+        using (var key = fx.Registry.Open(Hive.Machine, path, writable: true)) key!.SetValue("Value", 0); // so apply has work to do
+        using (new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.Throws<BackupUnreadableException>(() => fx.Store.Get(t.Id));
+            Assert.Equal(ApplyOutcome.Failed, (await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options)).Outcome);
+            Assert.False(fx.Engine.Revert(t).Success);
+        }
+        Assert.Equal("{\"TweakId\":\"test.dam", File.ReadAllText(file));
+        Assert.True(Labels.Current.Has("en", "block.otherAccount") && Labels.Current.Has("de", "block.otherAccount"));
+    }
+
     [Fact]
     public void BackupsOfIdsWithReplacedCharactersDoNotShareAFile()
     {

@@ -54,7 +54,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>The explanation page's title, with the subject for tweaks that share a page (DNS presets, services).</summary>
     public static string TitleOf(TweakDefinition t, string lang)
     {
-        var title = DocStore.Get(t.DocId, lang)?.Title ?? DocStore.Get(t.DocId, "en")?.Title ?? t.Id;
+        var title = DocStore.GetOrEnglish(t.DocId, lang)?.Title ?? t.Id;
         return t.Subject is { Length: > 0 } s ? $"{title}: {s}" : title;
     }
 
@@ -71,7 +71,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     public string Summary(TweakDefinition t)
     {
         var lang = Loc.Instance.Language;
-        var page = DocStore.Get(t.DocId, lang) ?? DocStore.Get(t.DocId, "en");
+        var page = DocStore.GetOrEnglish(t.DocId, lang);
         return page?.Section(DocHeadings.Summary(page.Language))?.Body ?? "";
     }
 
@@ -204,7 +204,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>Undoes every change this app made (one confirmation).</summary>
     public Task<bool> UndoAllAsync() => ExclusiveAsync("undo all", async () =>
     {
-        var count = services.Store.All().Count;
+        var count = await Task.Run(() => services.Store.All().Count);
         if (count == 0 || !dialogs.ConfirmUndoAll(count)) return false;
         try
         {

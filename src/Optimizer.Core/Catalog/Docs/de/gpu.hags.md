@@ -4,7 +4,7 @@
 Lässt die Grafikkarte ihre Arbeit selbst planen statt eines CPU-Threads. Nötig für DLSS Frame Generation; ohne Frame Generation ist kein messbarer Gewinn belegt.
 
 ## So funktioniert es
-Seit WDDM 2.7 kann Windows den Großteil der GPU-Planung an einen eigenen Prozessor auf der Grafikkarte abgeben, statt sie in einem hoch priorisierten CPU-Thread zu erledigen [1]. Das nutzen nur Grafikkarten und Treiber, die es unterstützen. Der Wert HwSchMode = 2 schaltet es ein und wirkt nach einem Neustart. Es ist der Wert hinter dem Schalter „Hardwarebeschleunigte GPU-Planung“ unter Einstellungen > System > Bildschirm > Grafik; Microsoft dokumentiert den Wert selbst nicht.
+Seit WDDM 2.7 kann Windows den Großteil der GPU-Planung an einen eigenen Prozessor auf der Grafikkarte abgeben, statt sie in einem hoch priorisierten CPU-Thread zu erledigen [1]. Das nutzen nur Grafikkarten und Treiber, die es unterstützen. Der Wert HwSchMode = 2 schaltet es ein und wirkt nach einem Neustart. Es ist der Wert hinter dem Schalter „Hardwarebeschleunigte GPU-Planung“ unter Einstellungen > System > Bildschirm > Grafik; Microsoft dokumentiert den Wert selbst nicht. Unabhängige Anleitungen zeigen, dass 2 den Schalter einschaltet und 1 ihn ausschaltet [4][5].
 
 ## Warum es helfen kann
 Auf NVIDIA-RTX-40- und -50-Karten funktioniert DLSS Frame Generation nur, wenn diese Einstellung an ist [2]. Ohne Frame Generation beschreibt Microsoft die Änderung als etwas, das du nicht bemerken solltest [1].
@@ -22,3 +22,5 @@ Auf Karten mit Frame Generation sollte es an bleiben. Auf anderen Karten ist kei
 1. https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/
 2. https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS_G.md
 3. https://www.intel.com/content/www/us/en/support/articles/000056788/graphics.html
+4. https://winaero.com/turn-on-or-off-hardware-accelerated-gpu-scheduling-in-windows-10/
+5. https://itechtics.com/hardware-accelerated-gpu/

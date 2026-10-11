@@ -101,6 +101,10 @@ public class RamTests
     [InlineData("BL2K16G32C16U4B", 3200)]
     [InlineData("CP2K16G60C30U5B", 6000)]
     [InlineData("TF3D416G3200HC16F", 3200)]
+    [InlineData("KF426C16BB/8", 2666)]        // "26" and "29" stand for DDR4-2666 and 2933
+    [InlineData("KF429C17BBK2/16", 2933)]
+    [InlineData("BL2K16G26C16U4B", 2666)]
+    [InlineData("PVE2416G266C6", 2666)]       // Patriot "266"
     public void DecodesRatedSpeed(string part, int expected) => Assert.Equal(expected, RamSpeed.DecodeRated(part, CatalogData.Current));
 
     [Theory]

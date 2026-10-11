@@ -59,7 +59,7 @@
                     <ui:Card Padding="16,12" Margin="0,0,0,8">
                         <StackPanel>
                             <WrapPanel>
-                                <ui:TextBox PlaceholderText="{l:Tr Svc_Search}" Text="{Binding ServicesPage.Search, UpdateSourceTrigger=PropertyChanged}" MinWidth="280" Margin="0,0,16,0"
+                                <ui:TextBox PlaceholderText="{l:Tr Svc_Search}" Text="{Binding ServicesPage.Search, UpdateSourceTrigger=PropertyChanged, Delay=200}" MinWidth="280" Margin="0,0,16,0"
                                             Icon="{ui:SymbolIcon Search20}" />
                                 <ui:ToggleSwitch Content="{l:Tr Svc_ShowWindows}" IsChecked="{Binding ServicesPage.ShowWindowsServices}" />
                             </WrapPanel>

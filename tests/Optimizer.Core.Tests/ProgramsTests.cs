@@ -1,6 +1,7 @@
 using Optimizer.Core.Actions;
 using Optimizer.Core.Apps;
 using Optimizer.Core.Platform;
+using Optimizer.Core.Startup;
 
 namespace Optimizer.Core.Tests;
 
@@ -113,6 +114,58 @@ public class ProgramsTests
         Assert.Equal(UninstallMode.Elevated, Programs.Command(program, _ => true)!.Mode);
         Assert.Equal(UninstallMode.AsUser, Programs.Command(program, f => !f.StartsWith(@"C:\ProgramData", StringComparison.OrdinalIgnoreCase))!.Mode);
         Assert.Equal(UninstallMode.AsUser, Programs.Command(program with { UninstallString = $"{cmd} /c del /q x" }, _ => true)!.Mode);
+    }
+
+    /// <summary>An interpreter another program installed runs the script it is given, like a script host.</summary>
+    [Fact]
+    public void InterpreterUninstallersRunElevatedOnlyWithAdminOnlyScripts()
+    {
+        static bool AdminOnly(string f) => f.StartsWith(@"C:\Program Files", StringComparison.OrdinalIgnoreCase);
+        var python = new DesktopProgram("Tool", null, null, null, null, @"""C:\Program Files\Python\python.exe"" ""C:\Users\Public\u.py""", null, false, "k");
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(python, AdminOnly)!.Mode);
+        Assert.Equal(UninstallMode.Elevated, Programs.Command(python with { UninstallString = @"""C:\Program Files\Python\python.exe"" ""C:\Program Files\Tool\u.py""" }, AdminOnly)!.Mode);
+        Assert.Equal(UninstallMode.AsUser, Programs.Command(python with { UninstallString = @"""C:\Program Files\Python\python.exe"" -c ""import os""" }, AdminOnly)!.Mode);
+    }
+
+    /// <summary>
+    /// cmd.exe runs the signed-in user's AutoRun command first (HKCU, writable by any program of the user): every cmd.exe
+    /// the elevated app starts gets /D, and a batch file is started through cmd.exe /D explicitly.
+    /// </summary>
+    [Fact]
+    public void ElevatedCmdNeverRunsTheUsersAutoRun()
+    {
+        var cmd = new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), @"/c ""C:\Program Files\Vendor\u.cmd""") { UseShellExecute = false };
+        ProcessHardening.Apply(cmd);
+        Assert.Equal(@"/D /c ""C:\Program Files\Vendor\u.cmd""", cmd.Arguments);
+        ProcessHardening.Apply(cmd);
+        Assert.Equal(@"/D /c ""C:\Program Files\Vendor\u.cmd""", cmd.Arguments); // not twice
+
+        var list = new System.Diagnostics.ProcessStartInfo("cmd.exe") { UseShellExecute = false };
+        list.ArgumentList.Add("/c");
+        list.ArgumentList.Add("ver");
+        ProcessHardening.Apply(list);
+        Assert.Equal(["/D", "/c", "ver"], list.ArgumentList);
+
+        var batch = new System.Diagnostics.ProcessStartInfo(@"C:\Program Files\Vendor\uninstall.bat", "/quiet") { UseShellExecute = false };
+        ProcessHardening.Apply(batch);
+        Assert.Equal(Path.Combine(Environment.SystemDirectory, "cmd.exe"), batch.FileName);
+        Assert.Equal(@"/D /S /C """"C:\Program Files\Vendor\uninstall.bat"" /quiet""", batch.Arguments);
+
+        var bare = new System.Diagnostics.ProcessStartInfo(@"C:\Program Files\Vendor\remove.CMD") { UseShellExecute = false };
+        ProcessHardening.Apply(bare);
+        Assert.Equal(@"/D /S /C """"C:\Program Files\Vendor\remove.CMD""""", bare.Arguments);
+    }
+
+    /// <summary>A one-character token (a lone backslash) must not crash the parser: a planted Run value would break the Startup page.</summary>
+    [Theory]
+    [InlineData(@"cmd.exe /c \")]
+    [InlineData(@"explorer.exe \")]
+    [InlineData(@"rundll32 x.dll,E \")]
+    public void ShortTokensDoNotThrow(string command)
+    {
+        _ = CommandLine.RunsUnverifiedScript(command);
+        _ = CommandLine.RunsUntrustedCode(command, _ => true);
+        Assert.False(CommandLine.IsInProtectedSystemFolder(@"\"));
     }
 
     [Fact]

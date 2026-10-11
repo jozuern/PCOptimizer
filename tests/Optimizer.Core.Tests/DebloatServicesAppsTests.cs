@@ -107,6 +107,15 @@ public class DebloatServicesAppsTests
     }
 
     [Fact]
+    public void InstallerTypeIsPassedOnlyWhenItIsAKnownValue()
+    {
+        Assert.Contains(" --installer-type exe ", Winget.InstallArguments("Microsoft.DirectX", null, "exe"));
+        Assert.DoesNotContain("--installer-type", Winget.InstallArguments("Microsoft.DirectX", null, null));
+        Assert.DoesNotContain("--installer-type", Winget.InstallArguments("Microsoft.DirectX", null, "exe; calc"));
+        Assert.Equal("exe", CatalogData.Current.Apps.Apps.Single(a => a.Id == "Microsoft.DirectX").InstallerType);
+    }
+
+    [Fact]
     public void ServiceEditRules()
     {
         var c = CatalogData.Current.Services;
@@ -120,6 +129,12 @@ public class DebloatServicesAppsTests
         Assert.Equal(ServiceEdit.ManualOnly, Row("MapsBroker", @"C:\Windows\System32\moshost.dll", microsoft).Edit);
         Assert.Equal(ServiceEdit.ReadOnly, Row("SomeUnknownWindowsSvc", @"C:\Windows\System32\x.dll", microsoft).Edit);
         Assert.Equal(ServiceEdit.Full, Row("LGHUBUpdaterService", @"C:\Program Files\LGHUB\updater.exe", vendor).Edit);
+        // Without a valid signature the Windows folder protects, except its folders standard users can write to.
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var unsigned = new SignatureInfo(SignatureStatus.Unsigned, null, false);
+        Assert.Equal(ServiceEdit.ReadOnly, Row("SomeSvc", Path.Combine(windows, @"System32\x.exe"), unsigned).Edit);
+        Assert.Equal(ServiceEdit.Full, Row("SomeSvc", Path.Combine(windows, @"Temp\x.exe"), unsigned).Edit);
+        Assert.Equal(ServiceEdit.Full, Row("SomeSvc", Path.Combine(windows, @"System32\Tasks\x.exe"), unsigned).Edit);
         Assert.Null(ServiceManager.Change(Row("MapsBroker", null, microsoft), ServiceStart.Disabled));
         Assert.NotNull(ServiceManager.Change(Row("MapsBroker", null, microsoft), ServiceStart.Manual));
         Assert.Equal("CDPUserSvc", ServiceManager.BaseName("CDPUserSvc_1a2b3c"));
@@ -293,6 +308,38 @@ public class DebloatServicesAppsTests
         Assert.Null(OptionalFeatureAction.ReadState(fx.Processes, "Missing"));
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal("Disabled", state);
+    }
+
+    /// <summary>Undo of "feature off" turns it on without /All (parents the user turned off stay off), /All only when DISM needs it.</summary>
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 2)]
+    public async Task UndoOfFeatureOffTurnsOnlyThatFeatureOn(bool parentOff, int enableCalls)
+    {
+        using var fx = new EngineFixture();
+        var state = "Enabled";
+        var enables = new List<string>();
+        fx.Processes.Handler = (file, args) =>
+        {
+            if (!file.Equals("dism.exe", StringComparison.OrdinalIgnoreCase)) return null;
+            if (args.Contains("/Get-FeatureInfo")) return (0, $"Feature Name : Printing-XPSServices-Features\r\nState : {state}\r\n");
+            if (args.Contains("/Enable-Feature"))
+            {
+                enables.Add(args);
+                if (parentOff && !args.Contains("/All")) return (50, "Error: 50 A parent feature is not enabled");
+                state = "Enabled";
+                return (0, "");
+            }
+            if (args.Contains("/Disable-Feature")) { state = "Disabled"; return (0, ""); }
+            return null;
+        };
+        var t = OptionalFeatureAction.Tweak(new FeatureEntry { Name = "Printing-XPSServices-Features", Title = "XPS" }, enabled: false);
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true);
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, facts, new HashSet<string>(), new ApplyOptions { ContinueWithoutRestorePoint = true })).Outcome);
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal("Enabled", state);
+        Assert.Equal(enableCalls, enables.Count);
+        Assert.DoesNotContain("/All", enables[0]);
     }
 
     /// <summary>

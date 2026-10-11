@@ -1,4 +1,9 @@
 #!/bin/sh
-# A merge without conflicts runs this hook, not pre-commit: the merge commit raises the version too (when both sides
-# raised it to the same number, the merged csproj would otherwise keep a version that already exists).
-exec "$(dirname "$0")/pre-commit"
+# A merge without conflicts runs this hook, not pre-commit. Every commit, a merge commit too, needs a version above all
+# of its parents (CI checks it), but git does not take what this hook stages into the merge commit, and the other side
+# is not known yet here (MERGE_HEAD is written later). So the merge stops here and stays in progress:
+# "git commit --no-edit" finishes it, and pre-commit raises the version above both sides then.
+[ -n "$SKIP_VERSION_BUMP" ] && exit 0
+echo "pre-merge-commit: a merge commit needs its own version above both sides." >&2
+echo "The merge is still in progress: finish it with  git commit --no-edit  (the version is raised then)." >&2
+exit 1

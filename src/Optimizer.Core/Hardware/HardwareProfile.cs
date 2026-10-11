@@ -37,6 +37,16 @@ public sealed record SystemInfo(string Manufacturer, string Model, IReadOnlyList
 {
     private static readonly HashSet<int> LaptopChassis = [8, 9, 10, 11, 14, 30, 31, 32];
     public bool IsLaptop => HasBattery && (LidPresent || ChassisTypes.Any(LaptopChassis.Contains));
+
+    /// <summary>
+    /// A virtual machine (Hyper-V, VMware, VirtualBox, QEMU/KVM, Xen, Parallels), from the maker and model the firmware
+    /// reports. Not HypervisorPresent: that is also true on a real PC with memory integrity or Hyper-V on.
+    /// </summary>
+    public bool IsVirtualMachine =>
+        (Manufacturer == "Microsoft Corporation" && Model == "Virtual Machine") ||
+        VirtualMakers.Any(v => Manufacturer.Contains(v, StringComparison.OrdinalIgnoreCase) || Model.Contains(v, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly string[] VirtualMakers = ["VMware", "VirtualBox", "innotek", "QEMU", "KVM", "Xen", "Parallels", "Bochs"];
 }
 
 // ---------------- CPU ----------------
@@ -221,7 +231,20 @@ public sealed record Volume(string Root, string Label, long SizeBytes, long Free
     public double FreeFraction => SizeBytes == 0 ? 1 : (double)FreeBytes / SizeBytes;
 }
 
-public sealed record StorageInfo(IReadOnlyList<PhysicalDisk> Disks, IReadOnlyList<Volume> Volumes);
+public sealed record StorageInfo(IReadOnlyList<PhysicalDisk> Disks, IReadOnlyList<Volume> Volumes)
+{
+    /// <summary>
+    /// The physical disk a volume lies on, or null when that is not certain. The volume's disk number is the number of
+    /// the disk Windows sees; for Storage Spaces that is the virtual disk, whose number a pooled physical disk can carry
+    /// too (or none does). So only one disk with the number counts, and only when the volume fits on it.
+    /// </summary>
+    public PhysicalDisk? DiskOf(Volume? volume)
+    {
+        if (volume?.DiskNumber is not { } number) return null;
+        var matches = Disks.Where(d => d.Number == number).Take(2).ToList();
+        return matches is [var disk] && (disk.SizeBytes == 0 || volume.SizeBytes <= disk.SizeBytes) ? disk : null;
+    }
+}
 
 // ---------------- Network ----------------
 public sealed record NetworkAdapterInfo(string Name, string Description, string Type, long SpeedBps, bool IsUp);

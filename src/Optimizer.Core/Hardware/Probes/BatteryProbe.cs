@@ -7,12 +7,17 @@ namespace Optimizer.Core.Hardware.Probes;
 /// </summary>
 public static class BatteryProbe
 {
+    private const long CapacityRelative = 0x40000000;
+
     public static BatteryHealth? Read()
     {
         if (!PowerProbe.HasBattery()) return null;
         try
         {
-            var designed = Wmi.Query("SELECT DesignedCapacity FROM BatteryStaticData", @"root\WMI").Sum(r => r.Long("DesignedCapacity") ?? 0);
+            var batteries = Wmi.Query("SELECT DesignedCapacity, Capabilities FROM BatteryStaticData", @"root\WMI");
+            // BATTERY_CAPACITY_RELATIVE: the capacities are in a unit of the driver's own, not mWh.
+            if (batteries.Any(r => ((r.Long("Capabilities") ?? 0) & CapacityRelative) != 0)) return null;
+            var designed = batteries.Sum(r => r.Long("DesignedCapacity") ?? 0);
             var full = Wmi.Query("SELECT FullChargedCapacity FROM BatteryFullChargedCapacity", @"root\WMI").Sum(r => r.Long("FullChargedCapacity") ?? 0);
             return BatteryHealth.From(designed, full);
         }

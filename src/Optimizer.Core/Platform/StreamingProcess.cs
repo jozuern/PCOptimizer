@@ -38,24 +38,41 @@ public static class StreamingProcess
         }
         p.OutputDataReceived += (_, e) => OnLine(e.Data);
         p.ErrorDataReceived += (_, e) => OnLine(e.Data);
+        var exited = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        p.Exited += (_, _) => exited.TrySetResult();
         if (!p.Start()) throw new InvalidOperationException($"Cannot start {file}");
         started?.Invoke();
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
         try
         {
-            await p.WaitForExitAsync(ct);
+            // The exit itself, not the end of the output: WaitForExitAsync also waits until the output pipes close, and a
+            // program the tool started (an installer launching the updated app) can keep them open for as long as it runs.
+            await exited.Task.WaitAsync(ct);
         }
         catch (OperationCanceledException)
         {
             ProcessHardening.KillTree(p);
             throw;
         }
+        try
+        {
+            using var rest = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            rest.CancelAfter(OutputGrace);
+            await p.WaitForExitAsync(rest.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            Log.Warn("command", $"{Path.GetFileName(file)} {arguments}: output still open after the tool ended; using what was read");
+        }
         string output;
         lock (all) output = string.Join(Environment.NewLine, all);
         Log.Info("command", $"{Path.GetFileName(file)} {arguments}", new { exitCode = p.ExitCode, output = output.Length > 4000 ? output[^4000..] : output });
         return p.ExitCode;
     }
+
+    /// <summary>How long the rest of the output is awaited after the tool ended.</summary>
+    internal static TimeSpan OutputGrace { get; set; } = TimeSpan.FromSeconds(10);
 
     /// <summary>sfc.exe writes UTF-16 to a redirected pipe.</summary>
     public static readonly Encoding Utf16 = Encoding.Unicode;

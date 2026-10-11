@@ -52,12 +52,14 @@ public class AdvisorCheckTests
     // ---------------- F2 ----------------
 
     [Theory]
-    [InlineData(144, 60, true)]
-    [InlineData(75, 60, true)]
-    [InlineData(144, 144, false)]
-    [InlineData(165, 144, false)] // 14 % gap: within tolerance
-    [InlineData(70, 50, false)]   // below 75 Hz
-    public void EdidLimit(int edid, int offered, bool limited) => Assert.Equal(limited, EdidRefreshCheck.IsLimited(edid, offered));
+    [InlineData(144, 60, 60.0, true)]
+    [InlineData(75, 60, 75.0, true)]    // a 75 Hz monitor (preferred mode 75 Hz) held at 60 Hz
+    [InlineData(76, 60, 60.0, false)]   // a 60 Hz monitor whose range limits end at 76 Hz
+    [InlineData(75, 60, null, false)]
+    [InlineData(144, 144, 144.0, false)]
+    [InlineData(165, 144, 165.0, false)] // 14 % gap: within tolerance
+    [InlineData(70, 50, 60.0, false)]
+    public void EdidLimit(int edid, int offered, double? preferred, bool limited) => Assert.Equal(limited, EdidRefreshCheck.IsLimited(edid, offered, preferred));
 
     [Fact]
     public void EdidRefreshOverHdmiIsProblemWithHdmiVariant()
@@ -251,6 +253,10 @@ public class AdvisorCheckTests
         Assert.Null(neg.Fix);
         // 2.5G adapter on a 1G router is normal.
         Assert.Equal(FindingStatus.Ok, One(new EthernetSpeedCheck(), P(p => p with { Extras = new HardwareExtras { Nics = [Nic(1_000_000_000, "0", 2500)] } })).Status);
+        // On battery the driver's power saving can lower the link: information, check again on mains power.
+        var battery = One(new EthernetSpeedCheck(), P(p => p with { Power = Power(onAc: false), Extras = new HardwareExtras { Nics = [Nic(100_000_000, "0", 1000)] } }));
+        Assert.Equal((FindingStatus.Info, "negotiatedBattery"), (battery.Status, battery.Variant));
+        AssertRenders(battery);
     }
 
     private static Wlan.Connection Wifi(uint? khz, params uint[] same) => new("Intel(R) Wireless-AC 8260", "Home", "AABBCCDDEEFF", khz, same);
@@ -385,6 +391,15 @@ public class AdvisorCheckTests
         var hdd = One(new SystemOnHddCheck(), P(p => p with { Storage = storage }));
         Assert.Equal(FindingStatus.Problem, hdd.Status);
         AssertRenders(hdd);
+
+        // Storage Spaces: the volume's disk number belongs to the virtual disk. A pooled disk with the same number, two
+        // disks with it, or a volume larger than the matching disk give no verdict instead of one about the wrong disk.
+        var pooled = new StorageInfo([new PhysicalDisk(0, "ST2000DM008", "HDD", "SATA", 2_000_000_000_000, "Healthy", false)],
+            [new Volume(@"C:\", "", 3_900_000_000_000, 1_000_000_000_000, 0, true)]);
+        Assert.Empty(new SystemOnHddCheck().Evaluate(P(p => p with { Storage = pooled }), CatalogData.Current));
+        var twice = storage with { Disks = [.. storage.Disks, new PhysicalDisk(0, "Samsung SSD 990 PRO", "SSD", "NVMe", 2_000_000_000_000, "Healthy", false)] };
+        Assert.Null(twice.DiskOf(twice.Volumes[0]));
+        Assert.NotNull(storage.DiskOf(storage.Volumes[0]));
     }
 
     [Fact]

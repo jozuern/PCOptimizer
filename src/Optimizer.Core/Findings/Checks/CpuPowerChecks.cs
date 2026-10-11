@@ -4,7 +4,7 @@ using Optimizer.Core.Hardware;
 namespace Optimizer.Core.Findings.Checks;
 
 /// <summary>Advisor: BIOS microcode below a catalog threshold (Raptor Lake 0x12F, Arrow Lake 0x114). Uses the BIOS-provided revision.</summary>
-public sealed class MicrocodeCheck : IFindingCheck
+public sealed class MicrocodeCheck : IPhysicalHardwareCheck
 {
     public IReadOnlyList<string> DocIds => CatalogData.Current.Cpu.MicrocodeRules.Select(r => r.Id).ToList();
 

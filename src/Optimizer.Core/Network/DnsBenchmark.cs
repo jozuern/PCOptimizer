@@ -40,13 +40,20 @@ public static class DnsBenchmark
         "www.microsoft.com", "www.reddit.com", "www.amazon.com", "www.wikipedia.org", "www.epicgames.com",
     ];
 
-    /// <summary>IPv4 DNS servers configured on the active adapters (from DHCP or set by hand).</summary>
+    /// <summary>
+    /// DNS servers configured on the active adapters (from DHCP, router advertisements or set by hand), IPv4 first. The
+    /// site-local IPv6 addresses Windows lists when no IPv6 server is known (fec0:0:0:ffff::1 to ::3) are left out.
+    /// </summary>
     public static IReadOnlyList<IPAddress> CurrentServers() =>
-        NetworkInterface.GetAllNetworkInterfaces()
+        Usable(NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-            .SelectMany(n => n.GetIPProperties().DnsAddresses)
-            .Where(a => a.AddressFamily == AddressFamily.InterNetwork)
+            .SelectMany(n => n.GetIPProperties().DnsAddresses));
+
+    internal static IReadOnlyList<IPAddress> Usable(IEnumerable<IPAddress> servers) =>
+        servers
+            .Where(a => a.AddressFamily == AddressFamily.InterNetwork || (a.AddressFamily == AddressFamily.InterNetworkV6 && !a.IsIPv6SiteLocal))
             .Distinct()
+            .OrderBy(a => a.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
             .ToList();
 
     public static async Task<IReadOnlyList<DnsServerResult>> RunAsync(IEnumerable<(string Name, IPAddress Address)> servers, int rounds = 2,

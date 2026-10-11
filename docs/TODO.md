@@ -19,10 +19,8 @@ Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, th
 
 The run of 2026-10-11 proved 28 previews and the visible effect of `gpu.gameMode`, confirmed the elevation boundary (H4, L-P4) and fixed the DISM umlauts. Still open:
 
-- **`privacy.locationOff` has no effect:** Location services stays on and apps keep their access, also after a restart. Find the value behind the Settings switch on 26H2.
-- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it.
-- **`privacy.inkingTypingOff` stays Preview:** in the VM, "Custom inking and typing dictionary" in Settings stayed on although both `RestrictImplicit*Collection` policies were set. Find out whether it needs a restart, another value or a different description.
-- **`gpu.gameDvrOff` stays Preview:** the VM detected it as Partial before and after apply. Find the value Windows does not take.
+- **`privacy.locationOff` on Home editions:** the tweak now uses the documented policy "Turn off location" (`DisableLocation`), proven on Pro, and is left out on Home. Check on a Home VM whether Windows honors the policy there; if it does, drop the edition condition. The ConsentStore values (location, and text and image generation) are ignored on build 26300: the capability access service keeps its own store.
+- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it. `LockScreenOverlaysDisabled`, which some tools name for this, appears in no Microsoft page or tool source we could open, so it is no alternative.
 - **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade` (Settings kept showing "Unencrypted" while Windows reported auto-upgrade on).
 - **Storage analysis before the first scan:** the refusal ("Wait until the PC scan has finished") could not be timed through UI Automation and is not confirmed.
 - **V-Cache driver (second audit M22):** the service name `amd3dvcacheSvc` needs a check on an X3D PC.

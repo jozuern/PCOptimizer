@@ -295,7 +295,7 @@ The app is removed for all users and new accounts. You can install it again from
   <data name="Debloat_ConfirmTextNoStore" xml:space="preserve">
     <value>{0}
 
-The app is removed for all users and new accounts. Microsoft no longer offers it in the Microsoft Store, so it cannot be installed again.</value>
+The app is removed for all users and new accounts. No Microsoft Store listing is confirmed for it, so you may not be able to install it again.</value>
   </data>
   <data name="Debloat_Removed" xml:space="preserve">
     <value>{0} was removed.</value>
@@ -593,6 +593,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_RecycleText" xml:space="preserve">
     <value>Files: {0}
 {1}</value>
+  </data>
+  <data name="Storage_KeepOneCopy" xml:space="preserve">
+    <value>Every copy of {0} is selected. Keep at least one: clear the check box of one copy, then try again.</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
     <value>Moved to the Recycle Bin: {0}. Failed: {1}.</value>
@@ -968,7 +971,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="StartMenu_Failed" xml:space="preserve"><value>The Start menu entry could not be changed ({0}).</value></data>
   <data name="Settings_Report" xml:space="preserve"><value>Report a problem</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Copy log</value></data>
-  <data name="Settings_ReportHint" xml:space="preserve"><value>Report a problem opens a bug report on GitHub with the app version and Windows build filled in. Nothing is sent until you submit it there (you need a GitHub account). Copy log puts this session's log on the clipboard to paste into it.</value></data>
+  <data name="Settings_ReportHint" xml:space="preserve"><value>Report a problem opens a bug report on GitHub with the app version and Windows build filled in. They are part of the link, so GitHub receives them when the page opens; the report itself is sent only when you submit it there (you need a GitHub account). Copy log puts this session's log on the clipboard to paste into it.</value></data>
   <data name="Log_Copied" xml:space="preserve"><value>Log copied (entries: {0}). Paste it into the report. It can contain your Windows user name, paths and program names: check it before you post it.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>The clipboard is in use by another app. Try again.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong and was logged. You can report it in Settings &gt; Diagnostics.</value></data>
@@ -1038,7 +1041,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Programs_AsUser" xml:space="preserve"><value>This uninstaller runs under your account because it is in a folder other users or programs can change. It asks for administrator rights itself if it needs them.</value></data>
   <data name="Programs_Running" xml:space="preserve"><value>Uninstaller is running.</value></data>
   <data name="Programs_StartedAsUser" xml:space="preserve"><value>Uninstaller started. When it is done, select Refresh.</value></data>
-  <data name="Programs_Removed" xml:space="preserve"><value>Uninstalled.</value></data>
   <data name="Programs_RemovedName" xml:space="preserve"><value>{0} was uninstalled.</value></data>
   <data name="Programs_StillThere" xml:space="preserve"><value>The program is still listed (exit code {0}). The uninstaller may have been cancelled or needs a restart.</value></data>
   <data name="Programs_NoUninstaller" xml:space="preserve"><value>This program has no uninstall command Windows can run.</value></data>
@@ -1111,4 +1113,20 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Startup_SignInKinds" xml:space="preserve"><value>Programs at sign-in</value></data>
   <data name="Cleanup_Nothing" xml:space="preserve"><value>Empty</value></data>
   <data name="Settings_Hint" xml:space="preserve"><value>Language, theme, Expert mode, optional online features and diagnostics.</value></data>
+  <data name="Changes_Transfer" xml:space="preserve"><value>Move to another PC</value></data>
+  <data name="Changes_TransferText" xml:space="preserve"><value>Save the catalog tweaks and start priorities that are on now to a file, and apply such a file here. Changes made for this PC only (startup entries, services, device tweaks) and removed apps are not included.</value></data>
+  <data name="Changes_Export" xml:space="preserve"><value>Export</value></data>
+  <data name="Changes_Import" xml:space="preserve"><value>Import</value></data>
+  <data name="Transfer_FileType" xml:space="preserve"><value>PCOptimizer changes</value></data>
+  <data name="Transfer_NothingToExport" xml:space="preserve"><value>Nothing to export: no catalog tweak or start priority made with this app is on.</value></data>
+  <data name="Transfer_Exported" xml:space="preserve"><value>Changes saved: {0}, in {1}. Changes for this PC only, not included: {2}.</value></data>
+  <data name="Transfer_Invalid" xml:space="preserve"><value>This file is not a PCOptimizer changes file, it is damaged, or it comes from a newer version.</value></data>
+  <data name="Transfer_Nothing" xml:space="preserve"><value>Nothing to apply from this file.</value></data>
+  <data name="Transfer_Skipped" xml:space="preserve"><value>Skipped: {0} already on, {1} not for this PC, {2} unknown to this version.</value></data>
+  <data name="Transfer_Title" xml:space="preserve"><value>Import changes</value></data>
+  <data name="Transfer_Intro" xml:space="preserve"><value>Applies the changes from the file that fit this PC and are not on yet. Each one is backed up first and can be undone on this page.</value></data>
+  <data name="Transfer_LaterOneByOne" xml:space="preserve"><value>Changes that need their own confirmation come after this: {0}.</value></data>
+  <data name="Transfer_OneByOneTitle" xml:space="preserve"><value>More changes from the file</value></data>
+  <data name="Transfer_OneByOneText" xml:space="preserve"><value>Changes in the file that are previews, Expert changes or can affect anti-cheats: {0}. Each one shows its own confirmation; cancel one to skip it.</value></data>
+  <data name="Transfer_OneByOneGo" xml:space="preserve"><value>Show them</value></data>
 </root>

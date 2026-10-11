@@ -112,7 +112,8 @@ public partial class App : Application
 
         // Developer aid for screenshots: start with this profile for the session (never saved).
         var vm = new MainViewModel(_settings, services, new Dialogs()) { ProfileOverride = args.Value("--profile") };
-        if (args.Value("--expert") is "on") vm.EnableExpertForSession();
+        // Without the confirmation: only for runs without admin rights (Debug), not for whoever starts the elevated exe.
+        if (args.Value("--expert") is "on" && !DataPaths.ProcessIsElevated) vm.EnableExpertForSession();
         Mark("view model ready");
         // The scan starts before the window is built: its probes run on other threads while WPF creates the window and
         // the page (about a third of a second), and the results only reach the view model.
@@ -301,11 +302,13 @@ public partial class App : Application
         // ApplicationThemeManager.Changed (also raised when Windows switches the mode).
     }
 
-    /// <summary>Rebuilds everything that holds theme brushes: after a switch in Settings and when Windows switches the theme.</summary>
+    /// <summary>
+    /// After a theme switch (in Settings or by Windows): the explanation document is rendered again. Status colors are
+    /// resource references (<see cref="Views.ThemeBrush"/>) and follow by themselves, so no rows are built again.
+    /// </summary>
     private void RefreshThemedContent()
     {
         if (MainWindow is not MainWindow main) return;
-        (main.DataContext as MainViewModel)?.OnThemeChanged();
         main.RenderDetails();
     }
 
@@ -369,8 +372,8 @@ public partial class App : Application
         try
         {
             var catalog = CatalogData.Current;
-            var profile = await new HardwareScanner(catalog).ScanAsync();
-            var findings = new FindingEngine(catalog, services.Context.Registry, services.BcdElements).Evaluate(profile);
+            // The window's scan pipeline, waiting for the background CPU sample (no tweak detection follows here).
+            var (profile, findings, _) = await new ScanService(catalog, services.Context.Registry, services.BcdElements).RunAsync();
             var sb = new StringBuilder();
             sb.AppendLine($"# PCOptimizer scan report ({DateTime.Now:yyyy-MM-dd HH:mm})").AppendLine();
             sb.AppendLine($"Readiness score: **{ReadinessScore.Compute(findings)}/100**, Windows {profile.Os.DisplayVersion} build {profile.Os.BuildString}, elevated: {profile.Elevation?.IsElevated}").AppendLine();
@@ -382,7 +385,9 @@ public partial class App : Application
             }
             sb.AppendLine("## System info").AppendLine();
             sb.Append(HardwareReport.ToText(HardwareReport.Build(profile, Loc.Instance), bullet: "- "));
-            File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
+            using (var file = OutputFile(path))
+            using (var writer = new StreamWriter(file, new UTF8Encoding(false)))
+                writer.Write(sb.ToString());
             return 0;
         }
         catch (Exception ex)
@@ -468,7 +473,9 @@ public partial class App : Application
         vm.CurrentPage = Page.Tweaks;
         await Measure($"Tweaks: theme {(dark ? "Light" : "Dark")}", () => ApplyTheme(dark ? "Light" : "Dark", save: false));
         await Measure($"Tweaks: theme {(dark ? "Dark" : "Light")}", () => ApplyTheme(dark ? "Dark" : "Light", save: false));
-        System.IO.File.WriteAllLines(path, lines);
+        using (var file = OutputFile(path))
+        using (var writer = new StreamWriter(file))
+            foreach (var line in lines) writer.WriteLine(line);
     }
 
     private static IEnumerable<T> Descendants<T>(DependencyObject parent) where T : DependencyObject
@@ -514,9 +521,17 @@ public partial class App : Application
         bitmap.Render(visual);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using var stream = File.Create(path);
+        using var stream = OutputFile(path);
         encoder.Save(stream);
     }
+
+    /// <summary>
+    /// A file a developer switch writes (report, screenshot, timings). Whoever starts the exe names the path, and the
+    /// elevated app writes with administrator rights: then only a new file is created, an existing one is never
+    /// overwritten.
+    /// </summary>
+    private static FileStream OutputFile(string path) =>
+        new(path, DataPaths.ProcessIsElevated ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None);
 
     private sealed class CliArgs(string[] args)
     {

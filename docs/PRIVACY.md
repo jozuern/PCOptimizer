@@ -16,7 +16,7 @@ The app contacts the internet only for the features below, and only when you sta
 | Adding a Windows capability or turning on a Windows feature (Tools) | When you add one | DISM downloads the capability, or the files of a feature such as .NET Framework 3.5, from Windows Update. |
 | Sync the clock (Tools > Quick fixes) | When you run it | The Windows Time service asks its configured time server (`time.windows.com` unless you changed it) for the time. |
 | Repair with DISM (Health) | When you start it | Windows downloads repair files from Windows Update. |
-| Links (Store pages, driver pages, sources, GitHub) | When you click one | Opens in your browser. |
+| Links (Store pages, driver pages, sources, GitHub) | When you click one | Opens in your browser. "Report a problem" opens GitHub's bug form with the app version and the Windows build in the link, so GitHub receives both when the page opens; the report itself is sent only when you submit it there. |
 
 The frame time benchmark uses PresentMon, which is built into the exe and runs locally. Sensor readings stay local.
 
@@ -40,7 +40,7 @@ Die App geht nur für die folgenden Funktionen ins Internet, und nur wenn du sie
 | Hinzufügen einer optionalen Funktion oder Einschalten eines Windows-Features (Tools) | Wenn du eine hinzufügst | DISM lädt die Funktion, oder die Dateien eines Features wie .NET Framework 3.5, über Windows Update. |
 | Uhr synchronisieren (Tools) | Wenn du es startest | Der Windows-Zeitdienst fragt seinen eingestellten Zeitserver (`time.windows.com`, wenn du nichts geändert hast) nach der Uhrzeit. |
 | Reparatur mit DISM (Zustand) | Wenn du sie startest | Windows lädt Reparaturdateien von Windows Update. |
-| Links (Store-Seiten, Treiberseiten, Quellen, GitHub) | Wenn du einen anklickst | Öffnet sich in deinem Browser. |
+| Links (Store-Seiten, Treiberseiten, Quellen, GitHub) | Wenn du einen anklickst | Öffnet sich in deinem Browser. „Problem melden“ öffnet das Fehlerformular auf GitHub mit App-Version und Windows-Build im Link, GitHub erhält beides also beim Öffnen der Seite; der Bericht selbst wird erst gesendet, wenn du ihn dort abschickst. |
 
 Der Frametime-Benchmark nutzt PresentMon, das in der exe enthalten ist und lokal läuft. Sensorwerte bleiben lokal.
 

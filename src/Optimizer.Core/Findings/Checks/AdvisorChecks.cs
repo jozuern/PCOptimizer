@@ -40,8 +40,13 @@ public sealed class EdidRefreshCheck : IFindingCheck
     public const string Id = "F2.edidRefresh";
     public IReadOnlyList<string> DocIds => [Id];
 
-    /// <summary>Problem only above 75 Hz and with a 20 % gap, so rounding and 60/75 Hz office monitors never trigger it.</summary>
-    public static bool IsLimited(int edidMaxHz, int maxOfferedHz) => maxOfferedHz > 0 && edidMaxHz >= 75 && edidMaxHz >= maxOfferedHz * 1.2;
+    /// <summary>
+    /// Problem only from 75 Hz on, with a 20 % gap, and only when the range goes above 76 Hz or the monitor's preferred mode itself is
+    /// above what Windows offers: a 60 Hz monitor whose range limits end at 75 or 76 Hz does not trigger it, a 75 Hz
+    /// monitor with a 75 Hz preferred mode held at 60 Hz does.
+    /// </summary>
+    public static bool IsLimited(int edidMaxHz, int maxOfferedHz, double? preferredHz = null) =>
+        maxOfferedHz > 0 && edidMaxHz >= 75 && edidMaxHz >= maxOfferedHz * 1.2 && (edidMaxHz > 76 || preferredHz >= maxOfferedHz * 1.2);
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
@@ -52,7 +57,7 @@ public sealed class EdidRefreshCheck : IFindingCheck
             var edidMax = d.Edid?.MaxVHz;
             var status = d.Edid is null || maxOffered == 0 ? FindingStatus.Unknown
                 : edidMax is not { } e ? FindingStatus.Unsupported // no range descriptor: nothing to compare with
-                : IsLimited(e, maxOffered) ? FindingStatus.Problem
+                : IsLimited(e, maxOffered, d.Edid.PreferredRefreshHz) ? FindingStatus.Problem
                 : FindingStatus.Ok;
             yield return new Finding
             {
@@ -379,7 +384,8 @@ public sealed class SecureBootCertsCheck : IFindingCheck
 /// <summary>
 /// F24: Ethernet link slower than the adapter can do. Forced speed in the driver = fixable here; auto-negotiated at
 /// 100 Mbit/s or less on a gigabit adapter usually means a damaged cable or port (two of four wire pairs).
-/// A 2.5G adapter on a 1G router is normal and not reported.
+/// A 2.5G adapter on a 1G router is normal and not reported. On battery the driver's power saving can lower the link on
+/// purpose: information then (variant "negotiatedBattery"), to be checked again on mains power.
 /// </summary>
 public sealed class EthernetSpeedCheck : IFindingCheck
 {
@@ -397,14 +403,14 @@ public sealed class EthernetSpeedCheck : IFindingCheck
             var forcedMbps = forced ? Hardware.Probes.ExtrasProbe.SpeedDuplexMbps(forcedValue!) : null;
             string? variant = null;
             if (forced && forcedMbps is { } f && f < max) variant = "forced";
-            else if (!forced && link <= 100 && max >= 1000) variant = "negotiated";
+            else if (!forced && link <= 100 && max >= 1000) variant = p.Power?.OnAc == false ? "negotiatedBattery" : "negotiated";
             yield return new Finding
             {
                 Id = Id,
                 InstanceKey = n.Id,
                 Subject = n.Description,
                 Kind = FindingKind.Finding,
-                Status = variant is null ? FindingStatus.Ok : FindingStatus.Problem,
+                Status = variant is null ? FindingStatus.Ok : variant == "negotiatedBattery" ? FindingStatus.Info : FindingStatus.Problem,
                 Variant = variant,
                 Impact = 1,
                 Effects = [Effect.Latency],
@@ -500,7 +506,7 @@ public sealed class WifiBandCheck : IFindingCheck
 /// F26: NVMe SSD link. Fewer lanes than the drive supports (trained down) is a problem (seating, slot sharing, riser);
 /// a slower slot is information (e.g. a PCIe 4.0 drive in a 3.0 slot works at 3.0 speed).
 /// </summary>
-public sealed class NvmeLinkCheck : IFindingCheck
+public sealed class NvmeLinkCheck : IPhysicalHardwareCheck
 {
     public const string Id = "F26.nvmeLink";
     public IReadOnlyList<string> DocIds => [Id];
@@ -634,6 +640,9 @@ public sealed class AmdFtpmCheck : IFindingCheck
     public static readonly DateTime FixedBiosDate = new(2022, 5, 1);
     public IReadOnlyList<string> DocIds => [Id];
 
+    /// <summary>A mobile Ryzen (6800H, 7840HS, 5800U, Ryzen AI 9 HX 370), also when it sits in a mini PC without a battery.</summary>
+    public static bool IsMobileRyzen(string name) => RegexCache.Get(@"\b\d{4}(U|H|HS|HX)\b|\bRyzen AI\b").IsMatch(name);
+
     /// <summary>
     /// AM4 desktop: socket name, else Zen/Zen+/Zen 2 (family 17h) or Zen 3 up to Cezanne (family 19h, model &lt; 60h).
     /// Mobile processors (U, H, HS, HX suffix) are excluded, also in mini PCs without a battery.
@@ -641,7 +650,7 @@ public sealed class AmdFtpmCheck : IFindingCheck
     public static bool IsAm4(CpuInfo cpu, bool laptop)
     {
         if (cpu.Vendor != Vendor.Amd || laptop) return false;
-        if (RegexCache.Get(@"\b\d{4}(U|H|HS|HX)\b").IsMatch(cpu.Name)) return false;
+        if (IsMobileRyzen(cpu.Name)) return false;
         if (cpu.Socket.Contains("AM4", StringComparison.OrdinalIgnoreCase)) return true;
         if (cpu.Socket.Contains("AM5", StringComparison.OrdinalIgnoreCase) || cpu.Socket.Contains("TR", StringComparison.OrdinalIgnoreCase)) return false;
         if (cpu.Name.Contains("Threadripper", StringComparison.OrdinalIgnoreCase) || cpu.Name.Contains("EPYC", StringComparison.OrdinalIgnoreCase)) return false;
@@ -698,7 +707,7 @@ public sealed class AmdFtpmCheck : IFindingCheck
 /// by testers (AM4 FCLK, AM5 UCLK), not an AMD specification; they can differ per processor and BIOS. Slower kits or
 /// speeds above that range are information, never a problem.
 /// </summary>
-public sealed class RyzenMemoryCheck : IFindingCheck
+public sealed class RyzenMemoryCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.ryzenMemory";
     public IReadOnlyList<string> DocIds => [Id];
@@ -712,7 +721,8 @@ public sealed class RyzenMemoryCheck : IFindingCheck
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
-        if (p.Cpu?.Vendor != Vendor.Amd || p.IsLaptop || p.Memory is null || p.Memory.Modules.Count == 0) yield break;
+        // A mobile Ryzen in a mini PC is no laptop, but its memory limits are the mobile ones (DDR5-4800 for a 6800H).
+        if (p.Cpu?.Vendor != Vendor.Amd || p.IsLaptop || AmdFtpmCheck.IsMobileRyzen(p.Cpu.Name) || p.Memory is null || p.Memory.Modules.Count == 0) yield break;
         var type = p.Memory.Modules[0].Type;
         if (SweetSpot(type) is not { } range) yield break;
         var configured = p.Memory.Modules.Select(RamSpeed.NormalizeConfigured).ToList();
@@ -764,7 +774,7 @@ public sealed class RyzenMemoryCheck : IFindingCheck
 }
 
 /// <summary>Advisor: BIOS older than a year (information; newer releases carry microcode, AGESA and stability fixes).</summary>
-public sealed class BiosAgeCheck : IFindingCheck
+public sealed class BiosAgeCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.biosAge";
     public const int MaxAgeDays = 365;
@@ -963,7 +973,7 @@ public sealed class ThrottleCheck : IFindingCheck
 }
 
 /// <summary>F28: drive health from Windows Storage Management (S.M.A.R.T. / NVMe health log).</summary>
-public sealed class DiskHealthCheck : IFindingCheck
+public sealed class DiskHealthCheck : IPhysicalHardwareCheck
 {
     public const string Id = "F28.diskHealth";
     public IReadOnlyList<string> DocIds => [Id];
@@ -1041,7 +1051,7 @@ public sealed class BackgroundCpuCheck : IFindingCheck
 }
 
 /// <summary>Advisor: Windows installed on a hard disk drive.</summary>
-public sealed class SystemOnHddCheck : IFindingCheck
+public sealed class SystemOnHddCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.systemHdd";
     public IReadOnlyList<string> DocIds => [Id];
@@ -1049,8 +1059,8 @@ public sealed class SystemOnHddCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var system = p.Storage?.Volumes.FirstOrDefault(v => v.IsSystem);
-        if (system?.DiskNumber is not { } number) yield break;
-        var disk = p.Storage!.Disks.FirstOrDefault(d => d.Number == number);
+        if (system?.DiskNumber is null) yield break;
+        var disk = p.Storage!.DiskOf(system);
         if (disk is null) yield break;
         yield return new Finding
         {

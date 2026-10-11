@@ -46,6 +46,9 @@ public static partial class DocStore
     private static readonly Dictionary<string, DocPage?> Cache = [];
     private static readonly Lock Gate = new();
 
+    /// <summary>The page in <paramref name="lang"/>, else the English one (a page not translated yet).</summary>
+    public static DocPage? GetOrEnglish(string id, string lang) => Get(id, lang) ?? Get(id, "en");
+
     public static DocPage? Get(string id, string lang)
     {
         var key = $"{lang}/{id}";

@@ -126,6 +126,32 @@
     ]
   },
   {
+    "name": "PawnIO Modules (embedded in LibreHardwareMonitorLib)",
+    "license": "LGPL-2.1-or-later",
+    "source": "https://github.com/namazso/PawnIO.Modules",
+    "files": [
+      "pawnio-modules.txt"
+    ]
+  },
+  {
+    "name": "PCI ID database (embedded in DiskInfoToolkit)",
+    "version": "2025.11.16",
+    "license": "BSD-3-Clause (or GPL-2.0-or-later)",
+    "source": "https://pci-ids.ucw.cz/",
+    "files": [
+      "pci-ids.txt"
+    ]
+  },
+  {
+    "name": "USB ID database (embedded in DiskInfoToolkit)",
+    "version": "2025.09.15",
+    "license": "BSD-3-Clause (or GPL-2.0-or-later)",
+    "source": "http://www.linux-usb.org/usb-ids.html",
+    "files": [
+      "usb-ids.txt"
+    ]
+  },
+  {
     "name": "RAMSPDToolkit-NDD",
     "package": "RAMSPDToolkit-NDD",
     "version": "1.4.2",

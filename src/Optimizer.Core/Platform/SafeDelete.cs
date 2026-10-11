@@ -8,7 +8,9 @@ namespace Optimizer.Core.Platform;
 /// Deletes files and empty folders in places a standard user can write to, from the elevated process, without
 /// following links. The path is opened without following a final reparse point, the handle's real path is compared
 /// with the expected one (a folder swapped for a junction after the scan resolves elsewhere and is refused), and the
-/// delete goes through the handle, so it hits exactly the object that was checked.
+/// delete goes through the handle, so it hits exactly the object that was checked. New files there are created the same
+/// way (<see cref="CreateNew"/>), and folders can be held so that a path handed to another API keeps its meaning
+/// (<see cref="Pin"/>).
 /// </summary>
 public static class SafeDelete
 {
@@ -48,6 +50,104 @@ public static class SafeDelete
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Holds the folder and every parent below the drive root open without delete sharing, after checking that each one
+    /// is a real folder (no junction, symbolic link or mount point) at its own path. While the pin is not disposed none of
+    /// them can be renamed, moved or replaced, so a path handed to another API (the Recycle Bin) still leads to the folder
+    /// that was checked. An emptied folder can still be turned into a mount point: <see cref="FolderPin.StillReal"/>
+    /// tells afterwards. Null when a folder is missing, is a link, or cannot be held.
+    /// </summary>
+    public static FolderPin? Pin(string folder)
+    {
+        var handles = new List<SafeFileHandle>();
+        try
+        {
+            var full = LongPath(Path.GetFullPath(folder)).TrimEnd('\\');
+            var root = Path.GetPathRoot(full)?.TrimEnd('\\');
+            var chain = new List<string>();
+            for (var p = full; !string.IsNullOrEmpty(p) && !string.Equals(p.TrimEnd('\\'), root, StringComparison.OrdinalIgnoreCase); p = Path.GetDirectoryName(p))
+                chain.Add(p);
+            chain.Reverse();
+            foreach (var p in chain)
+            {
+                // Top down: each parent is held before its child is opened, so the child's path cannot change in between. The
+                // handle needs a data access (list): one with attribute access only takes no part in sharing checks, and the
+                // folder could still be renamed.
+                var handle = CreateFileW(@"\\?\" + p, FileListDirectory | FileReadAttributes, FileShareRead | FileShareWrite, IntPtr.Zero, OpenExisting,
+                    FileFlagOpenReparsePoint | FileFlagBackupSemantics, IntPtr.Zero);
+                if (handle.IsInvalid)
+                {
+                    handle.Dispose();
+                    return Release(handles);
+                }
+                handles.Add(handle);
+                if (!IsRealFolder(handle) || !string.Equals(FinalPath(handle), p, StringComparison.OrdinalIgnoreCase)) return Release(handles);
+            }
+            return handles.Count == 0 ? null : new FolderPin(handles);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return Release(handles);
+        }
+    }
+
+    private static FolderPin? Release(List<SafeFileHandle> handles)
+    {
+        foreach (var h in handles) h.Dispose();
+        return null;
+    }
+
+    /// <summary>Folders held by <see cref="Pin"/>; disposing releases them.</summary>
+    public sealed class FolderPin : IDisposable
+    {
+        private readonly List<SafeFileHandle> _handles;
+
+        internal FolderPin(List<SafeFileHandle> handles) => _handles = handles;
+
+        /// <summary>False when one of the held folders has become a link (an emptied folder turned into a mount point).</summary>
+        public bool StillReal() => _handles.All(IsRealFolder);
+
+        public void Dispose()
+        {
+            foreach (var h in _handles) h.Dispose();
+        }
+    }
+
+    private static bool IsRealFolder(SafeFileHandle handle) =>
+        GetFileInformationByHandleEx(handle, FileAttributeTagInfoClass, out var info, Marshal.SizeOf<FileAttributeTagInfo>())
+        && (info.FileAttributes & (uint)FileAttributes.Directory) != 0
+        && (info.FileAttributes & (uint)FileAttributes.ReparsePoint) == 0;
+
+    /// <summary>
+    /// Creates a new file in a folder a standard user can write to and returns it open for writing. A name that already
+    /// exists (also a planted link) is refused, and the new file's real path is compared with the expected one before
+    /// anything is written: a file that came out somewhere else (a folder swapped in between) is deleted through its
+    /// handle and IOException is thrown.
+    /// </summary>
+    public static FileStream CreateNew(string path)
+    {
+        var expected = Path.Combine(LongPath(Path.GetDirectoryName(Path.GetFullPath(path))!).TrimEnd('\\'), Path.GetFileName(path));
+        var handle = CreateFileW(@"\\?\" + expected, GenericWrite | Delete_ | FileReadAttributes, FileShareRead, IntPtr.Zero, CreateNew_,
+            FileFlagOpenReparsePoint, IntPtr.Zero);
+        if (handle.IsInvalid) throw new IOException($"cannot create {expected}", new Win32Exception(Marshal.GetLastWin32Error()));
+        try
+        {
+            var final = FinalPath(handle);
+            if (!string.Equals(final, expected, StringComparison.OrdinalIgnoreCase))
+            {
+                var info = new FileDispositionInfoEx { Flags = DispositionDelete | DispositionPosixSemantics };
+                SetFileInformationByHandle(handle, FileDispositionInfoExClass, ref info, Marshal.SizeOf<FileDispositionInfoEx>());
+                throw new IOException($"{expected} was created as {final}: removed again");
+            }
+            return new FileStream(handle, FileAccess.Write);
+        }
+        catch
+        {
+            handle.Dispose();
+            throw;
         }
     }
 
@@ -106,10 +206,10 @@ public static class SafeDelete
         return s.StartsWith(@"\\?\", StringComparison.Ordinal) ? s[4..] : s;
     }
 
-    private const uint Delete_ = 0x00010000, FileReadAttributes = 0x80;
-    private const uint FileShareRead = 1, FileShareWrite = 2, FileShareDelete = 4, OpenExisting = 3;
+    private const uint Delete_ = 0x00010000, FileReadAttributes = 0x80, FileListDirectory = 0x1, GenericWrite = 0x40000000;
+    private const uint FileShareRead = 1, FileShareWrite = 2, FileShareDelete = 4, OpenExisting = 3, CreateNew_ = 1;
     private const uint FileFlagOpenReparsePoint = 0x00200000, FileFlagBackupSemantics = 0x02000000;
-    private const int FileDispositionInfoExClass = 21;
+    private const int FileDispositionInfoExClass = 21, FileAttributeTagInfoClass = 9;
     private const uint DispositionDelete = 0x1, DispositionPosixSemantics = 0x2, DispositionIgnoreReadOnly = 0x10;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -117,6 +217,17 @@ public static class SafeDelete
     {
         public uint Flags;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileAttributeTagInfo
+    {
+        public uint FileAttributes;
+        public uint ReparseTag;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(SafeFileHandle handle, int infoClass, out FileAttributeTagInfo info, int size);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);

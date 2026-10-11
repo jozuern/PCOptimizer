@@ -4,7 +4,7 @@
 Lets the graphics card schedule its own work instead of a CPU thread. Required for DLSS Frame Generation; without Frame Generation no measurable gain is documented.
 
 ## How it works
-Since WDDM 2.7, Windows can hand most GPU scheduling to a dedicated processor on the graphics card instead of a high-priority CPU thread [1]. Only supporting GPUs and drivers use it. The value HwSchMode = 2 turns it on; it takes effect after a restart. It is the value behind the switch "Hardware-accelerated GPU scheduling" in Settings > System > Display > Graphics; Microsoft does not document the value on its own.
+Since WDDM 2.7, Windows can hand most GPU scheduling to a dedicated processor on the graphics card instead of a high-priority CPU thread [1]. Only supporting GPUs and drivers use it. The value HwSchMode = 2 turns it on; it takes effect after a restart. It is the value behind the switch "Hardware-accelerated GPU scheduling" in Settings > System > Display > Graphics; Microsoft does not document the value on its own. Independent tutorials show that 2 turns the switch on and 1 turns it off [4][5].
 
 ## Why it can help
 On NVIDIA RTX 40 and 50 cards, DLSS Frame Generation only works with this setting on [2]. Without Frame Generation, Microsoft describes the change as one users should not notice [1].
@@ -22,3 +22,5 @@ On cards with Frame Generation it should stay on. On other cards there is nothin
 1. https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/
 2. https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS_G.md
 3. https://www.intel.com/content/www/us/en/support/articles/000056788/graphics.html
+4. https://winaero.com/turn-on-or-off-hardware-accelerated-gpu-scheduling-in-windows-10/
+5. https://itechtics.com/hardware-accelerated-gpu/

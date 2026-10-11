@@ -188,6 +188,27 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
         AssertNone(problems);
     }
 
+    /// <summary>Every category of the catalog belongs to a section of the Tweaks page (a new one would land in Security silently).</summary>
+    [Fact]
+    public void EveryCategoryHasATweaksPageSection()
+    {
+        var missing = TweakCatalog.Current.Tweaks.Select(t => t.Category).Distinct().Where(c => !TweakSections.Contains(c)).ToList();
+        Assert.Empty(missing);
+        Assert.Equal(TweakSections.All.Count, TweakSections.All.Select(s => s.Key).Distinct().Count());
+    }
+
+    /// <summary>Unknown facts never match, also under "not": an edition-gated policy is not offered when the edition is unknown.</summary>
+    [Fact]
+    public void NotOfAnUnknownFactDoesNotMatch()
+    {
+        var notHome = new Condition { Not = new Condition { Fact = "os.edition", In = [System.Text.Json.JsonSerializer.SerializeToElement("Core")] } };
+        Assert.True(notHome.Evaluate(new Facts().Set("os.edition", "Professional")));
+        Assert.False(notHome.Evaluate(new Facts().Set("os.edition", "Core")));
+        Assert.False(notHome.Evaluate(new Facts()));
+        // "exists" is about a missing fact and stays known.
+        Assert.True(new Condition { Not = new Condition { Fact = "os.edition", Exists = true } }.Evaluate(new Facts()));
+    }
+
     [Fact]
     public void AGuardThatCannotBeCheckedBlocks()
     {

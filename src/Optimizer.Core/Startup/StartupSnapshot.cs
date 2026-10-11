@@ -28,9 +28,7 @@ public static class StartupSnapshot
     public static void Save(string file, StartupSnapshotData data)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        var temp = file + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(data, Json));
-        File.Move(temp, file, overwrite: true);
+        Platform.DurableFile.WriteAllText(file, JsonSerializer.Serialize(data, Json));
     }
 
     /// <summary>Null when there is no snapshot or it cannot be read (damaged, locked, no access).</summary>

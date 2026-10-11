@@ -295,7 +295,7 @@ Die App wird für alle Benutzer und neue Konten entfernt. Du kannst sie über de
   <data name="Debloat_ConfirmTextNoStore" xml:space="preserve">
     <value>{0}
 
-Die App wird für alle Benutzer und neue Konten entfernt. Microsoft bietet sie nicht mehr im Microsoft Store an, du kannst sie also nicht neu installieren.</value>
+Die App wird für alle Benutzer und neue Konten entfernt. Für sie ist kein Eintrag im Microsoft Store bestätigt, eine Neuinstallation ist also eventuell nicht möglich.</value>
   </data>
   <data name="Debloat_Removed" xml:space="preserve">
     <value>{0} wurde entfernt.</value>
@@ -593,6 +593,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_RecycleText" xml:space="preserve">
     <value>Dateien: {0}
 {1}</value>
+  </data>
+  <data name="Storage_KeepOneCopy" xml:space="preserve">
+    <value>Alle Kopien von {0} sind ausgewählt. Behalte mindestens eine: Entferne bei einer Kopie das Häkchen und versuche es erneut.</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
     <value>In den Papierkorb verschoben: {0}. Fehlgeschlagen: {1}.</value>
@@ -968,7 +971,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="StartMenu_Failed" xml:space="preserve"><value>Der Eintrag im Startmenü konnte nicht geändert werden ({0}).</value></data>
   <data name="Settings_Report" xml:space="preserve"><value>Problem melden</value></data>
   <data name="Settings_CopyLog" xml:space="preserve"><value>Protokoll kopieren</value></data>
-  <data name="Settings_ReportHint" xml:space="preserve"><value>Problem melden öffnet einen Fehlerbericht auf GitHub, in dem App-Version und Windows-Build schon eingetragen sind. Gesendet wird erst, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto). Protokoll kopieren legt das Protokoll dieser Sitzung in die Zwischenablage, damit du es einfügen kannst.</value></data>
+  <data name="Settings_ReportHint" xml:space="preserve"><value>Problem melden öffnet einen Fehlerbericht auf GitHub, in dem App-Version und Windows-Build schon eingetragen sind. Beide stehen im Link, GitHub erhält sie also beim Öffnen der Seite; der Bericht selbst wird erst gesendet, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto). Protokoll kopieren legt das Protokoll dieser Sitzung in die Zwischenablage, damit du es einfügen kannst.</value></data>
   <data name="Log_Copied" xml:space="preserve"><value>Protokoll kopiert (Einträge: {0}). Füge es in den Bericht ein. Es kann deinen Windows-Benutzernamen, Pfade und Programmnamen enthalten: prüfe es vor dem Absenden.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>Die Zwischenablage wird gerade von einer anderen App benutzt. Versuch es noch einmal.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Etwas ist schiefgelaufen und wurde protokolliert. Du kannst es unter Einstellungen &gt; Diagnose melden.</value></data>
@@ -1038,7 +1041,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Programs_AsUser" xml:space="preserve"><value>Dieses Deinstallationsprogramm läuft unter deinem Konto, weil es in einem Ordner liegt, den andere Benutzer oder Programme ändern können. Braucht es Administratorrechte, fragt es selbst danach.</value></data>
   <data name="Programs_Running" xml:space="preserve"><value>Deinstallation läuft.</value></data>
   <data name="Programs_StartedAsUser" xml:space="preserve"><value>Deinstallationsprogramm gestartet. Wähle danach Aktualisieren.</value></data>
-  <data name="Programs_Removed" xml:space="preserve"><value>Deinstalliert.</value></data>
   <data name="Programs_RemovedName" xml:space="preserve"><value>{0} wurde deinstalliert.</value></data>
   <data name="Programs_StillThere" xml:space="preserve"><value>Das Programm steht noch in der Liste (Rückgabewert {0}). Die Deinstallation wurde eventuell abgebrochen oder braucht einen Neustart.</value></data>
   <data name="Programs_NoUninstaller" xml:space="preserve"><value>Für dieses Programm gibt es keinen Deinstallationsbefehl, den Windows ausführen kann.</value></data>
@@ -1111,4 +1113,20 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Startup_SignInKinds" xml:space="preserve"><value>Programme bei der Anmeldung</value></data>
   <data name="Cleanup_Nothing" xml:space="preserve"><value>Leer</value></data>
   <data name="Settings_Hint" xml:space="preserve"><value>Sprache, Design, Expertenmodus, optionale Online-Funktionen und Diagnose.</value></data>
+  <data name="Changes_Transfer" xml:space="preserve"><value>Auf einen anderen PC übertragen</value></data>
+  <data name="Changes_TransferText" xml:space="preserve"><value>Speichert die Katalog-Tweaks und Startprioritäten, die jetzt an sind, in einer Datei und wendet so eine Datei hier an. Änderungen nur für diesen PC (Autostart-Einträge, Dienste, Geräte-Tweaks) und entfernte Apps sind nicht enthalten.</value></data>
+  <data name="Changes_Export" xml:space="preserve"><value>Exportieren</value></data>
+  <data name="Changes_Import" xml:space="preserve"><value>Importieren</value></data>
+  <data name="Transfer_FileType" xml:space="preserve"><value>PCOptimizer-Änderungen</value></data>
+  <data name="Transfer_NothingToExport" xml:space="preserve"><value>Nichts zu exportieren: Kein Katalog-Tweak und keine Startpriorität dieser App ist an.</value></data>
+  <data name="Transfer_Exported" xml:space="preserve"><value>Gespeicherte Änderungen: {0}, in {1}. Nicht enthalten, weil nur für diesen PC: {2}.</value></data>
+  <data name="Transfer_Invalid" xml:space="preserve"><value>Diese Datei ist keine PCOptimizer-Änderungsdatei, sie ist beschädigt oder stammt aus einer neueren Version.</value></data>
+  <data name="Transfer_Nothing" xml:space="preserve"><value>Aus dieser Datei gibt es nichts anzuwenden.</value></data>
+  <data name="Transfer_Skipped" xml:space="preserve"><value>Übersprungen: {0} schon an, {1} nicht für diesen PC, {2} dieser Version unbekannt.</value></data>
+  <data name="Transfer_Title" xml:space="preserve"><value>Änderungen importieren</value></data>
+  <data name="Transfer_Intro" xml:space="preserve"><value>Wendet die Änderungen aus der Datei an, die zu diesem PC passen und noch nicht an sind. Jede wird vorher gesichert und lässt sich auf dieser Seite rückgängig machen.</value></data>
+  <data name="Transfer_LaterOneByOne" xml:space="preserve"><value>Danach folgen Änderungen, die eine eigene Bestätigung brauchen: {0}.</value></data>
+  <data name="Transfer_OneByOneTitle" xml:space="preserve"><value>Weitere Änderungen aus der Datei</value></data>
+  <data name="Transfer_OneByOneText" xml:space="preserve"><value>Änderungen in der Datei, die Vorschau oder Experten-Änderungen sind oder Anti-Cheats betreffen können: {0}. Jede zeigt ihre eigene Bestätigung; brich eine ab, um sie zu überspringen.</value></data>
+  <data name="Transfer_OneByOneGo" xml:space="preserve"><value>Anzeigen</value></data>
 </root>

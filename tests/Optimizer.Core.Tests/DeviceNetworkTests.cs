@@ -75,6 +75,17 @@ public class DeviceNetworkTests
         Assert.Equal(2.5, DnsBenchmark.Median([1, 2, 3, 4]));
     }
 
+    /// <summary>IPv6 resolvers count as current servers (IPv4 first); Windows' fec0:: placeholders do not.</summary>
+    [Fact]
+    public void CurrentServersIncludeIpv6ButNotSiteLocalPlaceholders()
+    {
+        var servers = DnsBenchmark.Usable([
+            System.Net.IPAddress.Parse("2a02:908::1"), System.Net.IPAddress.Parse("fec0:0:0:ffff::1"),
+            System.Net.IPAddress.Parse("192.168.1.1"), System.Net.IPAddress.Parse("192.168.1.1"),
+        ]);
+        Assert.Equal(["192.168.1.1", "2a02:908::1"], servers.Select(s => s.ToString()));
+    }
+
     [Fact]
     public void CatalogParsesNewActionTypes()
     {

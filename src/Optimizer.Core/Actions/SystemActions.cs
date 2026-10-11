@@ -79,20 +79,8 @@ public sealed class PowerSettingAction : TweakAction
     }
 
     /// <summary>
-    /// Compares on the scheme that was changed, not on whatever plan is active now, and only the values this action
-    /// writes (mains, battery or both).
-    /// </summary>
-    public override bool IsStillApplied(ActionContext c, StoredValue applied)
-    {
-        var parts = applied.Data?.Split(';') ?? [];
-        if (parts.Length < 3 || !Guid.TryParse(parts[0], out var scheme) || !c.Power.SchemeExists(scheme)) return false;
-        if (Ac is not null && c.Power.ReadAc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) != parts[1]) return false;
-        if (Dc is not null && c.Power.ReadDc(scheme, Sub, Set)?.ToString(CultureInfo.InvariantCulture) != parts[2]) return false;
-        return true;
-    }
-
-    /// <summary>
-    /// Mains and battery are compared and restored on their own: when the user changed only the mains value since, the
+    /// Compared on the scheme that was changed, not on whatever plan is active now. Mains and battery are compared and
+    /// restored on their own: when the user changed only the mains value since, the
     /// battery value still goes back (and the mains value stays as the user set it).
     /// </summary>
     public override RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
@@ -179,13 +167,21 @@ public sealed class PowerSchemeAction : TweakAction
     /// </summary>
     private HashSet<Guid>? _schemesBeforeApply;
     private Guid? _activated;
+    private bool _created;
+
+    /// <summary>Kind of the applied value: the plan was created by this apply (undo removes it) or already existed (kept).</summary>
+    public const string CreatedKind = "scheme-created", ExistingKind = "scheme-existing";
 
     public override void Apply(ActionContext c)
     {
         if (DuplicateFrom is not null && Name is not null) _schemesBeforeApply = c.Power.Schemes().Select(s => s.Id).ToHashSet();
         var target = Target(c);
+        _created = false;
         if (target is null && DuplicateFrom is not null && Name is not null)
+        {
             target = c.Power.Duplicate(PowerAliases.Resolve(DuplicateFrom), Name);
+            _created = true;
+        }
         if (target is { } t)
         {
             _activated = t;
@@ -194,33 +190,40 @@ public sealed class PowerSchemeAction : TweakAction
     }
 
     /// <summary>
-    /// Undo always runs: when the user picked another plan since, the active plan stays as it is, but a plan this action
-    /// created is still removed (otherwise it would be left behind for good).
+    /// The active plan, marked as created by this apply or found: a plan with the app's name that existed before (left by
+    /// an earlier run, or the user's own) is switched away from on undo but never deleted.
     /// </summary>
-    public override bool IsStillApplied(ActionContext c, StoredValue applied) => true;
+    public override StoredValue? AppliedValue(ActionContext c) =>
+        Read(c) is { } value && DuplicateFrom is not null && Name is not null ? value with { Kind = _created ? CreatedKind : ExistingKind } : Read(c);
 
-    /// <summary>The plan this action activated (its GUID) identifies a created plan even after the user renamed it.</summary>
+    /// <summary>
+    /// Undo always runs: when the user picked another plan since, the active plan stays as it is, but a plan this action
+    /// created is still removed (otherwise it would be left behind for good). The plan this action activated (its GUID)
+    /// identifies a created plan even after the user renamed it.
+    /// </summary>
     public override RestoreOutcome RestoreIfUnchanged(ActionContext c, StoredValue original, StoredValue? applied)
     {
-        RestoreCore(c, original, applied is { Existed: true } && Guid.TryParse(applied.Data, out var id) ? id : null);
+        // Backups from before the kind was recorded say "scheme": the plan counts as created, as it did then.
+        RestoreCore(c, original, applied is { Existed: true } && Guid.TryParse(applied.Data, out var id) ? id : null, applied?.Kind != ExistingKind);
         return RestoreOutcome.Restored;
     }
 
-    public override void Restore(ActionContext c, StoredValue original) => RestoreCore(c, original, null);
+    public override void Restore(ActionContext c, StoredValue original) => RestoreCore(c, original, null, true);
 
-    private void RestoreCore(ActionContext c, StoredValue original, Guid? appliedPlan)
+    private void RestoreCore(ActionContext c, StoredValue original, Guid? appliedPlan, bool appliedPlanCreated)
     {
         var active = c.Power.ActiveScheme();
         List<Guid> created = [];
         if (DuplicateFrom is not null && Name is not null)
         {
             // The plan this action created and activated, found by its GUID (the name may have been changed since). Only
-            // that plan is removed: another plan with the same name may be the user's own copy. Without the GUID (a
+            // that plan is removed, and only when this apply created it (a plan with the name that already existed was
+            // only activated): another plan with the same name may be the user's own copy. Without the GUID (a
             // rollback right after a failed apply) the plans with the name that did not exist before this apply are the
             // ones just created; a plan an earlier apply created (and the user may have customized) stays.
             if (appliedPlan is { } plan)
             {
-                if (c.Power.SchemeExists(plan) && !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
+                if (appliedPlanCreated && c.Power.SchemeExists(plan) && !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
                     created.Add(plan);
             }
             else
@@ -229,7 +232,7 @@ public sealed class PowerSchemeAction : TweakAction
             }
         }
         var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate)) ||
-                   (appliedPlan is null && _activated == active);
+                   (appliedPlan is { } activated ? activated == active : _activated == active);
         if (ours)
         {
             // The previous plan may have been deleted in the meantime: Balanced exists on every PC.

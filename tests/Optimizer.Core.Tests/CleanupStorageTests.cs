@@ -130,15 +130,87 @@ public class CleanupStorageTests : IDisposable
         Assert.False(Optimizer.Core.Platform.SafeDelete.HasNoLinks(Path.Combine(sub, "old.tmp")));
         Assert.False(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(Path.Combine(sub, "old.tmp")));
         Assert.True(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(victim));
-        // The storage analyzer refuses to recycle it as well.
-        Assert.Equal([Path.Combine(sub, "old.tmp")], StorageAnalyzer.Recycle([Path.Combine(sub, "old.tmp")], []));
+        // The storage analyzer refuses to recycle it as well: AppData (where %TEMP% lies) is not protected here, so the
+        // link is the only reason left, and nothing reaches the Recycle Bin.
+        Assert.Equal([Path.Combine(sub, "old.tmp")], StorageAnalyzer.Recycle([Path.Combine(sub, "old.tmp")], [], appData: false));
         Assert.True(System.IO.File.Exists(victim));
+        Assert.Null(Optimizer.Core.Platform.SafeDelete.Pin(sub));
 
         // A normal read-only file is deleted.
         var ro = File(@"temp\readonly.tmp", 10);
         System.IO.File.SetAttributes(ro, FileAttributes.ReadOnly);
         Optimizer.Core.Platform.SafeDelete.DeleteFile(ro);
         Assert.False(System.IO.File.Exists(ro));
+    }
+
+    /// <summary>The folders an update repair renamed are offered after a week and removed whole; other folders are not touched.</summary>
+    [Fact]
+    public void UpdateRepairLeftoversAreRemovedWhole()
+    {
+        var win = Path.Combine(_root, "Windows");
+        File(@"Windows\SoftwareDistribution.old-20260901-120000\Download\a.cab", 100);
+        File(@"Windows\System32\catroot2.old-20260901-120000\edb.log", 50);
+        File(@"Windows\SoftwareDistribution.old-20261010-120000\x.bin", 10); // a day old: kept
+        File(@"Windows\SoftwareDistribution\keep.bin", 10);
+        var now = new DateTime(2026, 10, 11);
+        var found = CleanupEngine.UpdateRepairLeftovers(win, now.AddDays(-CleanupEngine.RepairLeftoverDays));
+        Assert.Equal(2, found.Count);
+        var category = Assert.Single(CleanupEngine.Categories(null, null, win, now), c => c.Id == "cleanup.updateRepairLeftovers");
+        Assert.False(category.DefaultSelected);
+        CleanupEngine.Clean(category);
+        Assert.False(Directory.Exists(Path.Combine(win, "SoftwareDistribution.old-20260901-120000")));
+        Assert.False(Directory.Exists(Path.Combine(win, @"System32\catroot2.old-20260901-120000")));
+        Assert.True(Directory.Exists(Path.Combine(win, "SoftwareDistribution.old-20261010-120000")));
+        Assert.True(System.IO.File.Exists(Path.Combine(win, @"SoftwareDistribution\keep.bin")));
+        Assert.True(Labels.Current.Has("en", category.Id) && Labels.Current.Has("de", category.WarningKey!));
+    }
+
+    /// <summary>A selection that covers every copy of a duplicate group (the first copy picked under the largest files) is caught.</summary>
+    [Fact]
+    public void ASelectionMustKeepOneCopyOfEachDuplicateGroup()
+    {
+        var group = new DuplicateGroup(10, [@"C:\a\x.bin", @"C:\b\x.bin"]);
+        Assert.Empty(StorageAnalyzer.WholeGroupsSelected([@"C:\b\x.bin"], [group]));
+        Assert.Single(StorageAnalyzer.WholeGroupsSelected([@"c:\A\x.bin", @"C:\b\x.bin"], [group]));
+    }
+
+    /// <summary>
+    /// A held folder cannot be renamed or replaced (so a path handed to the shell keeps its meaning), while files in it can
+    /// still be created and moved out.
+    /// </summary>
+    [Fact]
+    public void PinnedFoldersCannotBeSwapped()
+    {
+        var folder = Path.Combine(_root, @"downloads\x");
+        var file = File(@"downloads\x\big.bin", 10);
+        Directory.CreateDirectory(Path.Combine(_root, "elsewhere"));
+        using (var pin = Optimizer.Core.Platform.SafeDelete.Pin(folder))
+        {
+            Assert.NotNull(pin);
+            Assert.ThrowsAny<IOException>(() => Directory.Move(folder, folder + "-renamed"));
+            Assert.ThrowsAny<IOException>(() => Directory.Move(Path.Combine(_root, "downloads"), Path.Combine(_root, "downloads-renamed")));
+            System.IO.File.Move(file, Path.Combine(_root, @"elsewhere\big.bin"));
+            System.IO.File.WriteAllText(Path.Combine(folder, "new.txt"), "x");
+            Assert.True(pin!.StillReal());
+        }
+        Directory.Move(folder, folder + "-renamed");
+    }
+
+    /// <summary>A new file in a user folder is created only at its own path: an existing name or a swapped folder is refused.</summary>
+    [Fact]
+    public void CreateNewRefusesExistingNamesAndLinkedFolders()
+    {
+        var target = Path.Combine(_root, @"start\PCOptimizer.lnk");
+        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        using (var s = Optimizer.Core.Platform.SafeDelete.CreateNew(target)) s.Write([1, 2, 3]);
+        Assert.Equal([1, 2, 3], System.IO.File.ReadAllBytes(target));
+        Assert.ThrowsAny<IOException>(() => Optimizer.Core.Platform.SafeDelete.CreateNew(target).Dispose());
+
+        var protectedDir = Path.Combine(_root, "protected");
+        Directory.CreateDirectory(protectedDir);
+        Junction(Path.Combine(_root, "swapped"), protectedDir);
+        Assert.ThrowsAny<IOException>(() => Optimizer.Core.Platform.SafeDelete.CreateNew(Path.Combine(_root, @"swapped\PCOptimizer.lnk")).Dispose());
+        Assert.Empty(Directory.GetFiles(protectedDir));
     }
 
     [Fact]

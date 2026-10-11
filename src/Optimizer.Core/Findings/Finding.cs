@@ -71,3 +71,11 @@ public interface IFindingCheck
 
     IEnumerable<Finding> Evaluate(HardwareProfile profile, CatalogData catalog);
 }
+
+/// <summary>
+/// A check whose advice concerns physical hardware or its firmware (memory modules and channels, BIOS, PCIe links,
+/// disks, microcode). In a virtual machine that hardware is the host's or emulated: the check does not run there.
+/// </summary>
+public interface IPhysicalHardwareCheck : IFindingCheck
+{
+}

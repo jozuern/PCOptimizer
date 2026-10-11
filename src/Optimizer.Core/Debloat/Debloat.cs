@@ -69,7 +69,7 @@ public sealed record RemovedApp(string Name, string FamilyName, string Version, 
 {
     /// <summary>
     /// Microsoft Store page of the app: the ProductId link Microsoft recommends, or the package family name link (still
-    /// working, but deprecated) for records without a product ID. Null when the Store no longer offers the app.
+    /// working, but deprecated) for records without a product ID. Null when no Store listing is confirmed for the app.
     /// </summary>
     public string? StoreLink => !Reinstallable ? null
         : StoreId is { Length: > 0 } id ? $"ms-windows-store://pdp/?ProductId={Uri.EscapeDataString(id)}"
@@ -200,9 +200,7 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
 
     private void Write(List<RemovedApp> list)
     {
-        var temp = LogFile + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
-        File.Move(temp, LogFile, overwrite: true);
+        Platform.DurableFile.WriteAllText(LogFile, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     /// <summary>
@@ -318,13 +316,20 @@ public static class OneDrive
     public static string? FindSetup(string? profilePath)
     {
         var candidates = new List<string>();
-        if (profilePath is not null)
+        // One unreadable folder (damaged permissions) must not break the Debloat page: it only offers no setup from there.
+        void AddVersions(string folder)
         {
-            var perUser = Path.Combine(profilePath, @"AppData\Local\Microsoft\OneDrive");
-            if (Directory.Exists(perUser)) candidates.AddRange(Directory.GetDirectories(perUser).Select(d => Path.Combine(d, "OneDriveSetup.exe")));
+            try
+            {
+                if (Directory.Exists(folder)) candidates.AddRange(Directory.GetDirectories(folder).Select(d => Path.Combine(d, "OneDriveSetup.exe")));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Logging.Log.Warn("debloat", $"{folder} not readable: {ex.Message}");
+            }
         }
-        var machine = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft OneDrive");
-        if (Directory.Exists(machine)) candidates.AddRange(Directory.GetDirectories(machine).Select(d => Path.Combine(d, "OneDriveSetup.exe")));
+        if (profilePath is not null) AddVersions(Path.Combine(profilePath, @"AppData\Local\Microsoft\OneDrive"));
+        AddVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft OneDrive"));
         candidates.Add(Path.Combine(Environment.SystemDirectory, "OneDriveSetup.exe"));
         return candidates.Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
     }

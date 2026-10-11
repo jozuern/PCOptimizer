@@ -1,0 +1,353 @@
+{
+  "tweaks": [
+    {
+      "id": "gpu.gameDvrPolicyOff",
+      "category": "Graphics",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "impactOverrides": [
+        {
+          "when": {
+            "fact": "gamedvr.backgroundRecording",
+            "eq": true
+          },
+          "gaming": 1,
+          "effect": [
+            "stutter"
+          ],
+          "reasonKey": "impact.backgroundRecording"
+        }
+      ],
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+          "name": "AllowGameDVR",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "recommendWhen": {
+        "fact": "gamedvr.backgroundRecording",
+        "eq": true
+      },
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-applicationmanagement"
+      ],
+      "recommendReasonKey": "rec.backgroundRecording"
+    },
+    {
+      "id": "privacy.silentAppInstallsOff",
+      "undocumented": true,
+      "preview": true,
+      "category": "Privacy",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SilentInstalledAppsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "PreinstalledAppsEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "PreinstalledAppsEverEnabled",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "OemPreinstalledAppsEnabled",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience",
+        "https://github.com/Raphire/Win11Debloat/blob/master/Regfiles/Disable_Windows_Suggestions.reg"
+      ]
+    },
+    {
+      "id": "explorer.homeGalleryHidden",
+      "undocumented": true,
+      "proof": [
+        "VM test 2026-10-11 (Windows 11 build 26300): a new File Explorer window showed no Home and no Gallery in the navigation pane after apply, and both again after undo"
+      ],
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Classes\\CLSID\\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}",
+          "name": "System.IsPinnedToNameSpaceTree",
+          "kind": "dword",
+          "value": 0,
+          "removeKeyOnUndo": "Software\\Classes\\CLSID\\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}"
+        },
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Classes\\CLSID\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}",
+          "name": "System.IsPinnedToNameSpaceTree",
+          "kind": "dword",
+          "value": 0,
+          "removeKeyOnUndo": "Software\\Classes\\CLSID\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"
+        }
+      ],
+      "sources": [
+        "https://github.com/Raphire/Win11Debloat/blob/master/Regfiles/Hide_Home_from_Explorer.reg",
+        "https://github.com/Raphire/Win11Debloat/blob/master/Regfiles/Hide_Gallery_from_Explorer.reg"
+      ]
+    },
+    {
+      "id": "explorer.thisPcFolders",
+      "undocumented": true,
+      "proof": [
+        "VM test 2026-10-11 (Windows 11 build 26300): This PC listed only the drives before, Desktop, Documents, Downloads, Music, Pictures and Videos above them after apply, and only the drives after undo"
+      ],
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{d3162b92-9365-467a-956b-92703aca08af}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{088e3905-0323-4b02-9826-5d99428e115f}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MyComputer\\NameSpace\\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",
+          "name": "HiddenByDefault",
+          "kind": "dword",
+          "value": 0
+        }
+      ],
+      "sources": [
+        "https://github.com/Raphire/Win11Debloat/blob/master/Regfiles/Add_All_Folders_Under_This_PC.reg"
+      ]
+    },
+    {
+      "id": "gpu.gameBarControllerOff",
+      "undocumented": true,
+      "proof": [
+        "VM test 2026-10-11 (Windows 11 build 26300): Settings > Gaming > Game Bar showed \"Allow your controller to open Game Bar\" Off after apply and On after undo"
+      ],
+      "category": "Input",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\GameBar",
+          "name": "UseNexusForGameBarEnabled",
+          "kind": "dword",
+          "value": 0,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://github.com/Raphire/Win11Debloat/blob/master/Regfiles/Disable_Game_Bar_Integration.reg"
+      ]
+    },
+    {
+      "id": "visual.wallpaperFullQuality",
+      "undocumented": true,
+      "proof": [
+        "VM test 2026-10-11 (Windows 11 build 26300): after sign-in, a newly set quality 100 JPEG wallpaper was stored in TranscodedWallpaper with quantization tables of quality 100 (all 1); without the value and after sign-in, a new one was stored at about quality 85 (5,3,4)"
+      ],
+      "category": "Visual",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Control Panel\\Desktop",
+          "name": "JPEGImportQuality",
+          "kind": "dword",
+          "value": 100
+        }
+      ],
+      "sources": [
+        "https://winaero.com/how-to-disable-wallpaper-jpeg-quality-reduction-in-windows-10"
+      ],
+      "signOut": true
+    },
+    {
+      "id": "personalize.settingsHomeHidden",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "SettingsPageVisibility",
+          "kind": "string",
+          "value": "hide:home"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-settings"
+      ]
+    },
+    {
+      "id": "system.bsodDetails",
+      "undocumented": true,
+      "proof": [
+        "VM test 2026-10-11 (Windows 11 build 26300): a stop error forced through a Hyper-V NMI showed the four bug check parameters at the top left of the stop screen with the value, and no parameters after undo"
+      ],
+      "category": "System",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "restart": true,
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\CrashControl",
+          "name": "DisplayParameters",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://winaero.com/show-bsod-details-instead-of-the-sad-smiley-in-windows-10/"
+      ]
+    }
+  ]
+}

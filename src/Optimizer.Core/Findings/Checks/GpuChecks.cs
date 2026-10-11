@@ -48,7 +48,10 @@ public sealed class BasicDisplayAdapterCheck : IFindingCheck
         !displays.Any(d => string.Equals(d.AdapterName, basic.Name, StringComparison.Ordinal));
 }
 
-/// <summary>F15 (GPU part): driver older than ~6 months.</summary>
+/// <summary>
+/// F15 (GPU part): driver older than ~6 months. Graphics whose vendor no longer releases drivers (NVIDIA Kepler, AMD
+/// GCN 1 to 3, catalog <see cref="GpuCatalog.LegacyPatterns"/>) cannot get a newer one: information, variant "legacy".
+/// </summary>
 public sealed class GpuDriverAgeCheck : IFindingCheck
 {
     public const string Id = "F15.gpuDriverAge";
@@ -71,6 +74,7 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
                 !displays.Any(d => string.Equals(d.AdapterName, g.Name, StringComparison.Ordinal)))
                 continue;
             var age = g.DriverDate is { } d ? (int)(_today() - d.Date).TotalDays : (int?)null;
+            var legacy = IsLegacy(g, c);
             var version = g.NvidiaDriverVersion is { } nv ? $"{nv} ({g.DriverVersion})" : g.DriverVersion ?? "?";
             yield return new Finding
             {
@@ -78,7 +82,8 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
                 InstanceKey = g.PnpDeviceId,
                 Subject = g.Name,
                 Kind = FindingKind.Finding,
-                Status = age is null ? FindingStatus.Unknown : age > MaxAgeDays ? FindingStatus.Problem : FindingStatus.Ok,
+                Status = age is null ? FindingStatus.Unknown : age <= MaxAgeDays ? FindingStatus.Ok : legacy ? FindingStatus.Info : FindingStatus.Problem,
+                Variant = legacy ? "legacy" : null,
                 Impact = 2,
                 Effects = [Effect.Fps, Effect.Stability],
                 Facts =
@@ -102,13 +107,19 @@ public sealed class GpuDriverAgeCheck : IFindingCheck
             };
         }
     }
+
+    public static bool IsLegacy(GpuInfo g, CatalogData c)
+    {
+        var key = g.Vendor switch { Vendor.Nvidia => "nvidia", Vendor.Amd => "amd", Vendor.Intel => "intel", _ => null };
+        return key is not null && c.Gpu.LegacyPatterns.TryGetValue(key, out var pattern) && RegexCache.Get(pattern).IsMatch(g.Name.Trim());
+    }
 }
 
 /// <summary>
 /// Advisor: Resizable BAR. Unsupported GPU family -> "Unsupported", never BIOS advice. Laptops get no BIOS
 /// advice either: an inactive BAR is information there (variant "laptop"), only the laptop maker can add support.
 /// </summary>
-public sealed class RebarCheck : IFindingCheck
+public sealed class RebarCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.rebar";
 
@@ -205,7 +216,7 @@ public sealed class RebarCheck : IFindingCheck
 /// Advisor: PCIe link width of the graphics card. Generation drops at idle, so only the width is judged at idle;
 /// the generation is shown as information (measured under load by the throttle check).
 /// </summary>
-public sealed class PcieLinkCheck : IFindingCheck
+public sealed class PcieLinkCheck : IPhysicalHardwareCheck
 {
     public const string Id = "A.pcieLink";
     public IReadOnlyList<string> DocIds => [Id];

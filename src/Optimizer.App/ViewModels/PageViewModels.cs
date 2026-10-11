@@ -32,6 +32,28 @@ public abstract partial class PageViewModel : ObservableObject
 
     public Task EnsureLoadedAsync() => _load ??= ReloadAsync();
 
+    /// <summary>The page builds rows from the scan result (<see cref="MainViewModel.Profile"/>).</summary>
+    protected virtual bool UsesProfile => false;
+
+    /// <summary>The scan result the last full load used; null when it ran before the first scan finished (or after it failed).</summary>
+    private Optimizer.Core.Hardware.HardwareProfile? _loadedFrom;
+
+    /// <summary>
+    /// A scan brought a new result: a page that loaded without one reads again; the others update what they show from it
+    /// (<see cref="ProfileUpdated"/>).
+    /// </summary>
+    public void OnProfileChanged()
+    {
+        if (!UsesProfile || _load is null || Owner.Profile is null) return;
+        if (_loadedFrom is null) ReloadAsync().Forget($"{GetType().Name} reload with the scan result");
+        else ProfileUpdated();
+    }
+
+    /// <summary>After a later scan, for pages whose rows come from the scan result alone (cheap to build again).</summary>
+    protected virtual void ProfileUpdated()
+    {
+    }
+
     /// <summary>The page was opened (or its data loaded ahead) at least once.</summary>
     protected bool WasLoaded => _load is not null;
 
@@ -120,6 +142,9 @@ public abstract partial class PageViewModel : ObservableObject
         if (fullLoad) IsLoading = true;
         try
         {
+            // Opened while the first scan still runs: its result comes first (an empty list would read as "nothing found").
+            if (fullLoad && UsesProfile && Owner.Profile is null) await Owner.ScanInProgress;
+            if (fullLoad) _loadedFrom = Owner.Profile;
             await (fullLoad ? LoadAsync() : RelabelAsync());
         }
         catch (Exception ex)
@@ -262,6 +287,9 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
             if (DnsChoices.FirstOrDefault(c => c.Item.HasBackup && !ReferenceEquals(c, choice)) is { } current)
             {
                 if (!await Owner.Runner.UndoAsync(current.Item.Tweak)) return;
+                // The undo starts a rescan, and no change can run while it does: wait for it (it also brings the facts the
+                // check below needs up to date) instead of having the apply refused as busy.
+                await Owner.ScanAsync();
                 // Undo brings back the servers from before, which may already be the choice (usually automatic).
                 var facts = Owner.Facts;
                 var applied = Owner.AppliedIds();
@@ -352,7 +380,7 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         DnsResults.Clear();
         try
         {
-            var current = DnsBenchmark.CurrentServers().Select((a, i) => (Loc.Instance.Format("Net_CurrentServer", i + 1), a));
+            var current = (await Task.Run(DnsBenchmark.CurrentServers)).Select((a, i) => (Loc.Instance.Format("Net_CurrentServer", i + 1), a));
             var servers = current.Concat(DnsBenchmark.PublicServers).DistinctBy(s => s.Item2).ToList();
             var progress = new Progress<string>(name => BenchmarkStatus = Loc.Instance.Format("Net_Testing", name));
             var results = await Task.Run(() => DnsBenchmark.RunAsync(servers, 2, progress));
@@ -413,6 +441,8 @@ public sealed record RemovedRow(string Name, string When, string? StoreLink)
 
 public sealed partial class DebloatViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
+    /// <summary>Offers and guards depend on the scan result (games, platform).</summary>
+    protected override bool UsesProfile => true;
     private Optimizer.Core.Debloat.DebloatService Service => new(services.Context.Processes, AppServices.DataFolder);
 
     public ObservableCollection<DebloatItem> Items { get; } = [];

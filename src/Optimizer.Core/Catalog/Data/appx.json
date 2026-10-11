@@ -13,6 +13,17 @@
       "titleDe": "Microsoft News"
     },
     {
+      "name": "Microsoft.StartExperiencesApp",
+      "group": "consumer",
+      "guard": null,
+      "reinstall": "store",
+      "storeId": "9PC1H9VN18CM",
+      "en": "Provides the news and content feeds of the Widgets board. Widgets without a feed stay.",
+      "de": "Liefert die Nachrichten und Inhalte im Widgets-Board. Widgets ohne Feed bleiben.",
+      "title": "Start Experiences App",
+      "titleDe": "Start Experiences App"
+    },
+    {
       "name": "Microsoft.BingWeather",
       "group": "consumer",
       "guard": null,
@@ -283,6 +294,17 @@
       "titleDe": "Smartphone-Link"
     },
     {
+      "name": "MicrosoftWindows.CrossDevice",
+      "group": "microsoft",
+      "guard": null,
+      "reinstall": "store",
+      "storeId": "9NTXGKQ8P7N0",
+      "en": "Connects Windows with a paired phone for the phone features in Start and Settings. Keep it if you use your phone with the PC.",
+      "de": "Verbindet Windows mit einem gekoppelten Smartphone für die Smartphone-Funktionen im Start und in den Einstellungen. Behalte es, wenn du dein Smartphone mit dem PC nutzt.",
+      "title": "Cross Device Experience Host",
+      "titleDe": "Cross Device Experience Host"
+    },
+    {
       "name": "Microsoft.WindowsCamera",
       "group": "microsoft",
       "guard": null,
@@ -346,6 +368,17 @@
       "de": "Xbox Game Bar (Windows + G). Für die Spielerkennung bei X3D-Prozessoren mit zwei CCDs und für Xbox-Funktionen nötig.",
       "title": "Xbox Game Bar",
       "titleDe": "Xbox Game Bar"
+    },
+    {
+      "name": "Microsoft.XboxGameOverlay",
+      "group": "xbox",
+      "guard": "xbox",
+      "reinstall": "store",
+      "storeId": "9NBLGGH537C2",
+      "en": "Older Game Bar plugin that some PCs still have next to Xbox Game Bar.",
+      "de": "Älteres Game-Bar-Plug-in, das manche PCs noch neben der Xbox Game Bar haben.",
+      "title": "Xbox Game Bar Plugin",
+      "titleDe": "Xbox Game Bar Plugin"
     },
     {
       "name": "Microsoft.XboxSpeechToTextOverlay",
@@ -580,14 +613,15 @@
       "titleDe": "Family Safety"
     },
     {
-      "name": "Microsoft.PCManager",
+      "name": "Microsoft.MicrosoftPCManager",
       "group": "microsoft",
       "guard": null,
-      "reinstall": "none",
+      "reinstall": "store",
       "en": "Microsoft's cleanup and optimization app.",
       "de": "Aufräum- und Optimierungs-App von Microsoft.",
       "title": "Microsoft PC Manager",
-      "titleDe": "Microsoft PC Manager"
+      "titleDe": "Microsoft PC Manager",
+      "storeId": "9PM860492SZD"
     },
     {
       "name": "Microsoft.M365Companions",
@@ -778,6 +812,17 @@
       "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
       "title": "TikTok",
       "titleDe": "TikTok"
+    },
+    {
+      "name": "9E2F88E3.Twitter",
+      "group": "thirdParty",
+      "guard": null,
+      "reinstall": "store",
+      "storeId": "9WZDNCRFJ140",
+      "en": "Third-party app that some PCs come with as a promotion.",
+      "de": "App eines anderen Herstellers, die manche PCs als Werbung mitbringen.",
+      "title": "X (Twitter)",
+      "titleDe": "X (Twitter)"
     },
     {
       "name": "ACGMediaPlayer",

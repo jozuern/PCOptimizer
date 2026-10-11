@@ -27,6 +27,6 @@ public static class HealthStore
     public static void SaveThrottle(string folder, ThrottleResult result)
     {
         Directory.CreateDirectory(folder);
-        File.WriteAllText(Path.Combine(folder, "throttle.json"), JsonSerializer.Serialize(result, Json));
+        Platform.DurableFile.WriteAllText(Path.Combine(folder, "throttle.json"), JsonSerializer.Serialize(result, Json));
     }
 }

@@ -17,6 +17,17 @@ public static class CommandLine
     };
 
     /// <summary>
+    /// Interpreters other programs install (Python, Node.js, Java, Perl and similar): like a script host they run the
+    /// script or inline code they are given, so an elevated command trusts them only with admin-only scripts.
+    /// </summary>
+    private static readonly HashSet<string> Interpreters = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "python.exe", "pythonw.exe", "py.exe", "pyw.exe", "node.exe", "java.exe", "javaw.exe", "perl.exe", "ruby.exe", "rubyw.exe",
+        "php.exe", "tclsh.exe", "wish.exe", "autohotkey.exe", "autohotkey32.exe", "autohotkey64.exe", "autohotkeyu32.exe",
+        "autohotkeyu64.exe", "autoit3.exe", "autoit3_x64.exe",
+    };
+
+    /// <summary>
     /// Built-in Windows programs that start another program, installer or file given on the command line (explorer.exe
     /// C:\Users\Public\x.exe, msiexec /i, pcalua -a). Without arguments, or with arguments that only name Windows' own
     /// files, they are what they seem; Windows' shell entry is plain explorer.exe.
@@ -65,14 +76,16 @@ public static class CommandLine
     /// files only administrators can change). A script with a path that is not trusted, or with "..", or an alternate
     /// data stream, is untrusted.
     /// </summary>
-    public static bool RunsUntrustedCode(string? command, Func<string, bool> trusted, Func<string, string>? expand = null, Func<string, bool>? exists = null)
+    /// <param name="interpreters">Also treat <see cref="Interpreters"/> (Python, Node.js and similar) as script hosts.</param>
+    public static bool RunsUntrustedCode(string? command, Func<string, bool> trusted, Func<string, string>? expand = null, Func<string, bool>? exists = null,
+        bool interpreters = false)
     {
         if (string.IsNullOrWhiteSpace(command)) return false;
         expand ??= Environment.ExpandEnvironmentVariables;
         if (Program(command, expand, exists) is not var (host, args)) return false;
-        bool Trusted(string file) => !file.Contains("..", StringComparison.Ordinal) && file.IndexOf(':', 2) < 0 && trusted(file);
+        bool Trusted(string file) => !file.Contains("..", StringComparison.Ordinal) && !HasStream(file) && trusted(file);
         if (IsLauncher(host)) return LauncherStartsSomethingElse(args, Trusted);
-        if (!IsScriptHost(host)) return false;
+        if (!IsScriptHost(host) && !(interpreters && FileName(host) is { } name && Interpreters.Contains(name))) return false;
         if (IsRundll(host)) return RundllStartsSomethingElse(args, Trusted);
         if (args.IndexOfAny(['&', '|', '^', '`', ';']) >= 0 || args.Contains("://", StringComparison.Ordinal)) return true;
         var tokens = Tokens(args).ToList();
@@ -128,7 +141,7 @@ public static class CommandLine
     /// </summary>
     public static bool IsInProtectedSystemFolder(string file)
     {
-        if (file.Contains("..", StringComparison.Ordinal) || file.IndexOf(':', 2) >= 0) return false;
+        if (file.Contains("..", StringComparison.Ordinal) || HasStream(file)) return false;
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         foreach (var root in new[] { Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") })
         {
@@ -136,6 +149,28 @@ public static class CommandLine
             var relative = file[(root.Length + 1)..];
             return !UserWritableSystemFolders.Any(w => relative.StartsWith(w + "\\", StringComparison.OrdinalIgnoreCase));
         }
+        return false;
+    }
+
+    /// <summary>A colon after the drive letter: an alternate data stream (x.txt:y.vbs). Safe for one-character tokens (a lone backslash).</summary>
+    private static bool HasStream(string file) => file.Length > 2 && file.IndexOf(':', 2) >= 0;
+
+    /// <summary>Folders directly below the Windows folder that standard users can write to.</summary>
+    private static readonly string[] UserWritableWindowsFolders = ["Temp", "Tasks", "Tracing", @"Registration\CRMLog", @"debug\WIA"];
+
+    /// <summary>
+    /// A file in a folder below the Windows folder (or System32 and SysWOW64) that standard users can write to: Temp,
+    /// Tasks, Tracing, the print spool and color folders and similar. Being in the Windows folder says nothing there.
+    /// </summary>
+    public static bool IsInUserWritableWindowsFolder(string file)
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        if (!file.StartsWith(windows + "\\", StringComparison.OrdinalIgnoreCase)) return false;
+        var relative = file[(windows.Length + 1)..];
+        if (UserWritableWindowsFolders.Any(w => relative.StartsWith(w + "\\", StringComparison.OrdinalIgnoreCase))) return true;
+        foreach (var system in new[] { "System32", "SysWOW64" })
+            if (relative.StartsWith(system + "\\", StringComparison.OrdinalIgnoreCase))
+                return UserWritableSystemFolders.Any(w => relative[(system.Length + 1)..].StartsWith(w + "\\", StringComparison.OrdinalIgnoreCase));
         return false;
     }
 

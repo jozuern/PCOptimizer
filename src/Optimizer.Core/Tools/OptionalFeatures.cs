@@ -49,9 +49,15 @@ public sealed partial class OptionalFeatureAction : TweakAction
 
     public override void Apply(ActionContext c) => Set(c.Processes, Feature, Enabled);
 
+    /// <summary>
+    /// Back to the original state. A feature that was on is turned on again without /All first: its parent features were
+    /// on before (or it could not have been on), and /All would also turn on parents the user had turned off since. Only
+    /// when DISM refuses that (a parent is off now) it runs with /All.
+    /// </summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
-        if (original.Data is "Enabled" or "Disabled") Set(c.Processes, Feature, original.Data == "Enabled");
+        if (original.Data == "Disabled") Set(c.Processes, Feature, false);
+        else if (original.Data == "Enabled" && !TrySet(c.Processes, Feature, true, withParents: false)) Set(c.Processes, Feature, true);
     }
 
     /// <summary>"Enabled", "Disabled", or null when the feature does not exist on this edition.</summary>
@@ -68,10 +74,20 @@ public sealed partial class OptionalFeatureAction : TweakAction
 
     private static void Set(IProcessRunner processes, string feature, bool enabled)
     {
-        if (!IsSafeName(feature)) throw new ArgumentException($"invalid feature name {feature}");
-        var args = enabled ? $"/Online /English /Enable-Feature /FeatureName:{feature} /All /NoRestart" : $"/Online /English /Disable-Feature /FeatureName:{feature} /NoRestart";
-        var (code, output) = processes.Run("dism.exe", args, TimeSpan.FromMinutes(30));
+        var (code, output) = Run(processes, feature, enabled, withParents: true);
         if (code is not (0 or 3010)) throw new InvalidOperationException($"DISM failed ({code}): {output.Trim()}");
+    }
+
+    private static bool TrySet(IProcessRunner processes, string feature, bool enabled, bool withParents) =>
+        Run(processes, feature, enabled, withParents).ExitCode is 0 or 3010;
+
+    private static (int ExitCode, string Output) Run(IProcessRunner processes, string feature, bool enabled, bool withParents)
+    {
+        if (!IsSafeName(feature)) throw new ArgumentException($"invalid feature name {feature}");
+        var args = enabled
+            ? $"/Online /English /Enable-Feature /FeatureName:{feature}{(withParents ? " /All" : "")} /NoRestart"
+            : $"/Online /English /Disable-Feature /FeatureName:{feature} /NoRestart";
+        return processes.Run("dism.exe", args, TimeSpan.FromMinutes(30));
     }
 
     /// <summary>

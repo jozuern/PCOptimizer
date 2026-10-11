@@ -42,11 +42,13 @@ public sealed record ServiceRow(
 
     /// <summary>
     /// A valid signature decides. Without one (not checked yet, file not found, check failed, not signed), a file in
-    /// the Windows folder counts as a Windows service, so a failed check never unlocks Disabled for it.
+    /// the Windows folder counts as a Windows service, so a failed check never unlocks Disabled for it; except in the
+    /// folders there that standard users can write to (Temp, Tasks, Tracing and similar), where anything can be placed.
     /// </summary>
     public bool IsMicrosoft => Signature is { Status: SignatureStatus.Signed } s
         ? s.IsMicrosoft
-        : File?.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase) == true;
+        : File is { } f && f.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows) + "\\", StringComparison.OrdinalIgnoreCase)
+          && !Startup.CommandLine.IsInUserWritableWindowsFolder(f);
 
     /// <summary>
     /// What the manager allows: catalog "protected" and unknown Microsoft services are read-only; Microsoft services the
@@ -71,9 +73,10 @@ public static class ServiceManager
             var name = s.Str("Name");
             if (name.Length == 0) continue;
             var image = s.Str("PathName");
-            var file = CommandLine.ImagePath(image);
+            // The service manager expands the path with the machine's variables, not the signed-in user's.
+            var file = CommandLine.ImagePath(image, Platform.MachineEnvironment.Expand);
             if (file is not null && Path.GetFileName(file).Equals("svchost.exe", StringComparison.OrdinalIgnoreCase))
-                file = CommandLine.ImagePath(Platform.Reg.HklmValue($@"SYSTEM\CurrentControlSet\Services\{name}\Parameters", "ServiceDll")?.ToString()) ?? file;
+                file = CommandLine.ImagePath(Platform.Reg.HklmValue($@"SYSTEM\CurrentControlSet\Services\{name}\Parameters", "ServiceDll")?.ToString(), Platform.MachineEnvironment.Expand) ?? file;
             rows.Add(new ServiceRow(name, s.Str("DisplayName"), NullIfEmpty(s.Str("Description")), services.GetStartType(name),
                 string.Equals(s.Str("State"), "Running", StringComparison.OrdinalIgnoreCase), NullIfEmpty(image), file, catalog.Find(BaseName(name))));
         }

@@ -363,6 +363,32 @@ public class CheckEdgeCaseTests
         Assert.Equal(2, new GpuDriverAgeCheck(() => today).Evaluate(p with { System = LaptopSystem }, C).Count());
     }
 
+    /// <summary>Graphics on NVIDIA's Kepler list or AMD's legacy list cannot get a newer driver: information, not a problem.</summary>
+    [Theory]
+    [InlineData("NVIDIA GeForce GTX 780 Ti", Vendor.Nvidia, true)]
+    [InlineData("NVIDIA GeForce GT 730", Vendor.Nvidia, true)]
+    [InlineData("NVIDIA GeForce GTX TITAN Black", Vendor.Nvidia, true)]
+    [InlineData("NVIDIA GeForce GTX 750 Ti", Vendor.Nvidia, false)]   // Maxwell
+    [InlineData("NVIDIA GeForce GTX TITAN X", Vendor.Nvidia, false)]  // Maxwell
+    [InlineData("NVIDIA GeForce GTX 1060 6GB", Vendor.Nvidia, false)]
+    [InlineData("NVIDIA GeForce GTX 680M", Vendor.Nvidia, false)]      // notebook: not on the desktop list
+    [InlineData("AMD Radeon R9 390 Series", Vendor.Amd, true)]
+    [InlineData("AMD Radeon R9 380X", Vendor.Amd, true)]
+    [InlineData("AMD Radeon (TM) R9 Fury Series", Vendor.Amd, false)] // "(TM) " with a space: not how Windows names it; see the next line
+    [InlineData("AMD Radeon(TM) R9 Fury Series", Vendor.Amd, true)]
+    [InlineData("AMD Radeon HD 7970", Vendor.Amd, true)]
+    [InlineData("AMD Radeon R7 Graphics", Vendor.Amd, true)]
+    [InlineData("AMD Radeon RX 580 2048SP", Vendor.Amd, false)]       // Polaris
+    [InlineData("AMD Radeon RX 7900 XTX", Vendor.Amd, false)]
+    public void LegacyGraphicsGetInformationInsteadOfAProblem(string name, Vendor vendor, bool legacy)
+    {
+        var today = new DateTime(2026, 10, 10);
+        var gpu = Dgpu() with { Name = name, Vendor = vendor, DriverDate = today.AddDays(-900) };
+        var f = Assert.Single(new GpuDriverAgeCheck(() => today).Evaluate(P(p => p with { Gpus = [gpu], Displays = [Monitor("AOC", name, primary: true)] }), C));
+        Assert.Equal(legacy ? (FindingStatus.Info, "legacy") : (FindingStatus.Problem, (string?)null), (f.Status, f.Variant));
+        AssertRenders(f);
+    }
+
     [Fact]
     public void BiosAgeUsesInjectedClock()
     {
@@ -380,6 +406,32 @@ public class CheckEdgeCaseTests
         Assert.Equal(FindingStatus.Ok, One(new LeftoverCheck(() => new HashSet<string> { "description" }), P()).Status);
         Assert.Equal(FindingStatus.Unknown, One(new LeftoverCheck(() => null), P()).Status);
         Assert.Equal(FindingStatus.Unknown, One(new LeftoverCheck(() => throw new UnauthorizedAccessException()), P()).Status);
+    }
+
+    /// <summary>In a virtual machine the memory, BIOS, PCIe and disk advice concerns the host or emulated hardware: those checks do not run.</summary>
+    [Fact]
+    public void HardwareAdviceIsSkippedInAVirtualMachine()
+    {
+        string[] physical = ["A.dualChannel", "A.xmp", "A.biosAge", "A.systemHdd"];
+        var real = P(p => p with { System = new SystemInfo("ASUS", "System Product Name", [3], false, false, HypervisorPresent: true) });
+        var vm = P(p => p with { System = new SystemInfo("Microsoft Corporation", "Virtual Machine", [3], false, false, HypervisorPresent: true) });
+        Assert.False(real.System!.IsVirtualMachine); // memory integrity on a real PC: a hypervisor, but no VM
+        Assert.True(vm.System!.IsVirtualMachine);
+        Assert.True(new SystemInfo("VMware, Inc.", "VMware20,1", [1], false, false, true).IsVirtualMachine);
+        var onReal = new FindingEngine(CatalogData.Current).Evaluate(real).Select(f => f.Id).ToHashSet();
+        var onVm = new FindingEngine(CatalogData.Current).Evaluate(vm).Select(f => f.Id).ToHashSet();
+        Assert.Contains(physical, onReal.Contains);
+        Assert.DoesNotContain(physical, onVm.Contains);
+        Assert.Contains(LeftoverCheck.Id, onVm); // other checks still run
+    }
+
+    /// <summary>The engine hands its BCD reader to F21 (the app builds the engine, never the check itself).</summary>
+    [Fact]
+    public void FindingEngineGivesTheBcdReaderToTheLeftoverCheck()
+    {
+        var findings = new FindingEngine(CatalogData.Current, bcd: () => new HashSet<string> { "useplatformclock" }).Evaluate(P());
+        Assert.Equal(FindingStatus.Problem, Assert.Single(findings, f => f.Id == LeftoverCheck.Id).Status);
+        Assert.Equal(FindingStatus.Unknown, Assert.Single(new FindingEngine(CatalogData.Current).Evaluate(P()), f => f.Id == LeftoverCheck.Id).Status);
     }
 
     // ---------------- G.access / A.virtualization ----------------
@@ -625,6 +677,16 @@ public class CheckEdgeCaseTests
         Assert.Equal(FindingStatus.Ok, One(new RyzenMemoryCheck(), Mem(am5, four)).Status);
     }
 
+    /// <summary>A mobile Ryzen in a mini PC (no battery) has the mobile memory limits: no desktop kit advice.</summary>
+    [Theory]
+    [InlineData("AMD Ryzen 7 6800H with Radeon Graphics")]
+    [InlineData("AMD Ryzen AI 9 HX 370 w/ Radeon 890M")]
+    public void MobileRyzenGetsNoDesktopMemoryAdvice(string name)
+    {
+        var mobile = Amd(name, 25, 68, "FP7", 16);
+        Assert.Empty(new RyzenMemoryCheck().Evaluate(Mem(mobile, Module(4800, "KF548S38IBK2-32", 34), Module(4800, "KF548S38IBK2-32", 34)), CatalogData.Current));
+    }
+
     [Theory]
     [InlineData(8, FindingStatus.Problem)]   // DIMM
     [InlineData(12, FindingStatus.Problem)]  // SODIMM
@@ -644,5 +706,43 @@ public class CheckEdgeCaseTests
         AssertRenders(f);
         // Two modules at the same speed: EXPO is off.
         Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), Mem(am5, four[0], four[2])).Status);
+    }
+
+    /// <summary>Four DDR5 modules on 13th/14th gen Intel and Core Ultra 200S: Intel's datasheets specify a lower speed for them.</summary>
+    [Theory]
+    [InlineData("13th Gen Intel(R) Core(TM) i7-13700K", "4000")]
+    [InlineData("Intel(R) Core(TM) i9-14900K", "4000")]
+    [InlineData("Intel(R) Core(TM) Ultra 9 285K", "4800")]
+    public void FourDdr5ModulesOnIntelRunSlowerByDesign(string cpuName, string limit)
+    {
+        var cpu = TestData.Cpu13700K() with { Name = cpuName };
+        var four = new[] { "DIMM_A1", "DIMM_A2", "DIMM_B1", "DIMM_B2" }.Select(l => Module(4800, "CMK64GX5M4B6000C30", 34, locator: l)).ToArray();
+        var f = One(new XmpCheck(), Mem(cpu, four));
+        Assert.Equal((FindingStatus.Info, "fourDimmsIntel", limit), (f.Status, f.Variant, f.Params["fourDimmMts"]));
+        AssertRenders(f);
+        // Two modules: XMP is simply off.
+        Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), Mem(cpu, four[0], four[2])).Status);
+        // A 12th gen processor is not covered (its datasheet is not checked yet): the usual advice.
+        Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), Mem(cpu with { Name = "12th Gen Intel(R) Core(TM) i7-12700K" }, four)).Status);
+    }
+
+    [Fact]
+    public void IntelNinthGenOnABoardWithoutMemoryOverclockingRunsAtItsSpecifiedSpeed()
+    {
+        var cpu = TestData.Cpu9700K() with { Name = "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz" };
+        HardwareProfile On(string board, int configured) => Mem(cpu, Module(configured, "CMW32GX4M2E3200C16", 26), Module(configured, "CMW32GX4M2E3200C16", 26, locator: "DIMM_B1"))
+            with { Firmware = TestData.Firmware() with { BoardProduct = board } };
+        var locked = One(new XmpCheck(), On("B365M DS3H", 2666));
+        Assert.Equal((FindingStatus.Info, "intelLocked"), (locked.Status, locked.Variant));
+        AssertRenders(locked);
+        // An OEM board that reports only a part code counts as not unlocked.
+        Assert.Equal("intelLocked", One(new XmpCheck(), On("0X8DXD", 2666)).Variant);
+        // A Z390 board can use XMP; a speed below the processor's specification is a missing setting anyway.
+        Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), On("ROG STRIX Z390-F GAMING", 2666)).Status);
+        Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), On("B365M DS3H", 2133)).Status);
+        // A current Intel processor is not covered by the rule.
+        var current = Mem(TestData.Cpu13700K(), Module(4800, "CMK32GX5M2B6000C36", 34), Module(4800, "CMK32GX5M2B6000C36", 34, locator: "DIMM_B1"))
+            with { Firmware = TestData.Firmware() with { BoardProduct = "PRO B760M-A" } };
+        Assert.Equal(FindingStatus.Problem, One(new XmpCheck(), current).Status);
     }
 }

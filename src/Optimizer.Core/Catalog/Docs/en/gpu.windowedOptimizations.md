@@ -4,7 +4,7 @@
 Lets older DirectX 10 and 11 games in windowed or borderless mode use the flip presentation model, which usually lowers latency.
 
 ## How it works
-Older games present frames with the "blt" model, where the desktop compositor copies every frame. With this setting, Windows upgrades them to the flip model, which hands frames to the display without the extra copy [1][2]. The app sets SwapEffectUpgradeEnable=1 in your DirectX settings and keeps your other values. Microsoft describes the switch [1][2] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Until a test on real Windows confirms the effect, the tweak is a Preview.
+Older games present frames with the "blt" model, where the desktop compositor copies every frame. With this setting, Windows upgrades them to the flip model, which hands frames to the display without the extra copy [1][2]. The app sets SwapEffectUpgradeEnable=1 in your DirectX settings and keeps your other values. Microsoft describes the switch [1][2] but does not document the registry value behind it; the app writes the value Windows itself stores for the switch. Two independent tutorials show that this value turns the switch on [3][4].
 
 ## Why it can help
 Windowed and borderless games skip the extra copy, which reduces frame latency [2].
@@ -21,3 +21,5 @@ Windows forces this on while Auto HDR is on, so there is nothing to change then 
 ## Sources
 1. https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/
 2. https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952
+3. https://www.elevenforum.com/t/turn-on-or-off-optimizations-for-windowed-games-in-windows-11.4943/
+4. https://www.thewindowsclub.com/enable-optimizations-for-windowed-games-in-windows

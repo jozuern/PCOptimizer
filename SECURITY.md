@@ -19,6 +19,7 @@ Fixes ship in a new release, and the report is credited in the release notes if 
 ## Known limits
 
 - The .NET runtime reads some switches from the user's environment variables before any code of the app runs: a profiler (`CORECLR_ENABLE_PROFILING`, notification profilers), a diagnostic port it connects to (`DOTNET_DiagnosticPorts`, where a client can attach a profiler), EventPipe traces and crash dumps written to a chosen path. The app refuses to continue as administrator when one of them is set, but code loaded through them has run by then; .NET has no setting in the app itself that turns them off. Startup hooks (`DOTNET_STARTUP_HOOKS`) are turned off in the build.
+- The storage analyzer moves files to the Recycle Bin through the Windows shell, which takes a path, not the file the app checked. The folders of the path stay held while the shell works, so none of them can be renamed or replaced by a link; a folder that a program of the user empties and turns into a mount point in that moment is only detected afterwards (the app then reports it, and the file is in the Recycle Bin, not deleted).
 
 ## Supported versions
 

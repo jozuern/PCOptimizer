@@ -94,6 +94,8 @@ public static class StorageAnalyzer
                 foreach (var e in entries)
                 {
                     if ((e.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                    // Cloud files (OneDrive online-only): reading one for the duplicate hash would download it.
+                    if (e is FileInfo && ((uint)e.Attributes & CloudOnly) != 0) continue;
                     if (e is DirectoryInfo sub)
                     {
                         stack.Push(sub);
@@ -211,18 +213,28 @@ public static class StorageAnalyzer
     }
 
     /// <summary>
-    /// Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths and paths that do not resolve
-    /// to themselves: a parent folder swapped for a junction between scan and confirmation would otherwise send a
-    /// system file to the Recycle Bin with administrator rights. A file that does not fit in the Recycle Bin (larger
-    /// than its limit, or the bin is set to delete at once) would be deleted for good without a question: Windows asks
-    /// first (FOF_WANTNUKEWARNING), and a "No" counts as a failure. Returns the failures.
+    /// Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths, system files and paths that
+    /// do not resolve to themselves: a parent folder swapped for a junction between scan and confirmation would otherwise
+    /// send a system file to the Recycle Bin with administrator rights. The folders of the path stay held while the shell
+    /// moves the file (<see cref="Platform.SafeDelete.Pin"/>), so none of them can be swapped in between; a folder emptied
+    /// and turned into a mount point in that moment is reported afterwards (the file is then in the Recycle Bin and can be
+    /// restored from there). A file that does not fit in the Recycle Bin (larger than its limit, or the bin is set to
+    /// delete at once) would be deleted for good without a question: Windows asks first (FOF_WANTNUKEWARNING), and a "No"
+    /// counts as a failure. Returns the failures.
     /// </summary>
-    public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots)
+    /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
+    public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots, bool appData = true)
     {
         var failed = new List<string>();
         foreach (var p in paths)
         {
-            if (IsProtected(p, protectedRoots) || !File.Exists(p) || !Platform.SafeDelete.ResolvesToItself(p))
+            if (IsProtected(p, protectedRoots, appData) || !File.Exists(p) || (File.GetAttributes(p) & FileAttributes.System) != 0)
+            {
+                failed.Add(p);
+                continue;
+            }
+            using var pin = Platform.SafeDelete.Pin(Path.GetDirectoryName(Path.GetFullPath(p))!);
+            if (pin is null || !Platform.SafeDelete.ResolvesToItself(p))
             {
                 failed.Add(p);
                 continue;
@@ -233,10 +245,56 @@ public static class StorageAnalyzer
                 pFrom = p + "\0\0",
                 fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
             };
-            if (SHFileOperation(ref op) != 0 || op.fAnyOperationsAborted || File.Exists(p)) failed.Add(p);
+            var result = OnStaThread(() => SHFileOperation(ref op));
+            if (!pin.StillReal())
+            {
+                failed.Add(p);
+                Log.Error("storage", $"a folder of {p} became a link while it was moved to the Recycle Bin: check the Recycle Bin");
+            }
+            else if (result != 0 || op.fAnyOperationsAborted || File.Exists(p)) failed.Add(p);
             else Log.Info("storage", $"recycled {p}");
         }
         return failed;
+    }
+
+    /// <summary>
+    /// Duplicate groups of which every copy is in <paramref name="selected"/> (the first copy can also be picked in the
+    /// list of the largest files). Recycling those would keep no copy at all.
+    /// </summary>
+    public static IReadOnlyList<DuplicateGroup> WholeGroupsSelected(IReadOnlyCollection<string> selected, IEnumerable<DuplicateGroup> groups)
+    {
+        var set = new HashSet<string>(selected, StringComparer.OrdinalIgnoreCase);
+        return groups.Where(g => g.Paths.Count > 0 && g.Paths.All(set.Contains)).ToList();
+    }
+
+    /// <summary>RECALL_ON_DATA_ACCESS, RECALL_ON_OPEN and OFFLINE: the content is not on the disk.</summary>
+    private const uint CloudOnly = 0x00400000 | 0x00040000 | 0x00001000;
+
+    /// <summary>
+    /// The shell's file operations expect a single-threaded apartment: its question before deleting a file for good (one
+    /// that does not fit in the Recycle Bin) belongs to such a thread, not to a thread-pool thread.
+    /// </summary>
+    private static T OnStaThread<T>(Func<T> work)
+    {
+        if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA) return work();
+        T result = default!;
+        Exception? error = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                result = work();
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+            }
+        }) { IsBackground = true, Name = "recycle" };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        if (error is not null) throw new InvalidOperationException("Recycle Bin operation failed", error);
+        return result;
     }
 
     private const uint FoDelete = 3;

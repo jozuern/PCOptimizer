@@ -7,7 +7,12 @@ namespace Optimizer.Core.Startup;
 public enum SignatureStatus { Signed, Unsigned, Invalid, NotFound, Error }
 
 /// <summary>Authenticode result; <see cref="Catalog"/> = signed through a Windows catalog file (most Windows binaries).</summary>
-public sealed record SignatureInfo(SignatureStatus Status, string? Publisher, bool Catalog)
+/// <param name="MicrosoftRoot">
+/// The signer's chain ends in one of Microsoft's own roots (CERT_CHAIN_POLICY_MICROSOFT_ROOT); null when the chain could
+/// not be checked. WinVerifyTrust accepts any trusted root, also one a program with admin rights added: a certificate
+/// named "Microsoft Corporation" under such a root must not count as Microsoft's.
+/// </param>
+public sealed record SignatureInfo(SignatureStatus Status, string? Publisher, bool Catalog, bool? MicrosoftRoot = null)
 {
     /// <summary>
     /// Signers of Microsoft's own files. Exact names: "Microsoft Windows Hardware Compatibility Publisher" (WHQL and
@@ -19,7 +24,7 @@ public sealed record SignatureInfo(SignatureStatus Status, string? Publisher, bo
         "Microsoft Windows", "Microsoft Corporation", "Microsoft Windows Publisher",
     };
 
-    public bool IsMicrosoft => Status == SignatureStatus.Signed && Publisher is { } p && MicrosoftSigners.Contains(p.Trim());
+    public bool IsMicrosoft => Status == SignatureStatus.Signed && MicrosoftRoot != false && Publisher is { } p && MicrosoftSigners.Contains(p.Trim());
 }
 
 /// <summary>
@@ -52,8 +57,8 @@ public static class SignatureVerifier
             var p = path;
             try
             {
-                var embedded = VerifyEmbedded(p, out var publisher);
-                if (embedded == 0) return new SignatureInfo(SignatureStatus.Signed, publisher, false);
+                var embedded = VerifyEmbedded(p, out var publisher, out var microsoftRoot);
+                if (embedded == 0) return new SignatureInfo(SignatureStatus.Signed, publisher, false, microsoftRoot);
                 // Not a signable file type (scripts, data): unsigned, not "invalid".
                 if (embedded is TrustESubjectFormUnknown or TrustEProviderUnknown) return new SignatureInfo(SignatureStatus.Unsigned, null, false);
                 if (embedded != TrustENoSignature) return new SignatureInfo(SignatureStatus.Invalid, publisher, false);
@@ -122,9 +127,10 @@ public static class SignatureVerifier
     private const uint WtdUiNone = 2, WtdRevokeNone = 0, WtdChoiceFile = 1, WtdChoiceCatalog = 2, WtdStateVerify = 1, WtdStateClose = 2;
     private const uint WtdCacheOnlyUrlRetrieval = 0x1000, WtdDisableMd2Md4 = 0x2000;
 
-    private static int VerifyEmbedded(string path, out string? publisher)
+    private static int VerifyEmbedded(string path, out string? publisher, out bool? microsoftRoot)
     {
         publisher = null;
+        microsoftRoot = null;
         var file = new WINTRUST_FILE_INFO { cbStruct = (uint)Marshal.SizeOf<WINTRUST_FILE_INFO>(), pcwszFilePath = path };
         var filePtr = Marshal.AllocHGlobal(Marshal.SizeOf<WINTRUST_FILE_INFO>());
         try
@@ -133,7 +139,7 @@ public static class SignatureVerifier
             var data = NewData(WtdChoiceFile, filePtr);
             var action = GenericVerifyV2;
             var result = WinVerifyTrust(IntPtr.Zero, ref action, ref data);
-            publisher = Publisher(data.hWVTStateData);
+            publisher = Publisher(data.hWVTStateData, out microsoftRoot);
             data.dwStateAction = WtdStateClose;
             WinVerifyTrust(IntPtr.Zero, ref action, ref data);
             return result;
@@ -194,7 +200,8 @@ public static class SignatureVerifier
                     var data = NewData(WtdChoiceCatalog, catPtr);
                     var action = GenericVerifyV2;
                     var result = WinVerifyTrust(IntPtr.Zero, ref action, ref data);
-                    var publisher = result == 0 ? Publisher(data.hWVTStateData) : null;
+                    bool? microsoftRoot = null;
+                    var publisher = result == 0 ? Publisher(data.hWVTStateData, out microsoftRoot) : null;
                     data.dwStateAction = WtdStateClose;
                     WinVerifyTrust(IntPtr.Zero, ref action, ref data);
                     if (result != 0)
@@ -210,7 +217,7 @@ public static class SignatureVerifier
                             data.pPolicyCallbackData = verInfo;
                             action = policy;
                             result = WinVerifyTrust(IntPtr.Zero, ref action, ref data);
-                            publisher = Publisher(data.hWVTStateData) ?? NullIfEmpty(Marshal.PtrToStringUni(verInfo + DriverVerSignedByOffset));
+                            publisher = Publisher(data.hWVTStateData, out microsoftRoot) ?? NullIfEmpty(Marshal.PtrToStringUni(verInfo + DriverVerSignedByOffset));
                             data.dwStateAction = WtdStateClose;
                             WinVerifyTrust(IntPtr.Zero, ref action, ref data);
                             var signerCert = Marshal.ReadIntPtr(verInfo, DriverVerSignerCertOffset);
@@ -221,7 +228,7 @@ public static class SignatureVerifier
                             Marshal.FreeHGlobal(verInfo);
                         }
                     }
-                    return new SignatureInfo(result == 0 ? SignatureStatus.Signed : SignatureStatus.Invalid, publisher, true);
+                    return new SignatureInfo(result == 0 ? SignatureStatus.Signed : SignatureStatus.Invalid, publisher, true, microsoftRoot);
                 }
                 finally
                 {
@@ -252,15 +259,20 @@ public static class SignatureVerifier
         dwProvFlags = WtdCacheOnlyUrlRetrieval | WtdDisableMd2Md4,
     };
 
-    /// <summary>Signer certificate subject (simple name) from the verification state.</summary>
-    private static string? Publisher(IntPtr state)
+    /// <summary>
+    /// Signer certificate subject (simple name) from the verification state, and whether the signer's chain ends in a
+    /// Microsoft root (null when there is no chain to check).
+    /// </summary>
+    private static string? Publisher(IntPtr state, out bool? microsoftRoot)
     {
+        microsoftRoot = null;
         if (state == IntPtr.Zero) return null;
         var provider = WTHelperProvDataFromStateData(state);
         if (provider == IntPtr.Zero) return null;
         var signer = WTHelperGetProvSignerFromChain(provider, 0, false, 0);
         if (signer == IntPtr.Zero) return null;
         var sgnr = Marshal.PtrToStructure<CRYPT_PROVIDER_SGNR>(signer);
+        if (sgnr.pChainContext != IntPtr.Zero) microsoftRoot = ChainsToMicrosoftRoot(sgnr.pChainContext);
         if (sgnr.csCertChain == 0 || sgnr.pasCertChain == IntPtr.Zero) return null;
         var cert = Marshal.PtrToStructure<CRYPT_PROVIDER_CERT>(sgnr.pasCertChain);
         if (cert.pCert == IntPtr.Zero) return null;
@@ -269,6 +281,50 @@ public static class SignatureVerifier
     }
 
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    /// <summary>
+    /// CERT_CHAIN_POLICY_MICROSOFT_ROOT on the signer's chain: Microsoft's product roots (Windows files chain to "Microsoft
+    /// Root Certificate Authority 2010"), then the Microsoft application root (2011), which the policy checks only when
+    /// asked to with its flag.
+    /// </summary>
+    private static bool? ChainsToMicrosoftRoot(IntPtr chain)
+    {
+        bool? result = null;
+        foreach (var flags in new[] { 0u, MicrosoftRootCheckApplicationRoot })
+        {
+            var para = new CERT_CHAIN_POLICY_PARA { cbSize = (uint)Marshal.SizeOf<CERT_CHAIN_POLICY_PARA>(), dwFlags = flags };
+            var status = new CERT_CHAIN_POLICY_STATUS { cbSize = (uint)Marshal.SizeOf<CERT_CHAIN_POLICY_STATUS>() };
+            if (!CertVerifyCertificateChainPolicy(CertChainPolicyMicrosoftRoot, chain, ref para, ref status)) continue;
+            if (status.dwError == 0) return true;
+            result = false;
+        }
+        return result;
+    }
+
+    private static readonly IntPtr CertChainPolicyMicrosoftRoot = 7;
+    private const uint MicrosoftRootCheckApplicationRoot = 0x00020000;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CERT_CHAIN_POLICY_PARA
+    {
+        public uint cbSize;
+        public uint dwFlags;
+        public IntPtr pvExtraPolicyPara;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CERT_CHAIN_POLICY_STATUS
+    {
+        public uint cbSize;
+        public uint dwError;
+        public int lChainIndex;
+        public int lElementIndex;
+        public IntPtr pvExtraPolicyStatus;
+    }
+
+    [DllImport("crypt32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CertVerifyCertificateChainPolicy(IntPtr policyOid, IntPtr chainContext, ref CERT_CHAIN_POLICY_PARA para, ref CERT_CHAIN_POLICY_STATUS status);
 
     // DRIVER_VER_INFO (softpub.h, x64): cbStruct@0, dwReserved1@8, dwReserved2@16, dwPlatform@24, dwVersion@28,
     // wszVersion[260]@32, wszSignedBy[260]@552, pcSignerCertContext@1072, sOSVersionLow@1080, sOSVersionHigh@1088,

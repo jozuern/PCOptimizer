@@ -36,7 +36,7 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new DiskHealthCheck(),
         new BackgroundCpuCheck(),
         new GpuPreferenceCheck(registry),
-        new LeftoverCheck(),
+        new LeftoverCheck(bcd),
         new MonitorOnIgpuCheck(),
         new BasicDisplayAdapterCheck(),
         new TurboDisabledCheck(),
@@ -70,8 +70,10 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
     public static IReadOnlyList<Finding> Evaluate(HardwareProfile profile, IEnumerable<IFindingCheck> checks, CatalogData catalog)
     {
         var results = new List<Finding>();
+        var virtualMachine = profile.System?.IsVirtualMachine == true;
         foreach (var check in checks)
         {
+            if (virtualMachine && check is IPhysicalHardwareCheck) continue;
             try
             {
                 results.AddRange(check.Evaluate(profile, catalog).ToList());

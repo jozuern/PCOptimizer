@@ -17,7 +17,7 @@ public sealed record StoredValue(bool Existed, string? Kind = null, string? Data
                                                   (!IsRegistryKind(Kind) || !IsRegistryKind(other.Kind) || string.Equals(Kind, other.Kind, StringComparison.Ordinal))));
 
     // Other actions use the kind for their own purposes (a label, or the raw bytes of a startup entry).
-    private static bool IsRegistryKind(string? kind) => kind is "dword" or "qword" or "string" or "expandString" or "multiString" or "binary" or "none";
+    private static bool IsRegistryKind(string? kind) => kind is "dword" or "qword" or "string" or "expandString" or "multiString" or "binary" or "none" || kind?.StartsWith("raw:", StringComparison.Ordinal) == true;
 }
 
 /// <summary>What an undo did with one target.</summary>
@@ -112,6 +112,13 @@ public abstract class TweakAction
 
     /// <summary>Whether the scan reads this action's state ahead of the tweak detection (<see cref="Tweaks.TweakEngine.PrefetchReads"/>).</summary>
     public virtual EarlyRead EarlyRead => EarlyRead.None;
+
+    /// <summary>
+    /// What the backup records as applied after <see cref="Apply"/> ran on this instance: the value read back, or the
+    /// desired value for a change that waits for a restart. Actions that need to remember how they applied (a power plan
+    /// that was created rather than found) add that to the value.
+    /// </summary>
+    public virtual StoredValue? AppliedValue(ActionContext c) => TakesEffectAfterRestart ? Desired(c) : Read(c);
 
     public virtual ActionState State(ActionContext c)
     {

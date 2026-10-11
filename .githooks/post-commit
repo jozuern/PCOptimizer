@@ -1,0 +1,14 @@
+#!/bin/sh
+# After a commit of named paths only ("git commit -- file"), git commits from a temporary index: the version that
+# pre-commit raised there reaches the commit, but the real index keeps the old csproj, and the next commit would stage
+# that lower version. When the working tree matches the commit, the index entry is set to the commit as well.
+csproj=src/Optimizer.App/Optimizer.App.csproj
+version_of() { sed -n 's|.*<Version>\([0-9]*\.[0-9]*\.[0-9]*\)</Version>.*|\1|p' | head -n 1; }
+
+head=$(git show "HEAD:$csproj" 2>/dev/null | version_of)
+staged=$(git show ":$csproj" 2>/dev/null | version_of)
+[ -z "$head" ] || [ -z "$staged" ] || [ "$head" = "$staged" ] && exit 0
+if git diff --quiet HEAD -- "$csproj"; then
+    git reset -q HEAD -- "$csproj"
+fi
+exit 0

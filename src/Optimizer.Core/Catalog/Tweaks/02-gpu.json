@@ -3,7 +3,10 @@
     {
       "id": "gpu.hags",
       "undocumented": true,
-      "preview": true,
+      "proof": [
+        "winaero.com (Turn On or Off Hardware Accelerated GPU Scheduling): HwSchMode 2 turns the Settings switch on and 1 turns it off",
+        "itechtics.com (Hardware-accelerated GPU scheduling): HwSchMode 2 turns it on after a restart and 1 turns it off again"
+      ],
       "category": "Graphics",
       "impact": {
         "gaming": 0,
@@ -51,14 +54,19 @@
       "sources": [
         "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/",
         "https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS_G.md",
-        "https://www.intel.com/content/www/us/en/support/articles/000056788/graphics.html"
+        "https://www.intel.com/content/www/us/en/support/articles/000056788/graphics.html",
+        "https://winaero.com/turn-on-or-off-hardware-accelerated-gpu-scheduling-in-windows-10/",
+        "https://itechtics.com/hardware-accelerated-gpu/"
       ],
       "recommendReasonKey": "rec.frameGeneration"
     },
     {
       "id": "gpu.windowedOptimizations",
       "undocumented": true,
-      "preview": true,
+      "proof": [
+        "elevenforum.com tutorial 4943: SwapEffectUpgradeEnable=1 in DirectXUserGlobalSettings turns \"Optimizations for windowed games\" on, shown with screenshots",
+        "thewindowsclub.com (Enable Optimizations for windowed games): the same value turns the feature on after a restart"
+      ],
       "category": "Graphics",
       "impact": {
         "gaming": 1,
@@ -99,7 +107,9 @@
       },
       "sources": [
         "https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/",
-        "https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952"
+        "https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952",
+        "https://www.elevenforum.com/t/turn-on-or-off-optimizations-for-windowed-games-in-windows-11.4943/",
+        "https://www.thewindowsclub.com/enable-optimizations-for-windowed-games-in-windows"
       ],
       "recommendReasonKey": "rec.windowedFlip"
     },
@@ -150,7 +160,12 @@
     {
       "id": "gpu.gameDvrOff",
       "undocumented": true,
-      "preview": true,
+      "proof": [
+        "tenforums.com tutorial 8637: AppCaptureEnabled and GameDVR_Enabled 0 turn Game Bar recording off, with reg files and screenshots",
+        "thewindowsclub.com (Enable or disable Game DVR): the same two values, 1 on and 0 off",
+        "elevenforum.com tutorial 17900: HistoricalCaptureEnabled 0 turns \"Record what happened\" off in Settings > Gaming > Captures, with reg files and screenshots; Microsoft's AppCaptureSettings API names the same setting IsHistoricalCaptureEnabled",
+        "VM test on Windows 11 26H2, 2026-10-11: apply and undo through the app's engine; all three values stayed in place and the tweak showed as applied (the VM has no video encoder, so the recording itself could not be tried)"
+      ],
       "category": "Graphics",
       "impact": {
         "gaming": 0,
@@ -207,7 +222,11 @@
       },
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-applicationmanagement",
-        "https://github.com/ChrisTitusTech/winutil"
+        "https://github.com/ChrisTitusTech/winutil",
+        "https://www.tenforums.com/tutorials/8637-game-bar-turn-off-windows-10-a.html",
+        "https://www.thewindowsclub.com/enable-disable-game-dvr-windows-10",
+        "https://www.elevenforum.com/t/enable-or-disable-record-what-happened-for-gaming-captures-in-windows-11.17900/",
+        "https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.appcapturesettings"
       ],
       "recommendReasonKey": "rec.backgroundRecording"
     },

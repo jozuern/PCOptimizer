@@ -10,7 +10,7 @@ Three Windows policies under SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\
 Paint stays a plain drawing app, and nothing you draw or type there goes to an AI service.
 
 ## Evidence
-Documented Windows policies [1]. Generative erase and background removal in Paint have no policy, so they stay. No effect on frame rate or latency.
+Documented Windows policies [1]. Generative erase and background removal in Paint have no documented policy, so they stay. The values some tools set for them (DisableGenerativeErase, DisableRemoveBackground) changed nothing in a VM test with Paint 11.2605, while Image Creator disappeared with this tweak. No effect on frame rate or latency.
 
 ## Trade-offs & risks
 The AI buttons in Paint are gone.

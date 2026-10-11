@@ -175,7 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
             foreach (var command in new CommunityToolkit.Mvvm.Input.IRelayCommand[]
                      {
                          RunActionCommand, ApplyRecommendedCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
-                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand,
+                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand,
                      })
                 command.NotifyCanExecuteChanged();
         };
@@ -312,9 +312,17 @@ public sealed partial class MainViewModel : ObservableObject
     public string? VirusTotalKey => Optimizer.Core.Startup.Dpapi.Unprotect(_settings.VirusTotalKey);
 
     partial void OnShowPassedChanged(bool value) => Rebuild();
-    partial void OnOnlyRecommendedChanged(bool value) => FillTweaks();
-    partial void OnTweakSearchChanged(string value) => FillTweaks();
-    partial void OnOnlyProfileChanged(bool value) => FillTweaks();
+    partial void OnOnlyRecommendedChanged(bool value) => RefillTweaks();
+    partial void OnTweakSearchChanged(string value) => RefillTweaks();
+    partial void OnOnlyProfileChanged(bool value) => RefillTweaks();
+
+    /// <summary>A filter or the search changed: the rows are created again, and the selected tweak stays selected if it is still listed.</summary>
+    private void RefillTweaks()
+    {
+        var selectedKey = SelectedItem?.Key;
+        FillTweaks();
+        RestoreSelection(selectedKey);
+    }
 
     /// <summary>The user picked another profile: re-rate everything (nothing on the PC changes).</summary>
     partial void OnSelectedProfileChanged(ProfileOption? value)
@@ -496,7 +504,10 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenReleasePage() => OpenLink(ReleaseCheck.LatestReleaseUrl);
 
-    /// <summary>Opens the GitHub bug form with version and Windows build filled in; nothing is sent until the user submits it there.</summary>
+    /// <summary>
+    /// Opens the GitHub bug form with version and Windows build filled in. Both are part of the link, so GitHub receives
+    /// them when the browser opens it (docs/PRIVACY.md); the report itself is sent only when the user submits it there.
+    /// </summary>
     [RelayCommand]
     private void ReportProblem() =>
         OpenLink($"https://github.com/{ReleaseCheck.Repository}/issues/new?template=bug_report.yml" +
@@ -767,6 +778,9 @@ public sealed partial class MainViewModel : ObservableObject
     private Task? _scan;
     private bool _rescanRequested;
 
+    /// <summary>The scan that runs now, or a finished task.</summary>
+    public Task ScanInProgress => _scan is { IsCompleted: false } scan ? scan : Task.CompletedTask;
+
     /// <summary>
     /// One scan at a time. A call while a scan runs asks for one more scan after it (the running one may have read the
     /// system before a change finished) and returns the task that ends after both, so two scans never race and an
@@ -806,34 +820,13 @@ public sealed partial class MainViewModel : ObservableObject
             // After a change only what a change can affect is read again; "Scan again" reads everything.
             var previous = _reuseSlowParts ? Profile : null;
             _reuseSlowParts = false;
-            var scanner = new HardwareScanner(_catalog);
-            var engine = _services.Engine;
-            var visible = _services.Catalog.Visible;
-            var registry = _services.Context.Registry;
-            var bcd = _services.BcdElements;
+            var service = ScanService;
             var lastSample = _lastBackgroundSample;
-            // The tweak reads that start PowerShell, DISM or bcdedit run beside the probes; the detection after the scan
-            // then finds them done (one after another they took longer than the whole hardware scan).
-            var toolReads = engine.PrefetchReads(visible, Optimizer.Core.Actions.EarlyRead.WithScan);
-            toolReads.Forget("early tool reads");
             // Scan and findings in one trip to the background: at the start the UI thread is busy drawing the window,
-            // and a return to it in between waited for that.
-            var (profile, findings) = await Task.Run(async () =>
-            {
-                // The page is ready without the 3 second background CPU sample; that one check follows when it is done.
-                // The CPU sample starts after the tools of the early reads ended (they would count as background activity).
-                var scanned = await scanner.ScanAsync(progress, previous: previous, waitForBackgroundSample: false, sampleAfter: toolReads).ConfigureAwait(false);
-                // The scan's own NVIDIA read is closed now: the detection's opens while the findings are evaluated.
-                engine.PrefetchReads(visible, Optimizer.Core.Actions.EarlyRead.AfterScan).Forget("early NVIDIA reads");
-                // A quick rescan after a change reuses the last finished sample.
-                if (scanned.Extras is { BackgroundCpu: null } && scanner.PendingBackgroundSample is null && lastSample is { } last)
-                    scanned = HardwareScanner.WithBackgroundSample(scanned, last);
-                var step = System.Diagnostics.Stopwatch.StartNew();
-                var evaluated = new FindingEngine(_catalog, registry, bcd).Evaluate(scanned);
-                Log.Debug("scan", "findings evaluated", new { ms = step.ElapsedMilliseconds });
-                return (scanned, evaluated);
-            });
-            pendingSample = scanner.PendingBackgroundSample;
+            // and a return to it in between waited for that. The page is ready without the 3 second background CPU
+            // sample; that one check follows when it is done.
+            var (profile, findings, sampleTask) = await Task.Run(() => service.RunAsync(progress, previous, lastSample, waitForBackgroundSample: false));
+            pendingSample = sampleTask;
             _findings = findings;
             Profile = profile;
             await RefreshTweaksAsync();
@@ -841,6 +834,7 @@ public sealed partial class MainViewModel : ObservableObject
             var rows = System.Diagnostics.Stopwatch.StartNew();
             Rebuild();
             Network.Rebuild();
+            foreach (var page in new PageViewModel[] { Debloat, Apps, Tools, Health }) page.OnProfileChanged();
             Log.Debug("scan", "rows built", new { ms = rows.ElapsedMilliseconds });
         }
         catch (Exception ex)
@@ -860,6 +854,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>? _lastBackgroundSample;
 
+    /// <summary>The scan pipeline (hardware probes, reads ahead for the tweak detection, checks), the same as --report uses.</summary>
+    private ScanService ScanService => new(_catalog, _services.Context.Registry, _services.BcdElements, _services.Engine, _services.Catalog.Visible);
+
     /// <summary>
     /// The 3 second background CPU sample finished after the page was ready: its check (F11) is evaluated now. Skipped
     /// when a newer scan replaced the result meanwhile; that scan's own sample follows.
@@ -878,10 +875,9 @@ public sealed partial class MainViewModel : ObservableObject
         }
         _lastBackgroundSample = sample;
         if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
-        var completed = HardwareScanner.WithBackgroundSample(scanned, sample);
         var registry = _services.Context.Registry;
-        var bcd = _services.BcdElements;
-        var findings = await Task.Run(() => new FindingEngine(_catalog, registry, bcd).Evaluate(completed));
+        var service = ScanService;
+        var (completed, findings) = await Task.Run(() => service.WithSample(scanned, sample));
         var facts = await Task.Run(() => FactsBuilder.Build(completed, findings, _catalog, registry));
         if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
         _findings = findings;
@@ -890,7 +886,11 @@ public sealed partial class MainViewModel : ObservableObject
         // sample changes only its own check, which no tweak reads today. Both happen only when a tweak depends on it.
         if (TweaksDependOn(_facts, facts))
         {
+            // A change that runs now rescans when it is done; states read in the middle of it would only be older.
+            if (ChangeGate.Instance.Busy) return;
             await RefreshTweaksAsync();
+            // A scan or change that started meanwhile has newer states: its rebuild follows.
+            if (!ReferenceEquals(Profile, completed) || IsScanning) return;
             Rebuild();
             Network.Rebuild();
             return;
@@ -1066,16 +1066,19 @@ public sealed partial class MainViewModel : ObservableObject
         // Called from the switch's binding setter: the confirmation dialog must not open inside the click and the
         // switch's property update (undo reaches ShowDialog before its first await), as SwitchRow.RunAsync does.
         await Task.Yield();
+        var done = false;
         try
         {
             if (!CanChange) ShowResult(Loc.Instance["Change_Busy"]);
-            else if (on && !item.IsOn) await Runner.ApplyAsync(item.Tweak);
-            else if (!on && item.HasBackup) await Runner.UndoAsync(item.Tweak);
+            else if (on && !item.IsOn) done = await Runner.ApplyAsync(item.Tweak);
+            else if (!on && item.HasBackup) done = await Runner.UndoAsync(item.Tweak);
             else if (!on) ShowResult(Loc.Instance["Tweak_NoBackup"]);
         }
         finally
         {
-            item.ResetSwitch();
+            // A switch that was just turned on and confirmed stays on until the rescan rebuilds the row (flipping back for a
+            // few seconds reads like a failure); cancelled or failed, it shows the real state again.
+            item.ResetSwitch(done ? on : null);
         }
     }
 
@@ -1167,6 +1170,10 @@ public sealed partial class MainViewModel : ObservableObject
     private IReadOnlyList<Optimizer.Core.Backup.TweakBackup> _backups = [];
     private bool? _restoreEnabled;
 
+    // The definitions of the backups, resolved with them in the background (a definition stored with a backup would
+    // otherwise be read from its file again on the UI thread at every rebuild).
+    private IReadOnlyDictionary<string, TweakDefinition?> _backupTweaks = new Dictionary<string, TweakDefinition?>();
+
     // States of changes the tweak lists do not cover (startup entries, services, tasks, the restore point frequency),
     // so their Changes rows show On or Off like the others.
     private IReadOnlyDictionary<string, TweakState> _otherChangeStates = new Dictionary<string, TweakState>();
@@ -1177,22 +1184,23 @@ public sealed partial class MainViewModel : ObservableObject
         var engine = _services.Engine;
         var facts = _facts;
         var known = _tweakStates.Concat(_deviceStates).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
-        (_backups, _restoreEnabled, _otherChangeStates) = await Task.Run(() =>
+        (_backups, _restoreEnabled, _otherChangeStates, _backupTweaks) = await Task.Run(() =>
         {
             var backups = store.All();
-            return (backups, SafeRestoreEnabled(), OtherChangeStates(engine, backups, known, facts));
+            var tweaks = backups.ToDictionary(b => b.TweakId, b => engine.Resolve(b), StringComparer.Ordinal);
+            return (backups, SafeRestoreEnabled(), OtherChangeStates(tweaks, engine, backups, known, facts), (IReadOnlyDictionary<string, TweakDefinition?>)tweaks);
         });
         BuildChanges();
     }
 
-    private static IReadOnlyDictionary<string, TweakState> OtherChangeStates(
+    private static IReadOnlyDictionary<string, TweakState> OtherChangeStates(IReadOnlyDictionary<string, TweakDefinition?> tweaks,
         TweakEngine engine, IReadOnlyList<Optimizer.Core.Backup.TweakBackup> backups, HashSet<string> known, Facts facts)
     {
         var states = new Dictionary<string, TweakState>(StringComparer.Ordinal);
         foreach (var b in backups.Where(b => !known.Contains(b.TweakId)))
         {
             // A retired tweak has no actions: its state cannot be read, only undone.
-            if (engine.Resolve(b.TweakId) is not { Actions.Count: > 0 } t) continue;
+            if (tweaks.GetValueOrDefault(b.TweakId) is not { Actions.Count: > 0 } t) continue;
             try
             {
                 states[b.TweakId] = engine.DetectState(t, facts);
@@ -1209,12 +1217,6 @@ public sealed partial class MainViewModel : ObservableObject
         _tweakStates.Concat(_deviceStates).Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet();
 
     // ---------------- building view state ----------------
-
-    /// <summary>
-    /// Theme switched (in Settings or by Windows). Status colors are resource references (<see cref="Views.ThemeBrush"/>)
-    /// and follow by themselves, so no rows are built again; the window renders the inspector document again.
-    /// </summary>
-    public void OnThemeChanged() => Health.OnThemeChanged();
 
     /// <summary>Recreates all language-dependent items (after a scan, a language switch, a profile or Expert mode switch).</summary>
     public void Rebuild()
@@ -1333,27 +1335,23 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Groups open on the Tweaks page this session: recommended and against the profile start open, the sections closed.</summary>
     private readonly HashSet<string> _openGroups = [RecommendedGroup, AgainstGroup];
 
-    /// <summary>
-    /// The sections of the Tweaks page, in this order: the catalog's categories (two dozen, some with one or two tweaks)
-    /// combined by topic, gaming first. The categories stay in the catalog, the explanation pages and the tests.
-    /// </summary>
+    /// <summary>The sections of the Tweaks page (<see cref="Optimizer.Core.Tweaks.TweakSections"/>) with their icons.</summary>
     private static readonly (string Key, SymbolRegular Icon, string[] Categories)[] TweakSections =
-    [
-        ("performance", SymbolRegular.Flash24, ["Power", "Graphics", "Input", "Memory", "Storage", "Battery", "Quiet", "Leftovers", "Priorities", "Fixes"]),
-        ("network", SymbolRegular.Router24, ["Network"]),
-        ("background", SymbolRegular.Alert24, ["Background", "Focus", "Updates", "Services", "Startup"]),
-        ("privacy", SymbolRegular.EyeOff24, ["Privacy", "Permissions", "AI"]),
-        ("security", SymbolRegular.Shield24, ["Security", "System", "Expert", "Features"]),
-        ("desktop", SymbolRegular.Window24, ["Explorer", "Personalize", "Visual", "Productivity"]),
-        ("browser", SymbolRegular.Globe24, ["Browser"]),
-    ];
+        Optimizer.Core.Tweaks.TweakSections.All.Select(s => (s.Key, SectionIcon(s.Key), s.Categories)).ToArray();
 
-    /// <summary>The section a catalog category belongs to; a category added later goes to Security and system until it gets one.</summary>
-    private static int SectionIndex(string category)
+    private static SymbolRegular SectionIcon(string key) => key switch
     {
-        var i = Array.FindIndex(TweakSections, s => s.Categories.Contains(category));
-        return i < 0 ? Array.FindIndex(TweakSections, s => s.Key == "security") : i;
-    }
+        "performance" => SymbolRegular.Flash24,
+        "network" => SymbolRegular.Router24,
+        "background" => SymbolRegular.Alert24,
+        "privacy" => SymbolRegular.EyeOff24,
+        "security" => SymbolRegular.Shield24,
+        "desktop" => SymbolRegular.Window24,
+        "browser" => SymbolRegular.Globe24,
+        _ => SymbolRegular.Apps24,
+    };
+
+    private static int SectionIndex(string category) => Optimizer.Core.Tweaks.TweakSections.IndexOf(category);
 
     private Dictionary<string, int>? _categoryOrder;
 
@@ -1515,7 +1513,7 @@ public sealed partial class MainViewModel : ObservableObject
         ChangeRecords.Clear();
         foreach (var b in _backups.OrderByDescending(b => b.LastApplied))
         {
-            var t = ResolveTweak(b.TweakId);
+            var t = _services.Catalog.Get(b.TweakId) ?? _findings.Select(f => f.Fix).FirstOrDefault(f => f?.Id == b.TweakId) ?? _backupTweaks.GetValueOrDefault(b.TweakId);
             var title = t is null ? b.TweakId : Runner.Title(t);
             var state = _tweakStates.Concat(_deviceStates).FirstOrDefault(s => s.Tweak.Id == b.TweakId)?.State
                 ?? (_otherChangeStates.TryGetValue(b.TweakId, out var other) ? other : null);

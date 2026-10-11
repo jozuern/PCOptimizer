@@ -88,8 +88,9 @@ public sealed class BackupStore
         Root = root;
         _secure = secure;
         _userSid = userSid;
-        // Locked before the subfolders are created, so new folders inherit the locked permissions.
-        if (secure) SecureFolder.Lock(root);
+        // Locked before the subfolders are created, so new folders inherit the locked permissions. A folder that cannot be
+        // made safe is refused: restoring values from files a standard user can change would be a way to admin rights.
+        if (secure && !SecureFolder.Lock(root)) throw new UnauthorizedAccessException($"{root} cannot be locked to administrators");
         Directory.CreateDirectory(BackupFolder);
         Directory.CreateDirectory(HistoryFolder);
         Directory.CreateDirectory(PendingUndoFolder);
@@ -146,17 +147,28 @@ public sealed class BackupStore
 
     /// <summary>
     /// The tweak's backup, or null when there is none. A file that exists but stays locked (another process is replacing
-    /// it) throws <see cref="BackupUnreadableException"/>: treating it as "no backup" would let an apply record the
-    /// changed values as originals, or let an undo report success without restoring anything.
+    /// it), or a damaged file that cannot be moved aside, throws <see cref="BackupUnreadableException"/>: treating it as
+    /// "no backup" would let an apply record the changed values as originals (and overwrite the file that still holds
+    /// them), or let an undo report success without restoring anything.
     /// </summary>
     public TweakBackup? Get(string tweakId)
     {
         var file = FileFor(tweakId);
         if (!File.Exists(file) || !Trusted(file)) return null;
         var (backup, damaged) = TryRead(file);
-        if (damaged) Quarantine(file);
-        else if (backup is null) throw new BackupUnreadableException(file);
+        if (damaged && !Quarantine(file)) throw new BackupUnreadableException(file);
+        if (!damaged && backup is null) throw new BackupUnreadableException(file);
         return OfAnotherAccount(backup) ? null : backup;
+    }
+
+    /// <summary>
+    /// A backup of the tweak in the shared folder that belongs to another Windows account (written by an older version):
+    /// it holds that account's originals, so this account must not apply the tweak and overwrite it.
+    /// </summary>
+    public bool HeldByAnotherAccount(string tweakId)
+    {
+        var shared = FileIn(BackupFolder, tweakId);
+        return File.Exists(shared) && Trusted(shared) && OfAnotherAccount(TryRead(shared).Backup);
     }
 
     /// <summary>True when the tweak has a backup of this account, also when the file is locked right now (undo then reports it).</summary>
@@ -199,18 +211,23 @@ public sealed class BackupStore
     /// targets (left after a partial undo) goes to the shared folder, and the account's copy is removed: it would be
     /// read first and bring back entries that were already restored.
     /// </summary>
+    /// A backup in the shared folder that belongs to another account is never deleted or overwritten.
+    /// </summary>
     public void Save(TweakBackup backup)
     {
+        var shared = FileIn(BackupFolder, backup.TweakId);
         if (UserFolder is { } user && backup.Entries.Any(e => IsPerUser(e.TargetKey)))
         {
             backup.Owner = _userSid;
             Directory.CreateDirectory(user);
             WriteDurably(FileIn(user, backup.TweakId), JsonSerializer.Serialize(backup, Json));
-            var shared = FileIn(BackupFolder, backup.TweakId);
-            if (File.Exists(shared)) File.Delete(shared);
+            if (File.Exists(shared) && !HeldByAnotherAccount(backup.TweakId)) File.Delete(shared);
             return;
         }
-        WriteDurably(FileIn(BackupFolder, backup.TweakId), JsonSerializer.Serialize(backup, Json));
+        // Only changes to the whole PC are left: they concern every account, so the backup belongs to none.
+        backup.Owner = null;
+        if (HeldByAnotherAccount(backup.TweakId)) throw new IOException($"{shared} holds the original values of another Windows account; it is not overwritten.");
+        WriteDurably(shared, JsonSerializer.Serialize(backup, Json));
         if (UserFolder is { } folder && FileIn(folder, backup.TweakId) is var own && File.Exists(own)) File.Delete(own);
     }
 
@@ -218,20 +235,10 @@ public sealed class BackupStore
     /// Written to a temporary file, flushed to the disk and then moved over the old file: a power loss right after a
     /// boot configuration change leaves either the old or the new backup, never an empty one.
     /// </summary>
-    private static void WriteDurably(string file, string json)
-    {
-        var tmp = file + ".tmp";
-        using (var stream = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
-        using (var writer = new StreamWriter(stream, new System.Text.UTF8Encoding(false)))
-        {
-            writer.Write(json);
-            writer.Flush();
-            stream.Flush(flushToDisk: true);
-        }
-        File.Move(tmp, file, overwrite: true);
-    }
+    private static void WriteDurably(string file, string json) => Platform.DurableFile.WriteAllText(file, json);
 
-    private static void Quarantine(string file)
+    /// <summary>Moves a damaged backup aside (it still holds the originals). False when it could not be moved.</summary>
+    private static bool Quarantine(string file)
     {
         try
         {
@@ -239,10 +246,12 @@ public sealed class BackupStore
             if (File.Exists(target)) target = $"{file}-{DateTime.Now:yyyyMMdd-HHmmss}{DamagedSuffix}";
             File.Move(file, target);
             Log.Error("backup", $"unreadable backup moved to {target}; the tweak cannot be applied again until it is removed");
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Log.Warn("backup", $"unreadable backup {file} could not be moved aside: {ex.Message}");
+            return false;
         }
     }
 

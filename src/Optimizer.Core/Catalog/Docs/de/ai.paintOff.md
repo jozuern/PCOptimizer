@@ -10,7 +10,7 @@ Drei Windows-Richtlinien unter SOFTWARE\Microsoft\Windows\CurrentVersion\Policie
 Paint bleibt ein einfaches Malprogramm, und nichts, was du dort zeichnest oder tippst, geht an einen KI-Dienst.
 
 ## Belege
-Von Microsoft beschriebene Windows-Richtlinien [1]. Für das generative Radieren und das Entfernen des Hintergrunds gibt es keine Richtlinie, sie bleiben. Kein Einfluss auf Framerate oder Latenz.
+Von Microsoft beschriebene Windows-Richtlinien [1]. Für das generative Radieren und das Entfernen des Hintergrunds gibt es keine dokumentierte Richtlinie, sie bleiben. Die Werte, die manche Tools dafür setzen (DisableGenerativeErase, DisableRemoveBackground), änderten in einem VM-Test mit Paint 11.2605 nichts, während Image Creator mit diesem Tweak verschwand. Kein Einfluss auf Framerate oder Latenz.
 
 ## Nachteile & Risiken
 Die KI-Schaltflächen in Paint fallen weg.

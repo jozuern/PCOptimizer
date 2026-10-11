@@ -1,5 +1,5 @@
 {
-  "_comment": "winget catalog (IDs verified in the winget-pkgs repository). scope machine = winget runs elevated; scope user = per-user installer, started as the signed-in user (this is not winget --scope). detect = regex on installed program names (empty = cannot be detected reliably). Microsoft.DirectX is not offered: since the manifest change winget picks the packaged-app framework, not dxwebsetup.exe.",
+  "_comment": "winget catalog (IDs verified in the winget-pkgs repository). scope machine = winget runs elevated; scope user = per-user installer, started as the signed-in user (this is not winget --scope). detect = regex on installed program names (empty = cannot be detected reliably). installerType = winget --installer-type: Microsoft.DirectX uses exe, because its manifest also offers the packaged-app framework, which winget picks by default and which does not install the runtime of older games (dxwebsetup.exe does).",
   "apps": [
     {
       "id": "Valve.Steam",
@@ -201,6 +201,79 @@
       "detect": "^Microsoft Visual C\\+\\+ (v14|20(15|17|19|22)).*x64",
       "en": "Runtime libraries most games and programs need.",
       "de": "Laufzeitbibliotheken, die die meisten Spiele und Programme brauchen."
+    },
+    {
+      "id": "Microsoft.VCRedist.2015+.x86",
+      "name": "Visual C++ v14 Redistributable (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ (v14|20(15|17|19|22)).*x86",
+      "en": "32-bit runtime libraries many games and launchers still need.",
+      "de": "32-Bit-Laufzeitbibliotheken, die viele Spiele und Launcher noch brauchen."
+    },
+    {
+      "id": "Microsoft.VCRedist.2013.x64",
+      "name": "Visual C++ 2013 Redistributable (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2013 Redistributable \\(x64\\)",
+      "en": "Runtime libraries of games from around 2014 to 2016.",
+      "de": "Laufzeitbibliotheken von Spielen aus etwa 2014 bis 2016."
+    },
+    {
+      "id": "Microsoft.VCRedist.2013.x86",
+      "name": "Visual C++ 2013 Redistributable (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2013 Redistributable \\(x86\\)",
+      "en": "32-bit version for older games from around 2014 to 2016.",
+      "de": "32-Bit-Version für ältere Spiele aus etwa 2014 bis 2016."
+    },
+    {
+      "id": "Microsoft.VCRedist.2012.x64",
+      "name": "Visual C++ 2012 Redistributable (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2012 Redistributable \\(x64\\)",
+      "en": "Runtime libraries of games from around 2013.",
+      "de": "Laufzeitbibliotheken von Spielen aus etwa 2013."
+    },
+    {
+      "id": "Microsoft.VCRedist.2012.x86",
+      "name": "Visual C++ 2012 Redistributable (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2012 Redistributable \\(x86\\)",
+      "en": "32-bit version for older games from around 2013.",
+      "de": "32-Bit-Version für ältere Spiele aus etwa 2013."
+    },
+    {
+      "id": "Microsoft.VCRedist.2010.x64",
+      "name": "Visual C++ 2010 Redistributable (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2010\\s+x64 Redistributable",
+      "en": "Runtime libraries of games from around 2010 to 2012.",
+      "de": "Laufzeitbibliotheken von Spielen aus etwa 2010 bis 2012."
+    },
+    {
+      "id": "Microsoft.VCRedist.2010.x86",
+      "name": "Visual C++ 2010 Redistributable (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2010\\s+x86 Redistributable",
+      "en": "32-bit version for older games from around 2010 to 2012.",
+      "de": "32-Bit-Version für ältere Spiele aus etwa 2010 bis 2012."
+    },
+    {
+      "id": "Microsoft.DirectX",
+      "name": "DirectX End-User Runtime",
+      "category": "runtimes",
+      "scope": "machine",
+      "installerType": "exe",
+      "detect": "",
+      "en": "Libraries from the old DirectX SDK (D3DX, XAudio 2.7, XInput 1.3) that many older games need. It does not change the DirectX built into Windows. The installer downloads them from Microsoft.",
+      "de": "Bibliotheken aus dem alten DirectX SDK (D3DX, XAudio 2.7, XInput 1.3), die viele ältere Spiele brauchen. Das in Windows eingebaute DirectX bleibt unverändert. Das Installationsprogramm lädt sie von Microsoft."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.10",

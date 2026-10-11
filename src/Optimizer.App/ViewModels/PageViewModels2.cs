@@ -402,6 +402,9 @@ public sealed partial class ServiceRowVm : ObservableObject
 
     private async Task ChangeAsync(StartOption? oldValue, StartOption newValue)
     {
+        // Not inside the combo box's selection change: the confirmation dialog opens from here, and setting the selection
+        // back after a cancel would otherwise happen while the combo box is still changing it.
+        await Task.Yield();
         var written = false;
         try
         {
@@ -590,6 +593,8 @@ public sealed partial class ProgramRow(DesktopProgram program) : ObservableObjec
 
 public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
+    /// <summary>The installed state of the catalog apps comes from the scan result (installed programs).</summary>
+    protected override bool UsesProfile => true;
     private List<ProgramRow> _allPrograms = [];
     private bool _restorePointReady;
 
@@ -877,6 +882,8 @@ public sealed record StepRow(string Text, bool Ok, string? Detail)
 
 public sealed partial class ToolsViewModel(MainViewModel owner, AppServices services, ChangeRunner runner, IDialogs dialogs) : PageViewModel(owner)
 {
+    /// <summary>The game lists come from the scan result.</summary>
+    protected override bool UsesProfile => true;
     private CancellationTokenSource? _scanCancel;
     private IReadOnlyList<string> _protected = [];
 
@@ -1040,6 +1047,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
                 LargestFiles.Add(new FileRow(f.Path, f.Bytes, f.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd"), f.CanDelete));
             foreach (var f in report.LargestFolders.Take(20))
                 LargestFolders.Add(new FolderRow(f.Path, CleanupViewModel.Size(f.Bytes), Loc.Instance.Format("Storage_Files", f.Files)));
+            _duplicateGroups = report.Duplicates.Take(50).ToList();
             foreach (var g in report.Duplicates.Take(50))
                 foreach (var (p, i) in g.Paths.Select((p, i) => (p, i)))
                     Duplicates.Add(new FileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "", i > 0));
@@ -1059,6 +1067,8 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         }
     }
 
+    private IReadOnlyList<DuplicateGroup> _duplicateGroups = [];
+
     [RelayCommand]
     private void StopStorage() => _scanCancel?.Cancel();
 
@@ -1068,6 +1078,12 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         if (IsScanningStorage) return; // the lists are being refilled
         var selected = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanDelete).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (selected.Count == 0) return;
+        // The first copy of a duplicate group can also be picked under the largest files: one copy always stays.
+        if (StorageAnalyzer.WholeGroupsSelected(selected, _duplicateGroups) is [var whole, ..])
+        {
+            Owner.ShowResult(Loc.Instance.Format("Storage_KeepOneCopy", whole.Paths[0]), Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            return;
+        }
         var text = Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10)));
         // The Recycle Bin belongs to the account this process runs as. With a separate admin account (or Administrator
         // protection) that is not the signed-in user's bin: say so before deleting.
@@ -1202,6 +1218,10 @@ public sealed record RunRow(string Label, string AvgFps, string Low, string Fram
 
 public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialogs) : PageViewModel(owner)
 {
+    /// <summary>The disk rows come from the scan result: built again after every scan.</summary>
+    protected override bool UsesProfile => true;
+
+    protected override void ProfileUpdated() => BuildDisks();
     private CancellationTokenSource? _toolCancel;
     private CancellationTokenSource? _throttleCancel;
     private Sensors? _sensors;
@@ -1238,12 +1258,6 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         CanInstallPawnIo = !Sensors.PawnIoInstalled;
         PawnIoText = Loc.Instance[Sensors.PawnIoInstalled ? "Sensors_PawnIoOn" : "Sensors_PawnIoOff"];
         if (Optimizer.Core.Tools.HealthStore.LoadThrottle(Optimizer.Core.Tools.HealthStore.DefaultFolder) is { } last) ThrottleResult = Describe(last);
-    }
-
-    /// <summary>The disk rows carry status brushes: built again for the new theme once the page was opened.</summary>
-    public void OnThemeChanged()
-    {
-        if (Disks.Count > 0) BuildDisks();
     }
 
     private void BuildDisks()

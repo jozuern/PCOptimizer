@@ -96,11 +96,13 @@ public sealed class HardwareScanner(CatalogData catalog)
         var gpus = Run<IReadOnlyList<GpuInfo>>("GPU", () => GpuProbe.Read(catalog));
         var memory = Run("Memory", MemoryProbe.Read);
         var displays = Run<IReadOnlyList<DisplayInfo>>("Displays", () => DisplayProbe.Read(catalog));
-        var firmware = Run("Firmware", FirmwareProbe.Read);
+        var firmware = Run("Firmware", () => FirmwareProbe.Read(previous?.Firmware));
         var power = Run("Power", PowerProbe.Read);
         var storage = Run("Storage", () => StorageProbe.Read(catalog));
         var network = Run<IReadOnlyList<NetworkAdapterInfo>>("Network", NetworkProbe.Read);
-        var software = Run("Software", () => SoftwareProbe.Read(catalog));
+        // Games, launchers and anti-cheat: no change of this app installs or removes them (like the installed programs of
+        // the extras, reused after a change; "Scan again" reads them).
+        var software = previous?.Software is { } reusedSoftware ? Task.FromResult<SoftwareInfo?>(reusedSoftware) : Run("Software", () => SoftwareProbe.Read(catalog));
         var system = Run("System", SystemProbe.Read);
         // Null (no battery or no usable driver data) is a valid result, not a probe error.
         var battery = Run<BatteryHealth>("Battery", () => BatteryProbe.Read()!);

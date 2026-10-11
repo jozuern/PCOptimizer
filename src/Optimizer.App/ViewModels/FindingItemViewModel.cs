@@ -14,7 +14,7 @@ public sealed class FindingItemViewModel : InspectorItem
         Finding = finding;
         Fix = fix;
         var labels = Labels.Current;
-        var page = DocStore.Get(finding.Id, lang) ?? DocStore.Get(finding.Id, "en");
+        var page = DocStore.GetOrEnglish(finding.Id, lang);
         var title = page is null ? finding.Id : DocStore.Substitute(page.Title, finding.Params);
         Title = finding.Subject is { Length: > 0 } s && !title.Contains(s, StringComparison.OrdinalIgnoreCase) ? $"{title}: {s}" : title;
         Summary = page is null ? "" : DocStore.Summary(page, finding);

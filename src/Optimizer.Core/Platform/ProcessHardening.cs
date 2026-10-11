@@ -8,14 +8,20 @@ namespace Optimizer.Core.Platform;
 /// modules (PSModulePath starts with the user's Documents folder, and commands load their module on first use),
 /// .NET Framework profilers (COR_PROFILER and friends load a DLL into powershell.exe) and runtime switches. The
 /// working directory is System32 instead of the exe's folder, which is often Downloads. SystemRoot, windir, ComSpec
-/// and PATH are set to Windows' own values, and TEMP to the admin-only folder of the app.
+/// and PATH are set to Windows' own values, and TEMP to the admin-only folder of the app. Interpreter variables
+/// (PYTHONPATH, NODE_OPTIONS, PERL5OPT and similar) are removed too, and cmd.exe runs without the user's AutoRun command.
 /// </summary>
 public static class ProcessHardening
 {
     /// <summary>Only Windows' own modules (PowerShell adds the admin-only Program Files modules folder itself).</summary>
     public static string PowerShellModules => Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\Modules");
 
-    private static readonly string[] RemovedVariables = ["COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH", "PSExecutionPolicyPreference"];
+    private static readonly string[] RemovedVariables =
+    [
+        "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH", "PSExecutionPolicyPreference",
+        "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PYTHONUSERBASE", "NODE_OPTIONS", "NODE_PATH", "PERL5LIB", "PERL5OPT", "PERLLIB",
+        "RUBYOPT", "RUBYLIB", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "CLASSPATH",
+    ];
     private static readonly string[] RemovedPrefixes = ["COMPlus_", "DOTNET_", "CORECLR_"];
 
     /// <summary>A plain tool name resolves to System32; powershell.exe to Windows PowerShell 5.1 in System32.</summary>
@@ -51,7 +57,41 @@ public static class ProcessHardening
             env["TEMP"] = temp;
             env["TMP"] = temp;
         }
+        WithoutAutoRun(psi);
     }
+
+    /// <summary>
+    /// cmd.exe runs the command in HKCU\Software\Microsoft\Command Processor\AutoRun first, a value any program of the
+    /// signed-in user can write: started by the elevated app, that command would run with administrator rights. /D turns
+    /// it off. A batch file is started through cmd.exe by Windows, so it gets cmd.exe /D /S /C explicitly (/S keeps the
+    /// quotes inside the command as they are).
+    /// </summary>
+    public static void WithoutAutoRun(ProcessStartInfo psi)
+    {
+        var name = Path.GetFileName(psi.FileName.Trim('"'));
+        var extension = Path.GetExtension(name);
+        if (name.Equals("cmd.exe", StringComparison.OrdinalIgnoreCase) || name.Equals("cmd", StringComparison.OrdinalIgnoreCase))
+        {
+            if (psi.ArgumentList.Count > 0)
+            {
+                if (!psi.ArgumentList[0].Equals("/D", StringComparison.OrdinalIgnoreCase)) psi.ArgumentList.Insert(0, "/D");
+            }
+            else if (!psi.Arguments.TrimStart().StartsWith("/D ", StringComparison.OrdinalIgnoreCase))
+            {
+                psi.Arguments = ("/D " + psi.Arguments).TrimEnd();
+            }
+        }
+        else if (extension.Equals(".bat", StringComparison.OrdinalIgnoreCase) || extension.Equals(".cmd", StringComparison.OrdinalIgnoreCase))
+        {
+            var args = (psi.ArgumentList.Count > 0 ? string.Join(' ', psi.ArgumentList.Select(Quote)) : psi.Arguments).Trim();
+            var command = args.Length == 0 ? $"\"{psi.FileName.Trim('"')}\"" : $"\"{psi.FileName.Trim('"')}\" {args}";
+            psi.ArgumentList.Clear();
+            psi.Arguments = $"/D /S /C \"{command}\"";
+            psi.FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+        }
+    }
+
+    private static string Quote(string arg) => arg.Length > 0 && arg.IndexOfAny([' ', '\t', '"']) < 0 ? arg : $"\"{arg.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 
     private static string? _systemPath;
 

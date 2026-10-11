@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Enumeration;
 using Optimizer.Core.Actions;
 using Optimizer.Core.Logging;
@@ -13,8 +14,8 @@ public sealed record CleanupCategory(
     bool Recursive = true,
     TimeSpan? MinAge = null,
     bool DefaultSelected = true,
-    bool KeepRoot = true,
-    string? WarningKey = null);
+    string? WarningKey = null,
+    bool RemoveRoots = false);
 
 public sealed record CleanupScan(CleanupCategory Category, long Bytes, int Files, IReadOnlyList<string> ExistingRoots);
 
@@ -31,7 +32,7 @@ public static class CleanupEngine
     public static readonly TimeSpan TempMinAge = TimeSpan.FromHours(24);
 
     /// <summary>Categories for this PC. <paramref name="profilePath"/> is the session user's profile folder.</summary>
-    public static IReadOnlyList<CleanupCategory> Categories(string? profilePath, string? userSid, string? windowsDir = null)
+    public static IReadOnlyList<CleanupCategory> Categories(string? profilePath, string? userSid, string? windowsDir = null, DateTime? now = null)
     {
         var win = windowsDir ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -43,12 +44,16 @@ public static class CleanupEngine
             new("cleanup.errorReports", [Path.Combine(programData, @"Microsoft\Windows\WER\ReportArchive"), Path.Combine(programData, @"Microsoft\Windows\WER\ReportQueue")]),
             new("cleanup.memoryDumps", [Path.Combine(win, "Minidump")], DefaultSelected: false),
             new("cleanup.memoryDumpFile", [win], Pattern: "MEMORY.DMP", Recursive: false, DefaultSelected: false),
+            // The folders Windows Update repair renamed instead of deleting (Tools); Windows built new ones. Removed whole.
+            new("cleanup.updateRepairLeftovers", UpdateRepairLeftovers(win, (now ?? DateTime.Now).AddDays(-RepairLeftoverDays)),
+                DefaultSelected: false, WarningKey: "cleanup.warn.updateRepairLeftovers", RemoveRoots: true),
         };
         if (local is not null)
         {
             list.Add(new("cleanup.userTemp", [Path.Combine(local, "Temp")], MinAge: TempMinAge, WarningKey: "cleanup.warn.temp"));
             list.Add(new("cleanup.thumbnails", [Path.Combine(local, @"Microsoft\Windows\Explorer")], Pattern: "thumbcache_*.db", Recursive: false));
-            list.Add(new("cleanup.crashDumps", [Path.Combine(local, "CrashDumps")]));
+            // A dump of a crash a moment ago may still be needed to report it.
+            list.Add(new("cleanup.crashDumps", [Path.Combine(local, "CrashDumps")], MinAge: TimeSpan.FromDays(7), WarningKey: "cleanup.warn.crashDumps"));
             list.Add(new("cleanup.browserCache",
             [
                 Path.Combine(local, @"Microsoft\Edge\User Data\Default\Cache"),
@@ -73,6 +78,36 @@ public static class CleanupEngine
         if (userSid is not null)
             list.Add(new("cleanup.recycleBin", DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady)
                 .Select(d => Path.Combine(d.RootDirectory.FullName, "$Recycle.Bin", userSid)).ToList(), DefaultSelected: false, WarningKey: "cleanup.warn.recycleBin"));
+        return list;
+    }
+
+    /// <summary>How long the folders of an update repair are kept, in case the repair has to be checked or undone by hand.</summary>
+    public const int RepairLeftoverDays = 7;
+
+    /// <summary>
+    /// SoftwareDistribution.old-yyyyMMdd-HHmmss and System32\catroot2.old-yyyyMMdd-HHmmss (the names UpdateRepair gives
+    /// them) from before <paramref name="olderThan"/>, read from the date in the name.
+    /// </summary>
+    internal static IReadOnlyList<string> UpdateRepairLeftovers(string win, DateTime olderThan)
+    {
+        var list = new List<string>();
+        foreach (var (folder, name) in new[] { (win, "SoftwareDistribution"), (Path.Combine(win, "System32"), "catroot2") })
+        {
+            try
+            {
+                if (!Directory.Exists(folder)) continue;
+                foreach (var dir in Directory.EnumerateDirectories(folder, name + ".old-*"))
+                {
+                    var stamp = Path.GetFileName(dir)[(name.Length + 5)..];
+                    if (DateTime.TryParseExact(stamp, "yyyyMMdd-HHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var when) && when < olderThan)
+                        list.Add(dir);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Log.Warn("cleanup", $"{folder} not readable: {ex.Message}");
+            }
+        }
         return list;
     }
 
@@ -138,7 +173,16 @@ public static class CleanupEngine
                     skipped++; // in use or protected: leave it
                 }
             }
-            if (c.Recursive) RemoveEmptyDirectories(root, keepRoot: c.KeepRoot);
+            if (c.Recursive) RemoveEmptyDirectories(root);
+            if (c.RemoveRoots)
+                try
+                {
+                    SafeDelete.DeleteEmptyDirectory(root);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Log.Warn("cleanup", $"{root} not removed: {ex.Message}");
+                }
         }
         Log.Info("cleanup", c.Id, new { freed, deleted, skipped });
         return new CleanupResult(c.Id, freed, deleted, skipped);
@@ -180,7 +224,8 @@ public static class CleanupEngine
 
     private static DateTime Newest(FileInfo f) => new[] { f.LastWriteTimeUtc, f.CreationTimeUtc }.Max();
 
-    private static void RemoveEmptyDirectories(string root, bool keepRoot)
+    /// <summary>Removes the folders a cleanup left empty below the root; the root itself stays.</summary>
+    private static void RemoveEmptyDirectories(string root)
     {
         var dirs = new List<DirectoryInfo>();
         var stack = new Stack<DirectoryInfo>([new DirectoryInfo(root)]);
@@ -199,7 +244,7 @@ public static class CleanupEngine
         }
         foreach (var d in Enumerable.Reverse(dirs))
         {
-            if (keepRoot && string.Equals(d.FullName.TrimEnd('\\'), root.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.Equals(d.FullName.TrimEnd('\\'), root.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) continue;
             try
             {
                 if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.DeleteEmptyDirectory(d.FullName);

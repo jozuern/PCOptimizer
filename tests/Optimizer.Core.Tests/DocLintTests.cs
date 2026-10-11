@@ -146,7 +146,7 @@ public partial class DocLintTests(ITestOutputHelper output)
     /// app, and rewriting the quotes would misstate what those tools say.
     /// </summary>
     private static bool IsQuotedReference(string file) =>
-        file.EndsWith("windows-tweak-tools-feature-reference.md", StringComparison.Ordinal);
+        file.EndsWith("Windows_Optimizer_Tools_Feature_Reference.md", StringComparison.Ordinal);
 
     /// <summary>Filler words in everything the user reads besides the explanation pages (which the docs lint covers).</summary>
     [Fact]
