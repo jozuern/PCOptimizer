@@ -137,6 +137,8 @@ public partial class DocLintTests(ITestOutputHelper output)
             offenders.AddRange(BannedTypography(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file)));
         foreach (var file in RepositoryFiles("*.cs").Concat(RepositoryFiles("*.csproj")).Concat(RepositoryFiles("*.yml")))
             offenders.AddRange(BannedCharacters(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file)));
+        foreach (var file in WebsiteCopy())
+            offenders.AddRange(BannedTypography(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file)));
         foreach (var o in offenders) output.WriteLine(o);
         Assert.Empty(offenders);
     }
@@ -163,9 +165,16 @@ public partial class DocLintTests(ITestOutputHelper output)
         // The style guide quotes the banned words as examples; the feature reference quotes other tools.
         foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal) && !f.EndsWith("explanation-style-guide.md", StringComparison.Ordinal) && !IsQuotedReference(f)))
             Check(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file));
+        foreach (var file in WebsiteCopy())
+            Check(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file));
         foreach (var o in offenders) output.WriteLine(o);
         Assert.Empty(offenders);
     }
+
+    /// <summary>The text of tunero.dev: its English and German copy and its pages (website/src).</summary>
+    private static IEnumerable<string> WebsiteCopy() =>
+        RepositoryFiles("*.ts").Concat(RepositoryFiles("*.astro"))
+            .Where(f => Path.GetRelativePath(RepoPaths.Root, f).Replace('\\', '/').StartsWith("website/src/", StringComparison.Ordinal));
 
     [Theory]
     [InlineData("A seamless experience", true)]
