@@ -1,4 +1,4 @@
-// English copy. Same voice as the app: plain words, real examples, no dashes, no marketing words (DESIGN.md).
+// English copy. Same voice as the app: plain words, real examples, no dashes; strong claims only where they are true (DESIGN.md).
 import type { Copy } from './types';
 
 const en: Copy = {
@@ -6,12 +6,12 @@ const en: Copy = {
   meta: {
     title: 'Tunero: PC optimizer for Windows 11',
     description:
-      'PC optimizer for Windows 11. Tunero scans your PC, explains every finding and every change with sources, and can undo everything it changes. Free and open source.',
+      'PC optimizer for Windows 11, built to be the only one you need. Tunero finds what costs your games frame rate, explains every change with sources and can undo everything it changes. Free and open source.',
   },
   nav: { download: 'Download', source: 'Source code', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
   hero: {
-    title: 'A PC optimizer for Windows 11 that shows its work.',
-    lead: 'Tunero scans your PC, explains what it finds with sources, and changes only what you confirm. Every change is backed up first and can be undone.',
+    title: 'Built to be the only PC optimizer you need.',
+    lead: 'Tunero finds what costs your games frame rate, fixes what it can, and puts the useful settings of the popular tweak tools into one app. Every change is explained with sources, backed up first and can be undone.',
     download: 'Download Tunero.exe',
     winget: 'or with winget',
     copy: 'Copy',
@@ -35,7 +35,7 @@ const en: Copy = {
   },
   scan: {
     label: 'Scan',
-    title: 'It looks at this PC first',
+    title: 'It finds what really costs you frame rate',
     body: (n) => [
       `${n} read-only checks look for problems that cost frame rate or smoothness: a monitor running at 60 Hz, memory without its XMP or EXPO profile, the Power saver plan on a desktop, a game library on a hard disk. A check that cannot read a value says unknown and gives no advice.`,
       'A profile decides what is recommended and which impact counts: Gaming, Laptop gaming, Battery, Office, Quiet and cool, or Older PC. It changes nothing by itself.',
@@ -68,15 +68,15 @@ const en: Copy = {
   },
   impact: {
     label: 'Impact',
-    title: 'Most tweaks will not raise your frame rate',
-    body: (n, zero) => [
-      `Every tweak rates its effect on games from 0 to 5, and the rating can change with the PC: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. ${zero} of the ${n} tweaks rate 0 on most PCs. Most of the catalog is about privacy, the browser and how Windows looks and behaves, and their pages say so.`,
+    title: 'Every tweak says what it does for games',
+    body: (n, matter) => [
+      `Every tweak rates its effect on games from 0 to 5, and the rating can depend on the PC: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. ${matter} of the ${n} tweaks can matter for games. The others are about privacy, the browser and Windows settings, and their pages say so instead of promising frame rate.`,
     ],
-    legend: { situational: 'Situational', disputed: 'Disputed', higher: 'Possible on some PCs' },
+    legend: { measured: 'Measured', situational: 'Situational', disputed: 'Disputed', higher: 'Possible on some PCs' },
     row: (level, count) => `Rating ${level}: ${count} ${count === 1 ? 'tweak' : 'tweaks'}`,
     higher: (title, level, reason) => `${title}: ${level}. ${reason}`,
     caption: 'Each square is one tweak. Hover over a square for its name.',
-    after: 'The biggest difference usually comes from what the scan finds, such as a monitor at 60 Hz or memory below its rated speed.',
+    after: 'The largest gains usually come from problems the scan finds, such as a monitor at 60 Hz or memory below its rated speed.',
   },
   sources: {
     label: 'Sources',
@@ -129,8 +129,24 @@ const en: Copy = {
     all: 'The full list, with sources',
   },
   facts: {
-    label: 'Facts',
-    title: 'In numbers',
+    label: 'One app',
+    title: 'Instead of a folder full of tools',
+    intro:
+      'Tunero brings together what people otherwise collect from several tweak tools, debloat scripts and system utilities, and leaves out what does nothing.',
+    areas: [
+      ['Scan and fix', 'Checks that find what costs frame rate, with a fix or the steps for the BIOS and drivers.'],
+      ['Tweaks', 'Documented settings for games, privacy, the browser and Windows, each with its evidence.'],
+      ['Remove apps', 'A reviewed list of inbox and manufacturer apps, and programs with their own uninstaller.'],
+      ['Cleanup', 'Temporary files, caches and leftovers, without following links.'],
+      ['Startup', 'Everything that starts with Windows, with signature checks and snapshots to compare.'],
+      ['Services & tasks', 'Start types, with what each service does.'],
+      ['Apps & drivers', 'Install and update apps with winget, and see how old the drivers are.'],
+      ['Windows Update', 'No restarts in the evening, restarts when you choose, monthly updates a week later (Pro and higher).'],
+      ['Health', 'A frame time benchmark with PresentMon, a throttle check and drive health.'],
+      ['Tools', 'Storage analyzer, Windows features, network fixes, Windows Update repair, SFC and DISM.'],
+      ['Changes', 'Every change with Undo, also after a restart or an update of the app.'],
+      ['Export and command line', 'Move your changes to another PC or a fresh install.'],
+    ],
     numbers: (c) => [
       ['Read-only checks', c.checks],
       ['Tweaks', c.tweaks],
@@ -153,7 +169,7 @@ const en: Copy = {
   },
   install: {
     label: 'Install',
-    title: 'Get it',
+    title: 'Get Tunero',
     steps: [
       { name: 'Download', text: 'The exe of the latest release.' },
       { name: 'Check', text: 'Compare its SHA-256 with the .sha256 file on the release page.' },
@@ -169,7 +185,7 @@ const en: Copy = {
       {
         id: 'faster',
         q: 'Will it make my games faster?',
-        a: 'Sometimes. The biggest gains come from fixing real problems the scan finds, such as a monitor at 60 Hz or memory without XMP. Most tweaks change little, and each page says how solid the evidence is. The Health page has a frame time benchmark, so you can measure your own games.',
+        a: 'When the scan finds a real problem, often noticeably: a monitor stuck at 60 Hz, memory without its XMP or EXPO profile, or a processor held at its base clock costs a lot of frame rate, and Tunero fixes it or tells you how. Most tweaks are about privacy, the browser and Windows and are rated 0 for games; the ones that can matter are rated for your PC, and each page says how solid the evidence is. The Health page has a frame time benchmark, so you can measure the difference in your own games.',
       },
       {
         id: 'smartscreen',

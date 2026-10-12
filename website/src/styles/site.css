@@ -161,8 +161,8 @@ body:has(.stage) .site-header { background: var(--stage); }
 .label b { font-weight: 400; color: var(--ink); margin-right: 8px; }
 .section h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.1; margin-bottom: 24px; max-width: 20ch; letter-spacing: -0.025em; }
 .section .body { min-width: 0; }
-.section .body > * + :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers) { margin-top: 40px; }
-.section .body > :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers) + :is(p, .split) { margin-top: 40px; }
+.section .body > * + :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers, .areas) { margin-top: 40px; }
+.section .body > :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers, .areas) + :is(p, .split) { margin-top: 40px; }
 
 /* Intro on the left, the example on the right, from 1100 px. */
 .split-2 { display: grid; gap: 32px 48px; align-items: end; }
@@ -196,6 +196,7 @@ body:has(.stage) .site-header { background: var(--stage); }
 .impact-row .count { font: 400 13px/20px var(--font-mono); color: var(--ink-3); text-align: right; }
 .cells { display: flex; flex-wrap: wrap; gap: 3px; min-height: 20px; padding-top: 4px; }
 .impact i { display: block; width: 12px; height: 12px; border-radius: 2px; }
+.impact i.measured { background: var(--ink); }
 .impact i.situational { background: var(--accent); }
 .impact i.disputed { background: var(--ink-3); }
 .impact i.higher { box-shadow: inset 0 0 0 1.5px var(--accent); }
@@ -273,6 +274,15 @@ td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--rule); vertical-a
 .facts div:first-child { border-top: 1px solid var(--rule); }
 .facts dt { color: var(--ink-2); }
 .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* What the app holds, by page: name and one line, in columns. */
+
+.areas { margin: 0; padding: 0; list-style: none; display: grid; gap: 0 32px; }
+@media (min-width: 640px) { .areas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .areas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.areas li { border-top: 1px solid var(--rule); padding: 14px 0 18px; display: flex; flex-direction: column; gap: 4px; }
+.areas b { font: 600 17px/1.35 var(--font-display); letter-spacing: -0.01em; }
+.areas span { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
 
 /* Install */
 

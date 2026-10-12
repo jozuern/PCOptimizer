@@ -9,16 +9,19 @@ const { t } = Astro.props;
 // Every check the scan runs, by the title of its explanation page.
 const checks = checkTitles(t.lang);
 
-// The gaming impact of every tweak, one square each, rows from 5 down to 0. A tweak that rates higher on some PCs also
+// The gaming impact of every tweak, one square each, rows from 5 down to 0, measured first, disputed last. A tweak that rates higher on some PCs also
 // gets an outlined square in the row of its highest rating.
 const impacts = tweakImpacts(t.lang);
+const basisOrder = ['measured', 'situational', 'disputed'] as const;
+type Basis = (typeof basisOrder)[number];
+const basisOf = (b: string): Basis => (basisOrder.includes(b as Basis) ? (b as Basis) : 'situational');
 const levels = [5, 4, 3, 2, 1, 0].map((level) => ({
   level,
-  tweaks: impacts.filter((i) => i.impact === level).sort((a, b) => (a.basis === b.basis ? 0 : a.basis === 'disputed' ? 1 : -1)),
+  tweaks: impacts.filter((i) => i.impact === level).sort((a, b) => basisOrder.indexOf(a.basis) - basisOrder.indexOf(b.basis)),
   higher: impacts.filter((i) => i.higher?.impact === level),
 }));
-const zero = impacts.filter((i) => i.impact === 0).length;
-const bases = [...new Set(impacts.map((i) => i.basis))].filter((b): b is 'situational' | 'disputed' => b === 'situational' || b === 'disputed');
+const matter = impacts.filter((i) => i.impact > 0 || i.higher).length;
+const bases = basisOrder.filter((b) => impacts.some((i) => basisOf(i.basis) === b));
 
 // The page of a popular tweak that the evidence does not support, straight from the app's catalog.
 const doc = explanation('power.ultimatePlan', t.lang);
@@ -35,7 +38,7 @@ const source = (url: string) => {
 // What turning off mouse acceleration writes; the Windows defaults are the Now column.
 const mouse = registryChanges('input.mouseAccelOff', { MouseSpeed: '1', MouseThreshold1: '6', MouseThreshold2: '10' });
 
-const sections = [t.scan, t.confirm, t.undo, t.impact, t.sources, t.left, t.facts, t.install, t.faq];
+const sections = [t.scan, t.impact, t.confirm, t.undo, t.facts, t.sources, t.left, t.install, t.faq];
 const n = (s: { label: string }) => String(sections.indexOf(s as never) + 1).padStart(2, '0');
 const faqSmartScreen = t.faq.items[1].id;
 const docsBase = `${repo}/blob/main/docs`;
@@ -93,6 +96,39 @@ const managers = [
   </div>
 </section>
 
+<section class="section" aria-labelledby="impact">
+  <div class="container grid">
+    <div class="label"><b>{n(t.impact)}</b>{t.impact.label}</div>
+    <div class="body">
+      <h2 id="impact">{t.impact.title}</h2>
+      {t.impact.body(impacts.length, matter).map((p) => <p>{p}</p>)}
+      <figure class="impact">
+        <div class="impact-rows">
+          {levels.map((l) => (
+            <div class="impact-row">
+              <span class="level" aria-hidden="true">{l.level}</span>
+              <span class="cells" aria-hidden="true">
+                {l.tweaks.map((x) => <i class={basisOf(x.basis)} title={x.title}></i>)}
+                {l.higher.map((x) => <i class="higher" title={t.impact.higher(x.title, l.level, x.higher!.reason)}></i>)}
+              </span>
+              <span class="count" aria-hidden="true">{l.tweaks.length}</span>
+              <span class="sr">{t.impact.row(l.level, l.tweaks.length)}</span>
+            </div>
+          ))}
+        </div>
+        <figcaption>
+          <ul class="legend">
+            {bases.map((b) => <li><i class={b} aria-hidden="true"></i>{t.impact.legend[b]}</li>)}
+            <li><i class="higher" aria-hidden="true"></i>{t.impact.legend.higher}</li>
+          </ul>
+          {t.impact.caption}
+        </figcaption>
+      </figure>
+      <p>{t.impact.after}</p>
+    </div>
+  </div>
+</section>
+
 <section class="section" aria-labelledby="confirm">
   <div class="container grid">
     <div class="label"><b>{n(t.confirm)}</b>{t.confirm.label}</div>
@@ -133,35 +169,28 @@ const managers = [
   </div>
 </section>
 
-<section class="section" aria-labelledby="impact">
+<section class="section" aria-labelledby="facts">
   <div class="container grid">
-    <div class="label"><b>{n(t.impact)}</b>{t.impact.label}</div>
+    <div class="label"><b>{n(t.facts)}</b>{t.facts.label}</div>
     <div class="body">
-      <h2 id="impact">{t.impact.title}</h2>
-      {t.impact.body(impacts.length, zero).map((p) => <p>{p}</p>)}
-      <figure class="impact">
-        <div class="impact-rows">
-          {levels.map((l) => (
-            <div class="impact-row">
-              <span class="level" aria-hidden="true">{l.level}</span>
-              <span class="cells" aria-hidden="true">
-                {l.tweaks.map((x) => <i class={x.basis === 'disputed' ? 'disputed' : 'situational'} title={x.title}></i>)}
-                {l.higher.map((x) => <i class="higher" title={t.impact.higher(x.title, l.level, x.higher!.reason)}></i>)}
-              </span>
-              <span class="count" aria-hidden="true">{l.tweaks.length}</span>
-              <span class="sr">{t.impact.row(l.level, l.tweaks.length)}</span>
-            </div>
-          ))}
+      <h2 id="facts">{t.facts.title}</h2>
+      <p>{t.facts.intro}</p>
+      <dl class="numbers">
+        {t.facts.numbers(counts).map(([k, v]) => <div><dd>{v}</dd><dt>{k}</dt></div>)}
+      </dl>
+      <ul class="areas">
+        {t.facts.areas.map(([name, text]) => <li><b>{name}</b><span>{text}</span></li>)}
+      </ul>
+      <div class="split">
+        <dl class="facts">
+          {t.facts.rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+        </dl>
+        <div class="aside">
+          <h3 id="privacy">{t.privacy.title}</h3>
+          {t.privacy.body.map((p) => <p>{p}</p>)}
+          <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
         </div>
-        <figcaption>
-          <ul class="legend">
-            {bases.map((b) => <li><i class={b} aria-hidden="true"></i>{t.impact.legend[b]}</li>)}
-            <li><i class="higher" aria-hidden="true"></i>{t.impact.legend.higher}</li>
-          </ul>
-          {t.impact.caption}
-        </figcaption>
-      </figure>
-      <p>{t.impact.after}</p>
+      </div>
     </div>
   </div>
 </section>
@@ -211,28 +240,6 @@ const managers = [
         ))}
       </ul>
       <p><a href={`${docsBase}/not-included.md`}>{t.left.all}</a></p>
-    </div>
-  </div>
-</section>
-
-<section class="section" aria-labelledby="facts">
-  <div class="container grid">
-    <div class="label"><b>{n(t.facts)}</b>{t.facts.label}</div>
-    <div class="body">
-      <h2 id="facts">{t.facts.title}</h2>
-      <dl class="numbers">
-        {t.facts.numbers(counts).map(([k, v]) => <div><dd>{v}</dd><dt>{k}</dt></div>)}
-      </dl>
-      <div class="split">
-        <dl class="facts">
-          {t.facts.rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
-        </dl>
-        <div class="aside">
-          <h3 id="privacy">{t.privacy.title}</h3>
-          {t.privacy.body.map((p) => <p>{p}</p>)}
-          <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
-        </div>
-      </div>
     </div>
   </div>
 </section>

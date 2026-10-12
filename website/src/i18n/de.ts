@@ -1,4 +1,4 @@
-// Deutsche Texte. Gleiche Stimme wie die App: du, einfache Wörter, echte Beispiele, keine Gedankenstriche (DESIGN.md).
+// Deutsche Texte. Gleiche Stimme wie die App: du, einfache Wörter, echte Beispiele, keine Gedankenstriche; starke Aussagen nur, wo sie stimmen (DESIGN.md).
 import type { Copy } from './types';
 
 const de: Copy = {
@@ -6,12 +6,12 @@ const de: Copy = {
   meta: {
     title: 'Tunero: PC-Optimierer für Windows 11',
     description:
-      'PC-Optimierer für Windows 11. Tunero prüft deinen PC, erklärt jeden Fund und jede Änderung mit Quellen und kann alles rückgängig machen, was es ändert. Kostenlos und quelloffen.',
+      'PC-Optimierer für Windows 11, gebaut, damit du nur noch einen brauchst. Tunero findet, was deine Spiele FPS kostet, erklärt jede Änderung mit Quellen und kann alles rückgängig machen, was es ändert. Kostenlos und quelloffen.',
   },
   nav: { download: 'Download', source: 'Quellcode', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
   hero: {
-    title: 'Ein PC-Optimierer für Windows 11, der seine Arbeit zeigt.',
-    lead: 'Tunero prüft deinen PC, erklärt seine Funde mit Quellen und ändert nur, was du bestätigst. Jede Änderung wird vorher gesichert und lässt sich rückgängig machen.',
+    title: 'Gebaut, damit du nur noch einen PC-Optimierer brauchst.',
+    lead: 'Tunero findet, was deine Spiele FPS kostet, behebt, was es kann, und vereint die sinnvollen Einstellungen der bekannten Tweak-Tools in einer App. Jede Änderung wird mit Quellen erklärt, vorher gesichert und lässt sich rückgängig machen.',
     download: 'Tunero.exe herunterladen',
     winget: 'oder mit winget',
     copy: 'Kopieren',
@@ -35,7 +35,7 @@ const de: Copy = {
   },
   scan: {
     label: 'Scan',
-    title: 'Erst schaut es sich diesen PC an',
+    title: 'Es findet, was dich wirklich FPS kostet',
     body: (n) => [
       `${n} Prüfungen, die nur lesen, suchen nach Problemen, die FPS oder flüssiges Spielen kosten: ein Monitor mit 60 Hz, Arbeitsspeicher ohne XMP- oder EXPO-Profil, der Energiesparmodus auf einem Desktop, eine Spielebibliothek auf einer Festplatte. Kann eine Prüfung einen Wert nicht lesen, sagt sie „unbekannt“ und gibt keinen Rat.`,
       'Ein Profil legt fest, was empfohlen wird und welche Wirkung zählt: Gaming, Laptop-Gaming, Akku, Büro, Leise und kühl oder Älterer PC. Von sich aus ändert es nichts.',
@@ -68,11 +68,11 @@ const de: Copy = {
   },
   impact: {
     label: 'Wirkung',
-    title: 'Die meisten Tweaks bringen keine FPS',
-    body: (n, zero) => [
-      `Jeder Tweak bewertet seine Wirkung auf Spiele von 0 bis 5, und die Bewertung kann vom PC abhängen: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. ${zero} der ${n} Tweaks haben auf den meisten PCs eine 0. Der größte Teil des Katalogs dreht sich um Datenschutz, den Browser und darum, wie Windows aussieht und sich verhält, und ihre Seiten sagen das.`,
+    title: 'Jeder Tweak sagt, was er für Spiele bringt',
+    body: (n, matter) => [
+      `Jeder Tweak bewertet seine Wirkung auf Spiele von 0 bis 5, und die Bewertung kann vom PC abhängen: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. ${matter} der ${n} Tweaks können für Spiele zählen. Die anderen drehen sich um Datenschutz, den Browser und Windows-Einstellungen, und ihre Seiten sagen das, statt FPS zu versprechen.`,
     ],
-    legend: { situational: 'Situationsabhängig', disputed: 'Umstritten', higher: 'Auf manchen PCs möglich' },
+    legend: { measured: 'Gemessen', situational: 'Situationsabhängig', disputed: 'Umstritten', higher: 'Auf manchen PCs möglich' },
     row: (level, count) => `Wirkung ${level}: ${count} ${count === 1 ? 'Tweak' : 'Tweaks'}`,
     higher: (title, level, reason) => `${title}: ${level}. ${reason}`,
     caption: 'Jedes Quadrat ist ein Tweak. Fahr mit der Maus darüber, um seinen Namen zu sehen.',
@@ -129,8 +129,24 @@ const de: Copy = {
     all: 'Die ganze Liste, mit Quellen (Englisch)',
   },
   facts: {
-    label: 'Fakten',
-    title: 'In Zahlen',
+    label: 'Eine App',
+    title: 'Statt eines Ordners voller Tools',
+    intro:
+      'Tunero vereint, was man sonst aus mehreren Tweak-Tools, Debloat-Skripten und Systemprogrammen zusammensucht, und lässt weg, was nichts bringt.',
+    areas: [
+      ['Scannen und beheben', 'Prüfungen, die finden, was FPS kostet, mit Behebung oder den Schritten für BIOS und Treiber.'],
+      ['Tweaks', 'Dokumentierte Einstellungen für Spiele, Datenschutz, den Browser und Windows, jede mit ihren Belegen.'],
+      ['Apps entfernen', 'Eine geprüfte Liste vorinstallierter Apps und Hersteller-Apps, dazu Programme mit eigenem Deinstallationsprogramm.'],
+      ['Bereinigen', 'Temporäre Dateien, Caches und Reste, ohne Verknüpfungen zu folgen.'],
+      ['Autostart', 'Alles, was mit Windows startet, mit Signaturprüfung und Schnappschüssen zum Vergleichen.'],
+      ['Dienste & Aufgaben', 'Starttypen, mit dem, was jeder Dienst tut.'],
+      ['Apps & Treiber', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
+      ['Windows Update', 'Keine Neustarts am Abend, Neustarts, wann du willst, monatliche Updates eine Woche später (ab Pro).'],
+      ['Zustand', 'Ein Frametime-Benchmark mit PresentMon, eine Drosselungsprüfung und der Zustand der Laufwerke.'],
+      ['Tools', 'Speicheranalyse, Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
+      ['Änderungen', 'Jede Änderung mit „Rückgängig“, auch nach einem Neustart oder einem Update der App.'],
+      ['Export und Befehlszeile', 'Deine Änderungen auf einen anderen PC oder eine Neuinstallation übertragen.'],
+    ],
     numbers: (c) => [
       ['Prüfungen, die nur lesen', c.checks],
       ['Tweaks', c.tweaks],
@@ -153,7 +169,7 @@ const de: Copy = {
   },
   install: {
     label: 'Installieren',
-    title: 'So bekommst du es',
+    title: 'Hol dir Tunero',
     steps: [
       { name: 'Herunterladen', text: 'Die exe der neuesten Version.' },
       { name: 'Prüfen', text: 'Vergleiche ihren SHA-256 mit der .sha256-Datei auf der Release-Seite.' },
@@ -169,7 +185,7 @@ const de: Copy = {
       {
         id: 'schneller',
         q: 'Laufen meine Spiele damit schneller?',
-        a: 'Manchmal. Am meisten bringt es, echte Probleme zu beheben, die der Scan findet, etwa einen Monitor mit 60 Hz oder Arbeitsspeicher ohne XMP. Die meisten Tweaks ändern wenig, und jede Seite sagt, wie belastbar die Belege sind. Auf der Seite Zustand gibt es einen Frametime-Benchmark, damit du deine eigenen Spiele messen kannst.',
+        a: 'Wenn der Scan ein echtes Problem findet, oft deutlich: Ein Monitor auf 60 Hz, Arbeitsspeicher ohne sein XMP- oder EXPO-Profil oder ein Prozessor, der auf seinem Basistakt festhängt, kostet viel FPS, und Tunero behebt das oder sagt dir, wie. Die meisten Tweaks betreffen Datenschutz, den Browser und Windows und sind für Spiele mit 0 bewertet; die, die etwas bringen können, werden für deinen PC bewertet, und jede Seite sagt, wie belastbar die Belege sind. Auf der Seite Zustand gibt es einen Frametime-Benchmark, damit du den Unterschied in deinen eigenen Spielen messen kannst.',
       },
       {
         id: 'smartscreen',

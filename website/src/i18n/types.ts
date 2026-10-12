@@ -30,8 +30,8 @@ export interface Copy {
   impact: {
     label: string;
     title: string;
-    body: (tweaks: number, zero: number) => string[];
-    legend: { situational: string; disputed: string; higher: string };
+    body: (tweaks: number, matter: number) => string[];
+    legend: { measured: string; situational: string; disputed: string; higher: string };
     row: (level: number, count: number) => string;
     higher: (title: string, level: number, reason: string) => string;
     caption: string;
@@ -47,7 +47,7 @@ export interface Copy {
     sourceLink: string;
     all: string;
   };
-  facts: { label: string; title: string; numbers: (c: Counts) => [string, number][]; rows: [string, string][] };
+  facts: { label: string; title: string; intro: string; numbers: (c: Counts) => [string, number][]; areas: [string, string][]; rows: [string, string][] };
   privacy: { label: string; title: string; body: string[]; link: string };
   install: { label: string; title: string; steps: { name: string; text: string }[]; managers: string; releases: string };
   faq: { label: string; title: string; items: { id: string; q: string; a: string }[] };

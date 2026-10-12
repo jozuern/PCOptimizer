@@ -7,8 +7,10 @@ app: the same type, the same accent button, the same screenshots. Every rule bel
 
 ## Voice
 
-- Same rules as the app: no marketing words (the list the tests check), no en or em dashes, no middle dots, no ellipsis
-  characters, no emoji.
+- Same rules as the app: no en or em dashes, no middle dots, no ellipsis characters (the tests check the copy), no emoji.
+  Strong or promotional wording is fine where it is true; claims we cannot back stay out.
+- The positioning: built to be the only PC optimizer you need. Say it as the aim ("built to be"), never as a measured
+  fact, and back it on the page with what the app holds.
 - Say what it does with real numbers and real examples taken from the catalog, never invented ones.
 - Numbers come from the repository at build time (`src/lib/data.ts`): never type a count by hand.
 - Admit limits on the page (preview status, unsigned exe, what it leaves out).
@@ -61,13 +63,15 @@ The dark page uses the brand tile navy, not black. Two accents only, the Windows
 - **Check list:** every check by the title of its explanation page, numbered, in 1 to 3 columns (`checkTitles`; the build
   fails when the number differs from the README).
 - **Steps:** numbered columns under a heavy rule (undo, install).
-- **Impact chart:** one 12 px square per tweak in rows from 5 to 0, filled accent for situational, `--ink-3` for disputed,
+- **Impact chart:** one 12 px square per tweak in rows from 5 to 0, filled `--ink` for measured, accent for situational, `--ink-3` for disputed,
   an accent outline in the row of the highest rating a condition gives it on some PCs (`tweakImpacts`). The square's
   title names the tweak; each row has its count and a screen reader sentence. Legend always shown.
 - **Explanation page:** the app's page set like print, the sources in the margin next to the text, references as small
   numbers that jump to them.
 - **Left out:** the tweak's name crossed out with a 2 px ink line, the reason and its source below.
 - **Counts:** the four catalog counts at 48 to 64 px, tabular figures, plain, no counting animation.
+- **App areas:** the app's pages by their names in the app, one line each, in 1 to 3 columns under light rules. They back
+  the claim in the hero (built to be the only optimizer you need) with what the app holds.
 
 ## Images
 
