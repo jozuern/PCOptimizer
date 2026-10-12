@@ -4,7 +4,7 @@
 Setzt „Maximale Leistung bevorzugen“ nur im NVIDIA-Profil dieses Spiels. Hält den Takt hoch, solange das Spiel läuft, alles andere bleibt, wie es ist.
 
 ## So funktioniert es
-NVIDIA speichert Einstellungen pro Spiel in Treiberprofilen [1]. Die App schreibt den Energieverwaltungsmodus in das Profil, zu dem dieses Spiel gehört. „Maximale Leistung bevorzugen“ betreibt die GPU bei den meisten 3D-Anwendungen mit maximaler Leistung [2]. Hat der Treiber kein Profil für das Spiel, legt die App eines mit dem Namen „PCOptimizer: “ und dem Dateinamen des Spiels an. Rückgängig machen entfernt die Einstellung wieder.
+NVIDIA speichert Einstellungen pro Spiel in Treiberprofilen [1]. Die App schreibt den Energieverwaltungsmodus in das Profil, zu dem dieses Spiel gehört. „Maximale Leistung bevorzugen“ betreibt die GPU bei den meisten 3D-Anwendungen mit maximaler Leistung [2]. Hat der Treiber kein Profil für das Spiel, legt die App eines mit dem Namen „Tunero: “ und dem Dateinamen des Spiels an. Rückgängig machen entfernt die Einstellung wieder.
 
 ## Warum es helfen kann
 In leichten oder CPU-limitierten Spielen kann die Grafikkarte zwischen den Frames heruntertakten. Das kann ungleichmäßige Frametimes verursachen.

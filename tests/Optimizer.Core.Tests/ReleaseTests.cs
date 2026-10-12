@@ -33,8 +33,9 @@ public class ReleaseTests
         var handler = new FakeHandler(HttpStatusCode.NotFound, "{}");
         using var check = new ReleaseCheck(handler);
         Assert.Equal(ReleaseCheckStatus.NoRelease, (await check.CheckAsync(Current)).Status);
-        Assert.Equal("https://api.github.com/repos/jozuern/PCOptimizer/releases/latest", handler.Request!.RequestUri!.ToString());
-        Assert.Equal("PCOptimizer/0.3.0", handler.Request.Headers.UserAgent.ToString());
+        // By the repository's id: it survives a rename of the repository (jozuern/PCOptimizer up to 0.7.3).
+        Assert.Equal("https://api.github.com/repositories/1412188031/releases/latest", handler.Request!.RequestUri!.ToString());
+        Assert.Equal("Tunero/0.3.0", handler.Request.Headers.UserAgent.ToString());
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class ReleaseTests
         var result = await check.CheckAsync(Current);
         Assert.Equal((ReleaseCheckStatus.NewerAvailable, new Version(1, 0, 0)), (result.Status, result.Latest));
         // The link the app opens is fixed, never the URL from the answer.
-        Assert.Equal("https://github.com/jozuern/PCOptimizer/releases/latest", ReleaseCheck.LatestReleaseUrl);
+        Assert.Equal("https://github.com/jozuern/Tunero/releases/latest", ReleaseCheck.LatestReleaseUrl);
     }
 
     private sealed class FakeHandler(HttpStatusCode status, string body) : HttpMessageHandler
@@ -60,14 +61,49 @@ public class ReleaseTests
 
     // ---------------- Self-update ----------------
 
-    private const string Download = "https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/";
+    private const string Download = "https://github.com/jozuern/Tunero/releases/download/v1.0.0/";
 
-    private static string ReleaseJson(string exeUrl, string shaUrl, string? sigUrl = Download + "PCOptimizer.exe.sig") => $$"""
+    private static string ReleaseJson(string exeUrl, string shaUrl, string? sigUrl = Download + "Tunero.exe.sig") => $$"""
         {"tag_name":"v1.0.0","assets":[
-          {"name":"PCOptimizer.exe","browser_download_url":"{{exeUrl}}"},
-          {{(sigUrl is null ? "" : $$"""{"name":"PCOptimizer.exe.sig","browser_download_url":"{{sigUrl}}"},""")}}
-          {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{shaUrl}}"}]}
+          {"name":"Tunero.exe","browser_download_url":"{{exeUrl}}"},
+          {{(sigUrl is null ? "" : $$"""{"name":"Tunero.exe.sig","browser_download_url":"{{sigUrl}}"},""")}}
+          {"name":"Tunero.exe.sha256","browser_download_url":"{{shaUrl}}"}]}
         """;
+
+    /// <summary>
+    /// The bridge across the rename: a release made before the repository was renamed has its links under
+    /// jozuern/PCOptimizer, and a release can carry the exe under its old name only.
+    /// </summary>
+    [Fact]
+    public void ReleasesFromBeforeTheRenameAreFound()
+    {
+        const string legacy = "https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/";
+        var json = $$"""
+            {"tag_name":"v1.0.0","assets":[
+              {"name":"PCOptimizer.exe","browser_download_url":"{{legacy}}PCOptimizer.exe"},
+              {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{legacy}}PCOptimizer.exe.sha256"},
+              {"name":"PCOptimizer.exe.sig","browser_download_url":"{{legacy}}PCOptimizer.exe.sig"}]}
+            """;
+        var assets = ReleaseCheck.Evaluate(Current, json).Assets;
+        Assert.NotNull(assets);
+        Assert.Equal(legacy + "PCOptimizer.exe", assets.ExeUrl);
+        Assert.Equal(legacy + "PCOptimizer.exe.sig", assets.SignatureUrl);
+    }
+
+    [Fact]
+    public void TheNewExeNameWinsOverTheOldCopy()
+    {
+        var json = $$"""
+            {"tag_name":"v1.0.0","assets":[
+              {"name":"PCOptimizer.exe","browser_download_url":"{{Download}}PCOptimizer.exe"},
+              {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{Download}}PCOptimizer.exe.sha256"},
+              {"name":"PCOptimizer.exe.sig","browser_download_url":"{{Download}}PCOptimizer.exe.sig"},
+              {"name":"Tunero.exe","browser_download_url":"{{Download}}Tunero.exe"},
+              {"name":"Tunero.exe.sha256","browser_download_url":"{{Download}}Tunero.exe.sha256"},
+              {"name":"Tunero.exe.sig","browser_download_url":"{{Download}}Tunero.exe.sig"}]}
+            """;
+        Assert.Equal(Download + "Tunero.exe", ReleaseCheck.Evaluate(Current, json).Assets!.ExeUrl);
+    }
 
     /// <summary>A throwaway release key; the tests never use the project's real key.</summary>
     private static (string PublicPem, Func<byte[], string> Sign) TestKey()
@@ -94,6 +130,7 @@ public class ReleaseTests
         var version = new Version(1, 2, 3);
         var signature = sign(UpdateSignature.Statement(version, hash));
         // The release workflow signs exactly this text, with the lowercase hash.
+        // The signed statement keeps the app's old name: every installed version, also those from before the rename, checks it.
         Assert.Equal("PCOptimizer 1.2.3\n" + hash + "\n", System.Text.Encoding.UTF8.GetString(UpdateSignature.Statement(version, hash.ToUpperInvariant())));
         var workflow = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "release.yml"));
         Assert.Contains("GetBytes(\"PCOptimizer $version`n$hash`n\")", workflow);
@@ -108,14 +145,14 @@ public class ReleaseTests
 
     [Fact]
     public void AReleaseWithoutSignatureOffersNoSelfUpdate() =>
-        Assert.Null(ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256", sigUrl: null)).Assets);
+        Assert.Null(ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "Tunero.exe", Download + "Tunero.exe.sha256", sigUrl: null)).Assets);
 
     [Fact]
     public void AssetsAreTakenOnlyFromThisRepository()
     {
-        var ok = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
-        Assert.Equal(Download + "PCOptimizer.exe", ok.Assets?.ExeUrl);
-        var elsewhere = ReleaseCheck.Evaluate(Current, ReleaseJson("https://example.com/PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        var ok = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "Tunero.exe", Download + "Tunero.exe.sha256"));
+        Assert.Equal(Download + "Tunero.exe", ok.Assets?.ExeUrl);
+        var elsewhere = ReleaseCheck.Evaluate(Current, ReleaseJson("https://example.com/Tunero.exe", Download + "Tunero.exe.sha256"));
         Assert.Null(elsewhere.Assets);
     }
 
@@ -123,7 +160,7 @@ public class ReleaseTests
     public void ReadsSha256sumFormat()
     {
         var hash = new string('a', 64);
-        Assert.Equal(hash, Updater.ParseChecksum($"{hash}  PCOptimizer.exe\n"));
+        Assert.Equal(hash, Updater.ParseChecksum($"{hash}  Tunero.exe\n"));
         Assert.Null(Updater.ParseChecksum("not a hash"));
     }
 
@@ -135,7 +172,7 @@ public class ReleaseTests
     {
         var exe = "new exe bytes"u8.ToArray();
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(matching ? exe : [1, 2, 3])).ToLowerInvariant();
-        var release = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "PCOptimizer.exe", Download + "PCOptimizer.exe.sha256"));
+        var release = ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "Tunero.exe", Download + "Tunero.exe.sha256"));
         var (pem, sign) = TestKey();
         var (_, signOther) = TestKey();
         var signature = (signedByReleaseKey ? sign : signOther)(UpdateSignature.Statement(new Version(1, 0, 0), hash));
@@ -144,9 +181,9 @@ public class ReleaseTests
         {
             using var updater = new Updater(new RoutingHandler(new()
             {
-                [Download + "PCOptimizer.exe"] = exe,
-                [Download + "PCOptimizer.exe.sha256"] = System.Text.Encoding.ASCII.GetBytes($"{hash}  PCOptimizer.exe\n"),
-                [Download + "PCOptimizer.exe.sig"] = System.Text.Encoding.ASCII.GetBytes(signature),
+                [Download + "Tunero.exe"] = exe,
+                [Download + "Tunero.exe.sha256"] = System.Text.Encoding.ASCII.GetBytes($"{hash}  Tunero.exe\n"),
+                [Download + "Tunero.exe.sig"] = System.Text.Encoding.ASCII.GetBytes(signature),
             }), pem);
             var result = await updater.DownloadAsync(release, folder);
             if (!signedByReleaseKey)
@@ -178,8 +215,8 @@ public class ReleaseTests
         Directory.CreateDirectory(folder);
         try
         {
-            var running = Path.Combine(folder, "PCOptimizer.exe");
-            var downloaded = Path.Combine(folder, "PCOptimizer-1.0.0.exe");
+            var running = Path.Combine(folder, "Tunero.exe");
+            var downloaded = Path.Combine(folder, "Tunero-1.0.0.exe");
             File.WriteAllText(running, "old");
             File.WriteAllText(downloaded, "new");
             Updater.Install(downloaded, running);
@@ -217,8 +254,8 @@ public class ReleaseTests
     {
         foreach (var file in Manifest().SelectMany(c => c.Files).Distinct())
         {
-            // PCOptimizer.txt is the repository's LICENSE, embedded under that name.
-            var path = file == "PCOptimizer.txt" ? Path.Combine(RepoPaths.Root, "LICENSE") : Path.Combine(RepoPaths.App, "Licenses", file);
+            // Tunero.txt is the repository's LICENSE, embedded under that name.
+            var path = file == "Tunero.txt" ? Path.Combine(RepoPaths.Root, "LICENSE") : Path.Combine(RepoPaths.App, "Licenses", file);
             Assert.True(File.Exists(path), $"{file} is listed in licenses.json but missing");
         }
         // GitHub recognizes the license only from the unchanged GNU text.

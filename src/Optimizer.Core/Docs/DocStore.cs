@@ -140,8 +140,15 @@ public static partial class DocStore
             {
                 Generated(DocHeadings.GeneratedChanges[lang], () =>
                 {
-                    var (now, next) = lang == "de" ? ("jetzt", "neu") : ("now", "new");
-                    foreach (var c in changes) sb.Append("- `").Append(c.Target).Append("`: ").Append(now).Append(' ').Append(Labels.Current.Display(lang, c.Before)).Append(", ").Append(next).Append(" **").Append(Labels.Current.Display(lang, c.After)).AppendLine("**");
+                    // "from Power saver to Tunero Gaming" reads as one change; a value that already is the target says so.
+                    var (from, to, already) = lang == "de" ? ("von", "auf", "schon") : ("from", "to", "already");
+                    foreach (var c in changes)
+                    {
+                        string before = Labels.Current.Display(lang, c.Before), after = Labels.Current.Display(lang, c.After);
+                        sb.Append("- `").Append(c.Target).Append("`: ");
+                        if (c.Before.Length > 0 && c.Before != "?" && c.Before == c.After) sb.Append(already).Append(" **").Append(after).AppendLine("**");
+                        else sb.Append(from).Append(' ').Append(before).Append(' ').Append(to).Append(" **").Append(after).AppendLine("**");
+                    }
                     foreach (var n in notes) sb.Append("- ").AppendLine(n);
                 });
             }

@@ -1,4 +1,4 @@
-# PCOptimizer brand
+# Tunero brand
 
 ## App icon
 
@@ -6,11 +6,11 @@ A blue chip square (#0078D4, with a light gradient from #2B8EE0 at the top left 
 
 | File | Use |
 |---|---|
-| `pcoptimizer-icon.svg` | Master drawing (48 unit grid) |
-| `pcoptimizer-icon-mono.svg` | Single color (`currentColor`), knob as knockout |
-| `hinted/pcoptimizer-icon-{16,20,24,32}.svg`, `hinted/pcoptimizer-icon-mono-{16,20,24,32}.svg` | Pixel-grid redraws for small sizes; the 16 px version drops the index dot |
-| `pcoptimizer-icon-1024.png`, `pcoptimizer-icon-256.png` | Raster exports (README, release page) |
-| `logo-light.svg`, `logo-dark.svg` | Icon with the "PCOptimizer" wordmark |
+| `tunero-icon.svg` | Master drawing (48 unit grid) |
+| `tunero-icon-mono.svg` | Single color (`currentColor`), knob as knockout |
+| `hinted/tunero-icon-{16,20,24,32}.svg`, `hinted/tunero-icon-mono-{16,20,24,32}.svg` | Pixel-grid redraws for small sizes; the 16 px version drops the index dot |
+| `tunero-icon-1024.png`, `tunero-icon-256.png` | Raster exports (README, release page) |
+| `logo-light.svg`, `logo-dark.svg` | Icon with the "Tunero" wordmark |
 
 The app's own icon files are in `src/Optimizer.App/Assets` (`app.ico` and 16, 24 and 32 px PNGs).
 

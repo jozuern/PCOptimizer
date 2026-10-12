@@ -12,219 +12,259 @@
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Hint}" Margin="0,4,0,0" />
+                        <!-- A fix that needs a restart is marked, so it does not look as harmless as a cache flush -->
+                        <Border Style="{StaticResource TagBorder}" Margin="0,6,0,0" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                                Visibility="{Binding NeedsRestart, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{l:Tr Tag_Restart}" FontSize="12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Border>
                         <!-- The tool's report (chkdsk, reagentc) under the card that ran it -->
                         <TextBox Style="{StaticResource OutputBox}" Text="{Binding Output, Mode=OneWay}" Visibility="{Binding Output, Converter={StaticResource NullToVisibility}}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Cleanup_Run}" CommandParameter="{Binding}"
+                <ui:Button Content="{Binding ActionText}" CommandParameter="{Binding}" MinWidth="96"
                            Command="{Binding DataContext.Tools.RunQuickFixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            IsEnabled="{Binding DataContext.Tools.IsWorking, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBool}}" />
             </ui:CardControl>
         </DataTemplate>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}">
+    <!-- Four separate tools, one tab each, instead of one long page -->
+    <Grid Style="{StaticResource PageRoot}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
             <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tools_Title}" />
             <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Tools_Hint}" />
-
-            <!-- Storage analyzer -->
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Storage_Title}" Margin="0,0,0,8" />
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" Margin="0,0,0,8" />
-            <ui:Card Padding="16,12">
-                <StackPanel>
-                    <WrapPanel>
-                        <ComboBox ItemsSource="{Binding Tools.Drives}" SelectedItem="{Binding Tools.SelectedDrive}" MinWidth="120" Margin="0,0,8,0" />
-                        <ui:Button Appearance="Primary" Content="{l:Tr Storage_Scan}" Icon="{ui:SymbolIcon Search20}" Command="{Binding Tools.ScanStorageCommand}"
-                                   IsEnabled="{Binding Tools.IsScanningStorage, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Tools.StopStorageCommand}" Visibility="{Binding Tools.IsScanningStorage, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Tools.RecycleSelectedCommand}" />
-                    </WrapPanel>
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Tools.StorageStatus}" Margin="0,8,0,0" Visibility="{Binding Tools.StorageStatus, Converter={StaticResource NullToVisibility}}" />
-                </StackPanel>
-            </ui:Card>
-            <ui:CardExpander Header="{l:Tr Storage_Largest}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
-                <ItemsControl ItemsSource="{Binding Tools.LargestFiles}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <DockPanel Margin="0,4">
-                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
-                                    </StackPanel>
-                                </CheckBox>
-                            </DockPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ui:CardExpander>
-            <ui:CardExpander Header="{l:Tr Storage_Folders}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFolders.Count, Converter={StaticResource CountToVisibility}}">
-                <ItemsControl ItemsSource="{Binding Tools.LargestFolders}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <DockPanel Margin="0,4">
-                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Files}" />
-                                </StackPanel>
-                            </DockPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ui:CardExpander>
-            <ui:CardExpander Header="{l:Tr Storage_Duplicates}" Margin="0,4,0,0" Visibility="{Binding Tools.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
-                <ItemsControl ItemsSource="{Binding Tools.Duplicates}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <DockPanel Margin="0,4">
-                                <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
-                                    </StackPanel>
-                                </CheckBox>
-                            </DockPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ui:CardExpander>
-
-            <!-- Optional features -->
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Feat_Title}" />
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Feat_Hint}" Margin="0,0,0,8" />
-            <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Tools.IsLoading, Converter={StaticResource BoolToVisibility}}" />
-            <ui:InfoBar Title="" Message="{Binding Tools.FeaturesNote}" Severity="Informational" IsClosable="False" Margin="0,0,0,8"
-                        IsOpen="{Binding Tools.FeaturesNote, Converter={StaticResource NullToBool}}" />
-            <ItemsControl ItemsSource="{Binding Tools.Features}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
-                            <ui:CardControl.Header>
-                                <StackPanel>
-                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" />
-                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Text}" Margin="0,4,0,0" />
-                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Note}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                                  Visibility="{Binding Note, Converter={StaticResource NullToVisibility}}" />
-                                </StackPanel>
-                            </ui:CardControl.Header>
-                            <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" >
-                                <ui:ToggleSwitch.IsEnabled>
-                                    <MultiBinding Converter="{StaticResource AllTrue}">
-                                        <Binding Path="CanToggle" />
-                                        <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
-                                    </MultiBinding>
-                                </ui:ToggleSwitch.IsEnabled>
-                            </ui:ToggleSwitch>
-                        </ui:CardControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <!-- Start priorities (Image File Execution Options) -->
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Prio_Title}" />
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Prio_Hint}" Margin="0,0,0,8" TextWrapping="Wrap" />
-            <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
-                <StackPanel>
-                    <WrapPanel>
-                        <ui:TextBox PlaceholderText="{l:Tr Prio_ExePlaceholder}" Text="{Binding Tools.NewPriorityExe, UpdateSourceTrigger=PropertyChanged}" MinWidth="240" Margin="0,0,8,8" />
-                        <ComboBox ItemsSource="{Binding Tools.PriorityChoices}" SelectedItem="{Binding Tools.NewPriority}" DisplayMemberPath="Text" MinWidth="180" Margin="0,0,8,8" />
-                        <CheckBox Content="{l:Tr Prio_LowIoOption}" IsChecked="{Binding Tools.NewPriorityLowIo}" Margin="0,0,8,8" VerticalAlignment="Center" />
-                        <ui:Button Content="{l:Tr Prio_Add}" Icon="{ui:SymbolIcon Add20}" Command="{Binding Tools.AddPriorityRuleCommand}" Margin="0,0,0,8" />
-                    </WrapPanel>
-                    <ui:TextBlock Style="{StaticResource Caption}" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Tools.PriorityNote}"
-                                  Visibility="{Binding Tools.PriorityNote, Converter={StaticResource NullToVisibility}}" />
-                </StackPanel>
-            </ui:Card>
-            <ItemsControl ItemsSource="{Binding Tools.PriorityRules}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+        </StackPanel>
+        <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource SelectorTab}" SelectedIndex="{Binding ToolsTab}">
+            <TabItem Header="{l:Tr Quick_TabFixes}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
+                    <StackPanel Margin="0,0,16,0">
+                        <!-- Quick fixes in three groups; the last one repairs Windows (system files, updates, drive) -->
+                        <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupNetwork}" Margin="0,0,0,8" />
                         <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                             <ui:CardControl.Header>
                                 <StackPanel>
-                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Exe}" />
-                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Details}" Margin="0,4,0,0" />
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Dns}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_DnsHint}" Margin="0,4,0,0" />
                                 </StackPanel>
                             </ui:CardControl.Header>
-                            <ui:Button Content="{l:Tr Prio_Remove}" Icon="{ui:SymbolIcon Delete20}" CommandParameter="{Binding}"
-                                       Command="{Binding DataContext.Tools.RemovePriorityRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                            <ui:Button Content="{l:Tr Quick_DnsAction}" MinWidth="96" Command="{Binding Tools.FlushDnsCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
                         </ui:CardControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <ui:CardControl.Header>
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Winsock}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_WinsockHint}" Margin="0,4,0,0" />
+                                    <Border Style="{StaticResource TagBorder}" Margin="0,6,0,0" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                                        <TextBlock Text="{l:Tr Tag_Restart}" FontSize="12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </ui:CardControl.Header>
+                            <ui:Button Content="{l:Tr Quick_WinsockAction}" MinWidth="96" Command="{Binding Tools.WinsockResetCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
+                        </ui:CardControl>
+                        <ItemsControl ItemsSource="{Binding Tools.QuickNetworkRows}" ItemTemplate="{StaticResource QuickFixRow}" />
 
-            <!-- Quick fixes in three groups; the last one repairs Windows (system files, updates, drive) -->
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupNetwork}" />
-            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Dns}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_DnsHint}" Margin="0,4,0,0" />
-                    </StackPanel>
-                </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Cleanup_Run}" Command="{Binding Tools.FlushDnsCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
-            </ui:CardControl>
-            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Winsock}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_WinsockHint}" Margin="0,4,0,0" />
-                    </StackPanel>
-                </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Cleanup_Run}" Command="{Binding Tools.WinsockResetCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
-            </ui:CardControl>
-            <ItemsControl ItemsSource="{Binding Tools.QuickNetworkRows}" ItemTemplate="{StaticResource QuickFixRow}" />
+                        <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRestart}" />
+                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <ui:CardControl.Header>
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Explorer}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_ExplorerHint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </ui:CardControl.Header>
+                            <ui:Button Content="{l:Tr Quick_ExplorerAction}" MinWidth="96" Command="{Binding Tools.RestartExplorerCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
+                        </ui:CardControl>
+                        <ItemsControl ItemsSource="{Binding Tools.QuickRestartRows}" ItemTemplate="{StaticResource QuickFixRow}" />
 
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRestart}" />
-            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Quick_Explorer}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Quick_ExplorerHint}" Margin="0,4,0,0" />
+                        <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRepair}" />
+                        <!-- System files (sfc, DISM): commands of the Health view model -->
+                        <ui:Card Padding="16,12" Margin="{StaticResource CardRowMargin}">
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Health_SystemFiles}" />
+                                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Health_SystemFilesHint}" Margin="0,4,0,0" />
+                                <WrapPanel Margin="0,8,0,0">
+                                    <ui:Button Content="{l:Tr Health_Sfc}" Command="{Binding Health.SfcCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
+                                    <ui:Button Content="{l:Tr Health_DismScan}" Command="{Binding Health.DismScanCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
+                                    <ui:Button Content="{l:Tr Health_DismRestore}" Command="{Binding Health.DismRestoreCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
+                                    <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Health.StopToolCommand}" Visibility="{Binding Health.IsToolRunning, Converter={StaticResource BoolToVisibility}}" />
+                                </WrapPanel>
+                                <TextBox Style="{StaticResource OutputBox}" Text="{Binding Health.ToolOutput, Mode=OneWay}" Visibility="{Binding Health.ToolOutput, Converter={StaticResource NullToVisibility}}" />
+                            </StackPanel>
+                        </ui:Card>
+                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <ui:CardControl.Header>
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Repair_Title}" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Repair_Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </ui:CardControl.Header>
+                            <ui:Button Content="{l:Tr Repair_Run}" MinWidth="96" Command="{Binding Tools.RepairUpdateCommand}"
+                                       IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
+                        </ui:CardControl>
+                        <ItemsControl ItemsSource="{Binding Tools.RepairSteps}" Margin="0,4,0,8" Visibility="{Binding Tools.RepairSteps.Count, Converter={StaticResource CountToVisibility}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                                        <Grid Width="16" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <ui:SymbolIcon Symbol="CheckmarkCircle16" Filled="True" FontSize="16" Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                                                           Visibility="{Binding Ok, Converter={StaticResource BoolToVisibility}}" />
+                                            <ui:SymbolIcon Symbol="DismissCircle16" Filled="True" FontSize="16" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                           Visibility="{Binding Ok, Converter={StaticResource InverseBoolToVisibility}}" />
+                                        </Grid>
+                                        <ui:TextBlock FontTypography="Body" Text="{Binding Text}" />
+                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding Tools.QuickRepairRows}" ItemTemplate="{StaticResource QuickFixRow}" />
                     </StackPanel>
-                </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Cleanup_Run}" Command="{Binding Tools.RestartExplorerCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
-            </ui:CardControl>
-            <ItemsControl ItemsSource="{Binding Tools.QuickRestartRows}" ItemTemplate="{StaticResource QuickFixRow}" />
-
-            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRepair}" />
-            <!-- System files (sfc, DISM): commands of the Health view model -->
-            <ui:Card Padding="16,12" Margin="{StaticResource CardRowMargin}">
-                <StackPanel>
-                    <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Health_SystemFiles}" />
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Health_SystemFilesHint}" Margin="0,4,0,0" />
-                    <WrapPanel Margin="0,8,0,0">
-                        <ui:Button Content="{l:Tr Health_Sfc}" Command="{Binding Health.SfcCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Health_DismScan}" Command="{Binding Health.DismScanCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Health_DismRestore}" Command="{Binding Health.DismRestoreCommand}" IsEnabled="{Binding Health.IsToolRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Health.StopToolCommand}" Visibility="{Binding Health.IsToolRunning, Converter={StaticResource BoolToVisibility}}" />
-                    </WrapPanel>
-                    <TextBox Style="{StaticResource OutputBox}" Text="{Binding Health.ToolOutput, Mode=OneWay}" Visibility="{Binding Health.ToolOutput, Converter={StaticResource NullToVisibility}}" />
-                </StackPanel>
-            </ui:Card>
-            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Repair_Title}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Repair_Hint}" Margin="0,4,0,0" />
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{l:Tr Storage_Title}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
+                    <StackPanel Margin="0,0,16,0">
+                        <!-- Storage analyzer -->
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" Margin="0,0,0,8" />
+                        <ui:Card Padding="16,12">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <ComboBox ItemsSource="{Binding Tools.Drives}" SelectedItem="{Binding Tools.SelectedDrive}" MinWidth="120" Margin="0,0,8,0" AutomationProperties.Name="{l:Tr Storage_Drive}" />
+                                    <ui:Button Appearance="Primary" Content="{l:Tr Storage_Scan}" Icon="{ui:SymbolIcon Search20}" Command="{Binding Tools.ScanStorageCommand}"
+                                               IsEnabled="{Binding Tools.IsScanningStorage, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
+                                    <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Tools.StopStorageCommand}" Visibility="{Binding Tools.IsScanningStorage, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
+                                    <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Tools.RecycleSelectedCommand}"
+                                               IsEnabled="{Binding Tools.HasStorageSelection}" />
+                                </WrapPanel>
+                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Tools.StorageStatus}" Margin="0,8,0,0" Visibility="{Binding Tools.StorageStatus, Converter={StaticResource NullToVisibility}}" />
+                            </StackPanel>
+                        </ui:Card>
+                        <ui:CardExpander Header="{l:Tr Storage_Largest}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
+                            <ItemsControl ItemsSource="{Binding Tools.LargestFiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,4">
+                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
+                                            <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
+                                                <StackPanel>
+                                                    <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
+                                                </StackPanel>
+                                            </CheckBox>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ui:CardExpander>
+                        <ui:CardExpander Header="{l:Tr Storage_Folders}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFolders.Count, Converter={StaticResource CountToVisibility}}">
+                            <ItemsControl ItemsSource="{Binding Tools.LargestFolders}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,4">
+                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Files}" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ui:CardExpander>
+                        <ui:CardExpander Header="{l:Tr Storage_Duplicates}" Margin="0,4,0,0" Visibility="{Binding Tools.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
+                            <ItemsControl ItemsSource="{Binding Tools.Duplicates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,4">
+                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
+                                            <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
+                                                <StackPanel>
+                                                    <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
+                                                </StackPanel>
+                                            </CheckBox>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ui:CardExpander>
                     </StackPanel>
-                </ui:CardControl.Header>
-                <ui:Button Content="{l:Tr Repair_Run}" Icon="{ui:SymbolIcon ArrowSync20}" Command="{Binding Tools.RepairUpdateCommand}"
-                           IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
-            </ui:CardControl>
-            <ItemsControl ItemsSource="{Binding Tools.RepairSteps}" Margin="0,4,0,8" Visibility="{Binding Tools.RepairSteps.Count, Converter={StaticResource CountToVisibility}}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="0,2">
-                            <ui:TextBlock FontTypography="Body" Text="{Binding Text}" />
-                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" Margin="12,0,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <ItemsControl ItemsSource="{Binding Tools.QuickRepairRows}" ItemTemplate="{StaticResource QuickFixRow}" />
-        </StackPanel>
-    </ScrollViewer>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{l:Tr Feat_Title}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
+                    <StackPanel Margin="0,0,16,0">
+                        <!-- Optional features -->
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Feat_Hint}" Margin="0,0,0,8" />
+                        <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Tools.IsLoading, Converter={StaticResource BoolToVisibility}}" />
+                        <ui:InfoBar Title="" Message="{Binding Tools.FeaturesNote}" Severity="Informational" IsClosable="False" Margin="0,0,0,8"
+                                    IsOpen="{Binding Tools.FeaturesNote, Converter={StaticResource NullToBool}}" />
+                        <ItemsControl ItemsSource="{Binding Tools.Features}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
+                                        <ui:CardControl.Header>
+                                            <StackPanel>
+                                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" />
+                                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Text}" Margin="0,4,0,0" />
+                                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Note}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                              Visibility="{Binding Note, Converter={StaticResource NullToVisibility}}" />
+                                            </StackPanel>
+                                        </ui:CardControl.Header>
+                                        <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" OnContent="{l:Tr Feature_On}" OffContent="{l:Tr Feature_Off}">
+                                            <ui:ToggleSwitch.IsEnabled>
+                                                <MultiBinding Converter="{StaticResource AllTrue}">
+                                                    <Binding Path="CanToggle" />
+                                                    <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
+                                                </MultiBinding>
+                                            </ui:ToggleSwitch.IsEnabled>
+                                        </ui:ToggleSwitch>
+                                    </ui:CardControl>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{l:Tr Prio_Title}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
+                    <StackPanel Margin="0,0,16,0">
+                        <!-- Start priorities (Image File Execution Options) -->
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Prio_Hint}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                        <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <ui:TextBox PlaceholderText="{l:Tr Prio_ExePlaceholder}" Text="{Binding Tools.NewPriorityExe, UpdateSourceTrigger=PropertyChanged}" MinWidth="240" Margin="0,0,8,8" AutomationProperties.Name="{l:Tr Prio_ExePlaceholder}" />
+                                    <ui:Button Content="{l:Tr Prio_Browse}" Icon="{ui:SymbolIcon FolderOpen20}" Command="{Binding Tools.BrowsePriorityExeCommand}" Margin="0,0,16,8" />
+                                    <ComboBox ItemsSource="{Binding Tools.PriorityChoices}" SelectedItem="{Binding Tools.NewPriority}" DisplayMemberPath="Text" MinWidth="180" Margin="0,0,8,8" AutomationProperties.Name="{l:Tr Prio_Priority}" />
+                                    <CheckBox Content="{l:Tr Prio_LowIoOption}" IsChecked="{Binding Tools.NewPriorityLowIo}" Margin="0,0,8,8" VerticalAlignment="Center" />
+                                    <ui:Button Content="{l:Tr Prio_Add}" Icon="{ui:SymbolIcon Add20}" Command="{Binding Tools.AddPriorityRuleCommand}" Margin="0,0,0,8" />
+                                </WrapPanel>
+                                <ui:TextBlock Style="{StaticResource Caption}" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Tools.PriorityNote}"
+                                              Visibility="{Binding Tools.PriorityNote, Converter={StaticResource NullToVisibility}}" />
+                            </StackPanel>
+                        </ui:Card>
+                        <ItemsControl ItemsSource="{Binding Tools.PriorityRules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                                        <ui:CardControl.Header>
+                                            <StackPanel>
+                                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Exe}" />
+                                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Details}" Margin="0,4,0,0" />
+                                            </StackPanel>
+                                        </ui:CardControl.Header>
+                                        <ui:Button Content="{l:Tr Prio_Remove}" Icon="{ui:SymbolIcon Delete20}" CommandParameter="{Binding}"
+                                                   Command="{Binding DataContext.Tools.RemovePriorityRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                                    </ui:CardControl>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>

@@ -5,7 +5,7 @@ namespace Optimizer.Core.Logging;
 public enum LogLevel { Debug, Info, Warning, Error }
 
 /// <summary>
-/// Structured JSON-lines log in the data folder's logs (%ProgramData%\PCOptimizer\logs when elevated). Logging never
+/// Structured JSON-lines log in the data folder's logs (%ProgramData%\Tunero\logs when elevated). Logging never
 /// throws: a failing log must not break a scan.
 /// </summary>
 public static class Log

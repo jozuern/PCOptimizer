@@ -1,12 +1,15 @@
 namespace Optimizer.Core.Updates;
 
 /// <summary>
-/// PCOptimizer installed with winget (portable package): updates go through winget, so its record of the installed
+/// Tunero installed with winget (portable package): updates go through winget, so its record of the installed
 /// version stays right, instead of the app replacing its own exe.
 /// </summary>
 public static class WingetPackage
 {
-    public const string Id = "jozuern.PCOptimizer";
+    public const string Id = "jozuern.Tunero";
+
+    /// <summary>The package id before the rename (submitted, never published); a copy installed from a manifest file under it is still recognized.</summary>
+    public const string LegacyId = "jozuern.PCOptimizer";
 
     /// <summary>
     /// winget keeps a portable package in a folder named after the package id, with the source appended for a source
@@ -34,14 +37,14 @@ public static class WingetPackage
     }
 
     public static bool IsPackageFolder(string? folder) =>
-        folder is not null && (folder.Equals(Id, StringComparison.OrdinalIgnoreCase) || folder.StartsWith(Id + "_", StringComparison.OrdinalIgnoreCase));
+        folder is not null && new[] { Id, LegacyId }.Any(id => folder.Equals(id, StringComparison.OrdinalIgnoreCase) || folder.StartsWith(id + "_", StringComparison.OrdinalIgnoreCase));
 
     public static string PowerShell => Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
 
     /// <summary>
     /// PowerShell arguments for the update, started as the signed-in user (never elevated): wait until this process has
     /// ended (winget cannot replace a running exe), run winget, keep the window open with <paramref name="failedText"/>
-    /// when it did not succeed, then start PCOptimizer again (Windows asks for administrator rights as on any start).
+    /// when it did not succeed, then start Tunero again (Windows asks for administrator rights as on any start).
     /// </summary>
     public static string UpdateArguments(int processId, string exePath, string runningText, string failedText) =>
         "-NoProfile -Command \"" +

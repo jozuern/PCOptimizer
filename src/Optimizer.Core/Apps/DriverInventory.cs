@@ -5,7 +5,7 @@ namespace Optimizer.Core.Apps;
 
 public sealed record DriverRow(string Device, string Class, string? Provider, string? Manufacturer, string? Version, DateTime? Date, string? Inf, string DeviceId)
 {
-    public int? AgeDays(DateTime today) => Date is { } d ? (int)(today - d.Date).TotalDays : null;
+    public int? AgeDays(DateTime today) => Date is { } d && !DriverInventory.IsPlaceholderDate(d) ? (int)(today - d.Date).TotalDays : null;
 }
 
 /// <summary>
@@ -57,6 +57,13 @@ public static class DriverInventory
             return "https://www.amd.com/en/support/download/drivers.html";
         return string.IsNullOrEmpty(boardSupportUrl) ? null : boardSupportUrl;
     }
+
+    /// <summary>
+    /// Dates that are not release dates: Intel's chipset and serial IO packages write 07/18/1968 into their INF files so
+    /// Windows ranks them below any other driver, and Windows' own inbox drivers carry 06/21/2006. Showing an age for
+    /// those would call a current package decades old.
+    /// </summary>
+    public static bool IsPlaceholderDate(DateTime date) => date.Year < 2000 || date.Date == new DateTime(2006, 6, 21);
 
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 }

@@ -115,6 +115,11 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
 
     partial void OnSearchChanged(string value) => Filter();
     partial void OnOnlyNewChanged(bool value) => Filter();
+
+    /// <summary>Only entries that need attention (not signed, unusual place, a script host).</summary>
+    [ObservableProperty] private bool _onlyAttention;
+
+    partial void OnOnlyAttentionChanged(bool value) => Filter();
     partial void OnHideMicrosoftChanged(bool value) => Filter();
     partial void OnSelectedKindChanged(FilterOption? value) => Filter();
 
@@ -134,6 +139,9 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     {
         var lang = Lang;
         _all = entries.Select(e => new StartupRow(e, lang, services, runner)).ToList();
+        // Services and drivers are found on Services & tasks; here only what the Startup page is for.
+        services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.StartupEntry,
+            _all.Where(r => r.Entry.Kind is not (StartupKind.Service or StartupKind.Driver)).Select(r => ("Startup", r.Name, r.Name, r.MetaText)));
         if (_compareAfterLoad && await Task.Run(() => StartupSnapshot.Load(StartupSnapshot.DefaultFile)) is { } snapshot)
             ShowComparison(StartupSnapshot.Compare(snapshot, entries));
         // Built again after a language switch; the chosen kind stays selected.
@@ -174,7 +182,7 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
             || r.Command?.Contains(q, StringComparison.OrdinalIgnoreCase) == true || r.Location.Contains(q, StringComparison.OrdinalIgnoreCase)
             || r.MetaText.Contains(q, StringComparison.CurrentCultureIgnoreCase);
         Rows.Clear();
-        foreach (var r in _all.Where(r => (kind.Length == 0 || (kind == SignInKey ? IsSignIn(r.Entry) : r.Entry.Kind.ToString() == kind)) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && Matches(r))
+        foreach (var r in _all.Where(r => (kind.Length == 0 || (kind == SignInKey ? IsSignIn(r.Entry) : r.Entry.Kind.ToString() == kind)) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && (!OnlyAttention || r.NeedsAttention) && Matches(r))
                      .OrderByDescending(r => r.IsNew).ThenByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
         var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);
@@ -360,19 +368,21 @@ public sealed partial class ServiceRowVm : ObservableObject
         StateText = Loc.Instance[row.Running ? "Svc_Running" : "Svc_Stopped"];
         Publisher = row.Signature?.Publisher ?? "";
         MetaText = string.Join(", ", new[] { row.Name, StateText, Publisher }.Where(x => x.Length > 0));
+        // Manual only: a button, not a combo box that offers a single entry.
         Options = row.Edit switch
         {
-            ServiceEdit.ManualOnly => [Opt(ServiceStart.Manual, lang)],
             ServiceEdit.Full => [Opt(ServiceStart.Automatic, lang), Opt(ServiceStart.AutomaticDelayed, lang), Opt(ServiceStart.Manual, lang), Opt(ServiceStart.Disabled, lang)],
             _ => [],
         };
+        CanSetManual = row.Edit == ServiceEdit.ManualOnly && row.Start != ServiceStart.Manual;
+        LockTip = row.Edit == ServiceEdit.ReadOnly ? Loc.Instance["Svc_LockTipReadOnly"] : Loc.Instance["Svc_LockTipManual"];
         if (row.Start is { } current && Options.All(o => o.Start != current)) Options = [Opt(current, lang), .. Options];
         _selected = Options.FirstOrDefault(o => o.Start == row.Start);
         EditText = row.Edit switch
         {
             ServiceEdit.ReadOnly => Loc.Instance["Svc_ReadOnly"],
             // Only when there is something to choose: a service already on Manual has no change to warn about.
-            ServiceEdit.ManualOnly => row.Note?.Mode == "warn" && Options.Count > 1 ? Loc.Instance["Svc_Warn"] : null,
+            ServiceEdit.ManualOnly => row.Note?.Mode == "warn" && CanSetManual ? Loc.Instance["Svc_Warn"] : null,
             _ => null,
         };
     }
@@ -390,7 +400,21 @@ public sealed partial class ServiceRowVm : ObservableObject
     public string MetaText { get; }
     public string? EditText { get; }
     public IReadOnlyList<StartOption> Options { get; }
-    public bool CanEdit => Row.Edit != ServiceEdit.ReadOnly && Options.Count > 1;
+    public bool CanEdit => Row.Edit == ServiceEdit.Full;
+
+    /// <summary>A Windows service the app explains: the only change offered is Manual.</summary>
+    public bool CanSetManual { get; }
+
+    /// <summary>Neither a choice nor the Manual button: the start type with a lock, and why.</summary>
+    public bool IsLocked => !CanEdit && !CanSetManual;
+
+    public string LockTip { get; }
+
+    /// <summary>"Start type of Print Spooler": what a screen reader says for the combo box.</summary>
+    public string StartTypeLabel => Loc.Instance.Format("Svc_StartTypeName", DisplayName);
+
+    [RelayCommand]
+    private async Task SetManualAsync() => await _page.ChangeStartAsync(this, ServiceStart.Manual);
 
     [ObservableProperty] private StartOption? _selected;
 
@@ -454,6 +478,8 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
         ShowServices(_serviceRows);
 
         _taskList = await Task.Run(() => services.Context.Tasks.List());
+        services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.ScheduledTask,
+            _taskList.Select(t => ("Services", t.Path, t.Path.TrimStart('\\'), t.Command ?? "")));
         FillTasks();
     }
 
@@ -470,6 +496,7 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
     {
         var lang = Lang;
         _all = rows.OrderBy(r => r.DisplayName, StringComparer.CurrentCultureIgnoreCase).Select(r => new ServiceRowVm(r, lang, this)).ToList();
+        services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.Service, _all.Select(r => ("Services", r.Name, r.DisplayName, r.Description ?? r.Name)));
         Filter();
     }
 
@@ -559,11 +586,14 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
     };
 
     [ObservableProperty] private bool _installed = installed;
+
+    /// <summary>"Install Discord": what a screen reader says for the button (each row has one).</summary>
+    public string InstallLabel => Loc.Instance.Format("Apps_InstallName", Name);
     [ObservableProperty] private bool _isInstalling;
     [ObservableProperty] private string _stateText = installed ? Loc.Instance["Apps_Installed"] : "";
 }
 
-public sealed record DriverItem(string Device, string ClassText, string Provider, string Version, string Date, string Age, string? UpdateUrl, bool Old)
+public sealed record DriverItem(string Device, string ClassText, string Provider, string Version, string DateText, string? UpdateUrl, bool Old)
 {
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Device;
@@ -571,7 +601,24 @@ public sealed record DriverItem(string Device, string ClassText, string Provider
     /// <summary>Class, provider and version; a driver without provider or version shows no empty part.</summary>
     public string MetaText => string.Join(", ", new[] { ClassText, $"{Provider} {Version}".Trim() }.Where(x => x.Length > 0));
 
-    public string DateText => string.Join(", ", new[] { Date, Age }.Where(x => x.Length > 0));
+    /// <summary>Heading above the first driver of an update source ("Updates from Intel"), with one link for the group.</summary>
+    public string? GroupHeader { get; init; }
+
+    public string? GroupUrl { get; init; }
+
+    /// <summary>"10.08.2018, about 8 years old": the date in the app language and a rounded age. Placeholder dates say so.</summary>
+    public static string Describe(DateTime? date, int? ageDays)
+    {
+        if (date is not { } d) return "";
+        if (ageDays is not { } a) return Loc.Instance["Drv_NoRealDate"];
+        var shown = d.ToString("d", System.Globalization.CultureInfo.CurrentCulture);
+        // A date after today (some inbox drivers carry one) has no meaningful age.
+        if (a < 0) return shown;
+        var age = a < 60 ? Loc.Instance["Drv_AgeNew"]
+            : a < 730 ? Loc.Instance.Format("Drv_AgeMonths", (int)Math.Round(a / 30.44))
+            : Loc.Instance.Format("Drv_AgeYears", (int)Math.Round(a / 365.25));
+        return $"{shown}, {age}";
+    }
 }
 
 /// <summary>A desktop program in the uninstall list.</summary>
@@ -589,6 +636,9 @@ public sealed partial class ProgramRow(DesktopProgram program) : ObservableObjec
 
     [ObservableProperty] private string? _stateText;
     [ObservableProperty] private bool _isRemoving;
+
+    /// <summary>"Uninstall Steam": what a screen reader says for the button (each row has one).</summary>
+    public string UninstallLabel => Loc.Instance.Format("Programs_UninstallName", Name);
 }
 
 public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
@@ -616,10 +666,12 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         ProgramsText = Loc.Instance.Format("Programs_Count", _allPrograms.Count);
     }
 
+    [RelayCommand]
     private async Task LoadProgramsAsync()
     {
         var list = await Task.Run(() => Programs.Read(services.Context.Registry));
         _allPrograms = list.Select(p => new ProgramRow(p)).ToList();
+        services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.InstalledProgram, _allPrograms.Select(r => ("Debloat", r.Program.RegistryKey, r.Name, r.Meta)));
         FilterPrograms();
     }
 
@@ -768,14 +820,34 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         var board = BiosAgeCheck.SupportUrl(vendor);
         Drivers.Clear();
         var today = DateTime.Today;
-        foreach (var d in drivers)
+        // One link per update source instead of one per driver: most chipset rows lead to the same Intel page. Sources
+        // keep the order of their first driver; drivers without a known source come last.
+        var groups = drivers.GroupBy(d => DriverInventory.UpdateUrl(d, board) ?? "").OrderBy(g => g.Key.Length == 0);
+        foreach (var g in groups)
         {
-            var age = d.AgeDays(today);
-            Drivers.Add(new DriverItem(d.Device, Loc.Instance[$"DrvClass_{d.Class}"] is var c && c != $"DrvClass_{d.Class}" ? c : d.Class,
-                d.Provider ?? "", d.Version ?? "", d.Date?.ToString("yyyy-MM-dd") ?? "", age is { } a ? Loc.Instance.Format("Drv_AgeDays", a) : "",
-                DriverInventory.UpdateUrl(d, board), age > 2 * 365 && d.Class is "DISPLAY" or "NET" or "MEDIA"));
+            var first = true;
+            foreach (var d in g)
+            {
+                var url = g.Key.Length == 0 ? null : g.Key;
+                Drivers.Add(new DriverItem(d.Device, Loc.Instance[$"DrvClass_{d.Class}"] is var c && c != $"DrvClass_{d.Class}" ? c : d.Class,
+                    d.Provider ?? "", d.Version ?? "", DriverItem.Describe(d.Date, d.AgeDays(today)), url,
+                    d.AgeDays(today) > 2 * 365 && d.Class is "DISPLAY" or "NET" or "MEDIA")
+                {
+                    GroupHeader = first ? GroupTitle(url) : null,
+                    GroupUrl = first ? url : null,
+                });
+                first = false;
+            }
         }
     }
+
+    /// <summary>Who the update link leads to, for the group heading.</summary>
+    private static string GroupTitle(string? url) =>
+        url is null ? Loc.Instance["Drv_GroupOther"]
+        : url.Contains("nvidia.", StringComparison.OrdinalIgnoreCase) ? Loc.Instance.Format("Drv_GroupFrom", "NVIDIA")
+        : url.Contains("amd.", StringComparison.OrdinalIgnoreCase) ? Loc.Instance.Format("Drv_GroupFrom", "AMD")
+        : url.Contains("intel.", StringComparison.OrdinalIgnoreCase) ? Loc.Instance.Format("Drv_GroupFrom", "Intel")
+        : Loc.Instance["Drv_GroupBoard"];
 
     [RelayCommand]
     private async Task InstallAsync(AppRow? row)
@@ -828,8 +900,10 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
 
 // ---------------- Tools ----------------
 
-public sealed partial class FileRow(string path, long bytes, string meta, bool canDelete) : ObservableObject
+public sealed partial class FileRow(string path, long bytes, string meta, bool canDelete, Action? selectionChanged = null) : ObservableObject
 {
+    partial void OnSelectedChanged(bool value) => selectionChanged?.Invoke();
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Path;
 
@@ -936,6 +1010,13 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
                 r.LowIo ? Loc.Instance["Prio_LowIo"] : null));
     }
 
+    [RelayCommand]
+    private void BrowsePriorityExe()
+    {
+        // Only the file name goes into the rule (Windows matches by name); the file itself is neither read nor started.
+        if (dialogs.PickOpenFile(Loc.Instance["Prio_ProgramFiles"], ".exe") is { } path) NewPriorityExe = System.IO.Path.GetFileName(path);
+    }
+
     /// <summary>Adds a start priority rule through the engine (confirmation, backup, Changes page).</summary>
     [RelayCommand]
     private async Task AddPriorityRuleAsync()
@@ -1037,6 +1118,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         LargestFiles.Clear();
         LargestFolders.Clear();
         Duplicates.Clear();
+        UpdateStorageSelection();
         try
         {
             // Read for every analysis: a scan since the page opened may have found a new library.
@@ -1044,13 +1126,13 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
             var progress = new Progress<(int Files, long Bytes)>(p => StorageStatus = Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes)));
             var report = await StorageAnalyzer.ScanAsync(SelectedDrive, _protected, progress: progress, ct: _scanCancel.Token);
             foreach (var f in report.LargestFiles)
-                LargestFiles.Add(new FileRow(f.Path, f.Bytes, f.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd"), f.CanDelete));
+                LargestFiles.Add(new FileRow(f.Path, f.Bytes, f.LastWriteUtc.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture), f.CanDelete, UpdateStorageSelection));
             foreach (var f in report.LargestFolders.Take(20))
                 LargestFolders.Add(new FolderRow(f.Path, CleanupViewModel.Size(f.Bytes), Loc.Instance.Format("Storage_Files", f.Files)));
             _duplicateGroups = report.Duplicates.Take(50).ToList();
             foreach (var g in report.Duplicates.Take(50))
                 foreach (var (p, i) in g.Paths.Select((p, i) => (p, i)))
-                    Duplicates.Add(new FileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "", i > 0));
+                    Duplicates.Add(new FileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "", i > 0, UpdateStorageSelection));
             StorageStatus = Loc.Instance.Format("Storage_Done", report.ScannedFiles, CleanupViewModel.Size(report.ScannedBytes),
                 CleanupViewModel.Size(report.Duplicates.Sum(d => d.Reclaimable)));
             if (report.Truncated) StorageStatus += " " + Loc.Instance["Storage_Truncated"];
@@ -1068,6 +1150,11 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     }
 
     private IReadOnlyList<DuplicateGroup> _duplicateGroups = [];
+
+    /// <summary>Something is ticked: "Move selected to Recycle Bin" has work to do.</summary>
+    [ObservableProperty] private bool _hasStorageSelection;
+
+    private void UpdateStorageSelection() => HasStorageSelection = LargestFiles.Concat(Duplicates).Any(f => f.Selected && f.CanDelete);
 
     [RelayCommand]
     private void StopStorage() => _scanCancel?.Cancel();
@@ -1189,6 +1276,11 @@ public sealed partial class QuickFixRow(QuickFix fix) : ObservableObject
     public string Title => Loc.Instance[$"Quick_{Fix.Id}"];
     public string Hint => Loc.Instance[$"Quick_{Fix.Id}Hint"];
 
+    /// <summary>The button names what it does ("Renew", "Restart") instead of a generic "Run".</summary>
+    public string ActionText => Loc.Instance[$"Quick_{Fix.Id}Action"];
+
+    public bool NeedsRestart => Fix.NeedsRestart;
+
     /// <summary>The last lines of the tool's report (chkdsk, reagentc), shown in the card that ran it.</summary>
     [ObservableProperty] private string? _output;
 
@@ -1243,6 +1335,19 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     [ObservableProperty] private string _throttleStatus = "";
     [ObservableProperty] private string _throttleResult = "";
     [ObservableProperty] private string? _selectedProcess;
+
+    /// <summary>Where the before and after measurement stands: which step is next, with the runs done so far.</summary>
+    [ObservableProperty] private string _benchmarkStep = "";
+
+    partial void OnSelectedProcessChanged(string? value) => UpdateBenchmarkStep();
+
+    /// <summary>Three runs before (A), the change, three runs after (B): the result counts only with enough runs on both sides.</summary>
+    private void UpdateBenchmarkStep() => BenchmarkStep =
+        SelectedProcess is null ? Loc.Instance["Bench_Step1"]
+        : _before.Count < 3 ? Loc.Instance.Format("Bench_Step2", _before.Count)
+        : _after.Count == 0 ? Loc.Instance["Bench_Step3"]
+        : _after.Count < 3 ? Loc.Instance.Format("Bench_Step4", _after.Count)
+        : Loc.Instance["Bench_StepDone"];
     [ObservableProperty] private int _captureSeconds = 60;
     [ObservableProperty] private bool _isCapturing;
     [ObservableProperty] private string _benchmarkStatus = "";
@@ -1399,7 +1504,8 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         });
         Processes.Clear();
         foreach (var n in names) Processes.Add(n);
-        SelectedProcess = selected is not null && Processes.Contains(selected) ? selected : Processes.FirstOrDefault();
+        SelectedProcess = selected is not null && Processes.Contains(selected) ? selected : null;
+        UpdateBenchmarkStep();
     }
 
     [RelayCommand] private Task CaptureBeforeAsync() => CaptureAsync(_before, "A");
@@ -1429,6 +1535,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             Runs.Add(new RunRow($"{label}{set.Count}", Loc.Instance.Format("Bench_Fps", $"{stats.AverageFps:0.0}"), Loc.Instance.Format("Bench_Low", $"{stats.OnePercentLowFps:0.0}"), stats.Frames.ToString()));
             BenchmarkStatus = Loc.Instance["Bench_Done"];
             Compare();
+            UpdateBenchmarkStep();
         }
         catch (OperationCanceledException)
         {
@@ -1465,6 +1572,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         _after.Clear();
         Runs.Clear();
         ComparisonText = "";
+        UpdateBenchmarkStep();
     }
 
     // Sensors (opt-in)

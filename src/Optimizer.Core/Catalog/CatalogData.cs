@@ -29,6 +29,7 @@ public sealed class CatalogData
     public required Apps.AppCatalog Apps { get; init; }
     public required Tools.FeatureCatalog Features { get; init; }
     public required Profiles.ProfileCatalog Profiles { get; init; }
+    public required NotIncludedCatalog NotIncluded { get; init; }
 
     public static CatalogData Load() => new()
     {
@@ -44,6 +45,7 @@ public sealed class CatalogData
         Bios = Read<BiosCatalog>("bios.json"),
         Storage = Read<StorageCatalog>("storage.json"),
         Extras = Read<ExtrasCatalog>("extras.json"),
+        NotIncluded = Read<NotIncludedCatalog>("notincluded.json"),
     };
 
     public static IEnumerable<string> ResourceNames(string prefix) =>

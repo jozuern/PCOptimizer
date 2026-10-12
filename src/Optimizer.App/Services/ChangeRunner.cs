@@ -155,10 +155,11 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var warnings = new List<string>();
         if (t.Preview) warnings.Add(labels.Get(lang, "preview.warning"));
         if (t.IsBootCritical) warnings.Add(labels.Get(lang, "undo.bootCritical"));
-        warnings.AddRange(status.Blocks.Where(b => b.ReasonKey is not ("block.antiCheat" or "block.expertMode")).Select(b => BlockText(b, lang)));
-        if (t.EffectiveRisk == Risk.Expert && !expert) warnings.Add(labels.Get(lang, "block.expertMode"));
+        // What stops the change goes first and keeps Apply off; notes about the change stay warnings below it.
+        var blocks = status.Blocks.Where(b => b.ReasonKey is not ("block.antiCheat" or "block.expertMode")).Select(b => BlockText(b, lang)).ToList();
+        if (t.EffectiveRisk == Risk.Expert && !expert) blocks.Add(labels.Get(lang, "block.expertMode"));
         var antiCheat = status.Blocks.FirstOrDefault(b => b.ReasonKey == "block.antiCheat") is { } ac ? labels.Get(lang, ac.ReasonKey) + ac.Detail : null;
-        return new ConfirmRequest(title, summary, preview, badges, warnings, antiCheat, false);
+        return new ConfirmRequest(title, summary, preview, badges, warnings, antiCheat, false) { Blocks = blocks };
     }
 
     /// <summary>Confirms and undoes one tweak from its backup.</summary>

@@ -29,6 +29,10 @@ public partial class App : Application
     private string? _sessionSid;
     private bool _preferenceHooked;
 
+    // Error reports (CrashReport): the services to open the GitHub form with, and whether this session offered one.
+    private AppServices? _services;
+    private bool _errorReportOffered;
+
     // What ApplyTheme set last: a Windows setting change that alters neither does not load the theme again.
     private (bool Dark, Color Accent)? _appliedTheme;
 
@@ -57,16 +61,19 @@ public partial class App : Application
             Log.Error("ui", "unhandled exception", ex.Exception);
             if (ex.Exception.GetBaseException() is { } root && !ReferenceEquals(root, ex.Exception)) Log.Error("ui", "root cause", root);
             ex.Handled = true;
+            CrashReport.Save(CrashReport.Describe(ex.Exception, AppInfo.Text, BuildInfo.Read().BuildString, DateTimeOffset.Now));
             // Before the window is shown there is nothing to keep running: say why and exit instead of staying invisible.
             if (MainWindow is not { IsVisible: true })
             {
-                System.Windows.MessageBox.Show(ex.Exception.GetBaseException().Message, "PCOptimizer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.Exception.GetBaseException().Message, "Tunero", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 Shutdown(1);
             }
             else
             {
                 // The app keeps running; say that something failed and where to report it instead of failing silently.
                 (MainWindow.DataContext as MainViewModel)?.ShowResult(Loc.Instance["Error_Unexpected"], Wpf.Ui.Controls.InfoBarSeverity.Error);
+                // Offer the report once per session, after the current input is handled (not from inside the failing call).
+                Dispatcher.BeginInvoke(() => OfferErrorReport(lastSession: false), DispatcherPriority.ApplicationIdle);
             }
         };
 
@@ -78,7 +85,10 @@ public partial class App : Application
         };
         AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
         {
-            if (ex.ExceptionObject is Exception error) Log.Error("app", "unhandled exception", error);
+            if (ex.ExceptionObject is not Exception error) return;
+            Log.Error("app", "unhandled exception", error);
+            // The process ends now: the report is offered on the next start.
+            CrashReport.Save(CrashReport.Describe(error, AppInfo.Text, BuildInfo.Read().BuildString, DateTimeOffset.Now));
         };
 
         var args = new CliArgs(e.Args);
@@ -91,7 +101,7 @@ public partial class App : Application
         {
             var text = gate == OsGateResult.BlockedTooOld ? Loc.Instance.Format("Gate_TooOld", os.BuildString) : Loc.Instance["Gate_Arch"];
             Log.Warn("app", "blocked by OS gate", new { os.Build, os.NativeArchitecture });
-            if (args.Value("--report") is null) System.Windows.MessageBox.Show(text, Loc.Instance["Gate_Title"], System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            if (args.Value("--report") is null && !args.IsCommandLineRun) System.Windows.MessageBox.Show(text, Loc.Instance["Gate_Title"], System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             Shutdown(2);
             return;
         }
@@ -100,6 +110,7 @@ public partial class App : Application
         if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, MainViewModel.UpdatesFolder);
 
         var services = new AppServices();
+        _services = services;
         Mark("services ready");
         _sessionSid = services.UserSid;
 
@@ -107,6 +118,17 @@ public partial class App : Application
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             Shutdown(await WriteReportAsync(reportPath, Loc.Instance.Language, services));
+            return;
+        }
+
+        // Changes without the window (CommandLineApply): apply an exported changes file, or undo everything.
+        if (args.IsCommandLineRun)
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var log = args.Value("--log");
+            Shutdown(args.Value("--apply") is { } changes
+                ? await CommandLineApply.ApplyAsync(changes, services, log, args.Has("--no-restore-point"))
+                : await CommandLineApply.UndoAllAsync(services, log));
             return;
         }
 
@@ -162,6 +184,7 @@ public partial class App : Application
         {
             // Asked once, over the first results: a portable exe has no Start menu entry, so Windows Search misses it.
             vm.OfferStartMenuEntry();
+            OfferErrorReport(lastSession: true);
             vm.CheckForUpdatesAsync(atStart: true).Forget("update check");
         }
 
@@ -187,6 +210,7 @@ public partial class App : Application
         if (Enum.TryParse<Page>(args.Value("--page"), true, out var page)) vm.CurrentPage = page;
         if (args.Value("--pane") is "closed") window.Nav.IsPaneOpen = false;
         if (double.TryParse(args.Value("--width"), CultureInfo.InvariantCulture, out var width)) window.Width = Math.Max(window.MinWidth, width);
+        if (double.TryParse(args.Value("--height"), CultureInfo.InvariantCulture, out var height)) window.Height = Math.Max(window.MinHeight, height);
         if (args.Value("--select") is { } id)
             vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
         if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
@@ -197,6 +221,16 @@ public partial class App : Application
             vm.SelectedItem = tweak;
             // Its card in view: open the group it is in.
             if (vm.TweakRows.OfType<TweakGroupRow>().FirstOrDefault(g => g.Items.Contains(tweak)) is { } group) vm.OpenTweakGroup(group.Key);
+        }
+        // Developer aid: type into the search box (Ctrl+F) and show the results.
+        if (args.Value("--search") is { } query)
+        {
+            vm.GlobalSearch = query;
+            await Task.Delay(1500);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            // The results are a popup, outside the window's picture: saved next to it.
+            if (window.SearchPopup.Child is FrameworkElement results)
+                SaveVisual(results, window, System.IO.Path.ChangeExtension(shot, null) + "-search.png");
         }
         // The inspector document is built in the background: wait for it before the picture.
         if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
@@ -375,7 +409,7 @@ public partial class App : Application
             // The window's scan pipeline, waiting for the background CPU sample (no tweak detection follows here).
             var (profile, findings, _) = await new ScanService(catalog, services.Context.Registry, services.BcdElements).RunAsync();
             var sb = new StringBuilder();
-            sb.AppendLine($"# PCOptimizer scan report ({DateTime.Now:yyyy-MM-dd HH:mm})").AppendLine();
+            sb.AppendLine($"# Tunero scan report ({DateTime.Now:yyyy-MM-dd HH:mm})").AppendLine();
             sb.AppendLine($"Readiness score: **{ReadinessScore.Compute(findings)}/100**, Windows {profile.Os.DisplayVersion} build {profile.Os.BuildString}, elevated: {profile.Elevation?.IsElevated}").AppendLine();
             foreach (var f in findings)
             {
@@ -504,7 +538,12 @@ public partial class App : Application
 
     private static void SaveScreenshot(Window window, string path)
     {
-        if (window.Content is not FrameworkElement root) return;
+        if (window.Content is FrameworkElement root) SaveVisual(root, window, path);
+    }
+
+    /// <summary>Renders one element (a window's content, or a popup that is not part of the window) to a PNG file.</summary>
+    private static void SaveVisual(FrameworkElement root, Window window, string path)
+    {
         var dpi = VisualTreeHelper.GetDpi(window);
         var w = (int)(root.ActualWidth * dpi.DpiScaleX);
         var h = (int)(root.ActualHeight * dpi.DpiScaleY);
@@ -533,6 +572,22 @@ public partial class App : Application
     private static FileStream OutputFile(string path) =>
         new(path, DataPaths.ProcessIsElevated ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None);
 
+    /// <summary>
+    /// Offers the saved error report (CrashReport) once: a question, and on yes the GitHub bug form filled in with it,
+    /// opened in the browser as the signed-in user. Nothing is sent unless the user submits the form there.
+    /// </summary>
+    private void OfferErrorReport(bool lastSession)
+    {
+        if (_errorReportOffered || _services is not { } services || CrashReport.Take() is not { } report) return;
+        _errorReportOffered = true;
+        var dialogs = new Dialogs();
+        if (!dialogs.Ask(Loc.Instance["Crash_Title"], Loc.Instance[lastSession ? "Crash_TextLastSession" : "Crash_Text"], Loc.Instance["Crash_Report"])) return;
+        var url = CrashReport.IssueUrl(ReleaseCheck.Repository, AppInfo.Text, services.Os.BuildString, Loc.Instance["Crash_What"], report);
+        Log.Info("crash", "error report opened", new { lastSession });
+        if (DeElevatedLauncher.Open(url, null, services.Elevation) == DeElevatedLauncher.Path.Failed)
+            (MainWindow?.DataContext as MainViewModel)?.ShowResult(Loc.Instance["Crash_OpenFailed"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
+    }
+
     private sealed class CliArgs(string[] args)
     {
         public string? Value(string name)
@@ -540,5 +595,10 @@ public partial class App : Application
             var i = Array.FindIndex(args, a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
             return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
         }
+
+        public bool Has(string name) => args.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>--apply &lt;file&gt; or --undo-all: no window, the result is the exit code (and the --log file).</summary>
+        public bool IsCommandLineRun => Value("--apply") is not null || Has("--undo-all");
     }
 }

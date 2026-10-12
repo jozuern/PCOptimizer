@@ -6,7 +6,7 @@
              xmlns:l="clr-namespace:Optimizer.App.Services"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}">
+        <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Health_Title}" />
             <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Health_Hint}" />
 
@@ -16,7 +16,7 @@
             <ui:Card Padding="16,12">
                 <StackPanel>
                     <WrapPanel>
-                        <ComboBox ItemsSource="{Binding Health.DurationOptions}" SelectedItem="{Binding Health.ThrottleSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding Health.DurationOptions}" SelectedItem="{Binding Health.ThrottleSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" AutomationProperties.Name="{l:Tr Bench_Duration}" />
                         <ui:Button Appearance="Primary" Content="{l:Tr Throttle_Start}" Icon="{ui:SymbolIcon Play20}" Command="{Binding Health.StartThrottleCommand}"
                                    IsEnabled="{Binding Health.IsThrottleRunning, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Stop}" Icon="{ui:SymbolIcon Stop20}" Command="{Binding Health.StopThrottleCommand}"
@@ -29,13 +29,15 @@
 
             <!-- Benchmark -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Bench_Title}" />
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Bench_Hint}" Margin="0,0,0,8" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Bench_Hint}" Margin="0,0,0,4" />
+
             <ui:Card Padding="16,12">
                 <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Health.BenchmarkStep}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <WrapPanel>
-                        <ComboBox ItemsSource="{Binding Health.Processes}" SelectedItem="{Binding Health.SelectedProcess}" MinWidth="220" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding Health.Processes}" SelectedItem="{Binding Health.SelectedProcess}" MinWidth="220" Margin="0,0,8,0" AutomationProperties.Name="{l:Tr Bench_Game}" />
                         <ui:Button Icon="{ui:SymbolIcon ArrowSync20}" Command="{Binding Health.RefreshProcessesCommand}" ToolTip="{l:Tr Common_Refresh}" AutomationProperties.Name="{l:Tr Common_Refresh}" Margin="0,0,8,0" />
-                        <ComboBox ItemsSource="{Binding Health.CaptureOptions}" SelectedItem="{Binding Health.CaptureSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding Health.CaptureOptions}" SelectedItem="{Binding Health.CaptureSeconds}" ItemStringFormat="{}{0} s" MinWidth="100" Margin="0,0,8,0" AutomationProperties.Name="{l:Tr Bench_Duration}" />
                         <ui:Button Content="{l:Tr Bench_Before}" Command="{Binding Health.CaptureBeforeCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Bench_After}" Command="{Binding Health.CaptureAfterCommand}" IsEnabled="{Binding Health.IsCapturing, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Health.StopCaptureCommand}" Margin="0,0,8,0"

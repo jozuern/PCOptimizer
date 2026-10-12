@@ -82,6 +82,27 @@ public abstract class InspectorItem : ObservableObject
 
     public bool HasAction => ActionText is not null;
 
+    /// <summary>Tags (Moderate risk, Restart, Not yet tested on a real PC): on the row and under the title in the details.</summary>
+    public IReadOnlyList<Badge> Badges { get; protected init; } = [];
+
+    /// <summary>A sentence under the title in the details pane, for a state the row only hints at (set outside this app).</summary>
+    public string? Note { get; protected init; }
+
+    /// <summary>
+    /// The detail line of a row in three parts with their own wording, "Off. Impact 1 of 5. Affects: Latency", instead
+    /// of values in a row separated by commas, where nobody could tell a state from an effect.
+    /// </summary>
+    protected static string Meta(string state, string? impact, string effects) =>
+        string.Join(". ", new[]
+        {
+            state,
+            impact,
+            effects.Length > 0 ? Optimizer.App.Services.Loc.Instance.Format("Meta_Affects", effects) : null,
+        }.Where(x => !string.IsNullOrEmpty(x)));
+
+    /// <summary>Something to look at (a problem or a critical state): tweak rows show their icon only then.</summary>
+    public bool NeedsAttention => IsCritical || Status is "Problem" or "Critical";
+
     public SymbolRegular StatusSymbol => StatusIcons.Symbol(IsCritical ? "Critical" : Status);
     public string StatusBrushKey => StatusIcons.BrushKey(IsCritical ? "Critical" : Status);
 }

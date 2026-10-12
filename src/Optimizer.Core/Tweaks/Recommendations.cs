@@ -3,7 +3,11 @@ using Optimizer.Core.Findings;
 namespace Optimizer.Core.Tweaks;
 
 /// <summary>One entry of the "Apply recommended" plan, with the reason shown to the user.</summary>
-public sealed record RecommendedItem(TweakDefinition Tweak, string? ReasonKey, Finding? FixesFinding, int Impact);
+public sealed record RecommendedItem(TweakDefinition Tweak, string? ReasonKey, Finding? FixesFinding, int Impact)
+{
+    /// <summary>Why a fix is left out of the plan although it fixes a problem (missing admin rights, Expert mode off).</summary>
+    public Block? Blocked { get; init; }
+}
 
 /// <summary>What "Apply recommended" would do and what it leaves out (and why).</summary>
 public sealed record RecommendationPlan(IReadOnlyList<RecommendedItem> Items, IReadOnlyList<RecommendedItem> Excluded)
@@ -43,9 +47,18 @@ public static class Recommendations
                 if (Profiles.ProfileView.RuntimeFixAllowed(fix, list)) Add(new RecommendedItem(fix, null, f, f.Impact ?? 0));
                 continue;
             }
-            // The plan applies without asking per item, so nothing may block it here (not even missing admin rights).
+            // The plan applies without asking per item, so nothing may block it here (not even missing admin rights). A fix
+            // that is blocked is listed as left out, with the block as the reason: the overview must not say "nothing to
+            // recommend" while a problem with a fix is shown below it.
             var catalogFix = list.FirstOrDefault(p => p.CanFix(f.Id) && p.Status.Blocks.Count == 0);
-            if (catalogFix is not null) Add(new RecommendedItem(catalogFix.Tweak, catalogFix.ReasonKey ?? catalogFix.Tweak.RecommendReasonKey, f, f.Impact ?? catalogFix.Impact));
+            if (catalogFix is not null)
+            {
+                Add(new RecommendedItem(catalogFix.Tweak, catalogFix.ReasonKey ?? catalogFix.Tweak.RecommendReasonKey, f, f.Impact ?? catalogFix.Impact));
+                continue;
+            }
+            var blockedFix = list.FirstOrDefault(p => p.CanFix(f.Id));
+            if (blockedFix is not null && seen.Add(blockedFix.Tweak.Id))
+                excluded.Add(new RecommendedItem(blockedFix.Tweak, blockedFix.ReasonKey, f, f.Impact ?? blockedFix.Impact) { Blocked = blockedFix.Status.Blocks[0] });
         }
 
         foreach (var p in list.Where(p => p.Recommended))

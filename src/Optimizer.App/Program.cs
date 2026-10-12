@@ -45,6 +45,7 @@ public static class Program
             return 1;
         }
         Log.EnableFile();
+        if (DataPaths.MovedFrom is { } oldFolder) Log.Info("app", "data folder moved to the new name", new { from = oldFolder, to = DataPaths.Root });
         // Tools started elevated get an admin-only TEMP instead of the user's (DISM, installers and uninstallers run
         // code from their TEMP).
         if (DataPaths.ProcessIsElevated) ProcessHardening.UseTempFolder(DataPaths.Temp);
@@ -106,7 +107,7 @@ public static class Program
         return resources.GetString(key, new System.Globalization.CultureInfo(german ? "de" : "en")) ?? key;
     }
 
-    private static void ShowError(string text) => MessageBoxW(IntPtr.Zero, text, "PCOptimizer", 0x10 /* MB_ICONERROR */);
+    private static void ShowError(string text) => MessageBoxW(IntPtr.Zero, text, "Tunero", 0x10 /* MB_ICONERROR */);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]

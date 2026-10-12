@@ -1,6 +1,6 @@
-# Feature gap analysis: PCOptimizer and 17 tweak tools
+# Feature gap analysis: Tunero and 17 tweak tools
 
-Compared on 2026-10-11 against PCOptimizer 0.6 (211 catalog tweaks, 48 checks, Debloat, Cleanup, Startup, Services and tasks, Apps and drivers, Tools, Health, Network, Changes). Input: `docs/Windows_Optimizer_Tools_Feature_Reference.md` (25,995 lines, 17 programs). Line numbers (L1234) point into that file.
+Compared on 2026-10-11 against Tunero 0.6 (211 catalog tweaks, 48 checks, Debloat, Cleanup, Startup, Services and tasks, Apps and drivers, Tools, Health, Network, Changes). Input: `docs/Windows_Optimizer_Tools_Feature_Reference.md` (25,995 lines, 17 programs), a local working file that is not part of the repository. Line numbers (L1234) point into that file.
 
 ## How it was sorted
 
@@ -8,8 +8,8 @@ The reference file was split into 3,124 entries: every tweak heading of the tool
 
 | Verdict | Meaning |
 |---|---|
-| Already in PCOptimizer | PCOptimizer has the feature or an equivalent (often a documented policy where the tool writes the value behind a Settings switch). |
-| Need to implement | A gap in something PCOptimizer already offers, a documented fix for an open Preview or TODO item, a likely bug, or a feature most tools have that PCOptimizer lacks. |
+| Already in Tunero | Tunero has the feature or an equivalent (often a documented policy where the tool writes the value behind a Settings switch). |
+| Need to implement | A gap in something Tunero already offers, a documented fix for an open Preview or TODO item, a likely bug, or a feature most tools have that Tunero lacks. |
 | Could implement | Has a real effect and fits the rules in CLAUDE.md, but is cosmetic, niche or low impact. "Needs proof" means an undocumented value (allowed only with proof, else Preview). |
 | Edge case | Only for a small group (certain hardware, Office or Narrator users, managed or shared PCs, Copilot+ PCs, dual boot), or the effect depends on firmware. |
 | Not sensible | Lowers security, only applies to Windows 10 or removed features, needs a program running in the background, is a hack that can break Windows, has no measurable effect, or is tool-internal. |
@@ -41,7 +41,7 @@ Entries per tool and verdict. An entry with two verdicts counts in both columns.
 | Flyoobe | 119 | 88 | 3 | 12 | 6 | 11 | 365 |
 | **All** | **2080** | **1119** | **23** | **438** | **168** | **392** | **955** |
 
-Grouped into features (the same setting in several tools counts once): already in PCOptimizer 233, need to implement 7, could implement 127, edge cases 100, not sensible 176. Many already-in rows are small groups of related settings.
+Grouped into features (the same setting in several tools counts once): already in Tunero 233, need to implement 7, could implement 127, edge cases 100, not sensible 176. Many already-in rows are small groups of related settings.
 
 DDU has no entries of its own (its sections are prose); its features are in "Features without their own entry" below.
 
@@ -49,7 +49,7 @@ DDU has no entries of its own (its sections are prose); its features are in "Fea
 
 | Feature | Why and how | References |
 |---|---|---|
-| Export and import of a selection | Save the applied tweaks (and optionally Debloat, services, start priorities) to a file and apply that file on another PC or after a reinstall, with the same confirmation and undo as "Apply recommended". Seven of the 17 tools have it: WinUtil (Import/Export, -Config), O&O ShutUp10++ (.cfg), Winhance (configuration), Sophia Script (preset file), Winaero Tweaker (.ini), Process Lasso (rule import and export), Flyoobe (recipes); BCU has uninstall lists. PCOptimizer can only apply one PC at a time. | WinUtil L2238; Winaero Tweaker L14546; Sophia Script L9928; Process Lasso L14688; Flyoobe L24641; Bulk Crap Uninstaller L23218 |
+| Export and import of a selection | Save the applied tweaks (and optionally Debloat, services, start priorities) to a file and apply that file on another PC or after a reinstall, with the same confirmation and undo as "Apply recommended". Seven of the 17 tools have it: WinUtil (Import/Export, -Config), O&O ShutUp10++ (.cfg), Winhance (configuration), Sophia Script (preset file), Winaero Tweaker (.ini), Process Lasso (rule import and export), Flyoobe (recipes); BCU has uninstall lists. Tunero can only apply one PC at a time. | WinUtil L2238; Winaero Tweaker L14546; Sophia Script L9928; Process Lasso L14688; Flyoobe L24641; Bulk Crap Uninstaller L23218 |
 | Game DVR policy AllowGameDVR | documented policy; done as gpu.gameDvrPolicyOff (Pro and higher). gpu.gameDvrOff is no longer Preview: the VM showed it Applied after apply, "Partial" appears only before apply on a fresh install | Win11Debloat L2667; O&O ShutUp10++ L4199; Winhance L5533; AtlasOS L15980; CrapFixer L24246; Flyoobe L24894 |
 | Silent app installs off on Home and Pro | privacy.consumerFeaturesOff is marked not applicable on Home and Pro (Microsoft supports DisableWindowsConsumerFeatures only on Enterprise and Education since Windows 10 1607), so Home and Pro users have no way to stop promoted app installs in PCO today. Eleven of the 17 tools write the ContentDeliveryManager values SilentInstalledAppsEnabled, PreinstalledAppsEnabled, PreinstalledAppsEverEnabled and OemPreinstalledAppsEnabled; undocumented, so prove it in the VM with a new user profile (Preview until then) | O&O ShutUp10++ L4185; Winhance L4394, L4405, L4416, L4427; Sophia Script L10229; CrapFixer L24343; Flyoobe L24991 |
 | App permissions: generative AI and system AI models | LetAppsAccessGenerativeAI and LetAppsAccessSystemAIModels (Privacy policies); the AI group has Recall, Paint and Notepad but not these two | O&O ShutUp10++ L3833; Winhance L4864, L4874; RemoveWindowsAI L23392 |
@@ -240,7 +240,7 @@ Sorted by area, then by how many tools offer it. "Often requested" marks feature
 
 ### App installer catalogue
 
-WinUtil, Winhance, Sparkle and Flyoobe ship installer lists; about 569 names (with spelling variants) are not on PCOptimizer's Apps page, which has 26 reviewed apps. A larger list fits the Apps page; every entry needs the same review as today (winget id, publisher, what it installs).
+WinUtil, Winhance, Sparkle and Flyoobe ship installer lists; about 569 names (with spelling variants) are not on Tunero's Apps page, which has 26 reviewed apps. A larger list fits the Apps page; every entry needs the same review as today (winget id, publisher, what it installs).
 
 - Gaming related, the best fit: DirectX Runtime (June 2010 D3DX for older games), Visual C++ 2015-2022 x86 and the older 2005 to 2013 runtimes (older games), Playnite, Heroic Games Launcher, Itch.io, Rockstar Games Launcher, Minecraft Launcher, Prism Launcher, Modrinth App, CurseForge, GeForce NOW, PS Remote Play, Moonlight, Sunshine, Medal, Streamlabs OBS, CapFrameX, Intel PresentMon, HWMonitor, Crystal Disk Mark, Cinebench R23, Fan Control, OpenRGB, SignalRGB, Logitech G HUB, Razer Synapse 4, SteelSeries GG, Voicemeeter, EarTrumpet, Borderless Gaming, JoyToKey, Display Driver Uninstaller, NVCleanstall, NVIDIA App, Process Explorer, System Informer.
 - General utilities found in two or more lists: Notepad++, PotPlayer, ShareX, Greenshot, Everything, WizTree, TreeSize Free, PowerShell 7, Windows Terminal, NanaZip, PeaZip, Brave, LibreWolf, Vivaldi, Bitwarden, KeePassXC, Signal, Telegram, LibreOffice, Sumatra PDF, qBittorrent, Rufus, Ventoy.
@@ -559,14 +559,14 @@ WinUtil, Winhance, Sparkle and Flyoobe ship installer lists; about 569 names (wi
 | USB hub selective suspend timeout | minor; selective suspend itself is covered | 1 | Winhance L6755 |
 | Updates over metered connections | default is already off | 1 | Winhance L7261 |
 
-## Already in PCOptimizer
+## Already in Tunero
 
-Features of the tools that PCOptimizer covers, with the tweak, page or check that does it.
+Features of the tools that Tunero covers, with the tweak, page or check that does it.
 
-| Feature | In PCOptimizer | Tools | References |
+| Feature | In Tunero | Tools | References |
 |---|---|---|---|
-| Remove inbox apps | Debloat page (126 reviewed apps with Xbox guard and Store links) | 11 | WinUtil L2104, L2105, L2106, L2108, L2109, L2110 (+20); Win11Debloat L2254, L3674, L3675, L3676, L3677, L3678 (+91); Winhance L9435, L9436, L9437, L9438, L9439, L9440 (+31); Sophia Script L12328; Sparkle L12959; AtlasOS L15109; ReviOS L20728, L20813, L21602; Bulk Crap Uninstaller L23163; RemoveWindowsAI L23395; CrapFixer L24587, L24588, L24589, L24590, L24591, L24592 (+34); Flyoobe L25262, L25263, L25264, L25265, L25266, L25267 (+35) |
-| OneDrive uninstall | Debloat page card | 8 | WinUtil L590; Win11Debloat L3764; Winhance L9489; Sophia Script L11394; AtlasOS L15210; ReviOS L20628; CrapFixer L24616; Flyoobe L25293 |
+| Remove inbox apps | Remove apps page (126 reviewed apps with Xbox guard and Store links) | 11 | WinUtil L2104, L2105, L2106, L2108, L2109, L2110 (+20); Win11Debloat L2254, L3674, L3675, L3676, L3677, L3678 (+91); Winhance L9435, L9436, L9437, L9438, L9439, L9440 (+31); Sophia Script L12328; Sparkle L12959; AtlasOS L15109; ReviOS L20728, L20813, L21602; Bulk Crap Uninstaller L23163; RemoveWindowsAI L23395; CrapFixer L24587, L24588, L24589, L24590, L24591, L24592 (+34); Flyoobe L25262, L25263, L25264, L25265, L25266, L25267 (+35) |
+| OneDrive uninstall | Remove apps page card | 8 | WinUtil L590; Win11Debloat L3764; Winhance L9489; Sophia Script L11394; AtlasOS L15210; ReviOS L20628; CrapFixer L24616; Flyoobe L25293 |
 | Tips and suggestions off | privacy.suggestionsOff, focus.finishSetupOff, explorer.syncProviderNotificationsOff, privacy.cloudContentOff, focus.lockScreenTipsOff | 8 | Win11Debloat L2319; O&O ShutUp10++ L3831, L3855, L3856, L4137, L4186; Winhance L4383, L7354, L7365, L7374, L7385; Sophia Script L10255, L10280, L10306; AtlasOS L15517; ReviOS L21126, L21826; CrapFixer L24010, L24019, L24028, L24047, L24058, L24067 (+2); Flyoobe L24658, L24667, L24676, L24695, L24706, L24715 (+2) |
 | Game Bar captures off | gpu.gameDvrOff, and gpu.gameDvrPolicyOff by policy on Pro and higher | 7 | Win11Debloat L2667; O&O ShutUp10++ L4199; Winhance L5533; Sophia Script L12349; AtlasOS L15980, L18517; CrapFixer L24246; Flyoobe L24894 |
 | Location off | privacy.locationOff, privacy.locationServiceOff, privacy.findMyDeviceOff | 7 | WinUtil L221; Win11Debloat L2362; O&O ShutUp10++ L3883, L3884, L4106, L4107, L4109; Winhance L4685; AtlasOS L18668; CrapFixer L24305; Flyoobe L24953 |
@@ -592,7 +592,7 @@ Features of the tools that PCOptimizer covers, with the tweak, page or check tha
 | Network throttling off | network.throttlingIndex | 4 | Winhance L5440; ReviOS L22347; CrapFixer L24392; Flyoobe L25040 |
 | Online speech recognition off | privacy.onlineSpeechOff | 4 | O&O ShutUp10++ L4079, L4080; Winhance L4522; CrapFixer L24332; Flyoobe L24980 |
 | Open with: no Store | explorer.openWithPromptsOff | 4 | O&O ShutUp10++ L3863; Sophia Script L12844; Winaero Tweaker L14562, L14569; AtlasOS L17555 |
-| Power plan choice | Balanced, PCOptimizer Gaming (copy of High performance) and the Ultimate Performance plan; the plan already uses 100 % minimum processor state on mains power | 4 | Winhance L6614; Sophia Script L11794; Process Lasso L14694; Flyoobe L25776 |
+| Power plan choice | Balanced, Tunero Gaming (copy of High performance) and the Ultimate Performance plan; the plan already uses 100 % minimum processor state on mains power | 4 | Winhance L6614; Sophia Script L11794; Process Lasso L14694; Flyoobe L25776 |
 | Restore point before changes | restore point once per session | 4 | WinUtil L358; Win11Debloat L2269; Sophia Script L9937; Flyoobe L25766 |
 | Spotlight off | privacy.spotlightOff | 4 | O&O ShutUp10++ L4190; Winhance L4447; CrapFixer L24352; Flyoobe L25000 |
 | Taskbar basics | alignment, widgets, search, highlights, Task View, seconds | 4 | Winhance L9188, L9197, L9214; Sophia Script L10607, L10626, L10655, L10695, L10724, L10751; CrapFixer L24468, L24477, L24486, L24495; Flyoobe L25115, L25124, L25133 |
@@ -757,8 +757,8 @@ Features of the tools that PCOptimizer covers, with the tweak, page or check tha
 | Recent items, verbose status, visual effects | privacy.recentFilesOff, system.verboseStatus, visual.bestPerformance | 1 | AtlasOS L19471, L19507, L19523 |
 | Recovery environment on | quick fix | 1 | AtlasOS L15781 |
 | Remote Assistance and SMB throttling | security.remoteAssistanceOff, network.smbThrottlingOff | 1 | AtlasOS L16907, L16921 |
-| Remove OEM apps | Debloat page OEM group | 1 | Win11Debloat L2264 |
-| Remove Xbox apps | Debloat page with Xbox guard | 1 | Win11Debloat L2259 |
+| Remove OEM apps | Remove apps page OEM group | 1 | Win11Debloat L2264 |
+| Remove Xbox apps | Remove apps page with Xbox guard | 1 | Win11Debloat L2259 |
 | Restart Explorer | quick fix | 1 | AtlasOS L19094 |
 | Restart Explorer and registry backup | quick fix, system.registryBackup | 1 | Winaero Tweaker L14634 |
 | SFC and DISM | Health page | 1 | WinUtil L1525 |
@@ -813,7 +813,7 @@ Some features are described in prose or bullet lists rather than as tweaks; they
 | Winhance L9426 | Power plan list and own plan | Already | Gaming and Ultimate Performance plans |
 | Winhance L9923 | WIM utility and custom ISO | Not sensible | out of scope |
 | Sparkle L14300 | DNS changer | Already | Network page |
-| Sparkle L14538 | Uninstaller for apps and programs | Already | Debloat page and Installed programs |
+| Sparkle L14538 | Uninstaller for apps and programs | Already | Remove apps page (Preinstalled apps and Installed programs tabs) |
 | Sparkle L14541 | Restore points: create, list, restore | Already | restore point per session, Open System Restore; a list inside the app would be a small Could |
 | Winaero Tweaker L14546 | Import and export of all changes, reset per page | Need | export and import, see above; Undo all exists |
 | Winaero Tweaker L14546 | Desktop shortcut per tweak | Not sensible | no value for one-time settings |

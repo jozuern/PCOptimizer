@@ -9,37 +9,24 @@
     <UserControl.Resources>
         <!-- Lists of one kind (games, devices): one line per row, the section explains the rest. Click opens the details. -->
         <DataTemplate x:Key="CompactTweakRow">
-            <ui:CardControl Margin="0,0,0,2" Padding="16,6" Style="{StaticResource SelectableCard}"
+            <ui:CardControl Margin="0,0,0,2" Padding="16,6" Style="{StaticResource SelectableCard}" AutomationProperties.Name="{Binding Title}"
                             Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                 <ui:CardControl.Icon>
-                    <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="16" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
+                    <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="16" v:ThemeBrush.Key="{Binding StatusBrushKey}"
+                                   Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToHidden}}" />
                 </ui:CardControl.Icon>
                 <ui:CardControl.Header>
                     <WrapPanel>
                         <ui:TextBlock FontTypography="Body" Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <ItemsControl ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False" VerticalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
+                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding CompactMeta}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     </WrapPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}">
-                    <ui:ToggleSwitch.IsEnabled>
-                        <MultiBinding Converter="{StaticResource AllTrue}">
-                            <Binding Path="CanToggle" />
-                            <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
-                        </MultiBinding>
-                    </ui:ToggleSwitch.IsEnabled>
-                </ui:ToggleSwitch>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
             </ui:CardControl>
         </DataTemplate>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}" DataContext="{Binding}">
+        <StackPanel Style="{StaticResource PageRoot}" DataContext="{Binding}">
             <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Net_Title}" />
             <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Net_Hint}" />
 
@@ -48,6 +35,17 @@
                 <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Net_NvidiaGlobal}" Margin="0,0,0,8" />
                 <ItemsControl ItemsSource="{Binding Network.GpuTweaks}" ItemTemplate="{StaticResource TweakRow}" />
 
+            </StackPanel>
+
+            <!-- NVIDIA profiles per game, next to the global NVIDIA settings -->
+            <StackPanel Visibility="{Binding Network.HasNvidia, Converter={StaticResource BoolToVisibility}}">
+                <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Net_GameProfiles}" />
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_GameProfilesHint}" Margin="0,0,0,4" />
+                <!-- Impact and tags are the same for every game: said once here instead of on each row -->
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Network.GameProfilesFacts}" Margin="0,0,0,8"
+                              Visibility="{Binding Network.GameProfilesFacts, Converter={StaticResource NullToVisibility}}" />
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_NoGames}" Visibility="{Binding Network.GameProfilesEmpty, Converter={StaticResource BoolToVisibility}}" />
+                <ItemsControl ItemsSource="{Binding Network.GameProfiles}" ItemTemplate="{StaticResource CompactTweakRow}" />
             </StackPanel>
 
             <!-- DNS: one choice, since only one set of servers can be in use -->
@@ -65,11 +63,13 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_DnsCustom}" Margin="0,4,0,0"
                                       Visibility="{Binding Network.DnsIsCustom, Converter={StaticResource BoolToVisibility}}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_DnsHint}" Margin="0,4,0,0" />
+                        <!-- Network repairs (flush DNS, reset Winsock) are tools: the way there -->
+                        <ui:HyperlinkButton Content="{l:Tr Net_FixesLink}" Command="{Binding OpenToolsFixesCommand}" Padding="0" Margin="0,4,0,0" FontSize="12" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
                     <ui:Button Content="{l:Tr Common_Details}" Appearance="Transparent" Command="{Binding Network.ShowDnsDetailsCommand}" Margin="0,0,8,0" />
-                    <ComboBox ItemsSource="{Binding Network.DnsChoices}" SelectedItem="{Binding Network.SelectedDns}" DisplayMemberPath="Name" MinWidth="220"
+                    <ComboBox ItemsSource="{Binding Network.DnsChoices}" SelectedItem="{Binding Network.SelectedDns}" DisplayMemberPath="Name" MinWidth="220" ToolTip="{Binding Network.CurrentDnsDetail}"
                               AutomationProperties.Name="{l:Tr Net_DnsServers}" IsEnabled="{Binding CanChange, Source={x:Static s:ChangeGate.Instance}}" />
                 </StackPanel>
             </ui:CardControl>
@@ -115,18 +115,12 @@
                 </DockPanel>
             </ui:Card>
 
-            <!-- NVIDIA profiles per game: after DNS, since the list can be long -->
-            <StackPanel Visibility="{Binding Network.HasNvidia, Converter={StaticResource BoolToVisibility}}">
-                <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Net_GameProfiles}" />
-                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_GameProfilesHint}" Margin="0,0,0,8" />
-                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_NoGames}" Visibility="{Binding Network.GameProfilesEmpty, Converter={StaticResource BoolToVisibility}}" />
-                <ItemsControl ItemsSource="{Binding Network.GameProfiles}" ItemTemplate="{StaticResource CompactTweakRow}" />
-            </StackPanel>
-
             <!-- Device interrupts (Expert) -->
             <StackPanel Visibility="{Binding Network.ShowDeviceTweaks, Converter={StaticResource BoolToVisibility}}">
                 <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Net_Devices}" />
-                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_DevicesHint}" Margin="0,0,0,8" />
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Net_DevicesHint}" Margin="0,0,0,4" />
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Network.DeviceFacts}" Margin="0,0,0,8"
+                              Visibility="{Binding Network.DeviceFacts, Converter={StaticResource NullToVisibility}}" />
                 <ItemsControl ItemsSource="{Binding Network.DeviceTweaks}" ItemTemplate="{StaticResource CompactTweakRow}" />
             </StackPanel>
         </StackPanel>

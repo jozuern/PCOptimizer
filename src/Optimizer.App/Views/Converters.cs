@@ -110,8 +110,25 @@ public sealed class SameItemConverter : IMultiValueConverter
 /// <summary>A layout width to set on a child: 0 (not laid out yet) means automatic, so nothing collapses before the first layout.</summary>
 public sealed class LayoutWidthConverter : IValueConverter
 {
+    /// <param name="parameter">Pixels to take off (the scroll bar's gutter), as a string.</param>
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is double w && w > 0 ? w : double.NaN;
+        value is double w && w > 0
+            ? Math.Max(0, w - (double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var cut) ? cut : 0))
+            : double.NaN;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// The width of a page's content: the page minus its padding and the room of a scroll bar, at most 1000 px (as in
+/// Windows Settings). Every page then ends at the same place, also one whose content alone would be narrower.
+/// </summary>
+public sealed class PageWidthConverter : IValueConverter
+{
+    public const double Max = 1000, Padding = 48 + 16;
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double w && w > Padding ? Math.Min(Max, w - Padding) : double.NaN;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

@@ -173,15 +173,24 @@ public static class Nvapi
         }
 
         /// <summary>The name of the profile this app creates for a game the driver has no profile for.</summary>
-        public static string OwnProfileName(string exePath) => $"PCOptimizer: {Path.GetFileName(exePath).ToLowerInvariant()}";
+        public static string OwnProfileName(string exePath) => $"Tunero: {Path.GetFileName(exePath).ToLowerInvariant()}";
+
+        /// <summary>The name such a profile got up to 0.7.3, when the app was called PCOptimizer.</summary>
+        public static string LegacyOwnProfileName(string exePath) => $"PCOptimizer: {Path.GetFileName(exePath).ToLowerInvariant()}";
 
         /// <summary>
-        /// Deletes the profile this app created for a game ("PCOptimizer: game.exe") once it holds no settings, so an
+        /// Deletes the profile this app created for a game ("Tunero: game.exe") once it holds no settings, so an
         /// undo leaves nothing behind. Profiles of the driver or of other tools are never deleted.
         /// </summary>
         public void DeleteOwnProfileIfEmpty(string exePath)
         {
-            if (Fn<FindProfileFn>(IdDrsFindProfileByName)(_session, Unicode(OwnProfileName(exePath)), out var profile) != Ok || profile == IntPtr.Zero) return;
+            DeleteIfEmpty(OwnProfileName(exePath));
+            DeleteIfEmpty(LegacyOwnProfileName(exePath));
+        }
+
+        private void DeleteIfEmpty(string name)
+        {
+            if (Fn<FindProfileFn>(IdDrsFindProfileByName)(_session, Unicode(name), out var profile) != Ok || profile == IntPtr.Zero) return;
             var info = new byte[ProfileSize];
             BitConverter.GetBytes(ProfileVersion).CopyTo(info, 0);
             if (Fn<ProfileInfoFn>(IdDrsGetProfileInfo)(_session, profile, info) != Ok) return;
@@ -198,7 +207,7 @@ public static class Nvapi
             return p;
         }
 
-        /// <summary>The profile a game executable belongs to; creates "PCOptimizer: &lt;exe&gt;" when the driver has none.</summary>
+        /// <summary>The profile a game executable belongs to; creates "Tunero: &lt;exe&gt;" when the driver has none.</summary>
         public IntPtr ProfileForExe(string exePath, bool create)
         {
             var exe = Path.GetFileName(exePath).ToLowerInvariant();

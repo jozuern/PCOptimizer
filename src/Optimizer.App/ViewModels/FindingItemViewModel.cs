@@ -28,7 +28,11 @@ public sealed class FindingItemViewModel : InspectorItem
         ImpactText = Impact is { } i ? Loc.Instance.Format("Impact_Short", i) : "";
         ImpactTooltip = Impact is { } j ? Loc.Instance.Format("Impact_TooltipGoal", labels.Get(lang, $"effect.{goal}"), j) : "";
         CriticalText = finding.Critical ? Loc.Instance["Impact_Critical"] : null;
-        MetaText = string.Join(", ", new[] { StatusText, CriticalText ?? ImpactText, EffectsText }.Where(x => !string.IsNullOrEmpty(x)));
+        // "No FPS effect" and "Needed to start games" are not things a finding affects: they stand without "Affects:".
+        var plain = finding.Effects.All(e => e is Effect.None or Effect.Prerequisite);
+        MetaText = plain
+            ? string.Join(". ", new[] { Meta(StatusText, CriticalText ?? ImpactText, ""), EffectsText }.Where(x => x.Length > 0))
+            : Meta(StatusText, CriticalText ?? ImpactText, EffectsText);
         if (fix is not null && finding.Status == FindingStatus.Problem) ActionText = Loc.Instance["Fix_Apply"];
     }
 

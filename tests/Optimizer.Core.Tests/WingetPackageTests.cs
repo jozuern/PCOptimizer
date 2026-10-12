@@ -7,12 +7,14 @@ namespace Optimizer.Core.Tests;
 public class WingetPackageTests
 {
     [Theory]
-    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.PCOptimizer_Microsoft.Winget.Source_8wekyb3d8bbwe\PCOptimizer.exe", true)]
-    [InlineData(@"C:\Program Files\WinGet\Packages\jozuern.PCOptimizer_Microsoft.Winget.Source_8wekyb3d8bbwe\PCOptimizer.exe", true)]
-    [InlineData(@"D:\Portable\jozuern.PCOptimizer\PCOptimizer.exe", true)] // winget's package root moved in its settings
-    [InlineData(@"C:\Users\a\Downloads\PCOptimizer.exe", false)]
-    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.PCOptimizerBeta_x\PCOptimizer.exe", false)]
-    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\Other.App_Microsoft.Winget.Source_8wekyb3d8bbwe\PCOptimizer.exe", false)]
+    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.PCOptimizer_Microsoft.Winget.Source_8wekyb3d8bbwe\Tunero.exe", true)]
+    [InlineData(@"C:\Program Files\WinGet\Packages\jozuern.PCOptimizer_Microsoft.Winget.Source_8wekyb3d8bbwe\Tunero.exe", true)]
+    [InlineData(@"D:\Portable\jozuern.PCOptimizer\Tunero.exe", true)] // winget's package root moved in its settings
+    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.Tunero_Microsoft.Winget.Source_8wekyb3d8bbwe\Tunero.exe", true)] // the id after the rename
+    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.TuneroBeta_x\Tunero.exe", false)]
+    [InlineData(@"C:\Users\a\Downloads\Tunero.exe", false)]
+    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\jozuern.PCOptimizerBeta_x\Tunero.exe", false)]
+    [InlineData(@"C:\Users\a\AppData\Local\Microsoft\WinGet\Packages\Other.App_Microsoft.Winget.Source_8wekyb3d8bbwe\Tunero.exe", false)]
     public void RecognizesTheWingetPackageFolder(string exe, bool expected) =>
         Assert.Equal(expected, WingetPackage.IsInstalledWithWinget(exe));
 
@@ -21,19 +23,19 @@ public class WingetPackageTests
     [InlineData("it's", "'it''s'")]
     [InlineData("it\u2019s", "'it\u2019\u2019s'")]
     [InlineData("say \"hi\"", "'say hi'")]
-    [InlineData(@"C:\Users\O'Brien\PCOptimizer (1).exe", @"'C:\Users\O''Brien\PCOptimizer (1).exe'")]
+    [InlineData(@"C:\Users\O'Brien\Tunero (1).exe", @"'C:\Users\O''Brien\Tunero (1).exe'")]
     public void QuotesForPowerShell(string text, string expected) => Assert.Equal(expected, WingetPackage.Quote(text));
 
     [Fact]
     public void UpdateWaitsForTheAppThenRunsWingetForThisPackageAndStartsTheAppAgain()
     {
-        var args = WingetPackage.UpdateArguments(4242, @"C:\Apps\PCOptimizer.exe", "Updating", "Failed \"here\"");
+        var args = WingetPackage.UpdateArguments(4242, @"C:\Apps\Tunero.exe", "Updating", "Failed \"here\"");
         Assert.StartsWith("-NoProfile -Command \"", args);
         Assert.EndsWith("\"", args);
         Assert.Equal(2, args.Count(c => c == '"')); // only the quotes around the command
         var wait = args.IndexOf("Wait-Process -Id 4242", StringComparison.Ordinal);
-        var upgrade = args.IndexOf("winget upgrade --id jozuern.PCOptimizer --exact --source winget", StringComparison.Ordinal);
-        var start = args.IndexOf(@"Start-Process -FilePath 'C:\Apps\PCOptimizer.exe'", StringComparison.Ordinal);
+        var upgrade = args.IndexOf("winget upgrade --id jozuern.Tunero --exact --source winget", StringComparison.Ordinal);
+        var start = args.IndexOf(@"Start-Process -FilePath 'C:\Apps\Tunero.exe'", StringComparison.Ordinal);
         Assert.True(wait > 0 && upgrade > wait && start > upgrade);
     }
 
@@ -43,7 +45,7 @@ public class WingetPackageTests
         var folder = TestFolders.Create("startmenu");
         try
         {
-            var exe = Path.Combine(folder, "PCOptimizer.exe");
+            var exe = Path.Combine(folder, "Tunero.exe");
             File.WriteAllBytes(exe, []);
             Assert.False(StartMenuShortcut.Exists(folder));
             Assert.Null(StartMenuShortcut.Target(folder));

@@ -31,10 +31,10 @@ public class SystemApiReadTests(ITestOutputHelper output)
     public void ServicesAndTasksAreReadable()
     {
         Assert.NotNull(Ctx.Services.GetStartType("DiagTrack"));
-        Assert.Null(Ctx.Services.GetStartType("PCOptimizerDoesNotExist"));
+        Assert.Null(Ctx.Services.GetStartType("TuneroDoesNotExist"));
         var appraiser = Ctx.Tasks.IsEnabled(@"\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser");
         output.WriteLine($"DiagTrack = {Ctx.Services.GetStartType("DiagTrack")}, Appraiser enabled = {appraiser?.ToString() ?? "missing"}");
-        Assert.Null(Ctx.Tasks.IsEnabled(@"\PCOptimizer\DoesNotExist"));
+        Assert.Null(Ctx.Tasks.IsEnabled(@"\Tunero\DoesNotExist"));
     }
 
     [Fact]

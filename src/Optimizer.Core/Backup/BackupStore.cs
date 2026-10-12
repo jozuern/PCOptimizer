@@ -71,7 +71,7 @@ public sealed class PendingUndo
 }
 
 /// <summary>
-/// JSON backups in %ProgramData%\PCOptimizer\backups. The folder is locked to Administrators + SYSTEM (no inheritance):
+/// JSON backups in %ProgramData%\Tunero\backups. The folder is locked to Administrators + SYSTEM (no inheritance):
 /// an elevated app restoring values from user-writable files would be a privilege-escalation path. The data folder is
 /// shared by every Windows account, so a backup of one account's own settings (HKCU values, accessibility shortcuts)
 /// lives in backups\users\&lt;SID&gt; and is seen only when the app runs for that account; otherwise a second account
@@ -357,7 +357,7 @@ public static class SecureFolder
 
     /// <summary>
     /// Makes the data folder safe before the elevated app writes or reads anything in it (log, settings, backups).
-    /// A standard user can create C:\ProgramData\PCOptimizer before the first elevated start: as a junction (every
+    /// A standard user can create C:\ProgramData\Tunero before the first elevated start: as a junction (every
     /// write would land where the link points) or as a real folder with files in it (planted backups and settings,
     /// and a handle kept open could keep adding files after the permissions change). A link is removed; a folder not
     /// owned by Administrators or SYSTEM was not created by this app and is deleted, never adopted. Returns false

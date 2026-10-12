@@ -5,20 +5,20 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Nav_Dashboard" xml:space="preserve"><value>Overview</value></data>
-  <data name="Nav_Advisor" xml:space="preserve"><value>BIOS &amp; hardware</value></data>
+  <data name="Nav_Advisor" xml:space="preserve"><value>Manual checks</value></data>
   <data name="Nav_Hardware" xml:space="preserve"><value>System info</value></data>
   <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="Scan_Running" xml:space="preserve"><value>Scanning your PC</value></data>
   <data name="Scan_Probe" xml:space="preserve"><value>Reading: {0}</value></data>
   <data name="Scan_Again" xml:space="preserve"><value>Scan again</value></data>
   <data name="Dash_Findings" xml:space="preserve"><value>Findings</value></data>
-  <data name="Dash_Problems" xml:space="preserve"><value>Problems found: {0}</value></data>
-  <data name="Dash_CountsHint" xml:space="preserve"><value>Manual checks are things only you can change, in the BIOS or on the hardware. BIOS &amp; hardware lists them.</value></data>
+  <data name="Dash_Problems" xml:space="preserve"><value>What the scan found</value></data>
+  <data name="Dash_CountsHint" xml:space="preserve"><value>To change by hand: settings in the BIOS or on the hardware that only you can change. The page Manual checks lists them.</value></data>
   <data name="Dash_NoProblems" xml:space="preserve"><value>No problems found</value></data>
   <data name="Dash_ShowAll" xml:space="preserve"><value>Show passed checks</value></data>
   <data name="Dash_GameAccess" xml:space="preserve"><value>Game access</value></data>
   <data name="Dash_GameAccessHint" xml:space="preserve"><value>What kernel anti-cheats check before a game starts. Not part of the impact rating.</value></data>
-  <data name="Advisor_Title" xml:space="preserve"><value>BIOS &amp; hardware</value></data>
+  <data name="Advisor_Title" xml:space="preserve"><value>Manual checks</value></data>
   <data name="Advisor_Hint" xml:space="preserve"><value>Things only you can change: BIOS settings, slots, firmware updates. Each item explains how.</value></data>
   <data name="Hw_Title" xml:space="preserve"><value>System info</value></data>
   <data name="Hw_Hint" xml:space="preserve"><value>Everything the scanner read. Nothing was changed.</value></data>
@@ -46,12 +46,11 @@
   <data name="Banner_SeparateAdmin" xml:space="preserve"><value>The app runs as {0}, but {1} is signed in. User settings belong to {1}.</value></data>
   <data name="Banner_NotElevated" xml:space="preserve"><value>Running without administrator rights. Some values (for example TPM) show as unknown.</value></data>
   <data name="Banner_EndOfUpdates" xml:space="preserve"><value>Windows 11 24H2 Home and Pro no longer receive updates since 13 October 2026. Update to 25H2 or 26H2.</value></data>
-  <data name="Startup_RuntimeFolderUnsafe" xml:space="preserve"><value>The program could not move its runtime libraries into its protected folder, so it does not start with administrator rights. If the environment variables {0} or {1} are set for your account, remove them and start PCOptimizer again. Nothing was changed.</value></data>
-  <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>The data folder {0} was created by another account and cannot be removed. Close all programs, delete the folder and start PCOptimizer again. Nothing was changed.</value></data>
-  <data name="Tweaks_ShowNotApplicable" xml:space="preserve"><value>Show tweaks that do not apply to this PC</value></data>
+  <data name="Startup_RuntimeFolderUnsafe" xml:space="preserve"><value>The program could not move its runtime libraries into its protected folder, so it does not start with administrator rights. If the environment variables {0} or {1} are set for your account, remove them and start Tunero again. Nothing was changed.</value></data>
+  <data name="Startup_DataFolderUnsafe" xml:space="preserve"><value>The data folder {0} was created by another account and cannot be removed. Close all programs, delete the folder and start Tunero again. Nothing was changed.</value></data>
   <data name="Gate_Title" xml:space="preserve"><value>Windows version not supported</value></data>
-  <data name="Gate_TooOld" xml:space="preserve"><value>PCOptimizer needs Windows 11 24H2 (build 26100) or newer. This PC runs build {0}. Please update Windows first. Nothing was changed.</value></data>
-  <data name="Gate_Arch" xml:space="preserve"><value>PCOptimizer supports x64 PCs only. ARM64 PCs are not supported. Nothing was changed.</value></data>
+  <data name="Gate_TooOld" xml:space="preserve"><value>Tunero needs Windows 11 24H2 (build 26100) or newer. This PC runs build {0}. Please update Windows first. Nothing was changed.</value></data>
+  <data name="Gate_Arch" xml:space="preserve"><value>Tunero supports x64 PCs only. ARM64 PCs are not supported. Nothing was changed.</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
   <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
@@ -71,7 +70,7 @@
   <data name="Verdict_Fair" xml:space="preserve"><value>Some issues worth fixing</value></data>
   <data name="Verdict_Poor" xml:space="preserve"><value>Significant issues found</value></data>
   <data name="Count_Problems" xml:space="preserve"><value>problems</value></data>
-  <data name="Count_Advisor" xml:space="preserve"><value>manual checks</value></data>
+  <data name="Count_Advisor" xml:space="preserve"><value>to change by hand</value></data>
   <data name="Count_Passed" xml:space="preserve"><value>passed</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scanning</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
@@ -82,8 +81,7 @@
   <data name="Nav_Changes" xml:space="preserve"><value>Changes</value></data>
   <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Tweaks_Hint" xml:space="preserve"><value>Every change shows exactly what it does and can be undone. Recommended items fit this PC.</value></data>
-  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks, {1} on, {2} recommended for this PC</value></data>
-  <data name="Tweaks_OnlyRecommended" xml:space="preserve"><value>Only recommended</value></data>
+  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks: {1} changed by this app, {2} already set, {3} recommended for this PC</value></data>
   <data name="Tweak_TurnOn" xml:space="preserve"><value>Turn on</value></data>
   <data name="Tweak_Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Tweak_Reapply" xml:space="preserve"><value>Apply again</value></data>
@@ -136,12 +134,12 @@
   <data name="UndoAll_Title" xml:space="preserve"><value>Undo all changes?</value></data>
   <data name="UndoAll_Text" xml:space="preserve"><value>Changes to undo: {0}. Values Windows has changed since are left as they are.</value></data>
   <data name="Busy" xml:space="preserve"><value>Working</value></data>
-  <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start PCOptimizer as administrator to apply or undo them.</value></data>
+  <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start Tunero as administrator to apply or undo them.</value></data>
   <data name="Nav_Network" xml:space="preserve">
     <value>Graphics &amp; network</value>
   </data>
   <data name="Nav_Debloat" xml:space="preserve">
-    <value>Debloat</value>
+    <value>Remove apps</value>
   </data>
   <data name="Nav_Cleanup" xml:space="preserve">
     <value>Cleanup</value>
@@ -219,7 +217,7 @@
     <value>Graphics &amp; network</value>
   </data>
   <data name="Net_Hint" xml:space="preserve">
-    <value>Graphics driver settings, per-game profiles, DNS and device interrupts.</value>
+    <value>Graphics driver settings, per-game profiles, DNS and, in Expert mode, device interrupts.</value>
   </data>
   <data name="Net_NvidiaGlobal" xml:space="preserve">
     <value>NVIDIA driver settings</value>
@@ -270,13 +268,10 @@
     <value>MSI mode and interrupt affinity per device. Disputed, boot-critical, and only worth trying with a before and after benchmark.</value>
   </data>
   <data name="Debloat_Title" xml:space="preserve">
-    <value>Debloat</value>
+    <value>Remove apps</value>
   </data>
   <data name="Debloat_Hint" xml:space="preserve">
     <value>Preinstalled apps you can remove. Only apps from a reviewed list are offered; parts of Windows and apps that games need are never offered.</value>
-  </data>
-  <data name="Debloat_NotUndoable" xml:space="preserve">
-    <value>Removing an app cannot be undone by this app. For apps still in the Microsoft Store, the list of removed apps keeps a link to install them again.</value>
   </data>
   <data name="Debloat_Empty" xml:space="preserve">
     <value>None of the apps on the list are installed.</value>
@@ -459,7 +454,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Not changed here</value>
   </data>
   <data name="Svc_Warn" xml:space="preserve">
-    <value>Only Manual can be chosen here. Read the note on the left first.</value>
+    <value>Read the note on the left first.</value>
   </data>
   <data name="Svc_Running" xml:space="preserve">
     <value>running</value>
@@ -486,7 +481,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Apps &amp; drivers</value>
   </data>
   <data name="Apps_Hint" xml:space="preserve">
-    <value>Common gaming apps and tools, installed with winget from their official sources. Drivers below show their age and where to get updates.</value>
+    <value>Common gaming apps and tools, and the age of your drivers with where to get updates.</value>
   </data>
   <data name="Apps_NoWinget" xml:space="preserve">
     <value>winget (App Installer) was not found. Install "App Installer" from the Microsoft Store.</value>
@@ -514,9 +509,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   </data>
   <data name="Drv_Update" xml:space="preserve">
     <value>Get update</value>
-  </data>
-  <data name="Drv_AgeDays" xml:space="preserve">
-    <value>Age in days: {0}</value>
   </data>
   <data name="DrvClass_DISPLAY" xml:space="preserve">
     <value>Graphics</value>
@@ -906,9 +898,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Findings_HiddenByProfile" xml:space="preserve">
     <value>Problems that only matter for other profiles: {0}. Switch the profile to see them.</value>
   </data>
-  <data name="Tweaks_OnlyProfile" xml:space="preserve">
-    <value>Only this profile</value>
-  </data>
   <data name="Impact_TooltipGoal" xml:space="preserve">
     <value>Impact on {0}: {1} of 5</value>
   </data>
@@ -928,7 +917,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Readiness: {0}</value>
   </data>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
-    <value>Based only on detected problems, weighted by their impact on {0}. Tweaks never add points.</value>
+    <value>Counts the problems the scan found, weighted by their impact on {0}. It rises when you fix them; turning on tweaks adds no points by itself.</value>
   </data>
   <data name="About_License" xml:space="preserve"><value>Free software under the GNU General Public License version 3 (GPL-3.0). You may use, change and share it under its terms. It comes without warranty.</value></data>
   <data name="About_Licenses" xml:space="preserve"><value>Licenses</value></data>
@@ -936,7 +925,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="About_Support" xml:space="preserve"><value>Support on Ko-fi</value></data>
   <data name="About_Source" xml:space="preserve"><value>Source code</value></data>
   <data name="Licenses_Title" xml:space="preserve"><value>Licenses</value></data>
-  <data name="Licenses_Intro" xml:space="preserve"><value>The license of PCOptimizer and of every component it ships, with the full texts.</value></data>
+  <data name="Licenses_Intro" xml:space="preserve"><value>The license of Tunero and of every component it ships, with the full texts.</value></data>
   <data name="Settings_Updates" xml:space="preserve"><value>Updates</value></data>
   <data name="Update_AtStart" xml:space="preserve"><value>Check for a new version at start</value></data>
   <data name="Update_Hint" xml:space="preserve"><value>Asks GitHub whether a newer release exists. An update is downloaded only when you confirm it.</value></data>
@@ -951,22 +940,22 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Apps_GetAppInstaller" xml:space="preserve"><value>Get App Installer</value></data>
   <data name="Update_Install" xml:space="preserve"><value>Update now</value></data>
   <data name="Update_ConfirmTitle" xml:space="preserve"><value>Update to version {0}?</value></data>
-  <data name="Update_ConfirmText" xml:space="preserve"><value>PCOptimizer downloads version {0} from its GitHub release, checks that the project's release key signed it, replaces this exe and starts again. Your changes, backups and settings stay.</value></data>
+  <data name="Update_ConfirmText" xml:space="preserve"><value>Tunero downloads version {0} from its GitHub release, checks that the project's release key signed it, replaces this exe and starts again. Your changes, backups and settings stay.</value></data>
   <data name="Update_Restart" xml:space="preserve"><value>Update and restart</value></data>
   <data name="Update_Downloading" xml:space="preserve"><value>Downloading version {0}: {1} %</value></data>
   <data name="Update_Failed" xml:space="preserve"><value>The update could not be downloaded. Try again later or use the download page.</value></data>
   <data name="Update_BadChecksum" xml:space="preserve"><value>The downloaded file does not match the release checksum and was deleted. Nothing was changed.</value></data>
-  <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the PCOptimizer release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
+  <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the Tunero release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
-  <data name="Update_WingetText" xml:space="preserve"><value>PCOptimizer was installed with winget, so winget installs version {0}. PCOptimizer closes, winget updates it in its own window and PCOptimizer starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
-  <data name="Update_WingetRunning" xml:space="preserve"><value>winget updates PCOptimizer. PCOptimizer starts again when winget has finished.</value></data>
-  <data name="Update_WingetFailed" xml:space="preserve"><value>winget did not update PCOptimizer (see above). A new version can take a day or two to reach winget. Press Enter to start PCOptimizer again</value></data>
-  <data name="Update_WingetManual" xml:space="preserve"><value>winget could not be started. Close PCOptimizer and run winget upgrade {0} in a terminal.</value></data>
+  <data name="Update_WingetText" xml:space="preserve"><value>Tunero was installed with winget, so winget installs version {0}. Tunero closes, winget updates it in its own window and Tunero starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
+  <data name="Update_WingetRunning" xml:space="preserve"><value>winget updates Tunero. Tunero starts again when winget has finished.</value></data>
+  <data name="Update_WingetFailed" xml:space="preserve"><value>winget did not update Tunero (see above). A new version can take a day or two to reach winget. Press Enter to start Tunero again</value></data>
+  <data name="Update_WingetManual" xml:space="preserve"><value>winget could not be started. Close Tunero and run winget upgrade {0} in a terminal.</value></data>
   <data name="StartMenu_Setting" xml:space="preserve"><value>Start menu entry</value></data>
-  <data name="StartMenu_Hint" xml:space="preserve"><value>Windows Search finds PCOptimizer only through an entry in the Start menu. The entry starts this exe where it is now.</value></data>
-  <data name="StartMenu_AskTitle" xml:space="preserve"><value>Add PCOptimizer to the Start menu?</value></data>
-  <data name="StartMenu_AskText" xml:space="preserve"><value>With an entry in the Start menu, Windows Search finds PCOptimizer. The entry starts this exe where it is now. You can remove it any time in Settings.</value></data>
+  <data name="StartMenu_Hint" xml:space="preserve"><value>Windows Search finds Tunero only through an entry in the Start menu. The entry starts this exe where it is now.</value></data>
+  <data name="StartMenu_AskTitle" xml:space="preserve"><value>Add Tunero to the Start menu?</value></data>
+  <data name="StartMenu_AskText" xml:space="preserve"><value>With an entry in the Start menu, Windows Search finds Tunero. The entry starts this exe where it is now. You can remove it any time in Settings.</value></data>
   <data name="StartMenu_Add" xml:space="preserve"><value>Add to Start menu</value></data>
   <data name="StartMenu_Description" xml:space="preserve"><value>Checks and optimizes Windows for gaming and everyday use</value></data>
   <data name="StartMenu_Failed" xml:space="preserve"><value>The Start menu entry could not be changed ({0}).</value></data>
@@ -1033,7 +1022,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Startup_CopyLocation" xml:space="preserve"><value>Copy location</value></data>
   <data name="Startup_FileMissing" xml:space="preserve"><value>The file of this entry does not exist.</value></data>
   <data name="Programs_Title" xml:space="preserve"><value>Installed programs</value></data>
-  <data name="Programs_Hint" xml:space="preserve"><value>Desktop programs from the Windows uninstall list. Uninstall runs the program's own uninstaller with its window. Before the first uninstall in a session the app creates a restore point when System Protection is on. Store apps are on the Debloat page.</value></data>
+  <data name="Programs_Hint" xml:space="preserve"><value>Desktop programs from the Windows uninstall list. Uninstall runs the program's own uninstaller with its window. Before the first uninstall in a session the app creates a restore point when System Protection is on.</value></data>
   <data name="Programs_Search" xml:space="preserve"><value>Search programs</value></data>
   <data name="Programs_Count" xml:space="preserve"><value>{0} programs</value></data>
   <data name="Programs_Uninstall" xml:space="preserve"><value>Uninstall</value></data>
@@ -1053,10 +1042,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Changes_OpenRestore" xml:space="preserve"><value>Open System Restore</value></data>
   <data name="Debloat_CameBack" xml:space="preserve"><value>These apps you removed are installed again, for example by a Windows update or the PC maker's software: {0}. They are listed below if you want to remove them again.</value></data>
   <data name="Drv_CleanTitle" xml:space="preserve"><value>Clean graphics driver removal</value></data>
-  <data name="Drv_CleanHint" xml:space="preserve"><value>When you switch graphics card brand or a driver keeps failing, Display Driver Uninstaller (DDU) removes the old driver completely before you install the new one. Its author recommends Safe Mode and a backup or restore point first. PCOptimizer does not remove drivers itself.</value></data>
+  <data name="Drv_CleanHint" xml:space="preserve"><value>When you switch graphics card brand or a driver keeps failing, Display Driver Uninstaller (DDU) removes the old driver completely before you install the new one. Its author recommends Safe Mode and a backup or restore point first. Tunero does not remove drivers itself.</value></data>
   <data name="Drv_CleanOpen" xml:space="preserve"><value>Open DDU page</value></data>
   <data name="Prio_Title" xml:space="preserve"><value>Program start priorities</value></data>
-  <data name="Prio_Hint" xml:space="preserve"><value>Windows starts the program with this CPU priority every time, without a background program. Use it for a game that competes with busy background programs, or to keep a backup or download tool out of the way. Undocumented values: Preview, and some anti-cheat systems check this place.</value></data>
+  <data name="Prio_Hint" xml:space="preserve"><value>Windows starts the program with this CPU priority every time, without a background program. Useful for a game that competes with busy background programs, or to keep a backup or download tool out of the way. Microsoft does not document these values, so the rules are tagged Preview, and some anti-cheat systems check this part of the registry.</value></data>
   <data name="Prio_ExePlaceholder" xml:space="preserve"><value>Program file, for example game.exe</value></data>
   <data name="Prio_LowIoOption" xml:space="preserve"><value>Low disk priority</value></data>
   <data name="Prio_Add" xml:space="preserve"><value>Add rule</value></data>
@@ -1067,8 +1056,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Prio_Low" xml:space="preserve"><value>Low</value></data>
   <data name="Prio_LowIo" xml:space="preserve"><value>low disk priority</value></data>
   <data name="Prio_InvalidName" xml:space="preserve"><value>Enter only the program file name, for example game.exe, without a folder.</value></data>
-  <data name="Startup_ProfilerSet" xml:space="preserve"><value>A .NET diagnostics setting is set in your environment variables ({0}). It can load a program into every .NET app, so PCOptimizer does not run as administrator with it. Remove the variable in System &gt; About &gt; Advanced system settings &gt; Environment Variables and start PCOptimizer again. Nothing was changed.</value></data>
-  <data name="Programs_RestorePointName" xml:space="preserve"><value>PCOptimizer: before uninstalling programs</value></data>
+  <data name="Startup_ProfilerSet" xml:space="preserve"><value>A .NET diagnostics setting is set in your environment variables ({0}). It can load a program into every .NET app, so Tunero does not run as administrator with it. Remove the variable in System &gt; About &gt; Advanced system settings &gt; Environment Variables and start Tunero again. Nothing was changed.</value></data>
+  <data name="Programs_RestorePointName" xml:space="preserve"><value>Tunero: before uninstalling programs</value></data>
   <data name="Programs_NoRestorePointTitle" xml:space="preserve"><value>No restore point</value></data>
   <data name="Programs_NoRestorePointText" xml:space="preserve"><value>Windows did not create a restore point: System Protection is off, or one was already created in the last 24 hours. Uninstall without a new restore point?</value></data>
   <data name="Programs_MaybeStillRunning" xml:space="preserve"><value>Still listed. Many uninstallers keep running in their own window after starting: when it is done, select Refresh.</value></data>
@@ -1078,10 +1067,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Nav_GroupOptimize" xml:space="preserve"><value>Optimize</value></data>
   <data name="Nav_GroupCleanUp" xml:space="preserve"><value>Clean up</value></data>
-  <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain</value></data>
+  <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain and check</value></data>
   <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Recommended for this PC</value></data>
   <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>On, but works against this profile</value></data>
-  <data name="Tweaks_GroupCount" xml:space="preserve"><value>Tweaks: {0}, on: {1}</value></data>
+  <data name="Tweaks_GroupCount" xml:space="preserve"><value>{1} of {0} on ({2} by this app)</value></data>
   <data name="Tweaks_OpenAll" xml:space="preserve"><value>Expand all</value></data>
   <data name="Tweaks_CloseAll" xml:space="preserve"><value>Collapse all</value></data>
   <data name="Tweaks_SectionPerformance" xml:space="preserve"><value>Performance and power</value></data>
@@ -1115,13 +1104,13 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cleanup_Nothing" xml:space="preserve"><value>Empty</value></data>
   <data name="Settings_Hint" xml:space="preserve"><value>Language, theme, Expert mode, optional online features and diagnostics.</value></data>
   <data name="Changes_Transfer" xml:space="preserve"><value>Move to another PC</value></data>
-  <data name="Changes_TransferText" xml:space="preserve"><value>Save the catalog tweaks and start priorities that are on now to a file, and apply such a file here. Changes made for this PC only (startup entries, services, device tweaks) and removed apps are not included.</value></data>
+  <data name="Changes_TransferText" xml:space="preserve"><value>Export saves the tweaks you turned on and your program priorities to a file. Import applies such a file here, for example after reinstalling Windows. Settings made for this PC only (startup entries, services, device settings) and removed apps are not included.</value></data>
   <data name="Changes_Export" xml:space="preserve"><value>Export</value></data>
   <data name="Changes_Import" xml:space="preserve"><value>Import</value></data>
-  <data name="Transfer_FileType" xml:space="preserve"><value>PCOptimizer changes</value></data>
+  <data name="Transfer_FileType" xml:space="preserve"><value>Tunero changes</value></data>
   <data name="Transfer_NothingToExport" xml:space="preserve"><value>Nothing to export: no catalog tweak or start priority made with this app is on.</value></data>
   <data name="Transfer_Exported" xml:space="preserve"><value>Changes saved: {0}, in {1}. Changes for this PC only, not included: {2}.</value></data>
-  <data name="Transfer_Invalid" xml:space="preserve"><value>This file is not a PCOptimizer changes file, it is damaged, or it comes from a newer version.</value></data>
+  <data name="Transfer_Invalid" xml:space="preserve"><value>This file is not a Tunero changes file, it is damaged, or it comes from a newer version.</value></data>
   <data name="Transfer_Nothing" xml:space="preserve"><value>Nothing to apply from this file.</value></data>
   <data name="Transfer_Skipped" xml:space="preserve"><value>Skipped: {0} already on, {1} not for this PC, {2} unknown to this version.</value></data>
   <data name="Transfer_Title" xml:space="preserve"><value>Import changes</value></data>
@@ -1131,18 +1120,140 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Transfer_OneByOneText" xml:space="preserve"><value>Changes in the file that are previews, Expert changes or can affect anti-cheats: {0}. Each one shows its own confirmation; cancel one to skip it.</value></data>
   <data name="Transfer_OneByOneGo" xml:space="preserve"><value>Show them</value></data>
   <data name="Settings_Uninstall" xml:space="preserve"><value>Uninstall</value></data>
-  <data name="Uninstall_Setting" xml:space="preserve"><value>Remove PCOptimizer from this PC</value></data>
+  <data name="Uninstall_Setting" xml:space="preserve"><value>Remove Tunero from this PC</value></data>
   <data name="Uninstall_Hint" xml:space="preserve"><value>Offers to undo its changes first, then deletes the app, its data folder with backups and logs, and its Start menu entry.</value></data>
   <data name="Uninstall_Button" xml:space="preserve"><value>Uninstall</value></data>
-  <data name="Uninstall_Title" xml:space="preserve"><value>Uninstall PCOptimizer?</value></data>
-  <data name="Uninstall_Text" xml:space="preserve"><value>PCOptimizer closes and deletes its exe, its data folder {0} with backups, logs and settings, and its Start menu entry. Restore points, apps you installed through PCOptimizer and the PawnIO driver stay; remove them in Windows under Settings &gt; Apps &gt; Installed apps if you no longer need them.</value></data>
-  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Changes still active: {0}. Undo them first to get the previous settings back. If you keep them, they stay after the uninstall, and PCOptimizer can no longer undo them, because their backups are deleted.</value></data>
+  <data name="Uninstall_Title" xml:space="preserve"><value>Uninstall Tunero?</value></data>
+  <data name="Uninstall_Text" xml:space="preserve"><value>Tunero closes and deletes its exe, its data folder {0} with backups, logs and settings, and its Start menu entry. Restore points, apps you installed through Tunero and the PawnIO driver stay; remove them in Windows under Settings &gt; Apps &gt; Installed apps if you no longer need them.</value></data>
+  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Changes still active: {0}. Undo them first to get the previous settings back. If you keep them, they stay after the uninstall, and Tunero can no longer undo them, because their backups are deleted.</value></data>
   <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Undo changes and uninstall</value></data>
   <data name="Uninstall_Keep" xml:space="preserve"><value>Keep changes and uninstall</value></data>
   <data name="Uninstall_Busy" xml:space="preserve"><value>Wait until the current change has finished, then uninstall.</value></data>
-  <data name="Uninstall_UndoFailed" xml:space="preserve"><value>PCOptimizer was not removed.</value></data>
+  <data name="Uninstall_UndoFailed" xml:space="preserve"><value>Tunero was not removed.</value></data>
   <data name="Uninstall_Failed" xml:space="preserve"><value>The uninstall could not be started: {0}</value></data>
-  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget removes PCOptimizer as soon as it has closed.</value></data>
-  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget did not remove PCOptimizer (see above). Press Enter to close this window</value></data>
-  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget could not be started. Close PCOptimizer and run winget uninstall {0} in a terminal.</value></data>
+  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget removes Tunero as soon as it has closed.</value></data>
+  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget did not remove Tunero (see above). Press Enter to close this window</value></data>
+  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget could not be started. Close Tunero and run winget uninstall {0} in a terminal.</value></data>
+  <!-- ui -->
+  <data name="Drv_NoRealDate" xml:space="preserve"><value>The package gives no real release date</value></data>
+  <data name="Drv_AgeNew" xml:space="preserve"><value>less than two months old</value></data>
+  <data name="Drv_AgeMonths" xml:space="preserve"><value>about {0} months old</value></data>
+  <data name="Drv_AgeYears" xml:space="preserve"><value>about {0} years old</value></data>
+  <data name="Drv_GroupFrom" xml:space="preserve"><value>Updates from {0}</value></data>
+  <data name="Drv_GroupOther" xml:space="preserve"><value>No known update source</value></data>
+  <data name="Drv_GroupBoard" xml:space="preserve"><value>Updates from the mainboard maker</value></data>
+  <data name="Tweak_AlreadyOnShort" xml:space="preserve"><value>Already on</value></data>
+  <data name="Tweak_AlreadyOnTip" xml:space="preserve"><value>This was already set before Tunero changed anything, by Windows, a policy or another tool. The app has no original value to restore, so it does not turn it off.</value></data>
+  <data name="Confirm_Blocked" xml:space="preserve"><value>Not possible yet: see the red note above. Nothing was changed.</value></data>
+  <data name="Confirm_NothingToChange" xml:space="preserve"><value>Every value is already set as this change would set it. There is nothing to apply.</value></data>
+  <data name="Svc_SetManual" xml:space="preserve"><value>Set to Manual</value></data>
+  <data name="Svc_LockTipReadOnly" xml:space="preserve"><value>This app has no explanation for this Windows service, so it does not change it.</value></data>
+  <data name="Svc_LockTipManual" xml:space="preserve"><value>Already on Manual, the only start type this app offers for this Windows service.</value></data>
+  <data name="Svc_FromWindows" xml:space="preserve"><value>Service description:</value></data>
+  <data name="Dash_CountShow" xml:space="preserve"><value>Show the list</value></data>
+  <data name="Rec_SafetyNote" xml:space="preserve"><value>Before the first change the app creates a restore point, or asks you if System Protection is off. Every change then shows up on the Changes page and can be undone there.</value></data>
+  <data name="Rec_NoneSelected" xml:space="preserve"><value>Nothing is ticked. Tick the changes you want to apply.</value></data>
+  <data name="Debloat_PageHint" xml:space="preserve"><value>Apps that came with Windows, and desktop programs you installed.</value></data>
+  <data name="Debloat_TabStore" xml:space="preserve"><value>Preinstalled apps</value></data>
+  <data name="Apps_TabApps" xml:space="preserve"><value>Get apps</value></data>
+  <data name="Apps_TabAppsHint" xml:space="preserve"><value>Installed with winget from their official sources.</value></data>
+  <data name="Quick_TabFixes" xml:space="preserve"><value>Fixes and repair</value></data>
+  <data name="Tag_Restart" xml:space="preserve"><value>Restart needed</value></data>
+  <data name="Quick_DnsAction" xml:space="preserve"><value>Flush</value></data>
+  <data name="Quick_WinsockAction" xml:space="preserve"><value>Reset Winsock</value></data>
+  <data name="Quick_ExplorerAction" xml:space="preserve"><value>Restart</value></data>
+  <data name="Quick_IpRenewAction" xml:space="preserve"><value>Renew</value></data>
+  <data name="Quick_TcpIpResetAction" xml:space="preserve"><value>Reset TCP/IP</value></data>
+  <data name="Quick_AudioRestartAction" xml:space="preserve"><value>Restart</value></data>
+  <data name="Quick_BluetoothRestartAction" xml:space="preserve"><value>Restart</value></data>
+  <data name="Quick_SearchRestartAction" xml:space="preserve"><value>Restart</value></data>
+  <data name="Quick_GraphicsRestartAction" xml:space="preserve"><value>Restart</value></data>
+  <data name="Quick_TimeSyncAction" xml:space="preserve"><value>Sync</value></data>
+  <data name="Quick_PerfCountersAction" xml:space="preserve"><value>Rebuild</value></data>
+  <data name="Quick_DiskScanAction" xml:space="preserve"><value>Check</value></data>
+  <data name="Quick_RecoveryEnableAction" xml:space="preserve"><value>Turn on</value></data>
+  <data name="Prio_Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Prio_ProgramFiles" xml:space="preserve"><value>Programs</value></data>
+  <data name="Tweaks_GroupApply" xml:space="preserve"><value>Turn on {0}</value></data>
+  <data name="Tweaks_GroupApplyTip" xml:space="preserve"><value>Turns on the tweaks of this group that are off and safe to apply together: Safe risk, fully reversible, not a preview. Alternatives that exclude each other, such as the power plans, are left out for you to choose. You see every change first.</value></data>
+  <data name="Tweaks_GroupApplyTitle" xml:space="preserve"><value>Turn on: {0}</value></data>
+  <data name="Tweaks_GroupApplyIntro" xml:space="preserve"><value>The tweaks of this group that are off and safe to apply together. Each one can be undone on the Changes page.</value></data>
+  <data name="Tweaks_ExpertLink" xml:space="preserve"><value>Show Expert changes in Settings</value></data>
+  <data name="Vt_AddKey" xml:space="preserve"><value>Check with VirusTotal: add a key in Settings</value></data>
+  <data name="Startup_Enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="Startup_Disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Cleanup_MoreFolders" xml:space="preserve"><value>and {0} more (hover for all)</value></data>
+  <data name="Cleanup_RunClean" xml:space="preserve"><value>Clean up</value></data>
+  <data name="Settings_ShowInFolder" xml:space="preserve"><value>Show in folder</value></data>
+  <data name="Settings_OpenFolder" xml:space="preserve"><value>Open folder</value></data>
+  <data name="Changes_OtherPcs" xml:space="preserve"><value>Other PCs</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>Search the app (Ctrl+F)</value></data>
+  <data name="Search_Empty" xml:space="preserve"><value>Nothing found. Try another word, for example a setting, a program or a service.</value></data>
+  <data name="Search_Results" xml:space="preserve"><value>Search results</value></data>
+  <data name="Search_NotIncluded" xml:space="preserve"><value>Not included in Tunero</value></data>
+  <data name="Intro_Text" xml:space="preserve"><value>The scan only reads: nothing changes until you confirm it, and changed settings can be undone on the Changes page.</value></data>
+  <data name="Intro_Dismiss" xml:space="preserve"><value>Got it</value></data>
+  <data name="Settings_Technical" xml:space="preserve"><value>Technical details in lists</value></data>
+  <data name="Settings_TechnicalHint" xml:space="preserve"><value>Paths, registry locations and package names on Startup, Cleanup, Services and Remove apps. Off gives a simpler view; the details pane and every confirmation still show them.</value></data>
+  <data name="TweakView_Label" xml:space="preserve"><value>Show</value></data>
+  <data name="TweakView_Profile" xml:space="preserve"><value>For this profile</value></data>
+  <data name="TweakView_Recommended" xml:space="preserve"><value>Recommended for this PC</value></data>
+  <data name="TweakView_Changed" xml:space="preserve"><value>Changed by this app</value></data>
+  <data name="TweakView_Applicable" xml:space="preserve"><value>All that apply to this PC</value></data>
+  <data name="TweakView_Everything" xml:space="preserve"><value>All, also those that do not apply</value></data>
+  <data name="Advisor_SummaryGood" xml:space="preserve"><value>Nothing to change in the BIOS or on the hardware</value></data>
+  <data name="Advisor_SummaryProblems" xml:space="preserve"><value>Things to change in the BIOS or on the hardware: {0}</value></data>
+  <data name="Advisor_SummaryCounts" xml:space="preserve"><value>Checked: {0}. Passed: {1}. Could not be checked: {2}. Notes: {3}.</value></data>
+  <data name="Meta_Affects" xml:space="preserve"><value>Affects: {0}</value></data>
+  <data name="Result_ViewChanges" xml:space="preserve"><value>View changes</value></data>
+  <data name="Tweak_SwitchOn" xml:space="preserve"><value>Applied</value></data>
+  <data name="Tweak_SwitchOff" xml:space="preserve"><value>Not applied</value></data>
+  <data name="Tweaks_ProfileLink" xml:space="preserve"><value>Profile: {0} (change on the overview)</value></data>
+  <data name="Rec_EmptyButExcluded" xml:space="preserve"><value>Nothing can be applied in one click right now. The changes that would help are listed below, with what they need first.</value></data>
+  <data name="Debloat_TabNote" xml:space="preserve"><value>Only apps from a reviewed list are offered; parts of Windows and apps that games need never are. Removing cannot be undone here; for apps still in the Microsoft Store, the list of removed apps keeps a link to install them again.</value></data>
+  <data name="Debloat_RemoveName" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Programs_UninstallName" xml:space="preserve"><value>Uninstall {0}</value></data>
+  <data name="Apps_InstallName" xml:space="preserve"><value>Install {0}</value></data>
+  <data name="Storage_Drive" xml:space="preserve"><value>Drive</value></data>
+  <data name="Prio_Priority" xml:space="preserve"><value>CPU priority</value></data>
+  <data name="Feature_On" xml:space="preserve"><value>On</value></data>
+  <data name="Feature_Off" xml:space="preserve"><value>Off</value></data>
+  <data name="Cleanup_EmptyList" xml:space="preserve"><value>Nothing to clean in: {0}</value></data>
+  <data name="Startup_OnlyAttention" xml:space="preserve"><value>Only entries that need attention</value></data>
+  <data name="Startup_KindFilter" xml:space="preserve"><value>Which entries</value></data>
+  <data name="Svc_StartTypeName" xml:space="preserve"><value>Start type of {0}</value></data>
+  <data name="Net_DnsRouter" xml:space="preserve"><value>Your router ({0})</value></data>
+  <data name="Net_FixesLink" xml:space="preserve"><value>Network fixes such as Flush DNS cache are under Tools</value></data>
+  <data name="Bench_Step1" xml:space="preserve"><value>Step 1 of 4: start the game, then pick it in the list below.</value></data>
+  <data name="Bench_Step2" xml:space="preserve"><value>Step 2 of 4: capture A (before) three times in the same scene. Done: {0} of 3.</value></data>
+  <data name="Bench_Step3" xml:space="preserve"><value>Step 3 of 4: make the change you want to test, then go back to the same scene.</value></data>
+  <data name="Bench_Step4" xml:space="preserve"><value>Step 4 of 4: capture B (after) three times in that scene. Done: {0} of 3.</value></data>
+  <data name="Bench_StepDone" xml:space="preserve"><value>Done: the result is below. More runs on both sides make it surer.</value></data>
+  <data name="Bench_Game" xml:space="preserve"><value>Game</value></data>
+  <data name="Bench_Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Settings_ReportShort" xml:space="preserve"><value>Report a problem opens a prefilled bug report on GitHub; nothing is sent until you submit it there.</value></data>
+  <data name="About_Shortcuts" xml:space="preserve"><value>Keyboard: Ctrl+F searches the app, F5 reads the page or the PC again, Esc closes the details.</value></data>
+  <!-- 4a -->
+  <data name="Cli_NotElevated" xml:space="preserve"><value>Tunero needs administrator rights to change or undo anything.</value></data>
+  <data name="Cli_FileUnreadable" xml:space="preserve"><value>{0} could not be read: {1}</value></data>
+  <data name="Cli_FileInvalid" xml:space="preserve"><value>{0} is not a Tunero changes file, or it comes from a newer version of the app.</value></data>
+  <data name="Cli_NoRestorePoint" xml:space="preserve"><value>No restore point could be created, so nothing was changed. Turn on System Protection, or add --no-restore-point to continue without one.</value></data>
+  <data name="Cli_NeedsApp" xml:space="preserve"><value>Not applied, needs its own confirmation in the app: {0}</value></data>
+  <data name="Cli_Summary" xml:space="preserve"><value>Applied: {0}. Failed: {1}. Not applied: {2}. Already on: {3}. Not for this PC: {4}. Unknown to this version: {5}.</value></data>
+  <data name="Cli_UndoSummary" xml:space="preserve"><value>Undone: {0}. Not fully undone: {1}.</value></data>
+  <data name="Cli_ExitCode" xml:space="preserve"><value>Exit code: {0}</value></data>
+  <data name="Crash_Title" xml:space="preserve"><value>Report the error?</value></data>
+  <data name="Crash_Text" xml:space="preserve"><value>Tunero ran into an unexpected error. A report helps to fix it: it opens on GitHub, filled in with the app version, the Windows build and the error details, without your user or computer name. Nothing is sent until you submit it there (you need a GitHub account).</value></data>
+  <data name="Crash_TextLastSession" xml:space="preserve"><value>Tunero ended with an unexpected error last time. A report helps to fix it: it opens on GitHub, filled in with the app version, the Windows build and the error details, without your user or computer name. Nothing is sent until you submit it there (you need a GitHub account).</value></data>
+  <data name="Crash_Report" xml:space="preserve"><value>Open report</value></data>
+  <data name="Crash_What" xml:space="preserve"><value>Tunero stopped with an error. What I did right before:</value></data>
+  <data name="Crash_OpenFailed" xml:space="preserve"><value>The browser could not be opened. You can report the error in Settings &gt; Diagnostics.</value></data>
+  <data name="ChangeLog_Apply" xml:space="preserve"><value>{0}, {1}: from {2} to {3}</value></data>
+  <data name="ChangeLog_Undo" xml:space="preserve"><value>{0}, {1}: undone, back to {2}</value></data>
+  <data name="Scan_Failed" xml:space="preserve"><value>The scan stopped with an error. Details are in the log, Settings &gt; Diagnostics.</value></data>
+  <data name="Debloat_UnreviewedSwitch" xml:space="preserve"><value>Show apps that were not reviewed</value></data>
+  <data name="Debloat_UnreviewedHint" xml:space="preserve"><value>Other removable apps on this PC. Nobody checked what they do: remove only apps you know, because a program or a device may need one.</value></data>
+  <data name="Debloat_UnreviewedEmpty" xml:space="preserve"><value>No other removable apps found.</value></data>
+  <data name="Debloat_UnreviewedMeta" xml:space="preserve"><value>Not reviewed, version {0}</value></data>
+  <data name="Debloat_UnreviewedConfirm" xml:space="preserve"><value>{0} is not on the reviewed list, so nobody checked what it does or what needs it. It is removed for all users, and this app cannot undo that; reinstall it from the Microsoft Store or its maker if you need it again.</value></data>
 </root>

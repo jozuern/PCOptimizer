@@ -6,7 +6,7 @@ Ein installierter Anti-Cheat ({{antiCheats}}) braucht eine Sicherheitsfunktion, 
 :::
 ::: status Info
 ::: variant sometimes
-Alle Pflichtfunktionen sind an. {{antiCheats}} kann je nach Spiel oder Konto mehr verlangen, etwa UEFI-Start, Secure Boot, TPM 2.0, VBS, Speicherintegrität oder IOMMU. Was aus ist, zeigen die Details.
+Alle Pflichtfunktionen sind an. {{antiCheats}} kann je nach Spiel oder Konto mehr verlangen, etwa UEFI-Start, Secure Boot, TPM 2.0, VBS, Speicherintegrität oder IOMMU. Die Details zeigen jede einzeln.
 :::
 ::: variant baseline
 UEFI-Start, Secure Boot oder TPM 2.0 fehlt. Spiele mit strengen Anti-Cheats (Valorant, FACEIT, Battlefield 6, Call of Duty) starten nicht.

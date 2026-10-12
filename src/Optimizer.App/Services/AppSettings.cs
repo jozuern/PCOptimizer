@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Optimizer.App.Services;
 
-/// <summary>UI preferences in %ProgramData%\PCOptimizer\settings.json (app-owned data; elevated profiles differ per account).</summary>
+/// <summary>UI preferences in %ProgramData%\Tunero\settings.json (app-owned data; elevated profiles differ per account).</summary>
 public sealed class AppSettings
 {
     public string? Language { get; set; }
@@ -23,6 +23,12 @@ public sealed class AppSettings
 
     /// <summary>Windows version seen at the last scan ("26300.9550"), to notice updates.</summary>
     public string? LastSeenWindowsVersion { get; set; }
+
+    /// <summary>Paths, registry locations and package names in the lists (Startup, Cleanup, Services, Remove apps). On by default.</summary>
+    public bool TechnicalDetails { get; set; } = true;
+
+    /// <summary>The overview's note on how the app works (reads only, asks first, can undo) was dismissed.</summary>
+    public bool IntroSeen { get; set; }
 
     /// <summary>Usage profile id ("gaming", "battery", ...); null until the first scan suggests one.</summary>
     public string? Profile { get; set; }

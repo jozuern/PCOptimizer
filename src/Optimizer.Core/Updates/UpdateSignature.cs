@@ -7,7 +7,7 @@ namespace Optimizer.Core.Updates;
 /// <summary>
 /// Proves who published an update. The release workflow signs the statement "PCOptimizer {version}\n{sha256}\n" with
 /// the project's ECDSA P-256 key (a repository secret that never reaches the build job) and attaches the signature as
-/// PCOptimizer.exe.sig. The app holds only the public key (update-key.pem, embedded). A checksum alone proves that the
+/// Tunero.exe.sig. The app holds only the public key (update-key.pem, embedded). A checksum alone proves that the
 /// download is intact, not who made it: anyone who can edit a release could replace the exe and its checksum file.
 /// Binding the version in also stops an older signed exe from being offered as a newer release.
 /// </summary>

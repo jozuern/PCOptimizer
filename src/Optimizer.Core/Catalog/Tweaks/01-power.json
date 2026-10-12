@@ -64,7 +64,10 @@
         {
           "type": "powerScheme",
           "duplicateFrom": "highPerformance",
-          "name": "PCOptimizer Gaming"
+          "name": "Tunero Gaming",
+          "formerNames": [
+            "PCOptimizer Gaming"
+          ]
         }
       ],
       "conflictsWith": [
@@ -107,7 +110,10 @@
         {
           "type": "powerScheme",
           "duplicateFrom": "ultimatePerformance",
-          "name": "PCOptimizer Ultimate"
+          "name": "Tunero Ultimate",
+          "formerNames": [
+            "PCOptimizer Ultimate"
+          ]
         }
       ],
       "conflictsWith": [

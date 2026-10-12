@@ -5,7 +5,7 @@
              xmlns:l="clr-namespace:Optimizer.App.Services"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}">
+        <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Settings_Title}" />
             <ui:TextBlock Style="{StaticResource PageIntro}" Text="{l:Tr Settings_Hint}" />
 
@@ -17,10 +17,11 @@
                 <ui:CardControl.Header>
                     <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Language}" />
                 </ui:CardControl.Header>
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton Content="{l:Tr Lang_En}" GroupName="Lang" IsChecked="{Binding IsEnglish, Mode=OneWay}" Checked="Language_Checked" Tag="en" Margin="0,0,16,0" />
-                    <RadioButton Content="{l:Tr Lang_De}" GroupName="Lang" IsChecked="{Binding IsGerman, Mode=OneWay}" Checked="Language_Checked" Tag="de" />
-                </StackPanel>
+                <!-- A drop-down as in Windows Settings; each language in its own name -->
+                <ComboBox x:Name="LanguageBox" MinWidth="200" SelectionChanged="Language_Changed" AutomationProperties.Name="{l:Tr Settings_Language}">
+                    <ComboBoxItem Content="{l:Tr Lang_En}" Tag="en" />
+                    <ComboBoxItem Content="{l:Tr Lang_De}" Tag="de" />
+                </ComboBox>
             </ui:CardControl>
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                 <ui:CardControl.Icon>
@@ -29,11 +30,11 @@
                 <ui:CardControl.Header>
                     <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Theme}" />
                 </ui:CardControl.Header>
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="ThemeSystem" Content="{l:Tr Theme_System}" GroupName="Theme" Checked="Theme_Checked" Tag="System" Margin="0,0,16,0" />
-                    <RadioButton x:Name="ThemeLight" Content="{l:Tr Theme_Light}" GroupName="Theme" Checked="Theme_Checked" Tag="Light" Margin="0,0,16,0" />
-                    <RadioButton x:Name="ThemeDark" Content="{l:Tr Theme_Dark}" GroupName="Theme" Checked="Theme_Checked" Tag="Dark" />
-                </StackPanel>
+                <ComboBox x:Name="ThemeBox" MinWidth="200" SelectionChanged="Theme_Changed" AutomationProperties.Name="{l:Tr Settings_Theme}">
+                    <ComboBoxItem Content="{l:Tr Theme_System}" Tag="System" />
+                    <ComboBoxItem Content="{l:Tr Theme_Light}" Tag="Light" />
+                    <ComboBoxItem Content="{l:Tr Theme_Dark}" Tag="Dark" />
+                </ComboBox>
             </ui:CardControl>
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                 <ui:CardControl.Icon>
@@ -46,6 +47,19 @@
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{l:Tr StartMenu_Setting}" IsChecked="{Binding StartMenuEntry}" IsEnabled="{Binding CanAddToStartMenu}" />
+            </ui:CardControl>
+
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Code24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Technical}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_TechnicalHint}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Settings_Technical}" IsChecked="{Binding ShowTechnical}" />
             </ui:CardControl>
 
             <!-- The section names what Expert mode is about; the card itself is called Expert mode -->
@@ -70,12 +84,15 @@
                     <WrapPanel>
                         <ui:PasswordBox x:Name="VtKey" PlaceholderText="{l:Tr Vt_KeyPlaceholder}" MinWidth="320" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Save}" Click="SaveKey_Click" Margin="0,0,8,0" />
-                        <ui:Button Content="{l:Tr Common_Remove}" Appearance="Transparent" Click="RemoveKey_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="{l:Tr Common_Remove}" Appearance="Transparent" Click="RemoveKey_Click" Margin="0,0,8,0" IsEnabled="{Binding VirusTotalConfigured}" />
                         <ui:Button Content="{l:Tr Vt_GetKey}" Icon="{ui:SymbolIcon Open20}" Appearance="Transparent"
                                    Command="{Binding OpenLinkCommand}" CommandParameter="https://docs.virustotal.com/docs/please-give-me-an-api-key" />
                     </WrapPanel>
-                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,8,0,0"
-                                  Text="{l:Tr Vt_Configured}" Visibility="{Binding VirusTotalConfigured, Converter={StaticResource BoolToVisibility}}" />
+                    <!-- The saved key is visible at a glance: a check mark and a line, not only a faint caption -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding VirusTotalConfigured, Converter={StaticResource BoolToVisibility}}">
+                        <ui:SymbolIcon Symbol="CheckmarkCircle16" Filled="True" FontSize="16" Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,8,0" />
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Vt_Configured}" VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
             </ui:Card>
 
@@ -83,10 +100,18 @@
             <ui:Card Padding="16,12">
                 <StackPanel>
                     <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Settings_Logs}" />
-                    <TextBlock Style="{StaticResource Mono}" Text="{Binding LogFile}" Margin="0,4,0,8" />
+                    <DockPanel Margin="0,4,0,8">
+                        <ui:HyperlinkButton DockPanel.Dock="Right" Content="{l:Tr Settings_ShowInFolder}" Padding="0" Margin="16,0,0,0" VerticalAlignment="Center"
+                                            Command="{Binding ShowInExplorerCommand}" CommandParameter="{Binding LogFile}" />
+                        <TextBlock Style="{StaticResource Mono}" Text="{Binding LogFile}" VerticalAlignment="Center" />
+                    </DockPanel>
                     <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Settings_Data}" />
-                    <TextBlock Style="{StaticResource Mono}" Text="{Binding DataFolder}" Margin="0,4,0,0" />
-                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_ReportHint}" Margin="0,12,0,0" />
+                    <DockPanel Margin="0,4,0,0">
+                        <ui:HyperlinkButton DockPanel.Dock="Right" Content="{l:Tr Settings_OpenFolder}" Padding="0" Margin="16,0,0,0" VerticalAlignment="Center"
+                                            Command="{Binding ShowInExplorerCommand}" CommandParameter="{Binding DataFolder}" />
+                        <TextBlock Style="{StaticResource Mono}" Text="{Binding DataFolder}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_ReportShort}" ToolTip="{l:Tr Settings_ReportHint}" Margin="0,12,0,0" TextWrapping="Wrap" />
                     <WrapPanel Margin="0,8,0,0">
                         <ui:Button Content="{l:Tr Settings_Report}" Icon="{ui:SymbolIcon Open20}" Command="{Binding ReportProblemCommand}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Settings_CopyLog}" Appearance="Transparent" Command="{Binding CopyLogCommand}" />
@@ -136,12 +161,13 @@
                 <StackPanel>
                     <ui:TextBlock FontTypography="Body" Text="{Binding AboutText}" TextWrapping="Wrap" />
                     <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr About_License}" Margin="0,4,0,0" />
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr About_Shortcuts}" Margin="0,4,0,0" />
                     <WrapPanel Margin="0,12,0,0">
                         <ui:Button Content="{l:Tr About_Licenses}" Icon="{ui:SymbolIcon DocumentText20}" Click="Licenses_Click" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr About_Privacy}" Icon="{ui:SymbolIcon ShieldCheckmark20}" Appearance="Transparent"
-                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer/blob/main/docs/PRIVACY.md" Margin="0,0,8,0" />
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/Tunero/blob/main/docs/PRIVACY.md" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr About_Source}" Icon="{ui:SymbolIcon Code20}" Appearance="Transparent"
-                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer" Margin="0,0,8,0" />
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/Tunero" Margin="0,0,8,0" />
                         <!-- Donations: one quiet link here, nowhere else in the app. -->
                         <ui:Button Content="{l:Tr About_Support}" Icon="{ui:SymbolIcon Heart20}" Appearance="Transparent"
                                    Command="{Binding OpenLinkCommand}" CommandParameter="https://ko-fi.com/jozuern" />

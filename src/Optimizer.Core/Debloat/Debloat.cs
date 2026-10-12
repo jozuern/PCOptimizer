@@ -14,9 +14,14 @@ public sealed class AppxCatalog
     public List<AppxEntry> Apps { get; init; } = [];
     public List<string> Protected { get; init; } = [];
 
+    /// <summary>Packages never offered among the apps that were not reviewed (<see cref="DebloatService.Unreviewed"/>).</summary>
+    public List<string> UnreviewedExcluded { get; init; } = [];
+
     /// <summary>A trailing * matches a prefix; an entry "!name" exempts that one package from a prefix (Edge Game Assist under Microsoft.Edge*).</summary>
     public bool IsProtected(string name) =>
         !Protected.Any(p => p.StartsWith('!') && Matches(p[1..], name)) && Protected.Any(p => !p.StartsWith('!') && Matches(p, name));
+
+    public bool IsUnreviewedExcluded(string name) => UnreviewedExcluded.Any(p => Matches(p, name));
 
     private static bool Matches(string pattern, string name) => pattern.EndsWith('*')
         ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
@@ -135,6 +140,18 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
         }
         return list;
     }
+
+    /// <summary>
+    /// Installed packages the reviewed list does not cover, for people who want to remove more: everything that is not
+    /// a framework, not marked non-removable by Windows, not protected and not a part of Windows or of what games need
+    /// (<see cref="AppxCatalog.UnreviewedExcluded"/>). Nobody checked what they do, so the page shows them only on
+    /// request and with a warning; removal works like for the reviewed apps.
+    /// </summary>
+    public static IReadOnlyList<InstalledAppx> Unreviewed(AppxCatalog catalog, IEnumerable<InstalledAppx> installed) =>
+        installed.Where(a => !a.NonRemovable && IsSafeName(a.Name) && !catalog.Apps.Any(e => e.Matches(a.Name))
+                             && !catalog.IsProtected(a.Name) && !catalog.IsUnreviewedExcluded(a.Name))
+            .OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     /// <summary>Removes the package for all users and its provisioned copy. Returns null on success, else the error text.</summary>
     public string? Remove(InstalledAppx app, AppxEntry? entry = null)

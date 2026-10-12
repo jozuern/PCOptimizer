@@ -109,10 +109,10 @@ public class TransactionTests
     {
         using var fx = new EngineFixture();
         var existing = Guid.NewGuid();
-        fx.Power.SchemeNames[existing] = "PCOptimizer Test";
+        fx.Power.SchemeNames[existing] = "Tunero Test";
         fx.Services.Start["SvcC"] = ServiceStart.Automatic;
         fx.Services.FailOnWrite.Add("SvcC");
-        var t = Tweak("test.planfail", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" },
+        var t = Tweak("test.planfail", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" },
             new ServiceAction { Name = "SvcC", StartType = ServiceStart.Disabled });
 
         Assert.Equal(ApplyOutcome.Failed, (await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options)).Outcome);

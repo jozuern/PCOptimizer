@@ -31,7 +31,7 @@ public static partial class DocLint
     /// <summary>Names that contain a banned word: a Windows power plan, Windows' own boost mode names, laptop vendor modes.</summary>
     public static readonly string[] AllowedPhrases =
     [
-        "ultimate performance", "pcoptimizer ultimate", "\"ultimate\"", "„ultimate“", "aggressive at guaranteed", "garantierter leistung",
+        "ultimate performance", "pcoptimizer ultimate", "tunero ultimate", "\"ultimate\"", "„ultimate“", "aggressive at guaranteed", "garantierter leistung",
     ];
 
     /// <summary>Banned words found in <paramref name="text"/>.</summary>

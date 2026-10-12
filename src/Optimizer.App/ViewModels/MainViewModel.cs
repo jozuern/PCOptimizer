@@ -48,6 +48,9 @@ public sealed record SummaryItem(string Label, string Value)
 /// <summary>Status drives the color of the number (problems in caution color, passed in success color).</summary>
 public sealed record CountItem(string Value, string Label, string Status)
 {
+    /// <summary>Where a click on the number leads: "findings" (the list below), "advisor" (BIOS and hardware) or "passed".</summary>
+    public string? Target { get; init; }
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => $"{Value} {Label}";
 }
@@ -83,6 +86,30 @@ public sealed partial class TweakGroupRow(string key, string title, SymbolRegula
     public string Summary { get; } = summary;
     public IReadOnlyList<TweakItemViewModel> Items { get; } = items;
 
+    /// <summary>
+    /// What "Turn on" in the heading applies: the group's tweaks that are off and safe to apply together (safe, fully
+    /// reversible, not boot-critical, no anti-cheat concern, not a preview), with nothing blocking them.
+    /// </summary>
+    public IReadOnlyList<TweakItemViewModel> Applicable { get; } = ApplicableOf(items);
+
+    /// <summary>
+    /// Off, Safe risk and batch-safe, and nothing blocks it (missing admin rights block every row alike: the button is
+    /// then off with the rest of the page). Alternatives that exclude each other (the power plans) are left out: which
+    /// one to use is a choice, not something to turn on all at once.
+    /// </summary>
+    private static List<TweakItemViewModel> ApplicableOf(IReadOnlyList<TweakItemViewModel> items)
+    {
+        var candidates = items.Where(i => !i.IsOn && i.CanToggle && i.Tweak.IsBatchSafe && i.Tweak.EffectiveRisk == Risk.Safe
+                                          && i.Status_.Blocks.All(b => b.ReasonKey == "block.notElevated")).ToList();
+        var ids = candidates.Select(i => i.Tweak.Id).ToHashSet(StringComparer.Ordinal);
+        return candidates.Where(i => !i.Tweak.ConflictsWith.Any(ids.Contains)
+                                     && !candidates.Any(o => o.Tweak.ConflictsWith.Contains(i.Tweak.Id))).ToList();
+    }
+
+    public bool CanApplyAll => Applicable.Count > 0;
+
+    public string ApplyAllText => Loc.Instance.Format("Tweaks_GroupApply", Applicable.Count);
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Chevron))]
     private bool _isExpanded;
@@ -112,9 +139,21 @@ public sealed record LogLine(string Time, string Text)
     public override string ToString() => $"{Time} {Text}";
 }
 
-/// <summary>One line of the "Apply recommended" plan: what, why, and its impact.</summary>
-public sealed record RecommendationLine(string Title, string Reason, string ImpactText)
+/// <summary>
+/// One line of the "Apply recommended" plan: what, why, and its impact. Lines of the plan can be unticked, so the user
+/// applies only what they agree with.
+/// </summary>
+public sealed partial class RecommendationLine(string title, string reason, string impactText, TweakDefinition? tweak = null, Action? selectionChanged = null) : ObservableObject
 {
+    public string Title { get; } = title;
+    public string Reason { get; } = reason;
+    public string ImpactText { get; } = impactText;
+    public TweakDefinition? Tweak { get; } = tweak;
+
+    [ObservableProperty] private bool _isSelected = true;
+
+    partial void OnIsSelectedChanged(bool value) => selectionChanged?.Invoke();
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Title;
 }
@@ -174,7 +213,7 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(CanChange));
             foreach (var command in new CommunityToolkit.Mvvm.Input.IRelayCommand[]
                      {
-                         RunActionCommand, ApplyRecommendedCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
+                         RunActionCommand, ApplyRecommendedCommand, ApplyTweakGroupCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
                          ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand, UninstallCommand,
                      })
                 command.NotifyCanExecuteChanged();
@@ -251,9 +290,25 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _canEnableRestorePoints;
     [ObservableProperty] private string _tweaksSummary = "";
     [ObservableProperty] private string? _resultText;
+
+    /// <summary>The result is about a change: the bar offers the way to the Changes page.</summary>
+    [ObservableProperty] private bool _resultShowsChanges;
+
+    /// <summary>Counts in the navigation (null = no badge).</summary>
+    [ObservableProperty] private string? _overviewBadge;
+    [ObservableProperty] private string? _advisorBadge;
+    [ObservableProperty] private string? _changesBadge;
+
+    [RelayCommand]
+    private void OpenChanges()
+    {
+        ResultOpen = false;
+        CurrentPage = Page.Changes;
+    }
     [ObservableProperty] private bool _resultOpen;
     [ObservableProperty] private string _recommendedButtonText = "";
     [ObservableProperty] private bool _hasRecommendations;
+    [ObservableProperty] private string _recommendationsEmptyText = "";
     [ObservableProperty] private bool _virusTotalConfigured;
     [ObservableProperty] private ProfileOption? _selectedProfile;
     [ObservableProperty] private bool _onlyProfile = true;
@@ -297,6 +352,30 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool FindingsEmpty => Profile is not null && Findings.Count == 0;
     public bool AdvisorEmpty => Profile is not null && AdvisorItems.Count == 0;
+
+    /// <summary>Manual checks page: what was checked and how it came out, above the list (which hides the passed ones).</summary>
+    [ObservableProperty] private string? _advisorSummaryTitle;
+    [ObservableProperty] private string? _advisorSummaryText;
+    [ObservableProperty] private bool _advisorAllGood;
+
+    private void BuildAdvisorSummary()
+    {
+        // Checks that do not apply to this PC (no such hardware) are not counted as checked.
+        var all = _profiledFindings.Where(f => f.Kind == FindingKind.Advisor && f.Status != FindingStatus.Unsupported).ToList();
+        if (Profile is null || all.Count == 0)
+        {
+            AdvisorSummaryTitle = null;
+            return;
+        }
+        var problems = all.Count(f => f.IsProblem);
+        var passed = all.Count(f => f.Status == FindingStatus.Ok);
+        var unknown = all.Count(f => f.Status == FindingStatus.Unknown);
+        var notes = all.Count(f => f.Status == FindingStatus.Info);
+        AdvisorAllGood = problems == 0;
+        AdvisorSummaryTitle = problems == 0 ? Loc.Instance["Advisor_SummaryGood"] : Loc.Instance.Format("Advisor_SummaryProblems", problems);
+        AdvisorSummaryText = Loc.Instance.Format("Advisor_SummaryCounts", all.Count, passed, unknown, notes);
+    }
+
     public bool ChangesEmpty => ChangeRecords.Count == 0;
     public bool ChangeLogEmpty => ChangeLog.Count == 0;
     public bool IsElevated => _services.Elevation.IsElevated;
@@ -311,10 +390,31 @@ public sealed partial class MainViewModel : ObservableObject
     public string DataFolder => AppServices.DataFolder;
     public string? VirusTotalKey => Optimizer.Core.Startup.Dpapi.Unprotect(_settings.VirusTotalKey);
 
-    partial void OnShowPassedChanged(bool value) => Rebuild();
-    partial void OnOnlyRecommendedChanged(bool value) => RefillTweaks();
+    partial void OnShowPassedChanged(bool value)
+    {
+        // Set from elsewhere (the overview, the search): the Changed view no longer holds.
+        if (value) _onlyChanged = false;
+        OnPropertyChanged(nameof(TweakViewMode));
+        Rebuild();
+    }
+
+    partial void OnOnlyRecommendedChanged(bool value)
+    {
+        // Set from elsewhere (the overview, the search): the Changed view no longer holds.
+        if (value) _onlyChanged = false;
+        OnPropertyChanged(nameof(TweakViewMode));
+        RefillTweaks();
+    }
+
     partial void OnTweakSearchChanged(string value) => RefillTweaks();
-    partial void OnOnlyProfileChanged(bool value) => RefillTweaks();
+
+    partial void OnOnlyProfileChanged(bool value)
+    {
+        // Set from elsewhere (the overview, the search): the Changed view no longer holds.
+        if (value) _onlyChanged = false;
+        OnPropertyChanged(nameof(TweakViewMode));
+        RefillTweaks();
+    }
 
     /// <summary>A filter or the search changed: the rows are created again, and the selected tweak stays selected if it is still listed.</summary>
     private void RefillTweaks()
@@ -366,7 +466,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (value == Page.Changes) BuildChanges();
         (value switch
         {
-            Page.Debloat => Debloat.EnsureLoadedAsync(),
+            // The page also lists the installed programs, which the Apps view model reads.
+            Page.Debloat => Task.WhenAll(Debloat.EnsureLoadedAsync(), Apps.EnsureLoadedAsync()),
             Page.Cleanup => Cleanup.EnsureLoadedAsync(),
             Page.Startup => Startup.EnsureLoadedAsync(),
             Page.Services => ServicesPage.EnsureLoadedAsync(),
@@ -451,6 +552,22 @@ public sealed partial class MainViewModel : ObservableObject
         Counts.Clear();
         foreach (var label in new[] { "Count_Problems", "Count_Advisor", "Count_Passed" })
             Counts.Add(new CountItem("--", Loc.Instance[label], "Neutral"));
+    }
+
+    /// <summary>
+    /// The simple or the technical view of the lists: off hides paths, registry locations and package names (the details
+    /// pane, confirmations and copied reports keep them).
+    /// </summary>
+    public bool ShowTechnical
+    {
+        get => _settings.TechnicalDetails;
+        set
+        {
+            if (value == _settings.TechnicalDetails) return;
+            _settings.TechnicalDetails = value;
+            _settings.Save();
+            OnPropertyChanged();
+        }
     }
 
     partial void OnCheckForUpdatesChanged(bool value)
@@ -550,14 +667,14 @@ public sealed partial class MainViewModel : ObservableObject
     public static string UpdatesFolder => DataPaths.Updates;
 
     /// <summary>
-    /// Self-update only replaces the published single-file exe running elevated. A Debug build has PCOptimizer.dll next
+    /// Self-update only replaces the published single-file exe running elevated. A Debug build has Tunero.dll next
     /// to its exe and gets the download page instead. The exe's own name does not matter: browsers save a second download
-    /// as "PCOptimizer (1).exe", and the update replaces the file under the name it has.
+    /// as "Tunero (1).exe", and the update replaces the file under the name it has.
     /// </summary>
     public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
         IsPublishedExe && !InstalledWithWinget;
 
-    /// <summary>The published single-file exe (a Debug or Release build has PCOptimizer.dll next to its exe).</summary>
+    /// <summary>The published single-file exe (a Debug or Release build has Tunero.dll next to its exe).</summary>
     public static bool IsPublishedExe { get; } = Environment.ProcessPath is { } exe &&
         System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
         !System.IO.File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exe) ?? "", typeof(MainViewModel).Assembly.GetName().Name + ".dll"));
@@ -787,6 +904,7 @@ public sealed partial class MainViewModel : ObservableObject
         ResultSeverity = severity;
         ResultText = text;
         ResultOpen = !string.IsNullOrWhiteSpace(text);
+        ResultShowsChanges = false;
         if (_resultTimer is null)
         {
             _resultTimer = new System.Windows.Threading.DispatcherTimer();
@@ -797,7 +915,8 @@ public sealed partial class MainViewModel : ObservableObject
             };
         }
         _resultTimer.Stop();
-        if (!ResultOpen) return;
+        // Errors and warnings stay until closed: they must not disappear before they are read.
+        if (!ResultOpen || severity is InfoBarSeverity.Error or InfoBarSeverity.Warning) return;
         _resultTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(5 + text.Length / 15.0, 8, 20));
         _resultTimer.Start();
     }
@@ -908,7 +1027,7 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error("ui", "scan failed", ex);
-            error = ex.Message;
+            error = Loc.Instance["Scan_Failed"];
         }
         finally
         {
@@ -1158,7 +1277,14 @@ public sealed partial class MainViewModel : ObservableObject
             ShowResult(Loc.Instance["Rec_None"]);
             return;
         }
-        await Runner.ApplyBatchAsync(_plan.Items.Select(i => i.Tweak).ToList(), Loc.Instance["Rec_Title"], Loc.Instance["Rec_Intro"]);
+        // Only the ticked lines of the plan on the overview (all of them unless the user unticked some).
+        var chosen = Recommendations.Where(r => r.IsSelected && r.Tweak is not null).Select(r => r.Tweak!).ToList();
+        if (chosen.Count == 0)
+        {
+            ShowResult(Loc.Instance["Rec_NoneSelected"]);
+            return;
+        }
+        await Runner.ApplyBatchAsync(chosen, Loc.Instance["Rec_Title"], Loc.Instance["Rec_Intro"]);
     }
 
     [RelayCommand(CanExecute = nameof(CanChange))]
@@ -1230,7 +1356,11 @@ public sealed partial class MainViewModel : ObservableObject
         var severity = ResultSeverity;
         _reuseSlowParts = true;
         await ScanAsync();
-        if (result is not null) ShowResult(result, severity);
+        if (result is not null)
+        {
+            ShowResult(result, severity);
+            ResultShowsChanges = true;
+        }
     }
 
     // The Changes page reads every backup file and asks WMI whether System Restore is on: done in the background after a
@@ -1294,6 +1424,9 @@ public sealed partial class MainViewModel : ObservableObject
         BuildProfileOptions();
         BuildFindingLists();
         OnPropertyChanged(nameof(IsEnglish));
+        OnPropertyChanged(nameof(TweakViewOptions));
+        OnPropertyChanged(nameof(TweaksProfileLink));
+        OnPropertyChanged(nameof(TweakViewMode));
         OnPropertyChanged(nameof(IsGerman));
 
         FillTweaks();
@@ -1355,20 +1488,26 @@ public sealed partial class MainViewModel : ObservableObject
         HiddenFindingsText = hidden > 0 ? Loc.Instance.Format("Findings_HiddenByProfile", hidden) : null;
         var passed = ShowPassed ? 0 : _profiledFindings.Count(f => f.Kind == FindingKind.Advisor && f.Status is FindingStatus.Ok or FindingStatus.Unsupported);
         AdvisorPassedText = passed > 0 ? Loc.Instance.Format("Advisor_PassedHidden", passed) : null;
+        BuildAdvisorSummary();
 
         // The score counts what matters for the profile, weighted by the profile's impact.
         Score = ReadinessScore.Compute(_profiledFindings);
         ScoreTitle = Loc.Instance.Format("Dash_ScoreFor", ProfileName(_usage));
         ScoreHint = Loc.Instance.Format("Dash_ScoreHintGoal", Labels.Current.Get(lang, $"effect.{_usage.Goal}"));
         var problems = _profiledFindings.Count(f => f.IsProblem && f.Kind != FindingKind.GameAccess);
-        ProblemSummary = problems == 0 ? Loc.Instance["Dash_NoProblems"] : Loc.Instance.Format("Dash_Problems", problems);
+        // The numbers below carry the count; the heading only says whether there is anything to look at.
+        ProblemSummary = problems == 0 ? Loc.Instance["Dash_NoProblems"] : Loc.Instance["Dash_Problems"];
         ScoreVerdict = Loc.Instance[Score >= 85 ? "Verdict_Good" : Score >= 60 ? "Verdict_Fair" : "Verdict_Poor"];
         Counts.Clear();
         var findingProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Finding);
         var advisorProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Advisor);
-        Counts.Add(new CountItem(findingProblems.ToString(), Loc.Instance["Count_Problems"], findingProblems > 0 ? "Problem" : "Ok"));
-        Counts.Add(new CountItem(advisorProblems.ToString(), Loc.Instance["Count_Advisor"], advisorProblems > 0 ? "Problem" : "Ok"));
-        Counts.Add(new CountItem(_profiledFindings.Count(f => f.Status == FindingStatus.Ok).ToString(), Loc.Instance["Count_Passed"], "Ok"));
+        // A zero stays neutral: only what needs attention gets a color.
+        Counts.Add(new CountItem(findingProblems.ToString(), Loc.Instance["Count_Problems"], findingProblems > 0 ? "Problem" : "Neutral") { Target = "findings" });
+        Counts.Add(new CountItem(advisorProblems.ToString(), Loc.Instance["Count_Advisor"], advisorProblems > 0 ? "Problem" : "Neutral") { Target = "advisor" });
+        Counts.Add(new CountItem(_profiledFindings.Count(f => f.Status == FindingStatus.Ok).ToString(), Loc.Instance["Count_Passed"], "Ok") { Target = "passed" });
+        // The navigation shows where something waits: problems on the overview, things to change by hand.
+        OverviewBadge = findingProblems > 0 ? findingProblems.ToString() : null;
+        AdvisorBadge = advisorProblems > 0 ? advisorProblems.ToString() : null;
         ScoreStatus = Score >= 85 ? "Ok" : Score >= 60 ? "Problem" : "Critical";
         LastScanText = _lastScanTime is { } t ? Loc.Instance.Format("LastScan", t.ToString("HH:mm")) : "";
         if (Profile is { } prof)
@@ -1379,7 +1518,16 @@ public sealed partial class MainViewModel : ObservableObject
     private void Fill(ObservableCollection<FindingItemViewModel> target, IEnumerable<Finding> source, string lang)
     {
         target.Clear();
-        foreach (var f in source.Where(f => ShowPassed || f.Status is not (FindingStatus.Ok or FindingStatus.Unsupported)))
+        // Problems first, then what could not be checked, then notes and passed checks (stable within each).
+        static int Rank(FindingStatus s) => s switch
+        {
+            FindingStatus.Problem => 0,
+            FindingStatus.Unknown => 1,
+            FindingStatus.Info => 2,
+            FindingStatus.Ok => 3,
+            _ => 4,
+        };
+        foreach (var f in source.Where(f => ShowPassed || f.Status is not (FindingStatus.Ok or FindingStatus.Unsupported)).OrderBy(f => Rank(f.Status)))
             target.Add(new FindingItemViewModel(f, lang, FixFor(f), _usage.Goal));
     }
 
@@ -1448,6 +1596,9 @@ public sealed partial class MainViewModel : ObservableObject
         _tweakGroups.Clear();
         var groups = VisibleTweaks()
             .Where(p => !OnlyRecommended || p.Recommended)
+            .Where(p => !_onlyChanged || p.Status.HasBackup)
+            // DNS servers are one choice, made on Graphics & network: not a second list of tweaks here.
+            .Where(p => !p.Tweak.Id.StartsWith("network.dns.", StringComparison.Ordinal))
             .Where(Matches)
             .GroupBy(p => p.Recommended ? RecommendedGroup : p.Flagged ? AgainstGroup : TweakSections[SectionIndex(p.Tweak.Category)].Key)
             .OrderBy(g => Order(g.Key));
@@ -1458,7 +1609,8 @@ public sealed partial class MainViewModel : ObservableObject
                 .Select(p => new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage))
                 .ToList();
             foreach (var item in items) Tweaks.Add(item);
-            var summary = Loc.Instance.Format("Tweaks_GroupCount", items.Count, items.Count(i => i.IsOn));
+            // "12 of 34 on (3 by this app)": the same split as the page summary.
+        var summary = Loc.Instance.Format("Tweaks_GroupCount", items.Count, items.Count(i => i.IsOn), items.Count(i => i.IsOn && i.HasBackup));
             _tweakGroups.Add(new TweakGroupRow(g.Key, GroupTitle(g.Key), GroupIcon(g.Key), summary, items)
             {
                 IsExpanded = q.Length > 0 || _openGroups.Contains(g.Key),
@@ -1466,7 +1618,9 @@ public sealed partial class MainViewModel : ObservableObject
         }
         ShowTweakRows();
         var visible = VisibleTweaks().ToList();
-        TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn), visible.Count(p => p.Recommended));
+        // "On" alone would count settings that were already that way as changes of this app.
+        TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn && p.Status.HasBackup),
+            visible.Count(p => p.Status.IsOn && !p.Status.HasBackup), visible.Count(p => p.Recommended));
     }
 
     private static string GroupTitle(string key) => key switch
@@ -1519,6 +1673,40 @@ public sealed partial class MainViewModel : ObservableObject
             for (var i = 0; i < group.Items.Count; i++) TweakRows.RemoveAt(at);
     }
 
+    /// <summary>
+    /// Shows a file selected in Explorer, or opens a folder (Settings, Diagnostics). Explorer runs as the signed-in user;
+    /// nothing in the folder is started.
+    /// </summary>
+    [RelayCommand]
+    private void ShowInExplorer(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+        var explorer = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (System.IO.File.Exists(path)) DeElevatedLauncher.Open(explorer, $"/select,\"{path}\"", _services.Elevation);
+        else if (System.IO.Directory.Exists(path)) DeElevatedLauncher.Open(explorer, $"\"{path}\"", _services.Elevation);
+    }
+
+    [RelayCommand]
+    private void DismissIntro()
+    {
+        _settings.IntroSeen = true;
+        _settings.Save();
+        BuildBanners();
+    }
+
+    /// <summary>From a page that needs a setting (Expert mode, the VirusTotal key) to Settings.</summary>
+    [RelayCommand]
+    private void OpenSettings() => CurrentPage = Page.Settings;
+
+    /// <summary>Turns on the safe tweaks of one group after one confirmation that lists every change.</summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
+    private async Task ApplyTweakGroupAsync(object? row)
+    {
+        if (row is not TweakGroupRow { CanApplyAll: true } group) return;
+        await Runner.ApplyBatchAsync(group.Applicable.Select(i => i.Tweak).ToList(), Loc.Instance.Format("Tweaks_GroupApplyTitle", group.Title),
+            Loc.Instance["Tweaks_GroupApplyIntro"]);
+    }
+
     [RelayCommand]
     private void OpenAllTweakGroups() => SetAllTweakGroups(true);
 
@@ -1548,6 +1736,10 @@ public sealed partial class MainViewModel : ObservableObject
         VisibleTweaks(profileFilter: false).Where(p => filter(p.Tweak) && p.Status.State != TweakState.NotApplicable)
             .Select(p => new TweakItemViewModel(p.Status, Loc.Instance.Language, _services.Engine, this, profiled: p, profile: _usage)).ToList();
 
+    /// <summary>The button counts the ticked lines of the plan.</summary>
+    private void UpdateRecommendedButton() =>
+        RecommendedButtonText = Loc.Instance.Format("Rec_Button", Recommendations.Count(r => r.IsSelected));
+
     private void BuildRecommendations()
     {
         var lang = Loc.Instance.Language;
@@ -1555,17 +1747,20 @@ public sealed partial class MainViewModel : ObservableObject
             i.FixesFinding is { } f ? Loc.Instance.Format("Rec_Fixes", new FindingItemViewModel(f, lang).Title)
             : i.ReasonKey is { } k ? Labels.Current.Get(lang, k) : Loc.Instance["Rec_Matches"];
         string Excluded(RecommendedItem i) =>
-            i.Tweak.EffectiveRisk == Risk.Expert ? Labels.Current.Get(lang, "risk.Expert")
+            i.Blocked is { } b ? ChangeRunner.BlockText(b, lang)
+            : i.Tweak.EffectiveRisk == Risk.Expert ? Labels.Current.Get(lang, "risk.Expert")
             : i.Tweak.AntiCheatSensitive ? Labels.Current.Get(lang, "badge.antiCheat")
             : Labels.Current.Get(lang, $"reversibility.{i.Tweak.Reversibility}");
         Recommendations.Clear();
         foreach (var i in _plan.Items)
-            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), Loc.Instance.Format("Impact_Short", i.Impact)));
+            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), Loc.Instance.Format("Impact_Short", i.Impact), i.Tweak, UpdateRecommendedButton));
         RecommendationsExcluded.Clear();
         foreach (var i in _plan.Excluded)
             RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), Loc.Instance.Format("Impact_Short", i.Impact)));
         HasRecommendations = _plan.Items.Count > 0;
-        RecommendedButtonText = Loc.Instance.Format("Rec_Button", _plan.Items.Count);
+        // Nothing to apply in one click, but fixes that need something first: say so instead of "nothing to recommend".
+        RecommendationsEmptyText = _plan.Excluded.Count > 0 ? Loc.Instance["Rec_EmptyButExcluded"] : Loc.Instance["Rec_Empty"];
+        UpdateRecommendedButton();
         RecommendationsIntro = Loc.Instance.Format("Rec_IntroProfile", ProfileName(_usage));
 
         // Changes on this PC that lower the profile's goal (for example a battery drain in the Battery profile).
@@ -1600,6 +1795,7 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
         OnPropertyChanged(nameof(ChangesEmpty));
+        ChangesBadge = ChangeRecords.Count > 0 ? ChangeRecords.Count.ToString() : null;
 
         var sr = _restoreEnabled;
         RestorePointText = sr switch { true => Loc.Instance["Rp_On"], false => Loc.Instance["Rp_Off"], _ => Loc.Instance["Rp_Unknown"] };
@@ -1607,7 +1803,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         ChangeLog.Clear();
         foreach (var e in Log.Newest(e => e.Source == "change", 200))
-            ChangeLog.Add(new LogLine(e.Time.ToString("HH:mm:ss"), e.Message + (e.Data is { } d ? "  " + d : "")));
+            ChangeLog.Add(new LogLine(e.Time.ToString("HH:mm:ss"), ChangeLogText.Text(e, Loc.Instance.Language)));
         OnPropertyChanged(nameof(ChangeLogEmpty));
     }
 
@@ -1637,6 +1833,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Banners.Clear();
         if (Profile is null) return;
+        // First start: how the app works, until the user dismisses it.
+        if (!_settings.IntroSeen)
+            Banners.Add(new Banner(Loc.Instance["Intro_Text"], false) { ActionText = Loc.Instance["Intro_Dismiss"], Action = DismissIntroCommand, ActionIcon = SymbolRegular.Checkmark20 });
         if (_drift.Count > 0)
         {
             var names = _drift.Take(4).Select(d => Runner.Title(d.Tweak)).ToList();

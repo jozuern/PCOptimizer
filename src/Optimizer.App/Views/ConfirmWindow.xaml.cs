@@ -1,5 +1,6 @@
 using System.Windows;
 using Optimizer.App.Services;
+using Optimizer.Core.Actions;
 using Wpf.Ui.Controls;
 
 namespace Optimizer.App.Views;
@@ -8,6 +9,14 @@ namespace Optimizer.App.Views;
 public partial class ConfirmWindow : FluentWindow
 {
     private readonly bool _needsAck;
+    private readonly bool _canApply;
+
+    /// <summary>One line of the table; <see cref="Unchanged"/> when the value already is what the change writes.</summary>
+    private sealed record Row(string Target, string Before, string After, bool Unchanged)
+    {
+        // What screen readers announce for this item in a list.
+        public override string ToString() => $"{Target}: {Before}, {After}";
+    }
 
     public ConfirmWindow(ConfirmRequest request)
     {
@@ -15,19 +24,36 @@ public partial class ConfirmWindow : FluentWindow
         TitleText.Text = request.Title;
         SummaryText.Text = request.Summary;
         SummaryText.Visibility = string.IsNullOrWhiteSpace(request.Summary) ? Visibility.Collapsed : Visibility.Visible;
-        BadgeText.Text = string.Join(", ", request.Badges);
-        BadgeText.Visibility = request.Badges.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        BadgeList.ItemsSource = request.Badges;
+        BadgeList.Visibility = request.Badges.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        BlockList.ItemsSource = request.Blocks;
         WarningList.ItemsSource = request.AntiCheatWarning is null ? request.Warnings : request.Warnings.Append(request.AntiCheatWarning).ToList();
-        ChangeList.ItemsSource = request.Changes
-            .Select(c => c with { Target = ChangeRunner.ShortTarget(c.Target), Before = Show(c.Before), After = Show(c.After) })
+        var rows = request.Changes
+            .Select(c => new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Show(c.After), IsUnchanged(c)))
             .ToList();
+        ChangeList.ItemsSource = rows;
         NewHeader.Text = Loc.Instance[request.IsUndo ? "Confirm_Restore" : "Confirm_New"];
         ApplyButton.Content = Loc.Instance[request.IsUndo ? "Confirm_Undo" : "Confirm_Apply"];
-        FooterText.Text = Loc.Instance[request.IsUndo ? "Confirm_UndoKeeps" : "Confirm_Backup"];
+        // Every value already is what the change writes: applying would only save a backup of the same values.
+        var nothingToDo = !request.IsUndo && rows.Count > 0 && rows.All(r => r.Unchanged);
+        NothingToDo.IsOpen = nothingToDo;
+        _canApply = request.Blocks.Count == 0 && !nothingToDo;
+        ApplyButton.Visibility = nothingToDo ? Visibility.Collapsed : Visibility.Visible;
+        FooterText.Text = request.Blocks.Count > 0 ? Loc.Instance["Confirm_Blocked"]
+            : nothingToDo ? ""
+            : Loc.Instance[request.IsUndo ? "Confirm_UndoKeeps" : "Confirm_Backup"];
         _needsAck = request.AntiCheatWarning is not null;
-        AntiCheatAck.Visibility = _needsAck ? Visibility.Visible : Visibility.Collapsed;
-        ApplyButton.IsEnabled = !_needsAck;
+        // The acknowledgement only matters while the change can be made at all.
+        AntiCheatAck.Visibility = _needsAck && _canApply ? Visibility.Visible : Visibility.Collapsed;
+        ApplyButton.IsEnabled = _canApply && !_needsAck;
     }
+
+    /// <summary>
+    /// The line writes the value that is already there. Lines without a readable current value (a command, an unknown
+    /// value) always count as a change.
+    /// </summary>
+    private static bool IsUnchanged(ChangeLine c) =>
+        c.Before.Length > 0 && c.Before != "?" && string.Equals(c.Before, c.After, StringComparison.Ordinal);
 
     /// <summary>Placeholders in the current language, also inside combined values ("Key=(not set), Key2=0").</summary>
     private static string Show(string value)
@@ -39,7 +65,7 @@ public partial class ConfirmWindow : FluentWindow
 
     public bool Acknowledged => AntiCheatAck.IsChecked == true;
 
-    private void AntiCheat_Changed(object sender, RoutedEventArgs e) => ApplyButton.IsEnabled = !_needsAck || Acknowledged;
+    private void AntiCheat_Changed(object sender, RoutedEventArgs e) => ApplyButton.IsEnabled = _canApply && (!_needsAck || Acknowledged);
 
     private void Apply_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 }

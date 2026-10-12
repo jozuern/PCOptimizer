@@ -4,7 +4,7 @@
 Legt eine Kopie des versteckten Plans „Ultimative Leistung“ an und aktiviert sie, eine Stufe über „Höchstleistung“. Ein Vorteil in Spielen gegenüber „Höchstleistung“ ist umstritten.
 
 ## So funktioniert es
-Windows enthält einen versteckten Plan für Workstations: „Ultimative Leistung“. Laut Microsoft baut er auf „Höchstleistung“ auf und geht einen Schritt weiter, um kleinste Verzögerungen durch fein abgestufte Energieverwaltung zu beseitigen [1]. Die App dupliziert ihn unter dem Namen „PCOptimizer Ultimate“ und aktiviert die Kopie.
+Windows enthält einen versteckten Plan für Workstations: „Ultimative Leistung“. Laut Microsoft baut er auf „Höchstleistung“ auf und geht einen Schritt weiter, um kleinste Verzögerungen durch fein abgestufte Energieverwaltung zu beseitigen [1]. Die App dupliziert ihn unter dem Namen „Tunero Ultimate“ und aktiviert die Kopie.
 
 ## Warum es helfen kann
 Er kann kleine Aufwachverzögerungen von Prozessor und Geräten einsparen. Microsoft hat ihn für anspruchsvolle Workstation-Aufgaben gebaut [1].

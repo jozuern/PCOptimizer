@@ -13,21 +13,23 @@ public partial class MessageWindow : FluentWindow
         InitializeComponent();
         TitleText.Text = title;
         BodyText.Text = body;
-        // Buttons share the footer in equal columns, primary (accent) last, as in a Windows 11 content dialog.
+        // Buttons share the footer in equal columns. The order of a Windows 11 content dialog: the primary (accent) button
+        // first, then the secondary one, Cancel last. The callers list them the other way round (Cancel first, primary last).
         for (var i = 0; i < buttons.Length; i++)
         {
             var index = i;
             Buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             var primary = i == buttons.Length - 1;
+            var column = buttons.Length - 1 - i;
             var b = new Wpf.Ui.Controls.Button
             {
                 // Long labels (German, three buttons) wrap instead of being cut off.
                 Content = new System.Windows.Controls.TextBlock { Text = buttons[i], TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
-                Margin = new Thickness(i == 0 ? 0 : 4, 0, primary ? 0 : 4, 0),
+                Margin = new Thickness(column == 0 ? 0 : 4, 0, column == buttons.Length - 1 ? 0 : 4, 0),
                 Appearance = primary ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary,
             };
-            Grid.SetColumn(b, i);
+            Grid.SetColumn(b, column);
             b.Click += (_, _) =>
             {
                 Result = index;

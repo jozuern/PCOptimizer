@@ -104,7 +104,7 @@ public class CleanupStorageTests : IDisposable
         // A standard user pre-created the backup root (or a subfolder) as a junction to a folder they control.
         var userFiles = Path.Combine(_root, "user");
         var planted = File(@"user\backups\x.json", 10);
-        var root = Path.Combine(_root, "PCOptimizer");
+        var root = Path.Combine(_root, "Tunero");
         Junction(root, userFiles);
         Optimizer.Core.Backup.SecureFolder.RemoveLinks(root);
         Assert.False(Directory.Exists(root));
@@ -200,7 +200,7 @@ public class CleanupStorageTests : IDisposable
     [Fact]
     public void CreateNewRefusesExistingNamesAndLinkedFolders()
     {
-        var target = Path.Combine(_root, @"start\PCOptimizer.lnk");
+        var target = Path.Combine(_root, @"start\Tunero.lnk");
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
         using (var s = Optimizer.Core.Platform.SafeDelete.CreateNew(target)) s.Write([1, 2, 3]);
         Assert.Equal([1, 2, 3], System.IO.File.ReadAllBytes(target));
@@ -209,7 +209,7 @@ public class CleanupStorageTests : IDisposable
         var protectedDir = Path.Combine(_root, "protected");
         Directory.CreateDirectory(protectedDir);
         Junction(Path.Combine(_root, "swapped"), protectedDir);
-        Assert.ThrowsAny<IOException>(() => Optimizer.Core.Platform.SafeDelete.CreateNew(Path.Combine(_root, @"swapped\PCOptimizer.lnk")).Dispose());
+        Assert.ThrowsAny<IOException>(() => Optimizer.Core.Platform.SafeDelete.CreateNew(Path.Combine(_root, @"swapped\Tunero.lnk")).Dispose());
         Assert.Empty(Directory.GetFiles(protectedDir));
     }
 

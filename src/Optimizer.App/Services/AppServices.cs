@@ -38,6 +38,9 @@ public sealed class AppServices
     public TweakEngine Engine { get; }
     public TweakCatalog Catalog => TweakCatalog.Current;
 
+    /// <summary>The search over the catalog, tools, settings and the lists the pages load (built on the first search).</summary>
+    public SearchIndex Search { get; } = new(TweakCatalog.Current, Optimizer.Core.Catalog.CatalogData.Current);
+
     /// <summary>
     /// Connected physical adapters ("{nic}" values and DNS presets): virtual switches, VPN and the host's Hyper-V adapters
     /// are left alone, so a VPN keeps its own DNS servers. Inside a Hyper-V guest its synthetic adapter counts.
@@ -118,7 +121,11 @@ public sealed record ConfirmRequest(
     IReadOnlyList<string> Badges,
     IReadOnlyList<string> Warnings,
     string? AntiCheatWarning,
-    bool IsUndo);
+    bool IsUndo)
+{
+    /// <summary>Reasons the change cannot be made now (Expert mode off, a policy): shown first, and Apply stays off.</summary>
+    public IReadOnlyList<string> Blocks { get; init; } = [];
+}
 
 public sealed record ConfirmResult(bool AcknowledgedAntiCheat);
 

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Components shipped in PCOptimizer.exe. Their full license texts are embedded in the exe and shown under Settings > About > Licenses (source: `src/Optimizer.App/Licenses/`, checked against the committed `packages.lock.json` by the test `EveryShippedPackageHasItsLicense`).
+Components shipped in Tunero.exe. Their full license texts are embedded in the exe and shown under Settings > About > Licenses (source: `src/Optimizer.App/Licenses/`, checked against the committed `packages.lock.json` by the test `EveryShippedPackageHasItsLicense`).
 
 | Component | License | Use |
 |---|---|---|

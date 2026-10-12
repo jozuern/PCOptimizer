@@ -557,6 +557,171 @@
       ]
     },
     {
+      "id": "updates.activeHoursEvening",
+      "category": "Updates",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "SetActiveHours",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ActiveHoursStart",
+          "kind": "dword",
+          "value": 8
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ActiveHoursEnd",
+          "kind": "dword",
+          "value": 2
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/deployment/update/waas-restart",
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update"
+      ]
+    },
+    {
+      "id": "updates.restartWhenYouChoose",
+      "category": "Updates",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "SetComplianceDeadlineForQU",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ConfigureDeadlineForQualityUpdates",
+          "kind": "dword",
+          "value": 7
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ConfigureDeadlineGracePeriod",
+          "kind": "dword",
+          "value": 2
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ConfigureDeadlineNoAutoRebootForQualityUpdates",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update",
+        "https://learn.microsoft.com/en-us/windows/deployment/update/wufb-compliancedeadlines",
+        "https://learn.microsoft.com/en-us/windows/deployment/update/waas-restart"
+      ]
+    },
+    {
+      "id": "updates.qualityUpdatesWeekLater",
+      "category": "Updates",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "moderate",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferQualityUpdates",
+          "kind": "dword",
+          "value": 1
+        },
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferQualityUpdatesPeriodInDays",
+          "kind": "dword",
+          "value": 7
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update"
+      ]
+    },
+    {
       "id": "storage.appArchivingOff",
       "category": "Storage",
       "impact": {

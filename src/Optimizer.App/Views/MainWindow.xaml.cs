@@ -49,14 +49,105 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             _syncing = false;
         };
         Loaded += (_, _) => Nav.Navigate(typeof(OverviewPage));
+        // The title bar lays out its parts after the window: center the search box once that is done.
+        Loaded += (_, _) => Dispatcher.BeginInvoke(CenterSearchBox, System.Windows.Threading.DispatcherPriority.Loaded);
         Loaded += (_, _) => SetTitleBarIcon(System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX);
         DpiChanged += (_, e) => SetTitleBarIcon(e.NewDpi.DpiScaleX);
         vm.PropertyChanged += OnViewModelChanged;
-        SizeChanged += (_, _) => FitPanes();
+        SizeChanged += (_, _) =>
+        {
+            FitPanes();
+            CenterSearchBox();
+        };
+        Nav.PaneOpened += (_, _) => ShowGroupHeaders();
+        Nav.PaneClosed += (_, _) => ShowGroupHeaders();
         PreviewKeyDown += (_, e) =>
         {
-            if (e.Key == System.Windows.Input.Key.Escape) vm.SelectedItem = null;
+            if (e.Key == System.Windows.Input.Key.Escape && !vm.SearchResultsOpen) vm.SelectedItem = null;
+            // Ctrl+F searches the whole app; F5 reads the page or the PC again.
+            else if (e.Key == System.Windows.Input.Key.F && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+            {
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.F5)
+            {
+                vm.RefreshCommand.Execute(null);
+                e.Handled = true;
+            }
         };
+    }
+
+    /// <summary>
+    /// The title bar puts its center content right after the title: the box is moved to the middle of the window, as in
+    /// Windows 11 apps (never closer than 24 px to the title).
+    /// </summary>
+    private void SearchBox_SizeChanged(object sender, SizeChangedEventArgs e) => CenterSearchBox();
+
+    private void CenterSearchBox()
+    {
+        if (!SearchBox.IsLoaded || ActualWidth <= 0) return;
+        var left = SearchBox.TranslatePoint(new Point(0, 0), this).X - SearchBox.Margin.Left;
+        var wanted = (ActualWidth - SearchBox.ActualWidth) / 2 - left;
+        SearchBox.Margin = new Thickness(Math.Max(24, wanted), 6, 0, 6);
+    }
+
+    /// <summary>A new result message is announced by screen readers (the text is a live region).</summary>
+    private void AnnounceResult()
+    {
+        if (System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(ResultMessage) is { } peer)
+            peer.RaiseAutomationEvent(System.Windows.Automation.Peers.AutomationEvents.LiveRegionChanged);
+    }
+
+    /// <summary>In the search box: Down moves into the results, Enter opens the first one, Escape clears the search.</summary>
+    private void SearchBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case System.Windows.Input.Key.Down when _vm.SearchResults.Count > 0:
+                _vm.SearchResultsOpen = true;
+                SearchList.SelectedIndex = 0;
+                Dispatcher.BeginInvoke(() => (SearchList.ItemContainerGenerator.ContainerFromIndex(0) as UIElement)?.Focus(),
+                    System.Windows.Threading.DispatcherPriority.Input);
+                e.Handled = true;
+                break;
+            case System.Windows.Input.Key.Enter when _vm.SearchResults.Count > 0:
+                OpenResult(_vm.SearchResults[0]);
+                e.Handled = true;
+                break;
+            case System.Windows.Input.Key.Escape:
+                _vm.GlobalSearch = "";
+                _vm.SearchResultsOpen = false;
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void SearchList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter && SearchList.SelectedItem is SearchResultItem item)
+        {
+            OpenResult(item);
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            _vm.SearchResultsOpen = false;
+            SearchBox.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void SearchList_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (SearchList.SelectedItem is SearchResultItem item) OpenResult(item);
+    }
+
+    private void OpenResult(SearchResultItem item)
+    {
+        _vm.OpenSearchResultCommand.Execute(item);
+        SearchList.SelectedItem = null;
     }
 
     /// <summary>Pages are created once and share the main view model.</summary>
@@ -74,6 +165,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
 
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainViewModel.ResultText) && _vm.ResultOpen) Dispatcher.BeginInvoke(AnnounceResult);
         if (e.PropertyName == nameof(MainViewModel.SelectedItem))
         {
             RenderDetails();
@@ -98,6 +190,9 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     /// </summary>
     private void FitPanes()
     {
+        FitHeight();
+        // The details pane never leaves the page less room than it needs for a readable list.
+        DetailsPane.Width = Math.Clamp(DetailsPane.Width, DetailsMin, DetailsMax);
         var crowded = _vm.SelectedItem is not null && ActualWidth > 0 && ActualWidth < NarrowWidth;
         if (crowded && Nav.IsPaneOpen)
         {
@@ -110,6 +205,50 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             _paneCollapsedForDetails = false;
         }
     }
+
+    /// <summary>Below this height the open pane cannot show the group headings and every page; it drops the headings.</summary>
+    private const double HeadingsHeight = 900;
+
+    /// <summary>Below this height even the pane without headings would cut off pages: it folds to the rail, as in WinUI.</summary>
+    private const double RailHeight = 790;
+
+    private bool _paneCollapsedForHeight;
+
+    /// <summary>
+    /// The pane does not scroll: on a short window (a 768 px screen) its last pages would slide under the footer. First the
+    /// group headings go, then the pane folds to the rail; both come back when the window is tall enough again.
+    /// </summary>
+    private void FitHeight()
+    {
+        if (ActualHeight <= 0) return;
+        var tooShort = ActualHeight < RailHeight;
+        if (tooShort && Nav.IsPaneOpen)
+        {
+            Nav.IsPaneOpen = false;
+            _paneCollapsedForHeight = true;
+        }
+        else if (!tooShort && _paneCollapsedForHeight)
+        {
+            Nav.IsPaneOpen = true;
+            _paneCollapsedForHeight = false;
+        }
+        ShowGroupHeaders();
+    }
+
+    private void ShowGroupHeaders()
+    {
+        var show = Nav.IsPaneOpen && ActualHeight >= HeadingsHeight ? Visibility.Visible : Visibility.Collapsed;
+        HeaderOptimize.Visibility = HeaderCleanUp.Visibility = HeaderMaintain.Visibility = show;
+    }
+
+    private const double DetailsMin = 340;
+
+    /// <summary>Widest details pane: the page keeps at least 520 px (rail and a list of readable width).</summary>
+    private double DetailsMax => Math.Max(DetailsMin, ActualWidth - 520);
+
+    /// <summary>Dragging the left edge of the details pane: to the left makes it wider.</summary>
+    private void DetailsResize_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) =>
+        DetailsPane.Width = Math.Clamp(DetailsPane.Width - e.HorizontalChange, DetailsMin, DetailsMax);
 
     /// <summary>
     /// Renders the selected item's explanation (re-run after theme changes so brushes match). The document is built in

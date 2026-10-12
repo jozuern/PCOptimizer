@@ -1,12 +1,12 @@
-# Writes the winget manifest of a published release for microsoft/winget-pkgs (package jozuern.PCOptimizer, portable).
+# Writes the winget manifest of a published release for microsoft/winget-pkgs (package jozuern.Tunero, portable).
 #
 #   pwsh scripts/winget-manifest.ps1 -Version 0.6.4 [-OutDir artifacts/winget]
 #
 # Reads the SHA-256 and the date of the GitHub release, writes the four files in the folder layout winget-pkgs expects
-# (manifests/j/jozuern/PCOptimizer/<version>/) and validates them with "winget validate". Submit the folder as one pull
+# (manifests/j/jozuern/Tunero/<version>/) and validates them with "winget validate". Submit the folder as one pull
 # request per version (doc/Authoring.md in winget-pkgs), for example with "wingetcreate submit <folder>".
 # No "Commands": winget would rename the exe to the command name; without it the link in WinGet\Links is named
-# after the exe, and "pcoptimizer" starts it all the same.
+# after the exe, and "tunero" starts it all the same.
 param(
     [Parameter(Mandatory)][string]$Version,
     [string]$OutDir = (Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\winget")
@@ -14,17 +14,17 @@ param(
 $ErrorActionPreference = "Stop"
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Version must look like 0.6.4." }
 
-$id = "jozuern.PCOptimizer"
-$repo = "https://github.com/jozuern/PCOptimizer"
+$id = "jozuern.Tunero"
+$repo = "https://github.com/jozuern/Tunero"
 $tag = "v$Version"
-$exeUrl = "$repo/releases/download/$tag/PCOptimizer.exe"
-$release = Invoke-RestMethod "https://api.github.com/repos/jozuern/PCOptimizer/releases/tags/$tag"
+$exeUrl = "$repo/releases/download/$tag/Tunero.exe"
+$release = Invoke-RestMethod "https://api.github.com/repos/jozuern/Tunero/releases/tags/$tag"
 if ($release.draft) { throw "$tag is still a draft. Publish it first." }
 $sha = ((Invoke-RestMethod "$exeUrl.sha256") -split '\s+')[0].ToUpperInvariant()
 if ($sha -notmatch '^[0-9A-F]{64}$') { throw "No SHA-256 in $exeUrl.sha256." }
 $date = ([datetime]$release.published_at).ToUniversalTime().ToString("yyyy-MM-dd")
 
-$dir = Join-Path $OutDir "manifests\j\jozuern\PCOptimizer\$Version"
+$dir = Join-Path $OutDir "manifests\j\jozuern\Tunero\$Version"
 New-Item -ItemType Directory -Force $dir | Out-Null
 $schema = "1.12.0"
 function Write-Manifest($name, $type, $body) {
@@ -55,7 +55,7 @@ PublisherUrl: https://github.com/jozuern
 PublisherSupportUrl: $repo/issues
 PrivacyUrl: $repo/blob/main/docs/PRIVACY.md
 Author: Joshua Zürn
-PackageName: PCOptimizer
+PackageName: Tunero
 PackageUrl: $repo
 License: GPL-3.0-only
 LicenseUrl: $repo/blob/main/LICENSE
@@ -66,10 +66,10 @@ ReleaseNotesUrl: $repo/releases/tag/$tag
 Write-Manifest "$id.locale.en-US.yaml" "defaultLocale" @"
 PackageLocale: en-US
 $common
-Moniker: pcoptimizer
+Moniker: tunero
 ShortDescription: Windows 11 PC optimizer, gaming first, with usage profiles. It explains every check and change with sources, backs up what it changes and can undo it.
 Description: |-
-  PCOptimizer checks Windows 11 for settings that cost performance, privacy or battery life and offers tweaks with their impact, evidence and risk.
+  Tunero checks Windows 11 for settings that cost performance, privacy or battery life and offers tweaks with their impact, evidence and risk.
   Every finding and every change comes with an explanation and sources in English and German. Changes are backed up first, verified after applying and can be undone, also after a restart.
   It also covers debloat, cleanup, startup entries, services, NVIDIA driver settings, DNS and a frame time benchmark. It needs administrator rights because it changes system settings.
 Tags:
@@ -83,7 +83,7 @@ Tags:
 - services
 - cleanup
 - performance
-InstallationNotes: Start it with pcoptimizer. On the first start PCOptimizer offers an entry in the Start menu, so Windows Search finds it.
+InstallationNotes: Start it with tunero. On the first start Tunero offers an entry in the Start menu, so Windows Search finds it.
 ManifestType: defaultLocale
 "@
 
@@ -101,7 +101,7 @@ Tags:
 - autostart
 - dienste
 - bereinigung
-InstallationNotes: Starte es mit pcoptimizer. Beim ersten Start bietet PCOptimizer einen Eintrag im Startmenü an, damit die Windows-Suche es findet.
+InstallationNotes: Starte es mit tunero. Beim ersten Start bietet Tunero einen Eintrag im Startmenü an, damit die Windows-Suche es findet.
 ManifestType: locale
 "@
 

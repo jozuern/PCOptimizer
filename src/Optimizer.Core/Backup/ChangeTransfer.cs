@@ -40,7 +40,10 @@ public static partial class ChangeTransfer
 {
     public const string FileKind = "pcoptimizer-changes";
     public const int CurrentFormat = 1;
-    public const string Extension = ".pcoptimizer.json";
+    public const string Extension = ".tunero.json";
+
+    /// <summary>What the import dialog lists: every .json, so files saved before the rename (".pcoptimizer.json") still show.</summary>
+    public const string ImportPattern = ".json";
 
     /// <summary>A transfer file is a few kilobytes; anything larger is not one.</summary>
     public const long MaxFileBytes = 1024 * 1024;

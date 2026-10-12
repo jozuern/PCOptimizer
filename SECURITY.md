@@ -1,6 +1,6 @@
 # Security
 
-PCOptimizer runs as administrator and changes Windows settings, so security problems matter more than in most apps.
+Tunero runs as administrator and changes Windows settings, so security problems matter more than in most apps.
 
 ## Reporting a vulnerability
 
@@ -13,7 +13,7 @@ Fixes ship in a new release, and the report is credited in the release notes if 
 - Anything that lets a non-administrator gain administrator or SYSTEM rights through the app, for example through files or folders a normal user can write (the data folder, temp files, tools the app starts).
 - Changes the app makes that it does not show in the confirmation dialog, or that Undo does not restore.
 - Downloads or processes the app starts without checking where they come from (winget, PresentMon, PawnIO).
-- An update the app installs although its release signature (`PCOptimizer.exe.sig`) is missing or does not match.
+- An update the app installs although its release signature (`Tunero.exe.sig`) is missing or does not match.
 - Leaks of the VirusTotal API key.
 
 ## Known limits

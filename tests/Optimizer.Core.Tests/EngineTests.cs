@@ -166,10 +166,10 @@ public class EngineTests
         Assert.DoesNotContain(fx.Engine.Preflight(gaming, Facts(), applied, Expert), b => b.ReasonKey == "block.conflict");
 
         Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(gaming, Facts(), applied, Expert)).Outcome);
-        Assert.Equal("PCOptimizer Gaming", fx.Power.SchemeNames[fx.Power.Active]);
+        Assert.Equal("Tunero Gaming", fx.Power.SchemeNames[fx.Power.Active]);
         Assert.True(fx.Engine.Revert(gaming).Success);
         Assert.Equal(FakePower.Balanced, fx.Power.Active);
-        Assert.DoesNotContain("PCOptimizer Gaming", fx.Power.SchemeNames.Values);
+        Assert.DoesNotContain("Tunero Gaming", fx.Power.SchemeNames.Values);
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class EngineTests
         fx.Power.Active = FakePower.High;
         var line = Assert.Single(fx.Engine.Preview(T("power.balancedPlan")));
         Assert.Equal(("High performance", "Balanced"), (line.Before, line.After));
-        Assert.Equal("PCOptimizer Gaming", Assert.Single(fx.Engine.Preview(T("power.gamingPlan"))).After);
+        Assert.Equal("Tunero Gaming", Assert.Single(fx.Engine.Preview(T("power.gamingPlan"))).After);
     }
 
     [Fact]
@@ -263,12 +263,12 @@ public class EngineTests
         using var fx = new EngineFixture();
         var t = T("power.gamingPlan");
         await fx.Engine.ApplyAsync(t, Facts(), new HashSet<string>(), Expert);
-        Assert.Equal("PCOptimizer Gaming", fx.Power.SchemeNames[fx.Power.Active]);
+        Assert.Equal("Tunero Gaming", fx.Power.SchemeNames[fx.Power.Active]);
         Assert.Equal(TweakState.Applied, fx.Engine.DetectState(t, Facts()));
 
         fx.Engine.Revert(t);
         Assert.Equal(FakePower.Balanced, fx.Power.Active);
-        Assert.DoesNotContain("PCOptimizer Gaming", fx.Power.SchemeNames.Values);
+        Assert.DoesNotContain("Tunero Gaming", fx.Power.SchemeNames.Values);
     }
 
     [Fact]

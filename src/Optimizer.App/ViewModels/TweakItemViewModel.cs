@@ -96,8 +96,17 @@ public sealed class TweakItemViewModel : InspectorItem
         // On: possible when not blocked. Off: possible when this app made the change (it has the original values).
         CanToggle = canChange && (IsOn ? HasBackup : hard.Count == 0);
         var outside = canChange && IsOn && !HasBackup ? Loc.Instance["Tweak_AlreadyOn"] : null;
-        // The badges are drawn as tags next to the title, not repeated in this line.
-        MetaText = string.Join(", ", new[] { StatusText, outside, ImpactText, EffectsText }.Where(x => !string.IsNullOrEmpty(x)));
+        // Already on before this app: there is no original value to restore, so a switch could never be turned off.
+        // Say that in words instead of showing a switch that looks broken.
+        IsSetOutside = outside is not null;
+        // "Already on" next to the switch says the rest; the icon carries on and off.
+        CompactMeta = IsSetOutside || status.State is TweakState.NotApplied or TweakState.Applied ? "" : StatusText;
+        // The badges are drawn as tags next to the title, not repeated in this line. A tweak without any effect on the
+        // profile's goal (most privacy and Explorer settings) leaves "Impact 0 of 5, No FPS effect" out of its row: the
+        // details still name it.
+        var noEffect = Impact == 0 && profiled is not { WorksAgainst: true };
+        MetaText = Meta(outside is null ? StatusText : $"{StatusText}, {outside}", noEffect ? null : ImpactText, noEffect ? "" : EffectsText);
+        Note = IsSetOutside ? Loc.Instance["Tweak_AlreadyOnTip"] : null;
         // Only real blocks are shown as a warning; "set outside this app" is part of the detail line.
         ToggleNote = canChange && !IsOn && hard.Count > 0 ? BlockText : null;
         Action = ActionFor(status.State, canChange, HasBackup);
@@ -109,7 +118,9 @@ public sealed class TweakItemViewModel : InspectorItem
             _ => null,
         };
         ActionEnabled = Action == RowAction.Undo || hard.Count == 0;
-        ActionNote = Action is RowAction.Undo or RowAction.None ? null : BlockText;
+        // In the details pane there is no page banner: missing admin rights are named here too.
+        var adminNote = status.Blocks.Any(b => b.ReasonKey == "block.notElevated") ? ChangeRunner.BlockText(status.Blocks.First(b => b.ReasonKey == "block.notElevated"), lang) : null;
+        ActionNote = Action is RowAction.Undo or RowAction.None ? null : BlockText ?? adminNote;
 
         // Inspector document: hand-written sections plus generated "What changes" and "Undo". Built when the row is
         // opened, because the preview reads the current values from the system.
@@ -117,7 +128,8 @@ public sealed class TweakItemViewModel : InspectorItem
         MarkdownFactory = () =>
         {
             if (page is null) return $"# {heading}";
-            var changes = ChangeRunner.ShortTargets(engine.Preview(t));
+            // A break opportunity after each backslash, so a long registry path wraps at a key, not inside a name.
+            var changes = ChangeRunner.ShortTargets(engine.Preview(t)).Select(c => c with { Target = c.Target.Replace("\\", "\\\u200B") }).ToList();
             var notes = new List<string>();
             if (t.Scope == TweakScope.User || t.Actions.OfType<Optimizer.Core.Actions.RegistryAction>().Any(a => a.Hive == Optimizer.Core.Actions.Hive.User))
                 notes.Add(labels.Get(lang, "changes.userScope"));
@@ -147,13 +159,20 @@ public sealed class TweakItemViewModel : InspectorItem
     public TweakDefinition Tweak => Status_.Tweak;
     public string Category { get; }
     public string BadgesText { get; }
-    public IReadOnlyList<Badge> Badges { get; }
     public bool IsRecommended { get; }
     public string? RecommendedText { get; }
     public string? BlockText { get; }
     public bool IsOn { get; }
     public bool HasBackup { get; }
     public bool CanToggle { get; }
+
+    /// <summary>On, but not changed by this app (Windows default, policy or another tool): shown as text, not as a switch.</summary>
+    public bool IsSetOutside { get; }
+
+    public bool ShowSwitch => !IsSetOutside;
+
+    /// <summary>Rows in lists of one kind (games, devices): only a state worth reading; the section names impact and tags.</summary>
+    public string CompactMeta { get; }
     public string? ToggleNote { get; }
 
     /// <summary>Shown while the tweak is on and works against the active profile (for example costs battery life).</summary>

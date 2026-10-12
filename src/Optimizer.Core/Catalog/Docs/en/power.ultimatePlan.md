@@ -4,7 +4,7 @@
 Creates and activates a copy of the hidden Ultimate Performance plan, a step beyond High performance. Any gaming benefit over High performance is disputed.
 
 ## How it works
-Windows contains a hidden plan for workstations, Ultimate Performance. Microsoft describes it as building on High performance and going a step further to remove micro-latencies caused by fine-grained power management [1]. The app duplicates it under the name "PCOptimizer Ultimate" and activates the copy.
+Windows contains a hidden plan for workstations, Ultimate Performance. Microsoft describes it as building on High performance and going a step further to remove micro-latencies caused by fine-grained power management [1]. The app duplicates it under the name "Tunero Ultimate" and activates the copy.
 
 ## Why it can help
 It can shave off small wake-up delays of the processor and devices. Microsoft built it for demanding workstation workloads [1].

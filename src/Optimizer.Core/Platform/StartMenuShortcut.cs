@@ -4,12 +4,15 @@ using System.Text;
 namespace Optimizer.Core.Platform;
 
 /// <summary>
-/// The app's entry in the signed-in user's Start menu ("PCOptimizer.lnk" in Programs). Windows Search lists apps from
+/// The app's entry in the signed-in user's Start menu ("Tunero.lnk" in Programs). Windows Search lists apps from
 /// the Start menu, and a portable exe (also one winget installed) has no entry there otherwise.
 /// </summary>
 public static class StartMenuShortcut
 {
-    public const string FileName = "PCOptimizer.lnk";
+    public const string FileName = "Tunero.lnk";
+
+    /// <summary>The entry's name before the app was renamed (0.7.3 and older); found, followed and removed like the new one.</summary>
+    public const string LegacyFileName = "PCOptimizer.lnk";
 
     /// <summary>
     /// Start menu programs folder of the signed-in user. Under Administrator protection or a separate admin account this
@@ -21,12 +24,13 @@ public static class StartMenuShortcut
             ? sessionProfile is null ? null : Path.Combine(sessionProfile, @"AppData\Roaming\Microsoft\Windows\Start Menu\Programs")
             : Environment.GetFolderPath(Environment.SpecialFolder.Programs);
 
-    public static bool Exists(string folder) => File.Exists(Path.Combine(folder, FileName));
+    public static bool Exists(string folder) => File.Exists(Path.Combine(folder, FileName)) || File.Exists(Path.Combine(folder, LegacyFileName));
 
     /// <summary>Exe the shortcut starts, or null when there is none.</summary>
     public static string? Target(string folder)
     {
         var path = Path.Combine(folder, FileName);
+        if (!File.Exists(path)) path = Path.Combine(folder, LegacyFileName);
         if (!File.Exists(path)) return null;
         var link = (IShellLinkW)new ShellLink();
         try
@@ -80,11 +84,17 @@ public static class StartMenuShortcut
         }
     }
 
-    /// <summary>Deletes the shortcut through <see cref="SafeDelete"/>: a link in its path is refused instead of followed.</summary>
+    /// <summary>
+    /// Deletes the shortcut, under its current and its old name, through <see cref="SafeDelete"/>: a link in its path is
+    /// refused instead of followed.
+    /// </summary>
     public static void Remove(string folder)
     {
-        var path = Path.Combine(folder, FileName);
-        if (File.Exists(path) || Directory.Exists(path)) SafeDelete.DeleteFile(path);
+        foreach (var name in new[] { FileName, LegacyFileName })
+        {
+            var path = Path.Combine(folder, name);
+            if (File.Exists(path) || Directory.Exists(path)) SafeDelete.DeleteFile(path);
+        }
     }
 
     [ComImport, Guid("00021401-0000-0000-C000-000000000046")]

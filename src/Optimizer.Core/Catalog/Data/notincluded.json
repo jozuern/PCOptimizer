@@ -1,0 +1,306 @@
+{
+  "_comment": "Popular tweaks the app does not offer, for the search: a short reason per language and the words people search for. The full reasons and sources are in docs/not-included.md; NotIncludedTests keeps both lists in step (every entry here names its row there in 'doc').",
+  "url": "https://github.com/jozuern/Tunero/blob/main/docs/not-included.md",
+  "entries": [
+    {
+      "id": "mmcss",
+      "doc": "MMCSS game profile",
+      "title": { "en": "MMCSS game profile", "de": "MMCSS-Spieleprofil" },
+      "reason": {
+        "en": "Microsoft documents most of its values as unused, the rest only affect threads that register with MMCSS. No measurement shows a gain in games.",
+        "de": "Microsoft dokumentiert die meisten Werte als ungenutzt, der Rest wirkt nur auf Threads, die sich bei MMCSS anmelden. Keine Messung zeigt einen Gewinn in Spielen."
+      },
+      "keywords": ["mmcss", "systemresponsiveness", "system responsiveness", "gpu priority", "sfio", "scheduling category", "multimedia class scheduler"]
+    },
+    {
+      "id": "win32PrioritySeparation",
+      "doc": "Win32PrioritySeparation = 0x26",
+      "title": { "en": "Win32PrioritySeparation 0x26", "de": "Win32PrioritySeparation 0x26" },
+      "reason": {
+        "en": "0x26 is the value Windows already uses for programs in the foreground. The tweak changes nothing on Windows 11.",
+        "de": "0x26 ist der Wert, den Windows für Programme im Vordergrund ohnehin nutzt. Der Tweak ändert unter Windows 11 nichts."
+      },
+      "keywords": ["win32priorityseparation", "priority separation", "0x26", "38", "foreground boost", "quantum"]
+    },
+    {
+      "id": "dynamicTick",
+      "doc": "Dynamic tick off",
+      "title": { "en": "Dynamic tick off", "de": "Dynamic Tick aus" },
+      "reason": {
+        "en": "Microsoft says this boot option should only be used for debugging. No reliable measurement shows a benefit in games, and it changes the boot configuration.",
+        "de": "Laut Microsoft ist diese Startoption nur zum Debuggen gedacht. Keine verlässliche Messung zeigt einen Vorteil in Spielen, und sie ändert die Startkonfiguration."
+      },
+      "keywords": ["dynamic tick", "disabledynamictick", "bcdedit", "tick", "latency"]
+    },
+    {
+      "id": "globalTimerResolution",
+      "doc": "Global timer resolution requests",
+      "title": { "en": "Global timer resolution", "de": "Globale Timer-Auflösung" },
+      "reason": {
+        "en": "Microsoft does not document this value and warns that a higher timer resolution reduces performance and power saving.",
+        "de": "Microsoft dokumentiert diesen Wert nicht und warnt, dass eine höhere Timer-Auflösung Leistung und Energiesparen verschlechtert."
+      },
+      "keywords": ["timer resolution", "globaltimerresolutionrequests", "timerresolution", "0.5 ms", "timebeginperiod", "hpet", "latency"]
+    },
+    {
+      "id": "mitigationsOff",
+      "doc": "Spectre and Meltdown mitigations off",
+      "title": { "en": "Spectre and Meltdown protection off", "de": "Spectre- und Meltdown-Schutz aus" },
+      "reason": {
+        "en": "On the processors Windows 11 supports, Microsoft measured slowdowns most users do not notice. Turning the protection off is a real security loss for a gain too small to notice.",
+        "de": "Auf den Prozessoren, die Windows 11 unterstützt, hat Microsoft Verlangsamungen gemessen, die die meisten nicht bemerken. Den Schutz abzuschalten ist ein echter Sicherheitsverlust für einen kaum spürbaren Gewinn."
+      },
+      "keywords": ["spectre", "meltdown", "mitigations", "featuresettingsoverride", "speculative execution", "inspectre"]
+    },
+    {
+      "id": "smartScreenOff",
+      "doc": "SmartScreen for apps off",
+      "title": { "en": "SmartScreen for apps off", "de": "SmartScreen für Apps aus" },
+      "reason": {
+        "en": "No effect on games. It only removes a safety check of downloaded programs.",
+        "de": "Keine Wirkung auf Spiele. Es entfernt nur eine Sicherheitsprüfung heruntergeladener Programme."
+      },
+      "keywords": ["smartscreen", "smart screen", "app reputation"]
+    },
+    {
+      "id": "overlayTestMode",
+      "doc": "Remove OverlayTestMode",
+      "title": { "en": "Remove OverlayTestMode", "de": "OverlayTestMode entfernen" },
+      "reason": {
+        "en": "OverlayTestMode = 5 is the value NVIDIA itself uses to turn off multiplane overlay, not a leftover. The multiplane overlay tweak uses it.",
+        "de": "OverlayTestMode = 5 ist der Wert, mit dem NVIDIA selbst Multiplane Overlay abschaltet, kein Überbleibsel. Der Tweak für Multiplane Overlay nutzt ihn."
+      },
+      "keywords": ["overlaytestmode", "mpo", "multiplane overlay"]
+    },
+    {
+      "id": "fullscreenOptimizationsGlobal",
+      "doc": "Fullscreen optimizations off, global",
+      "title": { "en": "Fullscreen optimizations off for all games", "de": "Vollbildoptimierungen für alle Spiele aus" },
+      "reason": {
+        "en": "The values for all games are undocumented, and Microsoft measured fullscreen optimizations as equal to or better than exclusive fullscreen. Turn them off per game in the exe's Properties > Compatibility.",
+        "de": "Die Werte für alle Spiele sind nicht dokumentiert, und Microsoft hat Vollbildoptimierungen als gleich gut oder besser als exklusives Vollbild gemessen. Schalte sie pro Spiel in den Eigenschaften der exe > Kompatibilität ab."
+      },
+      "keywords": ["fullscreen optimizations", "fso", "gamedvr_fse", "exclusive fullscreen", "vollbildoptimierung"]
+    },
+    {
+      "id": "teredoOff",
+      "doc": "Teredo off",
+      "title": { "en": "Teredo off", "de": "Teredo aus" },
+      "reason": {
+        "en": "Teredo is off by default anyway, and the Xbox app needs it for party chat and multiplayer, so turning it off can break those.",
+        "de": "Teredo ist ohnehin standardmäßig aus, und die Xbox-App braucht es für Party-Chat und Mehrspieler, die dadurch kaputtgehen können."
+      },
+      "keywords": ["teredo", "disabledcomponents", "ipv6 tunnel"]
+    },
+    {
+      "id": "8dot3Off",
+      "doc": "Short 8.3 file names off",
+      "title": { "en": "Short 8.3 file names off", "de": "Kurze 8.3-Dateinamen aus" },
+      "reason": {
+        "en": "Windows already creates no short names outside the system drive, some programs need them there, and the setting has no effect on games.",
+        "de": "Windows legt außerhalb des Systemlaufwerks schon keine Kurznamen an, manche Programme brauchen sie dort, und die Einstellung wirkt nicht auf Spiele."
+      },
+      "keywords": ["8.3", "8dot3", "short names", "ntfsdisable8dot3namecreation", "fsutil"]
+    },
+    {
+      "id": "handwritingSharingOff",
+      "doc": "Handwriting data sharing off",
+      "title": { "en": "Handwriting data sharing off", "de": "Freigabe von Handschriftdaten aus" },
+      "reason": {
+        "en": "Microsoft does not document these values on their own for Windows 11, so their effect is not confirmed.",
+        "de": "Microsoft dokumentiert diese Werte für Windows 11 nicht einzeln, ihre Wirkung ist also nicht bestätigt."
+      },
+      "keywords": ["handwriting", "preventhandwritingdatasharing", "handschrift"]
+    },
+    {
+      "id": "wpbtOff",
+      "doc": "Windows Platform Binary Table off",
+      "title": { "en": "WPBT off", "de": "WPBT aus" },
+      "reason": {
+        "en": "Microsoft does not document this value. It can come back as a Preview once a test on a PC with a WPBT table shows that Windows honors it.",
+        "de": "Microsoft dokumentiert diesen Wert nicht. Er kann als Vorschau zurückkommen, sobald ein Test auf einem PC mit WPBT-Tabelle zeigt, dass Windows ihn beachtet."
+      },
+      "keywords": ["wpbt", "disablewpbtexecution", "platform binary table", "armoury crate", "firmware software"]
+    },
+    {
+      "id": "spoolerManual",
+      "doc": "Print Spooler on Manual",
+      "title": { "en": "Print Spooler on Manual", "de": "Druckwarteschlange auf Manuell" },
+      "reason": {
+        "en": "The Print Spooler does not start by itself when you print, so printing, including Print to PDF, stops working. No effect on games.",
+        "de": "Die Druckwarteschlange startet nicht von selbst, wenn du druckst, also funktioniert Drucken, auch Drucken als PDF, nicht mehr. Keine Wirkung auf Spiele."
+      },
+      "keywords": ["spooler", "print spooler", "druckwarteschlange", "printing service"]
+    },
+    {
+      "id": "coreParkingOff",
+      "doc": "Core parking off",
+      "title": { "en": "Core parking off", "de": "Core Parking aus" },
+      "reason": {
+        "en": "Desktops already keep all cores unparked on mains power, and on hybrid processors the setting misses the performance cores. No measurement shows a gain in games.",
+        "de": "Desktops lassen am Netz schon alle Kerne aktiv, und auf Hybrid-Prozessoren erreicht die Einstellung die Leistungskerne nicht. Keine Messung zeigt einen Gewinn in Spielen."
+      },
+      "keywords": ["core parking", "cpmincores", "parkcontrol", "unpark cores", "kernparken"]
+    },
+    {
+      "id": "minProcessorState100",
+      "doc": "Minimum processor state 100 %",
+      "title": { "en": "Minimum processor state 100 %", "de": "Minimaler Prozessorzustand 100 %" },
+      "reason": {
+        "en": "Microsoft documents it only for special servers. The gaming power plan already runs at 100 % on mains power.",
+        "de": "Microsoft dokumentiert das nur für spezielle Server. Der Gaming-Energiesparplan läuft am Netz schon mit 100 %."
+      },
+      "keywords": ["minimum processor state", "procthrottlemin", "100%", "processor state", "prozessorzustand"]
+    },
+    {
+      "id": "nvidiaHidden",
+      "doc": "NVIDIA settings outside the public NVAPI headers",
+      "title": { "en": "Hidden NVIDIA settings (Profile Inspector, forced Resizable BAR)", "de": "Versteckte NVIDIA-Einstellungen (Profile Inspector, erzwungenes Resizable BAR)" },
+      "reason": {
+        "en": "The app only uses driver settings NVIDIA documents. Profile Inspector itself calls many of its settings hidden or experimental, with effects that vary.",
+        "de": "Die App nutzt nur Treibereinstellungen, die NVIDIA dokumentiert. Profile Inspector selbst nennt viele seiner Einstellungen versteckt oder experimentell, mit wechselnder Wirkung."
+      },
+      "keywords": ["profile inspector", "nvidia inspector", "rebar", "resizable bar", "ultra low latency", "nvidia hidden"]
+    },
+    {
+      "id": "tcpNoDelay",
+      "doc": "TCPNoDelay under the network interface keys",
+      "title": { "en": "TCPNoDelay (Nagle off)", "de": "TCPNoDelay (Nagle aus)" },
+      "reason": {
+        "en": "Microsoft does not document TCPNoDelay. Games turn off Nagle's algorithm per connection themselves. The delayed acknowledgement tweak sets the documented TcpAckFrequency.",
+        "de": "Microsoft dokumentiert TCPNoDelay nicht. Spiele schalten den Nagle-Algorithmus pro Verbindung selbst ab. Der Tweak für verzögerte Bestätigungen setzt das dokumentierte TcpAckFrequency."
+      },
+      "keywords": ["tcpnodelay", "nagle", "tcpackfrequency", "ping", "network latency"]
+    },
+    {
+      "id": "securityOff",
+      "doc": "Disabling Windows Defender, Windows Update or the firewall",
+      "title": { "en": "Windows Defender, Windows Update or firewall off", "de": "Windows Defender, Windows Update oder Firewall aus" },
+      "reason": {
+        "en": "They protect the PC, and turning them off has no documented gaming benefit. For updates, the app offers documented policies that control when updates and restarts happen.",
+        "de": "Sie schützen den PC, und sie abzuschalten bringt keinen dokumentierten Vorteil in Spielen. Für Updates bietet die App dokumentierte Richtlinien, die steuern, wann Updates und Neustarts kommen."
+      },
+      "keywords": ["defender", "windows defender", "antivirus", "virenschutz", "disable updates", "windows update off", "updates off", "firewall", "real-time protection", "tamper protection"]
+    },
+    {
+      "id": "ipv6Off",
+      "doc": "Turning off IPv6 completely",
+      "title": { "en": "IPv6 off completely", "de": "IPv6 komplett aus" },
+      "reason": {
+        "en": "Microsoft advises against it because parts of Windows can stop working, and recommends preferring IPv4 instead. The app offers Prefer IPv4 over IPv6.",
+        "de": "Microsoft rät davon ab, weil Teile von Windows dann nicht mehr funktionieren können, und empfiehlt stattdessen, IPv4 zu bevorzugen. Die App bietet IPv4 vor IPv6 bevorzugen."
+      },
+      "keywords": ["ipv6", "disable ipv6", "ipv6 off"]
+    },
+    {
+      "id": "svchostSplit",
+      "doc": "Grouping services into fewer svchost processes",
+      "title": { "en": "Fewer svchost processes", "de": "Weniger svchost-Prozesse" },
+      "reason": {
+        "en": "Windows splits services on purpose for reliability and security. Microsoft calls the saving from grouping modest and documents no gain.",
+        "de": "Windows trennt Dienste absichtlich für Stabilität und Sicherheit. Microsoft nennt die Ersparnis durch Gruppieren gering und dokumentiert keinen Gewinn."
+      },
+      "keywords": ["svchost", "svchostsplitthresholdinkb", "split threshold", "processes", "ram usage"]
+    },
+    {
+      "id": "realtimePriority",
+      "doc": "Realtime priority for games",
+      "title": { "en": "Realtime priority for games", "de": "Echtzeit-Priorität für Spiele" },
+      "reason": {
+        "en": "Microsoft warns that a realtime process can block Windows itself, so disk caches stop flushing or the mouse stops responding. Program start priorities on the Tools page offer High at most.",
+        "de": "Microsoft warnt, dass ein Echtzeit-Prozess Windows selbst blockieren kann, sodass Datenträgerpuffer nicht mehr geschrieben werden oder die Maus nicht mehr reagiert. Die Startprioritäten auf der Seite Tools bieten höchstens Hoch."
+      },
+      "keywords": ["realtime", "real-time priority", "echtzeit", "priority", "cpu priority"]
+    },
+    {
+      "id": "searchIndexingOff",
+      "doc": "Turning off Windows Search indexing for game performance",
+      "title": { "en": "Windows Search indexing off", "de": "Windows-Suchindizierung aus" },
+      "reason": {
+        "en": "The indexer already pauses itself when the PC is busy. No measurement shows a gain in games, and search gets slower. The Services page still lets you set Windows Search to Manual.",
+        "de": "Die Indizierung pausiert schon von selbst, wenn der PC beschäftigt ist. Keine Messung zeigt einen Gewinn in Spielen, und die Suche wird langsamer. Auf der Seite Dienste kannst du Windows Search trotzdem auf Manuell stellen."
+      },
+      "keywords": ["indexing", "search indexer", "wsearch", "windows search", "indizierung"]
+    },
+    {
+      "id": "resetBase",
+      "doc": "DISM /ResetBase as routine cleanup",
+      "title": { "en": "DISM /ResetBase cleanup", "de": "Bereinigung mit DISM /ResetBase" },
+      "reason": {
+        "en": "After /ResetBase, installed updates can no longer be uninstalled. The app runs the component cleanup without it.",
+        "de": "Nach /ResetBase lassen sich installierte Updates nicht mehr deinstallieren. Die App führt die Komponentenbereinigung ohne diese Option aus."
+      },
+      "keywords": ["resetbase", "dism", "component store", "winsxs", "startcomponentcleanup"]
+    },
+    {
+      "id": "standbyNetworkOff",
+      "doc": "Network off during Modern Standby",
+      "title": { "en": "Network off during Modern Standby", "de": "Netzwerk im Modern Standby aus" },
+      "reason": {
+        "en": "Windows already keeps the network quiet during sleep on battery unless an app needs it. The tweak repeats the default and breaks those cases.",
+        "de": "Windows hält das Netzwerk im Ruhezustand auf Akku schon still, außer eine App braucht es. Der Tweak wiederholt den Standard und macht diese Fälle kaputt."
+      },
+      "keywords": ["modern standby", "connected standby", "network standby", "sleep network"]
+    },
+    {
+      "id": "idleDisable",
+      "doc": "Processor idle states off (IDLEDISABLE)",
+      "title": { "en": "Processor idle states off", "de": "Leerlaufzustände des Prozessors aus" },
+      "reason": {
+        "en": "Every core then keeps drawing power all the time, so the PC gets hotter and louder. No measurement shows a gain in games.",
+        "de": "Dann verbraucht jeder Kern ständig Strom, der PC wird wärmer und lauter. Keine Messung zeigt einen Gewinn in Spielen."
+      },
+      "keywords": ["idledisable", "c-states", "c states", "idle states", "disable idle", "leerlauf"]
+    },
+    {
+      "id": "faultTolerantHeapOff",
+      "doc": "Fault Tolerant Heap off",
+      "title": { "en": "Fault Tolerant Heap off", "de": "Fault Tolerant Heap aus" },
+      "reason": {
+        "en": "It keeps programs that crashed repeatedly from crashing again. Turning it off brings those crashes back and gives no performance gain.",
+        "de": "Er verhindert, dass Programme, die wiederholt abgestürzt sind, erneut abstürzen. Ihn abzuschalten bringt diese Abstürze zurück und keinen Leistungsgewinn."
+      },
+      "keywords": ["fault tolerant heap", "fth", "heap"]
+    },
+    {
+      "id": "registryCleaning",
+      "doc": "Registry cleaning after uninstalls",
+      "title": { "en": "Registry cleaning", "de": "Registry-Bereinigung" },
+      "reason": {
+        "en": "Leftover keys take no measurable space and do not slow Windows down, and a wrong guess breaks other programs. The app cleans known file categories only.",
+        "de": "Übrig gebliebene Schlüssel belegen keinen messbaren Platz und bremsen Windows nicht, und eine falsche Vermutung macht andere Programme kaputt. Die App bereinigt nur bekannte Dateikategorien."
+      },
+      "keywords": ["registry cleaner", "registry cleaning", "ccleaner registry", "registry", "registry-bereinigung"]
+    },
+    {
+      "id": "netshTcp",
+      "doc": "netsh TCP global tweaks",
+      "title": { "en": "netsh TCP global tweaks", "de": "Globale TCP-Tweaks mit netsh" },
+      "reason": {
+        "en": "They change every connection of the PC, and no measurement shows a gain in games; ping depends mostly on the route to the server. The app offers documented settings per network adapter instead.",
+        "de": "Sie ändern jede Verbindung des PCs, und keine Messung zeigt einen Gewinn in Spielen; der Ping hängt vor allem vom Weg zum Server ab. Die App bietet stattdessen dokumentierte Einstellungen pro Netzwerkadapter."
+      },
+      "keywords": ["netsh", "autotuning", "auto-tuning", "congestion provider", "ctcp", "ecn", "rss", "tcp global", "heuristics", "ping"]
+    },
+    {
+      "id": "paintAiValues",
+      "doc": "Paint generative erase and background removal off",
+      "title": { "en": "Paint generative erase and background removal off", "de": "Generatives Löschen und Hintergrund entfernen in Paint aus" },
+      "reason": {
+        "en": "Microsoft documents no policy for these two features, and in a test both still worked with the values set. Image Creator in Paint can be turned off with the documented policy.",
+        "de": "Microsoft dokumentiert für diese beiden Funktionen keine Richtlinie, und im Test funktionierten beide trotz der Werte. Image Creator in Paint lässt sich mit der dokumentierten Richtlinie abschalten."
+      },
+      "keywords": ["paint", "generative erase", "remove background", "disablegenerativeerase", "disableremovebackground"]
+    },
+    {
+      "id": "textImageGeneration",
+      "doc": "Text and image generation for apps off through the registry",
+      "title": { "en": "Text and image generation for apps off", "de": "Text- und Bildgenerierung für Apps aus" },
+      "reason": {
+        "en": "Writing the value behind the Settings switch does not turn it off, and Microsoft offers no policy. Turn it off in Settings > Privacy & security > Text and image generation.",
+        "de": "Den Wert hinter dem Schalter in den Einstellungen zu schreiben schaltet ihn nicht ab, und Microsoft bietet keine Richtlinie. Schalte es unter Einstellungen > Datenschutz und Sicherheit > Text- und Bildgenerierung ab."
+      },
+      "keywords": ["text and image generation", "systemaimodels", "generative ai", "ai models", "bildgenerierung"]
+    }
+  ]
+}

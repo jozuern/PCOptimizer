@@ -239,14 +239,14 @@ public class UndoTests
     public async Task CreatedPlanIsRemovedEvenIfTheUserSwitchedPlans()
     {
         using var fx = new EngineFixture();
-        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" });
         await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
-        Assert.Contains("PCOptimizer Test", fx.Power.SchemeNames.Values);
+        Assert.Contains("Tunero Test", fx.Power.SchemeNames.Values);
 
         fx.Power.Active = FakePower.High; // the user picked another plan
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal(FakePower.High, fx.Power.Active); // the user's choice stays
-        Assert.DoesNotContain("PCOptimizer Test", fx.Power.SchemeNames.Values);
+        Assert.DoesNotContain("Tunero Test", fx.Power.SchemeNames.Values);
     }
 
     /// <summary>A value of a type .NET does not name (REG_DWORD_BIG_ENDIAN) comes back with its own type, not as REG_NONE.</summary>
@@ -282,8 +282,8 @@ public class UndoTests
     {
         using var fx = new EngineFixture();
         var existing = Guid.NewGuid();
-        fx.Power.SchemeNames[existing] = "PCOptimizer Test";
-        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        fx.Power.SchemeNames[existing] = "Tunero Test";
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" });
         await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
         Assert.Equal(existing, fx.Power.Active);
         Assert.Equal(PowerSchemeAction.ExistingKind, fx.Store.Get(t.Id)!.Entries.Single().Applied!.Kind);
@@ -298,7 +298,7 @@ public class UndoTests
     public async Task OlderBackupsStillRemoveTheirPlan()
     {
         using var fx = new EngineFixture();
-        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" });
         await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
         var backup = fx.Store.Get(t.Id)!;
         Assert.Equal(PowerSchemeAction.CreatedKind, backup.Entries.Single().Applied!.Kind);
@@ -306,7 +306,7 @@ public class UndoTests
         fx.Store.Save(backup);
 
         Assert.True(fx.Engine.Revert(t).Success);
-        Assert.DoesNotContain("PCOptimizer Test", fx.Power.SchemeNames.Values);
+        Assert.DoesNotContain("Tunero Test", fx.Power.SchemeNames.Values);
     }
 
     [Fact]
@@ -316,13 +316,13 @@ public class UndoTests
         var custom = Guid.NewGuid();
         fx.Power.SchemeNames[custom] = "My plan";
         fx.Power.Active = custom;
-        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "PCOptimizer Test" });
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" });
         await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
         fx.Power.SchemeNames.Remove(custom);
 
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal(FakePower.Balanced, fx.Power.Active);
-        Assert.DoesNotContain("PCOptimizer Test", fx.Power.SchemeNames.Values);
+        Assert.DoesNotContain("Tunero Test", fx.Power.SchemeNames.Values);
     }
 
     [Fact]

@@ -1024,7 +1024,7 @@ public sealed class BackgroundCpuCheck : IFindingCheck
     {
         "System", "Registry", "Idle", "smss", "csrss", "wininit", "winlogon", "services", "lsass", "dwm", "fontdrvhost", "explorer",
         "svchost", "audiodg", "Memory Compression", "SearchHost", "StartMenuExperienceHost", "ShellExperienceHost", "TextInputHost", "ctfmon",
-        "WmiPrvSE", "taskhostw", "RuntimeBroker", "sihost", "dllhost", "conhost", "spoolsv", "PCOptimizer",
+        "WmiPrvSE", "taskhostw", "RuntimeBroker", "sihost", "dllhost", "conhost", "spoolsv", "Tunero", "PCOptimizer",
     };
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)

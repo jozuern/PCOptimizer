@@ -40,7 +40,7 @@
         </DataTemplate>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="{StaticResource PagePadding}">
+        <StackPanel Style="{StaticResource PageRoot}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                     <ui:ToggleSwitch Content="{l:Tr Hw_ShowDetails}" IsChecked="{Binding ShowHardwareDetails}" Margin="0,0,16,0" />
@@ -67,7 +67,8 @@
                                                Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                                 <StackPanel>
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Caption}" />
-                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Value}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                    <!-- One line, the full name in the tooltip: tiles keep one height ("Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz") -->
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Value}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Value}" Margin="0,2,0,0" />
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Detail}" Margin="0,2,0,0"
                                                   Visibility="{Binding Detail, Converter={StaticResource NullToVisibility}}" />
                                 </StackPanel>

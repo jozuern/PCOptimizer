@@ -34,7 +34,7 @@ Read-only checks on one gaming PC: Intel Core i7-9700K, ASUS ROG Strix Z390-F, N
 - **Startup scan:** 220 entries (10 Run keys, 1 Startup folder item, 57 logon and boot tasks, 20 shell extensions, 2 Winlogon values, 84 drivers, 46 automatic services); all 46 service files resolved to existing files.
 - **Signatures:** ntoskrnl.exe and tcpip.sys verify as embedded signatures, notepad.exe through the Windows catalog; a non-executable file reports "not signed".
 - **Health counters:** `% Performance Limit` reads 100 at idle and `% Processor Performance` about 127 (boost), as expected. Drive reliability counters and processor sensor values need administrator rights; without them the app says so.
-- **Single-file runtime:** a published test build (asInvoker manifest) restarts once and loads the WPF native libraries from `%LocalAppData%\PCOptimizer\runtime` (elevated: `%ProgramData%\PCOptimizer\runtime`) instead of `%TEMP%\.net`. The exe's own imports are KnownDLLs or API sets, and its load configuration limits delay-loaded DLLs to System32.
+- **Single-file runtime:** a published test build (asInvoker manifest) restarts once and loads the WPF native libraries from `%LocalAppData%\Tunero\runtime` (elevated: `%ProgramData%\Tunero\runtime`) instead of `%TEMP%\.net`. The exe's own imports are KnownDLLs or API sets, and its load configuration limits delay-loaded DLLs to System32.
 
 ## Not checked on hardware
 

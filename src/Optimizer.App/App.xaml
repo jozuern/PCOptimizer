@@ -24,6 +24,7 @@
             <v:AllTrueConverter x:Key="AllTrue" />
             <v:CountToVisibilityConverter x:Key="EmptyToVisibility" Invert="True" />
             <v:LayoutWidthConverter x:Key="LayoutWidth" />
+            <v:PageWidthConverter x:Key="PageWidth" />
             <v:SameItemConverter x:Key="SameItem" />
 
             <!--
@@ -33,6 +34,13 @@
             <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
 
             <Thickness x:Key="PagePadding">24,16,24,24</Thickness>
+            <!-- The root of every page: padding, and a maximum width as in Windows Settings, so lines stay readable on wide
+                 windows (about 1000 px of content, left-aligned). -->
+            <Style x:Key="PageRoot" TargetType="FrameworkElement">
+                <Setter Property="Margin" Value="{StaticResource PagePadding}" />
+                <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource PageWidth}}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+            </Style>
             <Thickness x:Key="CardRowMargin">0,0,0,4</Thickness>
             <Thickness x:Key="CardPadding">16,12,16,12</Thickness>
 
@@ -102,19 +110,54 @@
                     </Setter.Value>
                 </Setter>
                 <Setter Property="Template" Value="{StaticResource VirtualList}" />
+                <!-- The scroll bar sits in the page's right padding, beside the cards instead of over their edge -->
+                <Setter Property="Margin" Value="0,0,-16,0" />
                 <!-- The panel lays every card out as wide as the widest one it ever measured, also cards realized off
                      screen that kept a width from before the details pane opened (the switches were cut off): give each
                      card exactly the visible width. -->
                 <Setter Property="ItemContainerStyle">
                     <Setter.Value>
                         <Style TargetType="ContentPresenter">
-                            <Setter Property="Width" Value="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LayoutWidth}}" />
+                            <Setter Property="Width" Value="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LayoutWidth}, ConverterParameter=16}" />
+                            <!-- Left, so the 16 px for the scroll bar stay on the right and the cards line up with the page -->
+                            <Setter Property="HorizontalAlignment" Value="Left" />
                         </Style>
                     </Setter.Value>
                 </Setter>
             </Style>
 
 
+
+            <!-- Tabs drawn like the Windows 11 selector bar: the selected tab gets an accent line under its text (pages with
+                 several parts: Services, Remove apps, Apps, Tools). -->
+            <Style x:Key="SelectorTab" TargetType="TabItem">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="4" Padding="12,6,12,4" Margin="0,0,4,0">
+                                <StackPanel>
+                                    <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                                    <Border x:Name="Pill" Height="3" Width="16" CornerRadius="1.5" Margin="0,4,0,0" HorizontalAlignment="Center"
+                                            Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Hidden" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
             <!-- A card that opens the details pane: an accent border marks the one the pane shows. -->
             <Style x:Key="SelectableCard" TargetType="ui:CardControl" BasedOn="{StaticResource {x:Type ui:CardControl}}">
@@ -133,7 +176,9 @@
 
             <!-- Finding / advisor row: status icon, title, summary, impact line; Fix button when there is one -->
             <DataTemplate x:Key="FindingRow">
+                <!-- The card opens the details: screen readers announce it by its title and state -->
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
+                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding MetaText}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
                         <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
@@ -160,10 +205,20 @@
                 </StackPanel>
             </DataTemplate>
 
+            <!-- A tag: a short fact in a subtle frame (rows, the details pane, Tools) -->
+            <Style x:Key="TagBorder" TargetType="Border">
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Padding" Value="6,1,6,2" />
+                <Setter Property="Margin" Value="0,2,4,2" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            </Style>
+
             <!-- Badge on a tweak row: neutral facts (Preview, Restart) in a subtle tag, risks in the caution color -->
             <DataTemplate x:Key="BadgeTag">
-                <Border x:Name="Tag" CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1" ToolTip="{Binding Tip}"
-                        Background="{DynamicResource SubtleFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                <Border x:Name="Tag" Style="{StaticResource TagBorder}" ToolTip="{Binding Tip}">
                     <TextBlock x:Name="TagText" Text="{Binding Text}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </Border>
                 <DataTemplate.Triggers>
@@ -174,11 +229,37 @@
                 </DataTemplate.Triggers>
             </DataTemplate>
 
+            <!-- The switch of a tweak row. A setting that was already on before this app (Windows, a policy or another
+                 tool) has no original value to restore, so it could never be switched off: say so in words instead. -->
+            <DataTemplate x:Key="TweakSwitch">
+                <Grid>
+                    <!-- "Applied" and "Not applied" next to the switch: a title like "Power Throttling off" with a switch that is
+                         off would otherwise read as a double negative. -->
+                    <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}"
+                                     OnContent="{s:Tr Tweak_SwitchOn}" OffContent="{s:Tr Tweak_SwitchOff}"
+                                     Visibility="{Binding ShowSwitch, Converter={StaticResource BoolToVisibility}}">
+                        <ui:ToggleSwitch.IsEnabled>
+                            <MultiBinding Converter="{StaticResource AllTrue}">
+                                <Binding Path="CanToggle" />
+                                <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
+                            </MultiBinding>
+                        </ui:ToggleSwitch.IsEnabled>
+                    </ui:ToggleSwitch>
+                    <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{s:Tr Tweak_AlreadyOnShort}"
+                                  ToolTip="{s:Tr Tweak_AlreadyOnTip}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                  Visibility="{Binding IsSetOutside, Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+            </DataTemplate>
+
             <DataTemplate x:Key="TweakRow">
                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
+                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding MetaText}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
-                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}" />
+                        <!-- The switch shows on and off; the icon marks only rows that need attention (reset by Windows, partly applied).
+                             Hidden, not collapsed, so every title starts at the same place. -->
+                        <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" v:ThemeBrush.Key="{Binding StatusBrushKey}"
+                                       Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToHidden}}" />
                     </ui:CardControl.Icon>
                     <ui:CardControl.Header>
                         <StackPanel>
@@ -204,14 +285,7 @@
                                           Margin="0,4,0,0" Visibility="{Binding AgainstNote, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </ui:CardControl.Header>
-                    <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" >
-                        <ui:ToggleSwitch.IsEnabled>
-                            <MultiBinding Converter="{StaticResource AllTrue}">
-                                <Binding Path="CanToggle" />
-                                <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
-                            </MultiBinding>
-                        </ui:ToggleSwitch.IsEnabled>
-                    </ui:ToggleSwitch>
+                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
                 </ui:CardControl>
             </DataTemplate>
         </ResourceDictionary>

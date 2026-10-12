@@ -287,6 +287,17 @@ public class DebloatServicesAppsTests
     }
 
     [Fact]
+    public void PlaceholderDriverDatesHaveNoAge()
+    {
+        var today = new DateTime(2026, 10, 12);
+        DriverRow Row(DateTime date) => new("Intel(R) SMBus", "SYSTEM", "INTEL", "INTEL", "10.1.16.7", date, "oem12.inf", @"PCI\VEN_8086");
+        // Intel chipset INF and Windows inbox placeholders: no age, so the page does not call them decades old.
+        Assert.Null(Row(new DateTime(1968, 7, 18)).AgeDays(today));
+        Assert.Null(Row(new DateTime(2006, 6, 21)).AgeDays(today));
+        Assert.Equal(2985, Row(new DateTime(2018, 8, 10)).AgeDays(today));
+    }
+
+    [Fact]
     public async Task OptionalFeatureStateFromEnglishDismOutput()
     {
         using var fx = new EngineFixture();

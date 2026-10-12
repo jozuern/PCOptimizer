@@ -1,4 +1,4 @@
-# Build, test and publish PCOptimizer (WPF, .NET 10, Windows x64).
+# Build, test and publish Tunero (WPF, .NET 10, Windows x64).
 # Runs the unit tests (sandbox registry and fakes; nothing on the runner is changed) and the docs lint,
 # then publishes the single self-contained exe and keeps it as a build artifact.
 # Tests marked Category=Hardware read the real PC (Store apps, sensors, GPU driver) and only make sense on a
@@ -65,13 +65,13 @@ jobs:
         global-json-file: global.json
 
     - name: Restore
-      run: dotnet restore PCOptimizer.sln --locked-mode
+      run: dotnet restore Tunero.sln --locked-mode
 
     - name: Build
-      run: dotnet build PCOptimizer.sln --configuration Release --no-restore
+      run: dotnet build Tunero.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test PCOptimizer.sln --configuration Release --no-build --filter "Category!=Hardware" --logger "trx;LogFileName=results.trx" --results-directory TestResults
+      run: dotnet test Tunero.sln --configuration Release --no-build --filter "Category!=Hardware" --logger "trx;LogFileName=results.trx" --results-directory TestResults
 
     # Artifacts count against the account's storage quota: a full quota must not fail the build.
     - name: Upload test results
@@ -91,7 +91,7 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
-        name: PCOptimizer-${{ github.sha }}
-        path: artifacts/publish/PCOptimizer.exe
+        name: Tunero-${{ github.sha }}
+        path: artifacts/publish/Tunero.exe
         if-no-files-found: error
         retention-days: 14

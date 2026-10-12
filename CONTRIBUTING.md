@@ -1,10 +1,10 @@
 # Development
 
-Notes for working on PCOptimizer. For what the app does, see [README.md](README.md).
+Notes for working on Tunero. For what the app does, see [README.md](README.md).
 
 ## Contributions
 
-PCOptimizer is open source under the [GNU General Public License version 3](LICENSE) (GPL-3.0-only). Bug reports and ideas are welcome as issues. For a code change, please open an issue first so the approach can be agreed on; a pull request is accepted under the same license and reviewed by the maintainer before it is merged (team roles: README, [Code signing policy](README.md#code-signing-policy)). Code from other projects only under a license compatible with GPL-3.0-only, with its notice. Security problems: see [SECURITY.md](SECURITY.md).
+Tunero is open source under the [GNU General Public License version 3](LICENSE) (GPL-3.0-only). Bug reports and ideas are welcome as issues. For a code change, please open an issue first so the approach can be agreed on; a pull request is accepted under the same license and reviewed by the maintainer before it is merged (team roles: README, [Code signing policy](README.md#code-signing-policy)). Code from other projects only under a license compatible with GPL-3.0-only, with its notice. Security problems: see [SECURITY.md](SECURITY.md).
 
 ## Build and run
 
@@ -12,7 +12,7 @@ PCOptimizer is open source under the [GNU General Public License version 3](LICE
 dotnet build                     # Debug: asInvoker manifest, runs without UAC (TPM and some counters show "Unknown")
 dotnet test                      # unit tests + explanation lint, also the read-only checks of this PC (Category=Hardware)
 dotnet build -c Release && dotnet test -c Release --no-build --filter "Category!=Hardware"   # what CI runs (the build also compiles the app and its XAML)
-dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifacts/publish/PCOptimizer.exe
+dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile   # writes artifacts/publish/Tunero.exe
 ```
 
 Developer switches (all read-only). Runs with `--screenshot` or `--perf` open the window and its dialogs below the screen,
@@ -24,10 +24,12 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 |---|---|
 | `--report <file.md>` | headless scan, writes all findings with explanations and the system info as Markdown |
 | `--screenshot <file.png>` | opens the UI, scans, renders the window to PNG and exits |
-| `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor, Network, Debloat, Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware, Settings |
+| `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor (Manual checks), Network, Debloat (Remove apps), Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware (System info), Settings |
 | `--shot-scanning <file.png>` | renders the window while the first scan still runs (score placeholders) |
 | `--pane closed` | collapses the navigation rail before the screenshot |
 | `--width <pixels>` | window width for the screenshot (for example 1040, the minimum, with `--select`) |
+| `--height <pixels>` | window height for the screenshot (below 900 the pane drops its group headings, below 790 it folds to the rail; the window is at least 720 high) |
+| `--search <text>` | types into the search box (Ctrl+F) before the screenshot; the results popup is saved to `<file>-search.png` |
 | `--scroll end` or `--scroll <pixels>` | scrolls the page to the end, or down by that many pixels, before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
 | `--category <key>` | opens that category group on the Tweaks page before the screenshot (a section such as `privacy`, or a catalog category such as `Browser`); `--select` opens the group of the selected tweak |
@@ -53,7 +55,7 @@ docs/                 privacy, third-party notices, VM test plan, explanation st
 .github/workflows/    CI (build, tests without Category=Hardware, single-exe artifact) and the tag-triggered release
 ```
 
-Data: `%ProgramData%\PCOptimizer` when elevated; Debug runs without admin rights use `%LocalAppData%\PCOptimizer` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change; an account's own settings under `users\<SID>`, undone changes in `history\`, undo that waits for a restart in `pending-undo\`), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon; its capture files are deleted once read), `temp\` (TEMP for the tools the app starts, emptied at every start), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`, `startup-snapshot.json`, `tcpip-reset.log`.
+Data: `%ProgramData%\Tunero` when elevated; Debug runs without admin rights use `%LocalAppData%\Tunero` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change; an account's own settings under `users\<SID>`, undone changes in `history\`, undo that waits for a restart in `pending-undo\`), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon; its capture files are deleted once read), `temp\` (TEMP for the tools the app starts, emptied at every start), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`, `startup-snapshot.json`, `tcpip-reset.log`.
 
 Native libraries: `NativeLibraryGuard` resolves P/Invoke targets to System32 or the protected runtime folder and refuses a DLL of that name next to the exe. New P/Invokes need nothing extra; never load a DLL by a path a standard user can write to.
 
@@ -61,7 +63,7 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 
 ## Testing changes safely
 
-- `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\PCOptimizerTest` and fake system APIs. Nothing on the real system changes.
+- `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\TuneroTest` and fake system APIs. Nothing on the real system changes.
 - Run the tests once from an elevated terminal before changing security code: the data folder lock (`SecureFolder`) is only exercised elevated, as on the CI runners; a normal terminal checks only that it fails safely.
 - `--filter Category=Hardware` runs read-only checks of the real adapters on this PC (power, services, tasks, displays, NVAPI, startup scan, signatures, AppX list, cleanup sizes, drive health, counters, sensors). They reach the adapters only through `ReadOnlyContext.Create` (tests project), whose write methods throw and whose tool runner refuses commands that change something; `ArchitectureTests` fails for any other way to the real adapters, and for a test that starts a tool without being listed there.
 - Real apply and undo round trips belong in a Hyper-V VM with checkpoints: follow [docs/vm-test-plan.md](docs/vm-test-plan.md). On a real PC, start with a harmless reversible tweak such as "Show file extensions", then undo it on the Changes page.
@@ -74,6 +76,8 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 3. A sandbox test for apply and undo (see `UndoTests` and `EngineTests`).
 4. Regenerate the VM test plan tables: run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`. The counts in README.md are checked against the catalog (`DocsConsistencyTests`).
 5. A tweak that is removed later stays undoable: undo uses the action stored with each backup entry.
+
+A tweak left out goes into [docs/not-included.md](docs/not-included.md) with its reason and sources, and into `Catalog/Data/notincluded.json` with a short reason in EN and DE and the words people search for, so the app's search explains it instead of finding nothing. `NotIncludedEntriesMatchTheDocument` checks that both lists have the same entries.
 
 ## Undocumented values
 
@@ -95,20 +99,29 @@ Every commit raises the patch version (0.3.0 to 0.3.1) through the pre-commit ho
 
 1. Pick the commit to release; its `<Version>` in `src/Optimizer.App/Optimizer.App.csproj` is the release version. The tag must match it, or the workflow stops.
 2. Tag and push: `git tag v0.4.0` and `git push origin v0.4.0`.
-3. The release workflow builds, runs the tests and publishes the single exe. The release job then waits for your approval (Actions > the run > Review deployments), because it uses the `release` environment. Once SignPath is set up (below), it sends the exe to SignPath and waits until you approve the signing request there. Then it adds a SHA-256 file and a signature file (`PCOptimizer.exe.sig`), both of the signed exe, and creates a **draft** release. Check it, then publish it on GitHub.
-4. winget: publishing the release starts the workflow `winget`, which submits the manifest to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with Microsoft's `wingetcreate` (a pull request "Update: jozuern.PCOptimizer to x.y.z" from your fork); a volunteer moderator merges it. It needs the secret `WINGET_CREATE_GITHUB_TOKEN` of the environment `winget` (only `v*.*.*` tags): a classic personal access token with only the `public_repo` scope, because `wingetcreate` supports no fine-grained token. Renew it before it expires. Before it submits, the workflow checks that the release's `PCOptimizer.exe` matches its `.sha256` and that the checksum carries the app's update signature for this version, so an asset replaced after publishing never reaches winget. To submit a release again, run the workflow by hand from its tag (Actions > winget > Run workflow). `pwsh scripts/winget-manifest.ps1 -Version x.y.z` writes and validates the same manifest locally, for a pull request by hand or a test with `Tools/SandboxTest.ps1` from winget-pkgs in Windows Sandbox. The exe needs administrator rights, so the pipeline's start test as a standard user can fail (`Validation-Executable-Error`): say so in the pull request.
+3. The release workflow builds, runs the tests and publishes the single exe. The release job then waits for your approval (Actions > the run > Review deployments), because it uses the `release` environment. Once SignPath is set up (below), it sends the exe to SignPath and waits until you approve the signing request there. Then it adds a SHA-256 file and a signature file (`Tunero.exe.sig`), both of the signed exe, and creates a **draft** release. Check it, then publish it on GitHub.
+4. winget: publishing the release starts the workflow `winget`, which submits the manifest to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with Microsoft's `wingetcreate` (a pull request "Update: jozuern.Tunero to x.y.z" from your fork); a volunteer moderator merges it. It needs the secret `WINGET_CREATE_GITHUB_TOKEN` of the environment `winget` (only `v*.*.*` tags): a classic personal access token with only the `public_repo` scope, because `wingetcreate` supports no fine-grained token. Renew it before it expires. Before it submits, the workflow checks that the release's `Tunero.exe` matches its `.sha256` and that the checksum carries the app's update signature for this version, so an asset replaced after publishing never reaches winget. To submit a release again, run the workflow by hand from its tag (Actions > winget > Run workflow). `pwsh scripts/winget-manifest.ps1 -Version x.y.z` writes and validates the same manifest locally, for a pull request by hand or a test with `Tools/SandboxTest.ps1` from winget-pkgs in Windows Sandbox. The exe needs administrator rights, so the pipeline's start test as a standard user can fail (`Validation-Executable-Error`): say so in the pull request.
 
 A copy installed with winget (the exe sits in a folder named after the package id) does not replace itself: "Update now" runs `winget upgrade` as the signed-in user after the app has ended (`WingetPackage`). A version reaches winget only when its manifest is merged, which can take a day or two; until then winget users who click "Update now" get winget's message and the old version.
 
 The in-app update installs a release only when its signature matches the public key in `src/Optimizer.Core/Updates/update-key.pem`. The release workflow signs with the private key from the secret `UPDATE_SIGNING_KEY` of the GitHub environment `release` and stops when the secret is missing or does not match that public key. Keep the secret in that environment, not in the repository (a repository secret is readable by a workflow on any pushed branch or tag), and let the environment allow only `v*.*.*` tags and require your approval (both are set up). The repository rulesets "Release tags" (only administrators create, move or delete `v*` tags) and "Protect main" (no deletion, no force push) cover the rest. Create the key pair once with `scripts/new-update-key.ps1`; the script says how to store the private key. Replace it only when it is lost or leaked: versions with the old public key then reject new releases, and users have to download the next version by hand.
+
+### The rename to Tunero (once)
+
+The app was called PCOptimizer up to 0.7.3. The order matters for the in-app update of installed copies:
+
+1. Release the first Tunero version (0.7.4 or later) while the repository is still named `jozuern/PCOptimizer`. Versions up to 0.7.3 accept only download links under that name and look for `PCOptimizer.exe`, which every release still carries next to `Tunero.exe` (same file, same signature).
+2. Then rename the repository on GitHub (Settings > General > Repository name: `Tunero`). GitHub redirects the old address. Versions from 0.7.4 on ask for releases by the repository's id (`ReleaseCheck.RepositoryId`) and accept links under both names, so they keep updating; versions up to 0.7.3 that did not update before the rename open the release page instead.
+3. winget: the first submission (pull request #450585, `jozuern.PCOptimizer` 0.6.4) is replaced by `jozuern.Tunero` with the first Tunero release, from `scripts/winget-manifest.ps1`. The `winget` workflow (`wingetcreate update`) works only once that package is published.
+4. Keep the `PCOptimizer.exe` copies in releases for some months, and the legacy names in the code (`LegacyFolderName`, `LegacyFileName`, `FormerNames`, `LegacyOwnProfileName`, `LegacyRepository`, `LegacyExeAsset`, `WingetPackage.LegacyId`) for longer: they cost nothing and keep old installs working.
 
 ### Code signing (SignPath Foundation)
 
 The exe is not code signed yet: the project is applying to [SignPath Foundation](https://signpath.org/), which signs open source projects for free with its own certificate. The release workflow already has the step; it runs only when the repository variable `SIGNPATH_ORGANIZATION_ID` is set. After SignPath accepts the project:
 
 1. In SignPath, link the predefined trusted build system "GitHub.com" to the project and install the SignPath GitHub App for this repository.
-2. Create the project with the slug `PCOptimizer`, paste [.signpath/artifact-configuration.xml](.signpath/artifact-configuration.xml) as its artifact configuration, and create the signing policy `release-signing` with yourself as approver (every request needs a manual approval).
+2. Create the project with the slug `Tunero`, paste [.signpath/artifact-configuration.xml](.signpath/artifact-configuration.xml) as its artifact configuration, and create the signing policy `release-signing` with yourself as approver (every request needs a manual approval).
 3. Create a CI user with submitter rights for that policy. Store its API token as the secret `SIGNPATH_API_TOKEN` of the GitHub environment `release` (not as a repository secret) and the organization ID as the repository variable `SIGNPATH_ORGANIZATION_ID`.
 4. Change the code signing section in the README from "is applying" to the current state.
 
-SignPath signs only an exe built on GitHub's runners in this workflow run whose version resource says product "PCOptimizer" and the tag's version (`IncludeSourceRevisionInInformationalVersion` is off for that reason). The signing request waits up to four hours for the approval. The policy in the README ([Code signing policy](README.md#code-signing-policy)) lists the team roles SignPath requires; update it when someone joins.
+SignPath signs only an exe built on GitHub's runners in this workflow run whose version resource says product "Tunero" and the tag's version (`IncludeSourceRevisionInInformationalVersion` is off for that reason). The signing request waits up to four hours for the approval. The policy in the README ([Code signing policy](README.md#code-signing-policy)) lists the team roles SignPath requires; update it when someone joins.

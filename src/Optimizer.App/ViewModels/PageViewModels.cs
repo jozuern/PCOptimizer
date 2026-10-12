@@ -239,6 +239,20 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
     public bool ShowDeviceTweaks => Owner.ExpertMode && DeviceTweaks.Count > 0;
     public bool GameProfilesEmpty => GameProfiles.Count == 0;
 
+    /// <summary>Impact, effects and tags the rows of a list share ("Impact 1 of 5, 1 % lows, Preview"), shown once above it.</summary>
+    [ObservableProperty] private string? _gameProfilesFacts;
+
+    [ObservableProperty] private string? _deviceFacts;
+
+    private static string? SharedFacts(IReadOnlyCollection<TweakItemViewModel> rows)
+    {
+        if (rows.Count == 0) return null;
+        static string Facts(TweakItemViewModel r) =>
+            string.Join(", ", new[] { r.ImpactText, r.EffectsText, r.BadgesText }.Where(x => !string.IsNullOrEmpty(x)));
+        var all = rows.Select(Facts).Distinct().ToList();
+        return all.Count == 1 ? all[0] : null;
+    }
+
     /// <summary>The DNS presets as one choice: only one can be in use, so a list of switches said the wrong thing.</summary>
     public ObservableCollection<DnsChoice> DnsChoices { get; } = [];
 
@@ -342,6 +356,8 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         foreach (var t in Owner.CatalogItems(t => t.Id.StartsWith("nvidia.", StringComparison.Ordinal))) GpuTweaks.Add(t);
         HasNvidia = Owner.Profile?.Gpus?.Any(g => g.Vendor == Optimizer.Core.Hardware.Vendor.Nvidia) == true;
         ShowCurrentDnsAsync().Forget("current DNS servers");
+        GameProfilesFacts = SharedFacts(GameProfiles);
+        DeviceFacts = SharedFacts(DeviceTweaks);
         OnPropertyChanged(nameof(ShowDeviceTweaks));
         OnPropertyChanged(nameof(GameProfilesEmpty));
     }
@@ -358,7 +374,23 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         {
             servers = [];
         }
-        CurrentDns = servers.Count == 0 ? Loc.Instance["Net_NoDns"] : string.Join(", ", servers);
+        // The router's own address (or a link-local one) means nothing to most people: "Your router", the addresses in the tooltip.
+        var detail = string.Join(", ", servers);
+        CurrentDns = servers.Count == 0 ? Loc.Instance["Net_NoDns"]
+            : servers.All(IsLocal) ? Loc.Instance.Format("Net_DnsRouter", string.Join(", ", servers.Where(s => !s.IsIPv6LinkLocal)))
+            : detail;
+        CurrentDnsDetail = detail;
+    }
+
+    [ObservableProperty] private string? _currentDnsDetail;
+
+    /// <summary>An address in the home network: private IPv4 ranges, link-local or unique-local IPv6.</summary>
+    private static bool IsLocal(System.Net.IPAddress a)
+    {
+        if (a.IsIPv6LinkLocal || a.IsIPv6UniqueLocal || a.IsIPv6SiteLocal) return true;
+        if (a.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return false;
+        var b = a.GetAddressBytes();
+        return b[0] == 10 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168);
     }
 
     private string? _fastestPresetId;
@@ -423,6 +455,9 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     public Optimizer.Core.Debloat.DebloatItem Item { get; } = item;
     public string Name { get; } = item.Entry.Label(lang);
     public string PackageName => Item.Installed.Name;
+
+    /// <summary>"Remove Camera": what a screen reader says for the button (each row has one).</summary>
+    public string RemoveLabel => Optimizer.App.Services.Loc.Instance.Format("Debloat_RemoveName", Name);
     public string Text { get; } = item.Entry.Text(lang);
     public string Version => Item.Installed.Version;
     public string Group { get; } = Labels.Current.Get(lang, $"debloatGroup.{item.Entry.Group}");
@@ -431,6 +466,16 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     // shows reasons that belong to this app.
     public string? BlockText { get; } = item.BlockKey is { } k ? Labels.Current.Get(lang, k) : null;
     public bool CanRemove => BlockText is null && elevated;
+}
+
+/// <summary>An installed package the reviewed list does not cover: its package name is all the app knows about it.</summary>
+public sealed record UnreviewedRow(Optimizer.Core.Debloat.InstalledAppx App, bool CanRemove)
+{
+    public string Name => App.Name;
+    public string Meta => Loc.Instance.Format("Debloat_UnreviewedMeta", App.Version);
+
+    // What screen readers announce for this item in a list.
+    public override string ToString() => Name;
 }
 
 public sealed record RemovedRow(string Name, string When, string? StoreLink)
@@ -448,6 +493,21 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     public ObservableCollection<DebloatItem> Items { get; } = [];
     public ObservableCollection<RemovedRow> Removed { get; } = [];
 
+    /// <summary>Apps the reviewed list does not cover (DebloatService.Unreviewed), shown only when the switch is on.</summary>
+    public ObservableCollection<UnreviewedRow> Unreviewed { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UnreviewedEmpty))]
+    private bool _showUnreviewed;
+
+    partial void OnShowUnreviewedChanged(bool value)
+    {
+        if (_data is not null) ShowUnreviewedRows(_data);
+    }
+
+    /// <summary>The switch is on and nothing beyond the reviewed list can be removed.</summary>
+    public bool UnreviewedEmpty => ShowUnreviewed && !IsLoading && Unreviewed.Count == 0;
+
     [ObservableProperty] private string _oneDriveText = "";
     [ObservableProperty] private string? _oneDriveBlock;
     [ObservableProperty] private string? _cameBackText;
@@ -456,14 +516,19 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
 
     public bool ItemsEmpty => !IsLoading && Items.Count == 0;
 
-    protected override void LoadingChanged() => OnPropertyChanged(nameof(ItemsEmpty));
+    protected override void LoadingChanged()
+    {
+        OnPropertyChanged(nameof(ItemsEmpty));
+        OnPropertyChanged(nameof(UnreviewedEmpty));
+    }
     public bool RemovedEmpty => Removed.Count == 0;
 
     private sealed record DebloatData(
         IReadOnlyList<Optimizer.Core.Debloat.DebloatItem> Offered,
         IReadOnlyList<Optimizer.Core.Debloat.RemovedApp> Removed,
         Optimizer.Core.Debloat.OneDriveState OneDrive,
-        IReadOnlyList<Optimizer.Core.Debloat.RemovedApp> CameBack);
+        IReadOnlyList<Optimizer.Core.Debloat.RemovedApp> CameBack,
+        IReadOnlyList<Optimizer.Core.Debloat.InstalledAppx> Unreviewed);
 
     private DebloatData? _data;
 
@@ -478,7 +543,8 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
             var offer = profile is null ? [] : Optimizer.Core.Debloat.DebloatService.Offer(Optimizer.Core.Catalog.CatalogData.Current.Appx, installed, profile, Optimizer.Core.Catalog.CatalogData.Current);
             var state = Optimizer.Core.Debloat.OneDrive.Read(services.Context.Registry, services.ProfilePath);
             var removedList = service.Removed();
-            return new DebloatData(offer, removedList, state, Optimizer.Core.Debloat.DebloatService.CameBack(removedList, installed));
+            return new DebloatData(offer, removedList, state, Optimizer.Core.Debloat.DebloatService.CameBack(removedList, installed),
+                Optimizer.Core.Debloat.DebloatService.Unreviewed(Optimizer.Core.Catalog.CatalogData.Current.Appx, installed));
         });
         Show(_data);
     }
@@ -495,7 +561,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     {
         var lang = Lang;
         var elevated = services.Elevation.IsElevated;
-        var (offered, removed, oneDrive, cameBack) = data;
+        var (offered, removed, oneDrive, cameBack, _) = data;
         Items.Clear();
         foreach (var i in offered.OrderBy(i => i.Entry.Group).ThenBy(i => i.Entry.Label(lang))) Items.Add(new DebloatItem(i, lang, elevated));
         _cameBack = cameBack.Select(r => r.Name).ToList();
@@ -515,6 +581,33 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
             : Loc.Instance["Debloat_OneDriveMissing"];
         OnPropertyChanged(nameof(ItemsEmpty));
         OnPropertyChanged(nameof(RemovedEmpty));
+        ShowUnreviewedRows(data);
+    }
+
+    private void ShowUnreviewedRows(DebloatData data)
+    {
+        Unreviewed.Clear();
+        if (ShowUnreviewed)
+            foreach (var app in data.Unreviewed) Unreviewed.Add(new UnreviewedRow(app, services.Elevation.IsElevated));
+        OnPropertyChanged(nameof(UnreviewedEmpty));
+        // The search finds what the page lists: the reviewed apps, and the unreviewed ones while the switch shows them.
+        services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.DebloatApp,
+            Items.Select(i => ("Debloat", i.PackageName, i.Name, i.Text)).Concat(Unreviewed.Select(u => ("Debloat", u.Name, u.Name, u.Meta))));
+    }
+
+    /// <summary>An app nobody reviewed: its own warning in the confirmation, removed like a reviewed one (all users, no Store link).</summary>
+    [RelayCommand]
+    private async Task RemoveUnreviewedAsync(UnreviewedRow? row)
+    {
+        if (row is null || !row.CanRemove) return;
+        if (!dialogs.Ask(Loc.Instance.Format("Debloat_ConfirmTitle", row.Name), Loc.Instance.Format("Debloat_UnreviewedConfirm", row.Name), Loc.Instance["Debloat_Remove"])) return;
+        await RunWorkAsync($"remove unreviewed {row.Name}", async () =>
+        {
+            var error = await Task.Run(() => Service.Remove(row.App));
+            Owner.ShowResult(error is null ? Loc.Instance.Format("Debloat_Removed", row.Name) : Loc.Instance.Format("Result_Error", error),
+                error is null ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Error);
+        });
+        await ReloadAsync();
     }
 
     [RelayCommand]
@@ -597,7 +690,19 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     /// The exact folders (with the file pattern where only some files go, like thumbcache_*.db): the ones found on this
     /// PC once measured, every place the category looks before that or when none of them exists.
     /// </summary>
-    [ObservableProperty] private string _foldersText = FoldersOf(category, category.Roots);
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FoldersShort))]
+    private string _foldersText = FoldersOf(category, category.Roots);
+
+    /// <summary>The first folder and how many more (all of them in the tooltip): six browser cache paths are one line.</summary>
+    public string FoldersShort
+    {
+        get
+        {
+            var lines = FoldersText.Split('\n');
+            return lines.Length <= 1 ? FoldersText : lines[0] + "\n" + Loc.Instance.Format("Cleanup_MoreFolders", lines.Length - 1);
+        }
+    }
 
     public void SetScan(Optimizer.Core.Cleanup.CleanupScan scan)
     {
@@ -648,6 +753,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         // The folders are measured side by side; each row shows its size as soon as it is known.
         await Task.WhenAll(rows.Select(async row => row.SetScan(await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Scan(row.Category)))));
         UpdateTotal();
+        UpdateEmptyText();
     }
 
     // A language switch builds the rows again with the sizes already measured.
@@ -658,7 +764,17 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         var rows = BuildRows(Rows.Select(r => r.Category).ToList());
         for (var i = 0; i < rows.Count; i++) rows[i].SetScan(scans[i]);
         UpdateTotal();
+        UpdateEmptyText();
         return Task.CompletedTask;
+    }
+
+    /// <summary>"Nothing to clean in: Windows Update downloads, Windows error reports": the empty categories in one line.</summary>
+    [ObservableProperty] private string? _emptyText;
+
+    private void UpdateEmptyText()
+    {
+        var empty = Rows.Where(r => r.IsEmpty).Select(r => r.Title).ToList();
+        EmptyText = empty.Count == 0 ? null : Loc.Instance.Format("Cleanup_EmptyList", string.Join(", ", empty));
     }
 
     /// <summary>New rows in the current language; a row the user ticked or cleared keeps that choice (also after cleaning).</summary>

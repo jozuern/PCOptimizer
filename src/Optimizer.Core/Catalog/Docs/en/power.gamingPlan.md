@@ -1,7 +1,7 @@
 # Gaming power plan (based on High performance)
 
 ## Summary
-Creates the plan "PCOptimizer Gaming" as a copy of High performance and activates it. Clocks stay higher between bursts of load.
+Creates the plan "Tunero Gaming" as a copy of High performance and activates it. Clocks stay higher between bursts of load.
 
 ## How it works
 The app copies the built-in High performance plan, names the copy and makes it active. Microsoft describes High performance as delivering maximum performance at the expense of higher power consumption [1]. On mains power, its Windows defaults keep the minimum processor state at 100 % instead of the 5 % of Balanced, so the clock stays high even at light load [2]. Your other plans are not changed.

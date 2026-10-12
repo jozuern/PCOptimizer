@@ -1,7 +1,7 @@
 # Gaming-Energiesparplan (auf Basis von „Höchstleistung“)
 
 ## Zusammenfassung
-Legt den Plan „PCOptimizer Gaming“ als Kopie von „Höchstleistung“ an und aktiviert ihn. Der Takt bleibt zwischen Lastspitzen höher.
+Legt den Plan „Tunero Gaming“ als Kopie von „Höchstleistung“ an und aktiviert ihn. Der Takt bleibt zwischen Lastspitzen höher.
 
 ## So funktioniert es
 Die App kopiert den eingebauten Plan „Höchstleistung“, benennt die Kopie und aktiviert sie. Microsoft beschreibt „Höchstleistung“ als Plan mit maximaler Leistung auf Kosten eines höheren Stromverbrauchs [1]. Im Netzbetrieb hält er laut Windows-Standardwerten den minimalen Leistungszustand des Prozessors bei 100 % statt bei 5 % wie „Ausbalanciert“, der Takt bleibt also auch bei wenig Last hoch [2]. Deine anderen Pläne bleiben unverändert.

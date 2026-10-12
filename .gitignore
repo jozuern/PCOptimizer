@@ -489,3 +489,6 @@ artifacts/
 
 # Local audit notes
 .audit/
+
+# Feature reference of other tweak tools: kept locally, not published
+docs/Windows_Optimizer_Tools_Feature_Reference.md

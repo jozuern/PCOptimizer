@@ -15,7 +15,7 @@ public static class SingleFileRuntime
     /// Set for the second start, so a failed redirect can never loop. It only breaks the loop: the decision itself
     /// depends on the real extraction folder, because any program of the signed-in user can set this variable too.
     /// </summary>
-    public const string RestartedVariable = "PCOPTIMIZER_RUNTIME_RESTARTED";
+    public const string RestartedVariable = "TUNERO_RUNTIME_RESTARTED";
 
     public static string ExtractBase(string dataRoot) => Path.Combine(dataRoot, Path.GetFileName(DataPaths.Runtime));
 

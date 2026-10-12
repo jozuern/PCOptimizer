@@ -1,7 +1,7 @@
 # Removed tweak
 
 ## Summary
-An earlier version of PCOptimizer made this change. The tweak is no longer offered. Undo puts back the values from before the change.
+An earlier version of Tunero made this change. The tweak is no longer offered. Undo puts back the values from before the change.
 
 ## How it works
 The backup of this change keeps every original value and the exact step that changed it. Undo uses that backup, so it works although the tweak is gone from the list.
@@ -19,4 +19,4 @@ None from undoing it. Values that Windows has changed since are left alone.
 Keep the change only if you know you want it; the app no longer checks whether it is still in place.
 
 ## Sources
-1. https://github.com/jozuern/PCOptimizer/blob/main/docs/not-included.md
+1. https://github.com/jozuern/Tunero/blob/main/docs/not-included.md

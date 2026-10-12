@@ -7,16 +7,19 @@ namespace Optimizer.Core.Tests;
 /// <summary>The app runs as administrator: links, downloads and files in user-writable places must not be trusted blindly.</summary>
 public class SecurityTests
 {
-    private const string Download = "https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/";
+    private const string Download = "https://github.com/jozuern/Tunero/releases/download/v1.0.0/";
 
     [Theory]
-    [InlineData(Download + "PCOptimizer.exe", true)]
-    [InlineData(Download + "../../../../evil/repo/releases/download/v1.0.0/PCOptimizer.exe", false)]
-    [InlineData(Download + "%2e%2e/%2e%2e/PCOptimizer.exe", false)]
-    [InlineData(Download + "PCOptimizer.exe?x=1", false)]
-    [InlineData(Download + "PCOptimizer.exe#x", false)]
-    [InlineData("http://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/PCOptimizer.exe", false)]
-    [InlineData("https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0\\..\\PCOptimizer.exe", false)]
+    [InlineData(Download + "Tunero.exe", true)]
+    [InlineData("https://github.com/jozuern/PCOptimizer/releases/download/v1.0.0/PCOptimizer.exe", true)]
+    [InlineData("https://github.com/jozuern/PCOptimizerX/releases/download/v1.0.0/Tunero.exe", false)]
+    [InlineData("https://github.com/someone/Tunero/releases/download/v1.0.0/Tunero.exe", false)]
+    [InlineData(Download + "../../../../evil/repo/releases/download/v1.0.0/Tunero.exe", false)]
+    [InlineData(Download + "%2e%2e/%2e%2e/Tunero.exe", false)]
+    [InlineData(Download + "Tunero.exe?x=1", false)]
+    [InlineData(Download + "Tunero.exe#x", false)]
+    [InlineData("http://github.com/jozuern/Tunero/releases/download/v1.0.0/Tunero.exe", false)]
+    [InlineData("https://github.com/jozuern/Tunero/releases/download/v1.0.0\\..\\Tunero.exe", false)]
     public void ReleaseDownloadsMustStayInThisRepository(string url, bool expected) =>
         Assert.Equal(expected, ReleaseCheck.IsReleaseDownload(url));
 
@@ -25,8 +28,8 @@ public class SecurityTests
     {
         var json = $$"""
             {"tag_name":"v1.0.0","assets":[
-              {"name":"PCOptimizer.exe","browser_download_url":"{{Download}}../../../../evil/x/releases/download/v1/PCOptimizer.exe"},
-              {"name":"PCOptimizer.exe.sha256","browser_download_url":"{{Download}}PCOptimizer.exe.sha256"}]}
+              {"name":"Tunero.exe","browser_download_url":"{{Download}}../../../../evil/x/releases/download/v1/Tunero.exe"},
+              {"name":"Tunero.exe.sha256","browser_download_url":"{{Download}}Tunero.exe.sha256"}]}
             """;
         Assert.Null(ReleaseCheck.Evaluate(new Version(0, 3, 0), json).Assets);
     }
@@ -38,7 +41,7 @@ public class SecurityTests
         Directory.CreateDirectory(folder);
         try
         {
-            var exe = Path.Combine(folder, "PCOptimizer.exe");
+            var exe = Path.Combine(folder, "Tunero.exe");
             File.WriteAllText(exe, "new exe");
             var hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(exe)));
 
@@ -315,7 +318,7 @@ public class SecurityTests
         }
     }
 
-    private const string ProtectedRuntime = @"C:\ProgramData\PCOptimizer\runtime";
+    private const string ProtectedRuntime = @"C:\ProgramData\Tunero\runtime";
 
     [Theory]
     [InlineData(true, null, false, false, RuntimeStart.Restart)]
@@ -342,8 +345,8 @@ public class SecurityTests
     public void OnlyExtractionFoldersInsideTheDataFolderAreTrusted()
     {
         var list = SingleFileRuntime.TrustedFolders(
-            @"C:\ProgramData\PCOptimizer\runtime\PCOptimizer\abc123\;C:\Users\me\Downloads\;C:\ProgramData\PCOptimizer\runtime-evil\x;relative\path",
-            @"C:\ProgramData\PCOptimizer\runtime");
-        Assert.Equal([@"C:\ProgramData\PCOptimizer\runtime\PCOptimizer\abc123"], list);
+            @"C:\ProgramData\Tunero\runtime\Tunero\abc123\;C:\Users\me\Downloads\;C:\ProgramData\Tunero\runtime-evil\x;relative\path",
+            @"C:\ProgramData\Tunero\runtime");
+        Assert.Equal([@"C:\ProgramData\Tunero\runtime\Tunero\abc123"], list);
     }
 }

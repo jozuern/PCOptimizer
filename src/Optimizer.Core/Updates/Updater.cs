@@ -27,7 +27,7 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
     public async Task<UpdateDownload> DownloadAsync(ReleaseCheckResult release, string folder, IProgress<int>? progress = null, CancellationToken ct = default)
     {
         if (release.Assets is not { } assets || release.Latest is not { } version || _key is null) return new(UpdateOutcome.NoAssets);
-        var target = Path.Combine(folder, $"PCOptimizer-{version.ToString(3)}.exe");
+        var target = Path.Combine(folder, $"Tunero-{version.ToString(3)}.exe");
         var partial = target + ".partial";
         try
         {
@@ -72,7 +72,7 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
         }
     }
 
-    /// <summary>"&lt;64 hex&gt;  PCOptimizer.exe" (sha256sum format) or just the hash.</summary>
+    /// <summary>"&lt;64 hex&gt;  Tunero.exe" (sha256sum format) or just the hash.</summary>
     public static string? ParseChecksum(string text) =>
         ChecksumRegex().Match(text) is { Success: true } m ? m.Groups[1].Value : null;
 
@@ -152,7 +152,7 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
         try
         {
             if (Directory.Exists(folder))
-                foreach (var file in Directory.EnumerateFiles(folder, "PCOptimizer-*.exe*")) TryDelete(file);
+                foreach (var file in Directory.EnumerateFiles(folder, "Tunero-*.exe*").Concat(Directory.EnumerateFiles(folder, "PCOptimizer-*.exe*"))) TryDelete(file);
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
@@ -169,7 +169,7 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
     private static HttpRequestMessage Request(string url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("PCOptimizer", "update"));
+        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Tunero", "update"));
         return request;
     }
 

@@ -15,24 +15,22 @@ public partial class SettingsPage : UserControl
         {
             _loading = true;
             var theme = (Application.Current as App)?.ThemeSetting ?? "System";
-            ThemeSystem.IsChecked = theme == "System";
-            ThemeLight.IsChecked = theme == "Light";
-            ThemeDark.IsChecked = theme == "Dark";
+            ThemeBox.SelectedIndex = theme switch { "Light" => 1, "Dark" => 2, _ => 0 };
+            LanguageBox.SelectedIndex = Services.Loc.Instance.Language == "de" ? 1 : 0;
             _loading = false;
         };
     }
 
-    private void Theme_Checked(object sender, RoutedEventArgs e)
+    private void Theme_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (_loading || sender is not RadioButton { Tag: string theme }) return;
+        if (_loading || ThemeBox.SelectedItem is not ComboBoxItem { Tag: string theme }) return;
         (Application.Current as App)?.ApplyTheme(theme);
     }
 
-    // Checked, not Command: a screen reader's select action and the arrow keys check a radio button without clicking it.
-    // The binding checks the button of the current language too, which must not switch again.
-    private void Language_Checked(object sender, RoutedEventArgs e)
+    // Selecting the language that is already on (when the page loads) must not switch again.
+    private void Language_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not RadioButton { Tag: string lang } || DataContext is not MainViewModel vm) return;
+        if (_loading || LanguageBox.SelectedItem is not ComboBoxItem { Tag: string lang } || DataContext is not MainViewModel vm) return;
         if (lang != Services.Loc.Instance.Language) vm.SetLanguageCommand.Execute(lang);
     }
 

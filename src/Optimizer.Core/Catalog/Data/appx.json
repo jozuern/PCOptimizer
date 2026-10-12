@@ -1,5 +1,5 @@
 {
-  "_comment": "Removable inbox apps (allowlist). Only these are offered. guard: xbox = blocked while Xbox or Game Pass games are installed; xboxOrX3d = also on dual-CCD X3D CPUs. reinstall: store = still listed in the Microsoft Store (storeId = Store product id, checked with the Store catalog API, market US, 2026-10-10); none = Microsoft no longer offers it there or the listing is not confirmed. protected: names never offered; * matches a prefix; !name is an exception to a prefix (Edge Game Assist under Microsoft.Edge*).",
+  "_comment": "Removable inbox apps (allowlist). Only these are offered. guard: xbox = blocked while Xbox or Game Pass games are installed; xboxOrX3d = also on dual-CCD X3D CPUs. reinstall: store = still listed in the Microsoft Store (storeId = Store product id, checked with the Store catalog API, market US, 2026-10-10); none = Microsoft no longer offers it there or the listing is not confirmed. protected: names never offered; * matches a prefix; !name is an exception to a prefix (Edge Game Assist under Microsoft.Edge*). unreviewedExcluded: never offered among the apps that were not reviewed either (parts of Windows, language and handwriting packs, video and audio codecs, what games and the Store sign-in need); protected and non-removable packages are left out as well.",
   "apps": [
     {
       "name": "Microsoft.BingNews",
@@ -1399,5 +1399,32 @@
     "AppUp.Intel*",
     "RealtekSemiconductorCorp.*",
     "DolbyLaboratories.*"
+  ],
+  "unreviewedExcluded": [
+    "Microsoft.Windows.*",
+    "MicrosoftWindows.*",
+    "windows.*",
+    "Windows.*",
+    "Microsoft.Win32WebViewHost",
+    "Microsoft.ECApp",
+    "Microsoft.CredDialogHost",
+    "Microsoft.BioEnrollment",
+    "Microsoft.AsyncTextService",
+    "Microsoft.LanguageExperiencePack*",
+    "Microsoft.Ink.Handwriting*",
+    "Microsoft.MicrosoftEdgeDevToolsClient",
+    "Microsoft.SecureAssessmentBrowser",
+    "Microsoft.Winget.*",
+    "Microsoft.OneDriveSync",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.GamingServices",
+    "Microsoft.Xbox.TCUI",
+    "NcsiUwpApp",
+    "Microsoft.WindowsAppSDK*",
+    "Microsoft.DirectXRuntime",
+    "Microsoft.CommandPalette*",
+    "Microsoft.AVCEncoderVideoExtension",
+    "Microsoft.MPEG2VideoExtension",
+    "Microsoft.DolbyAudioExtensions"
   ]
 }

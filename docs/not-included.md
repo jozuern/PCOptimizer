@@ -1,6 +1,6 @@
 # Tweaks that are not included
 
-PCOptimizer only offers a tweak when the setting is documented and the evidence supports what it promises. This page lists popular tweaks that the app does not offer, or no longer offers, and why. If you applied one of the removed tweaks with an earlier version, it still shows on the Changes page as "Removed tweak" and Undo restores your original values.
+Tunero only offers a tweak when the setting is documented and the evidence supports what it promises. This page lists popular tweaks that the app does not offer, or no longer offers, and why. If you applied one of the removed tweaks with an earlier version, it still shows on the Changes page as "Removed tweak" and Undo restores your original values.
 
 Every source below was opened and checked for the claim it is cited for.
 

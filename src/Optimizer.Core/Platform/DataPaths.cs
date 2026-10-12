@@ -4,17 +4,49 @@ namespace Optimizer.Core.Platform;
 
 /// <summary>
 /// The app's data folder (backups, logs, settings, tools). Elevated, as every Release start is:
-/// %ProgramData%\PCOptimizer, locked to Administrators and SYSTEM. Not elevated (Debug builds, screenshots):
-/// %LocalAppData%\PCOptimizer, because the locked folder cannot even be listed then, and a process without admin
+/// %ProgramData%\Tunero, locked to Administrators and SYSTEM. Not elevated (Debug builds, screenshots):
+/// %LocalAppData%\Tunero, because the locked folder cannot even be listed then, and a process without admin
 /// rights cannot apply anything anyway.
 /// </summary>
 public static class DataPaths
 {
     public static bool ProcessIsElevated { get; } = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 
-    public static string Root { get; } = Path.Combine(
-        Environment.GetFolderPath(ProcessIsElevated ? Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData),
-        "PCOptimizer");
+    public const string FolderName = "Tunero";
+
+    /// <summary>The folder's name up to 0.7.3, when the app was called PCOptimizer.</summary>
+    public const string LegacyFolderName = "PCOptimizer";
+
+    /// <summary>The old folder when this start moved it to <see cref="Root"/> (logged once the log is open), else null.</summary>
+    public static string? MovedFrom { get; private set; }
+
+    public static string Root { get; } = ResolveRoot(
+        Environment.GetFolderPath(ProcessIsElevated ? Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData));
+
+    /// <summary>
+    /// The data folder under <paramref name="baseFolder"/>. A folder from before the rename is moved to the new name once,
+    /// with its backups, so every change made by an older version can still be undone. The move is a rename on the same
+    /// drive and keeps the folder's permissions; the start secures the folder afterwards as always. A link put in place of
+    /// the old folder is not followed. When the move fails (an older version still runs and holds files), the old folder is
+    /// used until a later start can move it.
+    /// </summary>
+    public static string ResolveRoot(string baseFolder)
+    {
+        var root = Path.Combine(baseFolder, FolderName);
+        var legacy = Path.Combine(baseFolder, LegacyFolderName);
+        if (Directory.Exists(root) || !Directory.Exists(legacy)) return root;
+        try
+        {
+            if ((File.GetAttributes(legacy) & FileAttributes.ReparsePoint) != 0) return root;
+            Directory.Move(legacy, root);
+            MovedFrom = legacy;
+            return root;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return legacy;
+        }
+    }
 
     // Every place inside the data folder, named once (backups live in BackupStore, below Root).
     public static string Logs => Path.Combine(Root, "logs");

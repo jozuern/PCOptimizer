@@ -4,10 +4,10 @@ using Optimizer.Core.Backup;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Registry sandbox under HKCU\Software\PCOptimizerTest\&lt;guid&gt; with HKLM and HKU subtrees. Deleted on dispose.</summary>
+/// <summary>Registry sandbox under HKCU\Software\TuneroTest\&lt;guid&gt; with HKLM and HKU subtrees. Deleted on dispose.</summary>
 internal sealed class SandboxRegistry : IRegistryRoots, IDisposable
 {
-    private readonly string _root = $@"Software\PCOptimizerTest\{Guid.NewGuid():N}";
+    private readonly string _root = $@"Software\TuneroTest\{Guid.NewGuid():N}";
 
     public RegistryKey? Open(Hive hive, string path, bool writable, bool create = false)
     {

@@ -75,7 +75,7 @@ public static class DeElevatedLauncher
 
     private static bool TryTask(string target, string? arguments, string user)
     {
-        string? name = $"PCOptimizer-open-{Guid.NewGuid():N}";
+        string? name = $"Tunero-open-{Guid.NewGuid():N}";
         dynamic? folder = null;
         try
         {
@@ -155,7 +155,8 @@ public static class DeElevatedLauncher
         {
             var names = new List<string>();
             foreach (dynamic task in folder.GetTasks(1 /* TASK_ENUM_HIDDEN */)) names.Add((string)task.Name);
-            foreach (var name in names.Where(n => n.StartsWith("PCOptimizer-open-", StringComparison.OrdinalIgnoreCase)))
+            // "PCOptimizer-open-": the name before the app was renamed.
+            foreach (var name in names.Where(n => n.StartsWith("Tunero-open-", StringComparison.OrdinalIgnoreCase) || n.StartsWith("PCOptimizer-open-", StringComparison.OrdinalIgnoreCase)))
             {
                 lock (Pending)
                     if (Pending.Contains(name)) continue;

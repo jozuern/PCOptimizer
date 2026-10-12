@@ -29,7 +29,7 @@ public sealed partial class MainViewModel
                 ShowResult(Loc.Instance["Transfer_NothingToExport"]);
                 return;
             }
-            var name = $"PCOptimizer-{Environment.MachineName}-{DateTime.Now:yyyy-MM-dd}{ChangeTransfer.Extension}";
+            var name = $"Tunero-{Environment.MachineName}-{DateTime.Now:yyyy-MM-dd}{ChangeTransfer.Extension}";
             if (_dialogs.PickSaveFile(name, Loc.Instance["Transfer_FileType"], ChangeTransfer.Extension) is not { } path) return;
             await File.WriteAllTextAsync(path, ChangeTransfer.Serialize(file));
             Log.Info("transfer", "exported", new { tweaks = file.Tweaks.Count, priorities = file.Priorities.Count, pcSpecific });
@@ -45,7 +45,7 @@ public sealed partial class MainViewModel
     [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task ImportChangesAsync()
     {
-        if (_dialogs.PickOpenFile(Loc.Instance["Transfer_FileType"], ChangeTransfer.Extension) is not { } path) return;
+        if (_dialogs.PickOpenFile(Loc.Instance["Transfer_FileType"], ChangeTransfer.ImportPattern) is not { } path) return;
         TransferFile? file;
         try
         {

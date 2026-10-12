@@ -6,7 +6,7 @@ An installed anti-cheat ({{antiCheats}}) needs a security feature that is off on
 :::
 ::: status Info
 ::: variant sometimes
-All required features are on. {{antiCheats}} can ask for more in some games, modes or accounts, such as UEFI boot, Secure Boot, TPM 2.0, VBS, memory integrity or IOMMU. The details show what is off.
+All required features are on. {{antiCheats}} can ask for more in some games, modes or accounts, such as UEFI boot, Secure Boot, TPM 2.0, VBS, memory integrity or IOMMU. The details show each one.
 :::
 ::: variant baseline
 UEFI boot, Secure Boot or TPM 2.0 is missing. Games with strict anti-cheats (Valorant, FACEIT, Battlefield 6, Call of Duty) will not start.

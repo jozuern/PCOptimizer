@@ -56,13 +56,13 @@ jobs:
         global-json-file: global.json
 
     - name: Restore
-      run: dotnet restore PCOptimizer.sln --locked-mode
+      run: dotnet restore Tunero.sln --locked-mode
 
     - name: Build
-      run: dotnet build PCOptimizer.sln --configuration Release --no-restore
+      run: dotnet build Tunero.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test PCOptimizer.sln --configuration Release --no-build --filter "Category!=Hardware"
+      run: dotnet test Tunero.sln --configuration Release --no-build --filter "Category!=Hardware"
 
     - name: Publish single exe
       run: dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile
@@ -73,7 +73,7 @@ jobs:
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: release-exe
-        path: artifacts/publish/PCOptimizer.exe
+        path: artifacts/publish/Tunero.exe
         if-no-files-found: error
         retention-days: 3
 
@@ -116,7 +116,7 @@ jobs:
       with:
         api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
         organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-        project-slug: PCOptimizer
+        project-slug: Tunero
         signing-policy-slug: release-signing
         github-artifact-id: ${{ needs.build.outputs.artifact-id }}
         wait-for-completion: true
@@ -129,9 +129,9 @@ jobs:
       if: steps.sign.outcome == 'success'
       shell: pwsh
       run: |
-        $signature = Get-AuthenticodeSignature signed/PCOptimizer.exe
+        $signature = Get-AuthenticodeSignature signed/Tunero.exe
         if ($signature.Status -ne 'Valid') { Write-Error "SignPath returned an exe without a valid signature: $($signature.Status)"; exit 1 }
-        Move-Item signed/PCOptimizer.exe release/PCOptimizer.exe -Force
+        Move-Item signed/Tunero.exe release/Tunero.exe -Force
         "Signed by: $($signature.SignerCertificate.Subject)" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     # Only the public key the app checks updates with (no project code runs in this job).
@@ -149,8 +149,8 @@ jobs:
         UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
       run: |
         if (-not $env:UPDATE_SIGNING_KEY) { Write-Error "The UPDATE_SIGNING_KEY secret is missing (scripts/new-update-key.ps1)"; exit 1 }
-        $hash = (Get-FileHash release/PCOptimizer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-        "$hash  PCOptimizer.exe" | Set-Content -Encoding ascii release/PCOptimizer.exe.sha256
+        $hash = (Get-FileHash release/Tunero.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  Tunero.exe" | Set-Content -Encoding ascii release/Tunero.exe.sha256
         # Same statement as UpdateSignature.Statement: "PCOptimizer <version>\n<sha256>\n", signed with ECDSA P-256 and SHA-256.
         $version = $env:TAG.TrimStart('v')
         $statement = [System.Text.Encoding]::UTF8.GetBytes("PCOptimizer $version`n$hash`n")
@@ -167,7 +167,12 @@ jobs:
             Write-Error "The signature does not match src/Optimizer.Core/Updates/update-key.pem: UPDATE_SIGNING_KEY is not the app's key"; exit 1
           }
         } finally { $public.Dispose() }
-        [Convert]::ToBase64String($signature) | Set-Content -Encoding ascii release/PCOptimizer.exe.sig
+        [Convert]::ToBase64String($signature) | Set-Content -Encoding ascii release/Tunero.exe.sig
+        # The same exe under the app's old name, for installed versions up to 0.7.3: they look for PCOptimizer.exe and its
+        # .sha256 and .sig. The signature covers the version and the hash, not the file name, so it is the same file.
+        Copy-Item release/Tunero.exe release/PCOptimizer.exe
+        "$hash  PCOptimizer.exe" | Set-Content -Encoding ascii release/PCOptimizer.exe.sha256
+        Copy-Item release/Tunero.exe.sig release/PCOptimizer.exe.sig
         "SHA-256: $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     - name: Draft release
@@ -175,4 +180,4 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release create $env:TAG release/PCOptimizer.exe release/PCOptimizer.exe.sha256 release/PCOptimizer.exe.sig --draft --verify-tag --title "PCOptimizer $env:TAG" --generate-notes
+      run: gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig release/PCOptimizer.exe release/PCOptimizer.exe.sha256 release/PCOptimizer.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --generate-notes

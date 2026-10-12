@@ -25,12 +25,12 @@ public static class HardwareReport
         [
             f.I("version", $"Windows 11 {p.Os.DisplayVersion}"), f.I("edition", p.Os.Edition), f.I("build", p.Os.BuildString),
             f.I("architecture", p.Os.NativeArchitecture), f.I("formFactor", f.T(p.IsLaptop ? "laptop" : "desktop")),
-            f.I("elevated", p.Elevation?.IsElevated), f.I("managed", p.Managed?.IsManaged),
         ])
         {
             Icon = SymbolRegular.Window24,
             Technical =
             [
+                f.I("elevated", p.Elevation?.IsElevated), f.I("managed", p.Managed?.IsManaged),
                 f.I("insider", p.Os.FlightingActive), f.I("processUser", p.Elevation?.ProcessUser), f.I("sessionUser", p.Elevation?.SessionUser),
                 f.I("adminProtection", p.Elevation?.AdministratorProtection), f.I("hypervisor", p.System?.HypervisorPresent),
             ],
@@ -41,7 +41,7 @@ public static class HardwareReport
             sections.Add(new HwSection(l["Hw_Cpu"],
             [
                 f.I("name", c.Name), f.I("vendor", VendorName(c.Vendor)), f.I("coresThreads", f.F("coresThreadsValue", c.Cores, c.Threads)),
-                f.I("maxClock", c.MaxClockMhz > 0 ? $"{c.MaxClockMhz} MHz" : null), f.I("socket", c.Socket),
+                f.I("socket", c.Socket),
                 f.I("l3", c.L3Domains.Count == 0 ? null : string.Join(" + ", c.L3Domains.Select(d => $"{d.SizeBytes >> 20} MB"))),
                 .. c.IsHybrid
                     ? (SummaryItem[])[f.I("hybrid", string.Join(", ", c.CoresByEfficiencyClass.Select(kv => f.F("efficiencyClass", kv.Key, kv.Value)))), f.I("performanceCores", c.PerformanceCores)]
@@ -51,6 +51,7 @@ public static class HardwareReport
                 Icon = SymbolRegular.DeveloperBoard24,
                 Technical =
                 [
+                    f.I("maxClock", c.MaxClockMhz > 0 ? $"{c.MaxClockMhz} MHz" : null),
                     f.I("familyModel", $"{c.Family} / {c.Model} (0x{c.Model:X}) / {c.Stepping}"),
                     f.I("microcodeRunning", c.MicrocodeCurrent is { } m1 ? $"0x{m1:X}" : null),
                     f.I("microcodeBios", c.MicrocodeBios is { } m2 ? $"0x{m2:X} ({c.MicrocodeSource})" : null),

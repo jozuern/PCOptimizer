@@ -6,14 +6,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>PCOptimizer</AssemblyName>
+    <AssemblyName>Tunero</AssemblyName>
     <RootNamespace>Optimizer.App</RootNamespace>
     <!-- Program.Main secures the data folder and native library loading before WPF starts. -->
     <StartupObject>Optimizer.App.Program</StartupObject>
     <!-- DOTNET_STARTUP_HOOKS from the user's environment would run code in the elevated app before Main. -->
     <StartupHookSupport>false</StartupHookSupport>
-    <Version>0.7.3</Version>
-    <Product>PCOptimizer</Product>
+    <Version>0.7.4</Version>
+    <Product>Tunero</Product>
     <Authors>Joshua Zürn</Authors>
     <Company>Joshua Zürn</Company>
     <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
@@ -37,7 +37,7 @@
   <!-- License texts shown under Settings > About (MIT, BSD, MPL and Apache require them to ship with the exe). -->
   <ItemGroup>
     <EmbeddedResource Include="Licenses\*.txt;Licenses\licenses.json" LogicalName="Licenses.%(Filename)%(Extension)" />
-    <EmbeddedResource Include="..\..\LICENSE" LogicalName="Licenses.PCOptimizer.txt" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="Licenses.Tunero.txt" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ using Wpf.Ui.Controls;
 
 namespace Optimizer.App.Views;
 
-/// <summary>PCOptimizer's own license and the license texts of every shipped component.</summary>
+/// <summary>Tunero's own license and the license texts of every shipped component.</summary>
 public partial class LicensesWindow : FluentWindow
 {
     private readonly Action<string> _openLink;

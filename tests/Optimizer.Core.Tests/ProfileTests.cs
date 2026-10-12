@@ -185,6 +185,10 @@ public class ProfileTests
         // Missing admin rights alone do not hide the fix (applying then asks for them).
         var notElevated = blocked with { Blocks = [new Block("block.notElevated")] };
         Assert.True(ProfileView.For(gaming, notElevated, new Facts()).CanFix("F6.turbo"));
+        // Such a fix is not in the one-click plan, but it is named as left out, with the reason.
+        var plan = Recommendations.Build([ProfileView.For(gaming, notElevated, new Facts())], ProfileView.Findings(gaming, [F("F6.turbo", impact: 3)]));
+        Assert.Empty(plan.Items);
+        Assert.Equal("block.notElevated", Assert.Single(plan.Excluded).Blocked?.ReasonKey);
     }
 
     [Fact]

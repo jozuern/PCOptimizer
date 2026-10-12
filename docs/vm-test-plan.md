@@ -8,9 +8,9 @@ The tweak tables in sections 2 to 5 are generated from the catalog: after a cata
 
 1. Hyper-V VM, generation 2, Windows 11 24H2 or newer x64 (Pro or Home), Secure Boot and virtual TPM on, 2 or more virtual processors, 16 GB memory (`memory.compressionOff` applies from 16 GB), 80 GB disk. Use an unmodified Microsoft ISO: debloated images change the starting state the tests compare against. See [Creating the VM](#creating-the-vm).
 2. Install all Windows updates, sign in with a local administrator account, install Steam or another launcher so game library checks have something to find.
-3. Copy the Release exe (`dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile`, then `artifacts/publish/PCOptimizer.exe`) into the VM.
+3. Copy the Release exe (`dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile`, then `artifacts/publish/Tunero.exe`) into the VM.
 4. Take a checkpoint named **clean**. Go back to it whenever a test leaves the VM in a state you do not trust.
-5. Keep `%ProgramData%\PCOptimizer\logs` open: every apply, verify and undo is logged there. Attach the log to any bug report.
+5. Keep `%ProgramData%\Tunero\logs` open: every apply, verify and undo is logged there. Attach the log to any bug report.
 6. The app recognizes the VM and leaves out the advice about physical hardware (memory channels and speed, BIOS age, Resizable BAR, PCIe and NVMe links, drive health, microcode): those checks are tested with simulated hardware in the unit tests and on real PCs.
 
 For each tweak: apply it alone, check that the state shows **On** and that the change is really there (Settings, regedit, `powercfg /q`, `sc qc`, `schtasks /query`, `bcdedit`), restart or sign out where the table says so, then **Undo** on the Changes page and check that the original value is back. Write OK or the problem into the Result column.
@@ -36,7 +36,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 1. Open **Hyper-V Manager**, double-click the VM, click **Start** and press a key at "Press any key to boot from CD or DVD". If you miss it, the VM shows a boot error: use **Action > Reset** and try again.
 2. Install Windows. For a local account, press Shift+F10 on the network or account screen and run `start ms-cxh:localonly`. If newer builds remove that route, sign in with a Microsoft account, add a local account in Settings > Accounts > Other users ("Add a user without a Microsoft account"), make it an administrator, and use only that account. Give it a password: the enhanced session (shared clipboard, window resizing) needs one.
 3. An unactivated Windows works for these tests, but Settings > Personalization is locked; check those values in regedit instead.
-4. Copy the exe from the host: `Copy-VMFile -Name PCO-Test -SourcePath artifacts\publish\PCOptimizer.exe -DestinationPath C:\Test\PCOptimizer.exe -CreateFullPath -FileSource Host` (the VM must be running), or copy and paste the file in an enhanced session.
+4. Copy the exe from the host: `Copy-VMFile -Name PCO-Test -SourcePath artifacts\publish\Tunero.exe -DestinationPath C:\Test\Tunero.exe -CreateFullPath -FileSource Host` (the VM must be running), or copy and paste the file in an enhanced session.
 5. Checkpoints: `Checkpoint-VM -Name PCO-Test -SnapshotName clean` to take one, `Restore-VMCheckpoint -VMName PCO-Test -Name clean -Confirm:$false` to go back (or right-click the VM or the checkpoint in Hyper-V Manager). Production checkpoints do not keep the running state: after a restore the VM is off and starts fresh.
 
 ## 1. General flow
@@ -58,7 +58,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 219 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 222 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -235,6 +235,9 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `background.oneDriveSyncOff` | OneDrive file sync off | moderate |  | registry | |
 | `updates.featureUpdatesDeferred` | Feature updates one year later | safe |  | registry | |
 | `updates.storeAutoUpdateOff` | Microsoft Store: no automatic app updates | moderate |  | registry | |
+| `updates.activeHoursEvening` | No update restarts from 8 AM to 2 AM | safe |  | registry | |
+| `updates.restartWhenYouChoose` | Update restarts when you choose, for up to a week | moderate |  | registry | |
+| `updates.qualityUpdatesWeekLater` | Monthly updates one week later | moderate |  | registry | |
 | `storage.appArchivingOff` | No automatic archiving of unused apps | safe |  | registry | |
 | `focus.updateNotificationsReduced` | Fewer Windows Update notifications | safe |  | registry | |
 | `focus.toastsOff` | No pop-up notifications from apps | safe |  | registry | |
@@ -331,7 +334,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Services | Change one explained service to Manual, restart, undo | |
 | Scheduled tasks | Turn one task off and on again | |
 | Windows features | Turn one optional feature on, restart, turn it off again | |
-| Debloat | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |
+| Remove apps | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |
 | OneDrive | With Known Folder Move on: uninstall is blocked; without: uninstall works | |
 | Cleanup | Each of the 12 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
 | Storage analyzer | Delete one duplicate: it goes to the Recycle Bin; Windows and program folders cannot be selected | |
@@ -347,12 +350,13 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |
 | Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
 | Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |
-| Start menu entry | First start of the published exe: the question appears once; "Add to Start menu" creates `PCOptimizer.lnk` in the signed-in user's Start menu and Windows Search finds PCOptimizer; the switch in Settings removes and adds it; the question does not come back on the next start | |
-| winget install and update | `winget install --manifest <folder>` with the manifest of the previous release (LocalManifestFiles on), start with `pcoptimizer`, Update now: the app closes, a PowerShell window runs `winget upgrade`, the app starts again after the UAC prompt and shows the new version; `winget list jozuern.PCOptimizer` shows it too. Before the new version is in winget: the window says so and waits for Enter, then the old version starts | |
+| Start menu entry | First start of the published exe: the question appears once; "Add to Start menu" creates `Tunero.lnk` in the signed-in user's Start menu and Windows Search finds Tunero; the switch in Settings removes and adds it; the question does not come back on the next start | |
+| winget install and update | `winget install --manifest <folder>` with the manifest of the previous release (LocalManifestFiles on), start with `tunero`, Update now: the app closes, a PowerShell window runs `winget upgrade`, the app starts again after the UAC prompt and shows the new version; `winget list jozuern.Tunero` shows it too. Before the new version is in winget: the window says so and waits for Enter, then the old version starts | |
 | Startup snapshot | Save a snapshot, install a program that adds a Run entry, compare: only that entry is "new"; save while the list loads is refused | |
 | DNS "Use the fastest" | After the benchmark, the fastest preset is applied; with another preset of this app applied, that one is undone first | |
-| Edge Game Assist | Listed on Debloat when installed; removing it keeps Edge | |
-| Data folder | Create `C:\ProgramData\PCOptimizer` as a standard user with a file in it before the first start: the app deletes the folder and creates a locked one | |
+| Edge Game Assist | Listed on Remove apps when installed; removing it keeps Edge | |
+| Data folder | Create `C:\ProgramData\Tunero` as a standard user with a file in it before the first start: the app deletes the folder and creates a locked one | |
 | Two Windows accounts | Account A applies dark mode, account B starts the app: B sees dark mode as not applied by the app and can apply and undo it without touching A's backup | |
-| Uninstall (downloaded exe) | Apply two tweaks and add the Start menu entry; Settings > Uninstall > Undo changes and uninstall: both tweaks are undone, the app closes, and within a minute the exe (and a `.old` from an update), `C:\ProgramData\PCOptimizer` and `PCOptimizer.lnk` are gone. Again with Keep changes and uninstall: the tweaks stay applied. With a change that cannot be undone (registry key locked by hand), nothing is removed and the Changes page lists it | OK 2026-10-12 (26H2) |
-| Uninstall (winget copy) | Installed with `winget install`: Settings > Uninstall opens a PowerShell window as the signed-in user that runs `winget uninstall` after the app has closed; `winget list jozuern.PCOptimizer` finds nothing and the data folder is gone | OK 2026-10-12 (26H2, installed from a local manifest) |
+| Upgrade from PCOptimizer (rename) | Version 0.7.3 applies two tweaks (file extensions and the gaming power plan, which it names "PCOptimizer Gaming"); then `Tunero.exe` starts: `C:\ProgramData\PCOptimizer` is moved to `C:\ProgramData\Tunero`, the Changes page lists both, and `--undo-all` undoes them, deletes "PCOptimizer Gaming" and restores Balanced | OK 2026-10-12 (26H2, 0.7.3 code from the v0.7.3 tag) |
+| Uninstall (downloaded exe) | Apply two tweaks and add the Start menu entry; Settings > Uninstall > Undo changes and uninstall: both tweaks are undone, the app closes, and within a minute the exe (and a `.old` from an update), `C:\ProgramData\Tunero` and `Tunero.lnk` are gone. Again with Keep changes and uninstall: the tweaks stay applied. With a change that cannot be undone (registry key locked by hand), nothing is removed and the Changes page lists it | OK 2026-10-12 (26H2) |
+| Uninstall (winget copy) | Installed with `winget install`: Settings > Uninstall opens a PowerShell window as the signed-in user that runs `winget uninstall` after the app has closed; `winget list jozuern.Tunero` finds nothing and the data folder is gone | OK 2026-10-12 (26H2, installed from a local manifest) |

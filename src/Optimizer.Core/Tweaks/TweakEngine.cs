@@ -449,7 +449,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         store.Save(backup);
         if (pendingUndo is not null) store.ClearPendingUndo(t.Id);
 
-        foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { line.Before, line.After });
+        // The data lets the Changes page show the line in the UI language; the message stays English for the log file.
+        foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { tweak = t.Id, kind = "apply", target = line.Target, before = line.Before, after = line.After });
 
         // Verify: re-read every action. "afterRestart" tweaks are confirmed on the next scan after a reboot.
         var ineffective = t.Verify != "afterRestart" && done.Any(a => !a.TakesEffectAfterRestart && SafeState(a) != ActionState.Applied);
@@ -470,7 +471,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var lifted = freq is not null && PeekBackup(freq.Id) is null && !store.IsDamaged(freq.Id) &&
                      (await ApplyAsync(freq, facts, new HashSet<string>(), new ApplyOptions { ExpertMode = true, ContinueWithoutRestorePoint = true })).Outcome
                      is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective;
-        var created = await restorePoints.CreateAsync($"PCOptimizer {DateTime.Now:yyyy-MM-dd HH:mm}");
+        var created = await restorePoints.CreateAsync($"Tunero {DateTime.Now:yyyy-MM-dd HH:mm}");
         // No restore point came of it (the user may now cancel the change): the limit goes back as it was.
         if (!created && lifted) Revert(freq!);
         return created;
@@ -527,7 +528,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 // Parts changed since (one side of a power setting, one adapter keyword) keep the value set since.
                 if (outcome == RestoreOutcome.PartlyRestored) skipped.Add(entry.Description);
                 if (a.TakesEffectAfterRestart) restartBound.Add(entry);
-                Log.Info("change", $"{t.Id}: undo {entry.Description}", new { restored = entry.Original.Display });
+                Log.Info("change", $"{t.Id}: undo {entry.Description}", new { tweak = t.Id, kind = "undo", target = entry.Description, restored = entry.Original.Display });
             }
             catch (Exception ex)
             {

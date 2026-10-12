@@ -19,20 +19,36 @@ public sealed record ReleaseCheckResult(ReleaseCheckStatus Status, Version? Late
 /// </summary>
 public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : IDisposable
 {
-    public const string Repository = "jozuern/PCOptimizer";
+    public const string Repository = "jozuern/Tunero";
+
+    /// <summary>
+    /// GitHub's id of the repository: it stays the same when the repository is renamed (it was jozuern/PCOptimizer up to
+    /// 0.7.3), so the release check keeps working through a rename without following a redirect.
+    /// </summary>
+    public const long RepositoryId = 1412188031;
+
+    /// <summary>The repository's name up to 0.7.3; its download links stay valid for a release made before the rename.</summary>
+    public const string LegacyRepository = "jozuern/PCOptimizer";
+
     public const string LatestReleaseUrl = "https://github.com/" + Repository + "/releases/latest";
     public const string DownloadUrlPrefix = "https://github.com/" + Repository + "/releases/download/";
-    public const string ExeAsset = "PCOptimizer.exe";
-    public const string ChecksumAsset = "PCOptimizer.exe.sha256";
-    public const string SignatureAsset = "PCOptimizer.exe.sig";
+    public const string LegacyDownloadUrlPrefix = "https://github.com/" + LegacyRepository + "/releases/download/";
+    /// <summary>The exe of a release; its checksum and signature are "&lt;exe&gt;.sha256" and "&lt;exe&gt;.sig".</summary>
+    public const string ExeAsset = "Tunero.exe";
+
+    /// <summary>
+    /// The asset names up to 0.7.3. Releases also carry the exe under this name, for installed versions from before the
+    /// rename; a newer version takes them when a release has no Tunero.exe.
+    /// </summary>
+    public const string LegacyExeAsset = "PCOptimizer.exe";
 
     private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { BaseAddress = new Uri("https://api.github.com/"), Timeout = TimeSpan.FromSeconds(15) };
 
     public async Task<ReleaseCheckResult> CheckAsync(Version current, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"repos/{Repository}/releases/latest");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"repositories/{RepositoryId}/releases/latest");
         // GitHub rejects API requests without a User-Agent.
-        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("PCOptimizer", Normalize(current).ToString(3)));
+        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Tunero", Normalize(current).ToString(3)));
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         try
         {
@@ -79,7 +95,9 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
             .Where(a => a.ValueKind == JsonValueKind.Object && a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == name)
             .Select(a => a.TryGetProperty("browser_download_url", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null)
             .FirstOrDefault(IsReleaseDownload);
-        return Url(ExeAsset) is { } exe && Url(ChecksumAsset) is { } sha && Url(SignatureAsset) is { } sig ? new ReleaseAssets(exe, sha, sig) : null;
+        ReleaseAssets? Set(string exeName) =>
+            Url(exeName) is { } exe && Url(exeName + ".sha256") is { } sha && Url(exeName + ".sig") is { } sig ? new ReleaseAssets(exe, sha, sig) : null;
+        return Set(ExeAsset) ?? Set(LegacyExeAsset);
     }
 
     /// <summary>
@@ -87,7 +105,7 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
     /// dots would pass a plain prefix check and then resolve to another repository.
     /// </summary>
     public static bool IsReleaseDownload(string? url) =>
-        url is not null && url.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal) &&
+        url is not null && (url.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal) || url.StartsWith(LegacyDownloadUrlPrefix, StringComparison.Ordinal)) &&
         Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
         string.Equals(uri.AbsoluteUri, url, StringComparison.Ordinal) && uri.Query.Length == 0 && uri.Fragment.Length == 0 &&
         !url.Contains("..", StringComparison.Ordinal) && !url.Contains('%') && !url.Contains('\\');

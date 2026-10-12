@@ -8,7 +8,6 @@ Left over from the code audits of 2026-10-10 (the first one at version 0.4.0, th
 - **DNS change without a timeout:** `SystemNetworkManager.SetDns` (`src/Optimizer.Core/Actions/ExtendedActions.cs`) runs a `ManagementObjectSearcher` query without a timeout; a hung WMI service blocks the change.
 - **Runtime tweak ids without `TweakIds.Slug`:** `fix.refreshRate.*` and `fix.ethernetAuto.*` in `src/Optimizer.Core/Findings/Checks/FixChecks.cs` build their ids by hand.
 - **Per-user shell extensions (third audit M7):** the startup scanner reads shell extensions only from HKLM; per-user handlers and per-user CLSID overrides under `HKCU\Software\Classes` are not shown.
-- **Raw error text (third audit L-A7):** the scan status shows the exception message, and the Changes page log shows English engine lines in the German UI. Needs a typed tool exception that the UI maps to localized text.
 - **Version check of multi-commit pushes (third audit L-B2):** CI checks only the last commit of a push.
 - **Runtime license version (second audit L21, third audit L-B4):** `EveryShippedPackageHasItsLicense` reads the test host's runtime version instead of the one the publish ships.
 - **Catalog round trip (third audit L-B9):** `CatalogRoundTripTests` covers registry and accessibility actions only; power, service, BCD, DNS, task and NVIDIA actions have no apply and undo round trip.

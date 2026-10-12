@@ -128,7 +128,7 @@ public sealed class PowerSettingAction : TweakAction
     }
 }
 
-/// <summary>Activates a scheme, optionally creating it first as a copy of a template (e.g. High performance -> "PCOptimizer Gaming").</summary>
+/// <summary>Activates a scheme, optionally creating it first as a copy of a template (e.g. High performance -> "Tunero Gaming").</summary>
 public sealed class PowerSchemeAction : TweakAction
 {
     /// <summary>Scheme to activate: "balanced", "highPerformance", "powerSaver" or a GUID.</summary>
@@ -139,13 +139,24 @@ public sealed class PowerSchemeAction : TweakAction
 
     public string? Name { get; init; }
 
+    /// <summary>
+    /// Names the plan had before (the app was called PCOptimizer up to 0.7.3): a plan an earlier version created is found
+    /// and used again instead of a second copy.
+    /// </summary>
+    public List<string> FormerNames { get; init; } = [];
+
     public override string TargetKey => "pwr:activescheme";
     public override string Describe(ActionContext c) => "Active power plan";
 
     private Guid? Target(ActionContext c)
     {
         if (DuplicateFrom is not null && Name is not null)
-            return c.Power.Schemes().FirstOrDefault(s => s.Name == Name).Id is var id && id != Guid.Empty ? id : null;
+        {
+            var schemes = c.Power.Schemes();
+            foreach (var name in FormerNames.Prepend(Name))
+                if (schemes.FirstOrDefault(s => s.Name == name).Id is var id && id != Guid.Empty) return id;
+            return null;
+        }
         return Activate is null ? null : PowerAliases.Resolve(Activate);
     }
 

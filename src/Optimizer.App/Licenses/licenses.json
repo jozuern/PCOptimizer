@@ -1,10 +1,10 @@
 [
   {
-    "name": "PCOptimizer",
+    "name": "Tunero",
     "license": "GPL-3.0-only",
-    "source": "https://github.com/jozuern/PCOptimizer",
+    "source": "https://github.com/jozuern/Tunero",
     "files": [
-      "PCOptimizer.txt"
+      "Tunero.txt"
     ]
   },
   {

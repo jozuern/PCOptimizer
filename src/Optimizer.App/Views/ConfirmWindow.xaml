@@ -19,8 +19,32 @@
             <StackPanel DockPanel.Dock="Top">
                 <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
                 <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
-                <ui:TextBlock x:Name="BadgeText" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
-                <ItemsControl x:Name="WarningList" Margin="0,8,0,0">
+                <!-- Facts about the change as tags, as on the tweak rows -->
+                <ItemsControl x:Name="BadgeList" Margin="0,8,0,0" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1"
+                                    Background="{DynamicResource SubtleFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <!-- What stops the change first (error), then the notes about it (caution) -->
+                <ItemsControl x:Name="BlockList" Margin="0,8,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:InfoBar Title="" Message="{Binding}" Severity="Error" IsOpen="True" IsClosable="False" Margin="0,0,0,4" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ui:InfoBar x:Name="NothingToDo" Title="" Message="{l:Tr Confirm_NothingToChange}" Severity="Informational" IsOpen="False" IsClosable="False" Margin="0,0,0,4" />
+                <ItemsControl x:Name="WarningList">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ui:InfoBar Title="" Message="{Binding}" Severity="Warning" IsOpen="True" IsClosable="False" Margin="0,0,0,4" />
@@ -57,9 +81,16 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding Target}" Style="{StaticResource Mono}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,16,0" />
                                     <TextBlock Grid.Column="1" Text="{Binding Before}" Style="{StaticResource Mono}" Margin="0,0,12,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding After}" Style="{StaticResource Mono}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock x:Name="After" Grid.Column="2" Text="{Binding After}" Style="{StaticResource Mono}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 </Grid>
                             </Border>
+                            <!-- A value that already is what the change writes: not bold, so the real changes stand out -->
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Unchanged}" Value="True">
+                                    <Setter TargetName="After" Property="FontWeight" Value="Normal" />
+                                    <Setter TargetName="After" Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -69,8 +100,9 @@
         <Border Grid.Row="2" Padding="24" BorderThickness="0,1,0,0"
                 Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
             <DockPanel LastChildFill="False">
-                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Click="Apply_Click" IsDefault="True" />
-                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+                <!-- Windows 11 content dialog order: the primary button first, Cancel last (on the right) -->
+                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Confirm_Cancel}" MinWidth="100" IsCancel="True" />
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" MinWidth="120" Margin="0,0,8,0" Click="Apply_Click" IsDefault="True" />
                 <ui:TextBlock x:Name="FooterText" DockPanel.Dock="Left" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
             </DockPanel>
         </Border>
