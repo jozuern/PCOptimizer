@@ -13,9 +13,10 @@ namespace Optimizer.App.Services;
 /// Changes without the window, for a fresh install or several PCs:
 /// <c>--apply &lt;file&gt;</c> applies an exported changes file with the rules of Import (only what is safe to apply
 /// together; previews, Expert, boot-critical and anti-cheat sensitive changes need their own confirmation in the app
-/// and are listed instead), and <c>--undo-all</c> undoes every change of this app. Both create a restore point first,
-/// as the window does, and stop when that is not possible unless <c>--no-restore-point</c> is given. The result goes to
-/// the session log and, with <c>--log &lt;file&gt;</c>, to a new text file; the exit code says how it went.
+/// and are listed instead), and <c>--undo-all</c> undoes every change of this app. An apply creates a restore point
+/// first, as the window does, and stops when that is not possible unless <c>--no-restore-point</c> is given. A run waits
+/// for a change of another Tunero (<see cref="ChangeLock"/>). The result goes to the session log and, with
+/// <c>--log &lt;file&gt;</c>, to a new text file; the exit code says how it went.
 /// </summary>
 public static class CommandLineApply
 {
@@ -24,11 +25,17 @@ public static class CommandLineApply
     public const int InvalidFile = 2;
     public const int NotElevated = 3;
     public const int NoRestorePoint = 4;
+    public const int Busy = 5;
+    public const int Error = 6;
+    public const int NotSupported = 7;
+
+    /// <summary>How long a run waits for a change of another Tunero (the window, another run) to finish.</summary>
+    public static TimeSpan LockWait { get; set; } = TimeSpan.FromMinutes(5);
 
     public static async Task<int> ApplyAsync(string path, AppServices services, string? logPath, bool withoutRestorePoint)
     {
         var lines = new List<string>();
-        var code = await ApplyCoreAsync(path, services, withoutRestorePoint, lines);
+        var code = await Locked(lines, () => ApplyCoreAsync(path, services, withoutRestorePoint, lines));
         Finish("apply", lines, code, logPath);
         return code;
     }
@@ -36,9 +43,32 @@ public static class CommandLineApply
     public static async Task<int> UndoAllAsync(AppServices services, string? logPath)
     {
         var lines = new List<string>();
-        var code = await UndoCoreAsync(services, lines);
+        var code = await Locked(lines, () => UndoCoreAsync(services, lines));
         Finish("undo all", lines, code, logPath);
         return code;
+    }
+
+    /// <summary>Runs <paramref name="work"/> as the only change on this PC (<see cref="ChangeLock"/>), or returns <see cref="Busy"/>.</summary>
+    private static async Task<int> Locked(List<string> lines, Func<Task<int>> work)
+    {
+        using var crossProcess = await Task.Run(() => ChangeLock.TryAcquire(LockWait));
+        if (crossProcess is null)
+        {
+            lines.Add(Loc.Instance["Cli_Busy"]);
+            return Busy;
+        }
+        // An unexpected error ends the run with its own exit code and a line in the log file; a run without a window
+        // must never wait on an error dialog.
+        try
+        {
+            return await work();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("cli", "the run failed", ex);
+            lines.Add(Loc.Instance.Format("Cli_Error", ex.Message));
+            return Error;
+        }
     }
 
     private static async Task<int> ApplyCoreAsync(string path, AppServices services, bool withoutRestorePoint, List<string> lines)

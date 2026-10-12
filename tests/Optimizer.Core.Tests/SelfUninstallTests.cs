@@ -11,18 +11,39 @@ public class SelfUninstallTests
     public void CleanupScriptQuotesEveryPath()
     {
         var script = SelfUninstall.CleanupScript("Tunero (1)", @"C:\ProgramData\Tunero", @"C:\Users\O'Brien\Downloads\Tunero (1).exe");
-        Assert.Contains("Wait-Process -Name 'Tunero (1)' -Timeout 60", script);
+        Assert.Contains("$name = 'Tunero (1)'", script);
+        Assert.Contains("Wait-Process -Name $name -Timeout 60", script);
         Assert.Contains(@"$root = 'C:\ProgramData\Tunero'", script);
         Assert.Contains(@"$files = @('C:\Users\O''Brien\Downloads\Tunero (1).exe', 'C:\Users\O''Brien\Downloads\Tunero (1).exe.old')", script);
         Assert.Contains($"& '{Path.Combine(Environment.SystemDirectory, "cmd.exe")}' /d /c rd /s /q $root", script);
     }
 
+    /// <summary>The backups go only when no copy of the app runs: not when it did not end, not when it was started again.</summary>
     [Fact]
-    public void WingetCopyKeepsItsExeForWinget()
+    public void NothingIsDeletedWhileTheAppRuns()
     {
-        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", null);
+        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Apps\Tunero.exe");
+        const string running = "if (Get-Process -Name $name) { exit 1 }";
+        var wait = script.IndexOf("Wait-Process -Name $name -Timeout 60", StringComparison.Ordinal);
+        var first = script.IndexOf(running, StringComparison.Ordinal);
+        var delete = script.IndexOf("rd /s /q", StringComparison.Ordinal);
+        var beforeDelete = script.LastIndexOf(running, delete, StringComparison.Ordinal);
+        Assert.True(wait >= 0 && first > wait && beforeDelete > first && delete > beforeDelete, script);
+    }
+
+    /// <summary>
+    /// A package manager removes the exe; the data folder (with the backups) goes only after it did. When the package
+    /// manager fails, the app stays installed and keeps its backups.
+    /// </summary>
+    [Fact]
+    public void PackageCopyWaitsUntilThePackageManagerRemovedTheExe()
+    {
+        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\ProgramData\chocolatey\lib\tunero\tools\Tunero.exe", removedByPackageManager: true);
         Assert.Contains("$files = @()", script);
-        Assert.DoesNotContain(".exe", script.Replace("cmd.exe", "", StringComparison.Ordinal));
+        var gone = script.IndexOf("for ($i = 0; $i -lt 900 -and (Test-Path -LiteralPath $exe); $i++) {", StringComparison.Ordinal);
+        var stays = script.IndexOf("if (Test-Path -LiteralPath $exe) { exit 1 }", StringComparison.Ordinal);
+        var delete = script.IndexOf("rd /s /q", StringComparison.Ordinal);
+        Assert.True(gone >= 0 && stays > gone && delete > stays, script);
         Assert.DoesNotContain("Wait-Process -Id", script);
     }
 
@@ -30,11 +51,12 @@ public class SelfUninstallTests
     [Fact]
     public void ChocolateyCopyIsCleanedUpAfterChocolateyHasEnded()
     {
-        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", null, 4711);
-        var app = script.IndexOf("Wait-Process -Name 'Tunero' -Timeout 60", StringComparison.Ordinal);
+        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\ProgramData\chocolatey\lib\tunero\tools\Tunero.exe", true, 4711);
+        var app = script.IndexOf("Wait-Process -Name $name -Timeout 60", StringComparison.Ordinal);
+        var removed = script.IndexOf("if (Test-Path -LiteralPath $exe) { exit 1 }", StringComparison.Ordinal);
         var choco = script.IndexOf("Wait-Process -Id 4711 -Timeout 900", StringComparison.Ordinal);
         var delete = script.IndexOf("rd /s /q", StringComparison.Ordinal);
-        Assert.True(app >= 0 && choco > app && delete > choco, script);
+        Assert.True(app >= 0 && removed > app && choco > removed && delete > choco, script);
     }
 
     [Fact]
@@ -77,15 +99,7 @@ public class SelfUninstallTests
             File.WriteAllBytes(exe, []);
             File.WriteAllBytes(exe + ".old", []);
 
-            var script = SelfUninstall.CleanupScript("TuneroTestNoSuchProcess", data, exe);
-            var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            ProcessHardening.Apply(psi); // as the app starts it
-            using (var p = Process.Start(psi)!)
-                Assert.True(p.WaitForExit(60_000), "the cleanup script did not finish");
+            RunCleanup(SelfUninstall.CleanupScript("TuneroTestNoSuchProcess", data, exe));
 
             Assert.False(Directory.Exists(data));
             Assert.False(File.Exists(exe));
@@ -96,5 +110,68 @@ public class SelfUninstallTests
         {
             TestFolders.Delete(folder);
         }
+    }
+
+    /// <summary>
+    /// Runs the real script on temp folders only: a package manager that did not remove the exe (it failed) leaves the
+    /// data folder with the backups in place.
+    /// </summary>
+    [Fact]
+    public void FailedPackageManagerKeepsTheBackups()
+    {
+        var folder = TestFolders.Create("uninstall");
+        try
+        {
+            var data = Path.Combine(folder, "data");
+            Directory.CreateDirectory(Path.Combine(data, "backups"));
+            var exe = Path.Combine(folder, "Tunero.exe");
+            File.WriteAllBytes(exe, []);
+
+            RunCleanup(SelfUninstall.CleanupScript("TuneroTestNoSuchProcess", data, exe, removedByPackageManager: true, packageManagerSeconds: 2));
+
+            Assert.True(Directory.Exists(Path.Combine(data, "backups")));
+            Assert.True(File.Exists(exe));
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
+    }
+
+    /// <summary>Runs the real script on temp folders only: while a process with the app's name runs, nothing is deleted.</summary>
+    [Fact]
+    public void RunningAppKeepsTheBackups()
+    {
+        var folder = TestFolders.Create("uninstall");
+        try
+        {
+            var data = Path.Combine(folder, "data");
+            Directory.CreateDirectory(Path.Combine(data, "backups"));
+            var exe = Path.Combine(folder, "Tunero.exe");
+            File.WriteAllBytes(exe, []);
+            // This test's own process stands in for a copy of the app that was started again.
+            var running = Process.GetCurrentProcess().ProcessName;
+
+            RunCleanup(SelfUninstall.CleanupScript(running, data, exe).Replace("-Timeout 60", "-Timeout 1", StringComparison.Ordinal));
+
+            Assert.True(Directory.Exists(Path.Combine(data, "backups")));
+            Assert.True(File.Exists(exe));
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
+    }
+
+    private static void RunCleanup(string script)
+    {
+        var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        ProcessHardening.Apply(psi); // as the app starts it
+        using var p = Process.Start(psi)!;
+        Assert.True(p.WaitForExit(60_000), "the cleanup script did not finish");
     }
 }

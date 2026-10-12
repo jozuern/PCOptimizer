@@ -20,8 +20,35 @@ public static class DataPaths
     /// <summary>The old folder when this start moved it to <see cref="Root"/> (logged once the log is open), else null.</summary>
     public static string? MovedFrom { get; private set; }
 
-    public static string Root { get; } = ResolveRoot(
-        Environment.GetFolderPath(ProcessIsElevated ? Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData));
+    private static string? _root;
+
+    /// <summary>
+    /// The data folder. Reading it changes nothing (tests and tools read it too): a folder from before the rename is
+    /// used where it is until <see cref="MigrateLegacy"/>, called once at the start of the app, has moved it.
+    /// </summary>
+    public static string Root => _root ??= Locate(BaseFolder);
+
+    private static string BaseFolder =>
+        Environment.GetFolderPath(ProcessIsElevated ? Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData);
+
+    /// <summary>Moves a data folder from before the rename to the new name (<see cref="ResolveRoot"/>). Only the app's start calls this.</summary>
+    public static void MigrateLegacy() => _root = ResolveRoot(BaseFolder);
+
+    /// <summary>The data folder under <paramref name="baseFolder"/> as it is now, without moving anything.</summary>
+    public static string Locate(string baseFolder)
+    {
+        var root = Path.Combine(baseFolder, FolderName);
+        var legacy = Path.Combine(baseFolder, LegacyFolderName);
+        if (Directory.Exists(root) || !Directory.Exists(legacy)) return root;
+        try
+        {
+            return (File.GetAttributes(legacy) & FileAttributes.ReparsePoint) != 0 ? root : legacy;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return root;
+        }
+    }
 
     /// <summary>
     /// The data folder under <paramref name="baseFolder"/>. A folder from before the rename is moved to the new name once,

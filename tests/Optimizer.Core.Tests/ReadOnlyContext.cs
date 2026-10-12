@@ -137,6 +137,12 @@ internal sealed class ReadOnlyProcesses(IProcessRunner real) : IProcessRunner
         "set-", "remove-", "add-", "enable-", "disable-", "delete-", "new-", "stop-", "start-", "restart-", "register-",
         "unregister-", "install-", "uninstall-", "clear-", "reset-", "rename-", "move-", "copy-", "invoke-",
         " stop ", " start ", " config ", " resize ", " add ", " delete ",
+        // The tools also take "-" for "/" (powercfg -setactive, bcdedit -set).
+        " -set", " -delete", " -import", " -export", " -create", " -copy", " -change", " -hibernate", " -duplicatescheme",
+        // Quick fixes and other tools the app runs: ipconfig /release, netsh ... reset, reagentc /enable, w32tm /resync,
+        // lodctr /r, winget install and upgrade, fsutil ... set.
+        "/release", "/renew", "/flushdns", "/registerdns", " reset", "/enable", "/disable", "/resync", "lodctr",
+        " install ", " upgrade ", " uninstall ", " import ", " set ",
     ];
 
     public static bool LooksLikeAWrite(string file, string arguments)

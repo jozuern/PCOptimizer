@@ -23,6 +23,24 @@ public static class Reg
 
     public static string? HklmString(string path, string name) => HklmValue(path, name)?.ToString();
 
+    /// <summary>
+    /// A REG_EXPAND_SZ value as stored, with its %variables% left in: .NET would expand them with this process's
+    /// environment, which includes the signed-in user's own variables (HKCU\Environment). Expand it with
+    /// <see cref="MachineEnvironment.Expand"/> instead.
+    /// </summary>
+    public static string? HklmUnexpanded(string path, string name)
+    {
+        try
+        {
+            using var key = OpenHklm(path);
+            return key?.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     public static int? HklmInt(string path, string name) => HklmValue(path, name) switch
     {
         int i => i,

@@ -82,7 +82,12 @@
                         </ui:NavigationViewItem.InfoBadge>
                     </ui:NavigationViewItem>
                     <ui:NavigationViewItem Content="{l:Tr Nav_Hardware}" TargetPageType="{x:Type v:HardwarePage}" Icon="{ui:SymbolIcon Desktop24}" />
-                    <ui:NavigationViewItem Content="{l:Tr Nav_Settings}" TargetPageType="{x:Type v:SettingsPage}" Icon="{ui:SymbolIcon Settings24}" />
+                    <ui:NavigationViewItem Content="{l:Tr Nav_Settings}" TargetPageType="{x:Type v:SettingsPage}" Icon="{ui:SymbolIcon Settings24}">
+                        <!-- A new version is available: the update is under Settings > Updates -->
+                        <ui:NavigationViewItem.InfoBadge>
+                            <ui:InfoBadge Severity="Attention" Value="{Binding SettingsBadge}" Visibility="{Binding SettingsBadge, Converter={StaticResource NullToVisibility}}" />
+                        </ui:NavigationViewItem.InfoBadge>
+                    </ui:NavigationViewItem>
                 </ui:NavigationView.FooterMenuItems>
                 <ui:NavigationView.PaneFooter>
                     <!-- Collapsed rail: the text is hidden (it would be cut off), only the progress rings stay. -->
@@ -145,6 +150,8 @@
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" AutomationProperties.LiveSetting="Assertive" />
                 <ui:HyperlinkButton Grid.Column="1" Content="{l:Tr Result_ViewChanges}" Command="{Binding OpenChangesCommand}" VerticalAlignment="Center" Margin="0,0,56,0"
                                     Visibility="{Binding ResultShowsChanges, Converter={StaticResource BoolToVisibility}}" />
+                <ui:Button Grid.Column="1" Content="{Binding ResultUpdateText}" Command="{Binding UpdateNowCommand}" Appearance="Primary" VerticalAlignment="Center" Margin="0,0,56,0"
+                           Visibility="{Binding ResultShowsUpdate, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 
             <!-- Details pane: explanation of the selected item. Its left edge can be dragged to make it wider or narrower. -->

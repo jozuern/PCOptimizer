@@ -42,7 +42,11 @@ public sealed partial class ReleaseCheck(HttpMessageHandler? handler = null) : I
     /// </summary>
     public const string LegacyExeAsset = "PCOptimizer.exe";
 
-    private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { BaseAddress = new Uri("https://api.github.com/"), Timeout = TimeSpan.FromSeconds(15) };
+    // A release object is a few kilobytes; a larger answer is not GitHub's and is refused (HttpRequestException).
+    private readonly HttpClient _http = new(handler ?? new HttpClientHandler())
+    {
+        BaseAddress = new Uri("https://api.github.com/"), Timeout = TimeSpan.FromSeconds(15), MaxResponseContentBufferSize = 1 << 20,
+    };
 
     public async Task<ReleaseCheckResult> CheckAsync(Version current, CancellationToken ct = default)
     {

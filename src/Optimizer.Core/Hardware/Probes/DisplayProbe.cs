@@ -12,13 +12,25 @@ namespace Optimizer.Core.Hardware.Probes;
 /// </summary>
 public static class DisplayProbe
 {
+    private const int ErrorInsufficientBuffer = 122;
+
     public static List<DisplayInfo> Read(CatalogData catalog)
     {
         var result = new List<DisplayInfo>();
-        if (Native.GetDisplayConfigBufferSizes(Native.QdcOnlyActivePaths, out var pathCount, out var modeCount) != 0) return result;
-        var paths = new Native.DISPLAYCONFIG_PATH_INFO[pathCount];
-        var modes = new Native.DISPLAYCONFIG_MODE_INFO[modeCount];
-        if (Native.QueryDisplayConfig(Native.QdcOnlyActivePaths, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero) != 0) return result;
+        // A display that is added or removed between the two calls (or the refresh-rate change a tweak just made) makes
+        // the second one report ERROR_INSUFFICIENT_BUFFER: the sizes are read again, as the API documentation advises.
+        uint pathCount = 0, modeCount = 0;
+        Native.DISPLAYCONFIG_PATH_INFO[] paths = [];
+        Native.DISPLAYCONFIG_MODE_INFO[] modes = [];
+        for (var attempt = 0; ; attempt++)
+        {
+            if (Native.GetDisplayConfigBufferSizes(Native.QdcOnlyActivePaths, out pathCount, out modeCount) != 0) return result;
+            paths = new Native.DISPLAYCONFIG_PATH_INFO[pathCount];
+            modes = new Native.DISPLAYCONFIG_MODE_INFO[modeCount];
+            var error = Native.QueryDisplayConfig(Native.QdcOnlyActivePaths, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            if (error == 0) break;
+            if (error != ErrorInsufficientBuffer || attempt == 2) return result;
+        }
 
         foreach (var path in paths.Take((int)pathCount))
         {

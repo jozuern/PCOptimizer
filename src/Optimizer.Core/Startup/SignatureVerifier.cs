@@ -40,41 +40,73 @@ public static class SignatureVerifier
     public static SignatureInfo Verify(string? path)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return new SignatureInfo(SignatureStatus.NotFound, null, false);
-        // Keyed by the file's identity, not only its path, size and write time (which a program replacing the file can
-        // keep): the NTFS file id changes when the file is swapped, and the change time when it is written in place.
-        // Hashing every file for the key would double the work WinVerifyTrust does anyway.
-        string key;
+        // One handle for the cache key and the verification: the key names the file that was verified, not one a link
+        // swapped in between. Held without write or delete sharing, so the file cannot change while it is checked; a file
+        // another program holds open for writing is opened with sharing (as before), keyed by its change time.
+        FileStream stream;
         try
         {
-            key = $"{path}|{FileIdentity(path)}";
+            stream = Open(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return new SignatureInfo(SignatureStatus.Error, null, false);
         }
-        return Cache.GetOrAdd(key, _ =>
+        using (stream)
         {
-            var p = path;
+            // Keyed by the file's identity, not only its path, size and write time (which a program replacing the file can
+            // keep): the NTFS file id changes when the file is swapped, and the change time when it is written in place.
+            // Hashing every file for the key would double the work WinVerifyTrust does anyway.
+            string key;
             try
             {
-                var embedded = VerifyEmbedded(p, out var publisher, out var microsoftRoot);
-                if (embedded == 0) return new SignatureInfo(SignatureStatus.Signed, publisher, false, microsoftRoot);
-                // Not a signable file type (scripts, data): unsigned, not "invalid".
-                if (embedded is TrustESubjectFormUnknown or TrustEProviderUnknown) return new SignatureInfo(SignatureStatus.Unsigned, null, false);
-                if (embedded != TrustENoSignature) return new SignatureInfo(SignatureStatus.Invalid, publisher, false);
-                return VerifyCatalog(p);
+                key = $"{path}|{FileIdentity(stream, path)}";
             }
-            catch (Exception)
+            catch (IOException)
             {
                 return new SignatureInfo(SignatureStatus.Error, null, false);
             }
-        });
+            if (Cache.TryGetValue(key, out var known)) return known;
+            var result = VerifyOpen(path, stream);
+            // A passing failure (a busy catalog service) is checked again next time.
+            if (result.Status != SignatureStatus.Error) Cache.TryAdd(key, result);
+            return result;
+        }
     }
 
-    /// <summary>Volume serial, file id, size, last write and change time of the file, read through one handle.</summary>
-    private static string FileIdentity(string path)
+    private static FileStream Open(string path)
     {
-        using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        try
+        {
+            return File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        }
+        catch (IOException)
+        {
+            return File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        }
+    }
+
+    private static SignatureInfo VerifyOpen(string path, FileStream stream)
+    {
+        try
+        {
+            var handle = stream.SafeFileHandle.DangerousGetHandle();
+            var embedded = VerifyEmbedded(path, handle, out var publisher, out var microsoftRoot);
+            if (embedded == 0) return new SignatureInfo(SignatureStatus.Signed, publisher, false, microsoftRoot);
+            // Not a signable file type (scripts, data): unsigned, not "invalid".
+            if (embedded is TrustESubjectFormUnknown or TrustEProviderUnknown) return new SignatureInfo(SignatureStatus.Unsigned, null, false);
+            if (embedded != TrustENoSignature) return new SignatureInfo(SignatureStatus.Invalid, publisher, false);
+            return VerifyCatalog(path, handle);
+        }
+        catch (Exception)
+        {
+            return new SignatureInfo(SignatureStatus.Error, null, false);
+        }
+    }
+
+    /// <summary>Volume serial, file id, size, last write and change time of the open file.</summary>
+    private static string FileIdentity(FileStream stream, string path)
+    {
         var handle = stream.SafeFileHandle;
         if (!GetFileInformationByHandle(handle, out var info)) throw new IOException($"cannot read the identity of {path}");
         var basic = new FILE_BASIC_INFO();
@@ -127,11 +159,12 @@ public static class SignatureVerifier
     private const uint WtdUiNone = 2, WtdRevokeNone = 0, WtdChoiceFile = 1, WtdChoiceCatalog = 2, WtdStateVerify = 1, WtdStateClose = 2;
     private const uint WtdCacheOnlyUrlRetrieval = 0x1000, WtdDisableMd2Md4 = 0x2000;
 
-    private static int VerifyEmbedded(string path, out string? publisher, out bool? microsoftRoot)
+    /// <summary>WinVerifyTrust reads the open file (<paramref name="handle"/>); the path only names it in its results.</summary>
+    private static int VerifyEmbedded(string path, IntPtr handle, out string? publisher, out bool? microsoftRoot)
     {
         publisher = null;
         microsoftRoot = null;
-        var file = new WINTRUST_FILE_INFO { cbStruct = (uint)Marshal.SizeOf<WINTRUST_FILE_INFO>(), pcwszFilePath = path };
+        var file = new WINTRUST_FILE_INFO { cbStruct = (uint)Marshal.SizeOf<WINTRUST_FILE_INFO>(), pcwszFilePath = path, hFile = handle };
         var filePtr = Marshal.AllocHGlobal(Marshal.SizeOf<WINTRUST_FILE_INFO>());
         try
         {
@@ -151,22 +184,22 @@ public static class SignatureVerifier
         }
     }
 
-    private static SignatureInfo VerifyCatalog(string path)
+    private static SignatureInfo VerifyCatalog(string path, IntPtr handle)
     {
-        var sha256 = VerifyCatalog(path, "SHA256");
+        var sha256 = VerifyCatalog(path, handle, "SHA256");
         // Older catalogs list only SHA-1 hashes: a file not found by its SHA-256 hash is looked up again by SHA-1.
-        return sha256.Status is SignatureStatus.Unsigned or SignatureStatus.Error ? VerifyCatalog(path, "SHA1") is { Status: SignatureStatus.Signed } sha1 ? sha1 : sha256 : sha256;
+        return sha256.Status is SignatureStatus.Unsigned or SignatureStatus.Error ? VerifyCatalog(path, handle, "SHA1") is { Status: SignatureStatus.Signed } sha1 ? sha1 : sha256 : sha256;
     }
 
-    private static SignatureInfo VerifyCatalog(string path, string algorithm)
+    private static SignatureInfo VerifyCatalog(string path, IntPtr handle, string algorithm)
     {
         var policy = DriverActionVerify;
         if (!CryptCATAdminAcquireContext2(out var admin, IntPtr.Zero, algorithm, IntPtr.Zero, 0))
             return new SignatureInfo(SignatureStatus.Error, null, false);
         try
         {
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            var handle = stream.SafeFileHandle.DangerousGetHandle();
+            // Hashing reads from the file position: start of the file, also for the second (SHA-1) pass.
+            SetFilePointerEx(handle, 0, IntPtr.Zero, 0);
             uint size = 0;
             CryptCATAdminCalcHashFromFileHandle2(admin, handle, ref size, null, 0);
             if (size == 0) return new SignatureInfo(SignatureStatus.Unsigned, null, false);
@@ -332,6 +365,10 @@ public static class SignatureVerifier
     private const int DriverVerInfoSize = 1104, DriverVerSignedByOffset = 552, DriverVerSignerCertOffset = 1072;
 
     [DllImport("crypt32.dll")] private static extern bool CertFreeCertificateContext(IntPtr context);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetFilePointerEx(IntPtr file, long distance, IntPtr newPosition, uint moveMethod);
 
     // ---------------- interop (wintrust.h, mscat.h) ----------------
 

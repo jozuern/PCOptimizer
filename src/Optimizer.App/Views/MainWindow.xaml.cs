@@ -59,6 +59,14 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             FitPanes();
             CenterSearchBox();
         };
+        // Closing ends the process, and with it the threads of a change in progress: a batch, an undo, a winget run or
+        // an app removal would stop halfway. The window stays open until the change has finished.
+        Closing += (_, e) =>
+        {
+            if (!ChangeGate.Instance.Busy) return;
+            e.Cancel = true;
+            vm.ShowResult(Loc.Instance["Close_WhileBusy"], InfoBarSeverity.Warning);
+        };
         Nav.PaneOpened += (_, _) => ShowGroupHeaders();
         Nav.PaneClosed += (_, _) => ShowGroupHeaders();
         PreviewKeyDown += (_, e) =>

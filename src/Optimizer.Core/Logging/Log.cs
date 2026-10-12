@@ -13,8 +13,7 @@ public static class Log
     private static readonly Lock Gate = new();
     private static string? _file;
 
-    public static string Directory { get; } =
-        Platform.DataPaths.Logs;
+    public static string Directory => Platform.DataPaths.Logs;
 
     public static string? CurrentFile => _file;
 

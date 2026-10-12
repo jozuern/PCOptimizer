@@ -182,7 +182,14 @@ public abstract partial class SwitchRow : ObservableObject
     }
 
     public bool IsOn { get; protected set; }
-    public bool CanToggle { get; init; } = true;
+
+    private bool _canToggle = true;
+
+    public bool CanToggle
+    {
+        get => _canToggle;
+        protected set => SetProperty(ref _canToggle, value);
+    }
 
     public bool SwitchState
     {

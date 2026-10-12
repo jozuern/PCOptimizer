@@ -54,11 +54,14 @@ public sealed record ServiceRow(
     /// What the manager allows: catalog "protected" and unknown Microsoft services are read-only; Microsoft services the
     /// catalog explains can go to Manual; third-party services can be set to Manual or Disabled.
     /// </summary>
-    public ServiceEdit Edit => Note?.Mode switch
+    public ServiceEdit Edit => EditFor(Note, IsMicrosoft);
+
+    /// <summary>The rule for every page that changes a service's start type (also the Startup page's switches).</summary>
+    public static ServiceEdit EditFor(ServiceNote? note, bool isMicrosoft) => note?.Mode switch
     {
         "protected" => ServiceEdit.ReadOnly,
         "manualOk" or "warn" => ServiceEdit.ManualOnly,
-        _ => IsMicrosoft ? ServiceEdit.ReadOnly : ServiceEdit.Full,
+        _ => isMicrosoft ? ServiceEdit.ReadOnly : ServiceEdit.Full,
     };
 }
 
@@ -76,7 +79,7 @@ public static class ServiceManager
             // The service manager expands the path with the machine's variables, not the signed-in user's.
             var file = CommandLine.ImagePath(image, Platform.MachineEnvironment.Expand);
             if (file is not null && Path.GetFileName(file).Equals("svchost.exe", StringComparison.OrdinalIgnoreCase))
-                file = CommandLine.ImagePath(Platform.Reg.HklmValue($@"SYSTEM\CurrentControlSet\Services\{name}\Parameters", "ServiceDll")?.ToString(), Platform.MachineEnvironment.Expand) ?? file;
+                file = CommandLine.ImagePath(Platform.Reg.HklmUnexpanded($@"SYSTEM\CurrentControlSet\Services\{name}\Parameters", "ServiceDll"), Platform.MachineEnvironment.Expand) ?? file;
             rows.Add(new ServiceRow(name, s.Str("DisplayName"), NullIfEmpty(s.Str("Description")), services.GetStartType(name),
                 string.Equals(s.Str("State"), "Running", StringComparison.OrdinalIgnoreCase), NullIfEmpty(image), file, catalog.Find(BaseName(name))));
         }

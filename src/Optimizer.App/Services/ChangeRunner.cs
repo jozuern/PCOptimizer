@@ -2,6 +2,7 @@ using Optimizer.Core.Actions;
 using Optimizer.Core.Backup;
 using Optimizer.Core.Docs;
 using Optimizer.Core.Logging;
+using Optimizer.Core.Platform;
 using Optimizer.Core.Tweaks;
 using Wpf.Ui.Controls;
 
@@ -86,6 +87,14 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
             Report(Loc.Instance["Change_Busy"], InfoBarSeverity.Warning);
             return whenNotRun;
         }
+        // Another Tunero (a second window, a command line run, another account) may be changing this PC right now.
+        var crossProcess = ChangeLock.TryAcquire();
+        if (crossProcess is null)
+        {
+            _gate.Release();
+            Report(Loc.Instance["Change_OtherInstance"], InfoBarSeverity.Warning);
+            return whenNotRun;
+        }
         Busy(true);
         try
         {
@@ -99,6 +108,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         }
         finally
         {
+            crossProcess.Dispose();
             Busy(false);
             _gate.Release();
         }
@@ -242,7 +252,8 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
         {
             var choice = dialogs.AskRestorePoint();
-            if (choice == RestorePointChoice.Cancel) return results;
+            // Nothing was changed: an empty result, like a cancelled confirmation (Import then stops too).
+            if (choice == RestorePointChoice.Cancel) return [];
             if (choice == RestorePointChoice.Enable) await Task.Run(() => services.RestorePoints.Enable());
             options = new ApplyOptions { ExpertMode = options.ExpertMode, ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue };
             results = await Task.Run(() => services.Engine.ApplyBatchAsync(tweaks, currentFacts, applied, options));
@@ -251,7 +262,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         {
             // Enabling System Protection did not lead to a restore point: the batch stopped before changing anything.
             Report(Loc.Instance["Result_NoRestorePoint"], InfoBarSeverity.Warning);
-            return results;
+            return [];
         }
         var ok = results.Count(r => r.Result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective);
         var failed = results.Count(r => r.Result.Outcome == ApplyOutcome.Failed);

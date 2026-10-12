@@ -13,6 +13,7 @@ public partial class ArchitectureTests
     {
         ["BenchmarkHealthTests.cs"] = "cmd.exe starting ping to 127.0.0.1 (the output pipe test)",
         ["SelfUninstallTests.cs"] = "powershell.exe running the uninstall cleanup on temp folders only",
+        ["TestFolders.cs"] = "cmd.exe mklink /J creating a junction inside a temp folder",
     };
 
     [Fact]
@@ -28,6 +29,8 @@ public partial class ArchitectureTests
             foreach (Match m in RealAdapter().Matches(text)) problems.Add($"{name}: {m.Value} (use ReadOnlyContext.Create)");
             if (text.Contains("StreamingProcess.RunAsync(", StringComparison.Ordinal) && !AllowedToolRuns.ContainsKey(name))
                 problems.Add($"{name}: StreamingProcess.RunAsync (review it and list it in AllowedToolRuns)");
+            if (text.Contains("Process.Start(", StringComparison.Ordinal) && !AllowedToolRuns.ContainsKey(name))
+                problems.Add($"{name}: Process.Start (review it and list it in AllowedToolRuns)");
         }
         Assert.Empty(problems);
     }
@@ -41,6 +44,25 @@ public partial class ArchitectureTests
     [InlineData("dism.exe", "/Online /English /Set-ReservedStorageState /State:Disabled", true)]
     [InlineData("powershell.exe", "-NoProfile -NonInteractive -Command \"Disable-MMAgent -MemoryCompression\"", true)]
     [InlineData("net.exe", "stop wuauserv /y", true)]
+    // Commands the app's quick fixes and tweaks run, and the dash forms the tools accept as well.
+    [InlineData("ipconfig.exe", "/release", true)]
+    [InlineData("ipconfig.exe", "/flushdns", true)]
+    [InlineData("ipconfig.exe", "/all", false)]
+    [InlineData("netsh.exe", "int ip reset", true)]
+    [InlineData("netsh.exe", "winsock reset", true)]
+    [InlineData("netsh.exe", "interface ipv4 show interfaces", false)]
+    [InlineData("reagentc.exe", "/enable", true)]
+    [InlineData("reagentc.exe", "/info", false)]
+    [InlineData("w32tm.exe", "/resync", true)]
+    [InlineData("lodctr.exe", "/r", true)]
+    [InlineData("powercfg.exe", "-setactive 381b4222-f694-41f0-9685-ff5bb260df2e", true)]
+    [InlineData("powercfg.exe", "-list", false)]
+    [InlineData("bcdedit.exe", "-set {current} useplatformclock true", true)]
+    [InlineData("winget.exe", "install --id x --exact", true)]
+    [InlineData("winget.exe", "upgrade --all", true)]
+    [InlineData("winget.exe", "list --source winget", false)]
+    [InlineData("fsutil.exe", "behavior set disablelastaccess 1", true)]
+    [InlineData("fsutil.exe", "behavior query disablelastaccess", false)]
     public void TheReadOnlyRunnerRefusesChanges(string file, string arguments, bool refused) =>
         Assert.Equal(refused, ReadOnlyProcesses.LooksLikeAWrite(file, arguments));
 

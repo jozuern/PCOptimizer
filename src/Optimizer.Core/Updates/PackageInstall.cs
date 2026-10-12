@@ -124,19 +124,26 @@ public sealed record PackageInstall(PackageManager Manager, string Name, string 
     /// exe), run the package manager, keep the window open with <paramref name="failedText"/> when it did not succeed,
     /// then start Tunero again. From the signed-in user's window (winget, Scoop) Windows asks for administrator rights as
     /// on any start; Chocolatey's window is elevated and starts it elevated, which is why <see cref="TrustedChocolatey"/>
-    /// also requires the exe to be admin-only.
+    /// also requires the exe to be admin-only. Chocolatey and Scoop end without an error when their repository does not
+    /// offer the new version yet (Chocolatey's moderation takes days): with <paramref name="expectedVersion"/> the window
+    /// also checks the exe's version, so that case shows <paramref name="failedText"/> instead of quietly starting the old
+    /// version again. winget reports it with an exit code.
     /// </summary>
-    public string UpdateArguments(int processId, string exePath, string runningText, string failedText, string? choco = null)
+    public string UpdateArguments(int processId, string exePath, string runningText, string failedText, string? choco = null, string? expectedVersion = null)
     {
         if (Manager == PackageManager.Winget) return WingetPackage.UpdateArguments(processId, exePath, runningText, failedText);
         var command = Manager == PackageManager.Chocolatey
             ? $"& {WingetPackage.Quote(choco ?? throw new ArgumentNullException(nameof(choco)))} upgrade {ChocolateyId} --yes --no-progress"
             : $"scoop update {ScoopName}";
+        var exe = WingetPackage.Quote(ExeAfterUpdate(exePath));
+        var versionCheck = expectedVersion is null ? null
+            : $"$v = (Get-Item -LiteralPath {exe} -ErrorAction SilentlyContinue).VersionInfo.FileVersion; " +
+              $"$ok = $ok -and $v -and ([version]$v -ge [version]{WingetPackage.Quote(System.Version.Parse(expectedVersion).ToString())})";
         return Prefix +
             $"Write-Host {WingetPackage.Quote(runningText)}; " +
             $"Wait-Process -Id {processId} -Timeout 60 -ErrorAction SilentlyContinue; " +
-            Run(command, failedText) +
-            $"; Start-Process -FilePath {WingetPackage.Quote(ExeAfterUpdate(exePath))}\"";
+            Run(command, failedText, versionCheck) +
+            $"; Start-Process -FilePath {exe}\"";
     }
 
     /// <summary>
@@ -148,10 +155,11 @@ public sealed record PackageInstall(PackageManager Manager, string Name, string 
     /// <summary>
     /// Runs the command and keeps the window open with <paramref name="failedText"/> when it failed. $LASTEXITCODE starts at
     /// 0, because a script that sets no exit code leaves it unset (null, which is not 0); $? is read right after the command,
-    /// before anything else can reset it.
+    /// before anything else can reset it. <paramref name="check"/> can turn $ok false afterwards.
     /// </summary>
-    private static string Run(string command, string failedText) =>
+    private static string Run(string command, string failedText, string? check = null) =>
         $"$global:LASTEXITCODE = 0; {command}; $ok = $? -and $LASTEXITCODE -eq 0; " +
+        (check is null ? "" : check + "; ") +
         $"if (-not $ok) {{ Read-Host {WingetPackage.Quote(failedText)} }}";
 
     /// <summary>

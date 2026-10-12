@@ -168,11 +168,6 @@ jobs:
           }
         } finally { $public.Dispose() }
         [Convert]::ToBase64String($signature) | Set-Content -Encoding ascii release/Tunero.exe.sig
-        # The same exe under the app's old name, for installed versions up to 0.7.3: they look for PCOptimizer.exe and its
-        # .sha256 and .sig. The signature covers the version and the hash, not the file name, so it is the same file.
-        Copy-Item release/Tunero.exe release/PCOptimizer.exe
-        "$hash  PCOptimizer.exe" | Set-Content -Encoding ascii release/PCOptimizer.exe.sha256
-        Copy-Item release/Tunero.exe.sig release/PCOptimizer.exe.sig
         "SHA-256: $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     - name: Draft release
@@ -180,4 +175,4 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig release/PCOptimizer.exe release/PCOptimizer.exe.sha256 release/PCOptimizer.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --generate-notes
+      run: gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --generate-notes

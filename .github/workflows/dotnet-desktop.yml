@@ -17,9 +17,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels the older run. On main every push runs to the end: the version check covers
+# only the commits of its own push, so a cancelled run would leave those commits unchecked.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:

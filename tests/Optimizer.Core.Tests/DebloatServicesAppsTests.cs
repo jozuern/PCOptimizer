@@ -199,6 +199,17 @@ public class DebloatServicesAppsTests
     [InlineData(@"msiexec.exe /i https://example.invalid/x.msi /qn", true)]
     [InlineData(@"msiexec.exe /x {11111111-2222-3333-4444-555555555555}", false)]
     [InlineData(@"control.exe C:\Windows\System32\desk.cpl", false)]
+    // Paths with forward slashes, doubled separators, "." and short names are read as Windows reads them.
+    [InlineData(@"wscript.exe C:/Users/Public/x.vbs C:\Windows\System32\kernel32.dll", true)]
+    [InlineData(@"pcalua.exe -a C:/Users/Public/x.exe", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\\Tasks\x.cmd", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\.\Tasks\x.cmd", true)]
+    [InlineData(@"cmd.exe /c C:\Windows\System32\spool\PRINTE~1\x.cmd", true)]
+    [InlineData(@"cmd.exe /c C:/Windows/System32/WindowsPowerShell/v1.0/x.cmd", false)]
+    // A launcher started by a script host, and rundll32 entry points that load a control panel or an INF.
+    [InlineData(@"cmd.exe /c C:\Windows\System32\msiexec.exe /i C:\Users\Public\x.msi", true)]
+    [InlineData(@"rundll32.exe C:\Windows\System32\shell32.dll,Control_RunDLL C:\Users\Public\x.cpl", true)]
+    [InlineData(@"rundll32.exe C:\Windows\System32\advpack.dll,LaunchINFSection C:\Users\Public\x.inf,DefaultInstall", true)]
     public void ScriptHostEntriesAreFlaggedUnlessTheyOnlyRunSystemFiles(string command, bool flagged)
     {
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);

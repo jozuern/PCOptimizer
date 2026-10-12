@@ -15,6 +15,28 @@ public static partial class MachineEnvironment
     /// <summary>%name% replaced by the machine value; names without one stay as they are.</summary>
     public static string Expand(string text) => Expand(text, Variables.Value);
 
+    /// <summary>
+    /// Expansion as a program started for the signed-in user sees it: the machine variables plus that user's profile
+    /// folders. The elevated app may run under another account (a separate admin account): its own %LOCALAPPDATA% would
+    /// name a different file than the one the user's autostart entry starts. Names this does not know are expanded with
+    /// this process's variables. Without a profile path: this process's variables, as before.
+    /// </summary>
+    public static Func<string, string> ForUser(string? profilePath)
+    {
+        if (string.IsNullOrEmpty(profilePath)) return Environment.ExpandEnvironmentVariables;
+        var vars = new Dictionary<string, string>(Variables.Value, StringComparer.OrdinalIgnoreCase)
+        {
+            ["USERPROFILE"] = profilePath,
+            ["HOMEDRIVE"] = Path.GetPathRoot(profilePath)!.TrimEnd('\\'),
+            ["HOMEPATH"] = profilePath[Path.GetPathRoot(profilePath)!.TrimEnd('\\').Length..],
+            ["APPDATA"] = Path.Combine(profilePath, @"AppData\Roaming"),
+            ["LOCALAPPDATA"] = Path.Combine(profilePath, @"AppData\Local"),
+            ["TEMP"] = Path.Combine(profilePath, @"AppData\Local\Temp"),
+            ["TMP"] = Path.Combine(profilePath, @"AppData\Local\Temp"),
+        };
+        return text => Environment.ExpandEnvironmentVariables(Expand(text, vars));
+    }
+
     internal static string Expand(string text, IReadOnlyDictionary<string, string> variables) =>
         VariableRegex().Replace(text, m => variables.TryGetValue(m.Groups[1].Value, out var v) ? v : m.Value);
 

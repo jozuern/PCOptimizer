@@ -55,6 +55,7 @@ public partial class App : Application
 
     private async void StartAsync(StartupEventArgs e)
     {
+        var commandLineRun = new CliArgs(e.Args).IsCommandLineRun;
         DispatcherUnhandledException += (_, ex) =>
         {
             // Log the root cause too: XAML and reflection errors wrap the real exception.
@@ -63,10 +64,12 @@ public partial class App : Application
             ex.Handled = true;
             CrashReport.Save(CrashReport.Describe(ex.Exception, AppInfo.Text, BuildInfo.Read().BuildString, DateTimeOffset.Now));
             // Before the window is shown there is nothing to keep running: say why and exit instead of staying invisible.
+            // A command line run has no one to click a dialog away: it only ends, with its own exit code.
             if (MainWindow is not { IsVisible: true })
             {
-                System.Windows.MessageBox.Show(ex.Exception.GetBaseException().Message, "Tunero", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                Shutdown(1);
+                if (!commandLineRun)
+                    System.Windows.MessageBox.Show(ex.Exception.GetBaseException().Message, "Tunero", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                Shutdown(commandLineRun ? CommandLineApply.Error : 1);
             }
             else
             {
@@ -102,7 +105,7 @@ public partial class App : Application
             var text = gate == OsGateResult.BlockedTooOld ? Loc.Instance.Format("Gate_TooOld", os.BuildString) : Loc.Instance["Gate_Arch"];
             Log.Warn("app", "blocked by OS gate", new { os.Build, os.NativeArchitecture });
             if (args.Value("--report") is null && !args.IsCommandLineRun) System.Windows.MessageBox.Show(text, Loc.Instance["Gate_Title"], System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-            Shutdown(2);
+            Shutdown(args.IsCommandLineRun ? CommandLineApply.NotSupported : 2);
             return;
         }
 
@@ -214,6 +217,7 @@ public partial class App : Application
         if (args.Value("--select") is { } id)
             vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
         if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
+        if (Version.TryParse(args.Value("--update-shot"), out var newer)) vm.PreviewUpdateFound(newer);
         if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
         if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak)

@@ -22,6 +22,8 @@ public static class Program
 #pragma warning disable IL3000
         var bundle = string.IsNullOrEmpty(typeof(Program).Assembly.Location);
 #pragma warning restore IL3000
+        // A data folder from before the rename gets the new name first, before anything reads or secures it.
+        DataPaths.MigrateLegacy();
         var runtimeBase = SingleFileRuntime.ExtractBase(DataPaths.Root);
         if (bundle)
         {
@@ -48,7 +50,7 @@ public static class Program
         if (DataPaths.MovedFrom is { } oldFolder) Log.Info("app", "data folder moved to the new name", new { from = oldFolder, to = DataPaths.Root });
         // Tools started elevated get an admin-only TEMP instead of the user's (DISM, installers and uninstallers run
         // code from their TEMP).
-        if (DataPaths.ProcessIsElevated) ProcessHardening.UseTempFolder(DataPaths.Temp);
+        if (DataPaths.ProcessIsElevated) ProcessHardening.UseTempFolder(DataPaths.Temp, empty: !OtherCopyRuns());
 
         var start = SingleFileRuntime.Decide(bundle, Environment.GetEnvironmentVariable(SingleFileRuntime.ExtractVariable), runtimeBase,
             Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1", DataPaths.ProcessIsElevated);
@@ -97,6 +99,23 @@ public static class Program
         {
             Log.Error("app", "restart with the protected runtime folder failed", ex);
             return null;
+        }
+    }
+
+    /// <summary>Another process of this exe's name runs (a second window, a command line run, another account's copy).</summary>
+    private static bool OtherCopyRuns()
+    {
+        try
+        {
+            using var self = Process.GetCurrentProcess();
+            var others = Process.GetProcessesByName(self.ProcessName);
+            var count = others.Length;
+            foreach (var p in others) p.Dispose();
+            return count > 1;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return true;
         }
     }
 

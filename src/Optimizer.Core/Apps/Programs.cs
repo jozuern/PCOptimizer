@@ -103,7 +103,9 @@ public static class Programs
         var msiexec = ProcessHardening.ResolveSystemTool("msiexec.exe");
         if (p.ProductCode is { } productCode) return new UninstallCommand(msiMode, msiexec, $"/x {productCode}");
         if (string.IsNullOrWhiteSpace(p.UninstallString)) return null;
-        var expanded = Environment.ExpandEnvironmentVariables(p.UninstallString.Trim());
+        // A machine-wide entry is expanded with the machine's variables, not with this process's (the signed-in user can
+        // set %ProgramFiles% or %LOCALAPPDATA% for their account in HKCU\Environment).
+        var expanded = p.PerUser ? Environment.ExpandEnvironmentVariables(p.UninstallString.Trim()) : MachineEnvironment.Expand(p.UninstallString.Trim());
         if (CommandLine.Program(expanded, s => s, exists) is not var (file, args)) return null;
         // "MsiExec.exe /I{GUID}" or "/X{GUID}" without the WindowsInstaller flag: always the remove action of System32's msiexec.
         if (Path.GetFileName(file).Equals("msiexec.exe", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(file).Equals("msiexec", StringComparison.OrdinalIgnoreCase))
@@ -120,7 +122,9 @@ public static class Programs
         var image = CommandLine.ImagePath(expanded, s => s, exists);
         var elevated = !p.PerUser && isAdminOnly(file)
             && (image is null || string.Equals(image, file, StringComparison.OrdinalIgnoreCase) || isAdminOnly(image))
-            && !CommandLine.RunsUntrustedCode(expanded, isAdminOnly, s => s, exists, interpreters: true);
+            && !CommandLine.RunsUntrustedCode(expanded, isAdminOnly, s => s, exists, interpreters: true)
+            // cmd.exe would read operators in a batch file's arguments as more commands.
+            && (!ProcessHardening.IsBatchFile(file) || ProcessHardening.SafeForCmd(args));
         return new UninstallCommand(elevated ? UninstallMode.Elevated : UninstallMode.AsUser, file, args);
     }
 }

@@ -294,10 +294,17 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>The result is about a change: the bar offers the way to the Changes page.</summary>
     [ObservableProperty] private bool _resultShowsChanges;
 
+    /// <summary>The result says a new version is out: the bar offers the update (<see cref="ResultUpdateText"/>).</summary>
+    [ObservableProperty] private bool _resultShowsUpdate;
+    [ObservableProperty] private string? _resultUpdateText;
+
     /// <summary>Counts in the navigation (null = no badge).</summary>
     [ObservableProperty] private string? _overviewBadge;
     [ObservableProperty] private string? _advisorBadge;
     [ObservableProperty] private string? _changesBadge;
+
+    /// <summary>A new version is available: Settings, where the update is, carries a badge on every page.</summary>
+    [ObservableProperty] private string? _settingsBadge;
 
     [RelayCommand]
     private void OpenChanges()
@@ -613,6 +620,32 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSelfUpdate));
         OnPropertyChanged(nameof(CanUpdateInApp));
         BuildBanners();
+        SettingsBadge = UpdateAvailable ? "1" : null;
+        if (atStart && UpdateAvailable) ShowUpdateNotice();
+    }
+
+    /// <summary>
+    /// The check at start found a new version: the result bar says so on whatever page is open, with the button that
+    /// updates (or opens the release page when this copy cannot update itself), and stays until it is closed or used.
+    /// </summary>
+    /// <summary>Developer aid (--screenshot with --update-shot): as if the check at start had found <paramref name="latest"/>.</summary>
+    public void PreviewUpdateFound(Version latest)
+    {
+        _release = new ReleaseCheckResult(ReleaseCheckStatus.NewerAvailable, latest);
+        OnPropertyChanged(nameof(UpdateStatus));
+        OnPropertyChanged(nameof(UpdateAvailable));
+        OnPropertyChanged(nameof(CanUpdateInApp));
+        BuildBanners();
+        SettingsBadge = "1";
+        ShowUpdateNotice();
+    }
+
+    private void ShowUpdateNotice()
+    {
+        ShowResult(UpdateStatus!);
+        _resultTimer?.Stop();
+        ResultUpdateText = Loc.Instance[CanUpdateInApp ? "Update_Install" : "Update_Open"];
+        ResultShowsUpdate = true;
     }
 
     [RelayCommand]
@@ -763,9 +796,23 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
             Log.Info("update", "installed, restarting", new { version });
-            if (!Updater.StartVerified(exe, download.Sha256!, path => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false })?.Dispose()))
+            bool started;
+            try
             {
-                Log.Error("update", "the installed exe changed before the restart; not started");
+                started = Updater.StartVerified(exe, download.Sha256!, path => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false })?.Dispose());
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+            {
+                // The new version is in place; only its start failed (a program holds the file, or antivirus blocked it).
+                Log.Error("update", "installed, but the restart failed", ex);
+                ShowResult(Loc.Instance.Format("Update_RestartFailed", version), InfoBarSeverity.Warning);
+                return;
+            }
+            if (!started)
+            {
+                // The running version stays in use: it goes back in place of the file that was swapped.
+                var rolledBack = Updater.RollBack(exe);
+                Log.Error("update", $"the installed exe changed before the restart; not started (previous exe put back: {rolledBack})");
                 ShowResult(Loc.Instance["Update_BadChecksum"]);
                 return;
             }
@@ -789,14 +836,18 @@ public sealed partial class MainViewModel : ObservableObject
             ShowResult(Loc.Instance["Update_Busy"]);
             return;
         }
-        if (!package.CanRunFromApp())
+        // choco.exe is checked once, before the question: the same path goes into the window's command.
+        var choco = package.TrustedChocolatey();
+        if (package.Manager == PackageManager.Chocolatey ? choco is null : !package.CanRunFromApp())
         {
             ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
             return;
         }
-        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_PackageText", package.DisplayName, version), Loc.Instance["Update_Restart"])) return;
+        // Chocolatey's window is elevated and starts Tunero elevated: Windows does not ask again.
+        var text = package.RunsAsUser ? "Update_PackageText" : "Update_PackageTextElevated";
+        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format(text, package.DisplayName, version), Loc.Instance["Update_Restart"])) return;
         var arguments = package.UpdateArguments(Environment.ProcessId, exe, Loc.Instance.Format("Update_PackageRunning", package.DisplayName),
-            Loc.Instance.Format("Update_PackageFailed", package.DisplayName), package.TrustedChocolatey());
+            Loc.Instance.Format("Update_PackageFailed", package.DisplayName), choco, version);
         if (!StartPackageManager(package, arguments, out _))
         {
             ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
@@ -898,8 +949,10 @@ public sealed partial class MainViewModel : ObservableObject
             ShowResult(Loc.Instance["Uninstall_Busy"]);
             return;
         }
-        // Before anything is undone: a package manager the app may not start leaves the command to type.
-        if (Package is { } manual && !manual.CanRunFromApp())
+        // Before anything is undone: a package manager the app may not start leaves the command to type. choco.exe is
+        // checked once, here: the same path goes into the window's command after the undo.
+        var choco = Package?.TrustedChocolatey();
+        if (Package is { } manual && (manual.Manager == PackageManager.Chocolatey ? choco is null : !manual.CanRunFromApp()))
         {
             ShowResult(Loc.Instance.Format("Uninstall_PackageManual", manual.DisplayName, manual.UninstallCommand), InfoBarSeverity.Warning);
             return;
@@ -916,7 +969,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (!StartPackageManager(package, package.UninstallArguments(processName,
                     Loc.Instance.Format("Uninstall_PackageRunning", package.DisplayName), Loc.Instance.Format("Uninstall_PackageFailed", package.DisplayName),
-                    package.TrustedChocolatey()), out packageManagerProcess))
+                    choco), out packageManagerProcess))
             {
                 ShowResult(Loc.Instance.Format("Uninstall_PackageManual", package.DisplayName, package.UninstallCommand), InfoBarSeverity.Warning);
                 return;
@@ -933,7 +986,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         try
         {
-            var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, Package is null ? exe : null, packageManagerProcess);
+            var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, exe, removedByPackageManager: Package is not null, packageManagerProcess);
             var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
             {
                 UseShellExecute = false,
@@ -945,8 +998,13 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
             Log.Error("uninstall", "cleanup not started", ex);
-            ShowResult(Loc.Instance.Format("Uninstall_Failed", ex.Message), InfoBarSeverity.Error);
-            return;
+            // The package manager's window already waits for the app to end: it removes the app, and the data folder
+            // with the backups stays (deleted by hand, or by the next copy's Uninstall).
+            if (Package is null)
+            {
+                ShowResult(Loc.Instance.Format("Uninstall_Failed", ex.Message), InfoBarSeverity.Error);
+                return;
+            }
         }
         Log.Info("uninstall", "cleanup started, closing", new { package = Package?.Manager, undone = choice == UninstallChoice.UndoFirst });
         System.Windows.Application.Current.Shutdown();
@@ -964,6 +1022,7 @@ public sealed partial class MainViewModel : ObservableObject
         ResultText = text;
         ResultOpen = !string.IsNullOrWhiteSpace(text);
         ResultShowsChanges = false;
+        ResultShowsUpdate = false;
         if (_resultTimer is null)
         {
             _resultTimer = new System.Windows.Threading.DispatcherTimer();

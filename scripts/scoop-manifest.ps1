@@ -2,9 +2,10 @@
 #
 #   pwsh scripts/scoop-manifest.ps1 -Version 0.8.0 [-OutDir artifacts/scoop] [-Sha256 <hash>]
 #
-# Needed once, for the first version in the bucket: after that the bucket's Excavator workflow (from Scoop's bucket
-# template) runs every few hours, finds a new release through "checkver" and writes version and hash itself through
-# "autoupdate" (the hash from the release's .sha256 file). Copy the written tunero.json to bucket/ in the bucket repo.
+# The bucket's own workflow ("Tunero update") writes each new version after checking the release signature; this
+# script writes the manifest for a fix by hand. It has no "checkver" or "autoupdate", because Scoop's Excavator would
+# take the hash from the release's .sha256 file unchecked. Without -Sha256 the hash comes from verify-release.ps1
+# (checked against the release signature). Copy the written tunero.json to bucket/ in the bucket repo.
 # Users: scoop bucket add tunero https://github.com/jozuern/scoop-bucket, then scoop install tunero/tunero.
 # Scoop creates the Start menu entry (Scoop Apps\Tunero) from "shortcuts" and removes it with the app; the app does not
 # offer its own entry for a Scoop copy. No "bin": the exe asks for administrator rights on every start, which a console
@@ -19,7 +20,7 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Version must look like 0.8.0.
 
 $repo = "https://github.com/jozuern/Tunero"
 $exeUrl = "$repo/releases/download/v$Version/Tunero.exe"
-if (-not $Sha256) { $Sha256 = ((Invoke-RestMethod "$exeUrl.sha256") -split '\s+')[0] }
+if (-not $Sha256) { $Sha256 = & (Join-Path $PSScriptRoot "verify-release.ps1") -Version $Version }
 $Sha256 = $Sha256.ToLowerInvariant()
 if ($Sha256 -notmatch '^[0-9a-f]{64}$') { throw "No SHA-256 for $exeUrl." }
 
@@ -37,15 +38,8 @@ $manifest = [ordered]@{
         "64bit" = [ordered]@{ url = $exeUrl; hash = $Sha256 }
     }
     shortcuts    = @(, @("Tunero.exe", "Tunero"))
-    checkver     = "github"
-    autoupdate   = [ordered]@{
-        architecture = [ordered]@{
-            "64bit" = [ordered]@{
-                url  = "$repo/releases/download/v`$version/Tunero.exe"
-                hash = [ordered]@{ url = "`$url.sha256" }
-            }
-        }
-    }
+    # No checkver or autoupdate: the bucket's Excavator would take any new release's .sha256 unchecked, and Scoop
+    # installs what the manifest names. Every release gets a manifest with a hash verified against the signature.
 }
 
 New-Item -ItemType Directory -Force $OutDir | Out-Null

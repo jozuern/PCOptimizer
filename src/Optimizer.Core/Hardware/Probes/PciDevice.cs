@@ -64,15 +64,23 @@ public static class PciDevice
 
     /// <summary>
     /// Disables and re-enables a device so its driver re-reads the registry (what Device Manager does for advanced
-    /// properties). Returns null on success, otherwise a reason. A disabled device is always re-enabled.
+    /// properties). Returns null on success, otherwise a reason. The enable is tried several times: a device left
+    /// disabled (a network adapter, the graphics card) would stay off until the next restart of Windows.
     /// </summary>
     public static string? Restart(string instanceId)
     {
         if (Locate(instanceId) is not { } dev) return $"device {instanceId} not found";
         var cr = Interop.NativeWrite.CM_Disable_DevNode(dev, Interop.NativeWrite.CmDisableUiNotOk);
         if (cr != Native.CrSuccess) return $"CM_Disable_DevNode returned {cr}";
-        cr = Interop.NativeWrite.CM_Enable_DevNode(dev, 0);
-        return cr == Native.CrSuccess ? null : $"CM_Enable_DevNode returned {cr}";
+        for (var attempt = 1; ; attempt++)
+        {
+            cr = Interop.NativeWrite.CM_Enable_DevNode(dev, 0);
+            if (cr == Native.CrSuccess) return null;
+            if (attempt == 5) break;
+            Thread.Sleep(500);
+        }
+        Logging.Log.Error("device", $"{instanceId} stays disabled: CM_Enable_DevNode returned {cr}; a restart of Windows enables it again");
+        return $"CM_Enable_DevNode returned {cr}; the device stays disabled until Windows restarts";
     }
 
     public static bool IsPciBridge(uint devInst) => PciUInt32(devInst, PidBaseClass) == 6 && PciUInt32(devInst, PidSubClass) == 4;

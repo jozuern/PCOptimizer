@@ -81,7 +81,7 @@ Start-Process Tunero.exe -ArgumentList '--apply', 'my-changes.tunero.json', '--l
 | `--no-restore-point` | Continues when no restore point can be created (System Protection off); without it, nothing is changed then. |
 | `--log <file>` | Writes the result to a new text file; an existing file is never overwritten. |
 
-Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point.
+Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point, 5 another Tunero window or run was changing the PC for 5 minutes, 6 unexpected error (details in the log), 7 Windows version not supported.
 
 ## Privacy
 

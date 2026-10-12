@@ -19,16 +19,26 @@ public sealed record UpdateDownload(UpdateOutcome Outcome, string? FilePath = nu
 /// <param name="publicKeyPem">The key that must have signed the release; null uses the key built into the app.</param>
 public sealed partial class Updater(HttpMessageHandler? handler = null, string? publicKeyPem = null) : IDisposable
 {
-    private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { Timeout = TimeSpan.FromMinutes(10) };
+    /// <summary>The exe is about 80 MB; anything far larger is not a release of this app and is not written to the disk.</summary>
+    public const long MaxExeBytes = 300L << 20;
+
+    /// <summary>A download that receives nothing for this long has stalled (HttpClient.Timeout ends once the headers arrive).</summary>
+    public static TimeSpan StallTimeout { get; set; } = TimeSpan.FromSeconds(60);
+
+    // The checksum and signature files are a few hundred bytes: a larger buffered answer is refused. The exe is streamed
+    // (not buffered), so this limit does not apply to it.
+    private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { Timeout = TimeSpan.FromMinutes(10), MaxResponseContentBufferSize = 64 << 10 };
     private readonly string? _key = publicKeyPem ?? UpdateSignature.PublicKeyPem;
 
     /// <param name="folder">Where the download goes: the app's protected data folder (updates).</param>
     /// <param name="progress">Percent, when the server sends the size.</param>
     public async Task<UpdateDownload> DownloadAsync(ReleaseCheckResult release, string folder, IProgress<int>? progress = null, CancellationToken ct = default)
     {
-        if (release.Assets is not { } assets || release.Latest is not { } version || _key is null) return new(UpdateOutcome.NoAssets);
+        if (release.Status != ReleaseCheckStatus.NewerAvailable || release.Assets is not { } assets || release.Latest is not { } version || _key is null)
+            return new(UpdateOutcome.NoAssets);
         var target = Path.Combine(folder, $"Tunero-{version.ToString(3)}.exe");
         var partial = target + ".partial";
+        using var stall = CancellationTokenSource.CreateLinkedTokenSource(ct);
         try
         {
             if (ParseChecksum(await GetStringAsync(assets.ChecksumUrl, ct)) is not { } expected) return new(UpdateOutcome.DownloadFailed);
@@ -41,17 +51,21 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
             {
                 response.EnsureSuccessStatusCode();
                 var total = response.Content.Headers.ContentLength;
+                if (total > MaxExeBytes) return new(UpdateOutcome.DownloadFailed);
                 await using var source = await response.Content.ReadAsStreamAsync(ct);
                 await using var file = File.Create(partial);
                 using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var buffer = new byte[81920];
                 long done = 0;
                 int read;
-                while ((read = await source.ReadAsync(buffer, ct)) > 0)
+                stall.CancelAfter(StallTimeout);
+                while ((read = await source.ReadAsync(buffer, stall.Token)) > 0)
                 {
+                    stall.CancelAfter(StallTimeout);
+                    done += read;
+                    if (done > MaxExeBytes) return new(UpdateOutcome.DownloadFailed);
                     await file.WriteAsync(buffer.AsMemory(0, read), ct);
                     hash.AppendData(buffer, 0, read);
-                    done += read;
                     if (total > 0) progress?.Report((int)(done * 100 / total.Value));
                 }
                 actual = Convert.ToHexString(hash.GetHashAndReset());
@@ -65,10 +79,15 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
             return new(UpdateOutcome.Ready, target, actual);
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException ||
-                                   (ex is TaskCanceledException && !ct.IsCancellationRequested))
+                                   (ex is OperationCanceledException && !ct.IsCancellationRequested))
         {
-            TryDelete(partial);
+            // OperationCanceledException without the caller's cancel: HttpClient's timeout or a stalled download.
             return new(UpdateOutcome.DownloadFailed);
+        }
+        finally
+        {
+            // Moved to its final name on success; anything left (too large, failed, cancelled) goes.
+            TryDelete(partial);
         }
     }
 
@@ -143,6 +162,29 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
         if (!actual.Equals(sha256, StringComparison.OrdinalIgnoreCase)) return false;
         start(exe);
         return true;
+    }
+
+    /// <summary>
+    /// Puts the previous exe back when the installed one cannot be trusted (<see cref="StartVerified"/> found another hash):
+    /// the file in its place is deleted without following links and ".old" takes the name again. False when it failed.
+    /// </summary>
+    public static bool RollBack(string runningExe)
+    {
+        var old = runningExe + ".old";
+        try
+        {
+            if (!File.Exists(old)) return false;
+            using var pin = SafeDelete.Pin(Path.GetDirectoryName(Path.GetFullPath(runningExe))!);
+            if (pin is null) return false;
+            DeleteIfThere(runningExe);
+            File.Move(old, runningExe);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logging.Log.Error("update", $"the previous exe could not be put back, it is {old}", ex);
+            return false;
+        }
     }
 
     /// <summary>After an update: removes the previous exe and the downloaded files.</summary>

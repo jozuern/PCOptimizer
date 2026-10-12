@@ -132,9 +132,18 @@ public sealed class NicPropertyAction : TweakAction
         return new StoredValue(true, "nic", Format(map));
     }
 
+    /// <summary>
+    /// The class key (...\0000) still belongs to the adapter this action was made for. Windows can give the number of a
+    /// removed adapter to a new one: an undo stored for the old adapter must not write its values there.
+    /// </summary>
+    private bool IsSameAdapter(ActionContext c) =>
+        Adapter is not null && (Adapter.InterfaceGuid.Length == 0 ||
+            RegistryValue.Read(c.Registry, Hive.Machine, Adapter.ClassKey, "NetCfgInstanceId") is not { Existed: true, Data: { } id } ||
+            string.Equals(id.Trim('{', '}'), Adapter.InterfaceGuid.Trim('{', '}'), StringComparison.OrdinalIgnoreCase));
+
     public override StoredValue? Read(ActionContext c)
     {
-        if (Adapter is null || (!Applicable(c).Any() && Dwords.Count == 0)) return null;
+        if (Adapter is null || (!Applicable(c).Any() && Dwords.Count == 0) || !IsSameAdapter(c)) return null;
         var map = new SortedDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in Applicable(c))
             map[p.Key] = RegistryValue.Read(c.Registry, Hive.Machine, Adapter.ClassKey, p.Key) is { Existed: true } v ? v.Data : null;
@@ -165,6 +174,7 @@ public sealed class NicPropertyAction : TweakAction
     {
         var map = original.Data is null ? null : Parse(original.Data);
         if (map is null) return;
+        if (!IsSameAdapter(c)) throw new InvalidOperationException($"{Adapter?.Description}: another network adapter uses its settings key now; nothing was restored");
         foreach (var (key, value) in map)
         {
             if (value is null) RegistryValue.Delete(c.Registry, Hive.Machine, Adapter!.ClassKey, key);

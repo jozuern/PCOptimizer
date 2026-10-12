@@ -162,7 +162,8 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
                      $"Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq '{app.Name}' | Remove-AppxProvisionedPackage -Online -AllUsers -ErrorAction SilentlyContinue | Out-Null";
         var (code, output) = PowerShell(script, TimeSpan.FromMinutes(3));
         if (code != 0) return string.IsNullOrWhiteSpace(output) ? $"exit code {code}" : output.Trim();
-        Record(new RemovedApp(app.Name, app.FamilyName, app.Version, DateTimeOffset.Now, entry?.StoreId, entry?.CanReinstall ?? true));
+        // An app nobody reviewed has no confirmed Store listing: no reinstall link is offered for it.
+        Record(new RemovedApp(app.Name, app.FamilyName, app.Version, DateTimeOffset.Now, entry?.StoreId, entry?.CanReinstall ?? false));
         Log.Info("debloat", $"removed {app.Name}", new { app.Version });
         return null;
     }
@@ -180,10 +181,14 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
     /// <summary>Package names come from the catalog, but never pass anything but [A-Za-z0-9._-] into a script.</summary>
     public static bool IsSafeName(string name) => name.Length is > 0 and < 128 && name.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-');
 
-    public IReadOnlyList<RemovedApp> Removed() => ReadRemoved(out _);
+    public IReadOnlyList<RemovedApp> Removed() => ReadRemoved(out _) ?? [];
 
-    /// <summary><paramref name="damaged"/>: the file exists but its content cannot be parsed.</summary>
-    private IReadOnlyList<RemovedApp> ReadRemoved(out bool damaged)
+    /// <summary>
+    /// <paramref name="damaged"/>: the file exists but its content cannot be parsed. Null when the file could not be read
+    /// at all (antivirus or a backup tool holding it): the caller must not write a new list then, or the earlier entries
+    /// and their Store links would be lost.
+    /// </summary>
+    private List<RemovedApp>? ReadRemoved(out bool damaged)
     {
         damaged = false;
         try
@@ -199,7 +204,7 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Log.Warn("debloat", $"removed-apps log unreadable: {ex.Message}");
-            return [];
+            return null;
         }
     }
 
@@ -211,7 +216,7 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
     {
         var set = names.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var list = ReadRemoved(out var damaged);
-        if (damaged || !list.Any(r => set.Contains(r.Name))) return;
+        if (list is null || damaged || !list.Any(r => set.Contains(r.Name))) return;
         Write(list.Where(r => !set.Contains(r.Name)).ToList());
     }
 
@@ -227,7 +232,12 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
     /// </summary>
     private void Record(RemovedApp app)
     {
-        var list = ReadRemoved(out var damaged).Where(r => !string.Equals(r.Name, app.Name, StringComparison.OrdinalIgnoreCase)).Append(app).ToList();
+        if (ReadRemoved(out var damaged) is not { } earlier)
+        {
+            Log.Warn("debloat", $"{app.Name} not recorded: the removed-apps log could not be read, so it is not replaced");
+            return;
+        }
+        var list = earlier.Where(r => !string.Equals(r.Name, app.Name, StringComparison.OrdinalIgnoreCase)).Append(app).ToList();
         Directory.CreateDirectory(dataFolder);
         if (damaged) File.Move(LogFile, $"{LogFile}-{DateTime.Now:yyyyMMdd-HHmmss}.damaged", overwrite: true);
         Write(list);

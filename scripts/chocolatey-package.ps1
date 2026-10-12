@@ -12,7 +12,7 @@
 param(
     [Parameter(Mandatory)][string]$Version,
     [string]$OutDir = (Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\chocolatey"),
-    # Taken from the release's .sha256 file when not given (the workflow passes the hash it verified).
+    # Checked against the release signature by verify-release.ps1 when not given (the workflow passes the hash it verified).
     [string]$Sha256
 )
 $ErrorActionPreference = "Stop"
@@ -21,7 +21,7 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Version must look like 0.8.0.
 $repo = "https://github.com/jozuern/Tunero"
 $tag = "v$Version"
 $exeUrl = "$repo/releases/download/$tag/Tunero.exe"
-if (-not $Sha256) { $Sha256 = ((Invoke-RestMethod "$exeUrl.sha256") -split '\s+')[0] }
+if (-not $Sha256) { $Sha256 = & (Join-Path $PSScriptRoot "verify-release.ps1") -Version $Version }
 $Sha256 = $Sha256.ToLowerInvariant()
 if ($Sha256 -notmatch '^[0-9a-f]{64}$') { throw "No SHA-256 for $exeUrl." }
 

@@ -45,6 +45,9 @@ public sealed record StartupEntry(
 /// <summary>Reads every autostart location the app knows (Autoruns-style), through the swappable registry and task interfaces.</summary>
 public sealed partial class StartupScanner(IRegistryRoots registry, ITaskScheduler tasks, string? profilePath)
 {
+    /// <summary>Entries that run when the user signs in are expanded with that user's profile folders, not the app's.</summary>
+    private readonly Func<string, string> _userExpand = Platform.MachineEnvironment.ForUser(profilePath);
+
     private const string Run = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string Run32 = @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
     private const string Approved = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved";
@@ -105,7 +108,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             {
                 var command = key.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
                 var enabled = ApprovedState(hive, approvedSub, name);
-                yield return new StartupEntry(StartupKind.RunKey, name, command, CommandLine.ImagePath(command), label, hive, enabled, $"run:{hive}:{approvedSub}:{name}")
+                yield return new StartupEntry(StartupKind.RunKey, name, command, CommandLine.ImagePath(command, _userExpand), label, hive, enabled, $"run:{hive}:{approvedSub}:{name}")
                 {
                     Target = $@"{Approved}\{approvedSub}",
                 };
@@ -119,7 +122,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             foreach (var name in key?.GetValueNames() ?? [])
             {
                 var command = key!.GetValue(name)?.ToString();
-                yield return new StartupEntry(StartupKind.PolicyRun, name, command, CommandLine.ImagePath(command), $@"{(hive == Hive.Machine ? "HKLM" : "HKCU")}\{path}", hive, null, $"policyrun:{hive}:{name}");
+                yield return new StartupEntry(StartupKind.PolicyRun, name, command, CommandLine.ImagePath(command, _userExpand), $@"{(hive == Hive.Machine ? "HKLM" : "HKCU")}\{path}", hive, null, $"policyrun:{hive}:{name}");
             }
         }
     }
@@ -149,7 +152,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
                 var name = Path.GetFileName(file);
                 var target = file.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? ShortcutTarget(file) : file;
                 // A shortcut with arguments gives "\"target\" args": the image is only the target.
-                yield return new StartupEntry(StartupKind.StartupFolder, Path.GetFileNameWithoutExtension(file), target, CommandLine.ImagePath(target), dir, hive,
+                yield return new StartupEntry(StartupKind.StartupFolder, Path.GetFileNameWithoutExtension(file), target, CommandLine.ImagePath(target, _userExpand), dir, hive,
                     ApprovedState(hive, "StartupFolder", name), $"folder:{hive}:{name}")
                 {
                     Target = $@"{Approved}\StartupFolder|{name}",
@@ -190,7 +193,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
         {
             // A task's program path is often stored with quotes already: quote it only once.
             var command = t.Command is null ? null : $"\"{t.Command.Trim().Trim('"')}\" {t.Arguments}".Trim();
-            return new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), command, CommandLine.ImagePath(command),
+            return new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), command, CommandLine.ImagePath(command, _userExpand),
                 t.Path, Hive.Machine, t.Enabled, $"task:{t.Path}")
             {
                 Target = t.Path,
@@ -201,33 +204,47 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
 
     public IEnumerable<StartupEntry> ServicesAndDrivers()
     {
-        const string services = @"SYSTEM\CurrentControlSet\Services";
-        using var root = Open(Hive.Machine, services);
+        using var root = Open(Hive.Machine, ServicesKey);
         foreach (var name in root?.GetSubKeyNames() ?? [])
+            if (Service(root!, name, manualToo: false) is { } entry) yield return entry;
+    }
+
+    /// <summary>
+    /// One service, also when it starts on demand: a service this page set to Manual stays listed (switched off), so it
+    /// can be switched back here. Null for a driver, a missing service or one that is neither automatic nor manual.
+    /// </summary>
+    public StartupEntry? ManualService(string name)
+    {
+        using var root = Open(Hive.Machine, ServicesKey);
+        return root is null ? null : Service(root, name, manualToo: true) is { Kind: StartupKind.Service } entry ? entry : null;
+    }
+
+    private const string ServicesKey = @"SYSTEM\CurrentControlSet\Services";
+
+    private static StartupEntry? Service(Microsoft.Win32.RegistryKey root, string name, bool manualToo)
+    {
+        using var key = root.OpenSubKey(name);
+        if (key?.GetValue("Start") is not int start || key.GetValue("Type") is not int type) return null;
+        var image = key.GetValue("ImagePath", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
+        if (image is null) return null;
+        var isDriver = (type & 0x3) != 0;
+        var isService = (type & 0x30) != 0;
+        if (!isDriver && !isService) return null;
+        // Drivers: boot/system/automatic. Services: automatic only (manual services start on demand).
+        if (isDriver ? start > 2 : !(start == 2 || (manualToo && start == 3))) return null;
+        // Started by the service manager: expanded with the machine's variables, not the signed-in user's.
+        string? file = CommandLine.ImagePath(image, Platform.MachineEnvironment.Expand);
+        if (isService && file is not null && Path.GetFileName(file).Equals("svchost.exe", StringComparison.OrdinalIgnoreCase))
         {
-            using var key = root!.OpenSubKey(name);
-            if (key?.GetValue("Start") is not int start || key.GetValue("Type") is not int type) continue;
-            var image = key.GetValue("ImagePath", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
-            if (image is null) continue;
-            var isDriver = (type & 0x3) != 0;
-            var isService = (type & 0x30) != 0;
-            if (!isDriver && !isService) continue;
-            // Drivers: boot/system/automatic. Services: automatic only (manual services start on demand).
-            if (isDriver ? start > 2 : start != 2) continue;
-            // Started by the service manager: expanded with the machine's variables, not the signed-in user's.
-            string? file = CommandLine.ImagePath(image, Platform.MachineEnvironment.Expand);
-            if (isService && file is not null && Path.GetFileName(file).Equals("svchost.exe", StringComparison.OrdinalIgnoreCase))
-            {
-                using var p = key.OpenSubKey("Parameters");
-                if (p?.GetValue("ServiceDll", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is { } dll) file = CommandLine.ImagePath(dll, Platform.MachineEnvironment.Expand);
-            }
-            var display = ResolveIndirect(key.GetValue("DisplayName")?.ToString()) ?? name;
-            yield return new StartupEntry(isDriver ? StartupKind.Driver : StartupKind.Service, display, image, file, $@"HKLM\{services}\{name}", Hive.Machine,
-                isDriver ? null : true, $"{(isDriver ? "driver" : "service")}:{name}")
-            {
-                Target = name,
-            };
+            using var p = key.OpenSubKey("Parameters");
+            if (p?.GetValue("ServiceDll", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is { } dll) file = CommandLine.ImagePath(dll, Platform.MachineEnvironment.Expand);
         }
+        var display = ResolveIndirect(key.GetValue("DisplayName")?.ToString()) ?? name;
+        return new StartupEntry(isDriver ? StartupKind.Driver : StartupKind.Service, display, image, file, $@"HKLM\{ServicesKey}\{name}", Hive.Machine,
+            isDriver ? null : start == 2, $"{(isDriver ? "driver" : "service")}:{name}")
+        {
+            Target = name,
+        };
     }
 
     // ---------------- Explorer shell extensions ----------------

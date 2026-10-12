@@ -947,8 +947,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Update_BadChecksum" xml:space="preserve"><value>The downloaded file does not match the release checksum and was deleted. Nothing was changed.</value></data>
   <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the Tunero release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
+  <data name="Update_RestartFailed" xml:space="preserve"><value>Version {0} is installed, but it could not be started. Close Tunero and start it again.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
   <data name="Update_PackageText" xml:space="preserve"><value>Tunero was installed with {0}, so {0} installs version {1}. Tunero closes, {0} updates it in its own window and Tunero starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
+  <data name="Update_PackageTextElevated" xml:space="preserve"><value>Tunero was installed with {0}, so {0} installs version {1}. Tunero closes, {0} updates it in its own window with administrator rights and then starts Tunero again with them, so Windows does not ask again. Your changes, backups and settings stay.</value></data>
   <data name="Update_PackageRunning" xml:space="preserve"><value>{0} updates Tunero. Tunero starts again when {0} has finished.</value></data>
   <data name="Update_PackageFailed" xml:space="preserve"><value>{0} did not update Tunero (see above). A new version can take a few days to reach {0}. Press Enter to start Tunero again</value></data>
   <data name="Update_PackageManual" xml:space="preserve"><value>{0} could not be started from Tunero. Close Tunero and run {1} in a terminal.</value></data>
@@ -968,6 +970,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Score_Pending" xml:space="preserve"><value>The score appears when the scan is finished.</value></data>
   <data name="Dash_ProblemsPending" xml:space="preserve"><value>Problems found</value></data>
   <data name="Change_Busy" xml:space="preserve"><value>Wait until the current change or scan has finished.</value></data>
+  <data name="Change_OtherInstance" xml:space="preserve"><value>Another Tunero window or command line run is changing this PC. Try again when it has finished.</value></data>
+  <data name="Close_WhileBusy" xml:space="preserve"><value>A change is running. Close Tunero when it has finished, so it does not stop halfway.</value></data>
   <data name="Result_Error" xml:space="preserve"><value>Did not work: {0}</value></data>
   <data name="Result_UndoIncomplete" xml:space="preserve"><value>Undo incomplete: {0}. Not restored: {1}. What is left stays on the Changes page.</value></data>
   <data name="Result_UndoAllIncomplete" xml:space="preserve"><value>Changes undone: {0}. Not fully undone: {1}. They stay on the Changes page with the reason.</value></data>
@@ -1244,6 +1248,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Apps_Updated" xml:space="preserve"><value>Updated</value></data>
   <!-- 4a -->
   <data name="Cli_NotElevated" xml:space="preserve"><value>Tunero needs administrator rights to change or undo anything.</value></data>
+  <data name="Cli_Busy" xml:space="preserve"><value>Another Tunero window or command line run was changing this PC for 5 minutes, so nothing was changed. Run the command again when it has finished.</value></data>
+  <data name="Cli_Error" xml:space="preserve"><value>The run stopped because of an unexpected error: {0}</value></data>
   <data name="Cli_FileUnreadable" xml:space="preserve"><value>{0} could not be read: {1}</value></data>
   <data name="Cli_FileInvalid" xml:space="preserve"><value>{0} is not a Tunero changes file, or it comes from a newer version of the app.</value></data>
   <data name="Cli_NoRestorePoint" xml:space="preserve"><value>No restore point could be created, so nothing was changed. Turn on System Protection, or add --no-restore-point to continue without one.</value></data>

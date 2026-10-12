@@ -45,7 +45,22 @@ public sealed partial class StartupRow : SwitchRow
         _runner = runner;
         Entry = entry;
         KindText = Labels.Current.Get(lang, $"startupKind.{entry.Kind}");
-        CanToggle = entry.Enabled is not null && StartupTweaks.Set(entry, !(entry.Enabled ?? true)) is not null;
+        _switchable = entry.Enabled is not null && StartupTweaks.Set(entry, !(entry.Enabled ?? true)) is not null;
+        // Until the signature is read, a service counts as Windows' own.
+        UpdateCanToggle(microsoftOrUnknown: true);
+    }
+
+    private readonly bool _switchable;
+
+    /// <summary>
+    /// A service follows the Services page's rule (<see cref="ServiceRow.EditFor"/>): Windows' own services only when the
+    /// service catalog explains that Manual is fine, so Dhcp or the firewall cannot be switched off here. A service this
+    /// page set to Manual can always be switched back.
+    /// </summary>
+    private void UpdateCanToggle(bool microsoftOrUnknown)
+    {
+        CanToggle = _switchable && (Entry.Kind != StartupKind.Service || Entry.Enabled == false
+            || ServiceRow.EditFor(CatalogData.Current.Services.Find(Entry.Target ?? ""), microsoftOrUnknown) != ServiceEdit.ReadOnly);
         ReadOnlyNote = CanToggle ? null : Loc.Instance["Startup_ReadOnly"];
     }
 
@@ -54,7 +69,7 @@ public sealed partial class StartupRow : SwitchRow
     public string KindText { get; }
     public string Location => Entry.Location;
     public string? Command => Entry.Command;
-    public string? ReadOnlyNote { get; }
+    [ObservableProperty] private string? _readOnlyNote;
     public bool Suspicious => Entry.Suspicious;
 
     /// <summary>Signed by Microsoft does not mean harmless here: the command line decides what the script host runs.</summary>
@@ -82,6 +97,7 @@ public sealed partial class StartupRow : SwitchRow
     public void SetSignature(SignatureInfo s, string lang)
     {
         IsMicrosoft = s.IsMicrosoft;
+        UpdateCanToggle(s.IsMicrosoft || s.Status == SignatureStatus.Error);
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
         SignatureText = Labels.Current.Get(lang, $"signature.{s.Status}");
         NeedsAttention = Entry.Suspicious || Entry.RunsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
@@ -137,8 +153,21 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     protected override async Task LoadAsync()
     {
         var scanner = new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath);
-        _entries = await Task.Run(() => scanner.ScanAll());
+        _entries = await Task.Run(() => scanner.ScanAll().Concat(SetToManual(scanner)).ToList());
         await ShowAsync(_entries);
+    }
+
+    /// <summary>
+    /// Services this page set to Manual: they no longer start automatically, so the scan does not list them, and without
+    /// them here there would be no switch to turn them back on (the backups of their changes name them).
+    /// </summary>
+    private IEnumerable<StartupEntry> SetToManual(StartupScanner scanner)
+    {
+        var prefix = $"startup.off.{StartupKind.Service.ToString().ToLowerInvariant()}.";
+        foreach (var backup in services.Store.All().Where(b => b.TweakId.StartsWith(prefix, StringComparison.Ordinal)))
+            if (services.Engine.Resolve(backup.TweakId)?.Actions.OfType<ServiceAction>().FirstOrDefault() is { } action
+                && scanner.ManualService(action.Name) is { Enabled: false } entry)
+                yield return entry;
     }
 
     // A language switch builds the rows from the entries already read; the signatures come from the verifier's cache.

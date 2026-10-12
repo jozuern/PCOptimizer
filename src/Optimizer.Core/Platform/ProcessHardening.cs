@@ -21,8 +21,13 @@ public static class ProcessHardening
         "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH", "PSExecutionPolicyPreference",
         "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PYTHONUSERBASE", "NODE_OPTIONS", "NODE_PATH", "PERL5LIB", "PERL5OPT", "PERLLIB",
         "RUBYOPT", "RUBYLIB", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "CLASSPATH",
+        // Compatibility shims (RunAsInvoker and others) and the folder PowerShell caches module analysis in.
+        "__COMPAT_LAYER", "PSModuleAnalysisCachePath",
     ];
-    private static readonly string[] RemovedPrefixes = ["COMPlus_", "DOTNET_", "CORECLR_"];
+
+    // Chocolatey takes its root (configuration, PowerShell helpers, extensions) from ChocolateyInstall before its own
+    // folder; the package-manager window sets that one again to the checked root (PackageInstall.HardenChocolateyEnvironment).
+    private static readonly string[] RemovedPrefixes = ["COMPlus_", "DOTNET_", "CORECLR_", "Chocolatey"];
 
     /// <summary>A plain tool name resolves to System32; powershell.exe to Windows PowerShell 5.1 in System32.</summary>
     public static string ResolveSystemTool(string file)
@@ -52,6 +57,10 @@ public static class ProcessHardening
         env["windir"] = windows;
         env["ComSpec"] = Path.Combine(Environment.SystemDirectory, "cmd.exe");
         env["PATH"] = SystemPath(windows);
+        // Program and profile folders from the shell's known folders, not from variables the user can set: tools and
+        // installer scripts build paths from them (an uninstall string with %ProgramFiles% in it, for example).
+        foreach (var (name, value) in KnownFolders(windows).Concat(ProfileFolders()))
+            if (value.Length > 0) env[name] = value;
         if (TempFolder is { } temp)
         {
             env["TEMP"] = temp;
@@ -69,7 +78,6 @@ public static class ProcessHardening
     public static void WithoutAutoRun(ProcessStartInfo psi)
     {
         var name = Path.GetFileName(psi.FileName.Trim('"'));
-        var extension = Path.GetExtension(name);
         if (name.Equals("cmd.exe", StringComparison.OrdinalIgnoreCase) || name.Equals("cmd", StringComparison.OrdinalIgnoreCase))
         {
             if (psi.ArgumentList.Count > 0)
@@ -81,15 +89,30 @@ public static class ProcessHardening
                 psi.Arguments = ("/D " + psi.Arguments).TrimEnd();
             }
         }
-        else if (extension.Equals(".bat", StringComparison.OrdinalIgnoreCase) || extension.Equals(".cmd", StringComparison.OrdinalIgnoreCase))
+        else if (IsBatchFile(name))
         {
             var args = (psi.ArgumentList.Count > 0 ? string.Join(' ', psi.ArgumentList.Select(Quote)) : psi.Arguments).Trim();
+            // cmd.exe reads the arguments as commands: "&", "|", redirections, "^" and variables in them would run more.
+            if (!SafeForCmd(args)) throw new InvalidOperationException($"{name}: arguments with cmd.exe operators are not run elevated");
             var command = args.Length == 0 ? $"\"{psi.FileName.Trim('"')}\"" : $"\"{psi.FileName.Trim('"')}\" {args}";
             psi.ArgumentList.Clear();
             psi.Arguments = $"/D /S /C \"{command}\"";
             psi.FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe");
         }
     }
+
+    public static bool IsBatchFile(string file)
+    {
+        var extension = Path.GetExtension(file.Trim('"'));
+        return extension.Equals(".bat", StringComparison.OrdinalIgnoreCase) || extension.Equals(".cmd", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Arguments cmd.exe passes to a batch file as they are: no command separators, pipes, redirections, escapes or
+    /// variables, and balanced quotes.
+    /// </summary>
+    public static bool SafeForCmd(string arguments) =>
+        arguments.IndexOfAny(['&', '|', '<', '>', '^', '%', '!', '\n', '\r']) < 0 && arguments.Count(c => c == '"') % 2 == 0;
 
     private static string Quote(string arg) => arg.Length > 0 && arg.IndexOfAny([' ', '\t', '"']) < 0 ? arg : $"\"{arg.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 
@@ -134,17 +157,32 @@ public static class ProcessHardening
         yield return ("windir", windows);
         yield return ("SystemDrive", Path.GetPathRoot(windows)!.TrimEnd('\\'));
         yield return ("ProgramFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+        yield return ("ProgramW6432", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
         yield return ("ProgramFiles(x86)", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+        yield return ("CommonProgramFiles", Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles));
+        yield return ("CommonProgramW6432", Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles));
+        yield return ("CommonProgramFiles(x86)", Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86));
         yield return ("ProgramData", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData));
         yield return ("ALLUSERSPROFILE", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData));
     }
 
-    /// <summary>Creates the tools' TEMP folder empty (leftovers of earlier runs are removed) and uses it from now on.</summary>
-    public static void UseTempFolder(string folder)
+    /// <summary>This process's own profile folders, read through the shell (an override in HKCU\Environment does not count).</summary>
+    private static IEnumerable<(string, string)> ProfileFolders()
+    {
+        yield return ("APPDATA", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+        yield return ("LOCALAPPDATA", Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+        yield return ("USERPROFILE", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+    }
+
+    /// <summary>
+    /// Uses the tools' TEMP folder from now on. With <paramref name="empty"/> leftovers of earlier runs are removed first;
+    /// the start passes false while another copy of the app runs, whose tools (DISM, an installer) may be using them.
+    /// </summary>
+    public static void UseTempFolder(string folder, bool empty = true)
     {
         try
         {
-            if (Directory.Exists(folder))
+            if (empty && Directory.Exists(folder))
                 foreach (var entry in new DirectoryInfo(folder).EnumerateFileSystemInfos())
                     try
                     {

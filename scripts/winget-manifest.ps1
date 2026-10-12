@@ -1,6 +1,6 @@
 # Writes the winget manifest of a published release for microsoft/winget-pkgs (package jozuern.Tunero, portable).
 #
-#   pwsh scripts/winget-manifest.ps1 -Version 0.6.4 [-OutDir artifacts/winget]
+#   pwsh scripts/winget-manifest.ps1 -Version 0.8.2 [-OutDir artifacts/winget]
 #
 # Reads the SHA-256 and the date of the GitHub release, writes the four files in the folder layout winget-pkgs expects
 # (manifests/j/jozuern/Tunero/<version>/) and validates them with "winget validate". Submit the folder as one pull
@@ -20,7 +20,8 @@ $tag = "v$Version"
 $exeUrl = "$repo/releases/download/$tag/Tunero.exe"
 $release = Invoke-RestMethod "https://api.github.com/repos/jozuern/Tunero/releases/tags/$tag"
 if ($release.draft) { throw "$tag is still a draft. Publish it first." }
-$sha = ((Invoke-RestMethod "$exeUrl.sha256") -split '\s+')[0].ToUpperInvariant()
+# Checked against the release signature, not only against the release's .sha256 file.
+$sha = (& (Join-Path $PSScriptRoot "verify-release.ps1") -Version $Version).ToUpperInvariant()
 if ($sha -notmatch '^[0-9A-F]{64}$') { throw "No SHA-256 in $exeUrl.sha256." }
 $date = ([datetime]$release.published_at).ToUniversalTime().ToString("yyyy-MM-dd")
 

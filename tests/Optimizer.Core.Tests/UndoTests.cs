@@ -25,6 +25,26 @@ public class UndoTests
         Hive = Hive.Machine, Path = path, Name = name, Kind = kind, Value = JsonSerializer.SerializeToElement(value), RemoveKeyOnUndo = removeKeyOnUndo,
     };
 
+    /// <summary>
+    /// A newer catalog version asks for another value under the same target: the value the app wrote is still there, so
+    /// this is not a reset by Windows (no drift notice), and undo still restores the original.
+    /// </summary>
+    [Fact]
+    public async Task NewValueInTheCatalogIsNotDrift()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\Test\Drift";
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "Level", "dword", "0");
+        await fx.Engine.ApplyAsync(Tweak("test.level", Reg(path, "Level", 1)), Facts, new HashSet<string>(), Options);
+
+        var newer = Tweak("test.level", Reg(path, "Level", 2));
+        Assert.Equal(TweakState.NotApplied, fx.Engine.DetectState(newer, Facts));
+
+        // Windows resets it: that is drift.
+        RegistryValue.Write(fx.Registry, Hive.Machine, path, "Level", "dword", "0");
+        Assert.Equal(TweakState.RevertedByWindows, fx.Engine.DetectState(newer, Facts));
+    }
+
     [Fact]
     public void ChangeOfARemovedTweakCanStillBeUndone()
     {
@@ -370,6 +390,33 @@ public class UndoTests
         Assert.Equal(new StoredValue(true, "dword", "0"), RegistryValue.Read(fx.Registry, Hive.Machine, key, "*EEE"));
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal(new StoredValue(true, "dword", "1"), RegistryValue.Read(fx.Registry, Hive.Machine, key, "*EEE"));
+    }
+
+    /// <summary>
+    /// The adapter is replaced and Windows gives its class key number to the new one: the undo stored for the old adapter
+    /// writes nothing there (reported as changed since).
+    /// </summary>
+    [Fact]
+    public async Task NicUndoNeverWritesIntoAnotherAdapter()
+    {
+        using var fx = new EngineFixture();
+        var key = $@"{NicAdapters.ClassPath}\0001";
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "NetCfgInstanceId", "string", "{11111111-1111-1111-1111-111111111111}");
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "DeviceInstanceID", "string", @"PCI\VEN_8086&DEV_15BC\3");
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "Characteristics", "dword", "132");
+        RegistryValue.Write(fx.Registry, Hive.Machine, $@"{key}\Ndi\params\*EEE\enum", "0", "string", "Disabled");
+        RegistryValue.Write(fx.Registry, Hive.Machine, $@"{key}\Ndi\params\*EEE\enum", "1", "string", "Enabled");
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "*EEE", "string", "1");
+        var t = Tweak("test.eee", new NicPropertyAction { Properties = new(StringComparer.OrdinalIgnoreCase) { ["*EEE"] = "0" } });
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+
+        // Another adapter in the same slot, with the value the undo would compare against.
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "NetCfgInstanceId", "string", "{22222222-2222-2222-2222-222222222222}");
+        RegistryValue.Write(fx.Registry, Hive.Machine, key, "*EEE", "string", "0");
+
+        var result = fx.Engine.Revert(t);
+        Assert.Single(result.AlreadyRevertedByWindows);
+        Assert.Equal("0", RegistryValue.Read(fx.Registry, Hive.Machine, key, "*EEE").Data);
     }
 
     [Fact]

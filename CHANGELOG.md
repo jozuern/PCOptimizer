@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- **Update found at start:** when the check at start finds a new version, a bar at the bottom of the window says so on any page, with "Update now" (or "Open download page" for a copy that cannot update itself), and stays until it is closed; Settings in the navigation carries a badge until the update is installed.
+
+### Fixed
+
+- **Uninstall keeps your backups when the package manager fails:** Settings > Uninstall of a copy from winget, Chocolatey or Scoop deleted the data folder even when the package manager did not remove the app, or when Tunero was started again in the meantime. The data folder now goes only once the app is gone and no copy of it runs.
+- **One change at a time, also across windows:** the window and a command line run, or two Windows accounts, no longer change the PC at the same time, so no backup can record another change's value as the original. A second window says so; the command line waits up to 5 minutes (exit code 5 when it gives up). A second start no longer empties the tools' temporary folder while another copy uses it.
+- **Startup page and Windows services:** in Expert mode a Windows service such as DHCP or the firewall could be set to Manual on the Startup page, although the Services page keeps it read only. The Startup page now follows the same rule, and a service it set to Manual stays listed, so it can be switched back.
+- **Updates:** a download that receives nothing for 60 seconds ends, a download larger than 300 MB is refused, a new version that cannot be started after the update says so, and an installed exe that changed before the restart is replaced by the previous version again. For Chocolatey and Scoop, "Update now" shows the note that a new version can take a few days to arrive when the package manager installed nothing new, instead of quietly starting the old version, and the confirmation no longer says that Windows asks for administrator rights: Chocolatey's window already has them.
+- **Command line:** an unexpected error ends `--apply` and `--undo-all` with exit code 6 and a line in the log instead of waiting for a dialog; a Windows version the app does not support gives exit code 7.
+- **Closing the window during a change** is refused with a note, so a batch, an undo or an app removal does not stop halfway.
+- **Undo and backups:** power plan and boot exports of two changes in the same second no longer share one file; a backup that cannot be saved after a change is tried again and logged instead of ending the apply with an error; a newer catalog value for the same setting is no longer reported as "reset by Windows"; the undo of a network adapter setting writes nothing when another adapter took over its settings key; Import stops when the restore point question is cancelled.
+- **Startup entries that run scripts:** paths with forward slashes, doubled backslashes, "." or short names, a launcher started by a script host, and rundll32 entry points that open a Control Panel item or an INF file are marked. Entries of the signed-in user are read with that user's folders when Tunero runs under another administrator account, and a signature is checked on the same open file it is remembered for.
+- **Tools the app starts with administrator rights** get Windows' own program and profile folders instead of values the user can set, without compatibility shims, and a batch file never runs elevated with command operators in its arguments.
+- **Remove apps:** a list of removed apps that could not be read is no longer replaced by one with only the new app, and apps nobody reviewed get no Store link.
+- **Hardware:** restarting a device (network adapter, graphics card) tries to enable it again five times, and the display list is read again when a display was added or removed in between.
+
+### Changed
+
+- **Releases** carry only Tunero.exe: the PCOptimizer.exe copy helped versions up to 0.7.3 only until the repository was renamed.
+- **Package scripts** check the release signature (`scripts/verify-release.ps1`) before they write a hash, and the Scoop manifest no longer updates itself from the release's checksum file alone.
+
 ## 0.8.0 (preview)
 
 PCOptimizer is now called **Tunero**.

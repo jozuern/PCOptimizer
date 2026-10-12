@@ -143,6 +143,38 @@ public class ReleaseTests
         Assert.False(UpdateSignature.Verify(version, hash, "not base64", pem));
     }
 
+    /// <summary>
+    /// Every workflow and script that checks a release (winget, Chocolatey, the hand-run package scripts) checks the same
+    /// statement as the app, over the lowercase hash: a copy that drifted would accept or refuse other releases than the app.
+    /// </summary>
+    [Fact]
+    public void EveryReleaseCheckVerifiesTheAppsStatement()
+    {
+        var files = Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, ".github", "workflows"), "*.yml")
+            .Append(Path.Combine(RepoPaths.Root, "scripts", "verify-release.ps1"));
+        var checkers = 0;
+        foreach (var file in files)
+        {
+            var text = File.ReadAllText(file);
+            if (!text.Contains("\"PCOptimizer $", StringComparison.Ordinal)) continue;
+            checkers++;
+            var statement = System.Text.RegularExpressions.Regex.Match(text, "\"PCOptimizer \\$[^\"`]+`n\\$hash`n\"");
+            Assert.True(statement.Success, $"{Path.GetFileName(file)}: the statement is not \"PCOptimizer <version>`n$hash`n\"");
+            Assert.Contains(".Hash.ToLowerInvariant()", text);
+        }
+        Assert.True(checkers >= 4, $"expected release.yml, winget.yml, chocolatey.yml and verify-release.ps1, found {checkers}");
+        // The hand-run package scripts take their hash from the verified check, never from the .sha256 file alone.
+        foreach (var script in new[] { "chocolatey-package.ps1", "scoop-manifest.ps1", "winget-manifest.ps1" })
+        {
+            var text = File.ReadAllText(Path.Combine(RepoPaths.Root, "scripts", script));
+            Assert.Contains("verify-release.ps1", text);
+            Assert.DoesNotContain("Invoke-RestMethod \"$exeUrl.sha256\"", text);
+        }
+        // Scoop's Excavator would take a new release's .sha256 unchecked: the manifest has no checkver or autoupdate.
+        var scoop = File.ReadLines(Path.Combine(RepoPaths.Root, "scripts", "scoop-manifest.ps1")).Where(l => !l.TrimStart().StartsWith('#'));
+        Assert.DoesNotContain(scoop, l => l.Contains("checkver", StringComparison.Ordinal) || l.Contains("autoupdate", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void AReleaseWithoutSignatureOffersNoSelfUpdate() =>
         Assert.Null(ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "Tunero.exe", Download + "Tunero.exe.sha256", sigUrl: null)).Assets);
@@ -291,11 +323,35 @@ public class ReleaseTests
                 missing.Add($"{id} (THIRD-PARTY-NOTICES.md)");
         }
         // The self-contained runtime comes from the SDK that global.json pins, not from a package reference.
-        var runtime = $"{Environment.Version.Major}.{Environment.Version.Minor}.{Environment.Version.Build}";
+        var runtime = ShippedRuntime();
         foreach (var pack in new[] { "Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App" })
             if (listed.GetValueOrDefault(pack) != runtime) missing.Add($"{pack} {runtime} (licenses.json)");
         if (!notices.Contains($"runtime {runtime}", StringComparison.Ordinal)) missing.Add($".NET runtime {runtime} (THIRD-PARTY-NOTICES.md)");
         Assert.Empty(missing);
+    }
+
+    /// <summary>
+    /// The runtime the published exe carries: the one bundled with the SDK that global.json selects (the newest
+    /// installed patch of its feature band, as "latestPatch" picks it). The runtime this test runs on can be newer: a
+    /// Windows or Visual Studio update installs patches without changing what the build ships.
+    /// </summary>
+    private static string ShippedRuntime()
+    {
+        var fallback = $"{Environment.Version.Major}.{Environment.Version.Minor}.{Environment.Version.Build}";
+        var pinned = Version.Parse(JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoPaths.Root, "global.json")))
+            .RootElement.GetProperty("sdk").GetProperty("version").GetString()!);
+        // ...\dotnet\shared\Microsoft.NETCore.App\<version>\ -> ...\dotnet
+        var dotnet = Path.GetFullPath(Path.Combine(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", ".."));
+        var sdks = Path.Combine(dotnet, "sdk");
+        if (!Directory.Exists(sdks)) return fallback;
+        var sdk = Directory.EnumerateDirectories(sdks)
+            .Select(d => Version.TryParse(Path.GetFileName(d), out var v) ? (Folder: d, Version: v) : default)
+            .Where(x => x.Version is { } v && v.Major == pinned.Major && v.Minor == pinned.Minor && v.Build / 100 == pinned.Build / 100 && v >= pinned)
+            .OrderByDescending(x => x.Version).FirstOrDefault().Folder;
+        var props = sdk is null ? null : Path.Combine(sdk, "Microsoft.NETCoreSdk.BundledVersions.props");
+        if (props is null || !File.Exists(props)) return fallback;
+        var match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(props), @"<BundledNETCoreAppPackageVersion>([0-9]+\.[0-9]+\.[0-9]+)<");
+        return match.Success ? match.Groups[1].Value : fallback;
     }
 
     /// <summary>

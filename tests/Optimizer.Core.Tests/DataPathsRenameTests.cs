@@ -63,6 +63,28 @@ public class DataPathsRenameTests
         }
     }
 
+    /// <summary>
+    /// Reading the data folder changes nothing: only the app's start moves the old folder. Test runs (which read
+    /// DataPaths through the log) once renamed a developer's real folder.
+    /// </summary>
+    [Fact]
+    public void LocatingTheFolderMovesNothing()
+    {
+        var baseFolder = TestFolders.Create("datapaths");
+        try
+        {
+            var legacy = Path.Combine(baseFolder, DataPaths.LegacyFolderName);
+            Directory.CreateDirectory(legacy);
+            Assert.Equal(legacy, DataPaths.Locate(baseFolder));
+            Assert.True(Directory.Exists(legacy));
+            Assert.False(Directory.Exists(Path.Combine(baseFolder, DataPaths.FolderName)));
+        }
+        finally
+        {
+            TestFolders.Delete(baseFolder);
+        }
+    }
+
     [Fact]
     public void NoFolderYetGivesTheNewName()
     {

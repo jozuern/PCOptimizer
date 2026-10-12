@@ -53,7 +53,7 @@ public sealed partial class StartupScanner
             foreach (var name in key?.GetValueNames().Where(n => n.Length > 0) ?? [])
             {
                 var command = key!.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
-                yield return new StartupEntry(StartupKind.RunOnce, name, command, CommandLine.ImagePath(command), $@"{Root(hive)}\{path}", hive, null, $"runonce:{hive}:{path}:{name}");
+                yield return new StartupEntry(StartupKind.RunOnce, name, command, CommandLine.ImagePath(command, _userExpand), $@"{Root(hive)}\{path}", hive, null, $"runonce:{hive}:{path}:{name}");
             }
         }
         const string ex = @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx";
@@ -93,7 +93,7 @@ public sealed partial class StartupScanner
         using var key = Open(Hive.User, path);
         foreach (var name in new[] { "Load", "Run" })
         foreach (var item in Strings(key?.GetValue(name), split: true))
-            yield return new StartupEntry(StartupKind.LoadValue, $"{name}: {Path.GetFileName(item)}", item, CommandLine.ImagePath(item), $@"HKCU\{path}\{name}", Hive.User, null, $"load:{name}:{item}")
+            yield return new StartupEntry(StartupKind.LoadValue, $"{name}: {Path.GetFileName(item)}", item, CommandLine.ImagePath(item, _userExpand), $@"HKCU\{path}\{name}", Hive.User, null, $"load:{name}:{item}")
             {
                 Suspicious = true,
             };

@@ -58,6 +58,8 @@ public static class CommandLine
     private static readonly HashSet<string> ProxyExports = new(StringComparer.OrdinalIgnoreCase)
     {
         "ShellExec_RunDLL", "ShellExec_RunDLLA", "ShellExec_RunDLLW", "FileProtocolHandler", "OpenURL", "OpenURLA", "RouteTheCall",
+        "Control_RunDLL", "Control_RunDLLA", "Control_RunDLLW", "Control_RunDLLAsUser", "Control_RunDLLAsUserW", "RegisterOCX",
+        "LaunchINFSection", "LaunchINFSectionEx", "InstallHinfSection", "InstallHinfSectionA", "InstallHinfSectionW", "LaunchApplication",
     };
 
     /// <summary>
@@ -89,12 +91,13 @@ public static class CommandLine
         if (IsRundll(host)) return RundllStartsSomethingElse(args, Trusted);
         if (args.IndexOfAny(['&', '|', '^', '`', ';']) >= 0 || args.Contains("://", StringComparison.Ordinal)) return true;
         var tokens = Tokens(args).ToList();
-        if (tokens.Any(t => IsScriptHost(t))) return true;
+        // Another script host, or a launcher (cmd /c msiexec /i x.msi), as an argument runs whatever it is given.
+        if (tokens.Any(t => IsScriptHost(t) || IsLauncher(t))) return true;
         // PowerShell inline code: -Command / -EncodedCommand / -ec and their accepted prefixes ("-c", "-enc", "/e").
         if (Path.GetFileName(host).StartsWith("p", StringComparison.OrdinalIgnoreCase)
             && tokens.Any(t => t.Length >= 2 && t[0] is '-' or '/' && IsPrefixOf(t[1..], "command", "encodedcommand", "ec")))
             return true;
-        var files = tokens.Select(t => t.Split(',')[0]).Where(t => t.Contains('\\')).ToList();
+        var files = tokens.Select(t => t.Split(',')[0]).Where(IsPathToken).ToList();
         if (files.Count == 0) return true; // inline code or a bare name looked up on PATH
         return !files.All(Trusted);
     }
@@ -110,7 +113,7 @@ public static class CommandLine
         var parts = tokens[0].Split(',', 2);
         if (parts.Length == 2 && ProxyExports.Contains(parts[1].Trim())) return true;
         if (args.Contains("://", StringComparison.Ordinal)) return true;
-        return tokens.Skip(1).Any(t => t.Contains('\\') && !trusted(t));
+        return tokens.Skip(1).Any(t => IsPathToken(t) && !trusted(t));
     }
 
     /// <summary>
@@ -122,7 +125,31 @@ public static class CommandLine
         if (args.Contains("://", StringComparison.Ordinal)) return true;
         var tokens = Tokens(args).Select(t => t.Split(',')[0]).ToList();
         if (tokens.Any(t => IsScriptHost(t))) return true;
-        return tokens.Any(t => t.Contains('\\') && !trusted(t));
+        return tokens.Any(t => IsPathToken(t) && !trusted(t));
+    }
+
+    /// <summary>
+    /// A token that names a file by path: with a backslash, and also with forward slashes, which Windows accepts in paths
+    /// as well (C:/Users/Public/x.vbs). Switches such as /c or /i have their only slash first.
+    /// </summary>
+    private static bool IsPathToken(string token) =>
+        token.Contains('\\') || (token.Length > 2 && token[1] == ':' && token[2] == '/') || token.IndexOf('/', 1) > 0;
+
+    /// <summary>
+    /// The path as Windows reads it: forward slashes as backslashes, "." and doubled separators removed. A path with ".."
+    /// or a short (8.3) name is refused before this: both can lead out of a folder that looks protected.
+    /// </summary>
+    private static string Normalized(string file)
+    {
+        var path = file.Replace('/', '\\');
+        try
+        {
+            return Path.IsPathFullyQualified(path) ? Path.GetFullPath(path) : path;
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return path;
+        }
     }
 
     /// <summary>
@@ -141,7 +168,9 @@ public static class CommandLine
     /// </summary>
     public static bool IsInProtectedSystemFolder(string file)
     {
-        if (file.Contains("..", StringComparison.Ordinal) || HasStream(file)) return false;
+        // "~": a short name (spool\PRINTE~1) can stand for a folder users can write to.
+        if (file.Contains("..", StringComparison.Ordinal) || file.Contains('~') || HasStream(file)) return false;
+        file = Normalized(file);
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         foreach (var root in new[] { Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") })
         {
@@ -164,6 +193,7 @@ public static class CommandLine
     /// </summary>
     public static bool IsInUserWritableWindowsFolder(string file)
     {
+        file = Normalized(file);
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         if (!file.StartsWith(windows + "\\", StringComparison.OrdinalIgnoreCase)) return false;
         var relative = file[(windows.Length + 1)..];

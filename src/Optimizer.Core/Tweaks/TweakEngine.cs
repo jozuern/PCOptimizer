@@ -181,7 +181,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 return TweakState.PendingRestart;
             // We applied it, now it is gone: a feature update or another tool reset it (drift). Only
             // targets we changed count: a newly added adapter or a target outside the backup is simply not applied.
-            if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is not null))
+            // A target that still holds what the app wrote is not drift either: a newer catalog version asks for
+            // another value there, and the tweak simply reads as not (fully) applied.
+            if (actions.Select((a, i) => (a, s: states[i])).Any(x => x.s == ActionState.NotApplied && backup.Entry(x.a.TargetKey) is { } entry
+                    && !StillHoldsWhatWasWritten(x.a, entry)))
                 return TweakState.RevertedByWindows;
         }
         else if (state != TweakState.Applied && facts.Get("device.managed") is true && actions.OfType<RegistryAction>().Any(a => IsPolicyPath(a.Path) && SafeRead(a) is { Existed: true }))
@@ -189,6 +192,20 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             return TweakState.EnforcedByPolicy;
         }
         return state;
+    }
+
+    private bool StillHoldsWhatWasWritten(TweakAction a, BackupEntry entry)
+    {
+        if (entry.Applied is not { } applied) return false;
+        try
+        {
+            return a.IsStillApplied(ctx, applied);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("engine", $"{a.TargetKey}: could not compare with the written value: {ex.Message}");
+            return false;
+        }
     }
 
     private ActionState SafeState(TweakAction a)
@@ -336,24 +353,26 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         };
 
         // Exports before boot-critical or power-plan changes.
+        var exportsBefore = backup.Exports.Count;
         try
         {
             if (actions.Any(a => a.IsBootCritical))
             {
-                var file = Path.Combine(ctx.ExportFolder, $"bcd-{DateTime.Now:yyyyMMdd-HHmmss}.bcd");
+                var file = Path.Combine(ctx.ExportFolder, $"bcd-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.bcd");
                 ctx.Bcd.Export(file);
                 backup.Exports.Add(file);
             }
             if (actions.Any(a => a is PowerSettingAction or PowerSchemeAction))
             {
                 var scheme = ctx.Power.ActiveScheme();
-                var file = Path.Combine(ctx.ExportFolder, $"power-{scheme}-{DateTime.Now:yyyyMMdd-HHmmss}.pow");
+                var file = Path.Combine(ctx.ExportFolder, $"power-{scheme}-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.pow");
                 ctx.Power.Export(scheme, file);
                 backup.Exports.Add(file);
             }
         }
         catch (Exception ex)
         {
+            DeleteExports(backup.Exports.Skip(exportsBefore).ToList());
             return Fail(t, changes, $"Export before change failed: {ex.Message}");
         }
 
@@ -377,7 +396,12 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             entry.Action ??= JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
         }
         // Nothing could be read (a tool timed out after the state check): no originals, so nothing may be written.
-        if (before.Count == 0) return Fail(t, changes, "The current values could not be read; nothing was changed.");
+        if (before.Count == 0)
+        {
+            // Nothing is changed, so the exports made for this run are not needed.
+            DeleteExports(backup.Exports.Skip(exportsBefore).ToList());
+            return Fail(t, changes, "The current values could not be read; nothing was changed.");
+        }
         // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
         // definition is what detection compares against; each entry restores itself through its own action.
         if (_catalog.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
@@ -425,16 +449,16 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                         if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeApplied(s);
                     backup.LastApplied = DateTimeOffset.Now;
                     backup.AppliedOnVersion = WindowsVersion;
-                    store.Save(backup);
+                    SaveAfterChange(() => store.Save(backup), t.Id);
                     return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)") with { LeftChanged = true };
                 }
                 // Everything was rolled back: the entries this run added go (with an earlier backup still applied they would
                 // read as "reset by Windows"), and the backup goes to history when nothing of this tweak remains applied.
                 backup.Entries.RemoveAll(e => added.Contains(e.TargetKey));
                 if (backup.Entries.All(e => before.TryGetValue(e.TargetKey, out var b) && b.SameAs(e.Original)))
-                    store.Archive(t.Id);
+                    SaveAfterChange(() => store.Archive(t.Id), t.Id);
                 else
-                    store.Save(backup);
+                    SaveAfterChange(() => store.Save(backup), t.Id);
                 return Fail(t, changes, ex.Message);
             }
         }
@@ -446,7 +470,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
-        store.Save(backup);
+        // The originals were saved before the first write; this save adds what was written and when.
+        SaveAfterChange(() => store.Save(backup), t.Id);
         if (pendingUndo is not null) store.ClearPendingUndo(t.Id);
 
         // The data lets the Changes page show the line in the UI language; the message stays English for the log file.
@@ -539,17 +564,17 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         }
         if (kept.Count == 0)
         {
-            DeleteExports(backup);
-            store.Archive(t.Id);
+            DeleteExports(backup.Exports);
+            if (!SaveAfterChange(() => store.Archive(t.Id), t.Id)) errors.Add("The values were restored, but the backup file could not be moved to the history.");
         }
         else
         {
             // Only what could not be restored stays: a retry does not report restored targets as "reset by Windows".
             backup.Entries.RemoveAll(e => !kept.Contains(e));
-            store.Save(backup);
+            if (!SaveAfterChange(() => store.Save(backup), t.Id)) errors.Add("The backup file could not be updated.");
         }
         // Restored values that take effect after a restart: shown as "off after restart" until then.
-        if (restartBound.Count > 0) store.SavePendingUndo(new PendingUndo { TweakId = t.Id, Entries = restartBound });
+        if (restartBound.Count > 0) SaveAfterChange(() => store.SavePendingUndo(new PendingUndo { TweakId = t.Id, Entries = restartBound }), t.Id);
         return new RevertResult(errors.Count == 0, skipped, errors);
     }
 
@@ -557,9 +582,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     /// The BCD and power plan exports made before the change: kept while the change is in place (a manual way back),
     /// removed with its complete undo, so the exports folder does not grow with every apply.
     /// </summary>
-    private void DeleteExports(TweakBackup backup)
+    private void DeleteExports(IEnumerable<string> exports)
     {
-        foreach (var file in backup.Exports)
+        foreach (var file in exports)
         {
             try
             {
@@ -569,6 +594,32 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
             {
                 Log.Warn("engine", $"export {file} not removed: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// A backup write after the system was changed: one retry (antivirus briefly holding the file), then logged. It never
+    /// throws, so the caller still reports what was changed. False when it did not succeed.
+    /// </summary>
+    private static bool SaveAfterChange(Action save, string tweakId)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                save();
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (attempt == 0)
+                {
+                    Thread.Sleep(250);
+                    continue;
+                }
+                Log.Error("backup", $"{tweakId}: the backup could not be saved after the change", ex);
+                return false;
             }
         }
     }
