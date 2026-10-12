@@ -50,7 +50,7 @@ $nuspec = @"
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <copyright>Copyright (c) 2026 Joshua Zürn</copyright>
     <tags>gaming optimizer tweaks windows-11 privacy debloat startup services cleanup performance admin</tags>
-    <summary>Windows 11 PC optimizer, gaming first, that explains every check and change with sources and can undo every change.</summary>
+    <summary>PC optimizer for Windows 11, gaming first, that explains every check and change with sources and can undo every change.</summary>
     <description><![CDATA[Tunero checks Windows 11 for settings that cost performance, privacy or battery life and offers tweaks with their impact, evidence and risk.
 
 Every finding and every change comes with an explanation and sources in English and German. Changes are backed up first, verified after applying and can be undone, also after a restart. It also covers removing preinstalled apps, cleanup, startup entries, services, NVIDIA driver settings, DNS and a frame time benchmark.

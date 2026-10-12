@@ -67,7 +67,7 @@ Write-Manifest "$id.locale.en-US.yaml" "defaultLocale" @"
 PackageLocale: en-US
 $common
 Moniker: tunero
-ShortDescription: Windows 11 PC optimizer, gaming first, with usage profiles. It explains every check and change with sources, backs up what it changes and can undo it.
+ShortDescription: PC optimizer for Windows 11, gaming first, with usage profiles. It explains every check and change with sources, backs up what it changes and can undo it.
 Description: |-
   Tunero checks Windows 11 for settings that cost performance, privacy or battery life and offers tweaks with their impact, evidence and risk.
   Every finding and every change comes with an explanation and sources in English and German. Changes are backed up first, verified after applying and can be undone, also after a restart.

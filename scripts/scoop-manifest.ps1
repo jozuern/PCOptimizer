@@ -26,7 +26,7 @@ if ($Sha256 -notmatch '^[0-9a-f]{64}$') { throw "No SHA-256 for $exeUrl." }
 # The field order of Scoop's contributing guide.
 $manifest = [ordered]@{
     version      = $Version
-    description  = "Windows 11 PC optimizer, gaming first. Explains every check and change with sources, backs up what it changes and can undo it."
+    description  = "PC optimizer for Windows 11, gaming first. Explains every check and change with sources, backs up what it changes and can undo it."
     homepage     = $repo
     license      = "GPL-3.0-only"
     notes        = @(
