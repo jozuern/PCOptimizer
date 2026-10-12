@@ -117,6 +117,20 @@
                 </StackPanel>
             </ui:Card>
 
+            <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_Uninstall}" />
+            <ui:CardControl Padding="{StaticResource CardPadding}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Delete24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Uninstall_Setting}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Uninstall_Hint}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:Button Content="{l:Tr Uninstall_Button}" Command="{Binding UninstallCommand}" IsEnabled="{Binding CanUninstall}" />
+            </ui:CardControl>
+
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Settings_About}" />
             <ui:Card Padding="16,12">
                 <StackPanel>

@@ -57,7 +57,7 @@ PrivacyUrl: $repo/blob/main/docs/PRIVACY.md
 Author: Joshua Zürn
 PackageName: PCOptimizer
 PackageUrl: $repo
-License: PolyForm-Strict-1.0.0
+License: GPL-3.0-only
 LicenseUrl: $repo/blob/main/LICENSE
 Copyright: Copyright (c) 2026 Joshua Zürn
 ReleaseNotesUrl: $repo/releases/tag/$tag

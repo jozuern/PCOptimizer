@@ -108,4 +108,20 @@ public sealed class Dialogs : IDialogs
     public bool ConfirmUndoAll(int count) =>
         MessageWindow.Show(Owner, Loc.Instance["UndoAll_Title"], Loc.Instance.Format("UndoAll_Text", count),
             Loc.Instance["Confirm_Cancel"], Loc.Instance["Changes_UndoAll"]) == 1;
+
+    public UninstallChoice ConfirmUninstall(int activeChanges, string dataFolder)
+    {
+        var text = Loc.Instance.Format("Uninstall_Text", dataFolder);
+        if (activeChanges == 0)
+            return MessageWindow.Show(Owner, Loc.Instance["Uninstall_Title"], text, Loc.Instance["Confirm_Cancel"], Loc.Instance["Uninstall_Button"]) == 1
+                ? UninstallChoice.Keep
+                : UninstallChoice.Cancel;
+        return MessageWindow.Show(Owner, Loc.Instance["Uninstall_Title"], text + "\n\n" + Loc.Instance.Format("Uninstall_TextChanges", activeChanges),
+                Loc.Instance["Confirm_Cancel"], Loc.Instance["Uninstall_Keep"], Loc.Instance["Uninstall_UndoFirst"]) switch
+        {
+            2 => UninstallChoice.UndoFirst,
+            1 => UninstallChoice.Keep,
+            _ => UninstallChoice.Cancel,
+        };
+    }
 }

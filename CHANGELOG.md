@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.2 (preview)
+
+PCOptimizer is now open source under the GNU General Public License version 3, and it can remove itself from a PC.
+
+### New
+
+- **License:** PCOptimizer is now under the GNU General Public License version 3 (GPL-3.0-only) instead of the PolyForm Strict License 1.0.0. You can use, change and share it; shared versions stay under the GPL with their source code. Releases up to 0.7.1 keep the PolyForm license.
+- **Uninstall** (Settings > Uninstall): offers to undo the app's active changes first and stops without removing anything when one cannot be undone. Then the app closes and, once it has ended, its exe, its data folder `%ProgramData%\PCOptimizer` with backups, logs and settings, and its Start menu entry are deleted. A copy installed with winget is removed with `winget uninstall`, run as the signed-in user. Restore points, apps installed through PCOptimizer and the PawnIO driver stay. The README describes how to remove it by hand.
+- **Code signing:** the project is applying to SignPath Foundation for free code signing. The release workflow has the signing step, which runs once SignPath accepts the project; the README has the code signing policy with the team roles. The exe's product version no longer carries the commit id ("0.7.2" instead of "0.7.2+1a2b3c..."), because SignPath checks it against the release version.
+- **Donations:** the README and the repository's Sponsor button link to Ko-fi.
+
 ## 0.7.1 (preview)
 
 This release adds Export and Import of your changes and new tweaks from a comparison with other tweak tools, closes several security gaps in what the app runs as administrator, and fixes or proves five tweaks that were in Preview.

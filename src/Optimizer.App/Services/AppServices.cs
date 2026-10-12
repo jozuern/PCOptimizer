@@ -98,6 +98,9 @@ public interface IDialogs
 
     bool ConfirmUndoAll(int count);
 
+    /// <summary>Uninstall: Undo and uninstall / Keep changes and uninstall / Cancel (only the last two without active changes).</summary>
+    UninstallChoice ConfirmUninstall(int activeChanges, string dataFolder);
+
     /// <summary>Generic question; returns true when the primary button was chosen.</summary>
     bool Ask(string title, string text, string primary);
 
@@ -120,3 +123,5 @@ public sealed record ConfirmRequest(
 public sealed record ConfirmResult(bool AcknowledgedAntiCheat);
 
 public enum RestorePointChoice { Enable, Continue, Cancel }
+
+public enum UninstallChoice { UndoFirst, Keep, Cancel }

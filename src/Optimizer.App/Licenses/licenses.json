@@ -1,7 +1,7 @@
 [
   {
     "name": "PCOptimizer",
-    "license": "PolyForm Strict 1.0.0",
+    "license": "GPL-3.0-only",
     "source": "https://github.com/jozuern/PCOptimizer",
     "files": [
       "PCOptimizer.txt"

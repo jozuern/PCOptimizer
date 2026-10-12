@@ -13,7 +13,13 @@ public static class WingetPackage
     /// ("jozuern.PCOptimizer_Microsoft.Winget.Source_8wekyb3d8bbwe"), under a root its settings can move. Started through
     /// the command link in WinGet\Links, the path is the link's: it is followed to the file first.
     /// </summary>
-    public static bool IsInstalledWithWinget(string exePath)
+    public static bool IsInstalledWithWinget(string exePath) => PackageFolder(exePath) is not null;
+
+    /// <summary>
+    /// Name of the package folder the exe sits in, or null when it is not one. winget registers a portable package in
+    /// Installed apps under this name, so it is also the product code that finds the installation, from any source.
+    /// </summary>
+    public static string? PackageFolder(string exePath)
     {
         var path = exePath;
         try
@@ -23,7 +29,8 @@ public static class WingetPackage
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
-        return IsPackageFolder(Path.GetFileName(Path.GetDirectoryName(path)));
+        var folder = Path.GetFileName(Path.GetDirectoryName(path));
+        return IsPackageFolder(folder) ? folder : null;
     }
 
     public static bool IsPackageFolder(string? folder) =>
@@ -43,6 +50,20 @@ public static class WingetPackage
         $"winget upgrade --id {Id} --exact --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity; " +
         $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}; " +
         $"Start-Process -FilePath {Quote(exePath)}\"";
+
+    /// <summary>
+    /// PowerShell arguments for the uninstall, started as the signed-in user (never elevated, winget refuses to remove a
+    /// user-scope package with administrator rights): wait until every process named <paramref name="processName"/> has
+    /// ended, run winget, and keep the window open with <paramref name="failedText"/> when it did not succeed. The package
+    /// is named by its product code (<see cref="PackageFolder"/>): the id alone finds only a package from the winget
+    /// source, not one installed from a manifest file.
+    /// </summary>
+    public static string UninstallArguments(string productCode, string processName, string runningText, string failedText) =>
+        "-NoProfile -Command \"" +
+        $"Write-Host {Quote(runningText)}; " +
+        $"Wait-Process -Name {Quote(processName)} -Timeout 60 -ErrorAction SilentlyContinue; " +
+        $"winget uninstall --product-code {Quote(productCode)} --accept-source-agreements --disable-interactivity; " +
+        $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}\"";
 
     /// <summary>
     /// A PowerShell string in single quotes. PowerShell also ends such a string at the typographic single quotes, so every

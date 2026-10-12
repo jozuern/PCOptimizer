@@ -175,7 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
             foreach (var command in new CommunityToolkit.Mvvm.Input.IRelayCommand[]
                      {
                          RunActionCommand, ApplyRecommendedCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
-                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand,
+                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand, UninstallCommand,
                      })
                 command.NotifyCanExecuteChanged();
         };
@@ -706,6 +706,74 @@ public sealed partial class MainViewModel : ObservableObject
         _settings.StartMenuAsked = true;
         _settings.Save();
         if (_dialogs.Ask(Loc.Instance["StartMenu_AskTitle"], Loc.Instance["StartMenu_AskText"], Loc.Instance["StartMenu_Add"])) StartMenuEntry = true;
+    }
+
+    // ---------------- Uninstall ----------------
+
+    /// <summary>
+    /// Only the published exe removes itself (a build folder is not where the app lives), and only elevated: the data
+    /// folder is admin-only.
+    /// </summary>
+    public bool CanUninstall => IsPublishedExe && DataPaths.ProcessIsElevated;
+
+    /// <summary>
+    /// After confirmation: undoes the app's changes if the user wants (and stops when one fails), removes the Start menu
+    /// entry, starts the cleanup that deletes the data folder and the exe once the app has ended (a winget copy is removed
+    /// by winget, as the signed-in user) and ends the app (<see cref="SelfUninstall"/>).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
+    private async Task UninstallAsync()
+    {
+        if (!CanUninstall || Environment.ProcessPath is not { } exe) return;
+        if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating)
+        {
+            ShowResult(Loc.Instance["Uninstall_Busy"]);
+            return;
+        }
+        var active = await Task.Run(() => _services.Store.All().Count);
+        var choice = _dialogs.ConfirmUninstall(active, DataPaths.Root);
+        if (choice == UninstallChoice.Cancel) return;
+        if (choice == UninstallChoice.UndoFirst && !await Runner.UndoAllAsync(confirm: false, incompleteNote: Loc.Instance["Uninstall_UndoFailed"]))
+            return;
+
+        var processName = System.IO.Path.GetFileNameWithoutExtension(exe);
+        if (InstalledWithWinget)
+        {
+            var arguments = WingetPackage.UninstallArguments(WingetPackage.PackageFolder(exe)!, processName, Loc.Instance["Uninstall_WingetRunning"], Loc.Instance["Uninstall_WingetFailed"]);
+            if (DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) == DeElevatedLauncher.Path.Failed)
+            {
+                ShowResult(Loc.Instance.Format("Uninstall_WingetManual", WingetPackage.Id), InfoBarSeverity.Warning);
+                return;
+            }
+        }
+        // A Start menu entry that cannot be removed (a link put in its place) does not stop the uninstall.
+        try
+        {
+            if (StartMenuFolder is { } folder) StartMenuShortcut.Remove(folder);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("uninstall", $"Start menu entry not removed: {ex.Message}");
+        }
+        try
+        {
+            var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, InstalledWithWinget ? null : exe);
+            var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            ProcessHardening.Apply(psi);
+            System.Diagnostics.Process.Start(psi)?.Dispose();
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("uninstall", "cleanup not started", ex);
+            ShowResult(Loc.Instance.Format("Uninstall_Failed", ex.Message), InfoBarSeverity.Error);
+            return;
+        }
+        Log.Info("uninstall", "cleanup started, closing", new { winget = InstalledWithWinget, undone = choice == UninstallChoice.UndoFirst });
+        System.Windows.Application.Current.Shutdown();
     }
 
     private System.Windows.Threading.DispatcherTimer? _resultTimer;

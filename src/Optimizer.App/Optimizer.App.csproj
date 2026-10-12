@@ -12,11 +12,14 @@
     <StartupObject>Optimizer.App.Program</StartupObject>
     <!-- DOTNET_STARTUP_HOOKS from the user's environment would run code in the elevated app before Main. -->
     <StartupHookSupport>false</StartupHookSupport>
-    <Version>0.7.1</Version>
+    <Version>0.7.2</Version>
     <Product>PCOptimizer</Product>
     <Authors>Joshua Zürn</Authors>
     <Company>Joshua Zürn</Company>
     <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
+    <!-- Product version "0.7.1" instead of "0.7.1+<commit>": the code signing policy checks it against the release version
+         (.signpath/artifact-configuration.xml). -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
     <!-- Release: always elevated. Debug: asInvoker so the scanner can be run without UAC during development. -->

@@ -201,17 +201,21 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         }
     }, false);
 
-    /// <summary>Undoes every change this app made (one confirmation).</summary>
-    public Task<bool> UndoAllAsync() => ExclusiveAsync("undo all", async () =>
+    /// <summary>
+    /// Undoes every change this app made (one confirmation, unless the caller already asked: the uninstall).
+    /// <paramref name="incompleteNote"/> is added to the message when not everything was undone; it is part of the
+    /// runner's own message because the rescan after the change shows that message again.
+    /// </summary>
+    public Task<bool> UndoAllAsync(bool confirm = true, string? incompleteNote = null) => ExclusiveAsync("undo all", async () =>
     {
         var count = await Task.Run(() => services.Store.All().Count);
-        if (count == 0 || !dialogs.ConfirmUndoAll(count)) return false;
+        if (count == 0 || (confirm && !dialogs.ConfirmUndoAll(count))) return false;
         try
         {
             var results = await Task.Run(() => services.Engine.RevertAll());
             var failed = results.Where(r => !r.Result.Success).ToList();
             if (failed.Count == 0) Report(Loc.Instance.Format("Result_UndoAll", results.Count), InfoBarSeverity.Success);
-            else Report(Loc.Instance.Format("Result_UndoAllIncomplete", results.Count - failed.Count, failed.Count), InfoBarSeverity.Error);
+            else Report((Loc.Instance.Format("Result_UndoAllIncomplete", results.Count - failed.Count, failed.Count) + " " + incompleteNote).TrimEnd(), InfoBarSeverity.Error);
             return failed.Count == 0;
         }
         finally

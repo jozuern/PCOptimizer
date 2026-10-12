@@ -12,6 +12,7 @@ public partial class ArchitectureTests
     private static readonly Dictionary<string, string> AllowedToolRuns = new(StringComparer.OrdinalIgnoreCase)
     {
         ["BenchmarkHealthTests.cs"] = "cmd.exe starting ping to 127.0.0.1 (the output pipe test)",
+        ["SelfUninstallTests.cs"] = "powershell.exe running the uninstall cleanup on temp folders only",
     };
 
     [Fact]

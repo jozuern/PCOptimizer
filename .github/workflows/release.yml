@@ -1,5 +1,6 @@
-# Release: on a version tag (v1.2.3) of a commit on main, build and test like CI, publish the single exe, sign its
-# SHA-256 for the in-app update and create a DRAFT GitHub release. Check the draft, then publish it by hand. The app's
+# Release: on a version tag (v1.2.3) of a commit on main, build and test like CI, publish the single exe, have SignPath
+# sign it (once the repository variable SIGNPATH_ORGANIZATION_ID is set), sign its SHA-256 for the in-app update and
+# create a DRAFT GitHub release. Check the draft, then publish it by hand. The app's
 # opt-in update check only sees published releases. The tag must match <Version> in src/Optimizer.App/Optimizer.App.csproj.
 #
 # Two jobs on purpose: the build job runs third-party package code (restore, build, tests) with a read-only token and
@@ -22,6 +23,8 @@ concurrency:
 jobs:
   build:
     runs-on: windows-2025
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
 
     env:
       DOTNET_NOLOGO: true
@@ -64,9 +67,9 @@ jobs:
     - name: Publish single exe
       run: dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile
 
-    # Code signing (Azure Trusted Signing or an OV certificate) goes here, before the checksum.
-
+    # SignPath signs this artifact in the release job and checks that it came from this run on GitHub's runners.
     - name: Upload exe
+      id: upload
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: release-exe
@@ -83,6 +86,8 @@ jobs:
     environment: release
     permissions:
       contents: write
+      # SignPath reads the build job's details and downloads the unsigned artifact with this job's token.
+      actions: read
 
     env:
       TAG: ${{ github.ref_name }}
@@ -93,6 +98,41 @@ jobs:
       with:
         name: release-exe
         path: release
+
+    # Code signing by SignPath Foundation (CONTRIBUTING.md, Releases). Off until the repository variable
+    # SIGNPATH_ORGANIZATION_ID is set; the API token is a secret of the release environment. The request waits for the
+    # owner's approval in SignPath, so the timeout is generous. The parameter "version" is the version in the exe's
+    # version resource ("1.2.3"), which .signpath/artifact-configuration.xml checks.
+    - name: Version for SignPath
+      if: vars.SIGNPATH_ORGANIZATION_ID != ''
+      shell: pwsh
+      run: |
+        "VERSION=$($env:TAG.TrimStart('v'))" | Out-File -Encoding utf8 -Append $env:GITHUB_ENV
+
+    - name: Sign exe (SignPath)
+      id: sign
+      if: vars.SIGNPATH_ORGANIZATION_ID != ''
+      uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+      with:
+        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+        organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+        project-slug: PCOptimizer
+        signing-policy-slug: release-signing
+        github-artifact-id: ${{ needs.build.outputs.artifact-id }}
+        wait-for-completion: true
+        wait-for-completion-timeout-in-seconds: 14400
+        output-artifact-directory: signed
+        parameters: |
+          version: "${{ env.VERSION }}"
+
+    - name: Use the signed exe
+      if: steps.sign.outcome == 'success'
+      shell: pwsh
+      run: |
+        $signature = Get-AuthenticodeSignature signed/PCOptimizer.exe
+        if ($signature.Status -ne 'Valid') { Write-Error "SignPath returned an exe without a valid signature: $($signature.Status)"; exit 1 }
+        Move-Item signed/PCOptimizer.exe release/PCOptimizer.exe -Force
+        "Signed by: $($signature.SignerCertificate.Subject)" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     # Only the public key the app checks updates with (no project code runs in this job).
     - name: Get the app's update key

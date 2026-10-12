@@ -10,7 +10,7 @@ A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, off
 
 ## Download
 
-Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the release signature (`PCOptimizer.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start. The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
+Get `PCOptimizer.exe` from the [Releases](https://github.com/jozuern/PCOptimizer/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash PCOptimizer.exe`). The in-app update also checks the release signature (`PCOptimizer.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start; code signing by SignPath Foundation is applied for ([Code signing policy](#code-signing-policy)). The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
 
 ## What it does
 
@@ -35,6 +35,12 @@ The app uses settings that Microsoft or the hardware vendor documents. A few har
 
 No telemetry, no accounts. The app goes online only for features you start or turn on (update check, VirusTotal lookup, DNS benchmark, app installs). Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
+## Uninstall
+
+Settings > Uninstall removes PCOptimizer from this PC. When changes of the app are still active, it offers to undo them first; if one cannot be undone, it removes nothing. Then the app closes, and a moment later its exe, its data folder `%ProgramData%\PCOptimizer` (backups, logs, settings) and its Start menu entry are gone. A copy installed with winget is removed by winget (`winget uninstall jozuern.PCOptimizer`), so winget's list stays right.
+
+What stays: restore points, apps you installed through PCOptimizer and the PawnIO sensor driver. Remove them in Windows under Settings > Apps > Installed apps if you no longer need them. To remove PCOptimizer by hand: undo your changes on the Changes page, then delete the exe, the folder `%ProgramData%\PCOptimizer` and `PCOptimizer` in the Start menu folder (`%AppData%\Microsoft\Windows\Start Menu\Programs`).
+
 ## FAQ
 
 **Why is tweak X not included?** Many popular tweaks do nothing on Windows 11, use settings nobody documents, or cost more than they bring. [docs/not-included.md](docs/not-included.md) lists them with the reason and sources, including the ones earlier versions offered.
@@ -51,9 +57,24 @@ No telemetry, no accounts. The app goes online only for features you start or tu
 
 ## License
 
-PCOptimizer is free for personal and other noncommercial use under the [PolyForm Strict License 1.0.0](LICENSE). Changing, redistributing or selling it requires the author's permission. It comes without warranty. Commercial use: ask via an issue.
+Copyright (c) 2026 Joshua Zürn. PCOptimizer is free software: you can use, study, change and share it under the [GNU General Public License version 3](LICENSE) (GPL-3.0-only). Versions you share, changed or not, must stay under the same license and come with their source code. It comes without warranty. Releases up to 0.7.1 were published under the PolyForm Strict License 1.0.0; later releases are under the GPL.
 
-The exe contains third-party components under their own licenses (MIT, BSD-2-Clause, MPL-2.0, Apache-2.0); the full texts are in the app under Settings > About > Licenses and listed in [docs/THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md).
+The exe contains third-party components under their own licenses (MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, LGPL-2.1-or-later, Apache-2.0); the full texts are in the app under Settings > About > Licenses and listed in [docs/THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md).
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). The project is applying to SignPath Foundation; until it is accepted, releases are not code signed, and this section describes how signing will work.
+
+- **Who is involved:** the project has one member, [Joshua Zürn](https://github.com/jozuern), who is committer, reviewer and approver. Changes from anyone else (pull requests) are reviewed by him before they are merged. Signing requests are approved by him, one release at a time.
+- **What gets signed:** only `PCOptimizer.exe` as built by the [release workflow](.github/workflows/release.yml) on GitHub's runners from a version tag on `main`. SignPath checks that the file comes from that build and that its product name and version match the release ([artifact configuration](.signpath/artifact-configuration.xml)). Nothing built elsewhere and no third-party program is signed.
+- **Accounts:** GitHub and SignPath accounts of the team use multi-factor authentication.
+- **Privacy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The features that go online when you start or turn them on are listed in [docs/PRIVACY.md](docs/PRIVACY.md).
+
+Windows shows "SignPath Foundation" as the publisher of a signed release. To check a download: right-click the exe, Properties > Digital Signatures, or `Get-AuthenticodeSignature PCOptimizer.exe` in PowerShell; and compare its SHA-256 with the `.sha256` file of the release.
+
+## Support
+
+PCOptimizer is free. If it helps you and you want to give something back, you can support its development on [Ko-fi](https://ko-fi.com/jozuern). Bug reports and ideas help just as much.
 
 ## Credits
 

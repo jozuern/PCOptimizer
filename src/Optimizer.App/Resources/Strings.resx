@@ -930,7 +930,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
     <value>Based only on detected problems, weighted by their impact on {0}. Tweaks never add points.</value>
   </data>
-  <data name="About_License" xml:space="preserve"><value>Free for personal and other noncommercial use under the PolyForm Strict License 1.0.0. Changing, redistributing or selling it needs the author's permission. It comes without warranty.</value></data>
+  <data name="About_License" xml:space="preserve"><value>Free software under the GNU General Public License version 3 (GPL-3.0). You may use, change and share it under its terms. It comes without warranty.</value></data>
   <data name="About_Licenses" xml:space="preserve"><value>Licenses</value></data>
   <data name="About_Privacy" xml:space="preserve"><value>Privacy</value></data>
   <data name="About_Source" xml:space="preserve"><value>Source code</value></data>
@@ -1129,4 +1129,19 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Transfer_OneByOneTitle" xml:space="preserve"><value>More changes from the file</value></data>
   <data name="Transfer_OneByOneText" xml:space="preserve"><value>Changes in the file that are previews, Expert changes or can affect anti-cheats: {0}. Each one shows its own confirmation; cancel one to skip it.</value></data>
   <data name="Transfer_OneByOneGo" xml:space="preserve"><value>Show them</value></data>
+  <data name="Settings_Uninstall" xml:space="preserve"><value>Uninstall</value></data>
+  <data name="Uninstall_Setting" xml:space="preserve"><value>Remove PCOptimizer from this PC</value></data>
+  <data name="Uninstall_Hint" xml:space="preserve"><value>Offers to undo its changes first, then deletes the app, its data folder with backups and logs, and its Start menu entry.</value></data>
+  <data name="Uninstall_Button" xml:space="preserve"><value>Uninstall</value></data>
+  <data name="Uninstall_Title" xml:space="preserve"><value>Uninstall PCOptimizer?</value></data>
+  <data name="Uninstall_Text" xml:space="preserve"><value>PCOptimizer closes and deletes its exe, its data folder {0} with backups, logs and settings, and its Start menu entry. Restore points, apps you installed through PCOptimizer and the PawnIO driver stay; remove them in Windows under Settings &gt; Apps &gt; Installed apps if you no longer need them.</value></data>
+  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Changes still active: {0}. Undo them first to get the previous settings back. If you keep them, they stay after the uninstall, and PCOptimizer can no longer undo them, because their backups are deleted.</value></data>
+  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Undo changes and uninstall</value></data>
+  <data name="Uninstall_Keep" xml:space="preserve"><value>Keep changes and uninstall</value></data>
+  <data name="Uninstall_Busy" xml:space="preserve"><value>Wait until the current change has finished, then uninstall.</value></data>
+  <data name="Uninstall_UndoFailed" xml:space="preserve"><value>PCOptimizer was not removed.</value></data>
+  <data name="Uninstall_Failed" xml:space="preserve"><value>The uninstall could not be started: {0}</value></data>
+  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget removes PCOptimizer as soon as it has closed.</value></data>
+  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget did not remove PCOptimizer (see above). Press Enter to close this window</value></data>
+  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget could not be started. Close PCOptimizer and run winget uninstall {0} in a terminal.</value></data>
 </root>

@@ -930,7 +930,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
     <value>Beruht nur auf erkannten Problemen, gewichtet nach ihrer Wirkung auf {0}. Tweaks bringen nie Punkte.</value>
   </data>
-  <data name="About_License" xml:space="preserve"><value>Kostenlos für private und andere nichtkommerzielle Nutzung unter der PolyForm Strict License 1.0.0. Ändern, Weitergeben oder Verkaufen nur mit Erlaubnis des Autors. Ohne Gewährleistung.</value></data>
+  <data name="About_License" xml:space="preserve"><value>Freie Software unter der GNU General Public License Version 3 (GPL-3.0). Du darfst sie nach ihren Bedingungen nutzen, ändern und weitergeben. Ohne Gewährleistung.</value></data>
   <data name="About_Licenses" xml:space="preserve"><value>Lizenzen</value></data>
   <data name="About_Privacy" xml:space="preserve"><value>Datenschutz</value></data>
   <data name="About_Source" xml:space="preserve"><value>Quellcode</value></data>
@@ -1129,4 +1129,19 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Transfer_OneByOneTitle" xml:space="preserve"><value>Weitere Änderungen aus der Datei</value></data>
   <data name="Transfer_OneByOneText" xml:space="preserve"><value>Änderungen in der Datei, die Vorschau oder Experten-Änderungen sind oder Anti-Cheats betreffen können: {0}. Jede zeigt ihre eigene Bestätigung; brich eine ab, um sie zu überspringen.</value></data>
   <data name="Transfer_OneByOneGo" xml:space="preserve"><value>Anzeigen</value></data>
+  <data name="Settings_Uninstall" xml:space="preserve"><value>Deinstallieren</value></data>
+  <data name="Uninstall_Setting" xml:space="preserve"><value>PCOptimizer von diesem PC entfernen</value></data>
+  <data name="Uninstall_Hint" xml:space="preserve"><value>Bietet zuerst an, die Änderungen rückgängig zu machen, und löscht dann die App, ihren Datenordner mit Sicherungen und Protokollen und ihren Eintrag im Startmenü.</value></data>
+  <data name="Uninstall_Button" xml:space="preserve"><value>Deinstallieren</value></data>
+  <data name="Uninstall_Title" xml:space="preserve"><value>PCOptimizer deinstallieren?</value></data>
+  <data name="Uninstall_Text" xml:space="preserve"><value>PCOptimizer schließt sich und löscht seine exe, seinen Datenordner {0} mit Sicherungen, Protokollen und Einstellungen und seinen Eintrag im Startmenü. Wiederherstellungspunkte, Apps, die du über PCOptimizer installiert hast, und der PawnIO-Treiber bleiben; entferne sie in Windows unter Einstellungen &gt; Apps &gt; Installierte Apps, wenn du sie nicht mehr brauchst.</value></data>
+  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Noch aktive Änderungen: {0}. Mache sie zuerst rückgängig, um die vorherigen Einstellungen zurückzubekommen. Behältst du sie, bleiben sie nach der Deinstallation bestehen, und PCOptimizer kann sie nicht mehr rückgängig machen, weil ihre Sicherungen gelöscht werden.</value></data>
+  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Rückgängig machen und deinstallieren</value></data>
+  <data name="Uninstall_Keep" xml:space="preserve"><value>Änderungen behalten und deinstallieren</value></data>
+  <data name="Uninstall_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und deinstalliere dann.</value></data>
+  <data name="Uninstall_UndoFailed" xml:space="preserve"><value>PCOptimizer wurde nicht entfernt.</value></data>
+  <data name="Uninstall_Failed" xml:space="preserve"><value>Die Deinstallation konnte nicht gestartet werden: {0}</value></data>
+  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget entfernt PCOptimizer, sobald es geschlossen ist.</value></data>
+  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget hat PCOptimizer nicht entfernt (siehe oben). Drücke die Eingabetaste, um dieses Fenster zu schließen</value></data>
+  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget konnte nicht gestartet werden. Schließe PCOptimizer und führe winget uninstall {0} in einem Terminal aus.</value></data>
 </root>

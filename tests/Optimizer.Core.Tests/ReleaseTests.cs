@@ -221,7 +221,10 @@ public class ReleaseTests
             var path = file == "PCOptimizer.txt" ? Path.Combine(RepoPaths.Root, "LICENSE") : Path.Combine(RepoPaths.App, "Licenses", file);
             Assert.True(File.Exists(path), $"{file} is listed in licenses.json but missing");
         }
-        Assert.Contains("PolyForm Strict License 1.0.0", File.ReadAllText(Path.Combine(RepoPaths.Root, "LICENSE")));
+        // GitHub recognizes the license only from the unchanged GNU text.
+        var license = File.ReadAllText(Path.Combine(RepoPaths.Root, "LICENSE"));
+        Assert.StartsWith("                    GNU GENERAL PUBLIC LICENSE", license);
+        Assert.Contains("Version 3, 29 June 2007", license);
     }
 
     /// <summary>
