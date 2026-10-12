@@ -110,8 +110,8 @@ The in-app update installs a release only when its signature matches the public 
 
 The app was called PCOptimizer up to 0.7.3. The order matters for the in-app update of installed copies:
 
-1. Release the first Tunero version (0.7.4 or later) while the repository is still named `jozuern/PCOptimizer`. Versions up to 0.7.3 accept only download links under that name and look for `PCOptimizer.exe`, which every release still carries next to `Tunero.exe` (same file, same signature).
-2. Then rename the repository on GitHub (Settings > General > Repository name: `Tunero`). GitHub redirects the old address. Versions from 0.7.4 on ask for releases by the repository's id (`ReleaseCheck.RepositoryId`) and accept links under both names, so they keep updating; versions up to 0.7.3 that did not update before the rename open the release page instead.
+1. Release the first Tunero version (0.7.5) while the repository is still named `jozuern/PCOptimizer`. Versions up to 0.7.3 accept only download links under that name and look for `PCOptimizer.exe`, which every release still carries next to `Tunero.exe` (same file, same signature).
+2. Then rename the repository on GitHub (Settings > General > Repository name: `Tunero`). GitHub redirects the old address. Versions from 0.7.5 on ask for releases by the repository's id (`ReleaseCheck.RepositoryId`) and accept links under both names, so they keep updating; versions up to 0.7.3 that did not update before the rename open the release page instead.
 3. winget: the first submission (pull request #450585, `jozuern.PCOptimizer` 0.6.4) is replaced by `jozuern.Tunero` with the first Tunero release, from `scripts/winget-manifest.ps1`. The `winget` workflow (`wingetcreate update`) works only once that package is published.
 4. Keep the `PCOptimizer.exe` copies in releases for some months, and the legacy names in the code (`LegacyFolderName`, `LegacyFileName`, `FormerNames`, `LegacyOwnProfileName`, `LegacyRepository`, `LegacyExeAsset`, `WingetPackage.LegacyId`) for longer: they cost nothing and keep old installs working.
 
