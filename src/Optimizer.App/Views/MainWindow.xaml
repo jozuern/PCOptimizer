@@ -75,12 +75,9 @@
                     </ui:NavigationViewItem>
                 </ui:NavigationView.MenuItems>
                 <ui:NavigationView.FooterMenuItems>
-                    <!-- The way back from every change, always in view (never scrolled off the list) -->
-                    <ui:NavigationViewItem Content="{l:Tr Nav_Changes}" TargetPageType="{x:Type v:ChangesPage}" Icon="{ui:SymbolIcon History24}">
-                        <ui:NavigationViewItem.InfoBadge>
-                            <ui:InfoBadge Severity="Informational" Value="{Binding ChangesBadge}" Visibility="{Binding ChangesBadge, Converter={StaticResource NullToVisibility}}" />
-                        </ui:NavigationViewItem.InfoBadge>
-                    </ui:NavigationViewItem>
+                    <!-- The way back from every change, always in view (never scrolled off the list). No count: a number that
+                         never goes away reads as something to fix and would push towards undoing changes made on purpose. -->
+                    <ui:NavigationViewItem Content="{l:Tr Nav_Changes}" TargetPageType="{x:Type v:ChangesPage}" Icon="{ui:SymbolIcon History24}" />
                     <ui:NavigationViewItem Content="{l:Tr Nav_Hardware}" TargetPageType="{x:Type v:HardwarePage}" Icon="{ui:SymbolIcon Desktop24}" />
                     <ui:NavigationViewItem Content="{l:Tr Nav_Settings}" TargetPageType="{x:Type v:SettingsPage}" Icon="{ui:SymbolIcon Settings24}">
                         <!-- A new version is available: the update is under Settings > Updates -->

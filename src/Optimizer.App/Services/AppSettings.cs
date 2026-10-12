@@ -15,6 +15,12 @@ public sealed class AppSettings
     /// <summary>Opt-in: ask GitHub for the latest release at start. Off by default (no network request unless turned on).</summary>
     public bool CheckForUpdates { get; set; }
 
+    /// <summary>
+    /// Version ("0.8.4") whose update bar a copy installed by a package manager has shown at start: that copy gets it once,
+    /// because winget and Chocolatey offer a version only after their review, which can take days.
+    /// </summary>
+    public string? UpdateNoticeShownFor { get; set; }
+
     /// <summary>The first start asked whether to add the app to the Start menu (asked once, whatever the answer).</summary>
     public bool StartMenuAsked { get; set; }
 

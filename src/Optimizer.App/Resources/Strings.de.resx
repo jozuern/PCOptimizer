@@ -933,6 +933,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Update_Checking" xml:space="preserve"><value>Die neueste Version wird bei GitHub abgefragt.</value></data>
   <data name="Update_UpToDate" xml:space="preserve"><value>Version {0} ist die neueste Version.</value></data>
   <data name="Update_Available" xml:space="preserve"><value>Version {0} ist verfügbar.</value></data>
+  <data name="Update_AvailablePackage" xml:space="preserve"><value>Version {0} ist erschienen. {1} bietet sie an, sobald das Paket aktualisiert ist; das kann einige Tage dauern.</value></data>
   <data name="Update_NoRelease" xml:space="preserve"><value>Es wurde noch keine Version veröffentlicht.</value></data>
   <data name="Update_Error" xml:space="preserve"><value>GitHub ist nicht erreichbar. Versuch es später noch einmal.</value></data>
   <data name="Update_Open" xml:space="preserve"><value>Download-Seite öffnen</value></data>

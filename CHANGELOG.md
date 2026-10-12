@@ -4,7 +4,7 @@
 
 ### New
 
-- **Update found at start:** when the check at start finds a new version, a bar at the bottom of the window says so on any page, with "Update now" (or "Open download page" for a copy that cannot update itself), and stays until it is closed; Settings in the navigation carries a badge until the update is installed.
+- **Update found at start:** when the check at start finds a new version, a bar at the bottom of the window says so on any page, with "Update now" (or "Open download page" for a copy that cannot update itself), and stays until it is closed; Settings in the navigation carries a badge until the update is installed. A copy from winget, Chocolatey or Scoop shows the bar once per version and says that the package manager offers it once its package is updated, which can take a few days after the release.
 
 ### Fixed
 
@@ -22,6 +22,7 @@
 
 ### Changed
 
+- **No count on Changes in the navigation:** the number of changes stayed there all the time, read like something to fix and could push towards undoing changes made on purpose. The Changes page itself still lists them.
 - **Releases** carry only Tunero.exe: the PCOptimizer.exe copy helped versions up to 0.7.3 only until the repository was renamed.
 - **Package scripts** check the release signature (`scripts/verify-release.ps1`) before they write a hash, and the Scoop manifest no longer updates itself from the release's checksum file alone.
 

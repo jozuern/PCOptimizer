@@ -301,7 +301,6 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Counts in the navigation (null = no badge).</summary>
     [ObservableProperty] private string? _overviewBadge;
     [ObservableProperty] private string? _advisorBadge;
-    [ObservableProperty] private string? _changesBadge;
 
     /// <summary>A new version is available: Settings, where the update is, carries a badge on every page.</summary>
     [ObservableProperty] private string? _settingsBadge;
@@ -642,7 +641,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ShowUpdateNotice()
     {
-        ShowResult(UpdateStatus!);
+        if (_release?.Latest is not { } latest) return;
+        var version = latest.ToString(3);
+        // A package manager offers the version only after its review (winget and Chocolatey can take days): its copy gets
+        // the bar once per version, saying so; the Settings badge stays until the update is installed.
+        if (Package is { } package)
+        {
+            if (_settings.UpdateNoticeShownFor == version) return;
+            _settings.UpdateNoticeShownFor = version;
+            _settings.Save();
+            ShowResult(Loc.Instance.Format("Update_AvailablePackage", version, package.DisplayName));
+        }
+        else
+        {
+            ShowResult(UpdateStatus!);
+        }
         _resultTimer?.Stop();
         ResultUpdateText = Loc.Instance[CanUpdateInApp ? "Update_Install" : "Update_Open"];
         ResultShowsUpdate = true;
@@ -1913,7 +1926,6 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
         OnPropertyChanged(nameof(ChangesEmpty));
-        ChangesBadge = ChangeRecords.Count > 0 ? ChangeRecords.Count.ToString() : null;
 
         var sr = _restoreEnabled;
         RestorePointText = sr switch { true => Loc.Instance["Rp_On"], false => Loc.Instance["Rp_Off"], _ => Loc.Instance["Rp_Unknown"] };
