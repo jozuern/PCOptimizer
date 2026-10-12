@@ -141,7 +141,10 @@
                         <ui:Button Content="{l:Tr About_Privacy}" Icon="{ui:SymbolIcon ShieldCheckmark20}" Appearance="Transparent"
                                    Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer/blob/main/docs/PRIVACY.md" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr About_Source}" Icon="{ui:SymbolIcon Code20}" Appearance="Transparent"
-                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer" />
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://github.com/jozuern/PCOptimizer" Margin="0,0,8,0" />
+                        <!-- Donations: one quiet link here, nowhere else in the app. -->
+                        <ui:Button Content="{l:Tr About_Support}" Icon="{ui:SymbolIcon Heart20}" Appearance="Transparent"
+                                   Command="{Binding OpenLinkCommand}" CommandParameter="https://ko-fi.com/jozuern" />
                     </WrapPanel>
                 </StackPanel>
             </ui:Card>

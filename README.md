@@ -74,7 +74,7 @@ Windows shows "SignPath Foundation" as the publisher of a signed release. To che
 
 ## Support
 
-PCOptimizer is free. If it helps you and you want to give something back, you can support its development on [Ko-fi](https://ko-fi.com/jozuern). Bug reports and ideas help just as much.
+PCOptimizer is free. If it helps you and you want to give something back, you can support its development on [Ko-fi](https://ko-fi.com/jozuern) (also linked in the app under Settings > About). Bug reports and ideas help just as much.
 
 ## Credits
 
