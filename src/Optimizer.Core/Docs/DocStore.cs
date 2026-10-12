@@ -264,6 +264,8 @@ public sealed partial class Labels
     {
         "(not set)" => Get(lang, "value.notSet"),
         "(unavailable)" or "(unreadable)" => Get(lang, "value.unknown"),
+        // Windows' own power plans, named in the language of the app (PowerSchemeAction)
+        _ when value.StartsWith("@plan.", StringComparison.Ordinal) => Value(lang, value),
         _ => value,
     };
 

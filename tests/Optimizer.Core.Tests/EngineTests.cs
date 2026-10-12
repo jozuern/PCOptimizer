@@ -178,7 +178,10 @@ public class EngineTests
         using var fx = new EngineFixture();
         fx.Power.Active = FakePower.High;
         var line = Assert.Single(fx.Engine.Preview(T("power.balancedPlan")));
-        Assert.Equal(("High performance", "Balanced"), (line.Before, line.After));
+        // Windows' own plans by a label key, shown in the app's language (Windows names them in its own language).
+        Assert.Equal(("@plan.highPerformance", "@plan.balanced"), (line.Before, line.After));
+        var labels = Docs.Labels.Current;
+        Assert.Equal(("High performance", "Ausbalanciert"), (labels.Display("en", line.Before), labels.Display("de", line.After)));
         Assert.Equal("Tunero Gaming", Assert.Single(fx.Engine.Preview(T("power.gamingPlan"))).After);
     }
 

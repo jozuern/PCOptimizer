@@ -196,12 +196,16 @@ public partial class DocLintTests(ITestOutputHelper output)
         return p.Contains("/bin/", StringComparison.OrdinalIgnoreCase) || p.Contains("/obj/", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Tracked-looking files of the repository: build output, .git and the local audit folder are skipped.</summary>
+    /// <summary>
+    /// Tracked-looking files of the repository: build output, .git, the local audit folder and installed npm packages
+    /// (node_modules, their own text) are skipped.
+    /// </summary>
     private static IEnumerable<string> RepositoryFiles(string pattern) =>
         Directory.EnumerateFiles(RepoPaths.Root, pattern, SearchOption.AllDirectories).Where(f =>
         {
             var relative = Path.GetRelativePath(RepoPaths.Root, f).Replace('\\', '/');
             return !IsBuildOutput("/" + relative) && !relative.StartsWith(".git/", StringComparison.Ordinal) && !relative.StartsWith(".audit/", StringComparison.Ordinal)
+                   && !("/" + relative).Contains("/node_modules/", StringComparison.OrdinalIgnoreCase)
                    && !relative.StartsWith(".claude/", StringComparison.Ordinal) && !relative.StartsWith("artifacts/", StringComparison.Ordinal)
                    && !relative.Equals("CLAUDE.md", StringComparison.Ordinal);
         });

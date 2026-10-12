@@ -25,6 +25,8 @@ p.lead{font-size:18px;color:var(--muted);max-width:720px;margin:0 0 24px}
 .buttons{display:flex;gap:12px;flex-wrap:wrap}
 .btn{display:inline-block;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;border:1px solid var(--line);color:var(--text)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.install{color:var(--muted);margin:16px 0 0;overflow-wrap:anywhere}
+code{font:14px 'Cascadia Mono',Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 4px}
 .shot{display:block;width:100%;height:auto;margin:32px 0 0;border:1px solid var(--line);border-radius:8px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
@@ -54,6 +56,8 @@ footer a{color:var(--muted)}
     <a class="btn primary" href="https://github.com/jozuern/Tunero/releases/latest">Download</a>
     <a class="btn" href="https://github.com/jozuern/Tunero">Source code</a>
   </div>
+
+  <p class="install">Or with a package manager: <code>winget install jozuern.Tunero</code>, <code>choco install tunero</code>, or <code>scoop bucket add tunero https://github.com/jozuern/scoop-bucket</code> and <code>scoop install tunero/tunero</code>.</p>
 
   <img class="shot" src="../docs/screenshots/flow.gif" alt="The scan, the recommended changes as a checklist, the confirmation with the exact values, the Changes page, and Undo all">
 

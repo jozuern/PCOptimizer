@@ -172,6 +172,7 @@ public class ProgramsTests
     public void System32IsTrustedAndTempIsNot()
     {
         Assert.True(TrustedPath.IsAdminOnlyWritable(Path.Combine(Environment.SystemDirectory, "notepad.exe")));
+        Assert.True(TrustedPath.IsAdminOnlyBelowSharedFolders(Path.Combine(Environment.SystemDirectory, "notepad.exe")));
         var folder = TestFolders.Create("trusted");
         try
         {
@@ -179,6 +180,8 @@ public class ProgramsTests
             File.WriteAllText(file, "x");
             Assert.False(TrustedPath.IsAdminOnlyWritable(file));
             Assert.False(TrustedPath.IsAdminOnlyWritable(Path.Combine(folder, "missing.exe")));
+            // Folders above may let users add entries, the program's own folder may not.
+            Assert.False(TrustedPath.IsAdminOnlyBelowSharedFolders(file));
         }
         finally
         {
@@ -195,5 +198,6 @@ public class ProgramsTests
     {
         Assert.False(TrustedPath.IsOnLocalFixedDrive(path));
         Assert.False(TrustedPath.IsAdminOnlyWritable(path));
+        Assert.False(TrustedPath.IsAdminOnlyBelowSharedFolders(path));
     }
 }

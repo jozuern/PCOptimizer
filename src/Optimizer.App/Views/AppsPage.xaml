@@ -64,6 +64,11 @@
                                                        Visibility="{Binding Installed, Converter={StaticResource InverseBoolToVisibility}}"
                                                        IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
                                                        Command="{Binding DataContext.Apps.InstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                            <!-- An installed app: update just this one from winget -->
+                                            <ui:Button Content="{l:Tr Apps_Update}" Icon="{ui:SymbolIcon ArrowDownload20}" Appearance="Transparent" AutomationProperties.Name="{Binding UpdateLabel}"
+                                                       Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVisibility}}"
+                                                       IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
+                                                       Command="{Binding DataContext.Apps.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                         </StackPanel>
                                     </ui:CardControl>
                                     </DockPanel>

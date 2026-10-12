@@ -115,6 +115,17 @@ public static class Winget
     public static string InstallArguments(string id, string? scope = null, string? installerType = null) =>
         $"install --id {id} --exact --source winget{ScopeArgument(scope)}{InstallerTypeArgument(installerType)} --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
 
+    /// <summary>Upgrades one package to the newest version in the winget source (nothing to do when it is current).</summary>
+    public static string UpgradeArguments(string id) =>
+        $"upgrade --id {id} --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+
+    /// <summary>Updates a machine-scope app with progress lines. Returns winget's exit code (0 = updated or already current).</summary>
+    public static Task<int> UpgradeAsync(string winget, AppEntry app, IProgress<string>? lines, CancellationToken ct)
+    {
+        if (!IsSafeId(app.Id)) throw new ArgumentException($"invalid winget id {app.Id}");
+        return StreamingProcess.RunAsync(winget, UpgradeArguments(app.Id), lines, ct);
+    }
+
     /// <summary>Upgrades every package with a newer version in the winget source.</summary>
     public const string UpgradeAllArguments =
         "upgrade --all --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";

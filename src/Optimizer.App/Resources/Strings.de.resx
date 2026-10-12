@@ -948,10 +948,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Update_BadSignature" xml:space="preserve"><value>Das heruntergeladene Update ist nicht mit dem Release-Schlüssel von Tunero signiert und wurde gelöscht. Es wurde nichts geändert. Nutze die Downloadseite und melde das.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>Das Update wurde heruntergeladen, aber diese exe konnte nicht ersetzt werden ({0}). Nutze stattdessen die Download-Seite.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und aktualisiere dann.</value></data>
-  <data name="Update_WingetText" xml:space="preserve"><value>Tunero wurde mit winget installiert, deshalb installiert winget die Version {0}. Tunero schließt sich, winget aktualisiert es in einem eigenen Fenster, und Tunero startet neu; Windows fragt wie bei jedem Start nach Administratorrechten. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
-  <data name="Update_WingetRunning" xml:space="preserve"><value>winget aktualisiert Tunero. Tunero startet neu, wenn winget fertig ist.</value></data>
-  <data name="Update_WingetFailed" xml:space="preserve"><value>winget hat Tunero nicht aktualisiert (siehe oben). Eine neue Version kann ein bis zwei Tage brauchen, bis winget sie anbietet. Drücke die Eingabetaste, um Tunero wieder zu starten</value></data>
-  <data name="Update_WingetManual" xml:space="preserve"><value>winget konnte nicht gestartet werden. Schließe Tunero und führe winget upgrade {0} in einem Terminal aus.</value></data>
+  <data name="Update_PackageText" xml:space="preserve"><value>Tunero wurde mit {0} installiert, deshalb installiert {0} die Version {1}. Tunero schließt sich, {0} aktualisiert es in einem eigenen Fenster, und Tunero startet neu; Windows fragt wie bei jedem Start nach Administratorrechten. Deine Änderungen, Sicherungen und Einstellungen bleiben erhalten.</value></data>
+  <data name="Update_PackageRunning" xml:space="preserve"><value>{0} aktualisiert Tunero. Tunero startet neu, wenn {0} fertig ist.</value></data>
+  <data name="Update_PackageFailed" xml:space="preserve"><value>{0} hat Tunero nicht aktualisiert (siehe oben). Eine neue Version kann einige Tage brauchen, bis {0} sie anbietet. Drücke die Eingabetaste, um Tunero wieder zu starten</value></data>
+  <data name="Update_PackageManual" xml:space="preserve"><value>{0} konnte nicht aus Tunero gestartet werden. Schließe Tunero und führe {1} in einem Terminal aus.</value></data>
   <data name="StartMenu_Setting" xml:space="preserve"><value>Eintrag im Startmenü</value></data>
   <data name="StartMenu_Hint" xml:space="preserve"><value>Die Windows-Suche findet Tunero nur über einen Eintrag im Startmenü. Der Eintrag startet diese exe an ihrem jetzigen Ort.</value></data>
   <data name="StartMenu_AskTitle" xml:space="preserve"><value>Tunero zum Startmenü hinzufügen?</value></data>
@@ -1131,9 +1131,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Uninstall_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und deinstalliere dann.</value></data>
   <data name="Uninstall_UndoFailed" xml:space="preserve"><value>Tunero wurde nicht entfernt.</value></data>
   <data name="Uninstall_Failed" xml:space="preserve"><value>Die Deinstallation konnte nicht gestartet werden: {0}</value></data>
-  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget entfernt Tunero, sobald es geschlossen ist.</value></data>
-  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget hat Tunero nicht entfernt (siehe oben). Drücke die Eingabetaste, um dieses Fenster zu schließen</value></data>
-  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget konnte nicht gestartet werden. Schließe Tunero und führe winget uninstall {0} in einem Terminal aus.</value></data>
+  <data name="Uninstall_PackageRunning" xml:space="preserve"><value>{0} entfernt Tunero, sobald es geschlossen ist.</value></data>
+  <data name="Uninstall_PackageFailed" xml:space="preserve"><value>{0} hat Tunero nicht entfernt (siehe oben). Drücke die Eingabetaste, um dieses Fenster zu schließen</value></data>
+  <data name="Uninstall_PackageManual" xml:space="preserve"><value>{0} konnte nicht aus Tunero gestartet werden. Schließe Tunero und führe {1} in einem Terminal aus.</value></data>
   <!-- ui -->
   <data name="Drv_NoRealDate" xml:space="preserve"><value>Das Paket nennt kein echtes Veröffentlichungsdatum</value></data>
   <data name="Drv_AgeNew" xml:space="preserve"><value>jünger als zwei Monate</value></data>
@@ -1233,6 +1233,15 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Bench_Duration" xml:space="preserve"><value>Dauer</value></data>
   <data name="Settings_ReportShort" xml:space="preserve"><value>Problem melden öffnet einen vorausgefüllten Fehlerbericht auf GitHub; gesendet wird erst, wenn du ihn dort abschickst.</value></data>
   <data name="About_Shortcuts" xml:space="preserve"><value>Tastatur: Strg+F sucht in der App, F5 liest die Seite oder den PC neu ein, Esc schließt die Details.</value></data>
+  <data name="Startup_TagUnsigned" xml:space="preserve"><value>Nicht signiert</value></data>
+  <data name="Startup_TagBadSignature" xml:space="preserve"><value>Ungültige Signatur</value></data>
+  <data name="Startup_TagScript" xml:space="preserve"><value>Startet ein Skript</value></data>
+  <data name="Startup_TagUnusual" xml:space="preserve"><value>Ungewöhnlicher Ort</value></data>
+  <data name="Apps_Update" xml:space="preserve"><value>Aktualisieren</value></data>
+  <data name="Apps_UpdateName" xml:space="preserve"><value>{0} aktualisieren</value></data>
+  <data name="Apps_Updating" xml:space="preserve"><value>Wird aktualisiert</value></data>
+  <data name="Apps_UpToDate" xml:space="preserve"><value>Aktuell</value></data>
+  <data name="Apps_Updated" xml:space="preserve"><value>Aktualisiert</value></data>
   <!-- 4a -->
   <data name="Cli_NotElevated" xml:space="preserve"><value>Tunero braucht Administratorrechte, um etwas zu ändern oder rückgängig zu machen.</value></data>
   <data name="Cli_FileUnreadable" xml:space="preserve"><value>{0} konnte nicht gelesen werden: {1}</value></data>

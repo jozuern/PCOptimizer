@@ -492,3 +492,6 @@ artifacts/
 
 # Feature reference of other tweak tools: kept locally, not published
 docs/Windows_Optimizer_Tools_Feature_Reference.md
+
+# Internal feature gap analysis (built on the local feature reference above): kept locally, not published
+docs/feature-gap-analysis.md

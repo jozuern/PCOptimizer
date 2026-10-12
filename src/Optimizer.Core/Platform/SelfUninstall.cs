@@ -8,7 +8,7 @@ namespace Optimizer.Core.Platform;
 /// the open log cannot be deleted while the app runs, so a hidden Windows PowerShell, started with the app's
 /// administrator rights and <see cref="ProcessHardening"/>, waits until every process with the exe's name has ended (the
 /// restarted app and the start process that waits for it), then deletes the data folder and the exe. A copy winget
-/// installed is removed by winget instead (<see cref="WingetPackage.UninstallArguments"/>), so its record stays right.
+/// installed by a package manager is removed by it instead (<see cref="PackageInstall.UninstallArguments"/>), so its record stays right.
 /// </summary>
 public static class SelfUninstall
 {
@@ -16,15 +16,18 @@ public static class SelfUninstall
     /// Script for the cleanup. The data folder (admin-only) is deleted with cmd.exe's rd, which removes a junction or
     /// symbolic link inside it without following it. The exe usually sits in a folder the signed-in user can write to:
     /// Remove-Item deletes a link put in its place, not the link's target. <paramref name="exe"/> is null for a copy
-    /// winget removes; the ".old" exe a self-update leaves until the next start goes with it.
+    /// winget removes; the ".old" exe a self-update leaves until the next start goes with it. <paramref name="waitForProcessId"/>
+    /// is the elevated Chocolatey window: it inherits the app's TEMP inside the data folder and writes its download cache
+    /// there, so the folder is deleted only after it has ended (at most 15 minutes, in case its failure message stays open).
     /// </summary>
-    public static string CleanupScript(string processName, string dataRoot, string? exe)
+    public static string CleanupScript(string processName, string dataRoot, string? exe, int? waitForProcessId = null)
     {
         var files = exe is null ? "@()" : $"@({WingetPackage.Quote(exe)}, {WingetPackage.Quote(exe + ".old")})";
         var cmd = WingetPackage.Quote(Path.Combine(Environment.SystemDirectory, "cmd.exe"));
         return new StringBuilder()
             .AppendLine("$ErrorActionPreference = 'SilentlyContinue'")
             .AppendLine($"Wait-Process -Name {WingetPackage.Quote(processName)} -Timeout 60")
+            .Append(waitForProcessId is { } id ? $"Wait-Process -Id {id} -Timeout 900{Environment.NewLine}" : "")
             .AppendLine($"$root = {WingetPackage.Quote(dataRoot)}")
             .AppendLine($"$files = {files}")
             .AppendLine("for ($i = 0; $i -lt 30; $i++) {")

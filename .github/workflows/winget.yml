@@ -77,7 +77,25 @@ jobs:
         } finally { $public.Dispose() }
         "Verified Tunero.exe SHA-256 $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
+    # wingetcreate update needs the package in winget-pkgs: the first version is submitted by hand
+    # (scripts/winget-manifest.ps1), and until it is merged this job ends here without an error.
+    - name: Package already in winget
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh api repos/microsoft/winget-pkgs/contents/manifests/j/jozuern/Tunero --silent 2>$null
+        if ($LASTEXITCODE -ne 0) {
+          "jozuern.Tunero is not in winget-pkgs yet: submit its first version with scripts/winget-manifest.ps1 (CONTRIBUTING, winget)." | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+          "PUBLISHED=false" >> $env:GITHUB_ENV
+        } else {
+          "PUBLISHED=true" >> $env:GITHUB_ENV
+        }
+        # The pwsh shell of Actions ends the step with the last exit code: the expected 404 is no failure.
+        $global:LASTEXITCODE = 0
+
     - name: Download wingetcreate
+      if: env.PUBLISHED == 'true'
       shell: pwsh
       run: |
         Invoke-WebRequest $env:WINGETCREATE_URL -OutFile wingetcreate.exe
@@ -85,6 +103,7 @@ jobs:
         if ($hash -ne $env:WINGETCREATE_SHA256) { Write-Error "wingetcreate.exe has SHA-256 $hash, expected $env:WINGETCREATE_SHA256"; exit 1 }
 
     - name: Submit the manifest
+      if: env.PUBLISHED == 'true'
       shell: pwsh
       run: |
         $version = $env:TAG.Substring(1)

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.5 (preview)
+## 0.8.0 (preview)
 
 PCOptimizer is now called **Tunero**.
 
@@ -13,6 +13,7 @@ PCOptimizer is now called **Tunero**.
 
 ### New
 
+- **Chocolatey and Scoop:** `choco install tunero`, or the bucket `jozuern/scoop-bucket` for Scoop, next to winget (`jozuern.Tunero`). A copy installed by a package manager is updated and removed by it: "Update now" and Settings > Uninstall run `choco upgrade`, `scoop update` or `winget upgrade` and the matching uninstall, so the package manager's list stays right. Chocolatey runs elevated only from a folder that only administrators can change, else the app shows the command to type.
 - **Search** finds tweaks, findings, tools and settings across the app, in English and German, ignoring accents and umlauts, and also matches registry value names and service names. Popular tweaks the app leaves out show up with the reason ("Defender off: not included, because..."), from the new data file `notincluded.json`, which a test keeps in step with `docs/not-included.md`.
 - **Windows Update control** (Pro and higher, documented policies): no update restarts from 8 AM to 2 AM (active hours), update restarts when you choose for up to a week (deadline 7 days, grace period 2 days, no automatic restart before), and monthly updates one week later (Moderate risk: security fixes arrive later too).
 - **Command line:** `Tunero.exe --apply <changes file>` applies an exported changes file without the window, with the rules of Import (previews, Expert and anti-cheat sensitive changes are listed, not applied), and `--undo-all` undoes every change. Both create a restore point first or stop (`--no-restore-point` continues without one); `--log <file>` writes the result, and the exit code says how it went (0 done, 1 some failed, 2 invalid file, 3 no administrator rights, 4 no restore point).
@@ -32,6 +33,11 @@ PCOptimizer is now called **Tunero**.
 - **Settings:** language and theme are drop-downs, and the log and data folders open from Diagnostics. Health lists the steps of the before and after benchmark; Changes shows Move to another PC under its own heading.
 
 - **Second review pass:** the navigation shows counts (problems on the Overview, things to change by hand on Manual checks, the changes made) and keeps Changes next to Settings, always in view. The smallest window is 720 pixels high so every page stays reachable. Tweak switches say "Applied" or "Not applied", which settles titles like "Power Throttling off"; a status icon marks only rows that need attention, and detail lines read "Off. Impact 2 of 5. Affects: FPS" (privacy and Explorer tweaks without a performance effect leave the impact out). The "Preview" tag now says "Not yet tested on a real PC". The details pane shows the row's tags and, for a setting that was already on, why it has no switch. The Tweaks filter bar wraps on narrow windows and names the profile with a link to the Overview; DNS servers are chosen only on Graphics & network, where the NVIDIA settings now stay together and the router shows as "Your router". Errors and warnings stay until closed, a change offers "View changes", screen readers hear the result, and dialogs put the primary button first as in Windows 11. Pages end at the same width and scroll bars sit beside the cards. Manual checks and the Overview use the same words ("to change by hand"); German uses "Prüfungen" instead of "Checks". Remove apps has one Refresh and one note; Cleanup lists empty categories in one line; Startup can show only the entries that need attention; Changes lists what can be undone first and the log in plain rows; the benchmark shows the next step and picks no game in advance; System info keeps developer fields under Technical details; repeated buttons and drop-downs have names for screen readers.
+
+- **Cleanup** lists the biggest categories first, once their sizes are known.
+- **Startup:** an entry that needs attention says why in short tags under its name ("Not signed", "Invalid signature", "Runs a script", "Unusual place"), not only with the warning icon.
+- **Apps & drivers:** every installed app (installed for the whole PC) has its own Update button next to Update all apps; it says "Up to date" when winget has no newer version.
+- **Power plans in the app's language:** Windows names its own plans in the language of Windows, so an English app said "from Energiesparmodus to Tunero Gaming". Balanced, Power saver, High performance and Ultimate Performance now show in the app's language, in the details, the confirmation, the Changes page log and the report; other plans keep the name Windows gives them.
 
 ### Fixed
 

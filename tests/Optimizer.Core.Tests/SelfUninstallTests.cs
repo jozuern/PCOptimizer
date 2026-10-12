@@ -4,7 +4,7 @@ using Optimizer.Core.Updates;
 
 namespace Optimizer.Core.Tests;
 
-/// <summary>Settings > Uninstall: the cleanup after the app has ended, and the hand-over to winget.</summary>
+/// <summary>Settings > Uninstall: the cleanup after the app has ended, and the hand-over to a package manager.</summary>
 public class SelfUninstallTests
 {
     [Fact]
@@ -23,6 +23,18 @@ public class SelfUninstallTests
         var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", null);
         Assert.Contains("$files = @()", script);
         Assert.DoesNotContain(".exe", script.Replace("cmd.exe", "", StringComparison.Ordinal));
+        Assert.DoesNotContain("Wait-Process -Id", script);
+    }
+
+    /// <summary>The elevated Chocolatey window writes its cache into the app's TEMP inside the data folder: deleted after it.</summary>
+    [Fact]
+    public void ChocolateyCopyIsCleanedUpAfterChocolateyHasEnded()
+    {
+        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", null, 4711);
+        var app = script.IndexOf("Wait-Process -Name 'Tunero' -Timeout 60", StringComparison.Ordinal);
+        var choco = script.IndexOf("Wait-Process -Id 4711 -Timeout 900", StringComparison.Ordinal);
+        var delete = script.IndexOf("rd /s /q", StringComparison.Ordinal);
+        Assert.True(app >= 0 && choco > app && delete > choco, script);
     }
 
     [Fact]

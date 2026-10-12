@@ -672,18 +672,35 @@ public sealed partial class MainViewModel : ObservableObject
     /// as "Tunero (1).exe", and the update replaces the file under the name it has.
     /// </summary>
     public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
-        IsPublishedExe && !InstalledWithWinget;
+        IsPublishedExe && Package is null;
 
     /// <summary>The published single-file exe (a Debug or Release build has Tunero.dll next to its exe).</summary>
     public static bool IsPublishedExe { get; } = Environment.ProcessPath is { } exe &&
         System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
         !System.IO.File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exe) ?? "", typeof(MainViewModel).Assembly.GetName().Name + ".dll"));
 
-    /// <summary>Installed as a winget package: winget installs the update, so its record of the version stays right.</summary>
-    public static bool InstalledWithWinget { get; } = Environment.ProcessPath is { } exe && WingetPackage.IsInstalledWithWinget(exe);
+    private PackageInstall? _package;
+    private bool _packageDetected;
 
-    /// <summary>"Update now" is offered: the app replaces its exe, or hands the update to winget.</summary>
-    public bool CanUpdateInApp => CanSelfUpdate || (UpdateAvailable && InstalledWithWinget);
+    /// <summary>
+    /// Installed with winget, Chocolatey or Scoop: the package manager installs the update and removes the app, so its
+    /// record of the version stays right. Null for a downloaded copy.
+    /// </summary>
+    public PackageInstall? Package
+    {
+        get
+        {
+            if (!_packageDetected)
+            {
+                _package = Environment.ProcessPath is { } exe && IsPublishedExe ? PackageInstall.Detect(exe, _services.ProfilePath) : null;
+                _packageDetected = true;
+            }
+            return _package;
+        }
+    }
+
+    /// <summary>"Update now" is offered: the app replaces its exe, or hands the update to the package manager.</summary>
+    public bool CanUpdateInApp => CanSelfUpdate || (UpdateAvailable && Package is not null);
 
     [ObservableProperty] private bool _updating;
 
@@ -693,9 +710,9 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanChange))]
     private async Task UpdateNowAsync()
     {
-        if (InstalledWithWinget && UpdateAvailable && _release?.Latest is { } wingetVersion)
+        if (Package is { } package && UpdateAvailable && _release?.Latest is { } packageVersion)
         {
-            UpdateWithWinget(wingetVersion.ToString(3));
+            UpdateWithPackageManager(package, packageVersion.ToString(3));
             return;
         }
         if (!CanSelfUpdate || _release is not { Latest: { } latest } release || Environment.ProcessPath is not { } exe)
@@ -761,25 +778,56 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// After confirmation: starts winget in its own window as the signed-in user and ends the app (winget cannot replace a
-    /// running exe). The window waits for the app to end, updates it and starts it again.
+    /// After confirmation: starts the package manager in its own window and ends the app (no package manager can replace a
+    /// running exe). The window waits for the app to end, updates it and starts it again. winget and Scoop run as the
+    /// signed-in user, Chocolatey elevated (<see cref="PackageInstall"/>).
     /// </summary>
-    private void UpdateWithWinget(string version)
+    private void UpdateWithPackageManager(PackageInstall package, string version)
     {
         if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating || Environment.ProcessPath is not { } exe)
         {
             ShowResult(Loc.Instance["Update_Busy"]);
             return;
         }
-        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_WingetText", version), Loc.Instance["Update_Restart"])) return;
-        var arguments = WingetPackage.UpdateArguments(Environment.ProcessId, exe, Loc.Instance["Update_WingetRunning"], Loc.Instance["Update_WingetFailed"]);
-        if (DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) == DeElevatedLauncher.Path.Failed)
+        if (!package.CanRunFromApp())
         {
-            ShowResult(Loc.Instance.Format("Update_WingetManual", WingetPackage.Id), InfoBarSeverity.Warning);
+            ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
             return;
         }
-        Log.Info("update", "handed to winget, closing", new { version });
+        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_PackageText", package.DisplayName, version), Loc.Instance["Update_Restart"])) return;
+        var arguments = package.UpdateArguments(Environment.ProcessId, exe, Loc.Instance.Format("Update_PackageRunning", package.DisplayName),
+            Loc.Instance.Format("Update_PackageFailed", package.DisplayName), package.TrustedChocolatey());
+        if (!StartPackageManager(package, arguments, out _))
+        {
+            ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
+            return;
+        }
+        Log.Info("update", "handed to the package manager, closing", new { package.Manager, version });
         System.Windows.Application.Current.Shutdown();
+    }
+
+    /// <summary>
+    /// The package manager's PowerShell window: as the signed-in user, or elevated for Chocolatey, whose process id comes
+    /// back in <paramref name="elevatedProcessId"/> (the uninstall cleanup waits for it).
+    /// </summary>
+    private bool StartPackageManager(PackageInstall package, string arguments, out int? elevatedProcessId)
+    {
+        elevatedProcessId = null;
+        if (package.RunsAsUser) return DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) != DeElevatedLauncher.Path.Failed;
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), arguments) { UseShellExecute = false };
+            ProcessHardening.Apply(psi);
+            package.HardenChocolateyEnvironment(psi.Environment);
+            using var process = System.Diagnostics.Process.Start(psi);
+            elevatedProcessId = process?.Id;
+            return process is not null;
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("package", "PowerShell not started", ex);
+            return false;
+        }
     }
 
     // ---------------- Start menu entry ----------------
@@ -797,8 +845,11 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Only the published exe gets an entry (a build folder is not where the app lives).</summary>
-    public bool CanAddToStartMenu => IsPublishedExe;
+    /// <summary>
+    /// Only the published exe gets an entry (a build folder is not where the app lives). Scoop creates its own entry (Scoop
+    /// Apps) from the manifest and removes it with the app, so a Scoop copy does not add a second one.
+    /// </summary>
+    public bool CanAddToStartMenu => IsPublishedExe && Package?.Manager != PackageManager.Scoop;
 
     private void SetStartMenuEntry(bool on)
     {
@@ -847,6 +898,12 @@ public sealed partial class MainViewModel : ObservableObject
             ShowResult(Loc.Instance["Uninstall_Busy"]);
             return;
         }
+        // Before anything is undone: a package manager the app may not start leaves the command to type.
+        if (Package is { } manual && !manual.CanRunFromApp())
+        {
+            ShowResult(Loc.Instance.Format("Uninstall_PackageManual", manual.DisplayName, manual.UninstallCommand), InfoBarSeverity.Warning);
+            return;
+        }
         var active = await Task.Run(() => _services.Store.All().Count);
         var choice = _dialogs.ConfirmUninstall(active, DataPaths.Root);
         if (choice == UninstallChoice.Cancel) return;
@@ -854,12 +911,14 @@ public sealed partial class MainViewModel : ObservableObject
             return;
 
         var processName = System.IO.Path.GetFileNameWithoutExtension(exe);
-        if (InstalledWithWinget)
+        int? packageManagerProcess = null;
+        if (Package is { } package)
         {
-            var arguments = WingetPackage.UninstallArguments(WingetPackage.PackageFolder(exe)!, processName, Loc.Instance["Uninstall_WingetRunning"], Loc.Instance["Uninstall_WingetFailed"]);
-            if (DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) == DeElevatedLauncher.Path.Failed)
+            if (!StartPackageManager(package, package.UninstallArguments(processName,
+                    Loc.Instance.Format("Uninstall_PackageRunning", package.DisplayName), Loc.Instance.Format("Uninstall_PackageFailed", package.DisplayName),
+                    package.TrustedChocolatey()), out packageManagerProcess))
             {
-                ShowResult(Loc.Instance.Format("Uninstall_WingetManual", WingetPackage.Id), InfoBarSeverity.Warning);
+                ShowResult(Loc.Instance.Format("Uninstall_PackageManual", package.DisplayName, package.UninstallCommand), InfoBarSeverity.Warning);
                 return;
             }
         }
@@ -874,7 +933,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         try
         {
-            var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, InstalledWithWinget ? null : exe);
+            var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, Package is null ? exe : null, packageManagerProcess);
             var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
             {
                 UseShellExecute = false,
@@ -889,7 +948,7 @@ public sealed partial class MainViewModel : ObservableObject
             ShowResult(Loc.Instance.Format("Uninstall_Failed", ex.Message), InfoBarSeverity.Error);
             return;
         }
-        Log.Info("uninstall", "cleanup started, closing", new { winget = InstalledWithWinget, undone = choice == UninstallChoice.UndoFirst });
+        Log.Info("uninstall", "cleanup started, closing", new { package = Package?.Manager, undone = choice == UninstallChoice.UndoFirst });
         System.Windows.Application.Current.Shutdown();
     }
 

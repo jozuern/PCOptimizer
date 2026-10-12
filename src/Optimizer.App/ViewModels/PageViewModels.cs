@@ -754,6 +754,7 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         await Task.WhenAll(rows.Select(async row => row.SetScan(await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Scan(row.Category)))));
         UpdateTotal();
         UpdateEmptyText();
+        SortBySize();
     }
 
     // A language switch builds the rows again with the sizes already measured.
@@ -765,11 +766,23 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
         for (var i = 0; i < rows.Count; i++) rows[i].SetScan(scans[i]);
         UpdateTotal();
         UpdateEmptyText();
+        SortBySize();
         return Task.CompletedTask;
     }
 
     /// <summary>"Nothing to clean in: Windows Update downloads, Windows error reports": the empty categories in one line.</summary>
     [ObservableProperty] private string? _emptyText;
+
+    /// <summary>Once every size is known: the biggest categories first (moved, not rebuilt, so ticks stay as they are).</summary>
+    private void SortBySize()
+    {
+        var ordered = Rows.OrderByDescending(r => r.Bytes).ToList();
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            var at = Rows.IndexOf(ordered[i]);
+            if (at != i) Rows.Move(at, i);
+        }
+    }
 
     private void UpdateEmptyText()
     {

@@ -70,6 +70,9 @@ public sealed partial class StartupRow : SwitchRow
     /// <summary>Kind, publisher and signature; parts not known yet (signatures load after the list) are left out.</summary>
     public string MetaText => string.Join(", ", new[] { KindText, PublisherText, SignatureText }.Where(x => x.Length > 0));
     [ObservableProperty] private bool _needsAttention;
+
+    /// <summary>Why the row needs attention, as short tags ("Not signed", "Runs a script"): the warning icon alone says only that.</summary>
+    [ObservableProperty] private IReadOnlyList<string> _attentionTags = [];
     [ObservableProperty] private string? _virusTotalText;
     [ObservableProperty] private string? _virusTotalUrl;
 
@@ -82,6 +85,12 @@ public sealed partial class StartupRow : SwitchRow
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
         SignatureText = Labels.Current.Get(lang, $"signature.{s.Status}");
         NeedsAttention = Entry.Suspicious || Entry.RunsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
+        var tags = new List<string>();
+        if (s.Status == SignatureStatus.Invalid) tags.Add(Loc.Instance["Startup_TagBadSignature"]);
+        else if (s.Status == SignatureStatus.Unsigned) tags.Add(Loc.Instance["Startup_TagUnsigned"]);
+        if (Entry.RunsScriptHost) tags.Add(Loc.Instance["Startup_TagScript"]);
+        if (Entry.Suspicious) tags.Add(Loc.Instance["Startup_TagUnusual"]);
+        AttentionTags = tags;
     }
 
     protected override Task<bool> ToggleAsync(bool on) => Switching.SetAsync(_services, _runner, enabled => StartupTweaks.Set(Entry, enabled), on);
@@ -589,6 +598,13 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
 
     /// <summary>"Install Discord": what a screen reader says for the button (each row has one).</summary>
     public string InstallLabel => Loc.Instance.Format("Apps_InstallName", Name);
+
+    public string UpdateLabel => Loc.Instance.Format("Apps_UpdateName", Name);
+
+    /// <summary>Installed for the whole PC: winget can update it from here (per-user apps update in their own installer).</summary>
+    public bool CanUpdate => Installed && !PerUser;
+
+    partial void OnInstalledChanged(bool value) => OnPropertyChanged(nameof(CanUpdate));
     [ObservableProperty] private bool _isInstalling;
     [ObservableProperty] private string _stateText = installed ? Loc.Instance["Apps_Installed"] : "";
 }
@@ -884,6 +900,44 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                     row.StateText = row.Installed ? Loc.Instance["Apps_Installed"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
                 }))
                 row.StateText = "";
+        }
+        finally
+        {
+            row.IsInstalling = false;
+        }
+    }
+
+    /// <summary>winget upgrade for one app: the newest version from the winget source, or "already up to date".</summary>
+    [RelayCommand]
+    private async Task UpdateAppAsync(AppRow? row)
+    {
+        if (row is null || !row.CanUpdate) return;
+        if (_winget is null)
+        {
+            row.StateText = Loc.Instance["Apps_NoWinget"];
+            return;
+        }
+        row.IsInstalling = true;
+        row.StateText = Loc.Instance["Apps_Updating"];
+        var lines = new List<string>();
+        var progress = new Progress<string>(l =>
+        {
+            lines.Add(l);
+            if (lines.Count > 40) lines.RemoveAt(0);
+            Output = string.Join("\n", lines);
+        });
+        try
+        {
+            var winget = _winget;
+            if (!await RunWorkAsync($"update {row.App.Id}", async () =>
+                {
+                    var code = await Winget.UpgradeAsync(winget, row.App, progress, CancellationToken.None);
+                    // 0x8A15002B: no newer version in the source.
+                    row.StateText = code == unchecked((int)0x8A15002B) ? Loc.Instance["Apps_UpToDate"]
+                        : Winget.IsSuccess(code) ? Loc.Instance["Apps_Updated"]
+                        : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
+                }))
+                row.StateText = Loc.Instance["Apps_Installed"];
         }
         finally
         {

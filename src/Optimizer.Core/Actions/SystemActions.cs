@@ -165,10 +165,15 @@ public sealed class PowerSchemeAction : TweakAction
 
     public override StoredValue? Read(ActionContext c) => new(true, "scheme", c.Power.ActiveScheme().ToString());
 
-    /// <summary>The plan's name as Windows shows it, not its GUID; a plan still to be created by the name it gets.</summary>
+    /// <summary>
+    /// The plan's name, not its GUID: Windows' own plans by a label key ("@plan.powerSaver"), which the app shows in its
+    /// language (Windows names them in the language of Windows: "Energiesparmodus" in an English app), other plans as
+    /// Windows shows them, and a plan still to be created by the name it gets.
+    /// </summary>
     protected override string Show(ActionContext c, StoredValue value)
     {
         if (value.Data is { } data && data.StartsWith("new:", StringComparison.Ordinal)) return data[4..];
+        if (Guid.TryParse(value.Data, out var builtIn) && PowerAliases.BuiltInName(builtIn) is { } alias) return "@plan." + alias;
         return Guid.TryParse(value.Data, out var id) && c.Power.Schemes().FirstOrDefault(s => s.Id == id).Name is { Length: > 0 } name ? name : value.Display;
     }
 
@@ -433,6 +438,10 @@ public sealed class DisplayModeAction : TweakAction
 /// <summary>powercfg aliases and well-known scheme names -> GUIDs (never localized names).</summary>
 public static class PowerAliases
 {
+    /// <summary>"balanced", "highPerformance", "powerSaver" or "ultimatePerformance" for one of Windows' own plans, else null.</summary>
+    public static string? BuiltInName(Guid scheme) =>
+        new[] { "balanced", "highPerformance", "powerSaver", "ultimatePerformance" }.FirstOrDefault(a => Resolve(a) == scheme);
+
     private static readonly Dictionary<string, Guid> Map = new(StringComparer.OrdinalIgnoreCase)
     {
         ["SUB_PROCESSOR"] = new("54533251-82be-4824-96c1-47b60b740d00"),

@@ -948,10 +948,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the Tunero release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
-  <data name="Update_WingetText" xml:space="preserve"><value>Tunero was installed with winget, so winget installs version {0}. Tunero closes, winget updates it in its own window and Tunero starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
-  <data name="Update_WingetRunning" xml:space="preserve"><value>winget updates Tunero. Tunero starts again when winget has finished.</value></data>
-  <data name="Update_WingetFailed" xml:space="preserve"><value>winget did not update Tunero (see above). A new version can take a day or two to reach winget. Press Enter to start Tunero again</value></data>
-  <data name="Update_WingetManual" xml:space="preserve"><value>winget could not be started. Close Tunero and run winget upgrade {0} in a terminal.</value></data>
+  <data name="Update_PackageText" xml:space="preserve"><value>Tunero was installed with {0}, so {0} installs version {1}. Tunero closes, {0} updates it in its own window and Tunero starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
+  <data name="Update_PackageRunning" xml:space="preserve"><value>{0} updates Tunero. Tunero starts again when {0} has finished.</value></data>
+  <data name="Update_PackageFailed" xml:space="preserve"><value>{0} did not update Tunero (see above). A new version can take a few days to reach {0}. Press Enter to start Tunero again</value></data>
+  <data name="Update_PackageManual" xml:space="preserve"><value>{0} could not be started from Tunero. Close Tunero and run {1} in a terminal.</value></data>
   <data name="StartMenu_Setting" xml:space="preserve"><value>Start menu entry</value></data>
   <data name="StartMenu_Hint" xml:space="preserve"><value>Windows Search finds Tunero only through an entry in the Start menu. The entry starts this exe where it is now.</value></data>
   <data name="StartMenu_AskTitle" xml:space="preserve"><value>Add Tunero to the Start menu?</value></data>
@@ -1131,9 +1131,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Uninstall_Busy" xml:space="preserve"><value>Wait until the current change has finished, then uninstall.</value></data>
   <data name="Uninstall_UndoFailed" xml:space="preserve"><value>Tunero was not removed.</value></data>
   <data name="Uninstall_Failed" xml:space="preserve"><value>The uninstall could not be started: {0}</value></data>
-  <data name="Uninstall_WingetRunning" xml:space="preserve"><value>winget removes Tunero as soon as it has closed.</value></data>
-  <data name="Uninstall_WingetFailed" xml:space="preserve"><value>winget did not remove Tunero (see above). Press Enter to close this window</value></data>
-  <data name="Uninstall_WingetManual" xml:space="preserve"><value>winget could not be started. Close Tunero and run winget uninstall {0} in a terminal.</value></data>
+  <data name="Uninstall_PackageRunning" xml:space="preserve"><value>{0} removes Tunero as soon as it has closed.</value></data>
+  <data name="Uninstall_PackageFailed" xml:space="preserve"><value>{0} did not remove Tunero (see above). Press Enter to close this window</value></data>
+  <data name="Uninstall_PackageManual" xml:space="preserve"><value>{0} could not be started from Tunero. Close Tunero and run {1} in a terminal.</value></data>
   <!-- ui -->
   <data name="Drv_NoRealDate" xml:space="preserve"><value>The package gives no real release date</value></data>
   <data name="Drv_AgeNew" xml:space="preserve"><value>less than two months old</value></data>
@@ -1233,6 +1233,15 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Bench_Duration" xml:space="preserve"><value>Duration</value></data>
   <data name="Settings_ReportShort" xml:space="preserve"><value>Report a problem opens a prefilled bug report on GitHub; nothing is sent until you submit it there.</value></data>
   <data name="About_Shortcuts" xml:space="preserve"><value>Keyboard: Ctrl+F searches the app, F5 reads the page or the PC again, Esc closes the details.</value></data>
+  <data name="Startup_TagUnsigned" xml:space="preserve"><value>Not signed</value></data>
+  <data name="Startup_TagBadSignature" xml:space="preserve"><value>Invalid signature</value></data>
+  <data name="Startup_TagScript" xml:space="preserve"><value>Runs a script</value></data>
+  <data name="Startup_TagUnusual" xml:space="preserve"><value>Unusual place</value></data>
+  <data name="Apps_Update" xml:space="preserve"><value>Update</value></data>
+  <data name="Apps_UpdateName" xml:space="preserve"><value>Update {0}</value></data>
+  <data name="Apps_Updating" xml:space="preserve"><value>Updating</value></data>
+  <data name="Apps_UpToDate" xml:space="preserve"><value>Up to date</value></data>
+  <data name="Apps_Updated" xml:space="preserve"><value>Updated</value></data>
   <!-- 4a -->
   <data name="Cli_NotElevated" xml:space="preserve"><value>Tunero needs administrator rights to change or undo anything.</value></data>
   <data name="Cli_FileUnreadable" xml:space="preserve"><value>{0} could not be read: {1}</value></data>

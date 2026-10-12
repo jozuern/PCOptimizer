@@ -12,6 +12,16 @@ A Windows 11 PC optimizer, gaming first, with profiles for laptops, battery, off
 
 Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash Tunero.exe`). The in-app update also checks the release signature (`Tunero.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start; code signing by SignPath Foundation is applied for ([Code signing policy](#code-signing-policy)). The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
 
+Or with a package manager:
+
+| | Install | Start |
+|---|---|---|
+| winget | `winget install jozuern.Tunero` | `tunero` |
+| Chocolatey | `choco install tunero` | `tunero` |
+| Scoop | `scoop bucket add tunero https://github.com/jozuern/scoop-bucket`, then `scoop install tunero/tunero` | Start menu, Scoop Apps |
+
+A copy installed this way is updated by its package manager: "Update now" in the app runs `winget upgrade`, `choco upgrade` or `scoop update` for you. winget and Chocolatey review every new version before they offer it, which can take a few days; the Scoop bucket picks up a release within a few hours.
+
 ## What it does
 
 **For everyday use**
@@ -32,6 +42,7 @@ Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases)
 - **Graphics & network:** NVIDIA driver settings through the documented driver settings interface (NVAPI), VRR state, network adapter power saving, a DNS server choice and an opt-in DNS benchmark.
 - **Startup and services:** an Autoruns-style list of everything that starts with Windows with signature checks, VirusTotal lookups (your own key) and snapshots to compare, and service start types with explanations.
 - **Apps that were not reviewed:** on request, Remove apps also lists the other removable apps, with a warning.
+- **Apps & drivers:** install common apps with winget, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
 - **Tools and health:** storage analyzer, Windows features, program start priorities, network fixes, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
 - **Export, Import and command line:** move your changes to another PC or a fresh install, in the app or with `--apply` ([Command line](#command-line)).
 - **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan, with a button that copies it all for a forum post or a bug report.
@@ -78,7 +89,7 @@ No telemetry, no accounts. The app goes online only for features you start or tu
 
 ## Uninstall
 
-Settings > Uninstall removes Tunero from this PC. When changes of the app are still active, it offers to undo them first; if one cannot be undone, it removes nothing. Then the app closes, and a moment later its exe, its data folder `%ProgramData%\Tunero` (backups, logs, settings) and its Start menu entry are gone. A copy installed with winget is removed by winget (`winget uninstall jozuern.Tunero`), so winget's list stays right.
+Settings > Uninstall removes Tunero from this PC. When changes of the app are still active, it offers to undo them first; if one cannot be undone, it removes nothing. Then the app closes, and a moment later its exe, its data folder `%ProgramData%\Tunero` (backups, logs, settings) and its Start menu entry are gone. A copy installed with winget, Chocolatey or Scoop is removed by that package manager (`winget uninstall jozuern.Tunero`, `choco uninstall tunero`, `scoop uninstall tunero`), so its list stays right; uninstalling with the package manager alone keeps the data folder and its backups.
 
 What stays: restore points, apps you installed through Tunero and the PawnIO sensor driver. Remove them in Windows under Settings > Apps > Installed apps if you no longer need them. To remove Tunero by hand: undo your changes on the Changes page, then delete the exe, the folder `%ProgramData%\Tunero` and `Tunero` in the Start menu folder (`%AppData%\Microsoft\Windows\Start Menu\Programs`).
 

@@ -36,6 +36,34 @@ public static class TrustedPath
         }
     }
 
+    /// <summary>
+    /// A program like <see cref="IsAdminOnlyWritable"/>, except that folders above its own folder may let others add new
+    /// entries, as <c>C:\ProgramData</c> lets every user create folders. Adding an entry cannot change, rename or replace
+    /// an existing one (that takes delete rights, which are still refused), so the path keeps pointing to the same
+    /// admin-only folder. The program's own folder stays strict: a DLL added next to a program is loaded by it. For package
+    /// managers installed under <c>C:\ProgramData</c> (Chocolatey).
+    /// </summary>
+    public static bool IsAdminOnlyBelowSharedFolders(string path)
+    {
+        try
+        {
+            var full = Path.GetFullPath(path);
+            if (!IsOnLocalFixedDrive(full) || !File.Exists(full) || !SafeDelete.HasNoLinks(full)) return false;
+            if (!Check(new FileInfo(full).GetAccessControl())) return false;
+            var folder = new DirectoryInfo(Path.GetDirectoryName(full)!);
+            if ((folder.Attributes & FileAttributes.ReparsePoint) != 0 || !Check(folder.GetAccessControl())) return false;
+            for (var dir = folder.Parent; dir?.Parent is not null; dir = dir.Parent)
+            {
+                if ((dir.Attributes & FileAttributes.ReparsePoint) != 0 || !Check(dir.GetAccessControl(), Replacing)) return false;
+            }
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>A folder (for example a PATH entry) in which only Administrators, SYSTEM or TrustedInstaller can add or change files.</summary>
     public static bool IsAdminOnlyWritableFolder(string folder)
     {
@@ -74,6 +102,29 @@ public static class TrustedPath
 
     /// <summary>GENERIC_ALL and GENERIC_WRITE: some installers write these generic bits into an entry instead of file rights.</summary>
     private const int GenericWriting = 0x10000000 | 0x40000000;
+
+    /// <summary>
+    /// Rights on a folder above the program's own that could change what the path leads to: deleting or renaming what is
+    /// in it, or taking the folder over. Creating new entries (write data, append data, attributes, GENERIC_WRITE) is left out.
+    /// </summary>
+    private const FileSystemRights Replacing =
+        FileSystemRights.Delete | FileSystemRights.DeleteSubdirectoriesAndFiles | FileSystemRights.ChangePermissions | FileSystemRights.TakeOwnership;
+
+    /// <summary>GENERIC_ALL alone: it includes delete and permission rights, GENERIC_WRITE does not.</summary>
+    private const int GenericAll = 0x10000000;
+
+    private static bool Check(FileSystemSecurity security, FileSystemRights forbidden)
+    {
+        if (!IsTrusted(security.GetOwner(typeof(SecurityIdentifier)))) return false;
+        foreach (FileSystemAccessRule rule in security.GetAccessRules(includeExplicit: true, includeInherited: true, typeof(SecurityIdentifier)))
+        {
+            if (rule.AccessControlType != AccessControlType.Allow || IsTrusted(rule.IdentityReference)) continue;
+            if ((rule.PropagationFlags & PropagationFlags.InheritOnly) != 0) continue;
+            if (rule.IdentityReference == CreatorOwner) continue;
+            if ((rule.FileSystemRights & forbidden) != 0 || ((int)rule.FileSystemRights & GenericAll) != 0) return false;
+        }
+        return true;
+    }
 
     private static bool Check(FileSystemSecurity security)
     {

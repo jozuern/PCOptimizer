@@ -79,6 +79,22 @@
                                            Foreground="{DynamicResource SystemFillColorCautionBrush}" Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToHidden}}" />
                             <StackPanel>
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextWrapping="Wrap" />
+                                <!-- Why it needs attention, in the caution color: not signed, runs a script, unusual place -->
+                                <ItemsControl ItemsSource="{Binding AttentionTags}" Focusable="False" Margin="0,2,0,0"
+                                              Visibility="{Binding AttentionTags.Count, Converter={StaticResource CountToVisibility}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource TagBorder}" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                                                <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{l:Tr Startup_New}" Margin="0,2,0,0"
                                               Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}}" />
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0">

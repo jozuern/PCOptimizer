@@ -1,0 +1,108 @@
+# Chocolatey: when a release is published (the draft from release.yml turned into a release), build the package "tunero"
+# with scripts/chocolatey-package.ps1 and push it to the Chocolatey community repository. A new package version is
+# checked automatically (validator, verifier, VirusTotal); the first version of the package is also reviewed by a
+# volunteer moderator, later ones usually not. choco offers the version once it is approved.
+#
+# The API key (chocolatey.org > Account > API Keys) is stored as secret CHOCOLATEY_API_KEY of the environment
+# "chocolatey", which only v*.*.* tags may use. No project code runs here. To push a release again (for example after a
+# failed run): Actions > chocolatey > Run workflow, "Use workflow from" the tag. A version that was pushed once cannot be
+# pushed again; fix the package with a fourth version segment (0.8.0.20261013) instead.
+
+name: chocolatey
+
+on:
+  release:
+    types: [ released ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chocolatey-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  push:
+    runs-on: windows-2025
+    environment: chocolatey
+
+    env:
+      TAG: ${{ github.ref_name }}
+
+    steps:
+    - name: Release of a version tag
+      shell: pwsh
+      run: |
+        if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { Write-Error "$env:TAG is not a version tag (v1.2.3)"; exit 1 }
+        $release = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json isDraft,isPrerelease | ConvertFrom-Json
+        if ($release.isDraft -or $release.isPrerelease) { Write-Error "$env:TAG is a draft or a pre-release"; exit 1 }
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    # The package pins the exe's SHA-256: only an exe that matches the release's checksum, signed with the app's key for
+    # this version (the statement of UpdateSignature), is packaged. Same check as in winget.yml.
+    - name: Checkout the update key and the package script
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        sparse-checkout: |
+          src/Optimizer.Core/Updates/update-key.pem
+          scripts/chocolatey-package.ps1
+        sparse-checkout-cone-mode: false
+        path: repo
+        persist-credentials: false
+
+    - name: Verify the release assets
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download $env:TAG --repo $env:GITHUB_REPOSITORY --dir assets --pattern Tunero.exe --pattern Tunero.exe.sha256 --pattern Tunero.exe.sig
+        if ($LASTEXITCODE -ne 0) { Write-Error "release assets not downloaded"; exit 1 }
+        $hash = (Get-FileHash assets/Tunero.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+        $listed = ((Get-Content -Raw assets/Tunero.exe.sha256) -split '\s+')[0].ToLowerInvariant()
+        if ($hash -ne $listed) { Write-Error "Tunero.exe has SHA-256 $hash, the release lists $listed"; exit 1 }
+        $statement = [System.Text.Encoding]::UTF8.GetBytes("PCOptimizer $($env:TAG.TrimStart('v'))`n$hash`n")
+        $signature = [Convert]::FromBase64String((Get-Content -Raw assets/Tunero.exe.sig).Trim())
+        $public = [System.Security.Cryptography.ECDsa]::Create()
+        try {
+          $public.ImportFromPem((Get-Content -Raw repo/src/Optimizer.Core/Updates/update-key.pem))
+          if (-not $public.VerifyData($statement, $signature, [System.Security.Cryptography.HashAlgorithmName]::SHA256)) {
+            Write-Error "The release signature does not match the app's key for $env:TAG"; exit 1
+          }
+        } finally { $public.Dispose() }
+        "SHA256=$hash" >> $env:GITHUB_ENV
+        "Verified Tunero.exe SHA-256 $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+
+    # The package downloads from github.com/jozuern/Tunero (and its icon comes from there through jsDelivr). Before the
+    # repository was renamed from PCOptimizer, that address does not exist yet, Chocolatey's verifier would fail, and a
+    # pushed version number cannot be used again: nothing is pushed then. Run the workflow again after the rename.
+    - name: Release reachable under the package's address
+      shell: pwsh
+      run: |
+        try {
+          Invoke-WebRequest "https://github.com/jozuern/Tunero/releases/download/$env:TAG/Tunero.exe.sha256" -Method Head -UseBasicParsing | Out-Null
+          "REACHABLE=true" >> $env:GITHUB_ENV
+        } catch {
+          "github.com/jozuern/Tunero/releases/download/$env:TAG is not reachable yet (repository not renamed?): nothing pushed. Run this workflow again from the tag after the rename." | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+          "REACHABLE=false" >> $env:GITHUB_ENV
+        }
+
+    - name: Build the package
+      if: env.REACHABLE == 'true'
+      shell: pwsh
+      run: |
+        ./repo/scripts/chocolatey-package.ps1 -Version $env:TAG.Substring(1) -OutDir out -Sha256 $env:SHA256
+        $package = Get-ChildItem out -Filter 'tunero.*.nupkg' | Select-Object -First 1
+        if (-not $package) { Write-Error "no package was built"; exit 1 }
+        "PACKAGE=$($package.FullName)" >> $env:GITHUB_ENV
+
+    - name: Push to the community repository
+      if: env.REACHABLE == 'true'
+      shell: pwsh
+      run: |
+        choco push $env:PACKAGE --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+        if ($LASTEXITCODE -ne 0) { Write-Error "choco push failed ($LASTEXITCODE)"; exit 1 }
+        "Pushed $(Split-Path -Leaf $env:PACKAGE): https://community.chocolatey.org/packages/tunero" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+      env:
+        CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
