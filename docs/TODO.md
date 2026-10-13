@@ -27,10 +27,10 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 In the order of the audit's promise gaps:
 
-1. Installer: done (91 reviewed apps and a winget search for any package); the search needs its VM row.
-2. Bulk Crap Uninstaller: done (bulk and quiet uninstall, the leftover check, unused Program Files folders); the folder search needs its VM row.
+1. Installer: done (91 reviewed apps and a winget search for any package, passed in the VM).
+2. Bulk Crap Uninstaller: done (bulk and quiet uninstall, the leftover check, unused Program Files folders, all passed in the VM).
 3. Process Lasso style rules: the page priority (proof needed). Start priorities are proven; live rules and affinity are on the not-included page.
-4. Autoruns: done (the locations, the CSV export and Delete with a backup for registry values, Startup folder files and tasks of other programs); Delete for files and tasks needs its VM row.
+4. Autoruns: done (the locations, the CSV export and Delete with a backup for registry values, Startup folder files and tasks of other programs, passed in the VM).
 5. The documented policies still left over (sync per category, quality update deferral and more); AI permissions without documented values, cross-device resume, desktop Spotlight and Edge promotions were checked and stay out, with the reasons in the commit history and on the not-included page.
 6. About 30 cosmetic tweaks (menu delays, drive letters first, shortcut suffix, Photo Viewer, Folder Options, taskbar on several displays, Num Lock, startup sound and others); many need VM proof.
 7. Export: removed apps, service start types and startup entries as opt-in sections of the changes file (`--export` and `--apply-recommended` are done). `--include-preview` stays out: a preview has not been tested on real Windows and needs its own confirmation in the app.

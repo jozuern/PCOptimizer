@@ -1230,7 +1230,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Quick_DefenderUpdate" xml:space="preserve"><value>Update Microsoft Defender</value></data>
   <data name="Quick_DefenderUpdateHint" xml:space="preserve"><value>Downloads the latest virus definitions now (Update-MpSignature), as Check for updates in Windows Security does. Needs the internet.</value></data>
   <data name="Quick_DefenderUpdateAction" xml:space="preserve"><value>Update</value></data>
-  <data name="Quick_DefenderUpdateDone" xml:space="preserve"><value>Defender definitions updated.</value></data>
+  <data name="Quick_DefenderUpdateDone" xml:space="preserve"><value>Done: Microsoft Defender has the newest definitions.</value></data>
   <data name="Quick_WingetSourceReset" xml:space="preserve"><value>Reset winget sources</value></data>
   <data name="Quick_WingetSourceResetHint" xml:space="preserve"><value>When Install &amp; update cannot reach the winget catalog: restores winget's default sources (winget source reset). Sources you added yourself are removed.</value></data>
   <data name="Quick_WingetSourceResetAction" xml:space="preserve"><value>Reset</value></data>
