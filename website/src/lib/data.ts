@@ -96,8 +96,31 @@ export function checkTitles(lang: Lang): string[] {
   return titles;
 }
 
+/**
+ * The checks whose problem rates 5 for games, the top of the scale, by the title of their page. Checks set their rating
+ * in code, so this reads each check class (from `const string Id` to the next one) for an `Impact = ...` that can give 5:
+ * a plain 5 or one branch of a conditional. Fails the build when it finds none or a check without a page.
+ */
+export function topChecks(lang: Lang): string[] {
+  const dir = join(root, 'src/Optimizer.Core/Findings');
+  const ids = new Set<string>();
+  for (const file of readdirSync(dir, { recursive: true }) as string[]) {
+    if (!file.endsWith('.cs')) continue;
+    for (const part of readFileSync(join(dir, file), 'utf8').split('const string Id = "').slice(1)) {
+      const results = [...part.matchAll(/Impact = ([^,;\n]+)/g)]
+        .flatMap((m) => m[1].split(/[?:]/))
+        .map((x) => x.trim());
+      if (results.includes('5')) ids.add(part.slice(0, part.indexOf('"')));
+    }
+  }
+  const titles = [...ids].map((id) => docTitle(lang, id)?.replace(/\s*\{\{\w+\}\}/g, ''));
+  if (titles.length === 0 || titles.some((t) => !t)) throw new Error(`Checks rated 5: ${[...ids].join(', ') || 'none found'}`);
+  return (titles as string[]).sort((a, b) => a.localeCompare(b, lang));
+}
+
 /** A tweak's gaming impact (0 to 5) on most PCs, and the highest rating a condition on some PCs gives it. */
 export interface TweakImpact {
+  id: string;
   title: string;
   impact: number;
   basis: string;
@@ -120,6 +143,7 @@ export function tweakImpacts(lang: Lang): TweakImpact[] {
         .filter((o) => (o.gaming ?? 0) > t.impact.gaming)
         .sort((a, b) => b.gaming! - a.gaming!)[0];
       return {
+        id: t.id,
         title: t.subject ? `${title}: ${t.subject}` : title,
         impact: t.impact.gaming,
         basis: t.impact.basis,

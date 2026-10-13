@@ -1,7 +1,7 @@
 ---
 import Shot from './Shot.astro';
 import type { Copy } from '../i18n/types';
-import { counts, version, sizeMb, explanation, registryChanges, checkTitles, tweakImpacts, repo, download, packages } from '../lib/data';
+import { counts, version, sizeMb, explanation, registryChanges, checkTitles, topChecks, tweakImpacts, repo, download, packages } from '../lib/data';
 
 interface Props { t: Copy }
 const { t } = Astro.props;
@@ -9,23 +9,42 @@ const { t } = Astro.props;
 // Every check the scan runs, by the title of its explanation page.
 const checks = checkTitles(t.lang);
 
-// The gaming impact of every tweak, one square each, rows from 5 down to 0, measured first, disputed last. A tweak that rates higher on some PCs also
-// gets an outlined square in the row of its highest rating.
+// The rating board. Only problems the scan finds reach 5, so the top row names those checks. Below it every tweak
+// that can matter for games by name, once, in the row of its rating; a tweak that rates
+// higher on some PCs in the row of its highest rating, with its rating elsewhere. Popular tweaks rated 0 on disputed evidence are named too; the
+// rest of the 0 row is one square per tweak.
 const impacts = tweakImpacts(t.lang);
-const basisOrder = ['measured', 'situational', 'disputed'] as const;
-type Basis = (typeof basisOrder)[number];
-const basisOf = (b: string): Basis => (basisOrder.includes(b as Basis) ? (b as Basis) : 'situational');
-const levels = [5, 4, 3, 2, 1, 0].map((level) => ({
-  level,
-  tweaks: impacts.filter((i) => i.impact === level).sort((a, b) => basisOrder.indexOf(a.basis) - basisOrder.indexOf(b.basis)),
-  higher: impacts.filter((i) => i.higher?.impact === level),
-}));
+type Entry = { title: string; tag?: string; note?: string };
+const tagOf = (basis: string) => (basis === 'measured' ? t.impact.measured : basis === 'disputed' ? t.impact.disputed : undefined);
+const top = topChecks(t.lang);
+const levels = [4, 3, 2, 1].map((level) => {
+  const entries: Entry[] = [
+    ...impacts.filter((i) => i.impact === level && !i.higher).map((i) => ({ title: i.title, tag: tagOf(i.basis) })),
+    ...impacts.filter((i) => i.higher?.impact === level).map((i) => ({ title: i.title, tag: t.impact.some(i.impact), note: i.higher!.reason })),
+  ];
+  return { level, entries };
+});
+// The board's title and text state facts the catalog decides, so the build fails when they stop being true.
+if (impacts.some((i) => i.impact >= 5 || (i.higher?.impact ?? 0) >= 5))
+  throw new Error('A tweak is rated 5: the board has no tweak row 5, and its title says that no tweak reaches 5');
+const turbo = impacts.find((i) => i.id === 'power.turboRestore');
+if (turbo?.impact !== 0 || turbo.higher?.impact !== 4)
+  throw new Error('The board text says that Restore processor turbo rates 4 on some PCs and 0 everywhere else');
+const zero = impacts.filter((i) => i.impact === 0 && !i.higher);
+const zeroNamed = zero.filter((i) => i.basis === 'disputed');
+const zeroRest = zero.filter((i) => i.basis !== 'disputed');
 const matter = impacts.filter((i) => i.impact > 0 || i.higher).length;
-const bases = basisOrder.filter((b) => impacts.some((i) => basisOf(i.basis) === b));
 
-// The page of a popular tweak that the evidence does not support, straight from the app's catalog.
-const doc = explanation('power.ultimatePlan', t.lang);
-const docSections = doc.sections.filter((s) => t.sources.show.includes(s.heading));
+// One tweak followed end to end: its explanation page straight from the app's catalog, with the registry values it
+// writes where the app puts them, after the summary. The Tweaks screenshot shows the same tweak selected.
+const specimen = 'input.mouseAccelOff';
+const doc = explanation(specimen, t.lang);
+const docSections = t.tweak.show.map((heading) => {
+  const section = doc.sections.find((s) => s.heading === heading);
+  if (!section) throw new Error(`The page ${specimen} (${t.lang}) has no section ${heading}`);
+  return section;
+});
+const specimenImpact = impacts.find((i) => i.id === specimen)!.impact;
 // Splits "text [1] text" so the references can link to the numbered sources.
 // The space before a reference goes, so the number sits on the word.
 const withRefs = (text: string) => text.split(/\s*\[(\d+)\]/).map((part, i) => ({ ref: i % 2 === 1, part }));
@@ -35,11 +54,22 @@ const source = (url: string) => {
   return { host: u.host.replace(/^www\./, ''), path: (u.pathname + u.search).replace(/\/$/, '') };
 };
 
-// What turning off mouse acceleration writes; the Windows defaults are the Now column.
-const mouse = registryChanges('input.mouseAccelOff', { MouseSpeed: '1', MouseThreshold1: '6', MouseThreshold2: '10' });
+// A popular tweak whose own page says the evidence does not hold up, quoted under the sheet.
+const disputedId = 'power.ultimatePlan';
+if (impacts.find((i) => i.id === disputedId)?.basis !== 'disputed')
+  throw new Error(`The site quotes ${disputedId} as a tweak with disputed evidence`);
+const disputedDoc = explanation(disputedId, t.lang);
+const disputedEvidence = disputedDoc.sections.findIndex((s) => s.heading === t.tweak.show[2]);
+if (disputedEvidence < 0) throw new Error(`The page ${disputedId} (${t.lang}) has no section ${t.tweak.show[2]}`);
+const disputedQuote = disputedDoc.sections[disputedEvidence].body;
+const disputedHref = `${repo}/blob/main/src/Optimizer.Core/Catalog/Docs/${t.lang}/${disputedId}.md`;
 
-const sections = [t.scan, t.impact, t.confirm, t.undo, t.facts, t.sources, t.left, t.install, t.faq];
-const n = (s: { label: string }) => String(sections.indexOf(s as never) + 1).padStart(2, '0');
+// The hero claim: a hyphenated word such as "PC-Optimierer" stays on one line.
+const titleParts = t.hero.title.split(/(\S+-\S+)/).map((part, i) => ({ keep: i % 2 === 1, part }));
+
+// What the tweak writes; the Windows defaults are the Now column.
+const mouse = registryChanges(specimen, { MouseSpeed: '1', MouseThreshold1: '6', MouseThreshold2: '10' });
+
 const faqSmartScreen = t.faq.items[1].id;
 const docsBase = `${repo}/blob/main/docs`;
 const managers = [
@@ -49,220 +79,201 @@ const managers = [
 ].filter((m) => m.live);
 ---
 
-<div class="stage">
-  <section class="hero container">
-    <div class="hero-grid">
-      <div class="hero-text">
-        <h1>{t.hero.title}</h1>
-        <p class="lead">{t.hero.lead}</p>
-        <div class="actions">
-          <a class="button" href={download}>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5a.75.75 0 0 1 .75.75v7.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V2.25A.75.75 0 0 1 8 1.5ZM2.75 13h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5Z" /></svg>
-            {t.hero.download}
-            {sizeMb && <span class="size">{sizeMb} MB</span>}
-          </a>
-          {packages.winget.live && (
-            <span class="command">
-              {t.hero.winget}
-              <code><span id="winget">{packages.winget.commands[0]}</span><button class="copy" type="button" data-copy="winget" data-done={t.hero.copied} hidden>{t.hero.copy}</button></code>
-            </span>
-          )}
-        </div>
-        <p class="fine">{t.hero.preview} <a href={`#${faqSmartScreen}`}>{t.hero.previewLink}</a></p>
+<section class="hero container" aria-labelledby="title">
+  <h1 id="title">{titleParts.map((x) => (x.keep ? <span class="nowrap">{x.part}</span> : x.part))}</h1>
+  <div class="hero-text">
+    <p class="lead">{t.hero.lead}</p>
+    <div class="get">
+      <div class="actions">
+        <a class="button" href={download}>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5a.75.75 0 0 1 .75.75v7.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V2.25A.75.75 0 0 1 8 1.5ZM2.75 13h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5Z" /></svg>
+          {t.hero.download}
+          {sizeMb && <span class="size">{sizeMb} MB</span>}
+        </a>
+        {packages.winget.live && (
+          <span class="command">
+            {t.hero.winget}
+            <code><span id="winget">{packages.winget.commands[0]}</span><button class="copy" type="button" data-copy="winget" data-done={t.hero.copied} hidden>{t.hero.copy}</button></code>
+          </span>
+        )}
       </div>
-      <dl class="spec">
-        <div><dt>{t.hero.spec.version}</dt><dd>{version} <a href={`${repo}/blob/main/CHANGELOG.md`}>{t.hero.spec.changes}</a></dd></div>
-        <div><dt>{t.hero.spec.needs}</dt><dd>{t.hero.spec.needsValue}</dd></div>
-        <div><dt>{t.hero.spec.languages}</dt><dd>{t.hero.spec.languagesValue}</dd></div>
-        <div><dt>{t.hero.spec.license}</dt><dd>{t.hero.spec.licenseValue}</dd></div>
-      </dl>
-    </div>
-    <Shot name="overview" lang={t.lang} alt={t.hero.shotAlt} sizes="(min-width: 1208px) 1160px, calc(100vw - 32px)" eager />
-  </section>
-</div>
-<p class="container hero-caption">{t.hero.shotCaption}</p>
-
-<section class="section" aria-labelledby="scan">
-  <div class="container grid">
-    <div class="label"><b>{n(t.scan)}</b>{t.scan.label}</div>
-    <div class="body">
-      <h2 id="scan">{t.scan.title}</h2>
-      {t.scan.body(counts.checks).map((p) => <p>{p}</p>)}
-      <h3 class="list-head">{t.scan.list(checks.length)}</h3>
-      <ol class="checks">
-        {checks.map((c) => <li>{c}</li>)}
-      </ol>
+      <p class="fine">{t.hero.facts(version)} <a href={`${repo}/blob/main/CHANGELOG.md`}>{t.hero.changes}</a></p>
+      <p class="fine">{t.hero.preview} <a href={`#${faqSmartScreen}`}>{t.hero.previewLink}</a></p>
     </div>
   </div>
+  <Shot name="overview" lang={t.lang} alt={t.hero.shotAlt} caption={t.hero.shotCaption} sizes="(min-width: 1208px) 1160px, calc(100vw - 32px)" eager />
 </section>
 
-<section class="section" aria-labelledby="impact">
-  <div class="container grid">
-    <div class="label"><b>{n(t.impact)}</b>{t.impact.label}</div>
-    <div class="body">
+<section class="board" aria-labelledby="impact">
+  <div class="container">
+    <div class="intro">
       <h2 id="impact">{t.impact.title}</h2>
-      {t.impact.body(impacts.length, matter).map((p) => <p>{p}</p>)}
-      <figure class="impact">
-        <div class="impact-rows">
-          {levels.map((l) => (
-            <div class="impact-row">
-              <span class="level" aria-hidden="true">{l.level}</span>
-              <span class="cells" aria-hidden="true">
-                {l.tweaks.map((x) => <i class={basisOf(x.basis)} title={x.title}></i>)}
-                {l.higher.map((x) => <i class="higher" title={t.impact.higher(x.title, l.level, x.higher!.reason)}></i>)}
-              </span>
-              <span class="count" aria-hidden="true">{l.tweaks.length}</span>
-              <span class="sr">{t.impact.row(l.level, l.tweaks.length)}</span>
-            </div>
-          ))}
-        </div>
-        <figcaption>
-          <ul class="legend">
-            {bases.map((b) => <li><i class={b} aria-hidden="true"></i>{t.impact.legend[b]}</li>)}
-            <li><i class="higher" aria-hidden="true"></i>{t.impact.legend.higher}</li>
+      <div>{t.impact.body(impacts.length, matter).map((p) => <p>{p}</p>)}</div>
+    </div>
+    <div class="ratings">
+      <div class="rating top">
+        <span class="level" aria-hidden="true">5</span>
+        <div>
+          <h3 class="sr">{t.impact.topRow(top.length)}</h3>
+          <p class="top-note">{t.impact.top}</p>
+          <ul class="names">
+            {top.map((c) => <li>{c}</li>)}
           </ul>
-          {t.impact.caption}
-        </figcaption>
-      </figure>
-      <p>{t.impact.after}</p>
-    </div>
-  </div>
-</section>
-
-<section class="section" aria-labelledby="confirm">
-  <div class="container grid">
-    <div class="label"><b>{n(t.confirm)}</b>{t.confirm.label}</div>
-    <div class="body split-2">
-      <div>
-        <h2 id="confirm">{t.confirm.title}</h2>
-        <p>{t.confirm.intro}</p>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="changes">
-          <caption>{t.confirm.caption}</caption>
-          <thead>
-            <tr><th scope="colgroup" colspan="3" class="key">{mouse[0].key}</th></tr>
-            <tr>{t.confirm.columns.slice(1).map((c) => <th scope="col">{c}</th>)}</tr>
-          </thead>
-          <tbody>
-            {mouse.map((r) => (
-              <tr><td>{r.name}</td><td class="now">{r.from}</td><td class="new">{r.to}</td></tr>
-            ))}
-          </tbody>
-        </table>
+      {levels.map((l) => (
+        <div class="rating">
+          <span class="level" aria-hidden="true">{l.level}</span>
+          <div>
+            <h3 class="sr">{t.impact.row(l.level, l.entries.length)}</h3>
+            <ul class="names">
+              {l.entries.map((e) => (
+                <li title={e.note}>{e.title}{e.tag && <span class="tag">{e.tag}</span>}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))}
+      <div class="rating zero">
+        <span class="level" aria-hidden="true">0</span>
+        <div>
+          <h3 class="sr">{t.impact.row(0, zero.length)}</h3>
+          <p class="zero-note">{t.impact.zeroNamed}</p>
+          <ul class="names">
+            {zeroNamed.map((i) => <li>{i.title}</li>)}
+          </ul>
+          <p class="zero-note">{t.impact.zeroRest(zeroRest.length)}</p>
+          <div class="cells" aria-hidden="true">
+            {zeroRest.map((i) => <i title={i.title}></i>)}
+          </div>
+        </div>
       </div>
-      <p class="wide">{t.confirm.after}</p>
     </div>
   </div>
 </section>
 
-<section class="section" aria-labelledby="undo">
-  <div class="container grid">
-    <div class="label"><b>{n(t.undo)}</b>{t.undo.label}</div>
-    <div class="body">
-      <h2 id="undo">{t.undo.title}</h2>
-      <ol class="steps">
-        {t.undo.steps.map((s, i) => <li><span class="step-n">{i + 1}</span><b>{s.name}</b><span>{s.text}</span></li>)}
-      </ol>
-      {t.undo.body.map((p) => <p>{p}</p>)}
-    </div>
+<section class="section container scan" aria-labelledby="scan">
+  <div class="scan-text">
+    <h2 id="scan">{t.scan.title}</h2>
+    {t.scan.body(counts.checks).map((p) => <p>{p}</p>)}
+  </div>
+  <div>
+    <h3 class="sr">{t.scan.list(checks.length)}</h3>
+    <ol class="runon">
+      {checks.map((c) => <li>{c}</li>)}
+    </ol>
   </div>
 </section>
 
-<section class="section" aria-labelledby="facts">
-  <div class="container grid">
-    <div class="label"><b>{n(t.facts)}</b>{t.facts.label}</div>
-    <div class="body">
-      <h2 id="facts">{t.facts.title}</h2>
-      <p>{t.facts.intro}</p>
-      <dl class="numbers">
-        {t.facts.numbers(counts).map(([k, v]) => <div><dd>{v}</dd><dt>{k}</dt></div>)}
-      </dl>
-      <ul class="areas">
-        {t.facts.areas.map(([name, text]) => <li><b>{name}</b><span>{text}</span></li>)}
-      </ul>
-      <div class="split">
-        <dl class="facts">
-          {t.facts.rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+<section class="section container" aria-labelledby="areas">
+  <h2 id="areas">{t.areas.title}</h2>
+  <p>{t.areas.intro}</p>
+  <div class="rail">
+    {t.areas.groups(counts).map((g) => (
+      <div class="rail-group">
+        {g.name && <h3>{g.name}</h3>}
+        <dl>
+          {g.items.map(([name, text]) => <div><dt>{name}</dt><dd>{text}</dd></div>)}
         </dl>
-        <div class="aside">
-          <h3 id="privacy">{t.privacy.title}</h3>
-          {t.privacy.body.map((p) => <p>{p}</p>)}
-          <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
-        </div>
       </div>
-    </div>
+    ))}
   </div>
 </section>
 
-<section class="section" aria-labelledby="sources">
-  <div class="container grid">
-    <div class="label"><b>{n(t.sources)}</b>{t.sources.label}</div>
-    <div class="body">
-      <h2 id="sources">{t.sources.title}</h2>
-      <p>{t.sources.intro}</p>
-      <article class="doc">
-        <div class="doc-main">
-          <p class="doc-label">{t.sources.docLabel}</p>
-          <h3>{doc.title}</h3>
-          {docSections.map((s) => (
+<section class="section container" aria-labelledby="tweak">
+  <h2 id="tweak">{t.tweak.title}</h2>
+  <p>{t.tweak.intro}</p>
+  <article class="doc" aria-labelledby="doc-title">
+    <div class="doc-main">
+      <p class="doc-label">{t.tweak.docLabel}</p>
+      <h3 id="doc-title">{doc.title}</h3>
+      <p class="doc-impact">{t.tweak.impact(specimenImpact)}</p>
+      {docSections.map((s, i) => (
+        <>
+          <h4>{s.heading}</h4>
+          <p>
+            {withRefs(s.body).map((x) => (x.ref ? <sup><a href={`#src-${x.part}`}>{x.part}</a></sup> : x.part))}
+          </p>
+          {i === 0 && (
             <>
-              <h4>{s.heading}</h4>
-              <p>
-                {withRefs(s.body).map((x) => (x.ref ? <sup><a href={`#src-${x.part}`}>{x.part}</a></sup> : x.part))}
-              </p>
+              <h4>{t.tweak.changes}</h4>
+              <table class="diff">
+                <caption>{t.tweak.caption}</caption>
+                <thead>
+                  <tr><th scope="colgroup" colspan="3" class="key">{mouse[0].key}</th></tr>
+                  <tr>{t.tweak.columns.map((c) => <th scope="col">{c}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {mouse.map((r) => (
+                    <tr><td>{r.name}</td><td class="now"><del>{r.from}</del></td><td class="new"><ins>{r.to}</ins></td></tr>
+                  ))}
+                </tbody>
+              </table>
             </>
-          ))}
-        </div>
-        <aside class="doc-notes">
-          <h4>{t.lang === 'en' ? 'Sources' : 'Quellen'}</h4>
-          <ol>{doc.sources.map((url, i) => <li id={`src-${i + 1}`}><a href={url}><span class="host">{source(url).host}</span>{source(url).path}</a></li>)}</ol>
-        </aside>
-      </article>
-      <p>{t.sources.after}</p>
-      <Shot name="tweaks" lang={t.lang} alt={t.sources.shotAlt} sizes="(min-width: 1208px) 912px, calc(100vw - 32px)" />
+          )}
+        </>
+      ))}
     </div>
+    <aside class="doc-notes">
+      <h4>{t.tweak.sourcesLabel}</h4>
+      <ol>{doc.sources.map((url, i) => <li id={`src-${i + 1}`}><a href={url}><span class="host">{source(url).host}</span>{source(url).path}</a></li>)}</ol>
+    </aside>
+  </article>
+  <figure class="counter">
+    <figcaption>{t.tweak.disputed.intro(disputedDoc.title)}</figcaption>
+    <blockquote cite={disputedHref}><p>{disputedQuote}</p></blockquote>
+    <p><a href={disputedHref}>{t.tweak.disputed.link}</a></p>
+  </figure>
+  <h3 class="small-head">{t.tweak.stepsTitle}</h3>
+  <ol class="sequence across">
+    {t.tweak.steps.map((s) => <li><b>{s.name}</b><span>{s.text}</span></li>)}
+  </ol>
+  <div class="tweak-after">
+    {t.tweak.body.map((p) => <p>{p}</p>)}
   </div>
+  <Shot name="tweaks" lang={t.lang} alt={t.tweak.shotAlt} caption={t.tweak.shotCaption} sizes="(min-width: 1208px) 1160px, calc(100vw - 32px)" />
 </section>
 
-<section class="section" aria-labelledby="left">
-  <div class="container grid">
-    <div class="label"><b>{n(t.left)}</b>{t.left.label}</div>
-    <div class="body">
-      <h2 id="left">{t.left.title}</h2>
-      <p>{t.left.intro}</p>
-      <ul class="struck">
-        {t.left.rows.map((r) => (
-          <li>
-            <s class={r.tweak.includes('=') ? 'mono' : undefined}>{r.tweak}</s>
-            <p>{r.why}{r.source && <> <a href={r.source}>{t.left.sourceLink}</a></>}</p>
-          </li>
-        ))}
-      </ul>
-      <p><a href={`${docsBase}/not-included.md`}>{t.left.all}</a></p>
-    </div>
-  </div>
+<section class="section container" aria-labelledby="left">
+  <h2 id="left">{t.left.title}</h2>
+  <p>{t.left.intro}</p>
+  <ul class="struck">
+    {t.left.rows.map((r) => (
+      <li>
+        <s class={r.tweak.includes('=') ? 'mono' : undefined}>{r.tweak}</s>
+        <p>{r.why}{r.source && <> <a href={r.source}>{t.left.sourceLink}</a></>}</p>
+      </li>
+    ))}
+  </ul>
+  <p><a href={`${docsBase}/not-included.md`}>{t.left.all}</a></p>
 </section>
 
-<section class="section" aria-labelledby="install">
-  <div class="container grid">
-    <div class="label"><b>{n(t.install)}</b>{t.install.label}</div>
-    <div class="body">
-      <h2 id="install">{t.install.title}</h2>
-      <ol class="steps three">
+<div class="reference container">
+  <section class="ref-row" aria-labelledby="privacy">
+    <h2 id="privacy">{t.privacy.title}</h2>
+    <div>
+      {t.privacy.body.map((p) => <p>{p}</p>)}
+      <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
+    </div>
+  </section>
+
+  <section class="ref-row" aria-labelledby="install">
+    <h2 id="install">{t.install.title}</h2>
+    <div>
+      <ol class="sequence">
         <li>
-          <span class="step-n">1</span><b>{t.install.steps[0].name}</b><span>{t.install.steps[0].text}</span>
+          <b>{t.install.steps[0].name}</b><span>{t.install.steps[0].text}</span>
           <a class="button" href={download}>{t.hero.download}{sizeMb && <span class="size">{sizeMb} MB</span>}</a>
         </li>
         <li>
-          <span class="step-n">2</span><b>{t.install.steps[1].name}</b><span>{t.install.steps[1].text}</span>
+          <b>{t.install.steps[1].name}</b><span>{t.install.steps[1].text}</span>
           <pre><code>Get-FileHash Tunero.exe</code></pre>
         </li>
-        <li><span class="step-n">3</span><b>{t.install.steps[2].name}</b><span>{t.install.steps[2].text}</span></li>
+        <li><b>{t.install.steps[2].name}</b><span>{t.install.steps[2].text}</span></li>
       </ol>
       {managers.length > 0 && (
         <>
-          <h3 class="list-head">{t.install.managers}</h3>
+          <h3 class="small-head">{t.install.managers}</h3>
           <dl class="install-list">
             {managers.map((m) => <div><dt>{m.name}</dt><dd>{m.commands.map((c) => <code>{c}</code>)}</dd></div>)}
           </dl>
@@ -270,20 +281,15 @@ const managers = [
       )}
       <p class="after-list"><a href={`${repo}/releases`}>{t.install.releases}</a></p>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section" aria-labelledby="faq">
-  <div class="container grid">
-    <div class="label"><b>{n(t.faq)}</b>{t.faq.label}</div>
-    <div class="body">
-      <h2 id="faq">{t.faq.title}</h2>
-      <dl class="faq">
-        {t.faq.items.map((f) => <div><dt id={f.id}>{f.q}</dt><dd>{f.a}</dd></div>)}
-      </dl>
-    </div>
-  </div>
-</section>
+  <section class="ref-row" aria-labelledby="faq">
+    <h2 id="faq">{t.faq.title}</h2>
+    <dl class="faq">
+      {t.faq.items.map((f) => <div><dt id={f.id}>{f.q}</dt><dd>{f.a}</dd></div>)}
+    </dl>
+  </section>
+</div>
 
 <script>
   // The only script on the site: copy the winget command. The button stays hidden without script or clipboard access.
