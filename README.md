@@ -8,7 +8,7 @@ Tunero finds what really costs your games frame rate, fixes what it can and tell
 
 > **Status: preview.** Every change is tested for apply and undo against a registry sandbox, and the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 in a Hyper-V virtual machine before releases. A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
 
-<p align="center"><img src="docs/screenshots/flow.gif" width="800" alt="The scan, the recommended changes as a checklist, the confirmation with the exact values, the Changes page, and Undo all"></p>
+<p align="center"><img src="docs/screenshots/flow.gif" width="800" alt="The scan, the confirmation of the recommended changes with the exact values, the question to turn on System Protection for a restore point, the Changes page, and Undo all"></p>
 
 ## Download
 
