@@ -651,7 +651,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Reset network sockets (Winsock)</value>
   </data>
   <data name="Quick_WinsockHint" xml:space="preserve">
-    <value>Repairs broken network connections caused by faulty network add-ons. Needs a restart.</value>
+    <value>Repairs broken network connections caused by faulty network add-ons.</value>
   </data>
   <data name="Quick_WinsockTitle" xml:space="preserve">
     <value>Reset Winsock?</value>
@@ -992,7 +992,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Quick_IpRenewConfirm" xml:space="preserve"><value>The network connection drops for a few seconds while the address is renewed. Downloads and online games lose their connection.</value></data>
   <data name="Quick_IpRenewDone" xml:space="preserve"><value>IP address renewed.</value></data>
   <data name="Quick_TcpIpReset" xml:space="preserve"><value>Reset TCP/IP</value></data>
-  <data name="Quick_TcpIpResetHint" xml:space="preserve"><value>Sets the TCP/IP settings back to how Windows installs them (netsh int ip reset). For connection problems that renewing the address does not fix. Needs a restart.</value></data>
+  <data name="Quick_TcpIpResetHint" xml:space="preserve"><value>Sets the TCP/IP settings back to how Windows installs them (netsh int ip reset). For connection problems that renewing the address does not fix.</value></data>
   <data name="Quick_TcpIpResetConfirm" xml:space="preserve"><value>Microsoft describes this as having the same effect as removing and reinstalling TCP/IP: it overwrites the TCP/IP and DHCP settings in the registry. Settings stored there, such as a fixed IP address, may be lost and have to be set again. A restart is needed.</value></data>
   <data name="Quick_TcpIpResetDone" xml:space="preserve"><value>TCP/IP reset. Restart the PC.</value></data>
   <data name="Quick_AudioRestart" xml:space="preserve"><value>Restart Windows Audio</value></data>
