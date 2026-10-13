@@ -102,7 +102,7 @@ No telemetry, no accounts. The app goes online only for features you start or tu
 
 Settings > Uninstall removes Tunero from this PC. When changes of the app are still active, it offers to undo them first; if one cannot be undone, it removes nothing. Then the app closes, and a moment later its exe, its data folder `%ProgramData%\Tunero` (backups, logs, settings) and its Start menu entry are gone. A copy installed with winget, Chocolatey or Scoop is removed by that package manager (`winget uninstall jozuern.Tunero`, `choco uninstall tunero`, `scoop uninstall tunero`), so its list stays right; uninstalling with the package manager alone keeps the data folder and its backups.
 
-What stays: restore points, apps you installed through Tunero and the PawnIO sensor driver. Remove them in Windows under Settings > Apps > Installed apps if you no longer need them. To remove Tunero by hand: undo your changes on the Changes page, then delete the exe, the folder `%ProgramData%\Tunero` and `Tunero` in the Start menu folder (`%AppData%\Microsoft\Windows\Start Menu\Programs`).
+What stays: restore points, apps you installed through Tunero and the PawnIO sensor driver. Remove them in Windows under Settings > Apps > Installed apps if you no longer need them. To remove Tunero by hand: undo your changes on the Changes page, then delete the exe, the folder `%ProgramData%\Tunero` and `Tunero PC Optimizer` in the Start menu folder (`%AppData%\Microsoft\Windows\Start Menu\Programs`).
 
 ## FAQ
 

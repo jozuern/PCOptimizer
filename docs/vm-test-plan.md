@@ -351,7 +351,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Desktop program uninstaller | Uninstall one machine-wide program (restore point first, runs elevated) and one per-user program (runs as the signed-in user); an MSI entry under HKCU runs msiexec as the user; the list updates after Refresh | |
 | Update all (winget) | Runs `winget upgrade --all --scope machine` with the output in the app, then a winget window as the signed-in user for per-user programs; a winget copy of Tunero is not replaced while it runs | |
 | .NET Desktop Runtimes | Install .NET Desktop Runtime 8 and 10 from the Apps page | |
-| Quick fixes | Each of the 10: renew IP (connection back afterwards, also when one adapter fails to release), TCP/IP reset (restart needed), audio, Bluetooth and Search restart, graphics driver restart (screen flashes, apps keep running), time sync, performance counters, chkdsk /scan (output shown), recovery environment on | |
+| Fixes and repair (Tools) | Each of the 10 quick fixes: renew IP (connection back afterwards, also when one adapter fails to release), TCP/IP reset (restart needed), audio, Bluetooth and Search restart, graphics driver restart (screen flashes, apps keep running), time sync, performance counters, chkdsk /scan (output shown), recovery environment on | |
 | Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |
 | Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
 | Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |

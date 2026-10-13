@@ -30,7 +30,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 In the order of the audit's promise gaps:
 
-1. A larger app installer list (the gaming and utility shortlist in [feature-gap-analysis.md](feature-gap-analysis.md), about 60 entries) and a winget search for any package.
+1. A larger app installer list (the gaming and utility shortlist of the 2026-10-11 comparison with 17 tweak tools, about 60 entries) and a winget search for any package.
 2. Bulk and quiet uninstall, a leftover scan after an uninstall, orphaned Program Files folders.
 3. Process Lasso style rules: prove the start priorities, add the page priority (proof needed), and say on the not-included page why live rules and affinity are left out.
 4. Autoruns completeness: the missing locations (icon overlays, ShellServiceObjectDelayLoad, SharedTaskScheduler, copy hooks, Command Processor AutoRun, exefile and cmdfile open commands, SilentProcessExit, the WOW6432Node IFEO key, Winlogon Taskman, AppSetup and notification packages, credential providers, AppCertDlls, DirectShow filters), Delete with a backup, export as CSV or text.
