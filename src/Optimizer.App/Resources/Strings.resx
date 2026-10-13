@@ -398,7 +398,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Hide Windows entries</value>
   </data>
   <data name="Startup_Summary" xml:space="preserve">
-    <value>Entries: {0}. Programs from other vendors at sign-in: {1}. Need attention (unsigned or unusual): {2}.</value>
+    <value>{0} entries, {1} of them programs from other vendors at sign-in. {2} need attention: not signed or unusual.</value>
   </data>
   <data name="Startup_NoPublisher" xml:space="preserve">
     <value>No publisher</value>
@@ -1159,7 +1159,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Tweak_AlreadyOnTip" xml:space="preserve"><value>This was already set before Tunero changed anything, by Windows, a policy or another tool. The app has no original value to restore, so it does not turn it off.</value></data>
   <data name="Confirm_Blocked" xml:space="preserve"><value>Not possible yet: see the red note above. Nothing was changed.</value></data>
   <data name="Confirm_NothingToChange" xml:space="preserve"><value>Every value is already set as this change would set it. There is nothing to apply.</value></data>
-  <data name="Svc_SetManual" xml:space="preserve"><value>Set to Manual</value></data>
   <data name="Svc_LockTipReadOnly" xml:space="preserve"><value>This app has no explanation for this Windows service, so it does not change it.</value></data>
   <data name="Svc_LockTipManual" xml:space="preserve"><value>Already on Manual, the only start type this app offers for this Windows service.</value></data>
   <data name="Svc_FromWindows" xml:space="preserve"><value>Service description:</value></data>
@@ -1287,4 +1286,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Net_GameSearch" xml:space="preserve"><value>Search games</value></data>
   <data name="Net_NoGameMatch" xml:space="preserve"><value>No game matches the search.</value></data>
   <data name="Net_ShowAllGames" xml:space="preserve"><value>Show all {0} games</value></data>
+  <data name="Startup_ServicesHint" xml:space="preserve"><value>Their start types, with what each service does, and every scheduled task are on their own page.</value></data>
+  <data name="Startup_ServicesLink" xml:space="preserve"><value>Open Services &amp; tasks</value></data>
 </root>

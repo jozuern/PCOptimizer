@@ -43,21 +43,23 @@
                                 <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" Width="200">
-                                            <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Selected}" DisplayMemberPath="Text" AutomationProperties.Name="{Binding StartTypeLabel}"
-                                                      Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
-                                            <!-- Only Manual is offered: the current start type and one button, not a list with one entry -->
-                                            <StackPanel Visibility="{Binding CanSetManual, Converter={StaticResource BoolToVisibility}}">
-                                                <ui:TextBlock FontTypography="Body" Text="{Binding StartText}" Margin="12,0,0,8" />
-                                                <ui:Button Content="{l:Tr Svc_SetManual}" Command="{Binding SetManualCommand}" HorizontalAlignment="Stretch"
-                                                           IsEnabled="{Binding CanChange, Source={x:Static s:ChangeGate.Instance}}" />
-                                            </StackPanel>
-                                            <!-- Nothing to choose: the start type with a lock, lined up with the text of the combo boxes; the tooltip says why -->
-                                            <StackPanel Orientation="Horizontal" Margin="12,0,0,0" Background="Transparent" ToolTip="{Binding LockTip}"
-                                                        Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}">
-                                                <ui:SymbolIcon Symbol="LockClosed16" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                                <ui:TextBlock FontTypography="Body" Text="{Binding StartText}" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding EditText}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                            <!-- One combo box on every row, so the column reads the same all the way down. A row with
+                                                 nothing to choose has it disabled with a lock in front (the place is kept on every
+                                                 row, so the boxes line up); the tooltip says why. -->
+                                            <DockPanel ToolTip="{Binding LockTipShown}" ToolTipService.ShowOnDisabled="True" Background="Transparent">
+                                                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="LockClosed16" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0"
+                                                               VerticalAlignment="Center" Visibility="{Binding IsLocked, Converter={StaticResource BoolToHidden}}" />
+                                                <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Selected}" DisplayMemberPath="Text" AutomationProperties.Name="{Binding StartTypeLabel}"
+                                                          AutomationProperties.HelpText="{Binding LockTipShown}">
+                                                    <ComboBox.IsEnabled>
+                                                        <MultiBinding Converter="{StaticResource AllTrue}">
+                                                            <Binding Path="CanChoose" />
+                                                            <Binding Path="CanChange" Source="{x:Static s:ChangeGate.Instance}" />
+                                                        </MultiBinding>
+                                                    </ComboBox.IsEnabled>
+                                                </ComboBox>
+                                            </DockPanel>
+                                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding EditText}" TextWrapping="Wrap" Margin="24,4,0,0"
                                                           Visibility="{Binding EditText, Converter={StaticResource NullToVisibility}}" />
                                         </StackPanel>
                                         <StackPanel>

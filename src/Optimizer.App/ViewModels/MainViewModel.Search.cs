@@ -182,6 +182,14 @@ public sealed partial class MainViewModel
         CurrentPage = Page.Tools;
     }
 
+    /// <summary>Startup with services or tasks chosen: their own page, on the tab for them.</summary>
+    [RelayCommand]
+    private void OpenServicesTab(int tab)
+    {
+        ServicesTab = tab;
+        CurrentPage = Page.Services;
+    }
+
     /// <summary>Graphics & DNS: the other network settings are tweaks, in the Network group of the Tweaks page.</summary>
     [RelayCommand]
     private void OpenTweaksNetwork()

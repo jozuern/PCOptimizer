@@ -398,7 +398,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Windows-Einträge ausblenden</value>
   </data>
   <data name="Startup_Summary" xml:space="preserve">
-    <value>Einträge: {0}. Programme anderer Hersteller bei der Anmeldung: {1}. Auffällig (nicht signiert oder ungewöhnlich): {2}.</value>
+    <value>{0} Einträge, davon {1} Programme anderer Hersteller bei der Anmeldung. {2} auffällig: nicht signiert oder ungewöhnlich.</value>
   </data>
   <data name="Startup_NoPublisher" xml:space="preserve">
     <value>Kein Herausgeber</value>
@@ -1159,7 +1159,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Tweak_AlreadyOnTip" xml:space="preserve"><value>Das war schon gesetzt, bevor Tunero etwas geändert hat, durch Windows, eine Richtlinie oder ein anderes Tool. Die App hat keinen Originalwert zum Wiederherstellen und schaltet es deshalb nicht aus.</value></data>
   <data name="Confirm_Blocked" xml:space="preserve"><value>Noch nicht möglich: siehe den roten Hinweis oben. Es wurde nichts geändert.</value></data>
   <data name="Confirm_NothingToChange" xml:space="preserve"><value>Jeder Wert ist schon so gesetzt, wie diese Änderung ihn setzen würde. Es gibt nichts anzuwenden.</value></data>
-  <data name="Svc_SetManual" xml:space="preserve"><value>Auf Manuell stellen</value></data>
   <data name="Svc_LockTipReadOnly" xml:space="preserve"><value>Für diesen Windows-Dienst hat die App keine Erklärung, deshalb ändert sie ihn nicht.</value></data>
   <data name="Svc_LockTipManual" xml:space="preserve"><value>Schon auf Manuell, der einzige Starttyp, den die App für diesen Windows-Dienst anbietet.</value></data>
   <data name="Svc_FromWindows" xml:space="preserve"><value>Dienstbeschreibung:</value></data>
@@ -1287,4 +1286,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Net_GameSearch" xml:space="preserve"><value>Spiele suchen</value></data>
   <data name="Net_NoGameMatch" xml:space="preserve"><value>Kein Spiel passt zur Suche.</value></data>
   <data name="Net_ShowAllGames" xml:space="preserve"><value>Alle {0} Spiele zeigen</value></data>
+  <data name="Startup_ServicesHint" xml:space="preserve"><value>Ihre Starttypen, mit dem, was jeder Dienst tut, und alle geplanten Aufgaben stehen auf einer eigenen Seite.</value></data>
+  <data name="Startup_ServicesLink" xml:space="preserve"><value>Dienste &amp; Aufgaben öffnen</value></data>
 </root>

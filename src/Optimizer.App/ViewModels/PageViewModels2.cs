@@ -99,7 +99,8 @@ public sealed partial class StartupRow : SwitchRow
         IsMicrosoft = s.IsMicrosoft;
         UpdateCanToggle(s.IsMicrosoft || s.Status == SignatureStatus.Error);
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
-        SignatureText = Labels.Current.Get(lang, $"signature.{s.Status}");
+        // Not signed and a bad signature are tags under the name: the line does not say it a second time.
+        SignatureText = s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid ? "" : Labels.Current.Get(lang, $"signature.{s.Status}");
         NeedsAttention = Entry.Suspicious || Entry.RunsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
         var tags = new List<string>();
         if (s.Status == SignatureStatus.Invalid) tags.Add(Loc.Instance["Startup_TagBadSignature"]);
@@ -218,14 +219,30 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         var q = Search.Trim();
         bool Matches(StartupRow r) => q.Length == 0 || r.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)
             || r.Command?.Contains(q, StringComparison.OrdinalIgnoreCase) == true || r.Location.Contains(q, StringComparison.OrdinalIgnoreCase)
-            || r.MetaText.Contains(q, StringComparison.CurrentCultureIgnoreCase);
+            || r.MetaText.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+            || r.AttentionTags.Any(t => t.Contains(q, StringComparison.CurrentCultureIgnoreCase));
         Rows.Clear();
         foreach (var r in _all.Where(r => (kind.Length == 0 || (kind == SignInKey ? IsSignIn(r.Entry) : r.Entry.Kind.ToString() == kind)) && !(HideMicrosoft && r.IsPlainMicrosoft) && (!OnlyNew || r.IsNew) && (!OnlyAttention || r.NeedsAttention) && Matches(r))
                      .OrderByDescending(r => r.IsNew).ThenByDescending(r => r.NeedsAttention).ThenBy(r => r.Entry.Kind).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             Rows.Add(r);
         var atLogon = _all.Count(r => StartupTweaks.CountsForF16(r.Entry) && !r.IsPlainMicrosoft);
         SummaryText = Loc.Instance.Format("Startup_Summary", _all.Count, atLogon, _all.Count(r => r.NeedsAttention));
+        OnPropertyChanged(nameof(ServicesHintTab));
+        OnPropertyChanged(nameof(ShowServicesHint));
     }
+
+    public bool ShowServicesHint => ServicesHintTab >= 0;
+
+    /// <summary>
+    /// Services and scheduled tasks are listed here too (everything that starts), but their own page has the start types
+    /// with explanations and every task: with that kind chosen, the tab of Services &amp; tasks to point to, else -1.
+    /// </summary>
+    public int ServicesHintTab => SelectedKind?.Key switch
+    {
+        nameof(StartupKind.Service) => 0,
+        nameof(StartupKind.LogonTask) => 1,
+        _ => -1,
+    };
 
     /// <summary>Looks up the hashes of shown entries that are not signed by Microsoft (opt-in, own API key).</summary>
     [RelayCommand]
@@ -402,17 +419,16 @@ public sealed partial class ServiceRowVm : ObservableObject
         _page = page;
         Row = row;
         Note = row.Note?.Text(lang);
-        StartText = row.Start is { } s ? Labels.Current.Get(lang, $"serviceStart.{s}") : "?";
         StateText = Loc.Instance[row.Running ? "Svc_Running" : "Svc_Stopped"];
         Publisher = row.Signature?.Publisher ?? "";
         MetaText = string.Join(", ", new[] { row.Name, StateText, Publisher }.Where(x => x.Length > 0));
-        // Manual only: a button, not a combo box that offers a single entry.
-        Options = row.Edit switch
-        {
-            ServiceEdit.Full => [Opt(ServiceStart.Automatic, lang), Opt(ServiceStart.AutomaticDelayed, lang), Opt(ServiceStart.Manual, lang), Opt(ServiceStart.Disabled, lang)],
-            _ => [],
-        };
         CanSetManual = row.Edit == ServiceEdit.ManualOnly && row.Start != ServiceStart.Manual;
+        // Every row shows its start type in the same combo box, so the column reads the same all the way down: all four
+        // start types, the current one and Manual for a Windows service the app explains, or only the current one
+        // (disabled, with a lock) when there is nothing to choose. Choosing goes through the same confirmation.
+        Options = row.Edit == ServiceEdit.Full
+            ? [Opt(ServiceStart.Automatic, lang), Opt(ServiceStart.AutomaticDelayed, lang), Opt(ServiceStart.Manual, lang), Opt(ServiceStart.Disabled, lang)]
+            : CanSetManual ? [Opt(ServiceStart.Manual, lang)] : [];
         LockTip = row.Edit == ServiceEdit.ReadOnly ? Loc.Instance["Svc_LockTipReadOnly"] : Loc.Instance["Svc_LockTipManual"];
         if (row.Start is { } current && Options.All(o => o.Start != current)) Options = [Opt(current, lang), .. Options];
         _selected = Options.FirstOrDefault(o => o.Start == row.Start);
@@ -432,7 +448,6 @@ public sealed partial class ServiceRowVm : ObservableObject
     public string DisplayName => Row.DisplayName;
     public string? Description => Row.Description;
     public string? Note { get; }
-    public string StartText { get; }
     public string StateText { get; }
     public string Publisher { get; }
     public string MetaText { get; }
@@ -443,16 +458,18 @@ public sealed partial class ServiceRowVm : ObservableObject
     /// <summary>A Windows service the app explains: the only change offered is Manual.</summary>
     public bool CanSetManual { get; }
 
-    /// <summary>Neither a choice nor the Manual button: the start type with a lock, and why.</summary>
+    /// <summary>Nothing to choose: the start type in a disabled combo box with a lock, and why in its tooltip.</summary>
     public bool IsLocked => !CanEdit && !CanSetManual;
+
+    public bool CanChoose => !IsLocked;
 
     public string LockTip { get; }
 
+    /// <summary>The lock's reason as the tooltip of a locked row; rows with a choice have none.</summary>
+    public string? LockTipShown => IsLocked ? LockTip : null;
+
     /// <summary>"Start type of Print Spooler": what a screen reader says for the combo box.</summary>
     public string StartTypeLabel => Loc.Instance.Format("Svc_StartTypeName", DisplayName);
-
-    [RelayCommand]
-    private async Task SetManualAsync() => await _page.ChangeStartAsync(this, ServiceStart.Manual);
 
     [ObservableProperty] private StartOption? _selected;
 
