@@ -60,7 +60,7 @@ public static class DeElevatedLauncher
             browser.QueryActiveShellView(out var view);
             var iidDispatch = new Guid("00020400-0000-0000-C000-000000000046");
             view.GetItemObject(0 /* SVGIO_BACKGROUND */, ref iidDispatch, out var folderView);
-            dynamic app = ((dynamic)folderView).Application;
+            var app = (IShellDispatch2)((IShellFolderViewDual)folderView).Application;
             app.ShellExecute(target, arguments ?? "", "", "open", 1);
             return true;
         }
@@ -76,27 +76,28 @@ public static class DeElevatedLauncher
     private static bool TryTask(string target, string? arguments, string user)
     {
         string? name = $"Tunero-open-{Guid.NewGuid():N}";
-        dynamic? folder = null;
+        TaskSchedulerCom.ITaskFolder? folder = null;
         try
         {
-            dynamic service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
-            service.Connect();
+            var service = TaskSchedulerCom.Connect();
             folder = service.GetFolder("\\");
             DeleteLeftovers(folder);
-            dynamic def = service.NewTask(0);
-            def.Principal.UserId = user;
-            def.Principal.LogonType = 3; // TASK_LOGON_INTERACTIVE_TOKEN: runs in the user's session with the user's token
-            def.Principal.RunLevel = 0;  // TASK_RUNLEVEL_LUA: not elevated
-            def.Settings.DisallowStartIfOnBatteries = false;
+            var def = service.NewTask(0);
+            var principal = def.Principal;
+            principal.UserId = user;
+            principal.LogonType = TaskSchedulerCom.LogonInteractiveToken; // runs in the user's session with the user's token
+            principal.RunLevel = TaskSchedulerCom.RunLevelLua;             // not elevated
+            var settings = def.Settings;
+            settings.DisallowStartIfOnBatteries = false;
             var isUrl = target.Contains("://", StringComparison.Ordinal);
             // Task Scheduler ends a task's program when the time limit is reached: a link only starts the browser, but
             // an uninstaller or installer can run as long as the user needs (PT0S = no limit).
-            def.Settings.ExecutionTimeLimit = isUrl ? "PT1M" : "PT0S";
-            dynamic action = def.Actions.Create(0); // TASK_ACTION_EXEC
+            settings.ExecutionTimeLimit = isUrl ? "PT1M" : "PT0S";
+            var action = (TaskSchedulerCom.IExecAction)def.Actions.Create(TaskSchedulerCom.ActionExec);
             action.Path = isUrl ? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe") : target;
             // The link in its escaped form: a quote inside the raw text could otherwise end the argument early.
             action.Arguments = isUrl ? $"\"{(Uri.TryCreate(target, UriKind.Absolute, out var uri) ? uri.AbsoluteUri : target)}\"" : arguments ?? "";
-            dynamic task = folder.RegisterTaskDefinition(name, def, 6 /* CREATE_OR_UPDATE */, null, null, 3 /* INTERACTIVE_TOKEN */, null);
+            var task = folder.RegisterTaskDefinition(name, def, TaskSchedulerCom.CreateOrUpdate, null, null, TaskSchedulerCom.LogonInteractiveToken, null);
             task.Run(null);
             // The task is deleted once it has started; waiting for that happens off the UI thread.
             lock (Pending) Pending.Add(name);
@@ -131,9 +132,7 @@ public static class DeElevatedLauncher
         await Task.Delay(TimeSpan.FromSeconds(3));
         try
         {
-            dynamic service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
-            service.Connect();
-            service.GetFolder("\\").DeleteTask(name, 0);
+            TaskSchedulerCom.Connect().GetFolder("\\").DeleteTask(name, 0);
         }
         catch (Exception ex)
         {
@@ -149,12 +148,13 @@ public static class DeElevatedLauncher
     /// One-time tasks an earlier run left behind (the app ended within the 3 seconds before <see cref="DeleteLater"/>):
     /// they have no trigger and never run again, but stay in the Task Scheduler root until deleted.
     /// </summary>
-    private static void DeleteLeftovers(dynamic folder)
+    private static void DeleteLeftovers(TaskSchedulerCom.ITaskFolder folder)
     {
         try
         {
             var names = new List<string>();
-            foreach (dynamic task in folder.GetTasks(1 /* TASK_ENUM_HIDDEN */)) names.Add((string)task.Name);
+            var tasks = folder.GetTasks(TaskSchedulerCom.EnumHidden);
+            for (var i = 1; i <= tasks.Count; i++) names.Add(tasks.Item(i).Name);
             // "PCOptimizer-open-": the name before the app was renamed.
             foreach (var name in names.Where(n => n.StartsWith("Tunero-open-", StringComparison.OrdinalIgnoreCase) || n.StartsWith("PCOptimizer-open-", StringComparison.OrdinalIgnoreCase)))
             {
@@ -183,6 +183,27 @@ public static class DeElevatedLauncher
         void OnNavigate(int cookie, ref object loc);
         void OnActivated(int cookie, [MarshalAs(UnmanagedType.VariantBool)] bool active);
         [return: MarshalAs(UnmanagedType.IDispatch)] object FindWindowSW(ref object loc, ref object locRoot, int swClass, out int hwnd, int swfwOptions);
+    }
+
+    /// <summary>The desktop view's automation object (shell32 type library); only its first member is used.</summary>
+    [ComImport, Guid("E7A1AF80-4D96-11CF-960C-0080C7F4EE85"), InterfaceType(ComInterfaceType.InterfaceIsDual)]
+    private interface IShellFolderViewDual
+    {
+        object Application { [return: MarshalAs(UnmanagedType.IDispatch)] get; }
+    }
+
+    /// <summary>
+    /// Shell.Application of the desktop's Explorer. IShellDispatch2 extends IShellDispatch, whose 23 members (slots 7 to
+    /// 29) come first; they are never called here, so they are declared as placeholders.
+    /// </summary>
+    [ComImport, Guid("A4C6892C-3BA9-11D2-9DEA-00C04FB16162"), InterfaceType(ComInterfaceType.InterfaceIsDual)]
+    private interface IShellDispatch2
+    {
+        void Slot07(); void Slot08(); void Slot09(); void Slot10(); void Slot11(); void Slot12(); void Slot13(); void Slot14();
+        void Slot15(); void Slot16(); void Slot17(); void Slot18(); void Slot19(); void Slot20(); void Slot21(); void Slot22();
+        void Slot23(); void Slot24(); void Slot25(); void Slot26(); void Slot27(); void Slot28(); void Slot29();
+        int IsRestricted([MarshalAs(UnmanagedType.BStr)] string group, [MarshalAs(UnmanagedType.BStr)] string restriction);
+        void ShellExecute([MarshalAs(UnmanagedType.BStr)] string file, object? arguments, object? directory, object? operation, object? show);
     }
 
     [ComImport, Guid("6D5140C1-7436-11CE-8034-00AA006009FA"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
