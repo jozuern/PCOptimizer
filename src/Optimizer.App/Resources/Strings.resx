@@ -1155,6 +1155,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Settings_Hint" xml:space="preserve"><value>Language, theme, Expert mode, optional online features and diagnostics.</value></data>
   <data name="Changes_Transfer" xml:space="preserve"><value>Move to another PC</value></data>
   <data name="Changes_TransferText" xml:space="preserve"><value>Export saves the tweaks you turned on and your program priorities to a file. Import applies such a file here, for example after reinstalling Windows. Device settings stay with this PC; removed apps, service start types and startup entries go along only when you choose them below.</value></data>
+  <data name="NewUsers_Title" xml:space="preserve"><value>New accounts on this PC</value></data>
+  <data name="NewUsers_Text" xml:space="preserve"><value>Copies the tweaks for your account that are on (Explorer, taskbar, privacy and others made only of registry values) to the Default profile, so accounts created later start with them. Accounts that exist already keep their settings. Undo it on this page.</value></data>
+  <data name="NewUsers_Copy" xml:space="preserve"><value>Copy to new accounts</value></data>
+  <data name="NewUsers_Nothing" xml:space="preserve"><value>None of the tweaks that are on can go to new accounts: turn on tweaks for your account first (Explorer, taskbar, privacy).</value></data>
   <data name="Changes_ExportAlso" xml:space="preserve"><value>Also export</value></data>
   <data name="Changes_ExportApps" xml:space="preserve"><value>Removed apps</value></data>
   <data name="Changes_ExportServices" xml:space="preserve"><value>Service start types</value></data>
@@ -1275,7 +1279,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cleanup_RunClean" xml:space="preserve"><value>Clean up</value></data>
   <data name="Settings_ShowInFolder" xml:space="preserve"><value>Show in folder</value></data>
   <data name="Settings_OpenFolder" xml:space="preserve"><value>Open folder</value></data>
-  <data name="Changes_OtherPcs" xml:space="preserve"><value>Other PCs</value></data>
+  <data name="Changes_OtherPcs" xml:space="preserve"><value>Other PCs and new accounts</value></data>
   <data name="Search_Placeholder" xml:space="preserve"><value>Search the app (Ctrl+F)</value></data>
   <data name="Search_Empty" xml:space="preserve"><value>Nothing found. Try another word, for example a setting, a program or a service.</value></data>
   <data name="Search_Results" xml:space="preserve"><value>Search results</value></data>

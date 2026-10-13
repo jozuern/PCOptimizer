@@ -9,13 +9,39 @@ internal sealed class SandboxRegistry : IRegistryRoots, IDisposable
 {
     private readonly string _root = $@"Software\TuneroTest\{Guid.NewGuid():N}";
 
+    private int _holds;
+
+    /// <summary>How often the Default profile was "loaded" (a hold while none was open).</summary>
+    public int DefaultProfileLoads { get; private set; }
+
     public RegistryKey? Open(Hive hive, string path, bool writable, bool create = false)
     {
-        var full = $@"{_root}\{(hive == Hive.Machine ? "HKLM" : "HKU")}\{path}";
+        // As on a real PC: the Default profile is there only inside a hold.
+        if (hive == Hive.DefaultUser && _holds == 0) throw new InvalidOperationException("The Default profile is opened outside a hold.");
+        var full = $@"{_root}\{hive switch { Hive.Machine => "HKLM", Hive.User => "HKU", _ => "HKDEF" }}\{path}";
         return create ? Registry.CurrentUser.CreateSubKey(full, writable) : Registry.CurrentUser.OpenSubKey(full, writable);
     }
 
-    public string DisplayRoot(Hive hive) => hive == Hive.Machine ? "HKLM" : "HKU\\TEST";
+    public string DisplayRoot(Hive hive) => hive switch { Hive.Machine => "HKLM", Hive.User => "HKU\\TEST", _ => @"Default\NTUSER.DAT" };
+
+    public IDisposable? Hold(Hive hive)
+    {
+        if (hive != Hive.DefaultUser) return null;
+        if (_holds++ == 0) DefaultProfileLoads++;
+        return new Release(this);
+    }
+
+    private sealed class Release(SandboxRegistry owner) : IDisposable
+    {
+        private bool _done;
+
+        public void Dispose()
+        {
+            if (_done) return;
+            _done = true;
+            owner._holds--;
+        }
+    }
 
     public void Dispose() => Registry.CurrentUser.DeleteSubKeyTree(_root, throwOnMissingSubKey: false);
 }

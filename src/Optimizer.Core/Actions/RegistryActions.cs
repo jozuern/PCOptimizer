@@ -50,8 +50,15 @@ public sealed class RegistryAction : TweakAction
     /// </summary>
     public string? RemoveKeyOnUndo { get; init; }
 
+    /// <summary>The same value in another hive (the Default profile for accounts created later); no live refresh there.</summary>
+    public RegistryAction ForHive(Hive hive) => new()
+    {
+        Hive = hive, Path = Path, Name = Name, Kind = Kind, Value = Value, Delete = Delete, MissingMeans = MissingMeans, RemoveKeyOnUndo = RemoveKeyOnUndo,
+    };
+
     public override ActionState State(ActionContext c)
     {
+        using var hold = c.Registry.Hold(Hive);
         var current = Read(c);
         if (current is null) return ActionState.Unsupported;
         if (!current.Existed && MissingMeans is { } m && !Delete && Serialize(Kind, m) == Serialize(Kind, Value)) return ActionState.Applied;
@@ -64,10 +71,15 @@ public sealed class RegistryAction : TweakAction
 
     public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, Kind, Serialize(Kind, Value));
 
-    public override StoredValue? Read(ActionContext c) => RegistryValue.Read(c.Registry, Hive, Path, Name);
+    public override StoredValue? Read(ActionContext c)
+    {
+        using var hold = c.Registry.Hold(Hive);
+        return RegistryValue.Read(c.Registry, Hive, Path, Name);
+    }
 
     public override void Apply(ActionContext c)
     {
+        using var hold = c.Registry.Hold(Hive);
         if (Delete) RegistryValue.Delete(c.Registry, Hive, Path, Name);
         else RegistryValue.Write(c.Registry, Hive, Path, Name, Kind, Serialize(Kind, Value));
         if (Notify is not null) c.Notify?.Invoke(Notify);
@@ -75,6 +87,7 @@ public sealed class RegistryAction : TweakAction
 
     public override void Restore(ActionContext c, StoredValue original)
     {
+        using var hold = c.Registry.Hold(Hive);
         if (!original.Existed)
         {
             RegistryValue.Delete(c.Registry, Hive, Path, Name);

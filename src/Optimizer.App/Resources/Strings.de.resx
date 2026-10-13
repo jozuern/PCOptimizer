@@ -1155,6 +1155,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Settings_Hint" xml:space="preserve"><value>Sprache, Design, Expertenmodus, optionale Online-Funktionen und Diagnose.</value></data>
   <data name="Changes_Transfer" xml:space="preserve"><value>Auf einen anderen PC übertragen</value></data>
   <data name="Changes_TransferText" xml:space="preserve"><value>Exportieren speichert die Tweaks, die du eingeschaltet hast, und deine Programmprioritäten in eine Datei. Importieren wendet so eine Datei hier an, etwa nach einer Neuinstallation von Windows. Geräteeinstellungen bleiben bei diesem PC; entfernte Apps, Dienst-Starttypen und Autostart-Einträge kommen nur mit, wenn du sie unten wählst.</value></data>
+  <data name="NewUsers_Title" xml:space="preserve"><value>Neue Konten auf diesem PC</value></data>
+  <data name="NewUsers_Text" xml:space="preserve"><value>Übernimmt die eingeschalteten Tweaks für dein Konto (Explorer, Taskleiste, Datenschutz und andere, die nur aus Registrierungswerten bestehen) ins Standardprofil, damit später angelegte Konten mit ihnen starten. Bestehende Konten behalten ihre Einstellungen. Rückgängig machen kannst du es auf dieser Seite.</value></data>
+  <data name="NewUsers_Copy" xml:space="preserve"><value>Für neue Konten übernehmen</value></data>
+  <data name="NewUsers_Nothing" xml:space="preserve"><value>Keiner der eingeschalteten Tweaks kann zu neuen Konten: Schalte zuerst Tweaks für dein Konto ein (Explorer, Taskleiste, Datenschutz).</value></data>
   <data name="Changes_ExportAlso" xml:space="preserve"><value>Außerdem exportieren</value></data>
   <data name="Changes_ExportApps" xml:space="preserve"><value>Entfernte Apps</value></data>
   <data name="Changes_ExportServices" xml:space="preserve"><value>Dienst-Starttypen</value></data>
@@ -1275,7 +1279,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Cleanup_RunClean" xml:space="preserve"><value>Bereinigen</value></data>
   <data name="Settings_ShowInFolder" xml:space="preserve"><value>Im Ordner zeigen</value></data>
   <data name="Settings_OpenFolder" xml:space="preserve"><value>Ordner öffnen</value></data>
-  <data name="Changes_OtherPcs" xml:space="preserve"><value>Andere PCs</value></data>
+  <data name="Changes_OtherPcs" xml:space="preserve"><value>Andere PCs und neue Konten</value></data>
   <data name="Search_Placeholder" xml:space="preserve"><value>In der App suchen (Strg+F)</value></data>
   <data name="Search_Empty" xml:space="preserve"><value>Nichts gefunden. Versuch ein anderes Wort, zum Beispiel eine Einstellung, ein Programm oder einen Dienst.</value></data>
   <data name="Search_Results" xml:space="preserve"><value>Suchergebnisse</value></data>

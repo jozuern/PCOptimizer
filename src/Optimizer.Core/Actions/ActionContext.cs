@@ -2,8 +2,11 @@ using Microsoft.Win32;
 
 namespace Optimizer.Core.Actions;
 
-/// <summary>Which registry root an action targets. <see cref="User"/> = the signed-in session user's hive.</summary>
-public enum Hive { Machine, User }
+/// <summary>
+/// Which registry root an action targets. <see cref="User"/> = the signed-in session user's hive; <see cref="DefaultUser"/> =
+/// the Default profile (C:\Users\Default\NTUSER.DAT), the template Windows copies for every account created later.
+/// </summary>
+public enum Hive { Machine, User, DefaultUser }
 
 /// <summary>Registry roots. Real: HKLM (64-bit view) and HKU\&lt;session SID&gt;. Tests: a sandbox under HKCU.</summary>
 public interface IRegistryRoots
@@ -13,6 +16,12 @@ public interface IRegistryRoots
 
     /// <summary>Human-readable prefix for change lists ("HKLM", "HKU\S-1-5-...").</summary>
     string DisplayRoot(Hive hive);
+
+    /// <summary>
+    /// Keeps a hive that is not always loaded (<see cref="Hive.DefaultUser"/>) loaded until the result is disposed; holds
+    /// nest, and the hive is unloaded when the last one ends. Open that hive only inside a hold. Null for other hives.
+    /// </summary>
+    IDisposable? Hold(Hive hive) => null;
 }
 
 public enum ServiceStart { Boot = 0, System = 1, Automatic = 2, Manual = 3, Disabled = 4, AutomaticDelayed = 102 }

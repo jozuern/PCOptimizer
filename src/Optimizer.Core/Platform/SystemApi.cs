@@ -24,6 +24,10 @@ public sealed class SystemRegistryRoots(string? userSid) : IRegistryRoots
         {
             root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
         }
+        else if (hive == Hive.DefaultUser)
+        {
+            root = DefaultProfileHive.OpenRoot(writable);
+        }
         else
         {
             if (UserSid is null) throw new InvalidOperationException("The signed-in user could not be determined; user settings are not changed.");
@@ -36,7 +40,14 @@ public sealed class SystemRegistryRoots(string? userSid) : IRegistryRoots
         }
     }
 
-    public string DisplayRoot(Hive hive) => hive == Hive.Machine ? "HKLM" : $"HKU\\{UserSid}";
+    public string DisplayRoot(Hive hive) => hive switch
+    {
+        Hive.Machine => "HKLM",
+        Hive.DefaultUser => DefaultProfileHive.FilePath() ?? @"Default\NTUSER.DAT",
+        _ => $"HKU\\{UserSid}",
+    };
+
+    public IDisposable? Hold(Hive hive) => hive == Hive.DefaultUser ? DefaultProfileHive.Hold() : null;
 }
 
 public sealed class SystemServiceManager : IServiceManager
@@ -600,6 +611,8 @@ public static class SystemNotify
         // DISM and PowerShell reads of a scan or an apply are shared for a few seconds (dropped when the action writes).
         ReadCache.Enable(processes, TimeSpan.FromSeconds(20));
         var registry = new SystemRegistryRoots(userSid);
+        // A Tunero that ended while it had the Default profile loaded (killed during a change) left it under HKU.
+        DefaultProfileHive.UnloadLeftovers();
         return new ActionContext
         {
             Registry = registry,

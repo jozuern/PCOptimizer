@@ -21,7 +21,7 @@ public static partial class DocLint
     /// <summary>Explanation pages for tweaks: every catalog entry plus the runtime fixes.</summary>
     public static IEnumerable<string> RequiredTweakDocIds() =>
         Tweaks.TweakCatalog.Current.Tweaks.Select(t => t.DocId)
-            .Concat(Findings.Checks.RuntimeFixes.DocIds).Concat(Tweaks.DeviceTweaks.DocIds).Concat(Startup.StartupTweaks.DocIds).Concat(["service.change", "feature.change", "capability.change", "priority.change", Tweaks.ReapplyTask.TweakId])
+            .Concat(Findings.Checks.RuntimeFixes.DocIds).Concat(Tweaks.DeviceTweaks.DocIds).Concat(Startup.StartupTweaks.DocIds).Concat(["service.change", "feature.change", "capability.change", "priority.change", Tweaks.ReapplyTask.TweakId, Tweaks.NewUserDefaults.Id])
             .Distinct(StringComparer.Ordinal);
 
     public static List<LintIssue> Run()

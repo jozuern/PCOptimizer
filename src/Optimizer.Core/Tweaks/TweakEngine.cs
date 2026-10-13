@@ -169,6 +169,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     private TweakState DetectState(TweakDefinition t, Facts facts, BackupView? view)
     {
         if (!AppliesTo(t, facts)) return TweakState.NotApplicable;
+        using var hold = HoldHives(t);
         var actions = Expand(t);
         var states = actions.Select(a => SafeState(a)).ToList();
         var supported = states.Where(s => s != ActionState.Unsupported).ToList();
@@ -277,8 +278,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     // ---------------- preview ----------------
 
-    public IReadOnlyList<ChangeLine> Preview(TweakDefinition t) =>
-        Expand(t).Select(a =>
+    public IReadOnlyList<ChangeLine> Preview(TweakDefinition t)
+    {
+        using var hold = HoldHives(t);
+        return Expand(t).Select(a =>
         {
             try
             {
@@ -289,6 +292,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 return new ChangeLine(a.TargetKey, "(unreadable)", ex.Message);
             }
         }).ToList();
+    }
 
     // ---------------- apply ----------------
 
@@ -323,10 +327,15 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (blocks.Count > 0) return new ApplyResult(ApplyOutcome.Blocked, [], Blocks: blocks);
 
         var actions = Expand(t);
-        var changes = Preview(t);
-        // After an undo that waits for a restart the running value still matches, but the setting is already reverted.
-        var pendingUndo = ActivePendingUndo(t, actions);
-        if (pendingUndo is null && actions.All(a => SafeState(a) != ActionState.NotApplied)) return new ApplyResult(ApplyOutcome.NothingToDo, changes);
+        IReadOnlyList<ChangeLine> changes;
+        PendingUndo? pendingUndo;
+        using (HoldHives(t))
+        {
+            changes = Preview(t);
+            // After an undo that waits for a restart the running value still matches, but the setting is already reverted.
+            pendingUndo = ActivePendingUndo(t, actions);
+            if (pendingUndo is null && actions.All(a => SafeState(a) != ActionState.NotApplied)) return new ApplyResult(ApplyOutcome.NothingToDo, changes);
+        }
 
         // Safety net: one restore point per session before the first change (secondary to the JSON backup).
         if (!_restorePointDone && t.Id != RestorePointFrequencyTweak)
@@ -335,6 +344,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             if (!ok && !options.ContinueWithoutRestorePoint) return new ApplyResult(ApplyOutcome.NeedsRestorePointDecision, changes);
             _restorePointDone = true;
         }
+        // Only now: the restore point can take a minute, and the Default profile should not stay loaded meanwhile.
+        using var hold = HoldHives(t);
 
         TweakBackup? existing;
         try
@@ -537,6 +548,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     public RevertResult Revert(TweakDefinition t)
     {
+        using var hold = HoldHives(t);
         TweakBackup? backup;
         try
         {
@@ -791,6 +803,24 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
             : null;
 
     // ---------------- helpers ----------------
+
+    /// <summary>
+    /// Keeps the Default profile loaded for a whole call on a tweak that writes it: one load instead of one per value
+    /// (each action holds it too). A hive that cannot be loaded is left to the actions, which report it per target.
+    /// </summary>
+    private IDisposable? HoldHives(TweakDefinition t)
+    {
+        if (!t.Actions.OfType<RegistryAction>().Any(a => a.Hive == Hive.DefaultUser)) return null;
+        try
+        {
+            return ctx.Registry.Hold(Hive.DefaultUser);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("engine", $"{t.Id}: Default profile not loaded: {ex.Message}");
+            return null;
+        }
+    }
 
     /// <summary>The tweak's actions for this PC: templates expand to their targets (<see cref="TweakAction.Expand"/>).</summary>
     public IReadOnlyList<TweakAction> Expand(TweakDefinition t)

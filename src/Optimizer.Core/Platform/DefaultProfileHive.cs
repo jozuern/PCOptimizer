@@ -1,0 +1,148 @@
+using System.ComponentModel;
+using System.IO;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
+using Optimizer.Core.Logging;
+
+namespace Optimizer.Core.Platform;
+
+/// <summary>
+/// The Default profile's registry hive (C:\Users\Default\NTUSER.DAT), the template Windows copies for every account
+/// created later. It is not loaded while Windows runs: a hold loads it under HKU (RegLoadKey, as Microsoft's
+/// CopyProfile page does by hand with Load Hive), and the last hold unloads it again, so the file is free when Windows
+/// creates a profile. The mount name carries the process id: another Tunero never unloads this one's hive, and a hive
+/// left loaded by a process that ended is unloaded before the next load.
+/// </summary>
+public static class DefaultProfileHive
+{
+    private const string MountPrefix = "TuneroDefaultProfile-";
+    private static readonly string MountName = MountPrefix + Environment.ProcessId;
+    private static readonly IntPtr HkeyUsers = new(unchecked((int)0x80000003));
+    private static readonly object Gate = new();
+    private static int _holds;
+
+    /// <summary>The hive file from the profile list (HKLM, administrators only); null when it is not there.</summary>
+    public static string? FilePath()
+    {
+        try
+        {
+            using var list = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
+                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList");
+            if (list?.GetValue("Default") is not string folder || folder.Length == 0) return null;
+            var file = Path.Combine(Environment.ExpandEnvironmentVariables(folder), "NTUSER.DAT");
+            return Path.IsPathFullyQualified(file) && File.Exists(file) ? file : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or ArgumentException)
+        {
+            Log.Warn("registry", $"Default profile path unreadable: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>Loads the hive (unless a hold has it loaded already) until the result is disposed.</summary>
+    public static IDisposable Hold()
+    {
+        lock (Gate)
+        {
+            if (_holds == 0) Load();
+            _holds++;
+        }
+        return new Release();
+    }
+
+    /// <summary>The loaded hive's root; only inside a hold.</summary>
+    internal static RegistryKey OpenRoot(bool writable)
+    {
+        lock (Gate)
+        {
+            if (_holds == 0) throw new InvalidOperationException("The Default profile is opened outside a hold.");
+        }
+        using var users = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Registry64);
+        return users.OpenSubKey(MountName, writable) ?? throw new InvalidOperationException("The Default profile is not loaded.");
+    }
+
+    /// <summary>Unloads hives that Tunero processes no longer running left loaded (a crash between load and unload).</summary>
+    public static void UnloadLeftovers()
+    {
+        string[] names;
+        try
+        {
+            using var users = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Registry64);
+            names = users.GetSubKeyNames();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return;
+        }
+        foreach (var name in names.Where(n => n.StartsWith(MountPrefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (int.TryParse(name.AsSpan(MountPrefix.Length), out var pid) && pid != Environment.ProcessId && IsRunning(pid)) continue;
+            if (name.Equals(MountName, StringComparison.OrdinalIgnoreCase) && _holds > 0) continue;
+            Unload(name);
+        }
+    }
+
+    private static bool IsRunning(int pid)
+    {
+        try
+        {
+            using var p = System.Diagnostics.Process.GetProcessById(pid);
+            return !p.HasExited;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or Win32Exception)
+        {
+            return false;
+        }
+    }
+
+    private static void Load()
+    {
+        var file = FilePath() ?? throw new InvalidOperationException("The Default profile (NTUSER.DAT) was not found.");
+        UnloadLeftovers();
+        using var restore = FirmwareExtras.EnablePrivilege("SeRestorePrivilege");
+        using var backup = FirmwareExtras.EnablePrivilege("SeBackupPrivilege");
+        if (restore is null || backup is null) throw new InvalidOperationException("Loading the Default profile needs administrator rights.");
+        var rc = RegLoadKey(HkeyUsers, MountName, file);
+        if (rc != 0) throw new InvalidOperationException($"The Default profile could not be loaded: {new Win32Exception(rc).Message}");
+        Log.Info("registry", "Default profile loaded", new { file });
+    }
+
+    private static void Unload(string name)
+    {
+        using var restore = FirmwareExtras.EnablePrivilege("SeRestorePrivilege");
+        using var backup = FirmwareExtras.EnablePrivilege("SeBackupPrivilege");
+        // A key handle that is still open (antivirus, a search indexer) makes the unload fail for a moment: try again.
+        for (var i = 0; i < 20; i++)
+        {
+            var rc = RegUnLoadKey(HkeyUsers, name);
+            if (rc is 0 or 2 /* ERROR_FILE_NOT_FOUND: not loaded */)
+            {
+                if (rc == 0) Log.Info("registry", "Default profile unloaded", new { name });
+                return;
+            }
+            if (i == 19)
+            {
+                Log.Warn("registry", $"Default profile {name} not unloaded: {new Win32Exception(rc).Message}");
+                return;
+            }
+            Thread.Sleep(100);
+        }
+    }
+
+    private sealed class Release : IDisposable
+    {
+        private int _done;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _done, 1) == 1) return;
+            lock (Gate)
+            {
+                if (--_holds == 0) Unload(MountName);
+            }
+        }
+    }
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)] private static extern int RegLoadKey(IntPtr hKey, string subKey, string file);
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)] private static extern int RegUnLoadKey(IntPtr hKey, string subKey);
+}

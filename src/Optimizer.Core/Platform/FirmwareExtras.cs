@@ -146,7 +146,7 @@ public static partial class FirmwareExtras
     /// Enables the privilege for the current process until the result is disposed, which puts back the state before
     /// (a privilege that was already on stays on). Null when the account does not hold it.
     /// </summary>
-    private static PrivilegeScope? EnablePrivilege(string name)
+    internal static IDisposable? EnablePrivilege(string name)
     {
         if (!OpenProcessToken(GetCurrentProcess(), 0x0020 | 0x0008 /* ADJUST_PRIVILEGES | QUERY */, out var token)) return null;
         try

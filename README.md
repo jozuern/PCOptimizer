@@ -44,6 +44,7 @@ A copy installed this way is updated by its package manager: "Update now" in the
 - **Apps that were not reviewed:** on request, Remove apps also lists the other removable apps, with a warning.
 - **Install & update:** install common apps with winget or search winget for any other package, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
 - **Tools and health:** storage analyzer, Windows features, program start priorities, network fixes, Windows Update repair, SFC and DISM, quick fixes (icon cache, Defender update, winget sources, Advanced startup for Safe Mode), a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
+- **New accounts:** copy the per-user tweaks you turned on to the Default profile, so accounts created later start with them (undone on the Changes page).
 - **Export, Import and command line:** move your changes to another PC or a fresh install, if you like with removed apps, service start types and startup entries, in the app or with `--apply` ([Command line](#command-line)).
 - **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan, with a button that copies it all for a forum post or a bug report.
 - **Keyboard:** Ctrl+F search (Down into the results, Enter opens, Esc clears), F5 reads the page again or scans again, Esc closes the details pane.

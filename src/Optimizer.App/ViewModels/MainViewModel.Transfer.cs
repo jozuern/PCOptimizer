@@ -111,6 +111,25 @@ public sealed partial class MainViewModel
     }
 
     /// <summary>
+    /// "Copy to new accounts": the per-user tweaks that are on, written to the Default profile as one change with its own
+    /// confirmation (every value is listed) and undo on this page.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanChange))]
+    private async Task CopyToNewAccountsAsync()
+    {
+        // Only what Tunero turned on (it has a backup): a tweak that reads as on because Windows' default matches stays out.
+        var on = _tweakStates.Where(s => s.State is TweakState.Applied or TweakState.PendingRestart && HasBackup(s.Tweak.Id)).Select(s => s.Tweak).ToList();
+        var engine = _services.Engine;
+        var tweak = await Task.Run(() => NewUserDefaults.Build(on.Select(t => (t, engine.Expand(t)))));
+        if (tweak is null)
+        {
+            ShowResult(Loc.Instance["NewUsers_Nothing"]);
+            return;
+        }
+        await Runner.ApplyAsync(tweak);
+    }
+
+    /// <summary>
     /// The file's removed apps that this PC has: removing cannot be undone (the Store link stays for apps the Store
     /// offers), so they are asked for on their own, after the changes, with every name listed.
     /// </summary>

@@ -15,10 +15,6 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 - **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade`, the NVIDIA settings, MSI mode and interrupt affinity, the network adapter properties (section 5 of the VM plan).
 - **V-Cache driver:** the service name `amd3dvcacheSvc` needs a check on an X3D PC.
 
-## Code
-
-- **Catalog model:** an "also for new users" scope (Default profile).
-
 ## Toward "the only PC optimizer you need"
 
 In the order of the audit's promise gaps:
@@ -30,4 +26,4 @@ In the order of the audit's promise gaps:
 5. Documented policies: a cross-check of every policy value in the tool reference against the catalog (2026-10-13) left few with an effect. Added: Start without Recommended (checked on Pro), Click to Do off. Already in: quality and feature update deferral, restart scheduling, settings sync, Recall. Left out: sync per category (Settings has its own switches), AllowDeviceNameInDiagnosticData (off by default), the Settings agent and agent policies (Enterprise only), TurnOffWindowsCopilot (deprecated), TargetReleaseVersion (needs the version of the moment, not a fixed value).
 6. Cosmetic tweaks: snapping (Snap Assist, layouts) and taskbar on several displays are in. Menu show delay and mouse hover time are in (a `systemParameter` action, checked in the VM). Drive letters first and the "- Shortcut" suffix are in (proven in the VM without a sign-out). Num Lock at sign-in and the startup sound use undocumented values that only show at the sign-in screen or as sound, which a VM script cannot check: they stay out until someone checks them at the console. Five right-click menu entries are in as Explorer tweaks (Give access to, Restore previous versions, Open in Terminal, Cast to Device, Share; proven in the VM). "Include in library" ignores the block list and stays out. Photo Viewer associations and Send To stay out for now.
 7. Export: done (removed apps, service start types and startup entries as opt-in parts of the changes file, `--include` for `--export`, `--apply-recommended`). `--include-preview` stays out: a preview has not been tested on real Windows and needs its own confirmation in the app.
-8. An "also for new users" scope. Done: the opt-in re-apply task (`--reapply` and the switch in Settings, VM-tested) and the quick fixes (restart pending check, Defender update, winget source reset, icon cache, Advanced startup for Safe Mode; their VM row is open).
+8. New accounts: done ("Copy to new accounts" writes the per-user tweaks to the Default profile, VM-tested with a new local account). Also done: the opt-in re-apply task (`--reapply` and the switch in Settings, VM-tested) and the quick fixes (restart pending check, Defender update, winget source reset, icon cache, Advanced startup for Safe Mode; their VM row is open).

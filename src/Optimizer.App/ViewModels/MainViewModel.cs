@@ -60,7 +60,7 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
             foreach (var command in new CommunityToolkit.Mvvm.Input.IRelayCommand[]
                      {
                          RunActionCommand, ApplyRecommendedCommand, ApplyTweakGroupCommand, UndoAllCommand, UndoRecordCommand, ReapplyRecordCommand,
-                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand, UninstallCommand,
+                         ReapplyDriftCommand, EnableRestorePointsCommand, ScanCommand, UpdateNowCommand, ImportChangesCommand, CopyToNewAccountsCommand, UninstallCommand,
                      })
                 command.NotifyCanExecuteChanged();
         };
