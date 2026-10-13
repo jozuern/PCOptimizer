@@ -4,7 +4,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 ## Before 1.0
 
-- **Backup update key:** the code accepts a second key (`update-key-backup.pem`). The key pair itself is the owner's step: `scripts/new-update-key.ps1 -Backup -PrivateKeyFile <USB stick>`, then commit the public half. Also copy it into the Scoop bucket's `keys/`.
+- **Backup update key in the Scoop bucket:** the key pair exists (public half committed as `update-key-backup.pem`, private half offline with the owner) and every workflow here checks against both keys; the bucket's pinned copy in `keys/` still needs it.
 - **VM runs we could not do yet:** the core plan on Windows 11 25H2 Pro and on a Home edition (needs those VM images), and once on 24H2 to see the "no longer supported" note with a working Undo.
 - **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): small screen at 150 %, high contrast, clickable sources, a failed start after a self-update, the Startup page's task rows, Update all with machine and user scope.
 - **Release:** rename `## Unreleased` in CHANGELOG.md to `## 1.0.0`, drop "(preview)" and the README status banner, decide on code signing (SignPath declined on 2026-10-13), and get the first winget and Chocolatey versions through review or keep them marked pending.
