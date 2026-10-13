@@ -12,6 +12,12 @@
 - **Startup page, scheduled tasks:** like Autoruns, the page now lists every task of other programs (an updater that runs daily, not only tasks at sign-in), and each program a task runs gets its own row, so a second program cannot hide behind a signed first one. Tasks that run a COM handler show the DLL behind it. Windows' own tasks (`\Microsoft\Windows\`) are listed but switched only on Services & tasks, where the catalog says which are safe to turn off: turning off TextServicesFramework\MsCtfMonitor, for example, stops typing in Start search.
 - **Update all apps:** programs installed for the whole PC update in the app as before; programs installed only for your account now update as you, in a winget window of their own, instead of with administrator rights (which installed them for the wrong account, or failed). A failed update says "Update failed" instead of "Install failed".
 - **Backup update key:** every version now also accepts updates signed with a second key that is kept offline, so losing the release key would not strand installed copies. The release workflows check against both keys.
+- **Sources are links:** the numbered sources at the end of every explanation page open in your browser (as the signed-in user, never as administrator) and can be reached with the keyboard; before, the address was only in a tooltip.
+- **High contrast:** with a Windows contrast theme on, the app uses it (Windows' own colors, no Mica) instead of the Fluent light or dark colors, and follows when you turn it on or off.
+- **Small screens:** the window and the confirmation dialog fit the screen's free area: on a laptop at 150 % (about 1280 x 672) the window no longer reaches under the taskbar, and the list of changes in the confirmation scrolls so its buttons stay on screen.
+- **Accessibility:** the search and key boxes have names for screen readers, and dialogs carry their title as the window title (Alt+Tab, screen readers).
+- **Signing out during a change:** Windows is asked to wait until the change has finished, as closing the window already did.
+- **Delivery Optimization cleanup** asks once before it deletes, like the other cleanups.
 - **Command line:** `--apply` and `--undo-all` no longer show a message box when the start is refused for safety (a profiler variable, or a data or runtime folder other accounts can change); they end with the new exit code 8, so a script does not wait on a dialog.
 
 ### Fixed
@@ -22,6 +28,10 @@
 - **Backups not owned by Administrators** counted as "no backup", so undo reported success without restoring anything, and the next start deleted the file. Every backup is now given to the Administrators group when it is saved (or the change is not made), and a file owned by another account blocks apply and undo of that change instead.
 - **Network adapter undo** could fail for a change made with an adapter that is no longer connected, when the driver spelled a keyword differently.
 - **Undo all** now also restores the settings of the two "permanent" AI tweaks (what they deleted does not come back), so undoing everything before uninstalling no longer leaves them, and it reports a change it cannot undo instead of skipping it silently.
+- **Expert mode:** its question no longer opens inside the switch while it is still being set; screen readers could hang on it.
+- **Settings file:** one that cannot be read is kept as settings.json.bad instead of being overwritten with the defaults at the next save.
+- **Explanation pane:** an explanation that failed to build once is built again on the next selection, and a check without a page says so in your language.
+- **Sensors** are closed when the app ends.
 - **Self-update:** when the new version could not start after the update (antivirus took the new exe away or blocked it), only the renamed old exe was left and the shortcut started nothing. The version you were using is now put back, and the message says so. The new version also no longer inherits a profiler or startup hook from the user's environment.
 - **Startup page, services:** without a valid signature (the signature service turned off, a failed check) a Windows service could become switchable here in Expert mode; the Services page's rule, which counts a file in the Windows folder as Windows' own, now applies here too.
 - **Startup page, script hosts:** a variable of your own account could make a script look like it lives in System32, so the entry was hidden as Microsoft's. The check now uses the machine's variables only.

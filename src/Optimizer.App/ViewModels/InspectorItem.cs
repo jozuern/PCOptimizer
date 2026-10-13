@@ -24,6 +24,7 @@ public abstract class InspectorItem : ObservableObject
     public Task<string> MarkdownAsync()
     {
         if (_markdown is { } ready) return Task.FromResult(ready);
+        if (_markdownTask is { IsFaulted: true } or { IsCanceled: true }) _markdownTask = null;
         return _markdownTask ??= BuildMarkdownAsync();
     }
 

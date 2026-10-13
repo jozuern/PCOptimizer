@@ -41,6 +41,33 @@ public partial class App : Application
 
     private void Mark(string name) => _startMarks.Add((name, DateTime.Now));
 
+    /// <summary>
+    /// Sign-out or shutdown during a change (a batch, an undo, a winget run): Windows is asked to wait, so the change
+    /// does not stop halfway. Windows shows the app in its "waiting for apps" list, where the user can still go on.
+    /// </summary>
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            (MainWindow?.DataContext as MainViewModel)?.Health.CloseSensors();
+        }
+        catch (Exception ex)
+        {
+            Optimizer.Core.Logging.Log.Warn("app", $"sensors not closed at exit: {ex.Message}");
+        }
+        base.OnExit(e);
+    }
+
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        if (ChangeGate.Instance.Busy)
+        {
+            e.Cancel = true;
+            Optimizer.Core.Logging.Log.Warn("app", $"{e.ReasonSessionEnding} asked to wait: a change is running");
+        }
+        base.OnSessionEnding(e);
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         Mark("WPF started");
@@ -332,6 +359,16 @@ public partial class App : Application
     {
         // Case-insensitive so "--theme light" works like "--lang de"; the saved value keeps the canonical spelling.
         var setting = new[] { "Light", "Dark" }.FirstOrDefault(t => t.Equals(theme, StringComparison.OrdinalIgnoreCase)) ?? "System";
+        FollowHighContrast();
+        if (SystemParameters.HighContrast && TryApplyHighContrast())
+        {
+            if (save)
+            {
+                _settings.Theme = setting;
+                _settings.Save();
+            }
+            return;
+        }
         var (dark, accent) = TargetTheme(setting);
         var appTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         // The theme dictionary builds some brushes (the "on" fill of switches) from the accent colors when it loads.
@@ -353,6 +390,39 @@ public partial class App : Application
         }
         // Status colors and the explanation document read theme brushes when they are built: refreshed through
         // ApplicationThemeManager.Changed (also raised when Windows switches the mode).
+    }
+
+    /// <summary>
+    /// A Windows contrast theme wins over Light and Dark: its colors come from Windows (WPF-UI's HC themes), without Mica.
+    /// False when the theme could not be loaded; the normal theme is used then.
+    /// </summary>
+    private bool TryApplyHighContrast()
+    {
+        try
+        {
+            ApplicationThemeManager.Apply(ApplicationTheme.HighContrast, WindowBackdropType.None, false);
+            _appliedTheme = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("app", "high contrast theme not applied", ex);
+            return false;
+        }
+    }
+
+    private bool _contrastHooked;
+
+    /// <summary>Turning a contrast theme on or off in Windows applies to the open window too.</summary>
+    private void FollowHighContrast()
+    {
+        if (_contrastHooked) return;
+        _contrastHooked = true;
+        SystemParameters.StaticPropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(SystemParameters.HighContrast)) return;
+            Dispatcher.BeginInvoke(() => ApplyTheme(_settings.Theme, save: false));
+        };
     }
 
     /// <summary>

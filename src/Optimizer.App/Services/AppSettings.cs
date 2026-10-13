@@ -50,7 +50,15 @@ public sealed class AppSettings
         }
         catch (Exception ex)
         {
-            Optimizer.Core.Logging.Log.Warn("settings", $"settings not readable, defaults used: {ex.Message}");
+            Optimizer.Core.Logging.Log.Warn("settings", $"settings not readable, defaults used (the file is kept as settings.json.bad): {ex.Message}");
+            try
+            {
+                if (File.Exists(FilePath)) File.Copy(FilePath, FilePath + ".bad", overwrite: true);
+            }
+            catch (Exception copy) when (copy is IOException or UnauthorizedAccessException)
+            {
+                Optimizer.Core.Logging.Log.Warn("settings", $"settings.json.bad not written: {copy.Message}");
+            }
             return new();
         }
     }

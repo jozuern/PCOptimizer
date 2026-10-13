@@ -28,7 +28,7 @@
                             <ColumnDefinition Width="*" MinWidth="160" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                        <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" AutomationProperties.Name="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                     Margin="0,0,16,0" ClearButtonEnabled="True" />
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <ui:TextBlock FontTypography="Body" Text="{l:Tr TweakView_Label}" VerticalAlignment="Center" Margin="0,0,8,0" />

@@ -14,13 +14,16 @@ namespace Optimizer.App.Services;
 
 /// <summary>
 /// Markdown -> FlowDocument: headings, paragraphs, lists, bold/italic, inline code and links only.
-/// Links are shown as text with their URL.
+/// Web links (the sources of every page) are hyperlinks that open through the caller (the app opens them as the
+/// signed-in user, never elevated); anything else stays text with its address in a tooltip.
 /// </summary>
 public static class MarkdownFlow
 {
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().Build();
+    // Bare addresses (the numbered sources at the end of every page) become links too.
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAutoLinks().Build();
 
-    public static FlowDocument Render(string markdown, Brush foreground, Brush secondary, Brush codeBackground, Brush line)
+    public static FlowDocument Render(string markdown, Brush foreground, Brush secondary, Brush codeBackground, Brush line, Action<string>? openLink = null,
+        Brush? linkBrush = null)
     {
         var doc = new FlowDocument
         {
@@ -30,13 +33,27 @@ public static class MarkdownFlow
             PagePadding = new Thickness(0, 0, 12, 24),
             TextAlignment = TextAlignment.Left,
         };
-        var ctx = new Ctx(secondary, codeBackground, line);
+        var ctx = new Ctx(secondary, codeBackground, line, openLink, linkBrush);
         foreach (var block in Markdown.Parse(markdown, Pipeline))
             if (Convert(block, ctx) is { } b) doc.Blocks.Add(b);
         return doc;
     }
 
-    private sealed record Ctx(Brush Secondary, Brush CodeBackground, Brush Line);
+    private sealed record Ctx(Brush Secondary, Brush CodeBackground, Brush Line, Action<string>? OpenLink, Brush? LinkBrush);
+
+    /// <summary>A hyperlink for an http(s) address when the caller can open links; null otherwise.</summary>
+    private static Hyperlink? WebLink(string? url, Ctx ctx)
+    {
+        if (ctx.OpenLink is not { } open || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http")) return null;
+        var link = new Hyperlink { NavigateUri = uri, ToolTip = uri.AbsoluteUri };
+        if (ctx.LinkBrush is { } brush) link.Foreground = brush;
+        link.RequestNavigate += (_, e) =>
+        {
+            open(e.Uri.AbsoluteUri);
+            e.Handled = true;
+        };
+        return link;
+    }
 
     private static WpfBlock? Convert(MdBlock block, Ctx ctx)
     {
@@ -125,11 +142,17 @@ public static class MarkdownFlow
                 AddInlines(span.Inlines, em, ctx);
                 return span;
             case LinkInline link when !link.IsImage:
-                var text = new Span { Foreground = ctx.Secondary, TextDecorations = TextDecorations.Underline, ToolTip = link.Url };
+                Span text = WebLink(link.Url, ctx) ?? new Span { Foreground = ctx.Secondary, TextDecorations = TextDecorations.Underline, ToolTip = link.Url };
                 AddInlines(text.Inlines, link, ctx);
                 if (text.Inlines.Count == 0) text.Inlines.Add(new Run(link.Url));
                 return text;
             case AutolinkInline auto:
+                if (WebLink(auto.Url, ctx) is { } autoLink)
+                {
+                    autoLink.FontSize = 12;
+                    autoLink.Inlines.Add(new Run(auto.Url));
+                    return autoLink;
+                }
                 return new Run(auto.Url) { Foreground = ctx.Secondary, FontSize = 12 };
             case DelimiterInline d:
                 // An unmatched "[" (for example in "[1][2]", which Markdig first tries as a reference link) stays text.

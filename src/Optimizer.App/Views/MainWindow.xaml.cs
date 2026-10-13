@@ -48,6 +48,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             vm.CurrentPage = page;
             _syncing = false;
         };
+        SourceInitialized += (_, _) => FitToWorkArea();
         Loaded += (_, _) => Nav.Navigate(typeof(OverviewPage));
         // The title bar lays out its parts after the window: center the search box once that is done.
         Loaded += (_, _) => Dispatcher.BeginInvoke(CenterSearchBox, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -187,6 +188,22 @@ public partial class MainWindow : FluentWindow, IServiceProvider
         }
     }
 
+    /// <summary>
+    /// The window's size and minimum fit the screen's work area (without the taskbar): a 1080p laptop at 150 % has about
+    /// 1280 x 672 DIP, less than the default size and the minimum height, so the footer and the result bar would sit
+    /// behind the taskbar. Where even the smaller window would not fit, it opens maximized.
+    /// </summary>
+    private void FitToWorkArea()
+    {
+        var area = SystemParameters.WorkArea;
+        if (area.Width <= 0 || area.Height <= 0) return;
+        MinWidth = Math.Min(MinWidth, area.Width);
+        MinHeight = Math.Min(MinHeight, area.Height);
+        if (Width > area.Width) Width = area.Width;
+        if (Height > area.Height) Height = area.Height;
+        if (area.Width < 1040 || area.Height < 720) WindowState = WindowState.Maximized;
+    }
+
     /// <summary>Window width below which the open pane and the details pane together leave the page too narrow.</summary>
     private const double NarrowWidth = 1320;
 
@@ -296,7 +313,9 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             B("TextFillColorPrimaryBrush", Brushes.White),
             B("TextFillColorSecondaryBrush", Brushes.Gray),
             B("SubtleFillColorSecondaryBrush", Brushes.DimGray),
-            B("DividerStrokeColorDefaultBrush", Brushes.DimGray));
+            B("DividerStrokeColorDefaultBrush", Brushes.DimGray),
+            url => _vm.OpenLinkCommand.Execute(url),
+            B("AccentTextFillColorPrimaryBrush", Brushes.DodgerBlue));
     }
 
     [GeneratedRegex(@"\A\s*#[ \t][^\r\n]*(\r?\n)?")]

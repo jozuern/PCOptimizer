@@ -1768,6 +1768,12 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
 
     // Sensors (opt-in)
 
+    /// <summary>At exit: the sensor library (and its driver) is closed, not left to the end of the process.</summary>
+    public void CloseSensors()
+    {
+        if (SensorsOn) SensorsOn = false;
+    }
+
     partial void OnSensorsOnChanged(bool value)
     {
         if (value)

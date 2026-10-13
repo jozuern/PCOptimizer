@@ -893,6 +893,8 @@ public sealed partial class CleanupViewModel(MainViewModel owner, AppServices se
     [RelayCommand]
     private async Task DeliveryOptimizationCleanupAsync()
     {
+        // Like every other cleanup: what is deleted is said once before it happens.
+        if (!dialogs.Ask(Loc.Instance["Cleanup_DoTitle"], Loc.Instance["Cleanup_DoHint"], Loc.Instance["Cleanup_Clean"])) return;
         await RunWorkAsync("delivery optimization cleanup", async () =>
         {
             var (code, output) = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.DeliveryOptimizationCleanup(services.Context.Processes));

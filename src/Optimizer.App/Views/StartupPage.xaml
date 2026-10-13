@@ -30,7 +30,7 @@
                         <ColumnDefinition Width="*" MinWidth="160" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox PlaceholderText="{l:Tr Startup_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Startup.Search, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                    <ui:TextBox PlaceholderText="{l:Tr Startup_Search}" AutomationProperties.Name="{l:Tr Startup_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Startup.Search, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                 Margin="0,0,16,0" ClearButtonEnabled="True" />
                     <ComboBox Grid.Column="1" ItemsSource="{Binding Startup.Kinds}" SelectedItem="{Binding Startup.SelectedKind}" DisplayMemberPath="Text" MinWidth="220"
                               AutomationProperties.Name="{l:Tr Startup_KindFilter}" />

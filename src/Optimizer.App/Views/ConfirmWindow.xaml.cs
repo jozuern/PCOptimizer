@@ -12,6 +12,20 @@ public partial class ConfirmWindow : FluentWindow
     private readonly bool _canApply;
 
     /// <summary>One line of the table; <see cref="Unchanged"/> when the value already is what the change writes (After then says so).</summary>
+    /// <summary>
+    /// On a short screen (a laptop at 150 %) the dialog would grow past the taskbar and hide its buttons: the list of
+    /// changes scrolls in less room instead, and the dialog stays on the screen.
+    /// </summary>
+    private void FitToWorkArea()
+    {
+        var area = SystemParameters.WorkArea;
+        var limit = area.Height - 48;
+        if (limit <= 0) return;
+        if (ActualHeight > limit) ChangeScroll.MaxHeight = Math.Max(96, ChangeScroll.ActualHeight - (ActualHeight - limit));
+        UpdateLayout();
+        if (Top + ActualHeight > area.Bottom) Top = Math.Max(area.Top, area.Bottom - ActualHeight);
+    }
+
     private sealed record Row(string Target, string Before, string After, bool Unchanged)
     {
         // What screen readers announce for this item in a list.
@@ -21,7 +35,9 @@ public partial class ConfirmWindow : FluentWindow
     public ConfirmWindow(ConfirmRequest request)
     {
         InitializeComponent();
+        Loaded += (_, _) => FitToWorkArea();
         TitleText.Text = request.Title;
+        Title = request.Title;
         SummaryText.Text = request.Summary;
         SummaryText.Visibility = string.IsNullOrWhiteSpace(request.Summary) ? Visibility.Collapsed : Visibility.Visible;
         BadgeList.ItemsSource = request.Badges;

@@ -68,7 +68,7 @@
                 <Separator />
             </StackPanel>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="360">
+            <ScrollViewer x:Name="ChangeScroll" VerticalScrollBarVisibility="Auto" MaxHeight="360">
                 <ItemsControl x:Name="ChangeList">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

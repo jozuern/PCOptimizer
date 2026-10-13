@@ -21,6 +21,7 @@ public partial class MessageWindow : FluentWindow
     {
         InitializeComponent();
         TitleText.Text = title;
+        Title = title;
         BodyText.Text = body;
         // The order of a Windows 11 content dialog: the primary (accent) button first, then the secondary one, Cancel last.
         // The callers list them the other way round (Cancel first, primary last). The buttons share the footer in equal

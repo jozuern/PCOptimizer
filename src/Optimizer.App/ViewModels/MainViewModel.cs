@@ -529,11 +529,23 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnExpertModeChanged(bool value)
     {
-        if (value && !_settings.ExpertMode && !_dialogs.ConfirmExpertMode())
+        if (value && !_settings.ExpertMode)
         {
-            ExpertMode = false;
+            // Asked after the switch's binding has finished (a modal dialog inside a setter re-enters it, and a screen
+            // reader's toggle call waits for the dialog); a "no" turns the switch back off.
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                if (!ExpertMode || _settings.ExpertMode) return;
+                if (_dialogs.ConfirmExpertMode()) SaveExpertMode(true);
+                else ExpertMode = false;
+            });
             return;
         }
+        SaveExpertMode(value);
+    }
+
+    private void SaveExpertMode(bool value)
+    {
         _settings.ExpertMode = value;
         _settings.Save();
         Rebuild();

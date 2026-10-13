@@ -82,7 +82,7 @@
             <ui:Card Padding="16,12">
                 <StackPanel>
                     <WrapPanel>
-                        <ui:PasswordBox x:Name="VtKey" PlaceholderText="{l:Tr Vt_KeyPlaceholder}" MinWidth="320" Margin="0,0,8,0" />
+                        <ui:PasswordBox x:Name="VtKey" PlaceholderText="{l:Tr Vt_KeyPlaceholder}" AutomationProperties.Name="{l:Tr Vt_KeyPlaceholder}" MinWidth="320" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Save}" Click="SaveKey_Click" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Common_Remove}" Appearance="Transparent" Click="RemoveKey_Click" Margin="0,0,8,0" IsEnabled="{Binding VirusTotalConfigured}" />
                         <ui:Button Content="{l:Tr Vt_GetKey}" Icon="{ui:SymbolIcon Open20}" Appearance="Transparent"
