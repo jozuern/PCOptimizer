@@ -80,6 +80,8 @@
   <data name="Result_AppliedRestart" xml:space="preserve"><value>Applied: {0}. Restart Windows to finish.</value></data>
   <data name="Result_AppliedSignOut" xml:space="preserve"><value>Applied: {0}. Sign out and in again to finish.</value></data>
   <data name="Result_Ineffective" xml:space="preserve"><value>Applied, but Windows does not use the new value: {0}</value></data>
+  <data name="Result_BackupsNotUpdated" xml:space="preserve"><value>For some of them the backup could not be updated afterwards (details in the log); Undo still restores the original values.</value></data>
+  <data name="Result_BackupNotUpdated" xml:space="preserve"><value>Its backup could not be updated afterwards (details in the log); Undo still restores the original values.</value></data>
   <data name="Result_NothingToDo" xml:space="preserve"><value>Nothing to change, the setting is already in place.</value></data>
   <data name="Result_Failed" xml:space="preserve"><value>Not applied. Nothing was left half-changed. Reason: {0}</value></data>
   <data name="Result_Undone" xml:space="preserve"><value>Undone: {0}</value></data>

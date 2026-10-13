@@ -26,6 +26,11 @@
 
 ### Fixed
 
+- **Undo all and `--undo-all`** passed over a backup they could not read (damaged, locked by another program, or written by a newer version), so the change it records stayed in place without a word. It is now reported as not undone, with the file and the reason.
+- **Restore point:** within Windows' limit (one restore point a day unless the limit is lifted) Windows skips a new one and still reports success, so the app counted an older restore point as made for this change. It now checks the limit first and asks you, as when System Protection is off.
+- **Backup not updated after a change:** when the backup could not be updated after an apply (the originals are saved before the first write), the result said only "Applied". It now says so; Undo still restores the original values.
+- **Startup page, shell extensions:** one blocked in your account's own list (HKCU) showed as on. It now shows as off, and turning it on clears it there.
+- **Scans** read the backup folder once instead of once per tweak, and the history of undone changes keeps its newest 500 files instead of growing with every undo.
 - **Undo across updates is tested:** backup files now record their format, and the tests restore a saved backup of every kind of change (registry, services, power plans, boot options, tasks, DNS, network adapter, NVIDIA and the others) the way an earlier version wrote it. A backup from a newer version of Tunero is left alone instead of being misread, and the stored catalog version now changes with every catalog change.
 - **A setting that could not be read** during an apply was skipped, and the change was still reported as applied. The apply now stops before it writes anything and says which setting it could not read.
 - **Power plan undo after "Apply again":** when you had switched to another plan and applied Tunero's plan again, undo switched back but left the plan Tunero created in Power Options. It is removed again.

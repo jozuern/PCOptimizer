@@ -90,7 +90,6 @@ public sealed class TweakDefinition
 
     public AppliesTo AppliesTo { get; init; } = new();
     public required List<TweakAction> Actions { get; init; }
-    public List<string> Requires { get; init; } = [];
     public List<string> ConflictsWith { get; init; } = [];
     public List<Condition> BlockedWhen { get; init; } = [];
     public Condition? RecommendWhen { get; init; }

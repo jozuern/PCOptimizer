@@ -169,7 +169,6 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
         var problems = new List<string>();
         foreach (var t in Tweaks)
         {
-            problems.AddRange(t.Requires.Where(r => !ids.Contains(r)).Select(r => $"{t.Id}: requires unknown tweak {r}"));
             problems.AddRange(t.ConflictsWith.Where(c => !ids.Contains(c)).Select(c => $"{t.Id}: conflicts with unknown tweak {c}"));
             problems.AddRange(t.Fixes.Where(f => !FindingIds.Contains(f)).Select(f => $"{t.Id}: fixes unknown finding {f}"));
         }

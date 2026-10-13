@@ -24,7 +24,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 - **Engine text:** `Describe()` returns English that `labels.json` parses back with patterns; return a key and arguments instead, with a test over every action type. Halves the work for a third language (one language list instead of `de` branches).
 - **Catalog model:** an "also for new users" scope (Default profile), an action for the app's own scheduled task (undo removes it), whole-key backup, and `{nic}` expansion as a method of the actions instead of a switch in the engine.
 - **Start time:** measure from the launch (the bundle starts itself twice for the protected runtime folder); try ReadyToRun again against the exe size.
-- **Smaller ones:** `RevertAll` skips locked backup files without saying so; the history folder is never pruned; `Preflight` reads backup files per tweak on every scan; a failed save right after an apply is not reported; `Requires` is unused; per-user shell extensions and the HKCU `Shell Extensions\Blocked` key are not read; winget.yml compares the release hash with wingetcreate's own download only indirectly.
+- **Smaller ones:** winget.yml compares the release hash with wingetcreate's own download only indirectly.
 
 ## Toward "the only PC optimizer you need"
 

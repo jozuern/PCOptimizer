@@ -300,6 +300,9 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         using var blocked = Open(Hive.Machine, BlockedShellExt);
         var blockedSet = (blocked?.GetValueNames() ?? []).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Explorer also honors the user's own list: an extension blocked only there is off, and its switch clears it there.
+        using var blockedByUser = Open(Hive.User, BlockedShellExt);
+        var userBlockedSet = (blockedByUser?.GetValueNames() ?? []).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var handlerRoot in HandlerRoots)
         {
             using var key = Open(Hive.Machine, $@"SOFTWARE\Classes\{handlerRoot}");
@@ -315,8 +318,9 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
                 var dll = server?.GetValue("", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
                 using var cls = Open(Hive.Machine, $@"SOFTWARE\Classes\CLSID\{id}");
                 var name = cls?.GetValue("")?.ToString() is { Length: > 0 } n ? n : handler;
-                yield return new StartupEntry(StartupKind.ShellExtension, name, dll, CommandLine.ImagePath(dll), $@"HKCR\{handlerRoot}\{handler}", Hive.Machine,
-                    !blockedSet.Contains(id), $"shellext:{id}")
+                var blockedForUserOnly = !blockedSet.Contains(id) && userBlockedSet.Contains(id);
+                yield return new StartupEntry(StartupKind.ShellExtension, name, dll, CommandLine.ImagePath(dll), $@"HKCR\{handlerRoot}\{handler}",
+                    blockedForUserOnly ? Hive.User : Hive.Machine, !blockedSet.Contains(id) && !blockedForUserOnly, $"shellext:{id}")
                 {
                     Target = id,
                 };
@@ -500,10 +504,11 @@ public static class StartupTweaks
             // off TextServicesFramework\MsCtfMonitor, for example, stops typing in Start search).
             StartupKind.LogonTask when StartupScanner.IsWindowsTask(e.Target) => null,
             StartupKind.LogonTask => new ScheduledTaskAction { Path = e.Target!, Enabled = enabled },
-            // Blocked shell extensions are listed by CLSID under Shell Extensions\Blocked (read by Explorer at start).
+            // Blocked shell extensions are listed by CLSID under Shell Extensions\Blocked (read by Explorer at start): the
+            // machine's list, or the user's own when only that one blocks the extension (the entry's hive says which).
             StartupKind.ShellExtension => new RegistryAction
             {
-                Hive = Hive.Machine,
+                Hive = e.Hive,
                 Path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked",
                 Name = e.Target!,
                 Kind = "string",

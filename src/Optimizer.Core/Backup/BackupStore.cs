@@ -93,6 +93,12 @@ public sealed class PendingUndo
 /// lives in backups\users\&lt;SID&gt; and is seen only when the app runs for that account; otherwise a second account
 /// would take the first account's originals for its own.
 /// </summary>
+/// <summary>A backup file whose originals cannot be read now, and why.</summary>
+public sealed record UnreadableBackup(string File, string Reason);
+
+/// <summary>What one read of the backup folders found (<see cref="BackupStore.ReadAll"/>).</summary>
+public sealed record BackupFolderRead(IReadOnlyList<TweakBackup> Own, IReadOnlySet<string> OtherAccounts, IReadOnlyList<UnreadableBackup> Unreadable);
+
 public sealed class BackupStore
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
@@ -212,22 +218,43 @@ public sealed class BackupStore
 
     public string DamagedFile(string tweakId) => FileFor(tweakId) + DamagedSuffix;
 
-    public IReadOnlyList<TweakBackup> All()
+    public IReadOnlyList<TweakBackup> All() => ReadAll().Own;
+
+    /// <summary>
+    /// One read of every backup file: this account's backups (newest first), the tweaks whose backup in the shared
+    /// folder belongs to another account, and the files whose originals cannot be read (damaged, locked, not owned by
+    /// Administrators, or written by a newer version), which an undo of everything must report instead of passing over.
+    /// </summary>
+    public BackupFolderRead ReadAll()
     {
         var list = new List<TweakBackup>();
+        var others = new HashSet<string>(StringComparer.Ordinal);
+        var unreadable = new List<UnreadableBackup>();
         var folders = UserFolder is { } user && Directory.Exists(user) ? new[] { user, BackupFolder } : [BackupFolder];
-        foreach (var file in folders.SelectMany(f => Directory.EnumerateFiles(f, "*.json")).Where(Trusted))
+        foreach (var file in folders.SelectMany(f => Directory.EnumerateFiles(f, "*.json")))
         {
+            if (!Trusted(file))
+            {
+                unreadable.Add(new UnreadableBackup(file, "not owned by Administrators or SYSTEM, so it is not read"));
+                continue;
+            }
             var (backup, damaged) = TryRead(file);
             if (backup is { Format: > BackupFormat.Current })
             {
                 Log.Warn("backup", $"{file} was written by a newer version of the app (format {backup.Format}); it is left as it is");
+                unreadable.Add(new UnreadableBackup(file, $"written by a newer version of the app (format {backup.Format})"));
                 continue;
             }
-            if (backup is not null && !OfAnotherAccount(backup) && !list.Any(b => b.TweakId == backup.TweakId)) list.Add(backup);
-            else if (damaged) Quarantine(file);
+            if (backup is not null && OfAnotherAccount(backup)) others.Add(backup.TweakId);
+            else if (backup is not null && !list.Any(b => b.TweakId == backup.TweakId)) list.Add(backup);
+            else if (damaged) unreadable.Add(new UnreadableBackup(Quarantine(file) ? file + DamagedSuffix : file, "damaged; it still holds the original values"));
+            else if (backup is null) unreadable.Add(new UnreadableBackup(file, "locked by another program"));
         }
-        return list.OrderByDescending(b => b.LastApplied).ToList();
+        // Damaged files moved aside earlier still hold originals that no undo can restore.
+        foreach (var file in folders.SelectMany(f => Directory.EnumerateFiles(f, "*" + DamagedSuffix)))
+            if (!unreadable.Any(u => u.File.Equals(file, StringComparison.OrdinalIgnoreCase)))
+                unreadable.Add(new UnreadableBackup(file, "damaged; it still holds the original values"));
+        return new BackupFolderRead(list.OrderByDescending(b => b.LastApplied).ToList(), others, unreadable);
     }
 
     /// <summary>
@@ -288,7 +315,7 @@ public sealed class BackupStore
         }
     }
 
-    /// <summary>After a complete undo the record moves to history (kept for the change log).</summary>
+    /// <summary>After a complete undo the record moves to history (kept for support and a manual way back).</summary>
     public void Archive(string tweakId)
     {
         var file = FileFor(tweakId);
@@ -299,6 +326,24 @@ public sealed class BackupStore
         var shared = FileIn(BackupFolder, tweakId);
         if (shared != file && File.Exists(shared) && Trusted(shared) && TryRead(shared).Backup is { } other && !OfAnotherAccount(other))
             File.Move(shared, Path.Combine(HistoryFolder, $"{Sanitize(tweakId)}-{DateTime.Now:yyyyMMdd-HHmmss}-shared.json"), overwrite: true);
+        PruneHistory();
+    }
+
+    /// <summary>Undone changes kept in the history folder; older ones are deleted so it does not grow with every undo.</summary>
+    public const int KeptHistory = 500;
+
+    /// <summary>Keeps the newest <see cref="KeptHistory"/> files. A file that cannot be deleted now is tried at the next undo.</summary>
+    private void PruneHistory()
+    {
+        try
+        {
+            foreach (var old in new DirectoryInfo(HistoryFolder).GetFiles("*.json").OrderByDescending(f => f.LastWriteTimeUtc).ThenByDescending(f => f.Name, StringComparer.Ordinal).Skip(KeptHistory))
+                old.Delete();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("backup", $"history not pruned: {ex.Message}");
+        }
     }
 
     // ---------------- undo that takes effect after a restart ----------------

@@ -46,10 +46,21 @@ public sealed class RestorePointService(IProcessRunner processes) : IRestorePoin
         processes.Run("vssadmin.exe", $"resize shadowstorage /for={drive} /on={drive} /maxsize={maxPercent}%");
     }
 
+    /// <summary>
+    /// Windows makes a new restore point only when the newest one is older than SystemRestorePointCreationFrequency
+    /// minutes (1440 when the value is not set, 0 = always); within that time it skips the request and still reports
+    /// success. The engine would take that for a restore point made for this change, so the limit is checked first.
+    /// (The new point shows in the list only some seconds after the call, so it cannot be checked afterwards.)
+    /// </summary>
     public Task<bool> CreateAsync(string description) => Task.Run(() =>
     {
         try
         {
+            if (WithinCreationLimit() is { } newest)
+            {
+                Log.Warn("restore", $"no new restore point: Windows makes one only after the creation limit, and the newest is from {newest:yyyy-MM-dd HH:mm}");
+                return false;
+            }
             using var cls = new ManagementClass(new ManagementScope(@"root\default"), new ManagementPath("SystemRestore"), null);
             // 12 = MODIFY_SETTINGS, 100 = BEGIN_SYSTEM_CHANGE
             var result = cls.InvokeMethod("CreateRestorePoint", [description, 12u, 100u]);
@@ -63,4 +74,22 @@ public sealed class RestorePointService(IProcessRunner processes) : IRestorePoin
             return false;
         }
     });
+
+    /// <summary>The time of the newest restore point when Windows would skip a new one now; null when it would not (or that is unknown).</summary>
+    private static DateTime? WithinCreationLimit()
+    {
+        var minutes = Reg.HklmInt(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore", "SystemRestorePointCreationFrequency") ?? 1440;
+        if (minutes <= 0) return null;
+        try
+        {
+            var newest = Hardware.Wmi.Query("SELECT CreationTime FROM SystemRestore", @"root\default")
+                .Select(r => Hardware.Wmi.Str(r, "CreationTime")).Where(t => t.Length > 0).Select(ManagementDateTimeConverter.ToDateTime).DefaultIfEmpty(DateTime.MinValue).Max();
+            return DateTime.Now - newest < TimeSpan.FromMinutes(minutes) ? newest : null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("restore", $"restore points not listed: {ex.Message}");
+            return null;
+        }
+    }
 }

@@ -63,12 +63,12 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     }
 
     /// <summary>
-    /// A block reason as text. Conflicts and requirements name another tweak by id; the user sees its title instead.
+    /// A block reason as text. A conflict names the other tweak by id; the user sees its title instead.
     /// </summary>
     public static string BlockText(Block b, string lang)
     {
         var detail = b.Detail ?? "";
-        if (b.ReasonKey is "block.conflict" or "block.requires" && TweakCatalog.Current.Get(detail) is { } other) detail = TitleOf(other, lang);
+        if (b.ReasonKey is "block.conflict" && TweakCatalog.Current.Get(detail) is { } other) detail = TitleOf(other, lang);
         return Labels.Current.Get(lang, b.ReasonKey) + detail;
     }
 
@@ -273,13 +273,22 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var ok = results.Count(r => r.Result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective);
         var failed = results.Count(r => r.Result.Outcome == ApplyOutcome.Failed);
         var skipped = results.Count - ok - failed;
-        Report(Loc.Instance.Format("Result_Batch", ok, failed, skipped), failed > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+        var notUpdated = results.Any(r => r.Result.BackupNotUpdated);
+        var text = Loc.Instance.Format("Result_Batch", ok, failed, skipped);
+        Report(notUpdated ? $"{text} {Loc.Instance["Result_BackupsNotUpdated"]}" : text,
+            failed > 0 || notUpdated ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
         // Several changes at once: null makes the app read everything again (a single page-level item would not).
         if (ok > 0 || failed > 0) Changed?.Invoke(this, tweaks.Count == 1 ? tweaks[0] : null);
         return results;
     }, []);
 
     public static string ResultText(TweakDefinition t, string title, ApplyResult result)
+    {
+        var text = OutcomeText(t, title, result);
+        return result.BackupNotUpdated ? $"{text} {Loc.Instance["Result_BackupNotUpdated"]}" : text;
+    }
+
+    private static string OutcomeText(TweakDefinition t, string title, ApplyResult result)
     {
         var lang = Loc.Instance.Language;
         return result.Outcome switch
@@ -300,6 +309,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
 
     private static InfoBarSeverity SeverityOf(ApplyResult result) => result.Outcome switch
     {
+        ApplyOutcome.Applied when result.BackupNotUpdated => InfoBarSeverity.Warning,
         ApplyOutcome.Applied => InfoBarSeverity.Success,
         ApplyOutcome.AppliedIneffective or ApplyOutcome.Blocked or ApplyOutcome.NeedsRestorePointDecision => InfoBarSeverity.Warning,
         ApplyOutcome.Failed => InfoBarSeverity.Error,

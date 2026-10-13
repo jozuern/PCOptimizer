@@ -53,7 +53,12 @@ public sealed class ApplyOptions
 public enum ApplyOutcome { Applied, AppliedIneffective, Blocked, NeedsRestorePointDecision, Failed, NothingToDo }
 
 /// <param name="LeftChanged">Failed, and part of the change could not be rolled back: the backup is kept for Undo.</param>
-public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine> Changes, string? Error = null, IReadOnlyList<Block>? Blocks = null, bool LeftChanged = false);
+/// <param name="BackupNotUpdated">
+/// Applied, but the backup could not be updated with what was written. The originals were saved before the first write,
+/// so Undo still restores them; until the next change the app may not know that a restart is pending.
+/// </param>
+public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine> Changes, string? Error = null, IReadOnlyList<Block>? Blocks = null, bool LeftChanged = false,
+    bool BackupNotUpdated = false);
 
 public sealed record BatchItemResult(TweakDefinition Tweak, ApplyResult Result);
 
@@ -93,23 +98,21 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public IReadOnlyList<TweakStatus> DetectAll(IEnumerable<TweakDefinition> tweaks, Facts facts)
     {
         var list = tweaks.ToList();
-        // One read of every backup file for the whole detection instead of two or three per tweak.
-        _backups = store.All().ToDictionary(b => b.TweakId, StringComparer.Ordinal);
-        try
-        {
-            var first = list.Select(t => (t, state: DetectState(t, facts))).ToList();
-            var applied = first.Where(x => x.state is TweakState.Applied or TweakState.PendingRestart).Select(x => x.t.Id).ToHashSet();
-            return first.Select(x => BuildStatus(x.t, x.state, facts, applied)).ToList();
-        }
-        finally
-        {
-            _backups = null;
-        }
+        // One read of every backup file for the whole detection instead of several per tweak. It is passed along, not kept
+        // in a field, so two detections at once (a scan and a page) never see each other's read.
+        var read = store.ReadAll();
+        var view = new BackupView(read.Own.ToDictionary(b => b.TweakId, StringComparer.Ordinal), read.OtherAccounts);
+        var first = list.Select(t => (t, state: DetectState(t, facts, view))).ToList();
+        var applied = first.Where(x => x.state is TweakState.Applied or TweakState.PendingRestart).Select(x => x.t.Id).ToHashSet();
+        return first.Select(x => BuildStatus(x.t, x.state, facts, applied, view)).ToList();
     }
 
-    private Dictionary<string, TweakBackup>? _backups;
+    /// <summary>The backups as one detection read them; null outside a detection (each lookup reads the file).</summary>
+    private sealed record BackupView(IReadOnlyDictionary<string, TweakBackup> Own, IReadOnlySet<string> OtherAccounts);
 
-    private TweakBackup? BackupOf(string id) => _backups is { } cached ? cached.GetValueOrDefault(id) : PeekBackup(id);
+    private TweakBackup? BackupOf(string id, BackupView? view) => view is null ? PeekBackup(id) : view.Own.GetValueOrDefault(id);
+
+    private bool HeldByAnotherAccount(string id, BackupView? view) => view?.OtherAccounts.Contains(id) ?? store.HeldByAnotherAccount(id);
 
     /// <summary>For display and checks only: a backup that is locked right now counts as absent (apply and undo fail instead).</summary>
     private TweakBackup? PeekBackup(string id)
@@ -149,19 +152,21 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     }
 
     public TweakStatus Detect(TweakDefinition t, Facts facts, IReadOnlySet<string>? appliedIds = null) =>
-        BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>());
+        BuildStatus(t, DetectState(t, facts), facts, appliedIds ?? new HashSet<string>(), null);
 
-    private TweakStatus BuildStatus(TweakDefinition t, TweakState state, Facts facts, IReadOnlySet<string> applied)
+    private TweakStatus BuildStatus(TweakDefinition t, TweakState state, Facts facts, IReadOnlySet<string> applied, BackupView? view)
     {
         var (impact, effects, reason) = ImpactFor(t, facts);
         // Expert mode is a UI filter, not a reason to show a tweak as blocked; the anti-cheat warning is kept.
-        var blocks = Preflight(t, facts, applied, new ApplyOptions { ExpertMode = true });
+        var blocks = Preflight(t, facts, applied, new ApplyOptions { ExpertMode = true }, view);
         var recommended = state is TweakState.NotApplied or TweakState.Partial or TweakState.RevertedByWindows
                           && t.RecommendWhen?.Evaluate(facts) == true && blocks.Count == 0;
-        return new TweakStatus(t, state, impact, effects, reason, recommended, blocks, BackupOf(t.Id) is not null);
+        return new TweakStatus(t, state, impact, effects, reason, recommended, blocks, BackupOf(t.Id, view) is not null);
     }
 
-    public TweakState DetectState(TweakDefinition t, Facts facts)
+    public TweakState DetectState(TweakDefinition t, Facts facts) => DetectState(t, facts, null);
+
+    private TweakState DetectState(TweakDefinition t, Facts facts, BackupView? view)
     {
         if (!AppliesTo(t, facts)) return TweakState.NotApplicable;
         var actions = Expand(t);
@@ -173,7 +178,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var appliedCount = supported.Count(s => s == ActionState.Applied);
         var state = appliedCount == supported.Count ? TweakState.Applied : appliedCount == 0 ? TweakState.NotApplied : TweakState.Partial;
 
-        var backup = BackupOf(t.Id);
+        var backup = BackupOf(t.Id, view);
         if (backup is not null)
         {
             // Pending restart: everything reads as applied, except changes that only show their value after the restart.
@@ -244,7 +249,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     // ---------------- preflight / guard rules ----------------
 
-    public List<Block> Preflight(TweakDefinition t, Facts facts, IReadOnlySet<string> applied, ApplyOptions options)
+    public List<Block> Preflight(TweakDefinition t, Facts facts, IReadOnlySet<string> applied, ApplyOptions options) =>
+        Preflight(t, facts, applied, options, null);
+
+    private List<Block> Preflight(TweakDefinition t, Facts facts, IReadOnlySet<string> applied, ApplyOptions options, BackupView? view)
     {
         var blocks = new List<Block>();
         if (!AppliesTo(t, facts)) blocks.Add(new Block("block.notApplicable"));
@@ -258,12 +266,11 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // Conflicts: only changes this app made and has not undone. A value that merely matches the other tweak (the
         // Windows default Balanced plan matches power.balancedPlan) is not a change to protect; this tweak's own backup
         // keeps it as the original, so undo brings it back.
-        foreach (var other in t.ConflictsWith.Where(o => BackupOf(o) is not null)) blocks.Add(new Block("block.conflict", other));
+        foreach (var other in t.ConflictsWith.Where(o => BackupOf(o, view) is not null)) blocks.Add(new Block("block.conflict", other));
         // A backup file that cannot be read still holds the true originals: applying again would record the changed
         // values as originals and overwrite it.
         if (store.IsDamaged(t.Id)) blocks.Add(new Block("block.backupDamaged", store.DamagedFile(t.Id)));
-        if (store.HeldByAnotherAccount(t.Id)) blocks.Add(new Block("block.otherAccount"));
-        foreach (var req in t.Requires.Where(r => !applied.Contains(r))) blocks.Add(new Block("block.requires", req));
+        if (HeldByAnotherAccount(t.Id, view)) blocks.Add(new Block("block.otherAccount"));
         if (facts.Get("elevated") is false) blocks.Add(new Block("block.notElevated"));
         return blocks;
     }
@@ -469,8 +476,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                         if (backup.Entry(s.TargetKey) is { } e) e.Applied = SafeApplied(s);
                     backup.LastApplied = DateTimeOffset.Now;
                     backup.AppliedOnVersion = WindowsVersion;
-                    SaveAfterChange(() => store.Save(backup), t.Id);
-                    return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; the backup is kept, use Undo)") with { LeftChanged = true };
+                    var kept = SaveAfterChange(() => store.Save(backup), t.Id);
+                    return Fail(t, changes, $"{ex.Message} (rollback failed for {string.Join(", ", stuck.Select(s => s.TargetKey))}; " +
+                        (kept ? "the backup is kept, use Undo)" : "the backup could not be updated; it still holds the original values, use Undo)")) with { LeftChanged = true };
                 }
                 // Everything was rolled back: the entries this run added go (with an earlier backup still applied they would
                 // read as "reset by Windows"), and the backup goes to history when nothing of this tweak remains applied.
@@ -490,8 +498,9 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
-        // The originals were saved before the first write; this save adds what was written and when.
-        SaveAfterChange(() => store.Save(backup), t.Id);
+        // The originals were saved before the first write; this save adds what was written and when. When it fails, the
+        // change is in place and Undo still has the originals, but the result says so.
+        var saved = SaveAfterChange(() => store.Save(backup), t.Id);
         if (pendingUndo is not null) store.ClearPendingUndo(t.Id);
 
         // The data lets the Changes page show the line in the UI language; the message stays English for the log file.
@@ -499,7 +508,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
         // Verify: re-read every action. "afterRestart" tweaks are confirmed on the next scan after a reboot.
         var ineffective = t.Verify != "afterRestart" && done.Any(a => !a.TakesEffectAfterRestart && SafeState(a) != ActionState.Applied);
-        return new ApplyResult(ineffective ? ApplyOutcome.AppliedIneffective : ApplyOutcome.Applied, changes);
+        return new ApplyResult(ineffective ? ApplyOutcome.AppliedIneffective : ApplyOutcome.Applied, changes, BackupNotUpdated: !saved);
     }
 
     private ApplyResult Fail(TweakDefinition t, IReadOnlyList<ChangeLine> changes, string error)
@@ -694,13 +703,18 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     public IReadOnlyList<(TweakDefinition Tweak, RevertResult Result)> RevertAll()
     {
         var results = new List<(TweakDefinition, RevertResult)>();
-        foreach (var b in store.All())
+        var read = store.ReadAll();
+        foreach (var b in read.Own)
         {
             if (Resolve(b) is not { } t)
                 results.Add((Placeholder(b.TweakId), new RevertResult(false, [], ["This change is not described by this version of the app; undo it on its explanation page or by hand."])));
             else
                 results.Add((t, Revert(t)));
         }
+        // A backup file that cannot be read (damaged, locked, from a newer version) still stands for a change: it is
+        // reported as not undone instead of being passed over.
+        foreach (var u in read.Unreadable)
+            results.Add((Placeholder(Path.GetFileName(u.File)), new RevertResult(false, [], [$"The backup file {u.File} is {u.Reason}; the change it records was not undone."])));
         return results;
     }
 

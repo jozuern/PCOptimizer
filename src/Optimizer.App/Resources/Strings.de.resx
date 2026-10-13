@@ -80,6 +80,8 @@
   <data name="Result_AppliedRestart" xml:space="preserve"><value>Angewendet: {0}. Starte Windows neu, um abzuschließen.</value></data>
   <data name="Result_AppliedSignOut" xml:space="preserve"><value>Angewendet: {0}. Melde dich ab und wieder an, um abzuschließen.</value></data>
   <data name="Result_Ineffective" xml:space="preserve"><value>Angewendet, aber Windows nutzt den neuen Wert nicht: {0}</value></data>
+  <data name="Result_BackupsNotUpdated" xml:space="preserve"><value>Bei einigen ließ sich die Sicherung danach nicht aktualisieren (Details im Protokoll); Rückgängig stellt die ursprünglichen Werte trotzdem wieder her.</value></data>
+  <data name="Result_BackupNotUpdated" xml:space="preserve"><value>Die Sicherung ließ sich danach nicht aktualisieren (Details im Protokoll); Rückgängig stellt die ursprünglichen Werte trotzdem wieder her.</value></data>
   <data name="Result_NothingToDo" xml:space="preserve"><value>Nichts zu ändern, die Einstellung ist bereits gesetzt.</value></data>
   <data name="Result_Failed" xml:space="preserve"><value>Nicht angewendet. Es bleibt nichts halb geändert zurück. Grund: {0}</value></data>
   <data name="Result_Undone" xml:space="preserve"><value>Rückgängig gemacht: {0}</value></data>
