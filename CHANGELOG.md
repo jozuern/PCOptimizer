@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Health, live sensor readings:** instead of one long list of lines, every component (processor, graphics card, memory, mainboard, drives) has its own card with its main values set large: the hottest temperature, the total load with a bar, the fastest core clock, power and fan, each with the sensor it comes from and its peak since you switched the readings on. "All readings" opens a table of every sensor of that component by kind, with the value now and the peak. The values change in place every two seconds, so an open table stays open, and a line under the switch says when the sensors are still opening. The library's two memory entries share one card. New developer switch `--sensors on|all` for screenshots.
+
 ## 0.9.14 (preview)
 
 ### Changed

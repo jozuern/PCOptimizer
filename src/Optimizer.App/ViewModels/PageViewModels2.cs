@@ -1396,10 +1396,56 @@ public sealed record DiskRow(string Name, string Health, string Status, string D
     public override string ToString() => Name;
 }
 
-public sealed record SensorRow(string Hardware, string Sensor, string Value)
+/// <summary>One reading in a component's full list. Its texts change in place on every read: no row is built again.</summary>
+public sealed partial class SensorRow(string name) : ObservableObject
 {
+    public string Name { get; } = name;
+    [ObservableProperty] private string _value = "";
+    [ObservableProperty] private string _peak = "";
+
     // What screen readers announce for this item in a list or combo box.
-    public override string ToString() => $"{Sensor}: {Value}";
+    public override string ToString() => $"{Name}: {Value}";
+}
+
+/// <summary>The readings of one kind (temperatures, load, ...) of a component, under a heading in its full list.</summary>
+public sealed record SensorSection(string Title, IReadOnlyList<SensorRow> Rows);
+
+/// <summary>
+/// A component's headline value of one kind: the hottest temperature, the total load, the fastest core clock, the
+/// first power reading, the fastest fan. Which sensor that is can change from read to read; the tile names it.
+/// </summary>
+public sealed partial class SensorTile(string type, string title) : ObservableObject
+{
+    public string Type { get; } = type;
+    public string Title { get; } = title;
+    [ObservableProperty] private string _value = "";
+    [ObservableProperty] private string _unit = "";
+    [ObservableProperty] private string _source = "";
+    [ObservableProperty] private string _peak = "";
+
+    /// <summary>Share of 100 % for the bar under a load; null for other kinds.</summary>
+    [ObservableProperty] private double? _fill;
+
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => $"{Title}: {Value} {Unit}, {Source}";
+}
+
+/// <summary>One component (processor, graphics card, drive, ...): headline tiles and, folded, every reading.</summary>
+public sealed partial class SensorGroup(string id, string name, string kind, Wpf.Ui.Controls.SymbolRegular icon,
+    IReadOnlyList<SensorTile> tiles, IReadOnlyList<SensorSection> sections, string allTitle) : ObservableObject
+{
+    /// <summary>The library's identifier of the component: keeps the full list open when the cards are built again.</summary>
+    public string Id { get; } = id;
+    public string Name { get; } = name;
+    public string Kind { get; } = kind;
+    public Wpf.Ui.Controls.SymbolRegular Icon { get; } = icon;
+    public IReadOnlyList<SensorTile> Tiles { get; } = tiles;
+    public IReadOnlyList<SensorSection> Sections { get; } = sections;
+    public string AllTitle { get; } = allTitle;
+    [ObservableProperty] private bool _isExpanded;
+
+    // What screen readers announce for this item in a list or combo box.
+    public override string ToString() => Name;
 }
 
 public sealed record RunRow(string Label, string AvgFps, string Low, string Frames)
@@ -1422,7 +1468,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     private readonly List<FrameStats> _after = [];
 
     public ObservableCollection<DiskRow> Disks { get; } = [];
-    public ObservableCollection<SensorRow> SensorRows { get; } = [];
+    public ObservableCollection<SensorGroup> SensorGroups { get; } = [];
     public ObservableCollection<string> Processes { get; } = [];
     public ObservableCollection<RunRow> Runs { get; } = [];
     public ObservableCollection<int> DurationOptions { get; } = [60, 120, 300];
@@ -1482,6 +1528,9 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     [ObservableProperty] private string _benchmarkStatus = "";
     [ObservableProperty] private string _comparisonText = "";
     [ObservableProperty] private bool _sensorsOn;
+
+    /// <summary>While the sensors open, or when they report nothing; empty once readings show.</summary>
+    [ObservableProperty] private string _sensorsStatus = "";
     [ObservableProperty] private string _pawnIoText = "";
     [ObservableProperty] private bool _canInstallPawnIo;
 
@@ -1719,7 +1768,9 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
             // A read still running keeps the library open; it is closed when that read ends.
             if (!_readingSensors) _sensors?.Dispose();
             _sensors = null;
-            SensorRows.Clear();
+            SensorGroups.Clear();
+            _sensorLayout = "";
+            SensorsStatus = "";
         }
     }
 
@@ -1730,6 +1781,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     private async Task StartSensorsAsync()
     {
         Sensors opened;
+        SensorsStatus = Loc.Instance["Sensors_Opening"];
         try
         {
             opened = await Task.Run(() => new Sensors());
@@ -1738,6 +1790,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
         {
             Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
             SensorsOn = false;
+            SensorsStatus = "";
             return;
         }
         if (!SensorsOn || _sensors is not null)
@@ -1762,36 +1815,148 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     {
         if (_sensors is not { } s || _readingSensors || Owner.CurrentPage != Page.Health) return;
         _readingSensors = true;
-        IReadOnlyList<SensorReading> readings;
+        IReadOnlyList<SensorReading>? readings;
         try
         {
             readings = await Task.Run(s.Read);
         }
         catch (Exception ex)
         {
+            // The last values stay: one failed read is no reason to empty the cards.
             Log.Warn("sensors", $"read failed: {ex.Message}");
-            readings = [];
+            readings = null;
         }
         finally
         {
             _readingSensors = false;
             if (!ReferenceEquals(s, _sensors)) s.Dispose();
         }
-        if (!ReferenceEquals(s, _sensors)) return;
-        SensorRows.Clear();
-        foreach (var r in readings.Where(r => r.Value is not null && r.Type is "Temperature" or "Load" or "Clock" or "Power" or "Fan"))
-            SensorRows.Add(new SensorRow(r.Hardware, $"{r.Sensor} ({Loc.Instance[$"SensorType_{r.Type}"]})", Unit(r)));
+        if (readings is null || !ReferenceEquals(s, _sensors)) return;
+        ShowSensorReadings(readings);
     }
 
-    private static string Unit(SensorReading r) => r.Type switch
+    /// <summary>The kinds of reading shown, in the order of the tiles and of the sections in the full list.</summary>
+    private static readonly string[] SensorTypes = ["Temperature", "Load", "Clock", "Power", "Fan"];
+
+    /// <summary>The sensors and language the cards were built for: a different set (a drive added) builds them again.</summary>
+    private string _sensorLayout = "";
+
+    /// <summary>The row of every shown reading, by its place in the read; the tiles with the readings they choose from.</summary>
+    private SensorRow[] _sensorRows = [];
+    private readonly List<(SensorTile Tile, int[] Readings)> _sensorTiles = [];
+
+    /// <summary>
+    /// Fills the cards in place every two seconds: they are built only when the set of sensors changes, so an open full
+    /// list stays open and nothing flickers.
+    /// </summary>
+    private void ShowSensorReadings(IReadOnlyList<SensorReading> readings)
     {
-        "Temperature" => $"{r.Value:0} °C",
-        "Load" => $"{r.Value:0} %",
-        "Clock" => $"{r.Value:0} MHz",
-        "Power" => $"{r.Value:0.0} W",
-        "Fan" => $"{r.Value:0} RPM",
-        _ => $"{r.Value}",
+        var shown = readings.Where(r => r.Value is not null && SensorTypes.Contains(r.Type)).Select(MergeMemory).ToList();
+        var layout = Loc.Instance.Language + "\n" + string.Join("\n", shown.Select(r => $"{r.HardwareId}|{r.Type}|{r.Sensor}"));
+        if (layout != _sensorLayout)
+        {
+            BuildSensorGroups(shown);
+            _sensorLayout = layout;
+        }
+        SensorsStatus = shown.Count == 0 ? Loc.Instance["Sensors_None"] : "";
+        for (var i = 0; i < shown.Count; i++)
+        {
+            var r = shown[i];
+            _sensorRows[i].Value = SensorText(r.Type, r.Value!.Value);
+            _sensorRows[i].Peak = r.Max is { } max ? SensorText(r.Type, max) : "";
+        }
+        foreach (var (tile, indices) in _sensorTiles)
+        {
+            if (Headline(tile.Type, indices.Select(i => shown[i]).ToList()) is not { Value: { } value } r) continue;
+            (tile.Value, tile.Unit) = SensorNumber(r.Type, value);
+            tile.Source = r.Sensor;
+            tile.Peak = r.Max is { } max ? Loc.Instance.Format("Sensors_Peak", SensorText(r.Type, max)) : "";
+            tile.Fill = r.Type == "Load" ? Math.Clamp(value / 100.0, 0, 1) : null;
+        }
+    }
+
+    /// <summary>
+    /// The library reports memory as two components with one reading each ("Total Memory", "Virtual Memory", both
+    /// named "Memory"): one card with both, each reading named after its component.
+    /// </summary>
+    private static SensorReading MergeMemory(SensorReading r) =>
+        r.HardwareType == "Memory" ? r with { HardwareId = "memory", Hardware = Loc.Instance["Hw_Memory"], Sensor = r.Hardware } : r;
+
+    private void BuildSensorGroups(List<SensorReading> shown)
+    {
+        var l = Loc.Instance;
+        var open = SensorGroups.Where(g => g.IsExpanded).Select(g => g.Id).ToHashSet();
+        SensorGroups.Clear();
+        _sensorTiles.Clear();
+        _sensorRows = new SensorRow[shown.Count];
+        // Processor and graphics first, as on the System info page; the library's order within a kind.
+        var components = shown.Select((r, i) => (Reading: r, Index: i)).GroupBy(x => x.Reading.HardwareId)
+            .OrderBy(g => SensorKind(g.First().Reading.HardwareType).Rank);
+        foreach (var component in components)
+        {
+            var first = component.First().Reading;
+            var (kind, icon, _) = SensorKind(first.HardwareType);
+            var tiles = new List<SensorTile>();
+            var sections = new List<SensorSection>();
+            foreach (var type in SensorTypes)
+            {
+                var ofType = component.Where(x => x.Reading.Type == type).ToList();
+                if (ofType.Count == 0) continue;
+                var rows = new List<SensorRow>();
+                foreach (var (reading, index) in ofType) rows.Add(_sensorRows[index] = new SensorRow(reading.Sensor));
+                sections.Add(new SensorSection(l[$"SensorType_{type}"], rows));
+                if (Headline(type, ofType.Select(x => x.Reading).ToList()) is null) continue;
+                var tile = new SensorTile(type, l[$"SensorType_{type}"]);
+                tiles.Add(tile);
+                _sensorTiles.Add((tile, ofType.Select(x => x.Index).ToArray()));
+            }
+            SensorGroups.Add(new SensorGroup(first.HardwareId, first.Hardware, kind, icon, tiles, sections, l.Format("Sensors_All", component.Count()))
+            {
+                IsExpanded = open.Contains(first.HardwareId),
+            });
+        }
+    }
+
+    /// <summary>
+    /// The reading a tile shows: the hottest temperature (not "Distance to TjMax", the headroom left), the total load,
+    /// the fastest core clock, the fastest fan, otherwise the first reading (package power). Null: no tile.
+    /// </summary>
+    private static SensorReading? Headline(string type, List<SensorReading> readings) => type switch
+    {
+        "Temperature" => readings.Where(r => !r.Sensor.Contains("Distance", StringComparison.OrdinalIgnoreCase)).MaxBy(r => r.Value),
+        "Load" => readings.FirstOrDefault(r => r.Sensor.Contains("Total", StringComparison.OrdinalIgnoreCase)) ?? readings.FirstOrDefault(),
+        "Clock" => readings.Where(r => r.Sensor.Contains("Core", StringComparison.OrdinalIgnoreCase)).MaxBy(r => r.Value) ?? readings.FirstOrDefault(),
+        "Fan" => readings.MaxBy(r => r.Value),
+        _ => readings.FirstOrDefault(),
     };
+
+    private static (string Kind, Wpf.Ui.Controls.SymbolRegular Icon, int Rank) SensorKind(string hardwareType) => hardwareType switch
+    {
+        "Cpu" => (Loc.Instance["Hw_Cpu"], Wpf.Ui.Controls.SymbolRegular.DeveloperBoard24, 0),
+        "GpuNvidia" or "GpuAmd" or "GpuIntel" => (Loc.Instance["Hw_Gpu"], Wpf.Ui.Controls.SymbolRegular.DesktopPulse24, 1),
+        "Memory" => ("", Wpf.Ui.Controls.SymbolRegular.Ram20, 2), // the card is already called memory (MergeMemory)
+        "Motherboard" or "SuperIO" or "EmbeddedController" => (Loc.Instance["Hw_Board"], Wpf.Ui.Controls.SymbolRegular.DeveloperBoardLightning20, 3),
+        "Storage" => (Loc.Instance["Sensors_Drive"], Wpf.Ui.Controls.SymbolRegular.HardDrive24, 4),
+        "Battery" => (Loc.Instance["Sensors_Battery"], Wpf.Ui.Controls.SymbolRegular.Battery1024, 5),
+        _ => ("", Wpf.Ui.Controls.SymbolRegular.Gauge24, 6),
+    };
+
+    /// <summary>Number and unit apart: the tiles set the number large. Formatted in the app's language.</summary>
+    private static (string Number, string Unit) SensorNumber(string type, float value) => type switch
+    {
+        "Temperature" => ($"{value:0}", "°C"),
+        "Load" => ($"{value:0}", "%"),
+        "Clock" => ($"{value:N0}", "MHz"),
+        "Power" => ($"{value:0.0}", "W"),
+        "Fan" => ($"{value:N0}", "RPM"),
+        _ => ($"{value}", ""),
+    };
+
+    private static string SensorText(string type, float value)
+    {
+        var (number, unit) = SensorNumber(type, value);
+        return $"{number} {unit}";
+    }
 
     [RelayCommand]
     private async Task InstallPawnIoAsync()

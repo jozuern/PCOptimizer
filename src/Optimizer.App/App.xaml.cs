@@ -220,6 +220,15 @@ public partial class App : Application
         if (Version.TryParse(args.Value("--update-shot"), out var newer)) vm.PreviewUpdateFound(newer);
         if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
+        // Developer aid: live sensor readings on the Health page (read only); "all" also opens every full list.
+        if (args.Value("--sensors") is "on" or "all")
+        {
+            vm.Health.SensorsOn = true;
+            for (var waited = 0; vm.Health.SensorGroups.Count == 0 && waited < 15_000; waited += 250) await Task.Delay(250);
+            await Task.Delay(2500); // the next read: some sensors report only from the second one
+            if (args.Value("--sensors") is "all")
+                foreach (var group in vm.Health.SensorGroups) group.IsExpanded = true;
+        }
         if (args.Value("--select") is { } tid && vm.Tweaks.FirstOrDefault(t => t.Tweak.Id == tid) is { } tweak)
         {
             vm.SelectedItem = tweak;

@@ -765,7 +765,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Live-Messwerte</value>
   </data>
   <data name="Sensors_Hint" xml:space="preserve">
-    <value>Live-Temperaturen, Takte, Auslastung und Lüfter (LibreHardwareMonitor). Aus, bis du es einschaltest. CPU- und Mainboard-Sensoren brauchen den signierten PawnIO-Treiber.</value>
+    <value>Live-Temperaturen, Auslastung, Takte, Leistung und Lüfter (LibreHardwareMonitor), alle zwei Sekunden. Aus, bis du es einschaltest. Höchstwert ist der höchste Wert, seit du die Messwerte eingeschaltet hast. CPU- und Mainboard-Sensoren brauchen den signierten PawnIO-Treiber.</value>
   </data>
   <data name="Sensors_PawnIoOn" xml:space="preserve">
     <value>Der PawnIO-Treiber ist installiert.</value>
@@ -796,6 +796,30 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   </data>
   <data name="SensorType_Fan" xml:space="preserve">
     <value>Lüfter</value>
+  </data>
+  <data name="Sensors_Opening" xml:space="preserve">
+    <value>Die Sensoren werden geöffnet. Der erste Messwert kann ein paar Sekunden dauern.</value>
+  </data>
+  <data name="Sensors_None" xml:space="preserve">
+    <value>Keine Messwerte: Dieser PC meldet keine Temperaturen, Auslastung, Takte, Leistung oder Lüfter.</value>
+  </data>
+  <data name="Sensors_All" xml:space="preserve">
+    <value>Alle Messwerte ({0})</value>
+  </data>
+  <data name="Sensors_Peak" xml:space="preserve">
+    <value>Höchstwert {0}</value>
+  </data>
+  <data name="Sensors_Now" xml:space="preserve">
+    <value>Aktuell</value>
+  </data>
+  <data name="Sensors_PeakColumn" xml:space="preserve">
+    <value>Höchstwert</value>
+  </data>
+  <data name="Sensors_Drive" xml:space="preserve">
+    <value>Laufwerk</value>
+  </data>
+  <data name="Sensors_Battery" xml:space="preserve">
+    <value>Akku</value>
   </data>
   <data name="Feat_NeedsAdmin" xml:space="preserve">
     <value>Zum Anzeigen der Windows-Features braucht es Administratorrechte.</value>

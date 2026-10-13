@@ -4,7 +4,8 @@ using Optimizer.Core.Platform;
 
 namespace Optimizer.Core.Tools;
 
-public sealed record SensorReading(string Hardware, string HardwareType, string Sensor, string Type, float? Value, float? Max);
+/// <summary>One sensor; <paramref name="HardwareId"/> tells two components of the same name apart (two identical drives).</summary>
+public sealed record SensorReading(string HardwareId, string Hardware, string HardwareType, string Sensor, string Type, float? Value, float? Max);
 
 /// <summary>
 /// Opt-in sensor readings through LibreHardwareMonitorLib 0.9.6 (MPL-2.0). Graphics cards and drives work without
@@ -54,7 +55,7 @@ public sealed class Sensors : IDisposable
             return;
         }
         foreach (var s in hw.Sensors.Where(s => s.SensorType is SensorType.Temperature or SensorType.Clock or SensorType.Load or SensorType.Power or SensorType.Fan or SensorType.Voltage))
-            list.Add(new SensorReading(hw.Name, hw.HardwareType.ToString(), s.Name, s.SensorType.ToString(), s.Value, s.Max));
+            list.Add(new SensorReading(hw.Identifier.ToString(), hw.Name, hw.HardwareType.ToString(), s.Name, s.SensorType.ToString(), s.Value, s.Max));
         foreach (var sub in hw.SubHardware) Collect(sub, list);
     }
 

@@ -765,7 +765,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Live readings</value>
   </data>
   <data name="Sensors_Hint" xml:space="preserve">
-    <value>Live temperatures, clocks, load and fans (LibreHardwareMonitor). Off until you switch it on. Processor and mainboard sensors need the signed PawnIO driver.</value>
+    <value>Live temperatures, load, clocks, power and fans (LibreHardwareMonitor), every two seconds. Off until you switch it on. Peak is the highest value since you switched the readings on. Processor and mainboard sensors need the signed PawnIO driver.</value>
   </data>
   <data name="Sensors_PawnIoOn" xml:space="preserve">
     <value>PawnIO driver is installed.</value>
@@ -783,19 +783,43 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>PawnIO is a signed kernel driver that lets sensor tools read processor and mainboard sensors. It is installed with winget (namazso.PawnIO). Uninstalling it in Settings &gt; Apps removes the program, but the driver can stay in Windows. To remove it too, find the oem file with the original name pawnio.inf in pnputil /enum-drivers and run pnputil /delete-driver &lt;file&gt; /uninstall.</value>
   </data>
   <data name="SensorType_Temperature" xml:space="preserve">
-    <value>temperature</value>
+    <value>Temperature</value>
   </data>
   <data name="SensorType_Load" xml:space="preserve">
-    <value>load</value>
+    <value>Load</value>
   </data>
   <data name="SensorType_Clock" xml:space="preserve">
-    <value>clock</value>
+    <value>Clock</value>
   </data>
   <data name="SensorType_Power" xml:space="preserve">
-    <value>power</value>
+    <value>Power</value>
   </data>
   <data name="SensorType_Fan" xml:space="preserve">
-    <value>fan</value>
+    <value>Fan</value>
+  </data>
+  <data name="Sensors_Opening" xml:space="preserve">
+    <value>Opening the sensors. The first reading can take a few seconds.</value>
+  </data>
+  <data name="Sensors_None" xml:space="preserve">
+    <value>No readings: this PC reports no temperatures, load, clocks, power or fans.</value>
+  </data>
+  <data name="Sensors_All" xml:space="preserve">
+    <value>All readings ({0})</value>
+  </data>
+  <data name="Sensors_Peak" xml:space="preserve">
+    <value>Peak {0}</value>
+  </data>
+  <data name="Sensors_Now" xml:space="preserve">
+    <value>Now</value>
+  </data>
+  <data name="Sensors_PeakColumn" xml:space="preserve">
+    <value>Peak</value>
+  </data>
+  <data name="Sensors_Drive" xml:space="preserve">
+    <value>Drive</value>
+  </data>
+  <data name="Sensors_Battery" xml:space="preserve">
+    <value>Battery</value>
   </data>
   <data name="Feat_NeedsAdmin" xml:space="preserve">
     <value>Listing Windows features needs administrator rights.</value>

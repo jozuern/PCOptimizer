@@ -33,6 +33,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--scroll end` or `--scroll <pixels>` | scrolls the page to the end, or down by that many pixels, before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
 | `--category <key>` | opens that category group on the Tweaks page before the screenshot (a section such as `privacy`, or a catalog category such as `Browser`); `--select` opens the group of the selected tweak |
+| `--sensors on\|all` | switches the live sensor readings on (Health page, read only) and waits for the first values; `all` also opens every component's full list |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
 | `--confirm <tweak id> --confirm-shot <file.png>` | with `--screenshot`: renders the confirmation dialog of a tweak (nothing is applied) |
 | `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
