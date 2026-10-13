@@ -39,7 +39,7 @@
                                 <DataTemplate>
                                     <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" IsHitTestVisible="True">
                                         <ui:CardControl.Icon>
-                                            <ui:SymbolIcon Symbol="Apps24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                            <ui:SymbolIcon Symbol="{Binding Symbol}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                                         </ui:CardControl.Icon>
                                         <ui:CardControl.Header>
                                             <StackPanel>
@@ -59,8 +59,10 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Apps nobody reviewed: off by default, with a warning -->
-                        <ui:CardControl Padding="{StaticResource CardPadding}" Margin="0,8,0,0">
+                        <!-- Apps nobody reviewed: off by default, with a warning, in a section of their own after the reviewed list
+                             (the switch between the list and OneDrive read as one more app) -->
+                        <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Debloat_OtherApps}" />
+                        <ui:CardControl Padding="{StaticResource CardPadding}">
                             <ui:CardControl.Icon>
                                 <ui:SymbolIcon Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
                             </ui:CardControl.Icon>

@@ -10,6 +10,16 @@ namespace Optimizer.Core.Tests;
 /// <summary>Read-only checks of the extra probes on this machine (Category=Hardware).</summary>
 public class ExtrasHardwareTests(ITestOutputHelper output)
 {
+    /// <summary>Headings and tiles show the model without what the brand string adds (trademarks, clock, "CPU").</summary>
+    [Theory]
+    [InlineData("Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz", "Intel Core i7-9700K")]
+    [InlineData("13th Gen Intel(R) Core(TM) i7-13700K", "13th Gen Intel Core i7-13700K")]
+    [InlineData("Intel(R) Core(TM) Ultra 7 265K", "Intel Core Ultra 7 265K")]
+    [InlineData("AMD Ryzen 7 7800X3D 8-Core Processor           ", "AMD Ryzen 7 7800X3D")]
+    [InlineData("Snapdragon(R) X Elite - X1E78100 - Qualcomm(R) Oryon(TM) CPU", "Snapdragon X Elite - X1E78100 - Qualcomm Oryon")]
+    [InlineData("CPU", "CPU")]
+    public void CpuShortNameDropsTheBrandStringExtras(string name, string expected) => Assert.Equal(expected, CpuInfo.Shorten(name));
+
     [Fact]
     [Trait("Category", "Hardware")]
     public async Task ExtrasOnThisPc()

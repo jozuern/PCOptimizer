@@ -60,15 +60,19 @@
                                                            VerticalAlignment="Center" Visibility="{Binding Installed, Converter={StaticResource BoolToVisibility}}" />
                                             <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding StateText}" VerticalAlignment="Center" Margin="0,0,12,0" />
                                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,12,0" Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVisibility}}" />
-                                            <ui:Button Content="{l:Tr Apps_Install}" Icon="{ui:SymbolIcon ArrowDownload20}" AutomationProperties.Name="{Binding InstallLabel}"
-                                                       Visibility="{Binding Installed, Converter={StaticResource InverseBoolToVisibility}}"
-                                                       IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
-                                                       Command="{Binding DataContext.Apps.InstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
-                                            <!-- An installed app: update just this one from winget -->
-                                            <ui:Button Content="{l:Tr Apps_Update}" Icon="{ui:SymbolIcon ArrowDownload20}" Appearance="Transparent" AutomationProperties.Name="{Binding UpdateLabel}"
-                                                       Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVisibility}}"
-                                                       IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
-                                                       Command="{Binding DataContext.Apps.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                            <!-- One place for the button, kept on every row: "Installed" stays in line whether a row has
+                                                 Update, Install or no button at all -->
+                                            <Grid Width="140">
+                                                <ui:Button Content="{l:Tr Apps_Install}" Icon="{ui:SymbolIcon ArrowDownload20}" AutomationProperties.Name="{Binding InstallLabel}" HorizontalAlignment="Right"
+                                                           Visibility="{Binding Installed, Converter={StaticResource InverseBoolToVisibility}}"
+                                                           IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
+                                                           Command="{Binding DataContext.Apps.InstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                                <!-- An installed app: update just this one from winget -->
+                                                <ui:Button Content="{l:Tr Apps_Update}" Icon="{ui:SymbolIcon ArrowDownload20}" Appearance="Transparent" AutomationProperties.Name="{Binding UpdateLabel}" HorizontalAlignment="Right"
+                                                           Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVisibility}}"
+                                                           IsEnabled="{Binding IsInstalling, Converter={StaticResource InverseBool}}"
+                                                           Command="{Binding DataContext.Apps.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                            </Grid>
                                         </StackPanel>
                                     </ui:CardControl>
                                     </DockPanel>

@@ -155,7 +155,7 @@
     <value>Services &amp; tasks</value>
   </data>
   <data name="Nav_Apps" xml:space="preserve">
-    <value>Apps &amp; drivers</value>
+    <value>Install &amp; update</value>
   </data>
   <data name="Nav_Tools" xml:space="preserve">
     <value>Tools</value>
@@ -482,7 +482,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>On a schedule or event</value>
   </data>
   <data name="Apps_Title" xml:space="preserve">
-    <value>Apps &amp; drivers</value>
+    <value>Install &amp; update</value>
   </data>
   <data name="Apps_Hint" xml:space="preserve">
     <value>Common gaming apps and tools, and the age of your drivers with where to get updates.</value>
@@ -780,7 +780,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>PawnIO driver is installed.</value>
   </data>
   <data name="Sensors_PawnIoOff" xml:space="preserve">
-    <value>PawnIO driver is not installed: processor and mainboard sensors are not available. Install it with the button here or on the Apps &amp; drivers page.</value>
+    <value>PawnIO driver is not installed: processor and mainboard sensors are not available. Install it with the button here or on the Install &amp; update page.</value>
   </data>
   <data name="Sensors_InstallPawnIo" xml:space="preserve">
     <value>Install PawnIO</value>
@@ -1194,7 +1194,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Vt_AddKey" xml:space="preserve"><value>Check with VirusTotal: add a key in Settings</value></data>
   <data name="Startup_Enabled" xml:space="preserve"><value>Enabled</value></data>
   <data name="Startup_Disabled" xml:space="preserve"><value>Disabled</value></data>
-  <data name="Cleanup_MoreFolders" xml:space="preserve"><value>and {0} more (hover for all)</value></data>
   <data name="Cleanup_RunClean" xml:space="preserve"><value>Clean up</value></data>
   <data name="Settings_ShowInFolder" xml:space="preserve"><value>Show in folder</value></data>
   <data name="Settings_OpenFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -1215,7 +1214,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="TweakView_Everything" xml:space="preserve"><value>All, also those that do not apply</value></data>
   <data name="Advisor_SummaryGood" xml:space="preserve"><value>Nothing to change in the BIOS or on the hardware</value></data>
   <data name="Advisor_SummaryProblems" xml:space="preserve"><value>Things to change in the BIOS or on the hardware: {0}</value></data>
-  <data name="Advisor_SummaryCounts" xml:space="preserve"><value>Checked: {0}. Passed: {1}. Could not be checked: {2}. Notes: {3}.</value></data>
+  <data name="Advisor_SummaryCounts" xml:space="preserve"><value>{0} checked</value></data>
   <data name="Meta_Affects" xml:space="preserve"><value>Affects: {0}</value></data>
   <data name="Result_ViewChanges" xml:space="preserve"><value>View changes</value></data>
   <data name="Tweak_SwitchOn" xml:space="preserve"><value>Applied</value></data>
@@ -1236,11 +1235,11 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Svc_StartTypeName" xml:space="preserve"><value>Start type of {0}</value></data>
   <data name="Net_DnsRouter" xml:space="preserve"><value>Your router ({0})</value></data>
   <data name="Net_FixesLink" xml:space="preserve"><value>Network fixes such as Flush DNS cache are under Tools</value></data>
-  <data name="Bench_Step1" xml:space="preserve"><value>Step 1 of 4: start the game, then pick it in the list below.</value></data>
-  <data name="Bench_Step2" xml:space="preserve"><value>Step 2 of 4: capture A (before) three times in the same scene. Done: {0} of 3.</value></data>
-  <data name="Bench_Step3" xml:space="preserve"><value>Step 3 of 4: make the change you want to test, then go back to the same scene.</value></data>
-  <data name="Bench_Step4" xml:space="preserve"><value>Step 4 of 4: capture B (after) three times in that scene. Done: {0} of 3.</value></data>
-  <data name="Bench_StepDone" xml:space="preserve"><value>Done: the result is below. More runs on both sides make it surer.</value></data>
+  <data name="Bench_Step1" xml:space="preserve"><value>Start the game, then pick it in the list below.</value></data>
+  <data name="Bench_Step2" xml:space="preserve"><value>Capture A (before) three times in the same scene. Done: {0} of 3.</value></data>
+  <data name="Bench_Step3" xml:space="preserve"><value>Make the change you want to test, then go back to the same scene.</value></data>
+  <data name="Bench_Step4" xml:space="preserve"><value>Capture B (after) three times in that scene. Done: {0} of 3.</value></data>
+  <data name="Bench_StepDone" xml:space="preserve"><value>The result is below. More runs on both sides make it surer.</value></data>
   <data name="Bench_Game" xml:space="preserve"><value>Game</value></data>
   <data name="Bench_Duration" xml:space="preserve"><value>Duration</value></data>
   <data name="Settings_ReportShort" xml:space="preserve"><value>Report a problem opens a prefilled bug report on GitHub; nothing is sent until you submit it there.</value></data>
@@ -1288,4 +1287,11 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Net_ShowAllGames" xml:space="preserve"><value>Show all {0} games</value></data>
   <data name="Startup_ServicesHint" xml:space="preserve"><value>Their start types, with what each service does, and every scheduled task are on their own page.</value></data>
   <data name="Startup_ServicesLink" xml:space="preserve"><value>Open Services &amp; tasks</value></data>
+  <data name="Bench_StepOf" xml:space="preserve"><value>Step {0} of 4</value></data>
+  <data name="Bench_StepLabelDone" xml:space="preserve"><value>Done</value></data>
+  <data name="Bench_PickGame" xml:space="preserve"><value>Pick the game</value></data>
+  <data name="Advisor_CountPassed" xml:space="preserve"><value>{0} passed</value></data>
+  <data name="Advisor_CountUnknown" xml:space="preserve"><value>{0} could not be checked</value></data>
+  <data name="Advisor_CountNotes" xml:space="preserve"><value>{0} with a note</value></data>
+  <data name="Debloat_OtherApps" xml:space="preserve"><value>Other apps on this PC</value></data>
 </root>

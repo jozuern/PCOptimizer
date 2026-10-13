@@ -21,7 +21,8 @@
             <!-- What was checked and how it came out: the page says that much even when nothing needs a change -->
             <ui:Card Padding="16,12" Margin="0,0,0,8" Visibility="{Binding AdvisorSummaryTitle, Converter={StaticResource NullToVisibility}}">
                 <DockPanel>
-                    <Grid DockPanel.Dock="Left" Width="24" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <!-- 24 + 14 px: the title starts where the titles of the cards below start -->
+                    <Grid DockPanel.Dock="Left" Width="24" Margin="0,0,14,0" VerticalAlignment="Center">
                         <ui:SymbolIcon Symbol="CheckmarkCircle24" Filled="True" FontSize="24" Foreground="{DynamicResource SystemFillColorSuccessBrush}"
                                        Visibility="{Binding AdvisorAllGood, Converter={StaticResource BoolToVisibility}}" />
                         <ui:SymbolIcon Symbol="Warning24" Filled="True" FontSize="24" Foreground="{DynamicResource SystemFillColorCautionBrush}"

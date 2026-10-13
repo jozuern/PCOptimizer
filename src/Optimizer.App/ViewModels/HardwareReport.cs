@@ -24,7 +24,7 @@ public static class HardwareReport
         sections.Add(new HwSection(l["Hw_Os"],
         [
             f.I("version", $"Windows 11 {p.Os.DisplayVersion}"), f.I("edition", p.Os.Edition), f.I("build", p.Os.BuildString),
-            f.I("architecture", p.Os.NativeArchitecture), f.I("formFactor", f.T(p.IsLaptop ? "laptop" : "desktop")),
+            f.I("architecture", ArchitectureName(p.Os.NativeArchitecture)), f.I("formFactor", f.T(p.IsLaptop ? "laptop" : "desktop")),
         ])
         {
             Icon = SymbolRegular.Window24,
@@ -217,12 +217,20 @@ public static class HardwareReport
     }
 
     /// <summary>The tiles at the top of the System info page: what a user looks up most, one line each plus a detail line.</summary>
+    /// <summary>As Windows writes it (System > About): "x64", "Arm64"; the enum's own names start with a capital X.</summary>
+    private static string ArchitectureName(Optimizer.Core.Platform.CpuArchitecture a) => a switch
+    {
+        Optimizer.Core.Platform.CpuArchitecture.X64 => "x64",
+        Optimizer.Core.Platform.CpuArchitecture.Arm64 => "Arm64",
+        _ => a.ToString(),
+    };
+
     public static List<HwTile> Tiles(HardwareProfile p, Loc l)
     {
         var f = new Fmt(l.Language);
         var tiles = new List<HwTile>();
         if (p.Cpu is { } c)
-            tiles.Add(new HwTile(l["Hw_Cpu"], c.Name, f.F("coresThreadsValue", c.Cores, c.Threads), SymbolRegular.DeveloperBoard24));
+            tiles.Add(new HwTile(l["Hw_Cpu"], c.ShortName, f.F("coresThreadsValue", c.Cores, c.Threads), SymbolRegular.DeveloperBoard24));
         if (p.Gpus?.Where(g => g.Kind is not GpuKind.Virtual).ToList() is { Count: > 0 } gpus)
         {
             var main = gpus.FirstOrDefault(g => g.Kind == GpuKind.Discrete) ?? gpus[0];

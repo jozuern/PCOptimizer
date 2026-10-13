@@ -155,7 +155,7 @@
     <value>Dienste &amp; Aufgaben</value>
   </data>
   <data name="Nav_Apps" xml:space="preserve">
-    <value>Apps &amp; Treiber</value>
+    <value>Installieren &amp; aktualisieren</value>
   </data>
   <data name="Nav_Tools" xml:space="preserve">
     <value>Tools</value>
@@ -482,7 +482,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Nach Zeitplan oder Ereignis</value>
   </data>
   <data name="Apps_Title" xml:space="preserve">
-    <value>Apps &amp; Treiber</value>
+    <value>Installieren &amp; aktualisieren</value>
   </data>
   <data name="Apps_Hint" xml:space="preserve">
     <value>Gängige Gaming-Apps und Tools, dazu das Alter deiner Treiber und wo es Updates gibt.</value>
@@ -780,7 +780,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Der PawnIO-Treiber ist installiert.</value>
   </data>
   <data name="Sensors_PawnIoOff" xml:space="preserve">
-    <value>Der PawnIO-Treiber ist nicht installiert: CPU- und Mainboard-Sensoren sind nicht verfügbar. Installiere ihn mit der Schaltfläche hier oder unter Apps &amp; Treiber.</value>
+    <value>Der PawnIO-Treiber ist nicht installiert: CPU- und Mainboard-Sensoren sind nicht verfügbar. Installiere ihn mit der Schaltfläche hier oder unter Installieren &amp; aktualisieren.</value>
   </data>
   <data name="Sensors_InstallPawnIo" xml:space="preserve">
     <value>PawnIO installieren</value>
@@ -1194,7 +1194,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Vt_AddKey" xml:space="preserve"><value>Mit VirusTotal prüfen: Schlüssel in den Einstellungen eintragen</value></data>
   <data name="Startup_Enabled" xml:space="preserve"><value>Aktiviert</value></data>
   <data name="Startup_Disabled" xml:space="preserve"><value>Deaktiviert</value></data>
-  <data name="Cleanup_MoreFolders" xml:space="preserve"><value>und {0} weitere (alle beim Darüberfahren)</value></data>
   <data name="Cleanup_RunClean" xml:space="preserve"><value>Bereinigen</value></data>
   <data name="Settings_ShowInFolder" xml:space="preserve"><value>Im Ordner zeigen</value></data>
   <data name="Settings_OpenFolder" xml:space="preserve"><value>Ordner öffnen</value></data>
@@ -1215,7 +1214,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="TweakView_Everything" xml:space="preserve"><value>Alle, auch die nicht passenden</value></data>
   <data name="Advisor_SummaryGood" xml:space="preserve"><value>Im BIOS und an der Hardware ist nichts zu ändern</value></data>
   <data name="Advisor_SummaryProblems" xml:space="preserve"><value>Im BIOS oder an der Hardware zu ändern: {0}</value></data>
-  <data name="Advisor_SummaryCounts" xml:space="preserve"><value>Geprüft: {0}. Bestanden: {1}. Nicht prüfbar: {2}. Hinweise: {3}.</value></data>
+  <data name="Advisor_SummaryCounts" xml:space="preserve"><value>{0} geprüft</value></data>
   <data name="Meta_Affects" xml:space="preserve"><value>Wirkt auf: {0}</value></data>
   <data name="Result_ViewChanges" xml:space="preserve"><value>Änderungen ansehen</value></data>
   <data name="Tweak_SwitchOn" xml:space="preserve"><value>Angewendet</value></data>
@@ -1236,11 +1235,11 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Svc_StartTypeName" xml:space="preserve"><value>Starttyp von {0}</value></data>
   <data name="Net_DnsRouter" xml:space="preserve"><value>Dein Router ({0})</value></data>
   <data name="Net_FixesLink" xml:space="preserve"><value>Netzwerkhilfen wie DNS-Cache leeren stehen unter Tools</value></data>
-  <data name="Bench_Step1" xml:space="preserve"><value>Schritt 1 von 4: Starte das Spiel und wähle es unten in der Liste aus.</value></data>
-  <data name="Bench_Step2" xml:space="preserve"><value>Schritt 2 von 4: Nimm A (vorher) dreimal in derselben Szene auf. Fertig: {0} von 3.</value></data>
-  <data name="Bench_Step3" xml:space="preserve"><value>Schritt 3 von 4: Nimm die Änderung vor, die du testen willst, und geh zurück in dieselbe Szene.</value></data>
-  <data name="Bench_Step4" xml:space="preserve"><value>Schritt 4 von 4: Nimm B (nachher) dreimal in dieser Szene auf. Fertig: {0} von 3.</value></data>
-  <data name="Bench_StepDone" xml:space="preserve"><value>Fertig: Das Ergebnis steht darunter. Mehr Durchläufe auf beiden Seiten machen es sicherer.</value></data>
+  <data name="Bench_Step1" xml:space="preserve"><value>Starte das Spiel und wähle es unten in der Liste aus.</value></data>
+  <data name="Bench_Step2" xml:space="preserve"><value>Nimm A (vorher) dreimal in derselben Szene auf. Fertig: {0} von 3.</value></data>
+  <data name="Bench_Step3" xml:space="preserve"><value>Nimm die Änderung vor, die du testen willst, und geh zurück in dieselbe Szene.</value></data>
+  <data name="Bench_Step4" xml:space="preserve"><value>Nimm B (nachher) dreimal in dieser Szene auf. Fertig: {0} von 3.</value></data>
+  <data name="Bench_StepDone" xml:space="preserve"><value>Das Ergebnis steht darunter. Mehr Durchläufe auf beiden Seiten machen es sicherer.</value></data>
   <data name="Bench_Game" xml:space="preserve"><value>Spiel</value></data>
   <data name="Bench_Duration" xml:space="preserve"><value>Dauer</value></data>
   <data name="Settings_ReportShort" xml:space="preserve"><value>Problem melden öffnet einen vorausgefüllten Fehlerbericht auf GitHub; gesendet wird erst, wenn du ihn dort abschickst.</value></data>
@@ -1288,4 +1287,11 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Net_ShowAllGames" xml:space="preserve"><value>Alle {0} Spiele zeigen</value></data>
   <data name="Startup_ServicesHint" xml:space="preserve"><value>Ihre Starttypen, mit dem, was jeder Dienst tut, und alle geplanten Aufgaben stehen auf einer eigenen Seite.</value></data>
   <data name="Startup_ServicesLink" xml:space="preserve"><value>Dienste &amp; Aufgaben öffnen</value></data>
+  <data name="Bench_StepOf" xml:space="preserve"><value>Schritt {0} von 4</value></data>
+  <data name="Bench_StepLabelDone" xml:space="preserve"><value>Fertig</value></data>
+  <data name="Bench_PickGame" xml:space="preserve"><value>Spiel auswählen</value></data>
+  <data name="Advisor_CountPassed" xml:space="preserve"><value>{0} bestanden</value></data>
+  <data name="Advisor_CountUnknown" xml:space="preserve"><value>{0} nicht prüfbar</value></data>
+  <data name="Advisor_CountNotes" xml:space="preserve"><value>{0} mit Hinweis</value></data>
+  <data name="Debloat_OtherApps" xml:space="preserve"><value>Weitere Apps auf diesem PC</value></data>
 </root>

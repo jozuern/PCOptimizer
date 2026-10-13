@@ -510,6 +510,18 @@ public sealed partial class DebloatItem(Optimizer.Core.Debloat.DebloatItem item,
     public string Version => Item.Installed.Version;
     public string Group { get; } = Labels.Current.Get(lang, $"debloatGroup.{item.Entry.Group}");
 
+    /// <summary>An icon per group of the reviewed list, so the rows do not all carry the same one.</summary>
+    public Wpf.Ui.Controls.SymbolRegular Symbol { get; } = item.Entry.Group switch
+    {
+        "xbox" => Wpf.Ui.Controls.SymbolRegular.Games24,
+        "media" => Wpf.Ui.Controls.SymbolRegular.Video24,
+        "consumer" => Wpf.Ui.Controls.SymbolRegular.ShoppingBag24,
+        "legacy" => Wpf.Ui.Controls.SymbolRegular.History24,
+        "thirdParty" => Wpf.Ui.Controls.SymbolRegular.AppsAddIn24,
+        "oem" => Wpf.Ui.Controls.SymbolRegular.BuildingFactory24,
+        _ => Wpf.Ui.Controls.SymbolRegular.WindowApps24,
+    };
+
     // Removing for all users needs administrator rights: the page says that once above the list, so the row only
     // shows reasons that belong to this app.
     public string? BlockText { get; } = item.BlockKey is { } k ? Labels.Current.Get(lang, k) : null;
@@ -739,18 +751,7 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     /// PC once measured, every place the category looks before that or when none of them exists.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FoldersShort))]
     private string _foldersText = FoldersOf(category, category.Roots);
-
-    /// <summary>The first folder and how many more (all of them in the tooltip): six browser cache paths are one line.</summary>
-    public string FoldersShort
-    {
-        get
-        {
-            var lines = FoldersText.Split('\n');
-            return lines.Length <= 1 ? FoldersText : lines[0] + "\n" + Loc.Instance.Format("Cleanup_MoreFolders", lines.Length - 1);
-        }
-    }
 
     public void SetScan(Optimizer.Core.Cleanup.CleanupScan scan)
     {

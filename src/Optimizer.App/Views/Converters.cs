@@ -91,6 +91,14 @@ public sealed class NullToBoolConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
+/// <summary>A number at least the parameter -> true (the marks of the benchmark steps reached so far).</summary>
+public sealed class AtLeastConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is int n && int.TryParse(parameter as string, NumberStyles.Integer, CultureInfo.InvariantCulture, out var min) && n >= min;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
 /// <summary>True when every bound value is true (a row's own "can toggle" and the app-wide "a change may start now").</summary>
 public sealed class AllTrueConverter : IMultiValueConverter
 {

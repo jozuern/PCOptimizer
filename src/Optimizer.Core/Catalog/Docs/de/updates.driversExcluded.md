@@ -13,7 +13,7 @@ Wenn du Grafiktreiber selbst von NVIDIA, AMD oder Intel installierst, kann Windo
 Microsoft dokumentiert, was die Richtlinie bewirkt, aber keinen Effekt auf Spiele [1]. Der Nutzen ist Planbarkeit: Der Treiber ändert sich nur, wenn du ihn änderst.
 
 ## Nachteile & Risiken
-Sie gilt für alle Treiber, nicht nur für den Grafiktreiber: Auch Chipsatz-, Netzwerk-, Audio- und andere Treiberupdates über Windows Update fallen weg, und du installierst sie von den Herstellerseiten (die Seite Apps & Treiber hilft dabei). Am stärksten betroffen sind Laptops, die ihre Treiber über Windows Update bekommen. Microsoft führt die Richtlinie für Pro, Enterprise und Education, deshalb bietet die App sie unter Home nicht an.
+Sie gilt für alle Treiber, nicht nur für den Grafiktreiber: Auch Chipsatz-, Netzwerk-, Audio- und andere Treiberupdates über Windows Update fallen weg, und du installierst sie von den Herstellerseiten (die Seite Installieren & aktualisieren hilft dabei). Am stärksten betroffen sind Laptops, die ihre Treiber über Windows Update bekommen. Microsoft führt die Richtlinie für Pro, Enterprise und Education, deshalb bietet die App sie unter Home nicht an.
 
 ## Wann du es nicht nutzen solltest
 Wenn du Treiber nicht selbst aktualisierst, oder auf einem Laptop, dessen Hersteller Treiber über Windows Update liefert.

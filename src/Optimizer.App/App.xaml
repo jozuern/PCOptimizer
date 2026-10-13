@@ -18,6 +18,7 @@
             <v:BoolToVisibilityConverter x:Key="InverseBoolToVisibility" Invert="True" />
             <v:BoolToVisibilityConverter x:Key="BoolToHidden" Off="Hidden" />
             <v:NullToVisibilityConverter x:Key="NullToVisibility" />
+            <v:NullToVisibilityConverter x:Key="VisibleWhenNull" Invert="True" />
             <v:InverseBoolConverter x:Key="InverseBool" />
             <v:StatusToSymbolConverter x:Key="StatusToSymbol" />
             <v:CountToVisibilityConverter x:Key="CountToVisibility" />
@@ -27,6 +28,7 @@
             <v:LayoutWidthConverter x:Key="LayoutWidth" />
             <v:PageWidthConverter x:Key="PageWidth" />
             <v:SameItemConverter x:Key="SameItem" />
+            <v:AtLeastConverter x:Key="AtLeast" />
 
             <!--
                 Fluent rules for every page: Segoe UI Variable type ramp (ui:TextBlock FontTypography), spacing only

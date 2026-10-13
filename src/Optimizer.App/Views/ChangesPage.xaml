@@ -68,7 +68,7 @@
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Changes_Safety}" />
             <ui:CardControl Padding="{StaticResource CardPadding}">
                 <ui:CardControl.Icon>
-                    <ui:SymbolIcon Symbol="ShieldCheckmark24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                    <ui:SymbolIcon Symbol="{Binding RestorePointIcon}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 </ui:CardControl.Icon>
                 <ui:CardControl.Header>
                     <StackPanel>

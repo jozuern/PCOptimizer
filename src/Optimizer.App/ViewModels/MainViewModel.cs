@@ -293,6 +293,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _checkForUpdates;
     [ObservableProperty] private string _restorePointText = "";
     [ObservableProperty] private bool _canEnableRestorePoints;
+
+    /// <summary>The safety net card's icon follows the state: a check only when System Protection is known to be on.</summary>
+    [ObservableProperty] private SymbolRegular _restorePointIcon = SymbolRegular.Shield24;
     [ObservableProperty] private string _tweaksSummary = "";
     [ObservableProperty] private string? _resultText;
 
@@ -385,7 +388,15 @@ public sealed partial class MainViewModel : ObservableObject
         var notes = all.Count(f => f.Status == FindingStatus.Info);
         AdvisorAllGood = problems == 0;
         AdvisorSummaryTitle = problems == 0 ? Loc.Instance["Advisor_SummaryGood"] : Loc.Instance.Format("Advisor_SummaryProblems", problems);
-        AdvisorSummaryText = Loc.Instance.Format("Advisor_SummaryCounts", all.Count, passed, unknown, notes);
+        // "9 checked: 8 passed, 1 could not be checked", parts of zero left out (like the counts on the Tweaks page)
+        var parts = new[]
+        {
+            (Count: passed, Key: "Advisor_CountPassed"),
+            (Count: unknown, Key: "Advisor_CountUnknown"),
+            (Count: notes, Key: "Advisor_CountNotes"),
+        }.Where(x => x.Count > 0).Select(x => Loc.Instance.Format(x.Key, x.Count)).ToList();
+        var checkedText = Loc.Instance.Format("Advisor_SummaryCounts", all.Count);
+        AdvisorSummaryText = parts.Count == 0 ? checkedText : $"{checkedText}: {string.Join(", ", parts)}";
     }
 
     public bool ChangesEmpty => ChangeRecords.Count == 0;
@@ -1648,7 +1659,7 @@ public sealed partial class MainViewModel : ObservableObject
         ScoreStatus = Score >= 85 ? "Ok" : Score >= 60 ? "Problem" : "Critical";
         LastScanText = _lastScanTime is { } t ? Loc.Instance.Format("LastScan", t.ToString("HH:mm")) : "";
         if (Profile is { } prof)
-            Headline = string.Join(", ", new[] { prof.Cpu?.Name, prof.Gpus?.FirstOrDefault(g => g.Kind == GpuKind.Discrete)?.Name ?? prof.Gpus?.FirstOrDefault()?.Name,
+            Headline = string.Join(", ", new[] { prof.Cpu?.ShortName, prof.Gpus?.FirstOrDefault(g => g.Kind == GpuKind.Discrete)?.Name ?? prof.Gpus?.FirstOrDefault()?.Name,
                 $"Windows 11 {prof.Os.DisplayVersion}" }.Where(x => !string.IsNullOrEmpty(x)));
     }
 
@@ -1957,6 +1968,7 @@ public sealed partial class MainViewModel : ObservableObject
         var sr = _restoreEnabled;
         RestorePointText = sr switch { true => Loc.Instance["Rp_On"], false => Loc.Instance["Rp_Off"], _ => Loc.Instance["Rp_Unknown"] };
         CanEnableRestorePoints = sr == false && IsElevated;
+        RestorePointIcon = sr switch { true => SymbolRegular.ShieldCheckmark24, false => SymbolRegular.ShieldDismiss24, _ => SymbolRegular.Shield24 };
 
         ChangeLog.Clear();
         foreach (var e in Log.Newest(e => e.Source == "change", 200))

@@ -613,7 +613,7 @@ public sealed partial class ServicesViewModel(MainViewModel owner, AppServices s
     }
 }
 
-// ---------------- Apps & drivers ----------------
+// ---------------- Install & update ----------------
 
 public sealed partial class AppRow(AppEntry app, string lang, bool installed) : ObservableObject
 {
@@ -1442,12 +1442,41 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
     partial void OnSelectedProcessChanged(string? value) => UpdateBenchmarkStep();
 
     /// <summary>Three runs before (A), the change, three runs after (B): the result counts only with enough runs on both sides.</summary>
-    private void UpdateBenchmarkStep() => BenchmarkStep =
-        SelectedProcess is null ? Loc.Instance["Bench_Step1"]
-        : _before.Count < 3 ? Loc.Instance.Format("Bench_Step2", _before.Count)
-        : _after.Count == 0 ? Loc.Instance["Bench_Step3"]
-        : _after.Count < 3 ? Loc.Instance.Format("Bench_Step4", _after.Count)
-        : Loc.Instance["Bench_StepDone"];
+    private void UpdateBenchmarkStep()
+    {
+        BenchmarkStepNumber = SelectedProcess is null ? 1 : _before.Count < 3 ? 2 : _after.Count == 0 ? 3 : _after.Count < 3 ? 4 : 5;
+        BenchmarkStep = BenchmarkStepNumber switch
+        {
+            1 => Loc.Instance["Bench_Step1"],
+            2 => Loc.Instance.Format("Bench_Step2", _before.Count),
+            3 => Loc.Instance["Bench_Step3"],
+            4 => Loc.Instance.Format("Bench_Step4", _after.Count),
+            _ => Loc.Instance["Bench_StepDone"],
+        };
+        BenchmarkStepLabel = BenchmarkStepNumber <= 4 ? Loc.Instance.Format("Bench_StepOf", BenchmarkStepNumber) : Loc.Instance["Bench_StepLabelDone"];
+        OnPropertyChanged(nameof(CanCaptureBefore));
+        OnPropertyChanged(nameof(CanCaptureAfter));
+        OnPropertyChanged(nameof(HasRuns));
+    }
+
+    /// <summary>1 to 4 while the steps run, 5 when both sides have their runs: drives the four marks above the step.</summary>
+    [ObservableProperty] private int _benchmarkStepNumber = 1;
+
+    /// <summary>"Step 2 of 4" or "Done", above the instruction.</summary>
+    [ObservableProperty] private string _benchmarkStepLabel = "";
+
+    /// <summary>A capture needs the game; B also needs a run of A to compare with. One capture at a time.</summary>
+    public bool CanCaptureBefore => SelectedProcess is not null && !IsCapturing;
+
+    public bool CanCaptureAfter => SelectedProcess is not null && !IsCapturing && _before.Count > 0;
+
+    public bool HasRuns => Runs.Count > 0;
+
+    partial void OnIsCapturingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanCaptureBefore));
+        OnPropertyChanged(nameof(CanCaptureAfter));
+    }
     [ObservableProperty] private int _captureSeconds = 60;
     [ObservableProperty] private bool _isCapturing;
     [ObservableProperty] private string _benchmarkStatus = "";

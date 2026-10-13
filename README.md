@@ -44,7 +44,7 @@ A copy installed this way is updated by its package manager: "Update now" in the
 - **Graphics & DNS:** NVIDIA driver settings through the documented driver settings interface (NVAPI), "Prefer maximum performance" per game, a DNS server choice and an opt-in DNS benchmark. Network adapter power saving is in the tweaks, the VRR state in the scan.
 - **Startup and services:** an Autoruns-style list of everything that starts with Windows with signature checks, VirusTotal lookups (your own key) and snapshots to compare, and service start types with explanations.
 - **Apps that were not reviewed:** on request, Remove apps also lists the other removable apps, with a warning.
-- **Apps & drivers:** install common apps with winget, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
+- **Install & update:** install common apps with winget, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
 - **Tools and health:** storage analyzer, Windows features, program start priorities, network fixes, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
 - **Export, Import and command line:** move your changes to another PC or a fresh install, in the app or with `--apply` ([Command line](#command-line)).
 - **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan, with a button that copies it all for a forum post or a bug report.

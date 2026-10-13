@@ -13,7 +13,7 @@ If you install graphics drivers from NVIDIA, AMD or Intel yourself, Windows Upda
 Microsoft documents what the policy does, not an effect on games [1]. The benefit is predictability: the driver changes only when you change it.
 
 ## Trade-offs & risks
-It applies to all drivers, not only the graphics driver: chipset, network, audio and other driver updates from Windows Update stop as well, and you have to install them from the manufacturers' pages (the Apps & drivers page helps). Laptops that get their drivers through Windows Update are affected most. Microsoft lists the policy for Pro, Enterprise and Education, so the app does not offer it on Home.
+It applies to all drivers, not only the graphics driver: chipset, network, audio and other driver updates from Windows Update stop as well, and you have to install them from the manufacturers' pages (the Install & update page helps). Laptops that get their drivers through Windows Update are affected most. Microsoft lists the policy for Pro, Enterprise and Education, so the app does not offer it on Home.
 
 ## When not to use it
 If you do not update drivers yourself, or on a laptop whose manufacturer delivers drivers through Windows Update.

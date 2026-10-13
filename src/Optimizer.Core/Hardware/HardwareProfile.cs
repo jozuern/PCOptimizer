@@ -72,6 +72,25 @@ public sealed record CpuInfo(
     public bool IsHybrid => CoresByEfficiencyClass.Count > 1;
 
     public int PerformanceCores => CoresByEfficiencyClass.Count == 0 ? Cores : CoresByEfficiencyClass[CoresByEfficiencyClass.Keys.Max()];
+
+    /// <summary>The name for headings and tiles: "Intel Core i7-9700K" instead of "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz".</summary>
+    public string ShortName => Shorten(Name);
+
+    /// <summary>
+    /// Drops what the processor's brand string adds to the model: trademark signs, the clock after "@", "CPU", and the
+    /// "8-Core Processor" of AMD. A name that would come out empty stays as it is.
+    /// </summary>
+    public static string Shorten(string name)
+    {
+        var s = name.Replace("(R)", "", StringComparison.OrdinalIgnoreCase).Replace("(TM)", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00AE", "").Replace("\u2122", "");
+        var at = s.IndexOf('@');
+        if (at >= 0) s = s[..at];
+        s = string.Join(' ', s.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => !w.Equals("CPU", StringComparison.OrdinalIgnoreCase) && !w.Equals("Processor", StringComparison.OrdinalIgnoreCase)
+                && !(w.EndsWith("-Core", StringComparison.OrdinalIgnoreCase) && char.IsDigit(w[0]))));
+        return s.Length > 0 ? s : name.Trim();
+    }
 }
 
 // ---------------- GPU ----------------
