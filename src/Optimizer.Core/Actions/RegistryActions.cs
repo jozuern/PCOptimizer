@@ -12,6 +12,15 @@ public sealed class RegistryAction : TweakAction
     public Hive Hive { get; init; } = Hive.Machine;
     public string Path { get; init; } = "";
 
+    /// <summary>A path with "{nic}" stands for the same value under every active network interface.</summary>
+    public override IEnumerable<TweakAction> Expand(ExpansionContext x) =>
+        !Path.Contains("{nic}", StringComparison.Ordinal) ? [this]
+        : x.NetworkInterfaces.Select(id => new RegistryAction
+        {
+            Hive = Hive, Path = Path.Replace("{nic}", id), Name = Name, Kind = Kind, Value = Value, Delete = Delete,
+            Notify = Notify, MissingMeans = MissingMeans, RemoveKeyOnUndo = RemoveKeyOnUndo?.Replace("{nic}", id),
+        });
+
     /// <summary>Value name; empty = the key's default value.</summary>
     public string Name { get; init; } = "";
 

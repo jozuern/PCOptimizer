@@ -68,6 +68,9 @@ public sealed class PowerModeAction : TweakAction
     /// <summary>"ac" or "dc" after expansion; null in the catalog and in backups made before the source was recorded.</summary>
     public string? Source { get; init; }
 
+    /// <summary>The catalog's power mode goes to the source the PC runs on now (unchanged when Windows does not say).</summary>
+    public override IEnumerable<TweakAction> Expand(ExpansionContext x) => [Source is null && x.PowerSource is { } source ? For(source) : this];
+
     public PowerModeAction For(string source) => new() { Overlay = Overlay, Source = source };
 
     public override string TargetKey => Source is null ? "pwr:overlay" : $"pwr:overlay:{Source}";
@@ -109,6 +112,13 @@ public sealed class PowerModeAction : TweakAction
 /// </summary>
 public sealed class NicPropertyAction : TweakAction
 {
+    /// <summary>The template stands for every physical adapter of its medium (or the one interface it names).</summary>
+    public override IEnumerable<TweakAction> Expand(ExpansionContext x) => Adapter is not null ? [this]
+        : x.Adapters
+            .Where(a => Media switch { "ethernet" => a.IsEthernet, "wifi" => a.IsWifi, _ => true })
+            .Where(a => InterfaceGuid is not { } only || string.Equals(only, a.InterfaceGuid, StringComparison.OrdinalIgnoreCase))
+            .Select(a => new NicPropertyAction { Properties = Properties, Dwords = Dwords, Media = Media, InterfaceGuid = InterfaceGuid, Adapter = a });
+
     // Driver keywords are case-insensitive. The setters keep that for dictionaries read back from a backup, whose JSON
     // reader builds case-sensitive ones: otherwise the stored action of an undo would name a different target.
     private readonly Dictionary<string, string> _properties = new(StringComparer.OrdinalIgnoreCase);
@@ -331,6 +341,10 @@ public static class NicAdapters
 public sealed class DnsAction : TweakAction
 {
     public string InterfaceGuid { get; init; } = "";
+
+    /// <summary>"{nic}" sets the servers of every active network interface.</summary>
+    public override IEnumerable<TweakAction> Expand(ExpansionContext x) =>
+        InterfaceGuid != "{nic}" ? [this] : x.NetworkInterfaces.Select(id => new DnsAction { InterfaceGuid = id, Servers = Servers });
 
     /// <summary>"dhcp" or comma-separated IPv4 addresses.</summary>
     public string Servers { get; init; } = "dhcp";

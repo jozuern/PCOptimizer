@@ -123,6 +123,12 @@ public abstract class TweakAction
     /// <summary>Writes a stored original back (deleting the target when it did not exist).</summary>
     public abstract void Restore(ActionContext c, StoredValue original);
 
+    /// <summary>
+    /// The actions this one stands for on this PC. A template gives one per target ("{nic}" one per active network
+    /// interface, a power setting the active plan, adapter properties every adapter of the medium); a plain action is itself.
+    /// </summary>
+    public virtual IEnumerable<TweakAction> Expand(ExpansionContext x) => [this];
+
     /// <summary>The changed target as a label key and its parts, e.g. "target.service" and "Spooler".</summary>
     public abstract TargetText TargetLabel(ActionContext c);
 

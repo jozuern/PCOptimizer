@@ -33,6 +33,9 @@ public sealed class ServiceAction : TweakAction
 /// </summary>
 public sealed class PowerSettingAction : TweakAction
 {
+    /// <summary>Without a plan of its own the setting goes to the active plan (unchanged when that cannot be read).</summary>
+    public override IEnumerable<TweakAction> Expand(ExpansionContext x) => [Scheme is null && x.ActiveScheme is { } scheme ? For(scheme) : this];
+
     public string Subgroup { get; init; } = "";
     public string Setting { get; init; } = "";
     public uint? Ac { get; init; }

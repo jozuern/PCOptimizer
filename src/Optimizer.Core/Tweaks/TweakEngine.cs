@@ -792,79 +792,11 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     // ---------------- helpers ----------------
 
-    /// <summary>
-    /// Expands per-adapter templates: "{nic}" registry paths and DNS actions into one action per active network
-    /// interface, NIC property templates into one action per physical adapter of the requested media.
-    /// </summary>
+    /// <summary>The tweak's actions for this PC: templates expand to their targets (<see cref="TweakAction.Expand"/>).</summary>
     public IReadOnlyList<TweakAction> Expand(TweakDefinition t)
     {
-        var list = new List<TweakAction>();
-        IReadOnlyList<NicAdapter>? adapters = null;
-        Guid? activeScheme = null;
-        IReadOnlyList<string>? nics = null;
-        foreach (var a in t.Actions)
-        {
-            switch (a)
-            {
-                case RegistryAction r when r.Path.Contains("{nic}", StringComparison.Ordinal):
-                    foreach (var id in nics ??= ctx.CurrentNetworkInterfaceIds())
-                        list.Add(new RegistryAction
-                        {
-                            Hive = r.Hive, Path = r.Path.Replace("{nic}", id), Name = r.Name, Kind = r.Kind, Value = r.Value, Delete = r.Delete,
-                            Notify = r.Notify, MissingMeans = r.MissingMeans, RemoveKeyOnUndo = r.RemoveKeyOnUndo?.Replace("{nic}", id),
-                        });
-                    break;
-                case DnsAction d when d.InterfaceGuid == "{nic}":
-                    foreach (var id in nics ??= ctx.CurrentNetworkInterfaceIds())
-                        list.Add(new DnsAction { InterfaceGuid = id, Servers = d.Servers });
-                    break;
-                case PowerSettingAction p when p.Scheme is null:
-                    activeScheme ??= SafeActiveScheme();
-                    list.Add(activeScheme is { } scheme ? p.For(scheme) : p);
-                    break;
-                case PowerModeAction m when m.Source is null:
-                    list.Add(PowerModeAction.CurrentSource(ctx) is { } source ? m.For(source) : m);
-                    break;
-                case NicPropertyAction n when n.Adapter is null:
-                    adapters ??= SafeAdapters();
-                    foreach (var adapter in adapters.Where(x => n.Media switch { "ethernet" => x.IsEthernet, "wifi" => x.IsWifi, _ => true }))
-                    {
-                        if (n.InterfaceGuid is { } only && !string.Equals(only, adapter.InterfaceGuid, StringComparison.OrdinalIgnoreCase)) continue;
-                        list.Add(new NicPropertyAction { Properties = n.Properties, Dwords = n.Dwords, Media = n.Media, InterfaceGuid = n.InterfaceGuid, Adapter = adapter });
-                    }
-                    break;
-                default:
-                    list.Add(a);
-                    break;
-            }
-        }
-        return list;
-    }
-
-    private Guid? SafeActiveScheme()
-    {
-        try
-        {
-            return ctx.Power.ActiveScheme() is var g && g != Guid.Empty ? g : null;
-        }
-        catch (Exception ex)
-        {
-            Log.Warn("engine", $"active power plan unreadable: {ex.Message}");
-            return null;
-        }
-    }
-
-    private IReadOnlyList<NicAdapter> SafeAdapters()
-    {
-        try
-        {
-            return NicAdapters.Enumerate(ctx.Registry);
-        }
-        catch (Exception ex)
-        {
-            Log.Warn("engine", $"network adapters unreadable: {ex.Message}");
-            return [];
-        }
+        var x = new ExpansionContext(ctx);
+        return t.Actions.SelectMany(a => a.Expand(x)).ToList();
     }
 
     private static DateTimeOffset LastBoot() => DateTimeOffset.Now - TimeSpan.FromMilliseconds(Environment.TickCount64);
