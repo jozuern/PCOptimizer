@@ -116,7 +116,7 @@
     {
       "id": "quiet.powerModeEfficiency",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: after apply, Windows reports \"Best power efficiency\" as the effective power mode; undo restores the previous mode" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md in git 60c3a93^: after apply, Windows reports \"Best power efficiency\" as the effective power mode; undo restores the previous mode" ],
       "category": "Quiet",
       "impact": {
         "gaming": 0,
@@ -180,7 +180,7 @@
     {
       "id": "office.launchToThisPc",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: a new File Explorer window opened on \"This PC\" after apply and on \"Home\" again after undo" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md in git 60c3a93^: Preview review: a new File Explorer window opened on \"This PC\" after apply and on \"Home\" again after undo" ],
       "category": "Productivity",
       "impact": {
         "gaming": 0,

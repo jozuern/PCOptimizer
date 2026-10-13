@@ -4,9 +4,9 @@
 
 **Built to be the only PC optimizer you need on Windows 11.**
 
-Tunero finds what really costs your games frame rate, fixes what it can and tells you how to fix the rest. It brings the useful settings of the popular tweak tools, debloat scripts and system utilities into one app (privacy, debloat, cleanup, startup, services, Windows Update) and leaves out the placebo. Every finding and every change comes with an explanation and sources, and every change is backed up first and can be undone. Gaming first, with profiles for laptops, battery, office, quiet and older PCs. One exe for Windows 11 24H2 or newer (x64), in English and German. Website: [tunero.dev](https://tunero.dev).
+Tunero finds what really costs your games frame rate, fixes what it can and tells you how to fix the rest. It brings the useful settings of the popular tweak tools, debloat scripts and system utilities into one app (privacy, debloat, cleanup, startup, services, Windows Update) and leaves out the placebo. Every finding and every change comes with an explanation and sources, and every setting it changes is backed up first and can be undone. Gaming first, with profiles for laptops, battery, office, quiet and older PCs. One exe for Windows 11 25H2 or newer (x64), in English and German. Website: [tunero.dev](https://tunero.dev).
 
-> **Status: preview.** Every change is tested for apply and undo against a registry sandbox, and the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 in a Hyper-V virtual machine before releases. A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
+> **Status: preview.** The tests apply and undo every catalog tweak made of registry values against a registry sandbox, restore a saved backup of every kind of change the way an earlier version wrote it, and run the other changes against fake system interfaces; the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 Pro in a Hyper-V virtual machine before releases (Home and 25H2 are supported but have been tested less). A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
 
 <p align="center"><img src="docs/screenshots/flow.gif" width="800" alt="The scan, the confirmation of the recommended changes with the exact values, the question to turn on System Protection for a restore point, the Changes page, and Undo all"></p>
 
@@ -18,8 +18,8 @@ Or with a package manager:
 
 | | Install | Start |
 |---|---|---|
-| winget | `winget install jozuern.Tunero` | `tunero` |
-| Chocolatey | `choco install tunero` | `tunero` |
+| winget (once the first version has passed review) | `winget install jozuern.Tunero` | `tunero` |
+| Chocolatey (once the first version has passed moderation) | `choco install tunero` | `tunero` |
 | Scoop | `scoop bucket add tunero https://github.com/jozuern/scoop-bucket`, then `scoop install tunero/tunero` | Start menu, Scoop Apps |
 
 A copy installed this way is updated by its package manager: "Update now" in the app runs `winget upgrade`, `choco upgrade` or `scoop update` for you. winget and Chocolatey review every new version before they offer it, which can take a few days; the Scoop bucket picks up a release within a few hours.
@@ -42,10 +42,10 @@ A copy installed this way is updated by its package manager: "Update now" in the
 - **Exact changes:** the confirmation lists every registry value, service, task or setting with its current and new value; blocked changes say why.
 - **Privacy, browsers and Windows:** documented policies for Microsoft Edge, Google Chrome and Brave (data collection, AI features, promotions), Windows AI features (Recall, Paint, Notepad), app permissions, notifications, the taskbar and Start, and security options such as LSA protection and Defender network protection.
 - **Graphics & DNS:** NVIDIA driver settings through the documented driver settings interface (NVAPI), "Prefer maximum performance" per game, a DNS server choice and an opt-in DNS benchmark. Network adapter power saving is in the tweaks, the VRR state in the scan.
-- **Startup and services:** an Autoruns-style list of everything that starts with Windows with signature checks, VirusTotal lookups (your own key) and snapshots to compare, and service start types with explanations.
+- **Startup and services:** an Autoruns-style list of the places programs start from (Run keys and startup folders, scheduled tasks, services and drivers, Explorer extensions, Winlogon, image hijacks, AppInit, Active Setup, print monitors, LSA and network providers, codecs, WMI and more) with signature checks, VirusTotal lookups (your own key) and snapshots to compare, and service start types with explanations.
 - **Apps that were not reviewed:** on request, Remove apps also lists the other removable apps, with a warning.
 - **Install & update:** install common apps with winget, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
-- **Tools and health:** storage analyzer, Windows features, program start priorities, network fixes, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
+- **Tools and health:** storage analyzer, Windows features, program start priorities (preview), network fixes, Windows Update repair, SFC and DISM, a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
 - **Export, Import and command line:** move your changes to another PC or a fresh install, in the app or with `--apply` ([Command line](#command-line)).
 - **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan, with a button that copies it all for a forum post or a bug report.
 - **Keyboard:** Ctrl+F search (Down into the results, Enter opens, Esc clears), F5 reads the page again or scans again, Esc closes the details pane.
@@ -61,10 +61,19 @@ The app uses settings that Microsoft or the hardware vendor documents. A few har
 ## What it does differently
 
 - **It shows its work.** Every check and every change has a page with what it does, why, how solid the evidence is and the sources, in English and German.
-- **Everything it changes can be undone.** Each change is backed up first and can be undone on the Changes page, also after a restart or an update of the app; Uninstall offers to undo everything before it removes the app. Removed apps and deleted files are the exception, and the app says so before.
+- **Every setting it changes can be undone.** Each change is backed up first and can be undone on the Changes page, also after a restart or an update of the app; Uninstall offers to undo everything before it removes the app. Removed apps and deleted files are the exception, and the app says so before.
 - **No placebo.** Popular tweaks without evidence are left out, and the search says why when you look for one. The full list with sources is in [docs/not-included.md](docs/not-included.md).
 - **It looks at your PC first.** It recommends only what fits this PC and your profile, and keeps risky changes behind Expert mode.
 - **Nothing runs in the background.** No service, no tray icon, no telemetry. Windows applies the settings itself; the app runs only when you start it.
+
+## What it does not replace
+
+Tunero is built to be the only PC optimizer you need, and it says plainly where it is not:
+
+- **Driver removal and custom driver packages:** a clean graphics driver removal stays with Display Driver Uninstaller (DDU) and custom NVIDIA packages with NVCleanstall; the Drivers card links to both.
+- **Live per-process rules:** Process Lasso adjusts running programs all the time, which needs a program in the background. Tunero runs only when you start it, so it offers start priorities that Windows applies by itself instead.
+- **Security trade-offs:** tweaks that turn off Defender, UAC, updates or exploit protections for a few frames stay out ([docs/not-included.md](docs/not-included.md) lists them with sources). Tools such as AtlasOS that do this go further than Tunero on purpose.
+- **Installing Windows:** media creation and setup changes (Flyoobe, Rufus) are out of scope; Tunero optimizes the Windows that is running.
 
 <p align="center"><img src="docs/screenshots/search-en-light.png" width="800" alt="Search for defender: the reason why turning off Defender is not offered comes first, then what the app offers for Defender"></p>
 
@@ -107,7 +116,9 @@ What stays: restore points, apps you installed through Tunero and the PawnIO sen
 
 **Can I undo everything?** Every change the app makes is backed up and can be undone on the Changes page, also after a restart or an update of the app. Removing an inbox app cannot be undone by the app; the Store link stays where the Store still offers it.
 
-**Does it work on Windows 11 Home?** Yes. Some Group Policy based tweaks only work on Pro, Enterprise or Education; the app does not offer them on Home.
+**Does it work on Windows 11 Home?** Yes. Some Group Policy based tweaks only work on Pro, Enterprise or Education; the app does not offer them on Home. Home has been tested less than Pro so far.
+
+**Which Windows versions?** Windows 11 25H2 and newer on x64. Home and Pro 24H2 get no updates since 13 October 2026: on 24H2 the app still starts, with a note, so changes made there can be undone, but update Windows before you make new ones. Builds newer than the ones it was tested on run with a "not validated" note.
 
 **Why does it need administrator rights?** Most settings it changes are machine-wide. Its data folder (`%ProgramData%\Tunero`) is locked to administrators, and links or files planted there by other accounts are removed before use.
 

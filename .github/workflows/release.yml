@@ -134,11 +134,13 @@ jobs:
         Move-Item signed/Tunero.exe release/Tunero.exe -Force
         "Signed by: $($signature.SignerCertificate.Subject)" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
-    # Only the public key the app checks updates with (no project code runs in this job).
-    - name: Get the app's update key
+    # Only the public keys the app checks updates with and the changelog for the notes (no project code runs in this job).
+    - name: Get the app's update keys and the changelog
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
-        sparse-checkout: src/Optimizer.Core/Updates/update-key*.pem
+        sparse-checkout: |
+          src/Optimizer.Core/Updates/update-key*.pem
+          CHANGELOG.md
         sparse-checkout-cone-mode: false
         path: key
         persist-credentials: false
@@ -178,4 +180,14 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --generate-notes
+      # The notes are the version's section of CHANGELOG.md ("## 1.0.0" up to the next "## "): a release without one stops
+      # here, so "Unreleased" is renamed before the tag, not forgotten.
+      run: |
+        $version = $env:TAG.TrimStart('v')
+        $lines = Get-Content key/CHANGELOG.md
+        $start = [Array]::FindIndex($lines, [Predicate[string]]{ param($l) $l -match ('^## ' + [regex]::Escape($version) + '( |$)') })
+        if ($start -lt 0) { Write-Error "CHANGELOG.md has no section '## $version': rename 'Unreleased' to the version before tagging"; exit 1 }
+        $end = [Array]::FindIndex($lines, $start + 1, [Predicate[string]]{ param($l) $l -match '^## ' })
+        if ($end -lt 0) { $end = $lines.Count }
+        ($lines[($start + 1)..($end - 1)] -join "`n").Trim() | Set-Content -Encoding utf8 notes.md
+        gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --notes-file notes.md

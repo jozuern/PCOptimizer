@@ -18,6 +18,8 @@
 - **Accessibility:** the search and key boxes have names for screen readers, and dialogs carry their title as the window title (Alt+Tab, screen readers).
 - **Signing out during a change:** Windows is asked to wait until the change has finished, as closing the window already did.
 - **Delivery Optimization cleanup** asks once before it deletes, like the other cleanups.
+- **README and website:** they say "every setting it changes can be undone" instead of "everything" (removed apps and deleted files are the exception), mark the winget and Chocolatey commands as pending until the first version has passed review, describe the Startup page by its locations instead of "everything that starts with Windows", mark program start priorities as preview, state how far the tests reach, and list what Tunero does not replace (a driver cleaner, live per-process rules, security trade-offs, installing Windows).
+- **Release notes** are the version's section of this changelog; a release without one stops before it is drafted.
 - **Command line:** `--apply` and `--undo-all` no longer show a message box when the start is refused for safety (a profiler variable, or a data or runtime folder other accounts can change); they end with the new exit code 8, so a script does not wait on a dialog.
 
 ### Fixed

@@ -6,7 +6,7 @@ The tweak tables in sections 2 to 5 are generated from the catalog: after a cata
 
 ## Setup
 
-1. Hyper-V VM, generation 2, Windows 11 24H2 or newer x64 (Pro or Home), Secure Boot and virtual TPM on, 2 or more virtual processors, 16 GB memory (`memory.compressionOff` applies from 16 GB), 80 GB disk. Use an unmodified Microsoft ISO: debloated images change the starting state the tests compare against. See [Creating the VM](#creating-the-vm).
+1. Hyper-V VM, generation 2, Windows 11 25H2 or newer x64 (Pro or Home; before a release, once on each, and once on the oldest supported build), Secure Boot and virtual TPM on, 2 or more virtual processors, 16 GB memory (`memory.compressionOff` applies from 16 GB), 80 GB disk. Use an unmodified Microsoft ISO: debloated images change the starting state the tests compare against. See [Creating the VM](#creating-the-vm).
 2. Install all Windows updates, sign in with a local administrator account, install Steam or another launcher so game library checks have something to find.
 3. Copy the Release exe (`dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile`, then `artifacts/publish/Tunero.exe`) into the VM.
 4. Take a checkpoint named **clean**. Go back to it whenever a test leaves the VM in a state you do not trust.
@@ -55,6 +55,11 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 | Windows update between apply and undo | Checkpoint, apply recommended, install a cumulative update, scan: reset changes are listed with the update as likely cause; Undo still restores the originals | |
 | Language and theme | Switch to Deutsch and Dark in Settings, restart the app: both kept | |
 | Update check | Turn on, restart the app: no error; with a newer published release a banner links to the release page | |
+| 24H2 | On a 24H2 VM (build 26100): the app starts with the note that 24H2 is no longer supported; Undo of a change made there works | |
+| Small screen | Display at 1920 x 1080 and 150 % scaling: the window fits above the taskbar (footer and result bar visible); a confirmation with many changes (Apply recommended) keeps its buttons on screen | |
+| High contrast | Turn on a contrast theme (Settings > Accessibility > Contrast themes) while the app runs: it switches to Windows' colors, every page stays readable; turn it off: Light or Dark again | |
+| Sources | Select a tweak, click a source at the end of its page: it opens in the browser of the signed-in user; Tab reaches the links | |
+| Failed self-update start | Update with the new exe blocked (an antivirus quarantine, or delete the new exe in the second between install and start under a debugger): the previous version is put back and the message says so | |
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
@@ -333,6 +338,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Startup entries | Disable one Run key entry and one Startup folder item, sign out and in: not started; enable again | |
 | Services | Change one explained service to Manual, restart, undo | |
 | Scheduled tasks | Turn one task off and on again | |
+| Startup page tasks | Startup lists a third-party task with a daily trigger; Windows' own tasks (TextServicesFramework\MsCtfMonitor) show "Listed only" and no switch; a task that runs a COM handler shows its DLL and "Microsoft" | |
 | Windows features | Turn one optional feature on, restart, turn it off again | |
 | Remove apps | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |
 | OneDrive | With Known Folder Move on: uninstall is blocked; without: uninstall works | |
@@ -344,7 +350,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Tools | Winsock reset (restart needed), Explorer restart, DNS flush, Windows Update repair, SFC and DISM with live output | |
 | Health | Frame time benchmark with PresentMon; throttle check; PawnIO install from the Health page and uninstall with winget | |
 | Desktop program uninstaller | Uninstall one machine-wide program (restore point first, runs elevated) and one per-user program (runs as the signed-in user); an MSI entry under HKCU runs msiexec as the user; the list updates after Refresh | |
-| Update all (winget) | Runs `winget upgrade --all`, shows the output, programs are updated | |
+| Update all (winget) | Runs `winget upgrade --all --scope machine` with the output in the app, then a winget window as the signed-in user for per-user programs; a winget copy of Tunero is not replaced while it runs | |
 | .NET Desktop Runtimes | Install .NET Desktop Runtime 8 and 10 from the Apps page | |
 | Quick fixes | Each of the 10: renew IP (connection back afterwards, also when one adapter fails to release), TCP/IP reset (restart needed), audio, Bluetooth and Search restart, graphics driver restart (screen flashes, apps keep running), time sync, performance counters, chkdsk /scan (output shown), recovery environment on | |
 | Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |

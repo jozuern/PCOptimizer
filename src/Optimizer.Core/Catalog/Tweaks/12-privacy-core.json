@@ -234,7 +234,7 @@
     {
       "id": "privacy.webSearchOff",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: after sign-in, Start search showed no Microsoft Bing web suggestions and no Microsoft Bing tab; after undo and sign-in both were back" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md in git 60c3a93^: Preview review: after sign-in, Start search showed no Microsoft Bing web suggestions and no Microsoft Bing tab; after undo and sign-in both were back" ],
       "category": "Privacy",
       "impact": {
         "gaming": 0,
@@ -339,7 +339,7 @@
     {
       "id": "privacy.suggestionsOff",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: \"Recommendations and offers in Settings\", \"Show tips and app recommendations\" in Start and \"Get tips and suggestions when using Windows\" turned off after apply and on again after undo" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md in git 60c3a93^: Preview review: \"Recommendations and offers in Settings\", \"Show tips and app recommendations\" in Start and \"Get tips and suggestions when using Windows\" turned off after apply and on again after undo" ],
       "category": "Privacy",
       "impact": {
         "gaming": 0,

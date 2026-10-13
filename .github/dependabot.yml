@@ -1,0 +1,16 @@
+# Update pull requests for the pinned workflow actions, the NuGet packages and the website's npm packages, once a month.
+# A NuGet package in the exe needs its license in src/Optimizer.App/Licenses/ (LicenseTests fails until it is there).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: npm
+    directory: /website
+    schedule:
+      interval: monthly

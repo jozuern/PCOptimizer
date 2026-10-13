@@ -6,17 +6,17 @@ const en: Copy = {
   meta: {
     title: 'Tunero: PC optimizer for Windows 11',
     description:
-      'PC optimizer for Windows 11, built to be the only one you need. Tunero finds what costs your games frame rate, explains every change with sources and can undo everything it changes. Free and open source.',
+      'PC optimizer for Windows 11, built to be the only one you need. Tunero finds what costs your games frame rate, explains every change with sources and can undo every setting it changes. Free and open source.',
   },
   nav: { download: 'Download', source: 'Source code', support: 'Support', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
   hero: {
     title: 'Built to be the only PC optimizer you need.',
-    lead: 'Tunero scans your PC for what costs your games frame rate and fixes what it can. It is built to replace the tweak tools, debloat scripts, startup managers and cleaners you would otherwise collect. Every change is explained with sources, backed up first and can be undone.',
+    lead: 'Tunero scans your PC for what costs your games frame rate and fixes what it can. It is built to replace the tweak tools, debloat scripts, startup managers and cleaners you would otherwise collect. Every change is explained with sources, and every setting it changes is backed up first and can be undone.',
     download: 'Download Tunero.exe',
     winget: 'or with winget',
     copy: 'Copy',
     copied: 'Copied',
-    facts: (v) => `Version ${v} for Windows 11 24H2 or newer, x64. In English and German. Free software under the GPL-3.0.`,
+    facts: (v) => `Version ${v} for Windows 11 25H2 or newer, x64. In English and German. Free software under the GPL-3.0-only.`,
     changes: 'What changed',
     preview: 'The exe is not code signed yet, so Windows SmartScreen may warn on the first start.',
     previewLink: 'Why',
@@ -116,7 +116,7 @@ const en: Copy = {
   areas: {
     title: 'Built to replace a folder full of tools',
     intro:
-      'Tunero brings together what people otherwise collect from tweak tools, debloat scripts, startup managers, cleaners and system utilities, and leaves out what does nothing. These are its main pages, grouped as in the app.',
+      'Tunero brings together what people otherwise collect from tweak tools, debloat scripts, startup managers, cleaners and system utilities, and leaves out what does nothing. What it leaves to other tools, such as a driver cleaner, is listed in its README. These are its main pages, grouped as in the app.',
     groups: (c) => [
       {
         name: '',
@@ -200,7 +200,7 @@ const en: Copy = {
       {
         id: 'home',
         q: 'Does it work on Windows 11 Home?',
-        a: 'Yes. Tweaks that rely on Group Policy are offered only on Pro, Enterprise and Education.',
+        a: 'Yes. Tweaks that rely on Group Policy are offered only on Pro, Enterprise and Education. Home has been tested less than Pro so far.',
       },
       {
         id: 'remove',
@@ -210,7 +210,7 @@ const en: Copy = {
     ],
   },
   footer: {
-    license: (v) => `Tunero ${v}. Free software under the GPL-3.0.`,
+    license: (v) => `Tunero ${v}. Free software under the GPL-3.0-only.`,
     links: { releases: 'Releases', changelog: 'Changelog', source: 'Source code', privacy: 'Privacy', imprint: 'Legal notice', kofi: 'Support on Ko-fi', sponsors: 'GitHub Sponsors' },
     privacyHref: '/privacy/',
     imprintHref: '/legal/',

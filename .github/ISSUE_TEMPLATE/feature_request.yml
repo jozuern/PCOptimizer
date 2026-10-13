@@ -1,0 +1,28 @@
+name: Tweak or feature request
+description: A setting, check or tool you miss in Tunero.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tunero adds a tweak only when its effect is documented or proven, and leaves out what does nothing.
+        Search for it in the app first (Ctrl+F): a tweak that is left out on purpose says why.
+  - type: textarea
+    id: what
+    attributes:
+      label: What should Tunero do?
+      description: The setting, check or tool, and what it changes on the PC.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What it helps with (games, privacy, battery, something else), and how you noticed.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Microsoft or vendor documentation, measurements, or the tool that offers it (WinUtil, O&O ShutUp10++ and others).

@@ -180,7 +180,7 @@
     {
       "id": "explorer.endTask",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-11.md: Settings > System > Advanced showed \"End task\" On after apply and Off after undo; the taskbar right-click menu of Notepad showed \"End task\" only while applied" ],
+      "proof": [ "docs/vm-test-results-2026-10-11.md in git 60c3a93^: Settings > System > Advanced showed \"End task\" On after apply and Off after undo; the taskbar right-click menu of Notepad showed \"End task\" only while applied" ],
       "category": "Explorer",
       "impact": {
         "gaming": 0,
@@ -209,7 +209,7 @@
     {
       "id": "explorer.classicContextMenu",
       "undocumented": true,
-      "proof": [ "docs/vm-test-results-2026-10-10.md: Preview review: after sign-in, right-clicking a file in File Explorer showed the classic menu without \"Show more options\"; after undo and sign-in the Windows 11 menu was back" ],
+      "proof": [ "docs/vm-test-results-2026-10-10.md in git 60c3a93^: Preview review: after sign-in, right-clicking a file in File Explorer showed the classic menu without \"Show more options\"; after undo and sign-in the Windows 11 menu was back" ],
       "category": "Explorer",
       "impact": {
         "gaming": 0,

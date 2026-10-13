@@ -25,6 +25,23 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
     private static readonly HashSet<string> FindingIds = DocLint.RequiredDocIds().ToHashSet(StringComparer.Ordinal);
 
     /// <summary>
+    /// A proof names the file that holds the test result. A file that is no longer in docs/ is cited with the commit that
+    /// has it ("docs/x.md in git 60c3a93^"); a plain path must exist, or the proof rule cannot be checked.
+    /// </summary>
+    [Fact]
+    public void ProofFilesExist()
+    {
+        var missing = new List<string>();
+        foreach (var t in Tweaks)
+            foreach (Match m in t.Proof.SelectMany(p => Regex.Matches(p, @"docs/[\w./-]+\.md(?<git> in git [0-9a-f]{7,40}\^?)?")))
+            {
+                var path = m.Value.Split(' ')[0];
+                if (!m.Groups["git"].Success && !File.Exists(Path.Combine(RepoPaths.Root, path))) missing.Add($"{t.Id}: {path}");
+            }
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
     /// The data files are read leniently (maintainer "_comment" keys); a misspelled property would be ignored and turn a
     /// rule into a no-op ("recomendWhen" in profiles.json). Without the comments, every property must map.
     /// </summary>

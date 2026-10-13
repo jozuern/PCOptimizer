@@ -4,7 +4,7 @@
 Alt+Tab shows only open windows, without browser tabs from Microsoft Edge. Pro and up; Microsoft marks the policy as a preview.
 
 ## How it works
-The policy BrowserAltTabBlowout controls whether app tabs appear in Alt+Tab [1]. The value "Open windows only" turns the feature off [1]. The app sets MultiTaskingAltTabFilter to 4 in the user policy key. Microsoft notes that the policy is in preview and meant for testing [1], so the tweak is a Preview too.
+The policy BrowserAltTabBlowout controls whether app tabs appear in Alt+Tab [1]. The value "Open windows only" turns the feature off [1]. The app sets MultiTaskingAltTabFilter to 4 in the user policy key. Microsoft notes that the policy is in preview and meant for testing [1]; in a test on Windows 11 26H2, Settings > Multitasking showed the setting locked to "Don't show tabs" after apply and back to its default after undo.
 
 ## Why it can help
 Switching between a game and other windows with Alt+Tab is quicker when Edge tabs do not fill the list.
