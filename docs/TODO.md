@@ -18,7 +18,6 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 ## Code
 
 - **Catalog model:** an "also for new users" scope (Default profile) and an action for the app's own scheduled task (undo removes it).
-- **Start time:** measure from the launch (the bundle starts itself twice for the protected runtime folder); try ReadyToRun again against the exe size.
 
 ## Toward "the only PC optimizer you need"
 
