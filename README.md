@@ -79,20 +79,24 @@ Tunero is built to be the only PC optimizer you need, and it says plainly where 
 
 ## Command line
 
-For a fresh install or several PCs, export your changes on the Changes page and apply the file without the window:
+For a fresh install or several PCs, export your changes (on the Changes page or with `--export`) and apply the file without the window, or apply the recommended list of a profile:
 
 ```powershell
 Start-Process Tunero.exe -ArgumentList '--apply', 'my-changes.tunero.json', '--log', 'result.txt' -Verb RunAs -Wait
+Start-Process Tunero.exe -ArgumentList '--apply-recommended', '--profile', 'gaming', '--log', 'result.txt' -Verb RunAs -Wait
 ```
 
 | Switch | Effect |
 |---|---|
 | `--apply <file>` | Applies an exported changes file with the rules of Import: Preview, Expert and anti-cheat sensitive changes are listed in the log, not applied. |
+| `--apply-recommended` | Applies the Overview's recommended list (fixes of problems found, then what the profile recommends for this PC) with the same rules: what needs its own confirmation is listed in the log, not applied. |
+| `--profile <id>` | The profile for `--apply-recommended`: gaming, laptopGaming, battery, office, quiet or lowEnd. Without it, the profile saved in the app (or the one that fits this PC best). |
+| `--export <file>` | Writes the changes file the Changes page exports, to a new file. |
 | `--undo-all` | Undoes every change of this app. |
 | `--no-restore-point` | Continues when no restore point can be created (System Protection off); without it, nothing is changed then. |
 | `--log <file>` | Writes the result to a new text file; an existing file is never overwritten. |
 
-Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point, 5 another Tunero window or run was changing the PC for 5 minutes, 6 unexpected error (details in the log), 7 Windows version not supported, 8 the start was refused for safety (a profiler variable, or a data or runtime folder that other accounts can change).
+Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point, 5 another Tunero window or run was changing the PC for 5 minutes, 6 unexpected error (details in the log), 7 Windows version not supported, 8 the start was refused for safety (a profiler variable, or a data or runtime folder that other accounts can change), 9 unknown profile or one this PC does not offer (a laptop profile on a desktop).
 
 ## Privacy
 

@@ -1308,6 +1308,11 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cli_NoRestorePoint" xml:space="preserve"><value>No restore point could be created, so nothing was changed. Turn on System Protection, or add --no-restore-point to continue without one.</value></data>
   <data name="Cli_NeedsApp" xml:space="preserve"><value>Not applied, needs its own confirmation in the app: {0}</value></data>
   <data name="Cli_Summary" xml:space="preserve"><value>Applied: {0}. Failed: {1}. Not applied: {2}. Already on: {3}. Not for this PC: {4}. Unknown to this version: {5}.</value></data>
+  <data name="Cli_UnknownProfile" xml:space="preserve"><value>Unknown profile "{0}", or one this PC does not offer. Profiles here: {1}</value></data>
+  <data name="Cli_Profile" xml:space="preserve"><value>Profile: {0}</value></data>
+  <data name="Cli_RecommendedSummary" xml:space="preserve"><value>Applied: {0}. Failed: {1}. Left for the app: {2}.</value></data>
+  <data name="Cli_FileUnwritable" xml:space="preserve"><value>Cannot write {0}: {1}</value></data>
+  <data name="Cli_Exported" xml:space="preserve"><value>Exported {0} changes to {1}. Left out because they belong to this PC only: {2}.</value></data>
   <data name="Cli_UndoSummary" xml:space="preserve"><value>Undone: {0}. Not fully undone: {1}.</value></data>
   <data name="Cli_ExitCode" xml:space="preserve"><value>Exit code: {0}</value></data>
   <data name="Crash_Title" xml:space="preserve"><value>Report the error?</value></data>

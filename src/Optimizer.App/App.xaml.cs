@@ -156,8 +156,9 @@ public partial class App : Application
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var log = args.Value("--log");
-            Shutdown(args.Value("--apply") is { } changes
-                ? await CommandLineApply.ApplyAsync(changes, services, log, args.Has("--no-restore-point"))
+            Shutdown(args.Value("--apply") is { } changes ? await CommandLineApply.ApplyAsync(changes, services, log, args.Has("--no-restore-point"))
+                : args.Has("--apply-recommended") ? await CommandLineApply.ApplyRecommendedAsync(services, args.Value("--profile"), _settings.Profile, log, args.Has("--no-restore-point"))
+                : args.Value("--export") is { } exportPath ? await CommandLineApply.ExportAsync(exportPath, services, log)
                 : await CommandLineApply.UndoAllAsync(services, log));
             return;
         }
@@ -709,7 +710,7 @@ public partial class App : Application
 
         public bool Has(string name) => args.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
 
-        /// <summary>--apply &lt;file&gt; or --undo-all: no window, the result is the exit code (and the --log file).</summary>
-        public bool IsCommandLineRun => Value("--apply") is not null || Has("--undo-all");
+        /// <summary>--apply &lt;file&gt;, --apply-recommended, --export &lt;file&gt; or --undo-all: no window, the result is the exit code (and the --log file).</summary>
+        public bool IsCommandLineRun => Value("--apply") is not null || Has("--apply-recommended") || Value("--export") is not null || Has("--undo-all");
     }
 }

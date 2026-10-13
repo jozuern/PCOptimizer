@@ -340,6 +340,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Startup entries | Disable one Run key entry and one Startup folder item, sign out and in: not started; enable again | |
 | Services | Change one explained service to Manual, restart, undo | |
 | Scheduled tasks | Turn one task off and on again | |
+| Command line recommended and export | `--apply-recommended --profile battery` on a desktop: exit 9 and the profiles this PC offers; `--apply-recommended --profile gaming --log r.txt`: exit 0, the profile and each change in the log; `--export x.json`: exit 0 and the applied ids in the file, again to the same path: exit 2 (never overwritten); `--undo-all`, then `--apply x.json` and `--undo-all` again: everything comes back and goes again | OK 2026-10-13 (26H2: three changes applied, exported, undone, applied from the file, undone) |
 | Startup Delete entry | Add a Run value pointing to a missing file, a RunOnce value and a cmd.exe AutoRun by hand; Delete entry on each: the confirmation shows the value, the entries leave the list, the Changes page lists three deletions, and Undo writes each back with its type (an expandable string stays one) | |
 | Startup page tasks | Startup lists a third-party task with a daily trigger; Windows' own tasks (TextServicesFramework\MsCtfMonitor) show "Listed only" and no switch; a task that runs a COM handler shows its DLL and "Microsoft" | |
 | Windows features | Turn one optional feature on, restart, turn it off again | |

@@ -13,7 +13,9 @@ namespace Optimizer.App.Services;
 /// Changes without the window, for a fresh install or several PCs:
 /// <c>--apply &lt;file&gt;</c> applies an exported changes file with the rules of Import (only what is safe to apply
 /// together; previews, Expert, boot-critical and anti-cheat sensitive changes need their own confirmation in the app
-/// and are listed instead), and <c>--undo-all</c> undoes every change of this app. An apply creates a restore point
+/// and are listed instead), <c>--apply-recommended</c> applies the Overview's recommended list for the profile
+/// (<c>--profile &lt;id&gt;</c>, else the saved one), <c>--export &lt;file&gt;</c> writes the changes file the Changes
+/// page exports, and <c>--undo-all</c> undoes every change of this app. An apply creates a restore point
 /// first, as the window does, and stops when that is not possible unless <c>--no-restore-point</c> is given. A run waits
 /// for a change of another Tunero (<see cref="ChangeLock"/>). The result goes to the session log and, with
 /// <c>--log &lt;file&gt;</c>, to a new text file; the exit code says how it went.
@@ -30,6 +32,8 @@ public static class CommandLineApply
     public const int NotSupported = 7;
     /// <summary>The start was refused before anything ran: a profiler variable, or an unsafe data or runtime folder.</summary>
     public const int StartRefused = 8;
+    /// <summary>--profile names a profile this version does not know, or one this PC does not offer (a laptop profile on a desktop).</summary>
+    public const int UnknownProfile = 9;
 
     /// <summary>How long a run waits for a change of another Tunero (the window, another run) to finish.</summary>
     public static TimeSpan LockWait { get; set; } = TimeSpan.FromMinutes(5);
@@ -39,6 +43,24 @@ public static class CommandLineApply
         var lines = new List<string>();
         var code = await Locked(lines, () => ApplyCoreAsync(path, services, withoutRestorePoint, lines));
         Finish("apply", lines, code, logPath);
+        return code;
+    }
+
+    /// <param name="profileId">The profile named with --profile; it must exist and fit this PC.</param>
+    /// <param name="savedProfileId">The profile saved in the app, used without --profile; when this PC no longer offers it (or none was saved), the one that fits this PC best.</param>
+    public static async Task<int> ApplyRecommendedAsync(AppServices services, string? profileId, string? savedProfileId, string? logPath, bool withoutRestorePoint)
+    {
+        var lines = new List<string>();
+        var code = await Locked(lines, () => ApplyRecommendedCoreAsync(services, profileId, savedProfileId, withoutRestorePoint, lines));
+        Finish("apply recommended", lines, code, logPath);
+        return code;
+    }
+
+    public static async Task<int> ExportAsync(string path, AppServices services, string? logPath)
+    {
+        var lines = new List<string>();
+        var code = await Locked(lines, () => ExportCoreAsync(path, services, lines));
+        Finish("export", lines, code, logPath);
         return code;
     }
 
@@ -96,22 +118,95 @@ public static class CommandLineApply
             return InvalidFile;
         }
 
-        // The same scan as the window: the facts decide what applies to this PC and what is on already.
+        var pc = await ScanAsync(services);
+        var plan = ChangeTransfer.Plan(file, services.Catalog, pc.Facts, pc.Applied);
+        Log.Info("cli", "apply plan", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
+        return await ApplyTogetherAsync(services, pc, plan.Together, plan.OneByOne, withoutRestorePoint, lines,
+            (ok, failed, skipped) => Loc.Instance.Format("Cli_Summary", ok, failed, skipped, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown));
+    }
+
+    /// <summary>
+    /// The Overview's "Apply recommended" without the window: the same plan for the same profile (fixes of problems
+    /// first, then what the profile recommends for this PC), the same rule for what applies together, and the rest
+    /// listed for the app.
+    /// </summary>
+    private static async Task<int> ApplyRecommendedCoreAsync(AppServices services, string? profileId, string? savedProfileId, bool withoutRestorePoint, List<string> lines)
+    {
+        if (!services.Elevation.IsElevated)
+        {
+            lines.Add(Loc.Instance["Cli_NotElevated"]);
+            return NotElevated;
+        }
+        var pc = await ScanAsync(services);
+        var profiles = CatalogData.Current.Profiles;
+        var profile = profileId is not null
+            ? profiles.Profiles.FirstOrDefault(p => p.Id == profileId && p.IsAvailable(pc.Facts))
+            : profiles.Profiles.FirstOrDefault(p => p.Id == savedProfileId && p.IsAvailable(pc.Facts)) ?? profiles.Suggest(pc.Facts);
+        if (profile is null)
+        {
+            lines.Add(Loc.Instance.Format("Cli_UnknownProfile", profileId ?? "", string.Join(", ", profiles.Profiles.Where(p => p.IsAvailable(pc.Facts)).Select(p => p.Id))));
+            return UnknownProfile;
+        }
+        var lang = Loc.Instance.Language;
+        lines.Add(Loc.Instance.Format("Cli_Profile", ViewModels.MainViewModel.ProfileName(profile)));
+        var plan = Recommendations.Build(Optimizer.Core.Profiles.ProfileView.For(profile, pc.States, pc.Facts),
+            Optimizer.Core.Profiles.ProfileView.Findings(profile, pc.Findings));
+        Log.Info("cli", "recommended plan", new { profile = profile.Id, items = plan.Items.Count, excluded = plan.Excluded.Count });
+        return await ApplyTogetherAsync(services, pc, plan.Items.Select(i => i.Tweak).ToList(), plan.Excluded.Select(i => i.Tweak).ToList(), withoutRestorePoint, lines,
+            (ok, failed, skipped) => Loc.Instance.Format("Cli_RecommendedSummary", ok, failed, skipped));
+    }
+
+    /// <summary>The changes file of the Changes page's Export, written to <paramref name="path"/>.</summary>
+    private static async Task<int> ExportCoreAsync(string path, AppServices services, List<string> lines)
+    {
+        if (!services.Elevation.IsElevated)
+        {
+            lines.Add(Loc.Instance["Cli_NotElevated"]);
+            return NotElevated;
+        }
+        var pc = await ScanAsync(services);
+        var (file, pcSpecific) = ChangeTransfer.Create(services.Store.All().Select(b => b.TweakId), pc.Applied, services.Catalog,
+            Optimizer.Core.Tools.ProgramPriority.Read(services.Context.Registry), AppInfo.Text, services.Os.BuildString);
+        try
+        {
+            // Only a new file when elevated: whoever starts the exe names the path, and the app writes with administrator rights.
+            await using var stream = new FileStream(path, DataPaths.ProcessIsElevated ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None);
+            await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+            await writer.WriteAsync(ChangeTransfer.Serialize(file));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            lines.Add(Loc.Instance.Format("Cli_FileUnwritable", path, ex.Message));
+            return InvalidFile;
+        }
+        lines.Add(Loc.Instance.Format("Cli_Exported", file.Tweaks.Count + file.Priorities.Count, path, pcSpecific));
+        return Done;
+    }
+
+    /// <summary>The scan the window runs: the facts decide what applies to this PC and what is on already.</summary>
+    private sealed record PcState(Facts Facts, IReadOnlyList<TweakStatus> States, IReadOnlySet<string> Applied, IReadOnlyList<Finding> Findings);
+
+    private static async Task<PcState> ScanAsync(AppServices services)
+    {
         var catalog = CatalogData.Current;
         var visible = services.Catalog.Visible.ToList();
         var scan = await new ScanService(catalog, services.Context.Registry, services.BcdValues, services.Engine, visible).RunAsync();
         var facts = FactsBuilder.Build(scan.Profile, scan.Findings, catalog, services.Context.Registry);
-        var applied = services.Engine.DetectAll(visible, facts)
-            .Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
-        var plan = ChangeTransfer.Plan(file, services.Catalog, facts, applied);
-        Log.Info("cli", "apply plan", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
+        var states = await Task.Run(() => services.Engine.DetectAll(visible, facts));
+        var applied = states.Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
+        return new PcState(facts, states, applied, scan.Findings);
+    }
 
+    /// <summary>Applies the batch-safe changes in one go (one restore point) and lists the rest for the app.</summary>
+    private static async Task<int> ApplyTogetherAsync(AppServices services, PcState pc, IReadOnlyList<TweakDefinition> together, IReadOnlyList<TweakDefinition> inApp,
+        bool withoutRestorePoint, List<string> lines, Func<int, int, int, string> summary)
+    {
         var lang = Loc.Instance.Language;
         int ok = 0, failed = 0, skipped = 0;
-        if (plan.Together.Count > 0)
+        if (together.Count > 0)
         {
             var options = new ApplyOptions { ContinueWithoutRestorePoint = withoutRestorePoint };
-            var results = await Task.Run(() => services.Engine.ApplyBatchAsync(plan.Together, facts, applied, options));
+            var results = await Task.Run(() => services.Engine.ApplyBatchAsync(together, pc.Facts, pc.Applied, options));
             if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
             {
                 lines.Add(Loc.Instance["Cli_NoRestorePoint"]);
@@ -128,8 +223,8 @@ public static class CommandLineApply
                 }
             }
         }
-        foreach (var t in plan.OneByOne) lines.Add(Loc.Instance.Format("Cli_NeedsApp", ChangeRunner.TitleOf(t, lang)));
-        lines.Add(Loc.Instance.Format("Cli_Summary", ok, failed, skipped + plan.OneByOne.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown));
+        foreach (var t in inApp) lines.Add(Loc.Instance.Format("Cli_NeedsApp", ChangeRunner.TitleOf(t, lang)));
+        lines.Add(summary(ok, failed, skipped + inApp.Count));
         return failed > 0 ? SomeFailed : Done;
     }
 

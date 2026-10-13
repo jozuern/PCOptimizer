@@ -34,5 +34,5 @@ In the order of the audit's promise gaps:
 4. Autoruns: Delete for startup folder shortcuts and third-party tasks (registry values can be deleted with a backup; the locations and the CSV export are done).
 5. The documented policies still left over (sync per category, quality update deferral and more); AI permissions without documented values, cross-device resume, desktop Spotlight and Edge promotions were checked and stay out, with the reasons in the commit history and on the not-included page.
 6. About 30 cosmetic tweaks (menu delays, drive letters first, shortcut suffix, Photo Viewer, Folder Options, taskbar on several displays, Num Lock, startup sound and others); many need VM proof.
-7. Export and command line: removed apps, service start types and startup entries in the export; `--export`, `--profile ... --apply-recommended` and `--include-preview`.
+7. Export: removed apps, service start types and startup entries as opt-in sections of the changes file (`--export` and `--apply-recommended` are done). `--include-preview` stays out: a preview has not been tested on real Windows and needs its own confirmation in the app.
 8. An "also for new users" scope, an opt-in re-apply task after feature updates, and small quick fixes (pending restart check, Defender signature update, winget repair, icon cache reset, Restart into Safe Mode).
