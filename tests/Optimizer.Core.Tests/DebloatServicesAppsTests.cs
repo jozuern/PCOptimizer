@@ -115,6 +115,31 @@ public class DebloatServicesAppsTests
         Assert.Equal("exe", CatalogData.Current.Apps.Apps.Single(a => a.Id == "Microsoft.DirectX").InstallerType);
     }
 
+    /// <summary>
+    /// Every app of the Install page has a unique, safe winget id, a scope the runner knows, a winget scope and installer
+    /// type winget accepts (or none), a detection pattern that compiles, texts in both languages and a group heading;
+    /// entries of one group stand together, so each heading appears once.
+    /// </summary>
+    [Fact]
+    public void AppCatalogEntriesAreComplete()
+    {
+        var apps = CatalogData.Current.Apps.Apps;
+        Assert.Equal(apps.Count, apps.Select(a => a.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        foreach (var a in apps)
+        {
+            Assert.True(Winget.IsSafeId(a.Id), a.Id);
+            Assert.Contains(a.Scope, new[] { "machine", "user" });
+            Assert.True(a.WingetScope is null or "machine" or "user", a.Id);
+            Assert.True(a.InstallerType is null or "exe" or "msi" or "msix" or "inno" or "nullsoft" or "wix" or "burn", a.Id);
+            if (a.Detect.Length > 0) _ = new System.Text.RegularExpressions.Regex(a.Detect);
+            Assert.False(string.IsNullOrWhiteSpace(a.En) || string.IsNullOrWhiteSpace(a.De), a.Id);
+            foreach (var lang in new[] { "en", "de" })
+                Assert.NotEqual($"appCategory.{a.Category}", Labels.Current.Get(lang, $"appCategory.{a.Category}"));
+        }
+        var groups = apps.Select(a => a.Category).Aggregate(new List<string>(), (l, c) => { if (l.Count == 0 || l[^1] != c) l.Add(c); return l; });
+        Assert.Equal(groups.Count, groups.Distinct().Count());
+    }
+
     [Fact]
     public void ServiceEditRules()
     {

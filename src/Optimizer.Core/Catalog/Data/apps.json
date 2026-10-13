@@ -56,6 +56,124 @@
       "de": "Launcher von Blizzard und Activision (Call of Duty, Diablo, Overwatch)."
     },
     {
+      "id": "Playnite.Playnite",
+      "name": "Playnite",
+      "category": "launchers",
+      "scope": "user",
+      "detect": "^Playnite",
+      "en": "One library for the games of every launcher and emulator.",
+      "de": "Eine Bibliothek für die Spiele aller Launcher und Emulatoren."
+    },
+    {
+      "id": "HeroicGamesLauncher.HeroicGamesLauncher",
+      "name": "Heroic Games Launcher",
+      "category": "launchers",
+      "scope": "user",
+      "detect": "^Heroic",
+      "en": "Open source launcher for Epic, GOG and Amazon games.",
+      "de": "Quelloffener Launcher für Spiele von Epic, GOG und Amazon."
+    },
+    {
+      "id": "ItchIo.Itch",
+      "name": "itch",
+      "category": "launchers",
+      "scope": "user",
+      "detect": "^itch$",
+      "en": "The itch.io app for indie games.",
+      "de": "Die App von itch.io für Indie-Spiele."
+    },
+    {
+      "id": "RockstarGames.Launcher",
+      "name": "Rockstar Games Launcher",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Rockstar Games Launcher",
+      "en": "Launcher for GTA V, Red Dead Redemption 2 and other Rockstar games.",
+      "de": "Launcher für GTA V, Red Dead Redemption 2 und andere Rockstar-Spiele."
+    },
+    {
+      "id": "Mojang.MinecraftLauncher",
+      "name": "Minecraft Launcher",
+      "category": "launchers",
+      "scope": "machine",
+      "detect": "^Minecraft Launcher",
+      "en": "The official launcher for Minecraft: Java Edition.",
+      "de": "Der offizielle Launcher für Minecraft: Java Edition."
+    },
+    {
+      "id": "PrismLauncher.PrismLauncher",
+      "name": "Prism Launcher",
+      "category": "launchers",
+      "scope": "user",
+      "detect": "^Prism Launcher",
+      "en": "Open source Minecraft launcher for many instances and mod packs.",
+      "de": "Quelloffener Minecraft-Launcher für viele Instanzen und Modpacks."
+    },
+    {
+      "id": "Modrinth.ModrinthApp",
+      "name": "Modrinth App",
+      "category": "launchers",
+      "scope": "user",
+      "detect": "^Modrinth App",
+      "en": "Minecraft launcher and mod manager from Modrinth.",
+      "de": "Minecraft-Launcher und Mod-Verwaltung von Modrinth."
+    },
+    {
+      "id": "Overwolf.CurseForge",
+      "name": "CurseForge",
+      "category": "launchers",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^CurseForge",
+      "en": "Mod manager for Minecraft, WoW and other games.",
+      "de": "Mod-Verwaltung für Minecraft, WoW und andere Spiele."
+    },
+    {
+      "id": "Nvidia.GeForceNow",
+      "name": "GeForce NOW",
+      "category": "streaming",
+      "scope": "user",
+      "detect": "^NVIDIA GeForce NOW",
+      "en": "NVIDIA's cloud gaming service.",
+      "de": "Der Cloud-Gaming-Dienst von NVIDIA."
+    },
+    {
+      "id": "PlayStation.PSRemotePlay",
+      "name": "PS Remote Play",
+      "category": "streaming",
+      "scope": "machine",
+      "detect": "^PS Remote Play",
+      "en": "Plays your PS5 or PS4 on this PC over the network.",
+      "de": "Spielt deine PS5 oder PS4 über das Netzwerk auf diesem PC."
+    },
+    {
+      "id": "MoonlightGameStreamingProject.Moonlight",
+      "name": "Moonlight",
+      "category": "streaming",
+      "scope": "user",
+      "detect": "^Moonlight",
+      "en": "Streams games from a PC with Sunshine to this one.",
+      "de": "Streamt Spiele von einem PC mit Sunshine auf diesen."
+    },
+    {
+      "id": "LizardByte.Sunshine",
+      "name": "Sunshine",
+      "category": "streaming",
+      "scope": "machine",
+      "detect": "^Sunshine",
+      "en": "Game stream host for Moonlight clients.",
+      "de": "Host für Spiele-Streams zu Moonlight-Clients."
+    },
+    {
+      "id": "Streamlabs.Streamlabs",
+      "name": "Streamlabs Desktop",
+      "category": "streaming",
+      "scope": "machine",
+      "detect": "^Streamlabs",
+      "en": "Streaming software built on OBS with alerts and widgets.",
+      "de": "Streaming-Software auf Basis von OBS mit Alerts und Widgets."
+    },
+    {
       "id": "Discord.Discord",
       "name": "Discord",
       "category": "communication",
@@ -73,6 +191,24 @@
       "detect": "^TeamSpeak",
       "en": "Voice chat on your own or rented servers (TeamSpeak 3 client).",
       "de": "Sprachchat auf eigenen oder gemieteten Servern (TeamSpeak-3-Client)."
+    },
+    {
+      "id": "OpenWhisperSystems.Signal",
+      "name": "Signal",
+      "category": "communication",
+      "scope": "user",
+      "detect": "^Signal",
+      "en": "Encrypted messenger.",
+      "de": "Verschlüsselter Messenger."
+    },
+    {
+      "id": "Telegram.TelegramDesktop",
+      "name": "Telegram Desktop",
+      "category": "communication",
+      "scope": "user",
+      "detect": "^Telegram Desktop",
+      "en": "Telegram's desktop app for chats, groups and channels.",
+      "de": "Die Desktop-App von Telegram für Chats, Gruppen und Kanäle."
     },
     {
       "id": "Guru3D.Afterburner",
@@ -120,6 +256,134 @@
       "de": "Laufwerkszustand (S.M.A.R.T.) und Temperaturen."
     },
     {
+      "id": "CXWorld.CapFrameX",
+      "name": "CapFrameX",
+      "category": "monitoring",
+      "scope": "machine",
+      "installerType": "burn",
+      "detect": "^CapFrameX",
+      "en": "Records and compares frame times and 1 % lows.",
+      "de": "Zeichnet Frametimes und 1-%-Lows auf und vergleicht sie."
+    },
+    {
+      "id": "Intel.PresentMon",
+      "name": "Intel PresentMon",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "PresentMon",
+      "en": "Intel's overlay and capture tool for frame times and GPU load.",
+      "de": "Overlay und Aufzeichnung von Intel für Frametimes und GPU-Last."
+    },
+    {
+      "id": "CPUID.HWMonitor",
+      "name": "HWMonitor",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^CPUID HWMonitor",
+      "en": "Temperatures, voltages and fan speeds.",
+      "de": "Temperaturen, Spannungen und Lüfterdrehzahlen."
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskMark",
+      "name": "CrystalDiskMark",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^CrystalDiskMark",
+      "en": "Measures read and write speed of a drive.",
+      "de": "Misst die Lese- und Schreibgeschwindigkeit eines Laufwerks."
+    },
+    {
+      "id": "WinsiderSS.SystemInformer",
+      "name": "System Informer",
+      "category": "monitoring",
+      "scope": "machine",
+      "detect": "^System Informer",
+      "en": "Detailed task manager: processes, services, network and disk use.",
+      "de": "Ausführlicher Task-Manager: Prozesse, Dienste, Netzwerk- und Datenträgernutzung."
+    },
+    {
+      "id": "Microsoft.Sysinternals.ProcessExplorer",
+      "name": "Process Explorer",
+      "category": "monitoring",
+      "scope": "user",
+      "detect": "",
+      "en": "Microsoft's detailed task manager from Sysinternals.",
+      "de": "Der ausführliche Task-Manager von Microsoft aus den Sysinternals."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Autoruns",
+      "name": "Autoruns",
+      "category": "monitoring",
+      "scope": "user",
+      "detect": "",
+      "en": "Microsoft's full list of autostart locations from Sysinternals.",
+      "de": "Die vollständige Liste der Autostart-Orte von Microsoft aus den Sysinternals."
+    },
+    {
+      "id": "Rem0o.FanControl",
+      "name": "Fan Control",
+      "category": "peripherals",
+      "scope": "machine",
+      "installerType": "inno",
+      "detect": "^FanControl|^Fan Control",
+      "en": "Fan curves for case and CPU fans, by any temperature.",
+      "de": "Lüfterkurven für Gehäuse- und CPU-Lüfter, nach beliebiger Temperatur."
+    },
+    {
+      "id": "WhirlwindFX.SignalRgb",
+      "name": "SignalRGB",
+      "category": "peripherals",
+      "scope": "machine",
+      "detect": "^SignalRGB",
+      "en": "RGB lighting of many brands in one app.",
+      "de": "RGB-Beleuchtung vieler Hersteller in einer App."
+    },
+    {
+      "id": "Logitech.GHUB",
+      "name": "Logitech G HUB",
+      "category": "peripherals",
+      "scope": "machine",
+      "detect": "^Logitech G HUB",
+      "en": "Software for Logitech G mice, keyboards and headsets.",
+      "de": "Software für Mäuse, Tastaturen und Headsets von Logitech G."
+    },
+    {
+      "id": "RazerInc.RazerInstaller.Synapse4",
+      "name": "Razer Synapse 4",
+      "category": "peripherals",
+      "scope": "machine",
+      "detect": "^Razer Synapse",
+      "en": "Software for Razer devices.",
+      "de": "Software für Razer-Geräte."
+    },
+    {
+      "id": "SteelSeries.GG",
+      "name": "SteelSeries GG",
+      "category": "peripherals",
+      "scope": "machine",
+      "detect": "^SteelSeries GG",
+      "en": "Software for SteelSeries devices.",
+      "de": "Software für SteelSeries-Geräte."
+    },
+    {
+      "id": "VB-Audio.Voicemeeter",
+      "name": "Voicemeeter",
+      "category": "peripherals",
+      "scope": "machine",
+      "detect": "^VB:Voicemeeter|^Voicemeeter",
+      "en": "Virtual audio mixer for streams and voice chat.",
+      "de": "Virtueller Audiomischer für Streams und Sprachchat."
+    },
+    {
+      "id": "File-New-Project.EarTrumpet",
+      "name": "EarTrumpet",
+      "category": "peripherals",
+      "scope": "user",
+      "detect": "",
+      "en": "Volume per app from the taskbar.",
+      "de": "Lautstärke pro App über die Taskleiste."
+    },
+    {
       "id": "OBSProject.OBSStudio",
       "name": "OBS Studio",
       "category": "tools",
@@ -158,6 +422,181 @@
       "de": "Remotedesktop und Spielestreaming."
     },
     {
+      "id": "Wagnardsoft.DisplayDriverUninstaller",
+      "name": "Display Driver Uninstaller",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^Display Driver Uninstaller",
+      "en": "Removes a graphics driver completely, best in Safe Mode.",
+      "de": "Entfernt einen Grafiktreiber vollständig, am besten im abgesicherten Modus."
+    },
+    {
+      "id": "TechPowerUp.NVCleanstall",
+      "name": "NVCleanstall",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^NVCleanstall",
+      "en": "Builds an NVIDIA driver package with only the parts you choose.",
+      "de": "Baut ein NVIDIA-Treiberpaket nur mit den Teilen, die du auswählst."
+    },
+    {
+      "id": "Notepad++.Notepad++",
+      "name": "Notepad++",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "nullsoft",
+      "detect": "^Notepad\\+\\+",
+      "en": "Text and code editor.",
+      "de": "Text- und Code-Editor."
+    },
+    {
+      "id": "ShareX.ShareX",
+      "name": "ShareX",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^ShareX",
+      "en": "Screenshots, screen recordings and uploads.",
+      "de": "Screenshots, Bildschirmaufnahmen und Uploads."
+    },
+    {
+      "id": "Greenshot.Greenshot",
+      "name": "Greenshot",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^Greenshot",
+      "en": "Screenshots with quick markup.",
+      "de": "Screenshots mit schnellen Markierungen."
+    },
+    {
+      "id": "voidtools.Everything",
+      "name": "Everything",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "nullsoft",
+      "detect": "^Everything",
+      "en": "Finds any file by name in an instant.",
+      "de": "Findet jede Datei sofort über ihren Namen."
+    },
+    {
+      "id": "AntibodySoftware.WizTree",
+      "name": "WizTree",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^WizTree",
+      "en": "Shows what takes the space on a drive, as a map.",
+      "de": "Zeigt als Karte, was auf einem Laufwerk Platz belegt."
+    },
+    {
+      "id": "JAMSoftware.TreeSize.Free",
+      "name": "TreeSize Free",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^TreeSize Free",
+      "en": "Folder sizes as a tree.",
+      "de": "Ordnergrößen als Baum."
+    },
+    {
+      "id": "Microsoft.PowerShell",
+      "name": "PowerShell 7",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "wix",
+      "detect": "^PowerShell 7",
+      "en": "The current PowerShell, beside the built-in 5.1.",
+      "de": "Die aktuelle PowerShell, neben der eingebauten 5.1."
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "name": "Windows Terminal",
+      "category": "tools",
+      "scope": "user",
+      "detect": "",
+      "en": "Microsoft's terminal with tabs for PowerShell, cmd and WSL.",
+      "de": "Das Terminal von Microsoft mit Tabs für PowerShell, cmd und WSL."
+    },
+    {
+      "id": "M2Team.NanaZip",
+      "name": "NanaZip",
+      "category": "tools",
+      "scope": "user",
+      "detect": "",
+      "en": "7-Zip with the Windows 11 context menu.",
+      "de": "7-Zip mit dem Kontextmenü von Windows 11."
+    },
+    {
+      "id": "Giorgiotani.Peazip",
+      "name": "PeaZip",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "inno",
+      "detect": "^PeaZip",
+      "en": "Archive manager for many formats.",
+      "de": "Archivverwaltung für viele Formate."
+    },
+    {
+      "id": "KeePassXCTeam.KeePassXC",
+      "name": "KeePassXC",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^KeePassXC",
+      "en": "Password manager with a local database.",
+      "de": "Passwortverwaltung mit lokaler Datenbank."
+    },
+    {
+      "id": "Bitwarden.Bitwarden",
+      "name": "Bitwarden",
+      "category": "tools",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "nullsoft",
+      "detect": "^Bitwarden",
+      "en": "Password manager with sync.",
+      "de": "Passwortverwaltung mit Synchronisierung."
+    },
+    {
+      "id": "qBittorrent.qBittorrent",
+      "name": "qBittorrent",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^qBittorrent",
+      "en": "Open source BitTorrent client.",
+      "de": "Quelloffener BitTorrent-Client."
+    },
+    {
+      "id": "Rufus.Rufus",
+      "name": "Rufus",
+      "category": "tools",
+      "scope": "user",
+      "detect": "",
+      "en": "Writes bootable USB sticks from ISO files.",
+      "de": "Schreibt bootfähige USB-Sticks aus ISO-Dateien."
+    },
+    {
+      "id": "Ventoy.Ventoy",
+      "name": "Ventoy",
+      "category": "tools",
+      "scope": "user",
+      "detect": "",
+      "en": "A USB stick that boots any ISO file copied onto it.",
+      "de": "Ein USB-Stick, der jede darauf kopierte ISO-Datei startet."
+    },
+    {
+      "id": "TheDocumentFoundation.LibreOffice",
+      "name": "LibreOffice",
+      "category": "tools",
+      "scope": "machine",
+      "detect": "^LibreOffice",
+      "en": "Free office suite.",
+      "de": "Kostenlose Office-Suite."
+    },
+    {
       "id": "VideoLAN.VLC",
       "name": "VLC media player",
       "category": "media",
@@ -176,6 +615,26 @@
       "de": "Musikstreaming."
     },
     {
+      "id": "Daum.PotPlayer",
+      "name": "PotPlayer",
+      "category": "media",
+      "scope": "machine",
+      "detect": "^PotPlayer",
+      "en": "Video player with many formats and settings.",
+      "de": "Videoplayer mit vielen Formaten und Einstellungen."
+    },
+    {
+      "id": "SumatraPDF.SumatraPDF",
+      "name": "SumatraPDF",
+      "category": "media",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "installerType": "exe",
+      "detect": "^SumatraPDF",
+      "en": "Small, fast PDF and e-book reader.",
+      "de": "Kleiner, schneller Leser für PDF und E-Books."
+    },
+    {
       "id": "Mozilla.Firefox",
       "name": "Firefox",
       "category": "browsers",
@@ -192,6 +651,35 @@
       "detect": "^Google Chrome$",
       "en": "Web browser by Google.",
       "de": "Webbrowser von Google."
+    },
+    {
+      "id": "Brave.Brave",
+      "name": "Brave",
+      "category": "browsers",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^Brave",
+      "en": "Chromium browser with a built-in ad blocker.",
+      "de": "Chromium-Browser mit eingebautem Werbeblocker."
+    },
+    {
+      "id": "LibreWolf.LibreWolf",
+      "name": "LibreWolf",
+      "category": "browsers",
+      "scope": "machine",
+      "detect": "^LibreWolf",
+      "en": "Firefox with privacy settings on by default.",
+      "de": "Firefox mit voreingestellten Datenschutzeinstellungen."
+    },
+    {
+      "id": "Vivaldi.Vivaldi",
+      "name": "Vivaldi",
+      "category": "browsers",
+      "scope": "machine",
+      "wingetScope": "machine",
+      "detect": "^Vivaldi",
+      "en": "Chromium browser with many built-in tools.",
+      "de": "Chromium-Browser mit vielen eingebauten Werkzeugen."
     },
     {
       "id": "Microsoft.VCRedist.2015+.x64",
@@ -311,6 +799,51 @@
       "detect": "^PawnIO",
       "en": "Signed kernel driver for reading hardware sensors. Needed for the optional sensor readings on the Health page.",
       "de": "Signierter Kerneltreiber zum Lesen von Hardwaresensoren. Für die optionalen Sensorwerte auf der Seite Zustand nötig."
+    },
+    {
+      "id": "Microsoft.VCRedist.2008.x64",
+      "name": "Visual C++ 2008 (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2008 Redistributable - x64",
+      "en": "Runtime that older games need.",
+      "de": "Laufzeit, die ältere Spiele brauchen."
+    },
+    {
+      "id": "Microsoft.VCRedist.2008.x86",
+      "name": "Visual C++ 2008 (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2008 Redistributable - x86",
+      "en": "Runtime that older 32-bit games need.",
+      "de": "Laufzeit, die ältere 32-Bit-Spiele brauchen."
+    },
+    {
+      "id": "Microsoft.VCRedist.2005.x64",
+      "name": "Visual C++ 2005 (x64)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2005 Redistributable \\(x64\\)",
+      "en": "Runtime that very old games need.",
+      "de": "Laufzeit, die sehr alte Spiele brauchen."
+    },
+    {
+      "id": "Microsoft.VCRedist.2005.x86",
+      "name": "Visual C++ 2005 (x86)",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft Visual C\\+\\+ 2005 Redistributable$",
+      "en": "Runtime that very old 32-bit games need.",
+      "de": "Laufzeit, die sehr alte 32-Bit-Spiele brauchen."
+    },
+    {
+      "id": "Microsoft.XNARedist",
+      "name": "XNA Framework 4.0",
+      "category": "runtimes",
+      "scope": "machine",
+      "detect": "^Microsoft XNA Framework Redistributable",
+      "en": "Runtime for games made with XNA, such as Terraria.",
+      "de": "Laufzeit für Spiele mit XNA, etwa Terraria."
     }
   ]
 }

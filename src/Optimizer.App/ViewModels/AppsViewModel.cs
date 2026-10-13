@@ -31,6 +31,8 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
     public Wpf.Ui.Controls.SymbolRegular Symbol => App.Category switch
     {
         "launchers" => Wpf.Ui.Controls.SymbolRegular.Games24,
+        "streaming" => Wpf.Ui.Controls.SymbolRegular.Video24,
+        "peripherals" => Wpf.Ui.Controls.SymbolRegular.Keyboard24,
         "communication" => Wpf.Ui.Controls.SymbolRegular.Chat24,
         "monitoring" => Wpf.Ui.Controls.SymbolRegular.Gauge24,
         "media" => Wpf.Ui.Controls.SymbolRegular.Play24,
