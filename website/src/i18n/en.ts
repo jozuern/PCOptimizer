@@ -8,7 +8,7 @@ const en: Copy = {
     description:
       'PC optimizer for Windows 11, built to be the only one you need. Tunero finds what costs your games frame rate, explains every change with sources and can undo everything it changes. Free and open source.',
   },
-  nav: { download: 'Download', source: 'Source code', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
+  nav: { download: 'Download', source: 'Source code', support: 'Support', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
   hero: {
     title: 'Built to be the only PC optimizer you need.',
     lead: 'Tunero scans your PC for what costs your games frame rate and fixes what it can. It is built to replace the tweak tools, debloat scripts, startup managers and cleaners you would otherwise collect. Every change is explained with sources, backed up first and can be undone.',
@@ -160,6 +160,15 @@ const en: Copy = {
     ],
     link: 'Everything the app sends, and to whom',
   },
+  support: {
+    title: 'Support Tunero',
+    body: [
+      'Tunero is free, with no ads, no account and no paid version. If it helps you and you want to give something back, you can support its development on Ko-fi or GitHub Sponsors. Bug reports and ideas help just as much.',
+    ],
+    kofi: 'Support on Ko-fi',
+    sponsors: 'Sponsor on GitHub',
+    note: 'Support unlocks nothing: every feature is in the free exe.',
+  },
   install: {
     title: 'Get Tunero',
     steps: [
@@ -202,7 +211,7 @@ const en: Copy = {
   },
   footer: {
     license: (v) => `Tunero ${v}. Free software under the GPL-3.0.`,
-    links: { releases: 'Releases', changelog: 'Changelog', source: 'Source code', privacy: 'Privacy', imprint: 'Legal notice', kofi: 'Support on Ko-fi' },
+    links: { releases: 'Releases', changelog: 'Changelog', source: 'Source code', privacy: 'Privacy', imprint: 'Legal notice', kofi: 'Support on Ko-fi', sponsors: 'GitHub Sponsors' },
     privacyHref: '/privacy/',
     imprintHref: '/legal/',
   },

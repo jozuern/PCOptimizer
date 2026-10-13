@@ -132,7 +132,7 @@ Once releases are signed, Windows shows "SignPath Foundation" as their publisher
 
 ## Support
 
-Tunero is free. If it helps you and you want to give something back, you can support its development on [Ko-fi](https://ko-fi.com/jozuern) (also linked in the app under Settings > About). Bug reports and ideas help just as much.
+Tunero is free. If it helps you and you want to give something back, you can support its development on [Ko-fi](https://ko-fi.com/jozuern) (also linked in the app under Settings > About) or through [GitHub Sponsors](https://github.com/sponsors/jozuern). Support unlocks nothing: every feature is in the free exe. Bug reports and ideas help just as much.
 
 ## Credits
 

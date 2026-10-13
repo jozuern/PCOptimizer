@@ -8,7 +8,7 @@ const de: Copy = {
     description:
       'PC-Optimierer für Windows 11, gebaut, damit du nur noch einen brauchst. Tunero findet, was deine Spiele FPS kostet, erklärt jede Änderung mit Quellen und kann alles rückgängig machen, was es ändert. Kostenlos und quelloffen.',
   },
-  nav: { download: 'Download', source: 'Quellcode', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
+  nav: { download: 'Download', source: 'Quellcode', support: 'Unterstützen', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
   hero: {
     title: 'Gebaut, damit du nur noch einen PC-Optimierer brauchst.',
     lead: 'Tunero sucht auf deinem PC, was deine Spiele FPS kostet, und behebt, was es kann. Es ist gebaut, um die Tweak-Tools, Debloat-Skripte, Autostart-Manager und Aufräumprogramme zu ersetzen, die du sonst zusammensuchst. Jede Änderung wird mit Quellen erklärt, vorher gesichert und lässt sich rückgängig machen.',
@@ -160,6 +160,15 @@ const de: Copy = {
     ],
     link: 'Alles, was die App sendet, und an wen',
   },
+  support: {
+    title: 'Tunero unterstützen',
+    body: [
+      'Tunero ist kostenlos, ohne Werbung, ohne Konto und ohne Bezahlversion. Wenn es dir hilft und du etwas zurückgeben möchtest, kannst du die Entwicklung auf Ko-fi oder über GitHub Sponsors unterstützen. Fehlerberichte und Ideen helfen genauso.',
+    ],
+    kofi: 'Auf Ko-fi unterstützen',
+    sponsors: 'Auf GitHub sponsern',
+    note: 'Eine Unterstützung schaltet nichts frei: Jede Funktion steckt in der kostenlosen exe.',
+  },
   install: {
     title: 'Hol dir Tunero',
     steps: [
@@ -202,7 +211,7 @@ const de: Copy = {
   },
   footer: {
     license: (v) => `Tunero ${v}. Freie Software unter der GPL-3.0.`,
-    links: { releases: 'Versionen', changelog: 'Änderungen', source: 'Quellcode', privacy: 'Datenschutz', imprint: 'Impressum', kofi: 'Unterstützen auf Ko-fi' },
+    links: { releases: 'Versionen', changelog: 'Änderungen', source: 'Quellcode', privacy: 'Datenschutz', imprint: 'Impressum', kofi: 'Unterstützen auf Ko-fi', sponsors: 'GitHub Sponsors' },
     privacyHref: '/de/datenschutz/',
     imprintHref: '/de/impressum/',
   },

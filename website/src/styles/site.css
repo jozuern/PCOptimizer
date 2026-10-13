@@ -124,6 +124,10 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 }
 .button:hover { background: var(--button-hover); text-decoration: none; }
 .button svg { width: 16px; height: 16px; flex: none; }
+/* The standard button next to an accent one: the card surface with a hairline, as in the app. */
+.button.standard { background: var(--surface); color: var(--ink); border-color: var(--rule); border-bottom-color: rgb(0 0 0 / 0.2); }
+.button.standard:hover { background: color-mix(in srgb, var(--surface) 94%, var(--ink)); }
+.support-actions { margin-top: 20px; }
 .button .size { font-weight: 400; opacity: 0.8; padding-left: 10px; margin-left: 2px; border-left: 1px solid rgb(127 127 127 / 0.5); }
 
 .command { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--ink-2); font-size: 15px; max-width: 100%; }

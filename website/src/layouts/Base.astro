@@ -2,7 +2,7 @@
 import '../styles/site.css';
 import icon from '../assets/tunero-icon.svg';
 import type { Copy } from '../i18n/types';
-import { repo, download, version } from '../lib/data';
+import { repo, download, version, support } from '../lib/data';
 
 interface Props {
   t: Copy;
@@ -50,6 +50,7 @@ const home = t.lang === 'en' ? '/' : '/de/';
         <nav>
           <a class="wide" href={download}>{t.nav.download}</a>
           <a class="wide" href={repo}>{t.nav.source}</a>
+          <a href={`${home}#support`}>{t.nav.support}</a>
           <a href={alternate} hreflang={t.lang === 'en' ? 'de' : 'en'} lang={t.lang === 'en' ? 'de' : 'en'}>{t.nav.other}</a>
         </nav>
       </div>
@@ -64,7 +65,8 @@ const home = t.lang === 'en' ? '/' : '/de/';
           <a href={`${repo}/releases`}>{t.footer.links.releases}</a>
           <a href={`${repo}/blob/main/CHANGELOG.md`}>{t.footer.links.changelog}</a>
           <a href={repo}>{t.footer.links.source}</a>
-          <a href="https://ko-fi.com/jozuern">{t.footer.links.kofi}</a>
+          <a href={support.kofi}>{t.footer.links.kofi}</a>
+          <a href={support.sponsors}>{t.footer.links.sponsors}</a>
           <a href={t.footer.privacyHref}>{t.footer.links.privacy}</a>
           <a href={t.footer.imprintHref}>{t.footer.links.imprint}</a>
         </nav>

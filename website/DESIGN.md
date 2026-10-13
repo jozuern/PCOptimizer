@@ -70,7 +70,8 @@ areas, left out) under large headings, each laid out its own way; and the refere
 5. **Areas:** "Built to replace a folder full of tools", heading on top, then the app's pages in the groups and order
    of its navigation rail, in two columns, with the selection mark on Overview.
 6. **Left out:** tweak names struck through in red, the reason and source below.
-7. **Reference area:** Privacy, Install (a numbered sequence down a line) and Questions as rows of a settings page: a
+7. **Reference area:** Privacy, Install (a numbered sequence down a line), Support (Ko-fi as the accent button, GitHub
+   Sponsors as a standard one, reached from "Support" in the header) and Questions as rows of a settings page: a
    heading of 24 to 30 px on the left, the content on the right, a heavy rule over the first row and thin ones between.
 
 Sections are separated by space, not rules. Rules appear only inside things you read as a set (board rows, tables,

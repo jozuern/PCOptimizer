@@ -8,6 +8,8 @@ const read = (path: string) => readFileSync(join(root, path), 'utf8');
 
 /** The repository on GitHub. The old PCOptimizer address redirects here. */
 export const repo = 'https://github.com/jozuern/Tunero';
+/** Where people can support the project, as in .github/FUNDING.yml. */
+export const support = { kofi: 'https://ko-fi.com/jozuern', sponsors: 'https://github.com/sponsors/jozuern' };
 export const download = `${repo}/releases/latest/download/Tunero.exe`;
 
 /**

@@ -1,7 +1,7 @@
 ---
 import Shot from './Shot.astro';
 import type { Copy } from '../i18n/types';
-import { counts, version, sizeMb, explanation, registryChanges, checkTitles, topChecks, tweakImpacts, repo, download, packages } from '../lib/data';
+import { counts, version, sizeMb, explanation, registryChanges, checkTitles, topChecks, tweakImpacts, repo, download, packages, support } from '../lib/data';
 
 interface Props { t: Copy }
 const { t } = Astro.props;
@@ -280,6 +280,18 @@ const managers = [
         </>
       )}
       <p class="after-list"><a href={`${repo}/releases`}>{t.install.releases}</a></p>
+    </div>
+  </section>
+
+  <section class="ref-row" aria-labelledby="support">
+    <h2 id="support">{t.support.title}</h2>
+    <div>
+      {t.support.body.map((p) => <p>{p}</p>)}
+      <p class="actions support-actions">
+        <a class="button" href={support.kofi}>{t.support.kofi}</a>
+        <a class="button standard" href={support.sponsors}>{t.support.sponsors}</a>
+      </p>
+      <p class="fine">{t.support.note}</p>
     </div>
   </section>
 

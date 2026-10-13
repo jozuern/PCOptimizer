@@ -10,7 +10,7 @@ export interface Counts {
 export interface Copy {
   lang: Lang;
   meta: { title: string; description: string };
-  nav: { download: string; source: string; other: string; otherHref: string; skip: string };
+  nav: { download: string; source: string; support: string; other: string; otherHref: string; skip: string };
   hero: {
     title: string;
     lead: string;
@@ -73,10 +73,11 @@ export interface Copy {
   areas: { title: string; intro: string; groups: (c: Counts) => { name: string; items: [string, string][] }[] };
   privacy: { title: string; body: string[]; link: string };
   install: { title: string; steps: { name: string; text: string }[]; managers: string; releases: string };
+  support: { title: string; body: string[]; kofi: string; sponsors: string; note: string };
   faq: { title: string; items: { id: string; q: string; a: string }[] };
   footer: {
     license: (version: string) => string;
-    links: { releases: string; changelog: string; source: string; privacy: string; imprint: string; kofi: string };
+    links: { releases: string; changelog: string; source: string; privacy: string; imprint: string; kofi: string; sponsors: string };
     privacyHref: string;
     imprintHref: string;
   };
