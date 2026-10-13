@@ -99,13 +99,15 @@ public sealed class TweakItemViewModel : InspectorItem
         // Already on before this app: there is no original value to restore, so a switch could never be turned off.
         // Say that in words instead of showing a switch that looks broken.
         IsSetOutside = outside is not null;
-        // "Already on" next to the switch says the rest; the icon carries on and off.
-        CompactMeta = IsSetOutside || status.State is TweakState.NotApplied or TweakState.Applied ? "" : StatusText;
+        // On and off are what the switch shows, and "Already on" next to it says the rest (its tooltip explains it): the
+        // row's line names a state only when it is something else (partly applied, reset by Windows, set by a policy).
+        var stateShown = IsSetOutside || status.State is TweakState.NotApplied or TweakState.Applied;
+        CompactMeta = stateShown ? "" : StatusText;
         // The badges are drawn as tags next to the title, not repeated in this line. A tweak without any effect on the
         // profile's goal (most privacy and Explorer settings) leaves "Impact 0 of 5, No FPS effect" out of its row: the
         // details still name it.
         var noEffect = Impact == 0 && profiled is not { WorksAgainst: true };
-        MetaText = Meta(outside is null ? StatusText : $"{StatusText}, {outside}", noEffect ? null : ImpactText, noEffect ? "" : EffectsText);
+        MetaText = Meta(stateShown ? "" : StatusText, noEffect ? null : ImpactText, noEffect ? "" : EffectsText);
         Note = IsSetOutside ? Loc.Instance["Tweak_AlreadyOnTip"] : null;
         // Only real blocks are shown as a warning; "set outside this app" is part of the detail line.
         ToggleNote = canChange && !IsOn && hard.Count > 0 ? BlockText : null;

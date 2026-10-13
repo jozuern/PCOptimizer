@@ -199,8 +199,9 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     private void FitPanes()
     {
         FitHeight();
-        // The details pane never leaves the page less room than it needs for a readable list.
-        DetailsPane.Width = Math.Clamp(DetailsPane.Width, DetailsMin, DetailsMax);
+        // The details pane never leaves the page less room than it needs for a readable list; the width it was dragged
+        // to comes back when the window is wide enough again.
+        DetailsPane.Width = Math.Clamp(_detailsWidth, DetailsMin, DetailsMax);
         var crowded = _vm.SelectedItem is not null && ActualWidth > 0 && ActualWidth < NarrowWidth;
         if (crowded && Nav.IsPaneOpen)
         {
@@ -251,12 +252,21 @@ public partial class MainWindow : FluentWindow, IServiceProvider
 
     private const double DetailsMin = 340;
 
-    /// <summary>Widest details pane: the page keeps at least 520 px (rail and a list of readable width).</summary>
-    private double DetailsMax => Math.Max(DetailsMin, ActualWidth - 520);
+    /// <summary>The width the details pane is given (460 until its edge is dragged); narrow windows show less of it.</summary>
+    private double _detailsWidth = 460;
+
+    /// <summary>
+    /// Widest details pane: at most 45 % of the window, and the page keeps at least 640 px (the rail and a list whose
+    /// rows still have room for their text next to the switch; with 520 px a row's summary ran over six lines).
+    /// </summary>
+    private double DetailsMax => Math.Max(DetailsMin, Math.Min(ActualWidth - 640, ActualWidth * 0.45));
 
     /// <summary>Dragging the left edge of the details pane: to the left makes it wider.</summary>
-    private void DetailsResize_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) =>
-        DetailsPane.Width = Math.Clamp(DetailsPane.Width - e.HorizontalChange, DetailsMin, DetailsMax);
+    private void DetailsResize_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _detailsWidth = Math.Clamp(DetailsPane.Width - e.HorizontalChange, DetailsMin, DetailsMax);
+        DetailsPane.Width = _detailsWidth;
+    }
 
     /// <summary>
     /// Renders the selected item's explanation (re-run after theme changes so brushes match). The document is built in

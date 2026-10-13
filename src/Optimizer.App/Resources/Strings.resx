@@ -81,7 +81,7 @@
   <data name="Nav_Changes" xml:space="preserve"><value>Changes</value></data>
   <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Tweaks_Hint" xml:space="preserve"><value>Every change shows exactly what it does and can be undone. Recommended items fit this PC.</value></data>
-  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks: {1} changed by this app, {2} already set, {3} recommended for this PC</value></data>
+  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} tweaks</value></data>
   <data name="Tweak_TurnOn" xml:space="preserve"><value>Turn on</value></data>
   <data name="Tweak_Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Tweak_Reapply" xml:space="preserve"><value>Apply again</value></data>
@@ -1080,7 +1080,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain and check</value></data>
   <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Recommended for this PC</value></data>
   <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>On, but works against this profile</value></data>
-  <data name="Tweaks_GroupCount" xml:space="preserve"><value>{1} of {0} on ({2} by this app)</value></data>
+  <data name="Tweaks_GroupCount" xml:space="preserve"><value>{1} of {0} on</value></data>
   <data name="Tweaks_OpenAll" xml:space="preserve"><value>Expand all</value></data>
   <data name="Tweaks_CloseAll" xml:space="preserve"><value>Collapse all</value></data>
   <data name="Tweaks_SectionPerformance" xml:space="preserve"><value>Performance and power</value></data>
@@ -1280,4 +1280,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Debloat_UnreviewedEmpty" xml:space="preserve"><value>No other removable apps found.</value></data>
   <data name="Debloat_UnreviewedMeta" xml:space="preserve"><value>Not reviewed, version {0}</value></data>
   <data name="Debloat_UnreviewedConfirm" xml:space="preserve"><value>{0} is not on the reviewed list, so nobody checked what it does or what needs it. It is removed for all users, and this app cannot undo that; reinstall it from the Microsoft Store or its maker if you need it again.</value></data>
+  <data name="Tweaks_CountByApp" xml:space="preserve"><value>{0} changed by this app</value></data>
+  <data name="Tweaks_CountAlreadySet" xml:space="preserve"><value>{0} already set</value></data>
+  <data name="Tweaks_CountRecommended" xml:space="preserve"><value>{0} recommended for this PC</value></data>
 </root>

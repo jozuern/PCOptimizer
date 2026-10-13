@@ -81,7 +81,7 @@
   <data name="Nav_Changes" xml:space="preserve"><value>Änderungen</value></data>
   <data name="Tweaks_Title" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Tweaks_Hint" xml:space="preserve"><value>Jede Änderung zeigt genau, was sie tut, und lässt sich rückgängig machen. Empfohlene Punkte passen zu diesem PC.</value></data>
-  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} Tweaks: {1} von dieser App geändert, {2} schon gesetzt, {3} für diesen PC empfohlen</value></data>
+  <data name="Tweaks_Summary" xml:space="preserve"><value>{0} Tweaks</value></data>
   <data name="Tweak_TurnOn" xml:space="preserve"><value>Einschalten</value></data>
   <data name="Tweak_Undo" xml:space="preserve"><value>Rückgängig</value></data>
   <data name="Tweak_Reapply" xml:space="preserve"><value>Erneut anwenden</value></data>
@@ -1080,7 +1080,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Pflegen und prüfen</value></data>
   <data name="Tweaks_GroupRecommended" xml:space="preserve"><value>Für diesen PC empfohlen</value></data>
   <data name="Tweaks_GroupAgainstOn" xml:space="preserve"><value>An, wirkt aber gegen dieses Profil</value></data>
-  <data name="Tweaks_GroupCount" xml:space="preserve"><value>{1} von {0} an ({2} durch diese App)</value></data>
+  <data name="Tweaks_GroupCount" xml:space="preserve"><value>{1} von {0} an</value></data>
   <data name="Tweaks_OpenAll" xml:space="preserve"><value>Alle aufklappen</value></data>
   <data name="Tweaks_CloseAll" xml:space="preserve"><value>Alle zuklappen</value></data>
   <data name="Tweaks_SectionPerformance" xml:space="preserve"><value>Leistung und Energie</value></data>
@@ -1280,4 +1280,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Debloat_UnreviewedEmpty" xml:space="preserve"><value>Keine weiteren entfernbaren Apps gefunden.</value></data>
   <data name="Debloat_UnreviewedMeta" xml:space="preserve"><value>Nicht geprüft, Version {0}</value></data>
   <data name="Debloat_UnreviewedConfirm" xml:space="preserve"><value>{0} steht nicht auf der geprüften Liste, niemand hat also geprüft, was die App tut oder was sie braucht. Sie wird für alle Benutzer entfernt, und diese App kann das nicht rückgängig machen; installiere sie bei Bedarf aus dem Microsoft Store oder vom Hersteller neu.</value></data>
+  <data name="Tweaks_CountByApp" xml:space="preserve"><value>{0} von dieser App geändert</value></data>
+  <data name="Tweaks_CountAlreadySet" xml:space="preserve"><value>{0} schon gesetzt</value></data>
+  <data name="Tweaks_CountRecommended" xml:space="preserve"><value>{0} für diesen PC empfohlen</value></data>
 </root>

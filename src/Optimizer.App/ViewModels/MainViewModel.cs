@@ -1746,8 +1746,10 @@ public sealed partial class MainViewModel : ObservableObject
                 .Select(p => new TweakItemViewModel(p.Status, lang, _services.Engine, this, profiled: p, profile: _usage))
                 .ToList();
             foreach (var item in items) Tweaks.Add(item);
-            // "12 of 34 on (3 by this app)": the same split as the page summary.
-        var summary = Loc.Instance.Format("Tweaks_GroupCount", items.Count, items.Count(i => i.IsOn), items.Count(i => i.IsOn && i.HasBackup));
+            // "12 of 34 on, 3 by this app": the same split as the page summary; "0 by this app" is left out.
+            var byApp = items.Count(i => i.IsOn && i.HasBackup);
+            var summary = Loc.Instance.Format("Tweaks_GroupCount", items.Count, items.Count(i => i.IsOn))
+                + (byApp > 0 ? ", " + Loc.Instance.Format("Tweaks_CountByApp", byApp) : "");
             _tweakGroups.Add(new TweakGroupRow(g.Key, GroupTitle(g.Key), GroupIcon(g.Key), summary, items)
             {
                 IsExpanded = q.Length > 0 || _openGroups.Contains(g.Key),
@@ -1755,9 +1757,16 @@ public sealed partial class MainViewModel : ObservableObject
         }
         ShowTweakRows();
         var visible = VisibleTweaks().ToList();
-        // "On" alone would count settings that were already that way as changes of this app.
-        TweaksSummary = Loc.Instance.Format("Tweaks_Summary", visible.Count, visible.Count(p => p.Status.IsOn && p.Status.HasBackup),
-            visible.Count(p => p.Status.IsOn && !p.Status.HasBackup), visible.Count(p => p.Recommended));
+        // "On" alone would count settings that were already that way as changes of this app. Counts of zero are left out:
+        // "202 tweaks: 91 already set" reads, "0 changed by this app, 0 recommended" was noise.
+        var parts = new[]
+        {
+            (Count: visible.Count(p => p.Status.IsOn && p.Status.HasBackup), Key: "Tweaks_CountByApp"),
+            (Count: visible.Count(p => p.Status.IsOn && !p.Status.HasBackup), Key: "Tweaks_CountAlreadySet"),
+            (Count: visible.Count(p => p.Recommended), Key: "Tweaks_CountRecommended"),
+        }.Where(x => x.Count > 0).Select(x => Loc.Instance.Format(x.Key, x.Count)).ToList();
+        var total = Loc.Instance.Format("Tweaks_Summary", visible.Count);
+        TweaksSummary = parts.Count == 0 ? total : $"{total}: {string.Join(", ", parts)}";
     }
 
     private static string GroupTitle(string key) => key switch

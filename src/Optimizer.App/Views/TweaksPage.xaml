@@ -18,10 +18,10 @@
             <ui:InfoBar Title="" Message="{l:Tr Banner_AdminToApply}" Severity="Warning" IsClosable="False"
                         IsOpen="{Binding IsElevated, Converter={StaticResource InverseBool}}" Margin="0,0,0,8" />
 
-            <!-- One card for everything above the list. Search and what to show in the first row (the search box takes the rest);
-                 below, the counts and links, and the buttons, which wrap under them when the page is narrow. The profile is a
-                 setting of the whole app, chosen on the overview: here it is named, with the way there. -->
-            <ui:Card Padding="16,8" Margin="0,0,0,8">
+            <!-- One card for everything above the list. First row: search (it takes the rest) and what to show. Below a
+                 divider: the counts and the two links on the left, the buttons on the right, both centered on one line. The
+                 profile is a setting of the whole app, chosen on the overview: here it is named, with the way there. -->
+            <ui:Card Padding="16,12" Margin="0,0,0,8">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -29,30 +29,30 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <ui:TextBox PlaceholderText="{l:Tr Tweaks_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding TweakSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                    Margin="0,4,8,4" ClearButtonEnabled="True" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,4">
-                            <ui:TextBlock FontTypography="Body" Text="{l:Tr TweakView_Label}" VerticalAlignment="Center" Margin="8,0,8,0" />
+                                    Margin="0,0,16,0" ClearButtonEnabled="True" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:TextBlock FontTypography="Body" Text="{l:Tr TweakView_Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
                             <ComboBox ItemsSource="{Binding TweakViewOptions}" SelectedValuePath="View" SelectedValue="{Binding TweakViewMode}" DisplayMemberPath="Text"
                                       MinWidth="200" AutomationProperties.Name="{l:Tr TweakView_Label}" />
                         </StackPanel>
                     </Grid>
-                    <WrapPanel Margin="0,4,0,0">
-                        <StackPanel Margin="0,4,24,4" VerticalAlignment="Center">
-                            <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding TweaksSummary}" />
-                            <WrapPanel Margin="0,2,0,0">
-                                <ui:HyperlinkButton Content="{Binding TweaksProfileLink}" Padding="0" Margin="0,0,16,0" FontSize="12" ToolTip="{l:Tr Profile_Hint}"
-                                                    Command="{Binding OpenOverviewCommand}" />
-                                <!-- Expert changes are hidden until Expert mode is on: a way there from this page -->
-                                <ui:HyperlinkButton Content="{l:Tr Tweaks_ExpertLink}" Padding="0" FontSize="12" Command="{Binding OpenSettingsCommand}"
-                                                    Visibility="{Binding ExpertMode, Converter={StaticResource InverseBoolToVisibility}}" />
-                            </WrapPanel>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,4">
+                    <Border Style="{StaticResource Divider}" />
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                             <ui:Button Appearance="Primary" Content="{Binding RecommendedButtonText}" Command="{Binding ApplyRecommendedCommand}" Margin="0,0,8,0"
                                        Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVisibility}}" />
                             <ui:Button Appearance="Transparent" Content="{l:Tr Tweaks_OpenAll}" Icon="{ui:SymbolIcon ChevronDown20}" Command="{Binding OpenAllTweakGroupsCommand}" Margin="0,0,4,0" />
                             <ui:Button Appearance="Transparent" Content="{l:Tr Tweaks_CloseAll}" Icon="{ui:SymbolIcon ChevronUp20}" Command="{Binding CloseAllTweakGroupsCommand}" />
                         </StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{Binding TweaksSummary}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <!-- The links below, across the whole card: a link does not wrap, so next to the buttons a narrow window cut it off -->
+                    <WrapPanel Margin="0,4,0,0">
+                        <ui:HyperlinkButton Content="{Binding TweaksProfileLink}" Padding="0" Margin="0,0,16,0" ToolTip="{l:Tr Profile_Hint}"
+                                            Command="{Binding OpenOverviewCommand}" />
+                        <!-- Expert changes are hidden until Expert mode is on: a way there from this page -->
+                        <ui:HyperlinkButton Content="{l:Tr Tweaks_ExpertLink}" Padding="0" Command="{Binding OpenSettingsCommand}"
+                                            Visibility="{Binding ExpertMode, Converter={StaticResource InverseBoolToVisibility}}" />
                     </WrapPanel>
                 </StackPanel>
             </ui:Card>
