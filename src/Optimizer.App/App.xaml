@@ -281,8 +281,9 @@
                                           Margin="0,4,0,0" Visibility="{Binding RecommendedText, Converter={StaticResource NullToVisibility}}" />
                             <!-- State, impact and effects, then the badges as tags; both wrap inside the card -->
                             <WrapPanel Margin="0,4,0,0">
+                                <!-- Collapsed when empty: its margin would move the tags off the title's left edge -->
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" TextWrapping="Wrap"
-                                              VerticalAlignment="Center" Margin="0,0,8,0" />
+                                              VerticalAlignment="Center" Margin="0,0,8,0" Visibility="{Binding MetaText, Converter={StaticResource NullToVisibility}}" />
                                 <ItemsControl ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>

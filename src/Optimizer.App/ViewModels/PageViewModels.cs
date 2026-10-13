@@ -223,7 +223,7 @@ public abstract partial class SwitchRow : ObservableObject
     protected abstract Task<bool> ToggleAsync(bool on);
 }
 
-// ---------------- Graphics & network ----------------
+// ---------------- Graphics & DNS ----------------
 
 public sealed record DnsResultRow(string Name, string Server, string Median, string Best, string Answered)
 {
@@ -246,6 +246,41 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
     public bool ShowDeviceTweaks => Owner.ExpertMode && DeviceTweaks.Count > 0;
     public bool GameProfilesEmpty => GameProfiles.Count == 0;
 
+    /// <summary>
+    /// The game rows in view. A library can list dozens of games, which made the page endless: without a search the first
+    /// few show, plus every game whose profile is on (the ones people come back for), and "Show all" opens the rest.
+    /// </summary>
+    public ObservableCollection<TweakItemViewModel> GameProfilesShown { get; } = [];
+
+    private const int GamesShownFirst = 6;
+
+    [ObservableProperty] private string _gameSearch = "";
+    [ObservableProperty] private bool _showAllGames;
+    [ObservableProperty] private string? _showAllGamesText;
+
+    partial void OnGameSearchChanged(string value) => ShowGames();
+    partial void OnShowAllGamesChanged(bool value) => ShowGames();
+
+    /// <summary>The search box only for a list longer than what shows at first.</summary>
+    public bool GameSearchVisible => GameProfiles.Count > GamesShownFirst;
+
+    public bool GameSearchEmpty => GameProfiles.Count > 0 && GameProfilesShown.Count == 0;
+
+    [RelayCommand]
+    private void ExpandGames() => ShowAllGames = true;
+
+    private void ShowGames()
+    {
+        var q = GameSearch.Trim();
+        var matches = GameProfiles.Where(g => q.Length == 0 || g.Title.Contains(q, StringComparison.CurrentCultureIgnoreCase)).ToList();
+        var shown = q.Length > 0 || ShowAllGames ? matches : matches.Where((g, i) => i < GamesShownFirst || g.IsOn).ToList();
+        GameProfilesShown.Clear();
+        foreach (var g in shown) GameProfilesShown.Add(g);
+        ShowAllGamesText = shown.Count < matches.Count ? Loc.Instance.Format("Net_ShowAllGames", matches.Count) : null;
+        OnPropertyChanged(nameof(GameSearchVisible));
+        OnPropertyChanged(nameof(GameSearchEmpty));
+    }
+
     /// <summary>Impact, effects and tags the rows of a list share ("Impact 1 of 5, 1 % lows, Preview"), shown once above it.</summary>
     [ObservableProperty] private string? _gameProfilesFacts;
 
@@ -254,8 +289,13 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
     private static string? SharedFacts(IReadOnlyCollection<TweakItemViewModel> rows)
     {
         if (rows.Count == 0) return null;
-        static string Facts(TweakItemViewModel r) =>
-            string.Join(", ", new[] { r.ImpactText, r.EffectsText, r.BadgesText }.Where(x => !string.IsNullOrEmpty(x)));
+        // "Impact 1 of 5. Affects: 1 % lows. Not yet tested on a real PC", in the words of a row's line
+        static string Facts(TweakItemViewModel r) => string.Join(". ", new[]
+        {
+            r.ImpactText,
+            r.EffectsText.Length > 0 ? Loc.Instance.Format("Meta_Affects", r.EffectsText) : "",
+            r.BadgesText,
+        }.Where(x => !string.IsNullOrEmpty(x)));
         var all = rows.Select(Facts).Distinct().ToList();
         return all.Count == 1 ? all[0] : null;
     }
@@ -365,6 +405,7 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
         ShowCurrentDnsAsync().Forget("current DNS servers");
         GameProfilesFacts = SharedFacts(GameProfiles);
         DeviceFacts = SharedFacts(DeviceTweaks);
+        ShowGames();
         OnPropertyChanged(nameof(ShowDeviceTweaks));
         OnPropertyChanged(nameof(GameProfilesEmpty));
     }

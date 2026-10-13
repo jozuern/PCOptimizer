@@ -1734,7 +1734,7 @@ public sealed partial class MainViewModel : ObservableObject
         var groups = VisibleTweaks()
             .Where(p => !OnlyRecommended || p.Recommended)
             .Where(p => !_onlyChanged || p.Status.HasBackup)
-            // DNS servers are one choice, made on Graphics & network: not a second list of tweaks here.
+            // DNS servers are one choice, made on Graphics & DNS: not a second list of tweaks here.
             .Where(p => !p.Tweak.Id.StartsWith("network.dns.", StringComparison.Ordinal))
             .Where(Matches)
             .GroupBy(p => p.Recommended ? RecommendedGroup : p.Flagged ? AgainstGroup : TweakSections[SectionIndex(p.Tweak.Category)].Key)

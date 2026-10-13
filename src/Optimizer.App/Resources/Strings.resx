@@ -140,7 +140,7 @@
   <data name="Busy" xml:space="preserve"><value>Working</value></data>
   <data name="Banner_AdminToApply" xml:space="preserve"><value>Changes need administrator rights. Start Tunero as administrator to apply or undo them.</value></data>
   <data name="Nav_Network" xml:space="preserve">
-    <value>Graphics &amp; network</value>
+    <value>Graphics &amp; DNS</value>
   </data>
   <data name="Nav_Debloat" xml:space="preserve">
     <value>Remove apps</value>
@@ -218,7 +218,7 @@
     <value>{0} applied, {1} failed, {2} skipped.</value>
   </data>
   <data name="Net_Title" xml:space="preserve">
-    <value>Graphics &amp; network</value>
+    <value>Graphics &amp; DNS</value>
   </data>
   <data name="Net_Hint" xml:space="preserve">
     <value>Graphics driver settings, per-game profiles, DNS and, in Expert mode, device interrupts.</value>
@@ -1283,4 +1283,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Tweaks_CountByApp" xml:space="preserve"><value>{0} changed by this app</value></data>
   <data name="Tweaks_CountAlreadySet" xml:space="preserve"><value>{0} already set</value></data>
   <data name="Tweaks_CountRecommended" xml:space="preserve"><value>{0} recommended for this PC</value></data>
+  <data name="Net_TweaksLink" xml:space="preserve"><value>Other network settings are tweaks, in the Network group of the Tweaks page</value></data>
+  <data name="Net_GameSearch" xml:space="preserve"><value>Search games</value></data>
+  <data name="Net_NoGameMatch" xml:space="preserve"><value>No game matches the search.</value></data>
+  <data name="Net_ShowAllGames" xml:space="preserve"><value>Show all {0} games</value></data>
 </root>

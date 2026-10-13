@@ -104,7 +104,7 @@ public sealed partial class MainViewModel
         switch (r.Kind)
         {
             case SearchKind.Tweak when r.ItemId?.StartsWith("network.dns.", StringComparison.Ordinal) == true:
-                // DNS servers are chosen on Graphics & network.
+                // DNS servers are chosen on Graphics & DNS.
                 CurrentPage = Page.Network;
                 return;
             case SearchKind.Tweak when page == Page.Tweaks:
@@ -174,12 +174,20 @@ public sealed partial class MainViewModel
         }
     }
 
-    /// <summary>Graphics & network: the network repairs are on Tools, first tab.</summary>
+    /// <summary>Graphics & DNS: the network repairs are on Tools, first tab.</summary>
     [RelayCommand]
     private void OpenToolsFixes()
     {
         ToolsTab = 0;
         CurrentPage = Page.Tools;
+    }
+
+    /// <summary>Graphics & DNS: the other network settings are tweaks, in the Network group of the Tweaks page.</summary>
+    [RelayCommand]
+    private void OpenTweaksNetwork()
+    {
+        CurrentPage = Page.Tweaks;
+        OpenTweakGroup("network");
     }
 
     /// <summary>F5: reads the current page again (pages that load their own lists), else scans the PC again.</summary>

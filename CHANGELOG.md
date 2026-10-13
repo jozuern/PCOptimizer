@@ -11,6 +11,7 @@
 - **Tweaks page, cleaner rows:** the switches of a list stand in one column, and "Already on" starts where they do. A row's grey line no longer repeats "Off" or "On" next to the switch, and the warning icon of a row that needs attention sits in front of its title instead of an empty icon column on every other row. Counts leave out zeros ("202 tweaks: 91 already set", "12 of 34 on"), and the links under the search no longer get cut off in a narrow window.
 - **Details pane in a narrow window:** it takes at most 45 % of the window and leaves the list at least 640 px, so a row's text no longer runs over six lines; the width you drag it to comes back when the window is wider again.
 - **Overview order:** the findings now follow right after the counts and the game access card, so "2 problems" is answered right below the number; the recommendations and the settings against your profile come after them. Each count shows a small arrow, since a click opens its list, and the changes the one-click list leaves out sit under a line in the same card instead of a second card inside it.
+- **Graphics & DNS** is the new name of Graphics & network: the page holds the NVIDIA settings, the profiles per game and DNS, while the other network settings are tweaks and the network repairs are tools. Two links on the DNS card lead there. The profiles per game show the first six games and every game whose profile is on, with "Show all" and a search for long libraries, and the facts they share read like a row's line ("Impact 1 of 5. Affects: 1 % lows").
 
 ### Fixed
 
