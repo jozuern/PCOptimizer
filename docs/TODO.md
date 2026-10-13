@@ -19,7 +19,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 ## Code
 
-- **Refactors from the audit:** a Core `ChangeSession` shared by the window and the command line (also unblocks CLI verbs and an opt-in re-apply task); `UpdateService` and `UninstallService` out of `MainViewModel` with an App test project; one `ProcessLauncher` and `PowerShellScript` builder; pages behind an `IShell` interface with a page registry.
+- **Refactors from the audit:** a Core `ChangeSession` shared by the window and the command line (also unblocks CLI verbs and an opt-in re-apply task); `UpdateService` and `UninstallService` out of `MainViewModel` with an App test project; pages behind an `IShell` interface with a page registry.
 - **Catalog model:** an "also for new users" scope (Default profile), an action for the app's own scheduled task (undo removes it), whole-key backup, and `{nic}` expansion as a method of the actions instead of a switch in the engine.
 - **Start time:** measure from the launch (the bundle starts itself twice for the protected runtime folder); try ReadyToRun again against the exe size.
 

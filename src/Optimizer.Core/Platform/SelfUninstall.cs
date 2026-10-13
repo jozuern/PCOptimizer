@@ -58,6 +58,5 @@ public static class SelfUninstall
     }
 
     /// <summary>Arguments for powershell.exe that run <paramref name="script"/> without quoting problems.</summary>
-    public static string PowerShellArguments(string script) =>
-        $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {Convert.ToBase64String(Encoding.Unicode.GetBytes(script))}";
+    public static string PowerShellArguments(string script) => PowerShellScript.Encoded(script);
 }

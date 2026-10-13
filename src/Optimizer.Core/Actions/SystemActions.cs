@@ -413,7 +413,7 @@ public sealed class MemoryCompressionAction : TweakAction
     private void Run(ActionContext c, bool on) => ReadCache.Writing(c, TargetKey, () =>
     {
         var verb = on ? "Enable-MMAgent" : "Disable-MMAgent";
-        var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{verb} -MemoryCompression\"");
+        var (code, output) = c.Processes.Run(Platform.PowerShellScript.Exe, Platform.PowerShellScript.Command($"{verb} -MemoryCompression"));
         if (code != 0) throw new InvalidOperationException($"{verb} failed ({code}): {output}");
     });
 }

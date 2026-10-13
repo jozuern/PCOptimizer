@@ -139,18 +139,19 @@ public sealed record PackageInstall(PackageManager Manager, string Name, string 
         var versionCheck = expectedVersion is null ? null
             : $"$v = (Get-Item -LiteralPath {exe} -ErrorAction SilentlyContinue).VersionInfo.FileVersion; " +
               $"$ok = $ok -and $v -and ([version]$v -ge [version]{WingetPackage.Quote(System.Version.Parse(expectedVersion).ToString())})";
-        return Prefix +
+        return Window(
             $"Write-Host {WingetPackage.Quote(runningText)}; " +
             $"Wait-Process -Id {processId} -Timeout 60 -ErrorAction SilentlyContinue; " +
             Run(command, failedText, versionCheck) +
-            $"; Start-Process -FilePath {exe}\"";
+            $"; Start-Process -FilePath {exe}");
     }
 
     /// <summary>
-    /// Scoop is a PowerShell script (scoop.ps1), which the default execution policy (Restricted) would refuse: the policy is
-    /// lifted for this one PowerShell process only. Chocolatey and winget are exe files and need no exception.
+    /// The window's command line. Scoop is a PowerShell script (scoop.ps1), which the default execution policy (Restricted)
+    /// would refuse: the policy is lifted for this one PowerShell process only. Chocolatey and winget are exe files and
+    /// need no exception.
     /// </summary>
-    private string Prefix => Manager == PackageManager.Scoop ? "-NoProfile -ExecutionPolicy Bypass -Command \"" : "-NoProfile -Command \"";
+    private string Window(string script) => PowerShellScript.Command(script, interactive: true, bypassPolicy: Manager == PackageManager.Scoop);
 
     /// <summary>
     /// Runs the command and keeps the window open with <paramref name="failedText"/> when it failed. $LASTEXITCODE starts at
@@ -173,9 +174,9 @@ public sealed record PackageInstall(PackageManager Manager, string Name, string 
         var command = Manager == PackageManager.Chocolatey
             ? $"& {WingetPackage.Quote(choco ?? throw new ArgumentNullException(nameof(choco)))} uninstall {ChocolateyId} --yes --no-progress"
             : $"scoop uninstall {ScoopName}";
-        return Prefix +
+        return Window(
             $"Write-Host {WingetPackage.Quote(runningText)}; " +
             $"Wait-Process -Name {WingetPackage.Quote(processName)} -Timeout 60 -ErrorAction SilentlyContinue; " +
-            Run(command, failedText) + "\"";
+            Run(command, failedText));
     }
 }

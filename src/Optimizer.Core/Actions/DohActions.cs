@@ -61,7 +61,7 @@ public sealed class DohAutoUpgradeAction : TweakAction
         foreach (var s in states)
         {
             var script = $"$ErrorActionPreference='Stop'; Set-DnsClientDohServerAddress -ServerAddress '{s.Key}' -AutoUpgrade ${(s.Value ? "true" : "false")}";
-            var (code, output) = c.Processes.Run("powershell.exe", $"-NoProfile -NonInteractive -Command \"{script}\"");
+            var (code, output) = c.Processes.Run(Platform.PowerShellScript.Exe, Platform.PowerShellScript.Command(script));
             if (code != 0) errors.Add($"{s.Key} ({code}): {output.Trim()}");
         }
         if (errors.Count > 0) throw new InvalidOperationException("Set-DnsClientDohServerAddress failed for " + string.Join("; ", errors));

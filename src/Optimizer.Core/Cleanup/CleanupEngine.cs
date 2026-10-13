@@ -261,5 +261,5 @@ public static class CleanupEngine
 
     /// <summary>Delivery Optimization cache through its documented cmdlet.</summary>
     public static (int ExitCode, string Output) DeliveryOptimizationCleanup(IProcessRunner processes) =>
-        processes.Run("powershell.exe", "-NoProfile -NonInteractive -Command \"Delete-DeliveryOptimizationCache -Force\"", TimeSpan.FromMinutes(5));
+        processes.Run(PowerShellScript.Exe, PowerShellScript.Command("Delete-DeliveryOptimizationCache -Force"), TimeSpan.FromMinutes(5));
 }

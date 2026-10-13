@@ -238,9 +238,7 @@ public static class ProgramUninstaller
                 throw new InvalidOperationException("The uninstaller could not be started as the signed-in user.");
             return null;
         }
-        var psi = new System.Diagnostics.ProcessStartInfo(command.File, command.Arguments) { UseShellExecute = false };
-        ProcessHardening.Apply(psi);
-        using var p = System.Diagnostics.Process.Start(psi) ?? throw new InvalidOperationException($"Cannot start {command.File}");
+        using var p = ProcessLauncher.Start(ProcessLauncher.Info(command.File, command.Arguments, hidden: false));
         await p.WaitForExitAsync(ct);
         Logging.Log.Info("uninstall", $"exit {p.ExitCode}");
         return p.ExitCode;

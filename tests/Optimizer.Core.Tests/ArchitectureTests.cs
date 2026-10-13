@@ -35,6 +35,49 @@ public partial class ArchitectureTests
         Assert.Empty(problems);
     }
 
+    /// <summary>App code that builds a start info itself, each reviewed: everything else goes through ProcessLauncher.</summary>
+    private static readonly Dictionary<string, string> OwnStartInfo = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["ProcessLauncher.cs"] = "the one place that builds hardened start infos",
+        ["Program.cs"] = "the bundle starting itself again with the protected runtime folder",
+        ["MainViewModel.cs"] = "the updated exe started with the start's own environment rules",
+        ["DeElevatedLauncher.cs"] = "the shell opening a file or link as the signed-in user",
+    };
+
+    /// <summary>
+    /// Programs start through ProcessLauncher (System32 tools, no shell, hardened environment) and PowerShell command lines
+    /// come from PowerShellScript (-NoProfile always), so a new call site cannot forget either.
+    /// </summary>
+    [Fact]
+    public void ProcessesStartThroughTheLauncher()
+    {
+        var problems = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, "src"), "*.cs", SearchOption.AllDirectories))
+        {
+            if (file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)) continue;
+            var name = Path.GetFileName(file);
+            var text = File.ReadAllText(file);
+            if (text.Contains("new ProcessStartInfo(", StringComparison.Ordinal) || text.Contains("new System.Diagnostics.ProcessStartInfo(", StringComparison.Ordinal))
+                if (!OwnStartInfo.ContainsKey(name)) problems.Add($"{name}: builds a ProcessStartInfo (use ProcessLauncher.Info)");
+            if (text.Contains("\"-NoProfile", StringComparison.Ordinal) && name != "PowerShellScript.cs")
+                problems.Add($"{name}: writes PowerShell flags (use PowerShellScript)");
+        }
+        Assert.Empty(problems);
+    }
+
+    [Fact]
+    public void PowerShellCommandLines()
+    {
+        Assert.Equal("-NoProfile -NonInteractive -Command \"Get-Date\"", Optimizer.Core.Platform.PowerShellScript.Command("Get-Date"));
+        Assert.Equal("-NoProfile -ExecutionPolicy Bypass -Command \"scoop update tunero\"",
+            Optimizer.Core.Platform.PowerShellScript.Command("scoop update tunero", interactive: true, bypassPolicy: true));
+        // A double quote would end the -Command argument and run the rest as further arguments.
+        Assert.Throws<ArgumentException>(() => Optimizer.Core.Platform.PowerShellScript.Command("Write-Host \"x\""));
+        var encoded = Optimizer.Core.Platform.PowerShellScript.Encoded("Write-Host \"x\"");
+        Assert.StartsWith("-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ", encoded);
+        Assert.Equal("Write-Host \"x\"", System.Text.Encoding.Unicode.GetString(Convert.FromBase64String(encoded.Split(' ')[^1])));
+    }
+
     [Theory]
     [InlineData("bcdedit.exe", "/enum {current} /v", false)]
     [InlineData("dism.exe", "/Online /English /Get-ReservedStorageState", false)]

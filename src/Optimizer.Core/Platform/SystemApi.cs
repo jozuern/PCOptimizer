@@ -483,34 +483,8 @@ public sealed class SystemProcessRunner : IProcessRunner
     /// </summary>
     private static readonly Encoding ToolEncoding = StreamingProcess.Oem;
 
-    public (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null)
-    {
-        var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool(file), arguments)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = ToolEncoding,
-            StandardErrorEncoding = ToolEncoding,
-        };
-        ProcessHardening.Apply(psi);
-        var watch = Stopwatch.StartNew();
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Cannot start {file}");
-        var stdout = p.StandardOutput.ReadToEndAsync();
-        var stderr = p.StandardError.ReadToEndAsync();
-        if (!p.WaitForExit(timeout ?? TimeSpan.FromSeconds(60)))
-        {
-            ProcessHardening.KillTree(p);
-            throw new TimeoutException($"{file} {arguments} timed out");
-        }
-        // A program the tool started can keep the output pipes open after the tool ended: do not wait for it forever.
-        if (!Task.WaitAll([stdout, stderr], TimeSpan.FromSeconds(10)))
-            Log.Warn("command", $"{file} {arguments}: output still open after the tool ended; using what was read");
-        var output = (stdout.IsCompletedSuccessfully ? stdout.Result : "") + (stderr.IsCompletedSuccessfully ? stderr.Result : "");
-        Log.Info("command", $"{file} {arguments}", new { exitCode = p.ExitCode, ms = watch.ElapsedMilliseconds, output = output.Length > 2000 ? output[..2000] : output });
-        return (p.ExitCode, output);
-    }
+    public (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null) =>
+        ProcessLauncher.Run(ProcessLauncher.Info(file, arguments, capture: ToolEncoding), timeout ?? TimeSpan.FromSeconds(60));
 }
 
 /// <summary>

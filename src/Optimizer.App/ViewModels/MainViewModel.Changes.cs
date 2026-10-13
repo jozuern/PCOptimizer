@@ -93,9 +93,7 @@ public sealed partial class MainViewModel
     {
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo(Optimizer.Core.Platform.ProcessHardening.ResolveSystemTool("rstrui.exe")) { UseShellExecute = false };
-            Optimizer.Core.Platform.ProcessHardening.Apply(psi);
-            System.Diagnostics.Process.Start(psi)?.Dispose();
+            Optimizer.Core.Platform.ProcessLauncher.StartDetached(Optimizer.Core.Platform.ProcessLauncher.Info("rstrui.exe", hidden: false));
         }
         catch (Exception ex)
         {

@@ -47,12 +47,12 @@ public static class WingetPackage
     /// when it did not succeed, then start Tunero again (Windows asks for administrator rights as on any start).
     /// </summary>
     public static string UpdateArguments(int processId, string exePath, string runningText, string failedText) =>
-        "-NoProfile -Command \"" +
-        $"Write-Host {Quote(runningText)}; " +
-        $"Wait-Process -Id {processId} -Timeout 60 -ErrorAction SilentlyContinue; " +
-        $"winget upgrade --id {Id} --exact --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity; " +
-        $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}; " +
-        $"Start-Process -FilePath {Quote(exePath)}\"";
+        Platform.PowerShellScript.Command(
+            $"Write-Host {Quote(runningText)}; " +
+            $"Wait-Process -Id {processId} -Timeout 60 -ErrorAction SilentlyContinue; " +
+            $"winget upgrade --id {Id} --exact --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity; " +
+            $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}; " +
+            $"Start-Process -FilePath {Quote(exePath)}", interactive: true);
 
     /// <summary>
     /// PowerShell arguments for the uninstall, started as the signed-in user (never elevated, winget refuses to remove a
@@ -62,11 +62,11 @@ public static class WingetPackage
     /// source, not one installed from a manifest file.
     /// </summary>
     public static string UninstallArguments(string productCode, string processName, string runningText, string failedText) =>
-        "-NoProfile -Command \"" +
-        $"Write-Host {Quote(runningText)}; " +
-        $"Wait-Process -Name {Quote(processName)} -Timeout 60 -ErrorAction SilentlyContinue; " +
-        $"winget uninstall --product-code {Quote(productCode)} --accept-source-agreements --disable-interactivity; " +
-        $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}\"";
+        Platform.PowerShellScript.Command(
+            $"Write-Host {Quote(runningText)}; " +
+            $"Wait-Process -Name {Quote(processName)} -Timeout 60 -ErrorAction SilentlyContinue; " +
+            $"winget uninstall --product-code {Quote(productCode)} --accept-source-agreements --disable-interactivity; " +
+            $"if ($LASTEXITCODE -ne 0) {{ Read-Host {Quote(failedText)} }}", interactive: true);
 
     /// <summary>
     /// A PowerShell string in single quotes. PowerShell also ends such a string at the typographic single quotes, so every

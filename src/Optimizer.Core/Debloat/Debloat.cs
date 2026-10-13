@@ -90,10 +90,8 @@ public sealed class DebloatService(IProcessRunner processes, string dataFolder)
 {
     private string LogFile => Path.Combine(dataFolder, "removed-apps.json");
 
-    public static string EncodedCommand(string script) => Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-
     private (int Code, string Output) PowerShell(string script, TimeSpan timeout) =>
-        processes.Run("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {EncodedCommand(script)}", timeout);
+        processes.Run(PowerShellScript.Exe, PowerShellScript.Encoded(script), timeout);
 
     public IReadOnlyList<InstalledAppx> ListInstalled(bool allUsers)
     {

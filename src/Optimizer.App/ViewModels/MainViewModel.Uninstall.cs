@@ -72,15 +72,9 @@ public sealed partial class MainViewModel
         try
         {
             var script = SelfUninstall.CleanupScript(processName, DataPaths.Root, exe, removedByPackageManager: Package is not null, packageManagerProcess);
-            var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), SelfUninstall.PowerShellArguments(script))
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            ProcessHardening.Apply(psi);
-            System.Diagnostics.Process.Start(psi)?.Dispose();
+            ProcessLauncher.StartDetached(ProcessLauncher.Info(PowerShellScript.Exe, SelfUninstall.PowerShellArguments(script)));
         }
-        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             Log.Error("uninstall", "cleanup not started", ex);
             // The package manager's window already waits for the app to end: it removes the app, and the data folder

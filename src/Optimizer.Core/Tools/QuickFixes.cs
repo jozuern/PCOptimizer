@@ -21,8 +21,7 @@ public sealed record QuickFix(string Id, bool Confirm, bool NeedsRestart, IReadO
 
 public static class QuickFixes
 {
-    private static QuickFixStep Ps(string command) =>
-        new("powershell.exe", $"-NoProfile -NonInteractive -Command \"{command}\"");
+    private static QuickFixStep Ps(string command) => new(PowerShellScript.Exe, PowerShellScript.Command(command));
 
     public static IReadOnlyList<QuickFix> All { get; } =
     [

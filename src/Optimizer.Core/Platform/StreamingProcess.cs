@@ -15,16 +15,7 @@ public static class StreamingProcess
     public static async Task<int> RunAsync(string file, string arguments, IProgress<string>? lines, CancellationToken ct = default, Encoding? encoding = null,
         Action? started = null)
     {
-        var psi = new ProcessStartInfo(ProcessHardening.ResolveSystemTool(file), arguments)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = encoding ?? Encoding.UTF8,
-            StandardErrorEncoding = encoding ?? Encoding.UTF8,
-        };
-        ProcessHardening.Apply(psi);
+        var psi = ProcessLauncher.Info(file, arguments, capture: encoding ?? Encoding.UTF8);
         using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var all = new List<string>();
         void OnLine(string? line)

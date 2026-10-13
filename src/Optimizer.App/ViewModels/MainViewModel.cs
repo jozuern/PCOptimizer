@@ -766,14 +766,13 @@ public sealed partial class MainViewModel : ObservableObject
         if (package.RunsAsUser) return DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) != DeElevatedLauncher.Path.Failed;
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo(ProcessHardening.ResolveSystemTool("powershell.exe"), arguments) { UseShellExecute = false };
-            ProcessHardening.Apply(psi);
+            var psi = ProcessLauncher.Info(PowerShellScript.Exe, arguments, hidden: false);
             package.HardenChocolateyEnvironment(psi.Environment);
-            using var process = System.Diagnostics.Process.Start(psi);
-            elevatedProcessId = process?.Id;
-            return process is not null;
+            using var process = ProcessLauncher.Start(psi);
+            elevatedProcessId = process.Id;
+            return true;
         }
-        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             Log.Error("package", "PowerShell not started", ex);
             return false;

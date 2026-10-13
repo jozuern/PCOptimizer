@@ -33,24 +33,15 @@ public static class StabilityProbe
     /// <summary>Kernel-Power 41 of the last 30 days, at most 50, newest first.</summary>
     public static IReadOnlyList<UnexpectedShutdown> ReadUnexpectedShutdowns()
     {
-        var wevtutil = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "wevtutil.exe");
-        var start = new ProcessStartInfo(wevtutil)
-        {
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            // Not redirected: nothing reads it, and a full stderr pipe would block wevtutil until the timeout.
-            RedirectStandardError = false,
-            CreateNoWindow = true,
-        };
-        ProcessHardening.Apply(start);
-        foreach (var arg in new[]
-                 {
-                     "qe", "System",
-                     "/q:*[System[Provider[@Name='Microsoft-Windows-Kernel-Power'] and (EventID=41) and TimeCreated[timediff(@SystemTime) <= 2592000000]]]",
-                     "/c:50", "/rd:true", "/f:xml",
-                 })
-            start.ArgumentList.Add(arg);
-        using var process = Process.Start(start) ?? throw new InvalidOperationException("wevtutil did not start");
+        var start = ProcessLauncher.Info("wevtutil.exe",
+        [
+            "qe", "System",
+            "/q:*[System[Provider[@Name='Microsoft-Windows-Kernel-Power'] and (EventID=41) and TimeCreated[timediff(@SystemTime) <= 2592000000]]]",
+            "/c:50", "/rd:true", "/f:xml",
+        ]);
+        // Only stdout: nothing reads stderr, and a full stderr pipe would block wevtutil until the timeout.
+        start.RedirectStandardOutput = true;
+        using var process = ProcessLauncher.Start(start);
         var output = process.StandardOutput.ReadToEndAsync();
         if (!process.WaitForExit(15_000))
         {
