@@ -14,6 +14,8 @@ public class CrashReportTests
         Assert.DoesNotContain("joshua", clean, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("DESKTOP-ABC123", clean);
         Assert.Contains("<pc>", clean);
+        // A registry error names the account's hive by its SID.
+        Assert.Equal(@"HKU\<sid>\Software", CrashReport.Sanitize(@"HKU\S-1-5-21-1111111111-2222222222-3333333333-1001\Software", null, null));
     }
 
     [Fact]

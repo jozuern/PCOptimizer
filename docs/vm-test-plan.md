@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 222 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 221 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -225,7 +225,6 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `perm.phoneOff` | Windows apps: no phone calls | safe |  | registry | |
 | `perm.radiosOff` | Windows apps: no control of radios | safe |  | registry | |
 | `perm.devicesOff` | Windows apps: no unpaired or trusted devices | safe |  | registry | |
-| `privacy.locationServiceOff` | Location service off for everything | safe |  | registry | |
 | `privacy.searchConnectedOff` | Windows Search: no web results and no location | safe |  | registry | |
 | `privacy.malwareReportOff` | Malicious Software Removal Tool: no infection reports | safe |  | registry | |
 | `privacy.thirdPartySpotlightOff` | Windows Spotlight: no third-party suggestions | safe |  | registry | |

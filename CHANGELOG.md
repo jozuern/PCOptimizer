@@ -34,6 +34,10 @@
 - **Settings file:** one that cannot be read is kept as settings.json.bad instead of being overwritten with the defaults at the next save.
 - **Explanation pane:** an explanation that failed to build once is built again on the next selection, and a check without a page says so in your language.
 - **Sensors** are closed when the app ends.
+- **Location:** "Location service off for everything" and "Location access off" wrote the same policy value, so undoing one left a false "reset by Windows" note on the other. The first is no longer offered; changes made with it can still be undone.
+- **NVIDIA settings undo** while the driver was being updated reported success and dropped the originals; it now fails and can be repeated.
+- **Gaming power plan undo** could delete a plan of the same name that you made yourself, when the app could not tell which plan it had created; it now leaves such plans alone.
+- **Error reports** no longer contain your account's security id (SID) from registry messages.
 - **Self-update:** when the new version could not start after the update (antivirus took the new exe away or blocked it), only the renamed old exe was left and the shortcut started nothing. The version you were using is now put back, and the message says so. The new version also no longer inherits a profiler or startup hook from the user's environment.
 - **Startup page, services:** without a valid signature (the signature service turned off, a failed check) a Windows service could become switchable here in Expert mode; the Services page's rule, which counts a file in the Windows folder as Windows' own, now applies here too.
 - **Startup page, script hosts:** a variable of your own account could make a script look like it lives in System32, so the entry was hidden as Microsoft's. The check now uses the machine's variables only.

@@ -36,10 +36,17 @@ public sealed class NvidiaDrsAction : TweakAction
 
     public override void Apply(ActionContext c) => c.Nvidia.Write(Profile, SettingId, Value);
 
-    /// <summary>Without the NVIDIA driver (uninstalled, another graphics card) there is nothing to restore.</summary>
+    /// <summary>
+    /// Without the NVIDIA driver (uninstalled, another graphics card) there is nothing to restore. With the driver installed
+    /// but not answering (a driver update or a reset in progress) the undo fails, so the backup and its original stay.
+    /// </summary>
     public override void Restore(ActionContext c, StoredValue original)
     {
-        if (!c.Nvidia.Available) return;
+        if (!c.Nvidia.Available)
+        {
+            if (c.Nvidia.DriverInstalled) throw new InvalidOperationException("The NVIDIA driver settings do not answer right now (a driver update or a restart may be pending). Undo again later.");
+            return;
+        }
         c.Nvidia.Write(Profile, SettingId, original.Existed && uint.TryParse(original.Data, CultureInfo.InvariantCulture, out var v) ? v : null);
     }
 
@@ -397,6 +404,9 @@ public interface INvidiaSettings
 {
     bool Available { get; }
 
+    /// <summary>The NVIDIA driver is installed (its settings library is in System32), even when it does not answer right now.</summary>
+    bool DriverInstalled => Available;
+
     /// <summary>Value stored in the profile itself; null = not set there (inherited or driver default).</summary>
     uint? ReadOwn(string profile, uint settingId);
 
@@ -507,6 +517,8 @@ public sealed class SystemNvidiaSettings : INvidiaSettings
     private DateTime _readSessionOpened;
 
     public bool Available => Nvapi.Available;
+
+    public bool DriverInstalled => File.Exists(Path.Combine(Environment.SystemDirectory, "nvapi64.dll"));
 
     public uint? ReadOwn(string profile, uint settingId)
     {

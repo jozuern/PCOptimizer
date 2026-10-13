@@ -24,6 +24,20 @@ public partial class CatalogIntegrityTests(ITestOutputHelper output)
 
     private static readonly HashSet<string> FindingIds = DocLint.RequiredDocIds().ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>A condition compares with exactly one operator: {"gte": 1, "lte": 5} evaluated only "gte" and ignored the rest.</summary>
+    [Fact]
+    public void ConditionsUseOneOperatorEach()
+    {
+        static IEnumerable<Condition> Nodes(Condition c) =>
+            new[] { c }.Concat((c.All ?? []).Concat(c.Any ?? []).Concat(c.Not is null ? [] : [c.Not]).SelectMany(Nodes));
+        static int Operators(Condition c) =>
+            new object?[] { c.Eq, c.Ne, c.Gt, c.Gte, c.Lt, c.Lte, c.In, c.Exists }.Count(o => o is not null)
+            + (c.All is null ? 0 : 1) + (c.Any is null ? 0 : 1) + (c.Not is null ? 0 : 1);
+        var bad = Tweaks.SelectMany(t => t.Conditions().SelectMany(Nodes).Where(n => n.Fact is not null ? Operators(n) > 1 : Operators(n) != 1)
+            .Select(_ => t.Id)).Distinct().ToList();
+        Assert.Empty(bad);
+    }
+
     /// <summary>
     /// A proof names the file that holds the test result. A file that is no longer in docs/ is cited with the commit that
     /// has it ("docs/x.md in git 60c3a93^"); a plain path must exist, or the proof rule cannot be checked.

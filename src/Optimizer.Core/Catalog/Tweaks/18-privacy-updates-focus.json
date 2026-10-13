@@ -3,6 +3,7 @@
     {
       "id": "privacy.locationServiceOff",
       "category": "Privacy",
+      "hidden": true,
       "impact": {
         "gaming": 0,
         "basis": "situational",

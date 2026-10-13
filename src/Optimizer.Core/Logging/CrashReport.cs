@@ -30,10 +30,11 @@ public static partial class CrashReport
         return Sanitize(sb.ToString(), Environment.UserName, Environment.MachineName);
     }
 
-    /// <summary>Removes what identifies the user: profile paths, the account name and the computer name.</summary>
+    /// <summary>Removes what identifies the user: profile paths, account SIDs, the account name and the computer name.</summary>
     public static string Sanitize(string text, string? userName, string? machineName)
     {
         text = ProfilePath().Replace(text, "%USERPROFILE%");
+        text = Regex.Replace(text, @"S-1-5-21(-\d+){3,4}", "<sid>");
         if (userName is { Length: >= 3 }) text = Regex.Replace(text, Regex.Escape(userName), "<user>", RegexOptions.IgnoreCase);
         if (machineName is { Length: >= 3 }) text = Regex.Replace(text, Regex.Escape(machineName), "<pc>", RegexOptions.IgnoreCase);
         return text;

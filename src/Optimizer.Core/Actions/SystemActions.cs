@@ -251,10 +251,12 @@ public sealed class PowerSchemeAction : TweakAction
                 if (appliedPlanCreated && c.Power.SchemeExists(plan) && !PowerAliases.IsBuiltIn(plan) && (!Guid.TryParse(original.Data, out var before) || before != plan))
                     created.Add(plan);
             }
-            else
+            else if (_schemesBeforeApply is { } before)
             {
-                created = c.Power.Schemes().Where(s => s.Name == Name && _schemesBeforeApply?.Contains(s.Id) != true).Select(s => s.Id).ToList();
+                created = c.Power.Schemes().Where(s => s.Name == Name && !before.Contains(s.Id)).Select(s => s.Id).ToList();
             }
+            // Neither the plan's id nor the plans from before this apply are known (an action read back from a backup
+            // without its applied value): a plan with the name may be the user's own copy, so none is deleted.
         }
         var ours = created.Contains(active) || (Activate is not null && active == PowerAliases.Resolve(Activate)) ||
                    (appliedPlan is { } activated ? activated == active : _activated == active);
