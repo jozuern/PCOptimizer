@@ -103,11 +103,15 @@ public sealed class TweakItemViewModel : InspectorItem
         // row's line names a state only when it is something else (partly applied, reset by Windows, set by a policy).
         var stateShown = IsSetOutside || status.State is TweakState.NotApplied or TweakState.Applied;
         CompactMeta = stateShown ? "" : StatusText;
-        // The badges are drawn as tags next to the title, not repeated in this line. A tweak without any effect on the
-        // profile's goal (most privacy and Explorer settings) leaves "Impact 0 of 5, No FPS effect" out of its row: the
-        // details still name it.
-        var noEffect = Impact == 0 && profiled is not { WorksAgainst: true };
-        MetaText = Meta(stateShown ? "" : StatusText, noEffect ? null : ImpactText, noEffect ? "" : EffectsText);
+        // The badges are drawn as tags next to the title, and the impact as the rating mark beside the switch: neither is
+        // repeated in this line, which keeps what the tweak affects. "Works against the profile" has no mark and stays
+        // here. A tweak without any effect on the profile's goal (most privacy and Explorer settings) leaves "No FPS
+        // effect" out too: the details still name it.
+        var against = profiled is { WorksAgainst: true };
+        var noEffect = Impact == 0 && !against;
+        IsDisputed = t.Impact.Basis == "disputed";
+        Rating = against ? null : Impact;
+        MetaText = Meta(stateShown ? "" : StatusText, against ? ImpactText : null, noEffect ? "" : EffectsText);
         Note = IsSetOutside ? Loc.Instance["Tweak_AlreadyOnTip"] : null;
         // Only real blocks are shown as a warning; "set outside this app" is part of the detail line.
         ToggleNote = canChange && !IsOn && hard.Count > 0 ? BlockText : null;

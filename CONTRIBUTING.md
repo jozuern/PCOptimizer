@@ -25,7 +25,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--report <file.md>` | headless scan, writes all findings with explanations and the system info as Markdown |
 | `--screenshot <file.png>` | opens the UI, scans, renders the window to PNG and exits |
 | `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor (Manual checks), Network, Debloat (Remove apps), Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware (System info), Settings |
-| `--shot-scanning <file.png>` | renders the window while the first scan still runs (score placeholders) |
+| `--shot-scanning <file.png>` | renders the window while the first scan still runs (the Overview says the scan is reading the PC) |
 | `--pane closed` | collapses the navigation rail before the screenshot |
 | `--width <pixels>` | window width for the screenshot (for example 1040, the minimum, with `--select`) |
 | `--height <pixels>` | window height for the screenshot (below 900 the pane drops its group headings, below 790 it folds to the rail; the window is at least 720 high) |

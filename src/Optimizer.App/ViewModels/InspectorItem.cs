@@ -68,6 +68,12 @@ public abstract class InspectorItem : ObservableObject
     public int? Impact { get; protected init; }
 
     public string ImpactText { get; protected init; } = "";
+
+    /// <summary>What the rating mark shows: the impact, or null where a mark would mislead (works against the profile, critical).</summary>
+    public int? Rating { get; protected init; }
+
+    /// <summary>The impact rests on disputed evidence: the rating mark draws it as outlines.</summary>
+    public bool IsDisputed { get; protected init; }
     public string ImpactTooltip { get; protected init; } = "";
     public string? CriticalText { get; protected init; }
     public bool IsCritical => CriticalText is not null;

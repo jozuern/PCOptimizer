@@ -29,6 +29,7 @@
             <v:EdgeMarginConverter x:Key="EdgeMargin" />
             <v:SameItemConverter x:Key="SameItem" />
             <v:AtLeastConverter x:Key="AtLeast" />
+            <v:WidthBelowConverter x:Key="WidthBelow" />
 
             <!--
                 Fluent rules for every page: Segoe UI Variable type ramp (ui:TextBlock FontTypography), spacing only
@@ -46,6 +47,13 @@
             </Style>
             <Thickness x:Key="CardRowMargin">0,0,0,4</Thickness>
             <Thickness x:Key="CardPadding">16,12,16,12</Thickness>
+            <!-- The rating mark's column in a row: one width on every row, so the marks of a list stand under each other -->
+            <Style x:Key="RowRating" TargetType="v:RatingMark">
+                <Setter Property="Width" Value="60" />
+                <Setter Property="Margin" Value="12,0,12,0" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+            </Style>
+
             <!-- The right-hand column of rows with a switch: wide enough for the longest label ("Nicht angewendet") -->
             <sys:Double x:Key="SwitchColumnWidth">168</sys:Double>
 
@@ -218,9 +226,16 @@
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" TextWrapping="Wrap" Margin="0,4,0,0" />
                         </StackPanel>
                     </ui:CardControl.Header>
-                    <ui:Button Content="{Binding ActionText}" Appearance="Primary" MinWidth="88"
-                               Visibility="{Binding HasAction, Converter={StaticResource BoolToVisibility}}"
-                               Command="{Binding DataContext.RunActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                    <!-- The button has a place of its own on every row, so the rating marks of a list stand in one column -->
+                    <StackPanel Orientation="Horizontal">
+                        <v:RatingMark Style="{StaticResource RowRating}" Value="{Binding Rating}" Disputed="{Binding IsDisputed}"
+                                      ToolTip="{Binding ImpactTooltip}" AutomationProperties.Name="{Binding ImpactText}" />
+                        <Grid Width="112">
+                            <ui:Button Content="{Binding ActionText}" Appearance="Primary" MinWidth="88" HorizontalAlignment="Right"
+                                       Visibility="{Binding HasAction, Converter={StaticResource BoolToVisibility}}"
+                                       Command="{Binding DataContext.RunActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                        </Grid>
+                    </StackPanel>
                 </ui:CardControl>
             </DataTemplate>
 
@@ -261,13 +276,36 @@
                  tool) has no original value to restore, so it could never be switched off: say so in words instead. -->
             <DataTemplate x:Key="TweakSwitch">
                 <!-- One width for the column, left-aligned inside it: the switches of a list stay in one line whatever their
-                     label ("Applied", "Nicht angewendet"), and "Already on" starts where they start. -->
-                <Grid Width="{StaticResource SwitchColumnWidth}">
+                     label ("Applied", "Nicht angewendet"), and "Already on" starts where they start. On a narrow page (the
+                     details pane open in a small window) the switch goes without its label, as in Windows Settings: the
+                     row's text keeps its room, and the details pane and screen readers still name the state. -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Width" Value="{StaticResource SwitchColumnWidth}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource WidthBelow}, ConverterParameter=760}" Value="True">
+                                    <Setter Property="Width" Value="72" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
                     <!-- "Applied" and "Not applied" next to the switch: a title like "Power Throttling off" with a switch that is
                          off would otherwise read as a double negative. -->
-                    <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}"
-                                     OnContent="{s:Tr Tweak_SwitchOn}" OffContent="{s:Tr Tweak_SwitchOff}" HorizontalAlignment="Left"
+                    <ui:ToggleSwitch AutomationProperties.Name="{Binding Title}" IsChecked="{Binding SwitchState, Mode=TwoWay}" HorizontalAlignment="Left"
                                      Visibility="{Binding ShowSwitch, Converter={StaticResource BoolToVisibility}}">
+                        <ui:ToggleSwitch.Style>
+                            <Style TargetType="ui:ToggleSwitch" BasedOn="{StaticResource {x:Type ui:ToggleSwitch}}">
+                                <Setter Property="OnContent" Value="{s:Tr Tweak_SwitchOn}" />
+                                <Setter Property="OffContent" Value="{s:Tr Tweak_SwitchOff}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource WidthBelow}, ConverterParameter=760}" Value="True">
+                                        <Setter Property="OnContent" Value="{x:Null}" />
+                                        <Setter Property="OffContent" Value="{x:Null}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:ToggleSwitch.Style>
                         <ui:ToggleSwitch.IsEnabled>
                             <MultiBinding Converter="{StaticResource AllTrue}">
                                 <Binding Path="CanToggle" />
@@ -316,7 +354,11 @@
                                           Margin="0,4,0,0" Visibility="{Binding AgainstNote, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </ui:CardControl.Header>
-                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
+                    <StackPanel Orientation="Horizontal">
+                        <v:RatingMark Style="{StaticResource RowRating}" Value="{Binding Rating}" Disputed="{Binding IsDisputed}"
+                                      ToolTip="{Binding ImpactTooltip}" AutomationProperties.Name="{Binding ImpactText}" />
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
+                    </StackPanel>
                 </ui:CardControl>
             </DataTemplate>
         </ResourceDictionary>

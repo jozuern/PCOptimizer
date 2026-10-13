@@ -45,16 +45,6 @@ public sealed record SummaryItem(string Label, string Value)
     public override string ToString() => $"{Label}: {Value}";
 }
 
-/// <summary>Status drives the color of the number (problems in caution color, passed in success color).</summary>
-public sealed record CountItem(string Value, string Label, string Status)
-{
-    /// <summary>Where a click on the number leads: "findings" (the list below), "advisor" (BIOS and hardware) or "passed".</summary>
-    public string? Target { get; init; }
-
-    // What screen readers announce for this item in a list or combo box.
-    public override string ToString() => $"{Value} {Label}";
-}
-
 public sealed record HwSection(string Title, IReadOnlyList<SummaryItem> Items)
 {
     public SymbolRegular Icon { get; init; } = SymbolRegular.Info24;
@@ -143,11 +133,15 @@ public sealed record LogLine(string Time, string Text)
 /// One line of the "Apply recommended" plan: what, why, and its impact. Lines of the plan can be unticked, so the user
 /// applies only what they agree with.
 /// </summary>
-public sealed partial class RecommendationLine(string title, string reason, string impactText, TweakDefinition? tweak = null, Action? selectionChanged = null) : ObservableObject
+public sealed partial class RecommendationLine(string title, string reason, int impact, TweakDefinition? tweak = null, Action? selectionChanged = null) : ObservableObject
 {
     public string Title { get; } = title;
     public string Reason { get; } = reason;
-    public string ImpactText { get; } = impactText;
+
+    /// <summary>The line's rating mark (the impact for the profile) and its words for screen readers and the tooltip.</summary>
+    public int Rating { get; } = impact;
+    public string ImpactText { get; } = Loc.Instance.Format("Impact_Short", impact);
+    public bool IsDisputed { get; } = tweak?.Impact.Basis == "disputed";
     public TweakDefinition? Tweak { get; } = tweak;
 
     [ObservableProperty] private bool _isSelected = true;
@@ -233,7 +227,6 @@ public sealed partial class MainViewModel : ObservableObject
         Tools = new ToolsViewModel(this, services, Runner, dialogs);
         Health = new HealthViewModel(this, dialogs);
         _virusTotalConfigured = !string.IsNullOrEmpty(settings.VirusTotalKey);
-        ShowPendingCounts();
         Loc.Instance.LanguageChanged += (_, _) =>
         {
             Rebuild();
@@ -278,11 +271,18 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _scanStatus = "";
     [ObservableProperty] private HardwareProfile? _profile;
     [ObservableProperty] private int _score;
-    [ObservableProperty] private string _problemSummary = "";
     [ObservableProperty] private string _lastScanText = "";
     [ObservableProperty] private string _headline = "";
     [ObservableProperty] private string _scoreVerdict = "";
-    [ObservableProperty] private string _scoreStatus = "Neutral";
+
+    /// <summary>The Overview's verdict: one sentence on what holds this PC back (the problems listed right under it).</summary>
+    [ObservableProperty] private string _verdict = "";
+
+    /// <summary>The readiness score and the passed checks, one quiet line under the verdict.</summary>
+    [ObservableProperty] private string _readinessLine = "";
+
+    /// <summary>"To change by hand: 1": the way to Manual checks when the BIOS or the hardware has something to change.</summary>
+    [ObservableProperty] private string? _advisorLinkText;
     [ObservableProperty] private bool _showPassed;
     [ObservableProperty] private InspectorItem? _selectedItem;
     [ObservableProperty] private FindingItemViewModel? _gameAccess;
@@ -328,7 +328,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _onlyProfile = true;
     [ObservableProperty] private string _profileDescription = "";
     [ObservableProperty] private string? _suggestedProfileText;
-    [ObservableProperty] private string _scoreTitle = "";
     [ObservableProperty] private string _scoreHint = "";
     [ObservableProperty] private string? _hiddenFindingsText;
     /// <summary>BIOS and hardware page: how many passed checks "Show passed checks" would add (null when shown or none).</summary>
@@ -358,7 +357,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>System info: also show IDs and raw values (PnP IDs, GUIDs, microcode). Not saved.</summary>
     [ObservableProperty] private bool _showHardwareDetails;
-    public ObservableCollection<CountItem> Counts { get; } = [];
     public ObservableCollection<RecommendationLine> Recommendations { get; } = [];
     public ObservableCollection<RecommendationLine> RecommendationsExcluded { get; } = [];
 
@@ -538,27 +536,26 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Score and counts only after a finished scan: during a scan the cards keep their layout but show "--".</summary>
     public bool HasScore => Profile is not null && !IsScanning;
 
-    public string ScoreText => HasScore ? Score.ToString(System.Globalization.CultureInfo.CurrentCulture) : "--";
-    public int ScoreBarValue => HasScore ? Score : 0;
-    public string ScoreStatusShown => HasScore ? ScoreStatus : "Neutral";
-    public string ScoreVerdictShown => HasScore ? ScoreVerdict : Loc.Instance["Score_Pending"];
+    /// <summary>While a scan runs (and before the first): what the scan is doing, not an old or empty verdict.</summary>
+    public string VerdictShown => HasScore ? Verdict : Loc.Instance["Dash_VerdictPending"];
+    public string ReadinessShown => HasScore ? ReadinessLine : "";
+    public string? AdvisorLinkShown => HasScore ? AdvisorLinkText : null;
 
     private void NotifyScore()
     {
-        foreach (var name in new[] { nameof(HasScore), nameof(ScoreText), nameof(ScoreBarValue), nameof(ScoreStatusShown), nameof(ScoreVerdictShown) })
+        foreach (var name in new[] { nameof(HasScore), nameof(VerdictShown), nameof(ReadinessShown), nameof(AdvisorLinkShown) })
             OnPropertyChanged(name);
     }
 
-    partial void OnScoreChanged(int value) => NotifyScore();
-    partial void OnScoreStatusChanged(string value) => NotifyScore();
-    partial void OnScoreVerdictChanged(string value) => NotifyScore();
+    partial void OnVerdictChanged(string value) => NotifyScore();
+    partial void OnReadinessLineChanged(string value) => NotifyScore();
+    partial void OnAdvisorLinkTextChanged(string? value) => NotifyScore();
     partial void OnProfileChanged(HardwareProfile? value) => NotifyScore();
 
     partial void OnIsScanningChanged(bool value)
     {
         ChangeGate.Instance.Scanning = value;
         NotifyScore();
-        if (value) ShowPendingCounts();
     }
 
     /// <summary>No change, scan or update is running: switches and change buttons are enabled.</summary>
@@ -566,16 +563,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>A scan may start while no change or update runs (a running scan is joined, not repeated).</summary>
     private bool CanScan() => !ChangeGate.Instance.Busy && !ChangeGate.Instance.Updating;
-
-    /// <summary>While scanning (and before the first scan): the count tiles with "--" instead of old or empty numbers.</summary>
-    private void ShowPendingCounts()
-    {
-        ProblemSummary = Loc.Instance["Dash_ProblemsPending"];
-        ScoreTitle = Loc.Instance.Format("Dash_ScoreFor", ProfileName(_usage));
-        Counts.Clear();
-        foreach (var label in new[] { "Count_Problems", "Count_Advisor", "Count_Passed" })
-            Counts.Add(new CountItem("--", Loc.Instance[label], "Neutral"));
-    }
 
     /// <summary>
     /// The simple or the technical view of the lists: off hides paths, registry locations and package names (the details
@@ -1640,23 +1627,23 @@ public sealed partial class MainViewModel : ObservableObject
 
         // The score counts what matters for the profile, weighted by the profile's impact.
         Score = ReadinessScore.Compute(_profiledFindings);
-        ScoreTitle = Loc.Instance.Format("Dash_ScoreFor", ProfileName(_usage));
         ScoreHint = Loc.Instance.Format("Dash_ScoreHintGoal", Labels.Current.Get(lang, $"effect.{_usage.Goal}"));
-        var problems = _profiledFindings.Count(f => f.IsProblem && f.Kind != FindingKind.GameAccess);
-        // The numbers below carry the count; the heading only says whether there is anything to look at.
-        ProblemSummary = problems == 0 ? Loc.Instance["Dash_NoProblems"] : Loc.Instance["Dash_Problems"];
         ScoreVerdict = Loc.Instance[Score >= 85 ? "Verdict_Good" : Score >= 60 ? "Verdict_Fair" : "Verdict_Poor"];
-        Counts.Clear();
         var findingProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Finding);
         var advisorProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Advisor);
-        // A zero stays neutral: only what needs attention gets a color.
-        Counts.Add(new CountItem(findingProblems.ToString(), Loc.Instance["Count_Problems"], findingProblems > 0 ? "Problem" : "Neutral") { Target = "findings" });
-        Counts.Add(new CountItem(advisorProblems.ToString(), Loc.Instance["Count_Advisor"], advisorProblems > 0 ? "Problem" : "Neutral") { Target = "advisor" });
-        Counts.Add(new CountItem(_profiledFindings.Count(f => f.Status == FindingStatus.Ok).ToString(), Loc.Instance["Count_Passed"], "Ok") { Target = "passed" });
+        // The verdict counts the problems listed right under it; BIOS and hardware have their own page and the link.
+        Verdict = findingProblems switch
+        {
+            0 => Loc.Instance["Dash_VerdictNone"],
+            1 => Loc.Instance["Dash_VerdictOne"],
+            _ => Loc.Instance.Format("Dash_VerdictMany", findingProblems),
+        };
+        ReadinessLine = Loc.Instance.Format("Dash_Readiness", ProfileName(_usage), Score, ScoreVerdict,
+            _profiledFindings.Count(f => f.Status == FindingStatus.Ok));
+        AdvisorLinkText = advisorProblems > 0 ? Loc.Instance.Format("Dash_AdvisorLink", advisorProblems) : null;
         // The navigation shows where something waits: problems on the overview, things to change by hand.
         OverviewBadge = findingProblems > 0 ? findingProblems.ToString() : null;
         AdvisorBadge = advisorProblems > 0 ? advisorProblems.ToString() : null;
-        ScoreStatus = Score >= 85 ? "Ok" : Score >= 60 ? "Problem" : "Critical";
         LastScanText = _lastScanTime is { } t ? Loc.Instance.Format("LastScan", t.ToString("HH:mm")) : "";
         if (Profile is { } prof)
             Headline = string.Join(", ", new[] { prof.Cpu?.ShortName, prof.Gpus?.FirstOrDefault(g => g.Kind == GpuKind.Discrete)?.Name ?? prof.Gpus?.FirstOrDefault()?.Name,
@@ -1910,10 +1897,10 @@ public sealed partial class MainViewModel : ObservableObject
             : Labels.Current.Get(lang, $"reversibility.{i.Tweak.Reversibility}");
         Recommendations.Clear();
         foreach (var i in _plan.Items)
-            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), Loc.Instance.Format("Impact_Short", i.Impact), i.Tweak, UpdateRecommendedButton));
+            Recommendations.Add(new RecommendationLine(Runner.Title(i.Tweak), Reason(i), i.Impact, i.Tweak, UpdateRecommendedButton));
         RecommendationsExcluded.Clear();
         foreach (var i in _plan.Excluded)
-            RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), Loc.Instance.Format("Impact_Short", i.Impact)));
+            RecommendationsExcluded.Add(new RecommendationLine(Runner.Title(i.Tweak), Excluded(i), i.Impact, i.Tweak));
         HasRecommendations = _plan.Items.Count > 0;
         // Nothing to apply in one click, but fixes that need something first: say so instead of "nothing to recommend".
         RecommendationsEmptyText = _plan.Excluded.Count > 0 ? Loc.Instance["Rec_EmptyButExcluded"] : Loc.Instance["Rec_Empty"];

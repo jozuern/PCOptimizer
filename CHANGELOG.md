@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Rating mark:** every tweak and check shows its impact on the profile's goal as a light numeral and five bars, in one column beside its switch or Fix button, the same 0 to 5 scale as the rating board on tunero.dev. A rating on disputed evidence draws its bars as outlines; tweaks without effect show none. The grey line under a row no longer spells out "Impact 2 of 5", and the details pane puts the mark next to those words, so it explains the mark. On a narrow page the switches go without their "Applied" label, as in Windows Settings, so the rows keep room for their text.
+- **Overview, the verdict first:** the page opens with one sentence on what holds this PC back ("2 problems hold this PC back."), with those problems right under it and their rating marks. The readiness score, the passed checks and the way to Manual checks share one quiet line below the sentence; the two cards with large numbers are gone, and the profile follows the findings.
+
 ## 0.9.0 (preview)
 
 ### Changed

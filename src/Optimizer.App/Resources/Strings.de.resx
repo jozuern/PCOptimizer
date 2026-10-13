@@ -11,10 +11,7 @@
   <data name="Scan_Running" xml:space="preserve"><value>Dein PC wird gescannt</value></data>
   <data name="Scan_Probe" xml:space="preserve"><value>Wird gelesen: {0}</value></data>
   <data name="Scan_Again" xml:space="preserve"><value>Erneut scannen</value></data>
-  <data name="Dash_Findings" xml:space="preserve"><value>Ergebnisse</value></data>
-  <data name="Dash_Problems" xml:space="preserve"><value>Was der Scan gefunden hat</value></data>
   <data name="Dash_CountsHint" xml:space="preserve"><value>Von Hand zu ändern: Einstellungen im BIOS oder an der Hardware, die nur du ändern kannst. Die Seite Manuelle Prüfungen listet sie auf.</value></data>
-  <data name="Dash_NoProblems" xml:space="preserve"><value>Keine Probleme gefunden</value></data>
   <data name="Dash_ShowAll" xml:space="preserve"><value>Bestandene Prüfungen zeigen</value></data>
   <data name="Dash_GameAccess" xml:space="preserve"><value>Spielzugang</value></data>
   <data name="Dash_GameAccessHint" xml:space="preserve"><value>Was Kernel-Anti-Cheats vor dem Spielstart prüfen. Nicht Teil der Wirkungsbewertung.</value></data>
@@ -66,12 +63,9 @@
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Darstellung</value></data>
   <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnose</value></data>
-  <data name="Verdict_Good" xml:space="preserve"><value>Gut eingerichtet</value></data>
-  <data name="Verdict_Fair" xml:space="preserve"><value>Einige Punkte lohnen sich</value></data>
-  <data name="Verdict_Poor" xml:space="preserve"><value>Deutliche Probleme gefunden</value></data>
-  <data name="Count_Problems" xml:space="preserve"><value>Probleme</value></data>
-  <data name="Count_Advisor" xml:space="preserve"><value>von Hand zu ändern</value></data>
-  <data name="Count_Passed" xml:space="preserve"><value>bestanden</value></data>
+  <data name="Verdict_Good" xml:space="preserve"><value>gut eingerichtet</value></data>
+  <data name="Verdict_Fair" xml:space="preserve"><value>einige Punkte lohnen sich</value></data>
+  <data name="Verdict_Poor" xml:space="preserve"><value>deutliche Probleme</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scan läuft</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
   <data name="LastScan" xml:space="preserve"><value>Letzter Scan {0}</value></data>
@@ -918,9 +912,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Diese Einstellungen sind an und kosten, worum es diesem Profil geht. „Rückgängig“ stellt her, was Tunero geändert hat; bei einer Einstellung von außerhalb sagt „Details“, wie du sie zurückstellst.</value>
   </data>
   <data name="Rec_AgainstOutside" xml:space="preserve"><value>Außerhalb dieser App gesetzt</value></data>
-  <data name="Dash_ScoreFor" xml:space="preserve">
-    <value>Eignung für {0}</value>
-  </data>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
     <value>Zählt die gefundenen Probleme, gewichtet nach ihrer Wirkung auf {0}. Der Wert steigt, wenn du sie behebst; eingeschaltete Tweaks bringen für sich keine Punkte.</value>
   </data>
@@ -973,8 +964,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Log_Copied" xml:space="preserve"><value>Protokoll kopiert (Einträge: {0}). Füge es in den Bericht ein. Es kann deinen Windows-Benutzernamen, Pfade und Programmnamen enthalten: prüfe es vor dem Absenden.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>Die Zwischenablage wird gerade von einer anderen App benutzt. Versuch es noch einmal.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Etwas ist schiefgelaufen und wurde protokolliert. Du kannst es unter Einstellungen &gt; Diagnose melden.</value></data>
-  <data name="Score_Pending" xml:space="preserve"><value>Die Bewertung erscheint, wenn der Scan fertig ist.</value></data>
-  <data name="Dash_ProblemsPending" xml:space="preserve"><value>Gefundene Probleme</value></data>
   <data name="Change_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung oder der Scan fertig ist.</value></data>
   <data name="Change_OtherInstance" xml:space="preserve"><value>Ein anderes Tunero-Fenster oder ein Befehlszeilenlauf ändert gerade diesen PC. Versuche es erneut, wenn er fertig ist.</value></data>
   <data name="Close_WhileBusy" xml:space="preserve"><value>Eine Änderung läuft. Schließe Tunero, wenn sie fertig ist, damit sie nicht mittendrin abbricht.</value></data>
@@ -1162,7 +1151,6 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Svc_LockTipReadOnly" xml:space="preserve"><value>Für diesen Windows-Dienst hat die App keine Erklärung, deshalb ändert sie ihn nicht.</value></data>
   <data name="Svc_LockTipManual" xml:space="preserve"><value>Schon auf Manuell, der einzige Starttyp, den die App für diesen Windows-Dienst anbietet.</value></data>
   <data name="Svc_FromWindows" xml:space="preserve"><value>Dienstbeschreibung:</value></data>
-  <data name="Dash_CountShow" xml:space="preserve"><value>Liste zeigen</value></data>
   <data name="Rec_SafetyNote" xml:space="preserve"><value>Vor der ersten Änderung erstellt die App einen Wiederherstellungspunkt oder fragt dich, wenn der Computerschutz aus ist. Jede Änderung steht danach auf der Seite Änderungen und lässt sich dort rückgängig machen.</value></data>
   <data name="Rec_NoneSelected" xml:space="preserve"><value>Nichts ist angehakt. Hake die Änderungen an, die du anwenden willst.</value></data>
   <data name="Debloat_PageHint" xml:space="preserve"><value>Apps, die mit Windows kamen, und Desktopprogramme, die du installiert hast.</value></data>
@@ -1294,4 +1282,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Advisor_CountUnknown" xml:space="preserve"><value>{0} nicht prüfbar</value></data>
   <data name="Advisor_CountNotes" xml:space="preserve"><value>{0} mit Hinweis</value></data>
   <data name="Debloat_OtherApps" xml:space="preserve"><value>Weitere Apps auf diesem PC</value></data>
+  <data name="Dash_VerdictNone" xml:space="preserve"><value>Nichts gefunden, was diesen PC bremst.</value></data>
+  <data name="Dash_VerdictOne" xml:space="preserve"><value>Ein Problem bremst diesen PC.</value></data>
+  <data name="Dash_VerdictMany" xml:space="preserve"><value>{0} Probleme bremsen diesen PC.</value></data>
+  <data name="Dash_VerdictPending" xml:space="preserve"><value>Der Scan liest diesen PC.</value></data>
+  <data name="Dash_Readiness" xml:space="preserve"><value>Eignung für {0}: {1} von 100, {2}. {3} Prüfungen bestanden.</value></data>
+  <data name="Dash_AdvisorLink" xml:space="preserve"><value>Von Hand im BIOS oder an der Hardware zu ändern: {0}</value></data>
 </root>

@@ -99,6 +99,14 @@ public sealed class AtLeastConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
+/// <summary>A width below the parameter -> true (a page too narrow for the labels next to its switches).</summary>
+public sealed class WidthBelowConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double w && w > 0 && double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var limit) && w < limit;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
 /// <summary>True when every bound value is true (a row's own "can toggle" and the app-wide "a change may start now").</summary>
 public sealed class AllTrueConverter : IMultiValueConverter
 {

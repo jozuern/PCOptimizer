@@ -11,10 +11,7 @@
   <data name="Scan_Running" xml:space="preserve"><value>Scanning your PC</value></data>
   <data name="Scan_Probe" xml:space="preserve"><value>Reading: {0}</value></data>
   <data name="Scan_Again" xml:space="preserve"><value>Scan again</value></data>
-  <data name="Dash_Findings" xml:space="preserve"><value>Findings</value></data>
-  <data name="Dash_Problems" xml:space="preserve"><value>What the scan found</value></data>
   <data name="Dash_CountsHint" xml:space="preserve"><value>To change by hand: settings in the BIOS or on the hardware that only you can change. The page Manual checks lists them.</value></data>
-  <data name="Dash_NoProblems" xml:space="preserve"><value>No problems found</value></data>
   <data name="Dash_ShowAll" xml:space="preserve"><value>Show passed checks</value></data>
   <data name="Dash_GameAccess" xml:space="preserve"><value>Game access</value></data>
   <data name="Dash_GameAccessHint" xml:space="preserve"><value>What kernel anti-cheats check before a game starts. Not part of the impact rating.</value></data>
@@ -66,12 +63,9 @@
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
-  <data name="Verdict_Good" xml:space="preserve"><value>Well configured</value></data>
-  <data name="Verdict_Fair" xml:space="preserve"><value>Some issues worth fixing</value></data>
-  <data name="Verdict_Poor" xml:space="preserve"><value>Significant issues found</value></data>
-  <data name="Count_Problems" xml:space="preserve"><value>problems</value></data>
-  <data name="Count_Advisor" xml:space="preserve"><value>to change by hand</value></data>
-  <data name="Count_Passed" xml:space="preserve"><value>passed</value></data>
+  <data name="Verdict_Good" xml:space="preserve"><value>well configured</value></data>
+  <data name="Verdict_Fair" xml:space="preserve"><value>some issues worth fixing</value></data>
+  <data name="Verdict_Poor" xml:space="preserve"><value>significant issues found</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scanning</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
   <data name="LastScan" xml:space="preserve"><value>Last scan {0}</value></data>
@@ -918,9 +912,6 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>These settings are on and cost what this profile is about. Undo brings back what Tunero changed; for a setting made outside Tunero, Details says how to change it back.</value>
   </data>
   <data name="Rec_AgainstOutside" xml:space="preserve"><value>Set outside this app</value></data>
-  <data name="Dash_ScoreFor" xml:space="preserve">
-    <value>Readiness: {0}</value>
-  </data>
   <data name="Dash_ScoreHintGoal" xml:space="preserve">
     <value>Counts the problems the scan found, weighted by their impact on {0}. It rises when you fix them; turning on tweaks adds no points by itself.</value>
   </data>
@@ -973,8 +964,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Log_Copied" xml:space="preserve"><value>Log copied (entries: {0}). Paste it into the report. It can contain your Windows user name, paths and program names: check it before you post it.</value></data>
   <data name="Log_CopyFailed" xml:space="preserve"><value>The clipboard is in use by another app. Try again.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong and was logged. You can report it in Settings &gt; Diagnostics.</value></data>
-  <data name="Score_Pending" xml:space="preserve"><value>The score appears when the scan is finished.</value></data>
-  <data name="Dash_ProblemsPending" xml:space="preserve"><value>Problems found</value></data>
   <data name="Change_Busy" xml:space="preserve"><value>Wait until the current change or scan has finished.</value></data>
   <data name="Change_OtherInstance" xml:space="preserve"><value>Another Tunero window or command line run is changing this PC. Try again when it has finished.</value></data>
   <data name="Close_WhileBusy" xml:space="preserve"><value>A change is running. Close Tunero when it has finished, so it does not stop halfway.</value></data>
@@ -1162,7 +1151,6 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Svc_LockTipReadOnly" xml:space="preserve"><value>This app has no explanation for this Windows service, so it does not change it.</value></data>
   <data name="Svc_LockTipManual" xml:space="preserve"><value>Already on Manual, the only start type this app offers for this Windows service.</value></data>
   <data name="Svc_FromWindows" xml:space="preserve"><value>Service description:</value></data>
-  <data name="Dash_CountShow" xml:space="preserve"><value>Show the list</value></data>
   <data name="Rec_SafetyNote" xml:space="preserve"><value>Before the first change the app creates a restore point, or asks you if System Protection is off. Every change then shows up on the Changes page and can be undone there.</value></data>
   <data name="Rec_NoneSelected" xml:space="preserve"><value>Nothing is ticked. Tick the changes you want to apply.</value></data>
   <data name="Debloat_PageHint" xml:space="preserve"><value>Apps that came with Windows, and desktop programs you installed.</value></data>
@@ -1294,4 +1282,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Advisor_CountUnknown" xml:space="preserve"><value>{0} could not be checked</value></data>
   <data name="Advisor_CountNotes" xml:space="preserve"><value>{0} with a note</value></data>
   <data name="Debloat_OtherApps" xml:space="preserve"><value>Other apps on this PC</value></data>
+  <data name="Dash_VerdictNone" xml:space="preserve"><value>Nothing found that holds this PC back.</value></data>
+  <data name="Dash_VerdictOne" xml:space="preserve"><value>One problem holds this PC back.</value></data>
+  <data name="Dash_VerdictMany" xml:space="preserve"><value>{0} problems hold this PC back.</value></data>
+  <data name="Dash_VerdictPending" xml:space="preserve"><value>The scan is reading this PC.</value></data>
+  <data name="Dash_Readiness" xml:space="preserve"><value>Readiness for {0}: {1} of 100, {2}. {3} checks passed.</value></data>
+  <data name="Dash_AdvisorLink" xml:space="preserve"><value>To change by hand in the BIOS or on the hardware: {0}</value></data>
 </root>

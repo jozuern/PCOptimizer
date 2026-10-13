@@ -30,9 +30,9 @@ public sealed class FindingItemViewModel : InspectorItem
         CriticalText = finding.Critical ? Loc.Instance["Impact_Critical"] : null;
         // "No FPS effect" and "Needed to start games" are not things a finding affects: they stand without "Affects:".
         var plain = finding.Effects.All(e => e is Effect.None or Effect.Prerequisite);
-        // "Impact 0 of 5" next to "No FPS effect" said the same twice: a check without effect leaves it out of its row, as
-        // tweak rows do; the details pane still names it.
-        var rowImpact = CriticalText ?? (Impact is 0 ? "" : ImpactText);
+        // The impact is the row's rating mark, not words in this line (as on tweak rows); "Critical" has no mark and stays.
+        var rowImpact = CriticalText ?? "";
+        Rating = Impact;
         MetaText = plain
             ? string.Join(". ", new[] { Meta(StatusText, rowImpact, ""), EffectsText }.Where(x => x.Length > 0))
             : Meta(StatusText, rowImpact, EffectsText);

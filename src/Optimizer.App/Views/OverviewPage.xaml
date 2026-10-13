@@ -40,8 +40,30 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Usage profile: decides recommendations and what counts; changes nothing by itself -->
-            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="0,0,0,16">
+            <!-- What the scan says, in one sentence: the one loud element of this page. The light weight is kept for what the scan
+                 says (this sentence and the rating marks); the problems it counts follow right under it, each with its mark. -->
+            <TextBlock Text="{Binding VerdictShown}" FontFamily="Segoe UI Variable Display, Segoe UI" FontWeight="Light" FontSize="32"
+                       TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,8,0,8"
+                       AutomationProperties.HeadingLevel="Level2" />
+            <!-- The score as one quiet line (how it is counted in its tooltip), the way to Manual checks when the BIOS or the
+                 hardware has something to change, and on the right the switch for the passed checks of the list below -->
+            <DockPanel Margin="0,0,0,12">
+                <ui:ToggleSwitch DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" VerticalAlignment="Top" Margin="16,0,0,0" />
+                <StackPanel VerticalAlignment="Center">
+                    <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ReadinessShown}" TextWrapping="Wrap"
+                                  ToolTip="{Binding ScoreHint}" />
+                    <ui:HyperlinkButton Content="{Binding AdvisorLinkShown}" Padding="0" Margin="0,4,0,0" HorizontalAlignment="Left" Click="Advisor_Click"
+                                        ToolTip="{l:Tr Dash_CountsHint}" Visibility="{Binding AdvisorLinkShown, Converter={StaticResource NullToVisibility}}" />
+                </StackPanel>
+            </DockPanel>
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding FindingsEmpty, Converter={StaticResource BoolToVisibility}}" />
+            <ItemsControl ItemsSource="{Binding Findings}" ItemTemplate="{StaticResource FindingRow}" />
+            <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding HiddenFindingsText}" Margin="0,4,0,0"
+                          Visibility="{Binding HiddenFindingsText, Converter={StaticResource NullToVisibility}}" />
+
+            <!-- Usage profile: decides recommendations and what counts; changes nothing by itself. After the findings: the verdict
+                 comes first, the setting that shapes it follows. -->
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="0,24,0,0">
                 <ui:CardControl.Icon>
                     <ui:SymbolIcon Symbol="{Binding SelectedProfile.Icon}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 </ui:CardControl.Icon>
@@ -59,78 +81,13 @@
                           MinWidth="220" Margin="16,0,0,0" ToolTip="{l:Tr Profile_Hint}" AutomationProperties.Name="{l:Tr Profile_Label}" />
             </ui:CardControl>
 
-            <!-- Readiness and counts -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <ui:Card Grid.Column="0" Padding="24,16" VerticalAlignment="Stretch">
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ScoreTitle}" />
-                        <!-- Until a scan has finished the card keeps its layout but shows a placeholder instead of the number (ScoreText). -->
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <ui:TextBlock FontTypography="TitleLarge" Text="{Binding ScoreText}" v:ThemeBrush.Status="{Binding ScoreStatusShown}" />
-                            <ui:TextBlock FontTypography="Subtitle" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" / 100" VerticalAlignment="Bottom" Margin="0,0,0,4" />
-                        </StackPanel>
-                        <ProgressBar Value="{Binding ScoreBarValue, Mode=OneWay}" Maximum="100" Height="4" Margin="0,8,0,8" v:ThemeBrush.Status="{Binding ScoreStatusShown}" />
-                        <ui:TextBlock FontTypography="Body" Text="{Binding ScoreVerdictShown}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding ScoreHint}" Margin="0,4,0,0" />
-                    </StackPanel>
-                </ui:Card>
-                <ui:Card Grid.Column="2" Padding="24,16" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
-                    <!-- Numbers in the size of the score next to it; the line at the bottom says where the manual checks are -->
-                    <DockPanel>
-                        <ui:TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Caption}" Text="{l:Tr Dash_CountsHint}" Margin="0,8,0,0" />
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ProblemSummary}" />
-                        <ItemsControl ItemsSource="{Binding Counts}" Margin="0,8,0,0">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Rows="1" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <!-- Each number leads to its list: the findings below, BIOS and hardware, or the passed checks -->
-                                    <ui:Button Appearance="Transparent" BorderThickness="0" Padding="8,4" Margin="-8,0,8,0" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-                                               Click="Count_Click" Tag="{Binding Target}" AutomationProperties.Name="{Binding}" ToolTip="{l:Tr Dash_CountShow}">
-                                        <StackPanel>
-                                            <ui:TextBlock FontTypography="TitleLarge" Text="{Binding Value}" v:ThemeBrush.Status="{Binding Status}" />
-                                            <!-- The chevron says that the number opens its list -->
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Label}" VerticalAlignment="Center" />
-                                                <ui:SymbolIcon Symbol="ChevronRight12" FontSize="12" Margin="4,1,0,0" VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </ui:Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                    </DockPanel>
-                </ui:Card>
-            </Grid>
-
-            <!-- Game access (gaming profiles only): right after the counts and above the findings, since a game that does not start
-                 matters most. The findings follow, so "2 problems" is answered right below the number, then what to apply. -->
+            <!-- Game access (gaming profiles only): its own section after the findings and the profile, outside the verdict (it is
+                 not part of the impact rating) -->
             <StackPanel Visibility="{Binding GameAccess, Converter={StaticResource NullToVisibility}}">
                 <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Dash_GameAccess}" />
                 <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Dash_GameAccessHint}" Margin="0,0,0,8" />
                 <ContentControl Content="{Binding GameAccess}" ContentTemplate="{StaticResource FindingRow}" />
             </StackPanel>
-
-            <!-- Findings -->
-            <DockPanel x:Name="FindingsHeader" Margin="0,24,0,8">
-                <ui:ToggleSwitch DockPanel.Dock="Right" Content="{l:Tr Dash_ShowAll}" IsChecked="{Binding ShowPassed}" />
-                <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Dash_Findings}" VerticalAlignment="Center" />
-            </DockPanel>
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding FindingsEmpty, Converter={StaticResource BoolToVisibility}}" />
-            <ItemsControl ItemsSource="{Binding Findings}" ItemTemplate="{StaticResource FindingRow}" />
-            <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding HiddenFindingsText}" Margin="0,4,0,0"
-                          Visibility="{Binding HiddenFindingsText, Converter={StaticResource NullToVisibility}}" />
 
             <!-- Apply recommended -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Rec_Section}" />
@@ -160,7 +117,8 @@
                                         <ui:TextBlock FontTypography="Body" Text="{Binding Title}" TextWrapping="Wrap" />
                                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Reason}" />
                                     </StackPanel>
-                                    <ui:TextBlock Grid.Column="2" FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ImpactText}" Margin="16,0,0,0" />
+                                    <v:RatingMark Grid.Column="2" Style="{StaticResource RowRating}" Margin="16,0,0,0" VerticalAlignment="Top" Value="{Binding Rating}" Disputed="{Binding IsDisputed}"
+                                                  ToolTip="{Binding ImpactText}" AutomationProperties.Name="{Binding ImpactText}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
