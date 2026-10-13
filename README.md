@@ -94,6 +94,7 @@ Start-Process Tunero.exe -ArgumentList '--apply-recommended', '--profile', 'gami
 | `--apply-recommended` | Applies the Overview's recommended list (fixes of problems found, then what the profile recommends for this PC) with the same rules: what needs its own confirmation is listed in the log, not applied. |
 | `--profile <id>` | The profile for `--apply-recommended`: gaming, laptopGaming, battery, office, quiet or lowEnd. Without it, the profile saved in the app (or the one that fits this PC best). |
 | `--export <file>` | Writes the changes file the Changes page exports, to a new file. |
+| `--reapply` | Applies again the changes Windows reset (what "Apply again" offers on the Overview); the opt-in task in Settings runs this after sign-in. |
 | `--undo-all` | Undoes every change of this app. |
 | `--no-restore-point` | Continues when no restore point can be created (System Protection off); without it, nothing is changed then. |
 | `--log <file>` | Writes the result to a new text file; an existing file is never overwritten. |

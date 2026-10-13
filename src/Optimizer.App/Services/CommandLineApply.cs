@@ -64,6 +64,34 @@ public static class CommandLineApply
         return code;
     }
 
+    /// <summary>--reapply (the re-apply task, <see cref="ReapplyTask"/>): applies again what Windows reset.</summary>
+    public static async Task<int> ReapplyAsync(AppServices services, string? logPath)
+    {
+        var lines = new List<string>();
+        var code = await Locked(lines, () => ReapplyCoreAsync(services, lines));
+        Finish("reapply", lines, code, logPath);
+        return code;
+    }
+
+    private static async Task<int> ReapplyCoreAsync(AppServices services, List<string> lines)
+    {
+        if (!services.Elevation.IsElevated)
+        {
+            lines.Add(Loc.Instance["Cli_NotElevated"]);
+            return NotElevated;
+        }
+        var outcome = await services.Session.ReapplyResetAsync(await ScanAsync(services));
+        if (outcome.Results.Count == 0)
+        {
+            lines.Add(Loc.Instance["Cli_NothingReset"]);
+            return Done;
+        }
+        var lang = Loc.Instance.Language;
+        foreach (var r in outcome.Results) lines.Add(ChangeRunner.ResultText(r.Tweak, ChangeRunner.TitleOf(r.Tweak, lang), r.Result));
+        lines.Add(Loc.Instance.Format("Cli_ReapplySummary", outcome.Applied, outcome.Failed));
+        return outcome.Failed > 0 ? SomeFailed : Done;
+    }
+
     public static async Task<int> UndoAllAsync(AppServices services, string? logPath)
     {
         var lines = new List<string>();

@@ -52,6 +52,7 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
         Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
         Runner.BusyChanged += (_, busy) => IsBusy = busy;
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
+        Runner.Changed += (_, _) => RefreshReapply();
         ChangeGate.Instance.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName != nameof(ChangeGate.CanChange)) return;

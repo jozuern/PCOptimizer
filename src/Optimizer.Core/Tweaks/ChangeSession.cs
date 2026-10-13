@@ -77,6 +77,20 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
         };
     }
 
+    /// <summary>
+    /// The re-apply task's run (<see cref="ReapplyTask"/>): the changes the Overview lists as reset, the ones "Apply
+    /// again" offers (no Expert, boot-critical or anti-cheat sensitive change), applied again in one go. A restore point
+    /// is made when Windows can; without one the run goes on, since the user chose these changes before and nobody is
+    /// there to ask. <see cref="BatchOutcome.Cancelled"/> when nothing was reset.
+    /// </summary>
+    public async Task<BatchOutcome> ReapplyResetAsync(PcSnapshot pc)
+    {
+        var known = pc.States.ToDictionary(s => s.Tweak.Id, s => s.State, StringComparer.Ordinal);
+        var reset = await Task.Run(() => engine.CheckDrift(pc.Facts, known).Select(d => d.Tweak).Where(t => t.IsBatchSafe).ToList());
+        if (reset.Count == 0) return BatchOutcome.Cancelled;
+        return await ApplyBatchAsync(reset, pc.Facts, pc.Applied, new ApplyOptions { ContinueWithoutRestorePoint = true }, () => RestorePointChoice.Continue);
+    }
+
     public Task<RevertResult> UndoAsync(TweakDefinition t) => Task.Run(() => engine.Revert(t));
 
     public async Task<UndoAllOutcome> UndoAllAsync() => new(await Task.Run(engine.RevertAll));

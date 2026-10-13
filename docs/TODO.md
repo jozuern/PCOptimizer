@@ -17,7 +17,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 ## Code
 
-- **Catalog model:** an "also for new users" scope (Default profile) and an action for the app's own scheduled task (undo removes it).
+- **Catalog model:** an "also for new users" scope (Default profile).
 
 ## Toward "the only PC optimizer you need"
 
@@ -30,4 +30,4 @@ In the order of the audit's promise gaps:
 5. Documented policies: a cross-check of every policy value in the tool reference against the catalog (2026-10-13) left few with an effect. Added: Start without Recommended (checked on Pro), Click to Do off. Already in: quality and feature update deferral, restart scheduling, settings sync, Recall. Left out: sync per category (Settings has its own switches), AllowDeviceNameInDiagnosticData (off by default), the Settings agent and agent policies (Enterprise only), TurnOffWindowsCopilot (deprecated), TargetReleaseVersion (needs the version of the moment, not a fixed value).
 6. Cosmetic tweaks: snapping (Snap Assist, layouts) and taskbar on several displays are in. Menu show delay and mouse hover time are in (a `systemParameter` action, checked in the VM). Drive letters first and the "- Shortcut" suffix are in (proven in the VM without a sign-out). Num Lock at sign-in and the startup sound use undocumented values that only show at the sign-in screen or as sound, which a VM script cannot check: they stay out until someone checks them at the console. Photo Viewer associations, context menu entries one by one and Send To stay out for now (shell extensions can already be blocked on the Startup page).
 7. Export: removed apps, service start types and startup entries as opt-in sections of the changes file (`--export` and `--apply-recommended` are done). `--include-preview` stays out: a preview has not been tested on real Windows and needs its own confirmation in the app.
-8. An "also for new users" scope and an opt-in re-apply task after feature updates (the quick fixes are done: restart pending check, Defender update, winget source reset, icon cache, Advanced startup for Safe Mode; their VM row is open).
+8. An "also for new users" scope. Done: the opt-in re-apply task (`--reapply` and the switch in Settings) and the quick fixes (restart pending check, Defender update, winget source reset, icon cache, Advanced startup for Safe Mode); the VM rows of both are open.

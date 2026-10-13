@@ -105,6 +105,11 @@
   <data name="Settings_Expert" xml:space="preserve"><value>Expert mode</value></data>
   <data name="Settings_SectionTweaks" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Shows changes that trade security for performance or edit the boot configuration. They are never recommended automatically.</value></data>
+  <data name="Settings_Reapply" xml:space="preserve"><value>Apply my changes again when Windows resets them</value></data>
+  <data name="Reapply_Hint" xml:space="preserve"><value>Two minutes after you sign in, Tunero applies again what an update reset (a scheduled task with administrator rights; nothing keeps running). Expert changes are left for you.</value></data>
+  <data name="Reapply_NotHere" xml:space="preserve"><value>Available in the installed Tunero running as administrator.</value></data>
+  <data name="Reapply_OtherAccount" xml:space="preserve"><value>Available when the signed-in account itself runs Tunero as administrator: the task runs for that account.</value></data>
+  <data name="Reapply_UserFolder" xml:space="preserve"><value>Available when Tunero is in a folder only administrators can change (Program Files, or winget or Chocolatey for all users): the task starts it with administrator rights without asking.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Data folder</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Turn on Expert mode?</value></data>
   <data name="Expert_ConfirmText" xml:space="preserve"><value>Expert mode shows changes that can weaken Windows security or change how Windows starts. Each one is backed up and explained.</value></data>
@@ -1356,6 +1361,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cli_FileUnwritable" xml:space="preserve"><value>Cannot write {0}: {1}</value></data>
   <data name="Cli_Exported" xml:space="preserve"><value>Exported {0} changes to {1}. Left out because they belong to this PC only: {2}.</value></data>
   <data name="Cli_UndoSummary" xml:space="preserve"><value>Undone: {0}. Not fully undone: {1}.</value></data>
+  <data name="Cli_NothingReset" xml:space="preserve"><value>Nothing was reset: no change needs to be applied again.</value></data>
+  <data name="Cli_ReapplySummary" xml:space="preserve"><value>Applied again: {0}. Failed: {1}.</value></data>
   <data name="Cli_ExitCode" xml:space="preserve"><value>Exit code: {0}</value></data>
   <data name="Crash_Title" xml:space="preserve"><value>Report the error?</value></data>
   <data name="Crash_Text" xml:space="preserve"><value>Tunero ran into an unexpected error. A report helps to fix it: it opens on GitHub, filled in with the app version, the Windows build and the error details, without your user or computer name. Nothing is sent until you submit it there (you need a GitHub account).</value></data>

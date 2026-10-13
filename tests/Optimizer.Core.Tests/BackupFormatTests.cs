@@ -100,6 +100,8 @@ public class BackupFormatTests
             new Startup.StartupFileDeleteAction { Path = FixtureStartupFile }),
         new("scheduledTaskDelete", fx => fx.Tasks.Xml[@"\Fixture\Updater"] = FixtureTaskXml,
             new Startup.ScheduledTaskDeleteAction { Path = @"\Fixture\Updater" }),
+        new("ownTask", _ => { },
+            new OwnTaskAction { Path = Tweaks.ReapplyTask.TaskPath, Xml = Tweaks.ReapplyTask.Xml(@"C:\Program Files\Tunero\Tunero.exe", "S-1-5-21-1-2-3-1001") }),
     ];
 
     /// <summary>
@@ -334,7 +336,7 @@ public class BackupFormatTests
             .Cast<System.Text.Json.Serialization.JsonDerivedTypeAttribute>().Select(a => (string)a.TypeDiscriminator!).Order(StringComparer.Ordinal);
         Assert.Equal(
             ["accessibilityShortcut", "bcd", "displayMode", "dns", "dohAutoUpgrade", "hibernation", "memoryCompression", "nicProperty", "nvidiaDrs",
-             "optionalCapability", "optionalFeature", "powerMode", "powerScheme", "powerSetting", "registry", "registryBinaryBits", "registryBits",
+             "optionalCapability", "optionalFeature", "ownTask", "powerMode", "powerScheme", "powerSetting", "registry", "registryBinaryBits", "registryBits",
              "registryKey", "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete", "systemParameter"],
             types);
     }

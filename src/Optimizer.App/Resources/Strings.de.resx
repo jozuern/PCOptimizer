@@ -105,6 +105,11 @@
   <data name="Settings_Expert" xml:space="preserve"><value>Expertenmodus</value></data>
   <data name="Settings_SectionTweaks" xml:space="preserve"><value>Tweaks</value></data>
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Zeigt Änderungen, die Sicherheit gegen Leistung tauschen oder die Startkonfiguration bearbeiten. Sie werden nie automatisch empfohlen.</value></data>
+  <data name="Settings_Reapply" xml:space="preserve"><value>Meine Änderungen erneut anwenden, wenn Windows sie zurücksetzt</value></data>
+  <data name="Reapply_Hint" xml:space="preserve"><value>Zwei Minuten nach deiner Anmeldung wendet Tunero erneut an, was ein Update zurückgesetzt hat (eine geplante Aufgabe mit Administratorrechten; nichts läuft weiter). Expertenänderungen bleiben dir überlassen.</value></data>
+  <data name="Reapply_NotHere" xml:space="preserve"><value>Verfügbar im installierten Tunero, das als Administrator läuft.</value></data>
+  <data name="Reapply_OtherAccount" xml:space="preserve"><value>Verfügbar, wenn das angemeldete Konto Tunero selbst als Administrator startet: Die Aufgabe läuft für dieses Konto.</value></data>
+  <data name="Reapply_UserFolder" xml:space="preserve"><value>Verfügbar, wenn Tunero in einem Ordner liegt, den nur Administratoren ändern können (Programme oder winget bzw. Chocolatey für alle Benutzer): Die Aufgabe startet es ohne Nachfrage mit Administratorrechten.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Datenordner</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Expertenmodus einschalten?</value></data>
   <data name="Expert_ConfirmText" xml:space="preserve"><value>Der Expertenmodus zeigt Änderungen, die die Sicherheit von Windows schwächen oder ändern können, wie Windows startet. Jede wird gesichert und erklärt.</value></data>
@@ -1356,6 +1361,8 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Cli_FileUnwritable" xml:space="preserve"><value>{0} lässt sich nicht schreiben: {1}</value></data>
   <data name="Cli_Exported" xml:space="preserve"><value>{0} Änderungen nach {1} exportiert. Weggelassen, weil sie nur zu diesem PC gehören: {2}.</value></data>
   <data name="Cli_UndoSummary" xml:space="preserve"><value>Rückgängig gemacht: {0}. Nicht vollständig rückgängig gemacht: {1}.</value></data>
+  <data name="Cli_NothingReset" xml:space="preserve"><value>Nichts wurde zurückgesetzt: Keine Änderung muss erneut angewendet werden.</value></data>
+  <data name="Cli_ReapplySummary" xml:space="preserve"><value>Erneut angewendet: {0}. Fehlgeschlagen: {1}.</value></data>
   <data name="Cli_ExitCode" xml:space="preserve"><value>Exitcode: {0}</value></data>
   <data name="Crash_Title" xml:space="preserve"><value>Fehler melden?</value></data>
   <data name="Crash_Text" xml:space="preserve"><value>In Tunero ist ein unerwarteter Fehler aufgetreten. Ein Bericht hilft, ihn zu beheben: Er öffnet sich auf GitHub, ausgefüllt mit App-Version, Windows-Build und den Fehlerdetails, ohne deinen Benutzer- oder Computernamen. Gesendet wird erst, wenn du ihn dort abschickst (du brauchst ein GitHub-Konto).</value></data>

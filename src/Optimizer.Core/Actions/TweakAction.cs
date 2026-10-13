@@ -85,6 +85,7 @@ public enum EarlyRead
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(RegistryAction), "registry")]
 [JsonDerivedType(typeof(RegistryKeyAction), "registryKey")]
+[JsonDerivedType(typeof(OwnTaskAction), "ownTask")]
 [JsonDerivedType(typeof(RegistryBitsAction), "registryBits")]
 [JsonDerivedType(typeof(RegistryTokenAction), "registryToken")]
 [JsonDerivedType(typeof(RegistryBinaryBitsAction), "registryBinaryBits")]
