@@ -54,7 +54,22 @@ public static class QuickFixes
             "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/chkdsk") { ShowOutput = true },
         new("RecoveryEnable", Confirm: false, NeedsRestart: false, [new("reagentc.exe", "/enable")],
             "https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/reagentc-command-line-options") { ShowOutput = true },
+        // Defender's own signature update from its configured sources (Windows Update by default), as "Check for updates"
+        // in Windows Security does.
+        new("DefenderUpdate", Confirm: false, NeedsRestart: false, [Ps("Update-MpSignature") with { Timeout = TimeSpan.FromMinutes(10) }],
+            "https://learn.microsoft.com/en-us/powershell/module/defender/update-mpsignature"),
+        // Restores winget's default sources (msstore, winget, winget-font) and removes added ones: the documented fix when
+        // winget cannot open its catalog. Needs administrator rights, so it runs elevated here.
+        new("WingetSourceReset", Confirm: true, NeedsRestart: false, [new(WingetTool, "source reset --force --disable-interactivity", TimeSpan.FromMinutes(5))],
+            "https://learn.microsoft.com/en-us/windows/package-manager/winget/source") { ShowOutput = true },
+        // Restarts into the Advanced startup menu, where Startup Settings offers Safe Mode (for DDU) for this one start.
+        // Nothing in the boot configuration changes, so the start after that is normal again: no way back to set up.
+        new("AdvancedStartup", Confirm: true, NeedsRestart: true, [new("shutdown.exe", "/r /o /t 0")],
+            "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/shutdown"),
     ];
+
+    /// <summary>Stands for winget.exe from the protected App Installer folder (<see cref="Apps.Winget.FindTrusted()"/>), resolved when the step runs.</summary>
+    public const string WingetTool = "winget";
 
     public static QuickFix Get(string id) => All.Single(f => f.Id == id);
 
@@ -62,16 +77,24 @@ public static class QuickFixes
     /// Runs the steps in order. After a failed step (an exit code that is not a success, or a timeout) only the steps
     /// marked <see cref="QuickFixStep.AlwaysRun"/> still run. Output is the text of all steps run.
     /// </summary>
-    public static (bool Ok, string Output) Run(IProcessRunner runner, QuickFix fix)
+    /// <param name="winget">Finds the trusted winget.exe; null when App Installer is missing. Default: <see cref="Apps.Winget.FindTrusted()"/>.</param>
+    public static (bool Ok, string Output) Run(IProcessRunner runner, QuickFix fix, Func<string?>? winget = null)
     {
         var output = new List<string>();
         var ok = true;
         foreach (var step in fix.Steps)
         {
             if (!ok && !step.AlwaysRun) continue;
+            var file = step.File == WingetTool ? (winget ?? Apps.Winget.FindTrusted)() : step.File;
+            if (file is null)
+            {
+                output.Add("winget (App Installer) was not found.");
+                ok = false;
+                continue;
+            }
             try
             {
-                var (code, text) = runner.Run(step.File, step.Arguments, step.Timeout);
+                var (code, text) = runner.Run(file, step.Arguments, step.Timeout);
                 if (text.Trim() is { Length: > 0 } t) output.Add(t);
                 if (!(step.OkCodes ?? [0]).Contains(code)) ok = false;
             }

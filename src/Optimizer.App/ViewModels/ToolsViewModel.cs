@@ -327,19 +327,56 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     private async Task RestartExplorerAsync()
     {
         if (!dialogs.Ask(Loc.Instance["Quick_ExplorerTitle"], Loc.Instance["Quick_ExplorerText"], Loc.Instance["Quick_Explorer"])) return;
+        await RunWorkAsync("restart explorer", () => RestartExplorerCoreAsync(null, Loc.Instance["Quick_ExplorerRestarted"]));
+    }
+
+    /// <summary>
+    /// Rebuilds the icon cache the way Microsoft's troubleshooting article does: Explorer ends, the signed-in user's
+    /// IconCache.db is deleted, Explorer starts again and builds a new one.
+    /// </summary>
+    [RelayCommand]
+    private async Task ResetIconCacheAsync()
+    {
+        if (services.ProfilePath is not { Length: > 0 } profile)
+        {
+            Owner.ShowResult(Loc.Instance["Quick_IconCacheNoProfile"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            return;
+        }
+        if (!dialogs.Ask(Loc.Instance["Quick_IconCache"], Loc.Instance["Quick_IconCacheConfirm"], Loc.Instance["Quick_IconCacheAction"])) return;
+        var cache = Path.Combine(profile, "AppData", "Local", "IconCache.db");
+        await RunWorkAsync("reset icon cache", () => RestartExplorerCoreAsync(() =>
+        {
+            // The user's own folder: deleted only through a handle that resolves to this very file (no link swapped in).
+            if (File.Exists(cache)) SafeDelete.DeleteFile(cache);
+        }, Loc.Instance["Quick_IconCacheDone"]));
+    }
+
+    /// <param name="whileStopped">Runs after Explorer ended and before it starts again; an exception is shown and Explorer still starts.</param>
+    private async Task RestartExplorerCoreAsync(Action? whileStopped, string done)
+    {
         // Only Explorer of this session: the elevated taskkill would otherwise end it for every signed-in user, and it is
         // started again only for this one.
         int session;
         using (var self = Process.GetCurrentProcess()) session = self.SessionId;
-        await RunWorkAsync("restart explorer", async () =>
+        await Task.Run(() => services.Context.Processes.Run("taskkill.exe", $"/f /im explorer.exe /fi \"SESSION eq {session}\""));
+        await Task.Delay(1000);
+        string? failure = null;
+        if (whileStopped is not null)
         {
-            await Task.Run(() => services.Context.Processes.Run("taskkill.exe", $"/f /im explorer.exe /fi \"SESSION eq {session}\""));
-            await Task.Delay(1000);
-            // Explorer must run as the signed-in user, never elevated.
-            var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
-            if (path == DeElevatedLauncher.Path.Failed) Owner.ShowResult(Loc.Instance["Quick_ExplorerManual"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
-            else Owner.ShowResult(Loc.Instance["Quick_ExplorerRestarted"], Wpf.Ui.Controls.InfoBarSeverity.Success);
-        });
+            try
+            {
+                await Task.Run(whileStopped);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                failure = ex.Message;
+            }
+        }
+        // Explorer must run as the signed-in user, never elevated.
+        var path = DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), null, services.Elevation);
+        if (path == DeElevatedLauncher.Path.Failed) Owner.ShowResult(Loc.Instance["Quick_ExplorerManual"], Wpf.Ui.Controls.InfoBarSeverity.Warning);
+        else if (failure is not null) Owner.ShowResult(Loc.Instance.Format("Result_Error", failure), Wpf.Ui.Controls.InfoBarSeverity.Error);
+        else Owner.ShowResult(done, Wpf.Ui.Controls.InfoBarSeverity.Success);
     }
 
     [RelayCommand]

@@ -10,8 +10,33 @@ public class QuickFixTests
     public void EveryStepIsAWindowsTool()
     {
         foreach (var fix in QuickFixes.All)
-        foreach (var step in fix.Steps)
+        foreach (var step in fix.Steps.Where(s => s.File != QuickFixes.WingetTool))
             Assert.True(File.Exists(ProcessHardening.ResolveSystemTool(step.File)), $"{fix.Id}: {step.File} is not in System32");
+    }
+
+    /// <summary>winget runs only from the protected App Installer folder; without it the fix fails instead of running "winget" from anywhere.</summary>
+    [Fact]
+    public void WingetStepsUseTheTrustedWinget()
+    {
+        var runner = new FakeProcesses();
+        const string trusted = @"C:\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_1.0_x64__8wekyb3d8bbwe\winget.exe";
+        Assert.True(QuickFixes.Run(runner, QuickFixes.Get("WingetSourceReset"), () => trusted).Ok);
+        Assert.Equal([$"{trusted} source reset --force --disable-interactivity"], runner.Calls);
+
+        var none = new FakeProcesses();
+        var (ok, output) = QuickFixes.Run(none, QuickFixes.Get("WingetSourceReset"), () => null);
+        Assert.False(ok);
+        Assert.Contains("not found", output);
+        Assert.Empty(none.Calls);
+    }
+
+    [Fact]
+    public void AdvancedStartupChangesNoBootSetting()
+    {
+        // Restart into the menu once: shutdown /r /o, never bcdedit (a Safe Mode flag would need its own way back).
+        var step = Assert.Single(QuickFixes.Get("AdvancedStartup").Steps);
+        Assert.Equal(("shutdown.exe", "/r /o /t 0"), (step.File, step.Arguments));
+        Assert.DoesNotContain(QuickFixes.All.SelectMany(f => f.Steps), s => s.File.Contains("bcdedit", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

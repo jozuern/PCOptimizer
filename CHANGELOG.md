@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Tools, four more quick fixes:** "Rebuild the icon cache" for blank or wrong icons (Explorer ends, the signed-in user's IconCache.db is deleted as Microsoft's troubleshooting article does, Explorer starts again as that user). "Update Microsoft Defender" downloads the newest definitions now (Update-MpSignature). "Reset winget sources" restores winget's default sources when Install & update cannot reach the catalog; sources you added are removed, so it asks first. "Restart to Advanced startup" restarts into the menu where Startup Settings offers Safe Mode, for DDU for example; nothing in the boot settings changes, so the next start is normal again without a way back to set up.
+
 ## 1.0.0
 
 The first release out of preview.
