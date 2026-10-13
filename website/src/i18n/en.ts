@@ -22,13 +22,13 @@ const en: Copy = {
     previewLink: 'Why',
     shotCaption: 'The Overview after a scan, on a test PC in a virtual machine.',
     shotAlt:
-      'The Overview page of Tunero: the readiness score, what the scan found, and the recommended changes as a checklist with Apply recommended.',
+      'The Overview page of Tunero: the verdict of the scan, the readiness score in one line, the findings with their impact rating, and the start of the recommended changes.',
   },
   impact: {
     title: 'Only problems the scan finds rate 5. No tweak does.',
     body: (n, matter) => [
       'Checks and tweaks share one scale for games, from 0 to 5. The largest gains come from problems the scan finds, such as a monitor below its refresh rate or a processor held at its base clock.',
-      `Of the ${n} tweaks, ${matter} can matter for games, some only on some PCs: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. The app rates each tweak for the PC it runs on.`,
+      `Of the ${n} tweaks, ${matter} can matter for games, some only on some PCs: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. The app rates each tweak for the PC it runs on and shows the rating next to every check and tweak, as a number and five bars.`,
     ],
     top: 'Problems the scan finds. It fixes them or tells you how.',
     topRow: (n) => `Rated 5: ${n} problems the scan finds`,
@@ -74,7 +74,7 @@ const en: Copy = {
       'Changes that turn off security features or touch the boot configuration stay behind Expert mode, and none of them is ever recommended automatically. A tweak that is not yet proven on real hardware carries the badge "Not yet tested on a real PC" and is never part of Apply recommended.',
     ],
     shotAlt:
-      'The Tweaks page of Tunero with Mouse acceleration off selected: groups of tweaks with switches, and its explanation in the details pane.',
+      'The Tweaks page of Tunero with Mouse acceleration off selected: groups of tweaks with their impact rating and switches, and its explanation in the details pane.',
     shotCaption: 'The same tweak on the Tweaks page.',
   },
   left: {

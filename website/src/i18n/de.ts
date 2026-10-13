@@ -22,13 +22,13 @@ const de: Copy = {
     previewLink: 'Warum',
     shotCaption: 'Die Übersicht nach einem Scan, auf einem Test-PC in einer virtuellen Maschine.',
     shotAlt:
-      'Die Übersicht von Tunero: die Eignung, was der Scan gefunden hat, und die empfohlenen Änderungen als Checkliste mit „Empfohlene anwenden“.',
+      'Die Übersicht von Tunero: das Urteil des Scans, die Eignung in einer Zeile, die Ergebnisse mit ihrer Wirkung und der Anfang der empfohlenen Änderungen.',
   },
   impact: {
     title: 'Eine 5 gibt es nur für Probleme, die der Scan findet. Für keinen Tweak.',
     body: (n, matter) => [
       'Prüfungen und Tweaks teilen sich eine Skala für Spiele, von 0 bis 5. Den größten Unterschied machen Probleme, die der Scan findet, etwa ein Monitor unter seiner Bildwiederholrate oder eine CPU, die beim Basistakt festhängt.',
-      `Von den ${n} Tweaks können ${matter} für Spiele zählen, manche nur auf manchen PCs: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. Die App bewertet jeden Tweak für den PC, auf dem sie läuft.`,
+      `Von den ${n} Tweaks können ${matter} für Spiele zählen, manche nur auf manchen PCs: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. Die App bewertet jeden Tweak für den PC, auf dem sie läuft, und zeigt die Wertung neben jeder Prüfung und jedem Tweak als Zahl und fünf Balken.`,
     ],
     top: 'Probleme, die der Scan findet. Er behebt sie oder sagt dir, wie.',
     topRow: (n) => `Wirkung 5: ${n} Probleme, die der Scan findet`,
@@ -74,7 +74,7 @@ const de: Copy = {
       'Änderungen, die Sicherheitsfunktionen ausschalten oder die Startkonfiguration ändern, bleiben im Expertenmodus, und keine davon wird je automatisch empfohlen. Ein Tweak, der auf echter Hardware noch nicht erprobt ist, trägt das Abzeichen „Noch nicht auf einem echten PC getestet“ und ist nie Teil von „Empfohlene anwenden“.',
     ],
     shotAlt:
-      'Die Seite Tweaks von Tunero, gewählt ist „Mausbeschleunigung aus“: Gruppen von Tweaks mit Schaltern und die Erklärung im Detailbereich.',
+      'Die Seite Tweaks von Tunero, gewählt ist „Mausbeschleunigung aus“: Gruppen von Tweaks mit ihrer Wirkung und Schaltern und die Erklärung im Detailbereich.',
     shotCaption: 'Derselbe Tweak auf der Seite Tweaks.',
   },
   left: {
