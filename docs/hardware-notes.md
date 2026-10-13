@@ -24,7 +24,7 @@ Read-only checks on one gaming PC: Intel Core i7-9700K, ASUS ROG Strix Z390-F, N
 - Many tweaks are already set on this PC (likely from an earlier tool): telemetry, activity history, Widgets, background apps, Game DVR, mouse acceleration, file extensions, classic context menu, fast startup and hibernation off, SysMain disabled. The engine shows them as "On" without an undo entry, because the app did not make those changes and does not know the originals.
 - `visual.bestPerformance` showed "Partly on": some of its values match, others do not.
 - The page file is set manually, so "Page file managed by Windows" is recommended.
-- Without admin rights: `Get-MMAgent` fails (memory compression shows as not supported) and `bcdedit /enum` fails (boot configuration tweaks show as unknown). The app shows one banner on the Tweaks page instead of a note per row.
+- Without admin rights: reading memory compression fails (the WMI class behind `Get-MMAgent`; the tweak shows as not supported) and `bcdedit /enum` fails (boot configuration tweaks show as unknown). The app shows one banner on the Tweaks page instead of a note per row.
 - System Protection state needs admin rights for the WMI class; without them the Changes page says "unknown".
 
 ## Drivers, startup and health

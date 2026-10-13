@@ -17,7 +17,7 @@ CONTRIBUTING: impact 0 to 5 only as far as the evidence goes.
   Windows test (PCGH, AtlasOS, 2024) did not report the memory integrity state, so its 2 to 8 % cannot be credited to
   debloating.
 
-## Done in this change
+## Done in the October 2026 research pass
 
 | Item | What | Rating | Evidence |
 |---|---|---|---|
