@@ -16,45 +16,45 @@ const de: Copy = {
     winget: 'oder mit winget',
     copy: 'Kopieren',
     copied: 'Kopiert',
-    spec: {
-      version: 'Version',
-      changes: 'Was neu ist',
-      size: 'Download',
-      needs: 'Läuft auf',
-      needsValue: 'Windows 11 24H2 oder neuer, x64',
-      languages: 'Sprachen',
-      languagesValue: 'Deutsch, Englisch',
-      license: 'Lizenz',
-      licenseValue: 'Freie Software, GPL-3.0',
-    },
-    shotCaption: 'Die Übersicht nach einem Scan, hier auf einem Test-PC in einer virtuellen Maschine.',
+    facts: (v) => `Version ${v} für Windows 11 24H2 oder neuer, x64. Auf Deutsch und Englisch. Freie Software unter der GPL-3.0.`,
+    changes: 'Was neu ist',
     preview: 'Die exe ist noch nicht signiert, deshalb kann Windows SmartScreen beim ersten Start warnen.',
     previewLink: 'Warum',
+    shotCaption: 'Die Übersicht nach einem Scan, auf einem Test-PC in einer virtuellen Maschine.',
     shotAlt:
       'Die Übersicht von Tunero: die Eignung, was der Scan gefunden hat, und die empfohlenen Änderungen als Checkliste mit „Empfohlene anwenden“.',
   },
+  impact: {
+    title: (n, matter) => `Alle ${n} Tweaks sind für Spiele bewertet. ${matter} davon können zählen.`,
+    body: [
+      'Jeder Tweak bewertet seine Wirkung auf Spiele von 0 bis 5 und sagt, worauf die Bewertung beruht. Manche Bewertungen hängen vom PC ab: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. Die App bewertet jeden Tweak für den PC, auf dem sie läuft.',
+    ],
+    measured: 'gemessen',
+    disputed: 'umstritten',
+    some: (base) => `auf manchen PCs, sonst ${base}`,
+    none: (level) => `Kein Tweak hat eine ${level}.`,
+    zeroNamed: 'Beliebte Gaming-Tweaks mit umstrittenen Belegen. Angeboten, mit 0 bewertet, und ihre Seiten erklären den Streit.',
+    zeroRest: (n) => `Dazu ${n} weitere, die meisten für Datenschutz, den Browser und Windows. Sie versprechen keine FPS.`,
+    row: (level, count) => `Wirkung ${level}: ${count} ${count === 1 ? 'Tweak' : 'Tweaks'}`,
+    after: 'Den größten Unterschied macht meist, was der Scan findet, etwa ein Monitor mit 60 Hz oder Arbeitsspeicher unter seinem Nenntakt.',
+  },
   scan: {
-    label: 'Scan',
-    title: 'Es findet, was dich wirklich FPS kostet',
+    title: 'Der Scan sucht, was dich wirklich FPS kostet',
     body: (n) => [
-      `${n} Prüfungen, die nur lesen, suchen nach Problemen, die FPS oder flüssiges Spielen kosten: ein Monitor mit 60 Hz, Arbeitsspeicher ohne XMP- oder EXPO-Profil, der Energiesparmodus auf einem Desktop, eine Spielebibliothek auf einer Festplatte. Kann eine Prüfung einen Wert nicht lesen, sagt sie „unbekannt“ und gibt keinen Rat.`,
+      `${n} Prüfungen, die nur lesen, suchen nach Problemen, die FPS oder flüssiges Spielen kosten. Kann eine Prüfung einen Wert nicht lesen, sagt sie „unbekannt“ und gibt keinen Rat.`,
       'Ein Profil legt fest, was empfohlen wird und welche Wirkung zählt: Gaming, Laptop-Gaming, Akku, Büro, Leise und kühl oder Älterer PC. Von sich aus ändert es nichts.',
     ],
-    list: (n) => `Alle ${n} Prüfungen`,
+    list: (n) => `Die ${n} Prüfungen`,
   },
-  confirm: {
-    label: 'Bestätigen',
-    title: 'Du siehst jeden Wert, bevor er sich ändert',
+  change: {
+    title: 'Du siehst jeden Wert, bevor er sich ändert, und kannst ihn zurückholen',
     intro:
       'Die Bestätigung listet jeden Registry-Wert, Dienst, jede Aufgabe und Einstellung mit dem aktuellen und dem neuen Wert. So sieht das aus, wenn du die Mausbeschleunigung ausschaltest:',
-    columns: ['Schlüssel', 'Wert', 'Jetzt', 'Neu'],
-    caption: 'Die Spalte „Jetzt“ zeigt die Standardwerte von Windows.',
-    after:
+    columns: ['Wert', 'Jetzt', 'Neu'],
+    caption: '„Jetzt“ zeigt die Standardwerte von Windows.',
+    expert:
       'Änderungen, die Sicherheitsfunktionen ausschalten oder die Startkonfiguration ändern, bleiben im Expertenmodus, und keine davon wird je automatisch empfohlen.',
-  },
-  undo: {
-    label: 'Rückgängig',
-    title: 'Alles, was es ändert, lässt sich rückgängig machen',
+    stepsTitle: 'Was beim Anwenden passiert',
     steps: [
       { name: 'Wiederherstellungspunkt', text: 'Vor der ersten Änderung, wenn der Computerschutz eingeschaltet ist.' },
       { name: 'Sicherung', text: 'Jeder Wert wird gesichert, bevor er sich ändert.' },
@@ -62,28 +62,15 @@ const de: Copy = {
       { name: 'Rückgängig', text: 'Die Seite Änderungen listet jede Änderung mit „Rückgängig“, auch nach einem Neustart oder einem Update der App.' },
     ],
     body: [
-      'Nach einem Windows-Update zeigt sie, welche Änderungen Windows zurückgesetzt hat, und bietet an, sie erneut anzuwenden.',
-      'Entfernte Apps und gelöschte Dateien sind die Ausnahme, und das sagt die App, bevor sie etwas entfernt.',
+      'Nach einem Windows-Update zeigt sie, welche Änderungen Windows zurückgesetzt hat, und bietet an, sie erneut anzuwenden. Entfernte Apps und gelöschte Dateien sind die Ausnahme, und das sagt die App, bevor sie etwas entfernt.',
     ],
-  },
-  impact: {
-    label: 'Wirkung',
-    title: 'Jeder Tweak sagt, was er für Spiele bringt',
-    body: (n, matter) => [
-      `Jeder Tweak bewertet seine Wirkung auf Spiele von 0 bis 5, und die Bewertung kann vom PC abhängen: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. ${matter} der ${n} Tweaks können für Spiele zählen. Die anderen drehen sich um Datenschutz, den Browser und Windows-Einstellungen, und ihre Seiten sagen das, statt FPS zu versprechen.`,
-    ],
-    legend: { measured: 'Gemessen', situational: 'Situationsabhängig', disputed: 'Umstritten', higher: 'Auf manchen PCs möglich' },
-    row: (level, count) => `Wirkung ${level}: ${count} ${count === 1 ? 'Tweak' : 'Tweaks'}`,
-    higher: (title, level, reason) => `${title}: ${level}. ${reason}`,
-    caption: 'Jedes Quadrat ist ein Tweak. Fahr mit der Maus darüber, um seinen Namen zu sehen.',
-    after: 'Den größten Unterschied macht meist, was der Scan findet, etwa ein Monitor mit 60 Hz oder Arbeitsspeicher unter seinem Nenntakt.',
   },
   sources: {
-    label: 'Quellen',
     title: 'Jede Aussage hat eine Quelle',
     intro:
-      'Jede Prüfung und jeder Tweak hat eine Seite auf Deutsch und Englisch: was er tut, warum er helfen kann, wie belastbar die Belege sind, die Nachteile und die Quellen. Die Wirkung reicht von 0 bis 5 und nennt ihre Grundlage: gemessen, situationsabhängig oder umstritten. Das ist die Seite eines beliebten Tweaks, den die Belege nicht stützen:',
+      'Jede Prüfung und jeder Tweak hat eine Seite auf Deutsch und Englisch: was er tut, warum er helfen kann, wie belastbar die Belege sind, die Nachteile und die Quellen. Das ist die Seite eines beliebten Tweaks, den die Belege nicht stützen:',
     docLabel: 'Erklärseite in der App',
+    sourcesLabel: 'Quellen',
     show: ['Zusammenfassung', 'Belege', 'Nachteile & Risiken'],
     after:
       'Ein Tweak, der auf echter Hardware noch nicht erprobt ist, trägt das Abzeichen „Noch nicht auf einem echten PC getestet“ und ist nie Teil von „Empfohlene anwenden“.',
@@ -91,10 +78,8 @@ const de: Copy = {
       'Die Seite Tweaks von Tunero: Gruppen von Tweaks mit Schaltern und die Erklärung des gewählten Tweaks im Detailbereich.',
   },
   left: {
-    label: 'Weggelassen',
     title: 'Was es weglässt, und warum',
-    intro: 'Beliebte Tweaks ohne Belege gibt es nicht. Suchst du in der App danach, sagt sie dir, warum.',
-    columns: ['Tweak', 'Warum er fehlt'],
+    intro: 'Manche beliebten Tweaks gibt es gar nicht, weil sie schaden oder nichts ändern. Suchst du in der App danach, sagt sie dir, warum.',
     rows: [
       {
         tweak: 'Echtzeitpriorität für Spiele',
@@ -128,47 +113,53 @@ const de: Copy = {
     sourceLink: 'Quelle',
     all: 'Die ganze Liste, mit Quellen (Englisch)',
   },
-  facts: {
-    label: 'Eine App',
+  areas: {
     title: 'Statt eines Ordners voller Tools',
     intro:
-      'Tunero vereint, was man sonst aus mehreren Tweak-Tools, Debloat-Skripten und Systemprogrammen zusammensucht, und lässt weg, was nichts bringt.',
-    areas: [
-      ['Scannen und beheben', 'Prüfungen, die finden, was FPS kostet, mit Behebung oder den Schritten für BIOS und Treiber.'],
-      ['Tweaks', 'Dokumentierte Einstellungen für Spiele, Datenschutz, den Browser und Windows, jede mit ihren Belegen.'],
-      ['Apps entfernen', 'Eine geprüfte Liste vorinstallierter Apps und Hersteller-Apps, dazu Programme mit eigenem Deinstallationsprogramm.'],
-      ['Bereinigen', 'Temporäre Dateien, Caches und Reste, ohne Verknüpfungen zu folgen.'],
-      ['Autostart', 'Alles, was mit Windows startet, mit Signaturprüfung und Schnappschüssen zum Vergleichen.'],
-      ['Dienste & Aufgaben', 'Starttypen, mit dem, was jeder Dienst tut.'],
-      ['Apps & Treiber', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
-      ['Windows Update', 'Keine Neustarts am Abend, Neustarts, wann du willst, monatliche Updates eine Woche später (ab Pro).'],
-      ['Zustand', 'Ein Frametime-Benchmark mit PresentMon, eine Drosselungsprüfung und der Zustand der Laufwerke.'],
-      ['Tools', 'Speicheranalyse, Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
-      ['Änderungen', 'Jede Änderung mit „Rückgängig“, auch nach einem Neustart oder einem Update der App.'],
-      ['Export und Befehlszeile', 'Deine Änderungen auf einen anderen PC oder eine Neuinstallation übertragen.'],
-    ],
-    numbers: (c) => [
-      ['Prüfungen, die nur lesen', c.checks],
-      ['Tweaks', c.tweaks],
-      ['Geprüfte entfernbare Apps', c.apps],
-      ['Kategorien zum Bereinigen', c.cleanup],
-    ],
-    rows: [
-      ['Hintergrundprozesse', 'Keine. Es läuft nur, wenn du es startest.'],
-      ['Telemetrie', 'Keine'],
-      ['Installation', 'Nicht nötig. Eine exe.'],
+      'Tunero vereint, was man sonst aus mehreren Tweak-Tools, Debloat-Skripten und Systemprogrammen zusammensucht. Das sind seine wichtigsten Seiten, gruppiert wie in der App.',
+    groups: (c) => [
+      {
+        name: '',
+        items: [['Übersicht', `${c.checks} Prüfungen, die finden, was FPS kostet, mit Behebung oder den Schritten für BIOS und Treiber.`]],
+      },
+      {
+        name: 'Optimieren',
+        items: [
+          ['Tweaks', `${c.tweaks} dokumentierte Einstellungen für Spiele, Datenschutz, den Browser, Windows und Windows Update, jede mit ihren Belegen.`],
+          ['Autostart', 'Alles, was mit Windows startet, mit Signaturprüfung und Schnappschüssen zum Vergleichen.'],
+          ['Dienste & Aufgaben', 'Starttypen, mit dem, was jeder Dienst tut.'],
+        ],
+      },
+      {
+        name: 'Aufräumen',
+        items: [
+          ['Apps entfernen', `${c.apps} geprüfte vorinstallierte Apps und Hersteller-Apps, dazu Programme mit eigenem Deinstallationsprogramm.`],
+          ['Bereinigen', `${c.cleanup} Kategorien temporärer Dateien, Caches und Reste, ohne Verknüpfungen zu folgen.`],
+        ],
+      },
+      {
+        name: 'Pflegen und prüfen',
+        items: [
+          ['Apps & Treiber', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
+          ['Tools', 'Speicheranalyse, Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
+          ['Zustand', 'Ein Frametime-Benchmark mit PresentMon, eine Drosselungsprüfung und der Zustand der Laufwerke.'],
+        ],
+      },
+      {
+        name: '',
+        items: [['Änderungen', 'Jede Änderung mit „Rückgängig“, dazu ein Export, um deine Änderungen auf einen anderen PC oder eine Neuinstallation zu übertragen.']],
+      },
     ],
   },
   privacy: {
-    label: 'Datenschutz',
     title: 'Ins Internet geht es nur, wenn du es willst',
     body: [
-      'Keine Telemetrie, kein Konto, keine Werbung. Die Update-Prüfung ist aus, bis du sie einschaltest. Eine VirusTotal-Abfrage braucht deinen eigenen Schlüssel und sendet Hashes von Dateien, nie die Dateien. Der DNS-Benchmark und App-Installationen laufen, wenn du sie startest.',
+      'Keine Telemetrie, kein Konto, keine Werbung und nichts, was im Hintergrund läuft: Es läuft nur, wenn du es startest, als eine exe ohne Installation.',
+      'Die Update-Prüfung ist aus, bis du sie einschaltest. Eine VirusTotal-Abfrage braucht deinen eigenen Schlüssel und sendet Hashes von Dateien, nie die Dateien. Der DNS-Benchmark und App-Installationen laufen, wenn du sie startest.',
     ],
     link: 'Alles, was die App sendet, und an wen',
   },
   install: {
-    label: 'Installieren',
     title: 'Hol dir Tunero',
     steps: [
       { name: 'Herunterladen', text: 'Die exe der neuesten Version.' },
@@ -179,7 +170,6 @@ const de: Copy = {
     releases: 'Alle Versionen',
   },
   faq: {
-    label: 'Fragen',
     title: 'Fragen',
     items: [
       {

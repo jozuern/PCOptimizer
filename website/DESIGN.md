@@ -1,83 +1,77 @@
-# tunero.dev design rules
+# tunero.dev design notes
 
-The site is the app's manual cover, not a startup landing page, and it must never look generated: no gradients, glow,
-glass, icon grids, pill badges, emoji, centered heroes or invented numbers. It stays interesting by showing the work:
-real catalog data drawn at build time, real registry values, real screenshots, the tweaks it crosses out. It should feel like it belongs on Windows 11 next to the
-app: the same type, the same accent button, the same screenshots. Every rule below can be checked.
+The owner's one firm rule (2026-10-13): the site must not look AI generated. Everything below is how the current design
+meets it; change any of it when a better idea serves that rule, and update this file with it.
+
+What reads as generated, and stays out: a numbered mono label in a margin column over every section, the same section
+rhythm repeated down the page, a row of big numbers with small labels, a grid of feature tiles, a spec table in the
+hero, a near-black page with one bright accent, gradients, glow, glass, pill badges, emoji, invented numbers.
+
+## Idea
+
+The site looks like Windows and reads like an audit. It sits on the real Windows 11 surfaces, so the app's screenshots
+look at home on it, and it shows the work: what the scan checks, how every tweak rates for games, what each change
+writes, which popular tweaks are left out. One element is loud, the rating board; everything else is quiet.
 
 ## Voice
 
 - Same rules as the app: no en or em dashes, no middle dots, no ellipsis characters (the tests check the copy), no emoji.
   Strong or promotional wording is fine where it is true; claims we cannot back stay out.
-- The positioning: built to be the only PC optimizer you need. Say it as the aim ("built to be"), never as a measured
-  fact, and back it on the page with what the app holds.
-- Say what it does with real numbers and real examples taken from the catalog, never invented ones.
+- The positioning: built to be the only PC optimizer you need. Say it as the aim ("built to be"), and back it with what
+  the app holds.
 - Numbers come from the repository at build time (`src/lib/data.ts`): never type a count by hand.
 - Admit limits on the page (preview status, unsigned exe, what it leaves out).
 - Install commands only for package managers that already offer the app (`packages` in `src/lib/data.ts`).
 
 ## Type
 
-- Text: `Segoe UI Variable Text`, display: `Segoe UI Variable Display`, code: `Cascadia Mono`. All ship with Windows 11,
-  which is every visitor who can run the app. Other systems fall back to `system-ui` and `ui-monospace`.
-- No web fonts, so no request leaves the page.
-- Scale (px): 13, 15, 17 (body), 20, 26, 34, 48, 64. Line height 1.6 for body, 1.1 for display.
-- Display weight 600 with -0.02em tracking; body 400; labels in Cascadia Mono 13 px, uppercase only for section numbers.
-- Measure: body text at most 66ch.
+- `Segoe UI Variable Display` for headings, `Segoe UI Variable Text` for text, `Cascadia Mono` only for registry paths,
+  values and commands. All ship with Windows 11; other systems fall back to `system-ui` and `ui-monospace`. No web fonts.
+- The hero claim at up to 92 px, section headings up to 56 px, both 600 with tight tracking. The rating numerals are the
+  one light weight (300) on the page, up to 104 px.
+- No small labels above headings. A heading carries its section.
 
 ## Color
 
-| Token | Light | Dark |
-|---|---|---|
-| `--bg` | #FAFAF9 | #0B121E |
-| `--ink` | #1B1B1B | #EEF1F5 |
-| `--ink-2` (secondary) | #505050 | #AEB7C4 |
-| `--rule` | #E2E2DF | #1F2B40 |
-| `--accent` (links) | #0F6CBD | #4CC2FF |
-| button | #0F6CBD on white text | #4CC2FF with #0E1726 text |
-| `--code` | #F1F1EF | #111B2B |
-| `--stage` (hero band) | #EFEFEC | #111C2F |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--bg` | #F3F3F3 | #202020 | Windows 11 base surface, same as the screenshots |
+| `--surface` | #FBFBFB | #2A2A2A | the rating board band and the explanation sheet |
+| `--ink` | #1A1A1A | #FFFFFF | text |
+| `--ink-2`, `--ink-3` | #555, #6B6B6B | #C8C8C8, #9D9D9D | secondary text |
+| `--accent` | #005FB8 | #60CDFF | links, the button, new values, "on some PCs" |
+| `--red` | #C42B1C | #FF99A4 | only what goes away: old values, tweaks left out |
 
-The dark page uses the brand tile navy, not black. Two accents only, the Windows ones. No gradients anywhere.
+Two colors with a meaning each, both from Windows 11. No gradients.
+
+## Page
+
+1. **Hero:** the claim across the page, the lead and the download side by side, then the Overview window. The window
+   hangs into the rating board below it.
+2. **Rating board** (the loud element): numerals 5 to 0 down the side. Every tweak that can matter for games by name,
+   once, in the row of its highest rating; "on some PCs, otherwise N" when the rating depends on the PC. Row 0 names the
+   popular gaming tweaks rated 0 on disputed evidence, then one square per remaining tweak. An empty row says so.
+3. **Scan:** the text on the left (sticky), every check as one running paragraph on the right, alternating ink.
+4. **Change:** the registry values with the old value struck in red and the new one in accent, next to the steps of an
+   apply as a numbered sequence (a real order, so numbers are right there).
+5. **Sources:** an explanation page of the app set as a sheet, the sources in its margin; then the Tweaks window.
+6. **Left out:** tweak names struck through in red, the reason and source below.
+7. **Areas:** the app's pages in the groups and order of its navigation rail, with the selection mark on Overview; the
+   privacy facts beside them.
+8. **Install** (a numbered sequence along a line) and **Questions**.
+
+Sections are separated by space, not rules. Rules appear only inside things you read as a set (board rows, tables,
+the left-out list, questions).
 
 ## Shape
 
-- No cards. Sections are separated by a 1 px rule and space; content sits on the page.
-- Corner radius: 4 px on buttons and code (as Windows 11 controls), 8 px on window screenshots (as Windows 11 windows).
-- One shadow in the whole site: the window shadow under screenshots.
-- One band: the hero sits on `--stage` with the header, and the Overview screenshot hangs over its lower edge.
-- Heavy rules (2 px, ink) open things you read as a set: the spec sheet, steps, the impact chart, the counts, the
-  explanation page. Light rules (1 px) separate items inside a list and the sections.
-- No icons next to headings, no colored left borders, no pills, no badges invented for the site.
-
-## Layout
-
-- Container 1160 px, gutter 24 px (16 px under 600 px). No horizontal scroll at 320 px.
-- Sections: a 1 px rule, then a two column grid at 960 px and wider: a 200 px margin column with the section number and
-  name in Cascadia Mono, the content on the right. One column below 960 px, the label above the heading.
-- Spacing steps (px): 4, 8, 12, 16, 24, 32, 48, 64, 96.
-- Left aligned throughout. Nothing centered except nothing.
-
-## Components
-
-- **Check list:** every check by the title of its explanation page, numbered, in 1 to 3 columns (`checkTitles`; the build
-  fails when the number differs from the README).
-- **Steps:** numbered columns under a heavy rule (undo, install).
-- **Impact chart:** one 12 px square per tweak in rows from 5 to 0, filled `--ink` for measured, accent for situational, `--ink-3` for disputed,
-  an accent outline in the row of the highest rating a condition gives it on some PCs (`tweakImpacts`). The square's
-  title names the tweak; each row has its count and a screen reader sentence. Legend always shown.
-- **Explanation page:** the app's page set like print, the sources in the margin next to the text, references as small
-  numbers that jump to them.
-- **Left out:** the tweak's name crossed out with a 2 px ink line, the reason and its source below.
-- **Counts:** the four catalog counts at 48 to 64 px, tabular figures, plain, no counting animation.
-- **App areas:** the app's pages by their names in the app, one line each, in 1 to 3 columns under light rules. They back
-  the claim in the hero (built to be the only optimizer you need) with what the app holds.
+- 4 px corners on buttons and code, 8 px on screenshots and the explanation sheet. One shadow: under screenshots.
+- Container 1160 px, gutter 24 px (16 px under 600 px). No horizontal scroll at 320 px. Left aligned throughout.
 
 ## Images
 
 - Only real screenshots of the app, rendered with `--screenshot` (see CONTRIBUTING), never mockups or illustrations.
-- Light screenshots in light mode and dark ones in dark mode when both exist (`<picture>` with `prefers-color-scheme`).
-- Every screenshot has alt text that says what it shows.
+- Light screenshots in light mode and dark ones in dark mode (`<picture>` with `prefers-color-scheme`), alt text on each.
 
 ## Motion and script
 

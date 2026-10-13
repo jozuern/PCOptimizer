@@ -2,19 +2,23 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #fafaf9;
-  --ink: #1b1b1b;
-  --ink-2: #505050;
-  --ink-3: #6e6e6e;
-  --rule: #e2e2df;
-  --accent: #0f6cbd;
-  --button: #0f6cbd;
-  --button-hover: #115ea3;
+  /* The Windows 11 surfaces the app's screenshots sit on, so a screenshot looks at home on the page. */
+  --bg: #f3f3f3;
+  --surface: #fbfbfb;
+  --ink: #1a1a1a;
+  --ink-2: #555555;
+  --ink-3: #6b6b6b;
+  --rule: #dcdcdc;
+  --accent: #005fb8;
+  --button: #005fb8;
+  --button-hover: #0a539d;
   --button-ink: #ffffff;
-  --code: #f1f1ef;
-  --stage: #efefec;
+  /* The second color has one meaning: what goes away (old values, tweaks left out). */
+  --red: #c42b1c;
+  --code: #e9e9e9;
   --mark: #fff4ce;
-  --shadow: 0 2px 4px rgb(0 0 0 / 0.04), 0 16px 40px -8px rgb(0 0 0 / 0.18);
+  --square: #b9b9b9;
+  --shadow: 0 2px 4px rgb(0 0 0 / 0.04), 0 24px 56px -12px rgb(0 0 0 / 0.22);
 
   --font-display: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-text: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -26,19 +30,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b121e;
-    --ink: #eef1f5;
-    --ink-2: #aeb7c4;
-    --ink-3: #8592a3;
-    --rule: #1f2b40;
-    --accent: #4cc2ff;
-    --button: #4cc2ff;
-    --button-hover: #7ed3ff;
-    --button-ink: #0e1726;
-    --code: #111b2b;
-    --stage: #111c2f;
-    --mark: #3a3216;
-    --shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 48px -12px rgb(0 0 0 / 0.6);
+    --bg: #202020;
+    --surface: #2a2a2a;
+    --ink: #ffffff;
+    --ink-2: #c8c8c8;
+    --ink-3: #9d9d9d;
+    --rule: #3a3a3a;
+    --accent: #60cdff;
+    --button: #60cdff;
+    --button-hover: #8ad9ff;
+    --button-ink: #000000;
+    --red: #ff99a4;
+    --code: #2f2f2f;
+    --mark: #43391a;
+    --square: #555555;
+    --shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 32px 64px -16px rgb(0 0 0 / 0.7);
   }
 }
 
@@ -81,10 +87,10 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 
 .skip { position: absolute; left: -9999px; }
 .skip:focus { left: var(--gutter); top: 8px; background: var(--bg); padding: 8px 12px; z-index: 10; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Header */
 
-body:has(.stage) .site-header { background: var(--stage); }
 .site-header .container { display: flex; align-items: center; gap: 24px; height: 64px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; margin-right: auto; }
 .brand img { width: 28px; height: 28px; }
@@ -94,29 +100,30 @@ body:has(.stage) .site-header { background: var(--stage); }
 .site-header nav a:hover { color: var(--ink); text-decoration: underline; }
 @media (max-width: 600px) { .site-header nav .wide { display: none; } }
 
-/* Hero: text and spec sheet on the stage, a band in the brand tile color; the window hangs over its lower edge. */
+/* Hero: the claim across the page, the lead and the download under it, then the app's window. The window hangs into
+   the rating board below. */
 
-.stage { --overhang: clamp(64px, 16vw, 220px); background: var(--stage); margin-bottom: var(--overhang); }
-.hero { padding-top: 72px; }
-@media (max-width: 600px) { .hero { padding-top: 40px; } .hero .lead { font-size: 18px; } }
-.hero-grid { display: grid; gap: 40px; align-items: end; }
-@media (min-width: 1000px) { .hero-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 64px; } }
-.hero h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.04; max-width: 15ch; letter-spacing: -0.03em; }
-.hero .lead { font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 54ch; margin: 24px 0 32px; }
+.hero { --overhang: clamp(56px, 14vw, 200px); padding-top: clamp(40px, 7vw, 88px); position: relative; z-index: 1; }
+.hero h1 { font-size: clamp(42px, 7.4vw, 92px); line-height: 1; letter-spacing: -0.035em; max-width: 14ch; }
+.hero-text { display: grid; gap: 24px 64px; margin-top: 32px; }
+@media (min-width: 1000px) { .hero-text { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; } }
+.hero .lead { font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 52ch; margin: 0; }
+@media (max-width: 600px) { .hero .lead { font-size: 18px; } }
+.get { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
 
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
 
 /* The Windows 11 accent button: 4 px corners and a darker bottom edge, as in the app. */
 .button {
   display: inline-flex; align-items: center; gap: 10px;
-  min-height: 40px; padding: 8px 18px;
+  min-height: 44px; padding: 8px 20px;
   border-radius: 4px; border: 1px solid transparent; border-bottom-color: rgb(0 0 0 / 0.28);
   background: var(--button); color: var(--button-ink);
-  font: 600 15px/1 var(--font-text); text-decoration: none;
+  font: 600 16px/1 var(--font-text); text-decoration: none;
 }
 .button:hover { background: var(--button-hover); text-decoration: none; }
 .button svg { width: 16px; height: 16px; flex: none; }
-.button .size { font-weight: 400; opacity: 0.8; padding-left: 10px; margin-left: 2px; border-left: 1px solid currentColor; border-left-color: rgb(127 127 127 / 0.5); }
+.button .size { font-weight: 400; opacity: 0.8; padding-left: 10px; margin-left: 2px; border-left: 1px solid rgb(127 127 127 / 0.5); }
 
 .command { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--ink-2); font-size: 15px; max-width: 100%; }
 .command code {
@@ -130,177 +137,175 @@ body:has(.stage) .site-header { background: var(--stage); }
 }
 .copy:hover { color: var(--ink); }
 
-.fine { font-size: 14px; color: var(--ink-3); margin-top: 20px; }
-
-/* The spec sheet next to the hero text: label and value in rows, like a product label. */
-.spec { margin: 0; font-size: 15px; border-top: 2px solid var(--ink); }
-.spec div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
-.spec dt { font: 400 13px/1.9 var(--font-mono); color: var(--ink-3); }
-.spec dd { margin: 0; }
-.spec dd a { margin-left: 8px; font-size: 14px; }
+.fine { font-size: 14px; line-height: 1.5; color: var(--ink-3); margin: 0; max-width: 56ch; }
 
 /* Screenshots: a Windows 11 window, 8 px corners and the window shadow. */
 .shot { margin: 0; }
-.shot img { border-radius: 8px; box-shadow: var(--shadow); outline: 1px solid rgb(127 127 127 / 0.18); outline-offset: -1px; }
-.hero .shot { margin: 64px 0 calc(-1 * var(--overhang)); }
+.shot img { border-radius: 8px; box-shadow: var(--shadow); outline: 1px solid rgb(127 127 127 / 0.2); outline-offset: -1px; }
 .shot figcaption { font-size: 14px; color: var(--ink-3); margin-top: 16px; }
-.hero-caption { font-size: 14px; color: var(--ink-3); padding-top: 16px; margin-bottom: 0; }
+.hero .shot { margin: clamp(40px, 6vw, 72px) 0 calc(-1 * var(--overhang)); }
 
+/* Sections: plain, separated by space; the heading carries the section. */
 
-/* Sections: a rule, the margin label, the content. */
+.section { padding-top: clamp(80px, 11vw, 144px); }
+.section:last-child { padding-bottom: clamp(80px, 10vw, 128px); }
+.section h2, .board h2 { font-size: clamp(32px, 4.6vw, 56px); line-height: 1.06; letter-spacing: -0.03em; max-width: 20ch; margin-bottom: 24px; }
+.section > p { max-width: 62ch; }
+.small-head { font: 600 20px/1.3 var(--font-display); letter-spacing: -0.01em; margin: 0 0 16px; }
 
-.section { border-top: 1px solid var(--rule); padding: 56px 0; }
-.hero-caption + .section { margin-top: 56px; }
-.section .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 48px; }
-@media (min-width: 960px) {
-  .section .grid { grid-template-columns: 200px minmax(0, 1fr); }
-  .section { padding: 72px 0; }
+/* The rating board: the one band on the page. Big numerals from 5 to 0, the tweaks that can matter by name. */
+
+.board {
+  --overhang: clamp(56px, 14vw, 200px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  padding: calc(var(--overhang) + clamp(64px, 8vw, 112px)) 0 clamp(64px, 8vw, 112px);
 }
-.label { font: 400 13px/1.6 var(--font-mono); color: var(--ink-3); padding-top: 6px; }
-@media (min-width: 960px) { .label { position: sticky; top: 24px; align-self: start; } }
-.label b { font-weight: 400; color: var(--ink); margin-right: 8px; }
-.section h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.1; margin-bottom: 24px; max-width: 20ch; letter-spacing: -0.025em; }
-.section .body { min-width: 0; }
-.section .body > * + :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers, .areas) { margin-top: 40px; }
-.section .body > :is(.shot, .table-wrap, .doc, figure, .steps, .struck, .numbers, .areas) + :is(p, .split) { margin-top: 40px; }
+.board .intro { display: grid; gap: 0 64px; }
+@media (min-width: 1000px) { .board .intro { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: end; } .board .intro h2 { margin-bottom: 0; } }
+.board .intro p { color: var(--ink-2); }
 
-/* Intro on the left, the example on the right, from 1100 px. */
-.split-2 { display: grid; gap: 32px 48px; align-items: end; }
-@media (min-width: 1100px) { .split-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .split-2 .wide { grid-column: 1 / -1; } }
-.section .split-2 > .wide { margin-top: 0; }
-
-/* Small mono heading over a list. */
-.list-head { font: 400 13px/1.6 var(--font-mono); letter-spacing: 0; color: var(--ink-3); margin: 40px 0 12px; }
-
-/* All checks of the scan, numbered, in columns. */
-.checks { margin: 0; padding: 0; list-style: none; counter-reset: check; columns: 1; column-gap: 40px; font-size: 15px; }
-@media (min-width: 640px) { .checks { columns: 2; } }
-@media (min-width: 1100px) { .checks { columns: 3; } }
-.checks li { counter-increment: check; break-inside: avoid; display: grid; grid-template-columns: 28px minmax(0, 1fr); padding: 7px 0; border-top: 1px solid var(--rule); line-height: 1.4; }
-.checks li::before { content: counter(check, decimal-leading-zero); font: 400 12px/1.7 var(--font-mono); color: var(--ink-3); }
-
-/* Numbered steps side by side, a 2 px rule over each, like the hero's spec sheet. */
-.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 24px 32px; }
-@media (min-width: 760px) { .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); } .steps.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.steps li { border-top: 2px solid var(--ink); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--ink-2); }
-.steps .step-n { font: 400 13px/1.6 var(--font-mono); color: var(--ink-3); }
-.steps b { font: 600 20px/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--ink); hyphens: auto; }
-.steps .button, .steps pre { margin-top: 12px; align-self: flex-start; }
-.after-list { margin-top: 32px; }
-
-/* Impact of every tweak: one square per tweak, rows from 5 down to 0. */
-.impact { margin: 0; }
-.impact-rows { border-top: 2px solid var(--ink); }
-.impact-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) 40px; gap: 16px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--rule); }
-.impact-row .level { font: 600 20px/1 var(--font-display); font-variant-numeric: tabular-nums; }
-.impact-row .count { font: 400 13px/20px var(--font-mono); color: var(--ink-3); text-align: right; }
-.cells { display: flex; flex-wrap: wrap; gap: 3px; min-height: 20px; padding-top: 4px; }
-.impact i { display: block; width: 12px; height: 12px; border-radius: 2px; }
-.impact i.measured { background: var(--ink); }
-.impact i.situational { background: var(--accent); }
-.impact i.disputed { background: var(--ink-3); }
-.impact i.higher { box-shadow: inset 0 0 0 1.5px var(--accent); }
-.impact figcaption { font-size: 14px; color: var(--ink-3); margin-top: 16px; }
-.legend { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; color: var(--ink-2); }
-.legend li { display: flex; align-items: center; gap: 8px; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-/* Tweaks left out: the name crossed out, the reason below. */
-.struck { margin: 0; padding: 0; list-style: none; display: grid; gap: 0 48px; }
-@media (min-width: 900px) { .struck { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.struck li { border-top: 1px solid var(--rule); padding: 20px 0 24px; }
-.struck s {
-  font: 600 22px/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--ink-2);
-  text-decoration: line-through 2px var(--ink); text-decoration-skip-ink: none;
+.ratings { margin-top: 56px; border-top: 2px solid var(--ink); }
+.rating { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; padding: 20px 0 22px; border-bottom: 1px solid var(--rule); }
+@media (min-width: 760px) { .rating { grid-template-columns: 120px minmax(0, 1fr); gap: 24px; } }
+.rating .level {
+  font: 300 clamp(56px, 8vw, 104px)/0.8 var(--font-display); letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums; padding-top: 4px;
 }
-.struck s.mono { font: 400 18px/1.4 var(--font-mono); letter-spacing: 0; }
-.struck p { font-size: 15px; color: var(--ink-2); margin-top: 8px; }
-.struck p a { white-space: nowrap; }
+.rating.zero .level { color: var(--ink-3); }
+.names { list-style: none; margin: 0; padding: 0; columns: 1; column-gap: 40px; }
+@media (min-width: 760px) { .names { columns: 2; } }
+@media (min-width: 1100px) { .names { columns: 3; } }
+.names li { break-inside: avoid; font: 500 18px/1.35 var(--font-display); letter-spacing: -0.005em; padding: 4px 0 8px; }
+.names li[title] { cursor: help; }
+.names .tag { display: block; font: 400 13px/1.4 var(--font-text); letter-spacing: 0; color: var(--ink-3); margin-top: 2px; }
+.names li[title] .tag { color: var(--accent); }
+.none { color: var(--ink-3); padding-top: 6px; }
+.zero-note { font-size: 15px; color: var(--ink-2); margin: 4px 0 12px; }
+.zero .names { margin-bottom: 20px; }
+.zero .names li { font-size: 16px; color: var(--ink-2); }
+.cells { display: flex; flex-wrap: wrap; gap: 3px; }
+.cells i { display: block; width: 11px; height: 11px; border-radius: 2px; background: var(--square); }
+.board .after { margin-top: 32px; font-size: 17px; }
 
-/* Tables: the exact changes and the tweaks left out. */
+/* The scan: the text on the left, every check as one running paragraph on the right. */
 
-.table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 15px; }
-caption { caption-side: bottom; text-align: left; font-size: 14px; color: var(--ink-3); padding-top: 12px; }
-th { text-align: left; font-weight: 600; font-size: 13px; color: var(--ink-2); padding: 0 16px 10px 0; border-bottom: 1px solid var(--rule); }
-td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
-.changes td { font-family: var(--font-mono); font-size: 13.5px; white-space: nowrap; }
-.changes td.now { color: var(--ink-3); }
-.changes td.new { font-weight: 700; color: var(--accent); }
-.changes { max-width: 560px; }
-.changes th.key { font: 400 13.5px/1.5 var(--font-mono); color: var(--ink); padding-bottom: 12px; }
-.changes td:first-child { width: 55%; }
-.left td:first-child { font-weight: 600; width: 32%; padding-right: 24px; }
-.left td a { white-space: nowrap; }
-@media (max-width: 700px) {
-  .left tr, .left td { display: block; width: auto; }
-  .left thead { display: none; }
-  .left td:first-child { width: auto; border-bottom: 0; padding-bottom: 4px; padding-right: 0; }
+.scan { display: grid; gap: 32px 64px; }
+@media (min-width: 1000px) { .scan { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); } .scan-text { position: sticky; top: 32px; align-self: start; } }
+.scan-text p { color: var(--ink-2); }
+.runon { list-style: none; margin: 0; padding: 0; font: 400 clamp(20px, 2.1vw, 25px)/1.45 var(--font-display); letter-spacing: -0.01em; color: var(--ink); }
+@media (min-width: 1000px) { .runon { padding-top: 12px; } }
+.runon li { display: inline; }
+.runon li::after { content: '.'; color: var(--ink-3); margin-right: 0.3em; }
+.runon li:nth-child(even) { color: var(--ink-2); }
+
+/* Before and after a change: the registry values, then the order of things. */
+
+.change-grid { display: grid; gap: 48px 64px; margin-top: 8px; }
+@media (min-width: 1000px) { .change-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+.change-grid > div > p { color: var(--ink-2); }
+
+table { border-collapse: collapse; width: 100%; }
+caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-text); color: var(--ink-3); padding-top: 12px; }
+.diff { margin-top: 24px; font-family: var(--font-mono); max-width: 560px; }
+.diff th { text-align: left; font: 400 13px/1.4 var(--font-text); color: var(--ink-3); padding: 0 16px 8px 0; border-bottom: 1px solid var(--rule); }
+.diff th.key { font: 400 14px/1.5 var(--font-mono); color: var(--ink); padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+.diff td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--rule); font-size: 17px; white-space: nowrap; }
+.diff td:first-child { width: 60%; }
+.diff del { color: var(--red); text-decoration-thickness: 2px; }
+.diff ins { text-decoration: none; font-weight: 700; color: var(--accent); }
+.expert { margin-top: 32px; font-size: 16px; }
+
+/* A real sequence: a line down the side with a mark at each step. */
+.sequence { list-style: none; margin: 0 0 24px; padding: 0; counter-reset: step; }
+.sequence li { counter-increment: step; position: relative; padding: 0 0 20px 40px; display: flex; flex-direction: column; gap: 2px; color: var(--ink-2); font-size: 16px; }
+.sequence li::before {
+  content: counter(step); position: absolute; left: 0; top: 1px;
+  width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--ink);
+  font: 600 12px/21px var(--font-text); text-align: center; color: var(--ink); background: var(--bg);
+}
+.sequence li::after { content: ''; position: absolute; left: 11.25px; top: 28px; bottom: 2px; width: 1.5px; background: var(--rule); }
+.sequence li:last-child::after { display: none; }
+.sequence b { font: 600 19px/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--ink); }
+.sequence .button, .sequence pre { margin-top: 12px; align-self: flex-start; }
+
+/* Across the page from 760 px: the line runs along the top. */
+@media (min-width: 760px) {
+  .sequence.across { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: 16px; }
+  .sequence.across li { padding: 40px 0 0; }
+  .sequence.across li::after { left: 32px; right: -28px; top: 11.25px; bottom: auto; width: auto; height: 1.5px; }
 }
 
-/* An explanation page of the app, set like a printed page, the sources in the margin next to the text. */
+/* An explanation page of the app, set as a printed sheet, the sources in the margin next to the text. */
 
-.doc { border-top: 2px solid var(--ink); padding-top: 20px; display: grid; gap: 24px 48px; }
-@media (min-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr) 240px; } .doc-notes { padding-top: 26px; } }
-.doc-main { max-width: 66ch; }
-.doc .doc-label { font: 400 13px/1 var(--font-mono); color: var(--ink-3); margin: 0 0 12px; }
-.doc h3 { font-size: 24px; line-height: 1.2; margin-bottom: 20px; }
-.doc h4 { font: 600 15px/1.4 var(--font-text); margin: 20px 0 4px; }
-.doc p { font-size: 16px; }
-.doc sup a { text-decoration: none; font: 400 11px/1 var(--font-mono); padding: 0 2px; }
+.doc {
+  margin: 40px 0 24px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  padding: clamp(24px, 4vw, 48px); display: grid; gap: 24px 56px;
+}
+@media (min-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr) 260px; } .doc-notes { padding-top: 34px; border-left: 1px solid var(--rule); padding-left: 32px; } }
+.doc-main { max-width: 64ch; }
+.doc .doc-label { font-size: 14px; color: var(--ink-3); margin: 0 0 8px; }
+.doc h3 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 20px; }
+.doc h4 { font: 600 15px/1.4 var(--font-text); margin: 24px 0 4px; }
+.doc p { font-size: 17px; }
+.doc sup a { text-decoration: none; font: 600 11px/1 var(--font-text); padding: 0 2px; }
 .doc-notes h4 { margin-top: 0; }
-.doc ol { margin: 8px 0 0; padding-left: 22px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
-.doc ol li { margin-bottom: 8px; overflow-wrap: anywhere; }
-.doc ol li::marker { font: 400 12px var(--font-mono); }
+.doc ol { margin: 8px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+.doc ol li { margin-bottom: 10px; overflow-wrap: anywhere; }
 .doc ol li:target a { background: var(--mark); }
 .doc-notes a { text-decoration: none; color: var(--ink-3); }
 .doc-notes a .host { color: var(--accent); }
 .doc-notes a:hover .host { text-decoration: underline; }
+.doc-after { margin-bottom: 48px; color: var(--ink-2); }
 
-/* The facts: the four counts large, the rest as a spec sheet. */
+/* Tweaks left out: the name crossed out in red, the reason below. */
 
-.numbers { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
-@media (min-width: 760px) { .numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.numbers div { border-top: 2px solid var(--ink); padding-top: 12px; display: flex; flex-direction: column; }
-.numbers dd { margin: 0; font: 600 clamp(48px, 6vw, 64px)/1 var(--font-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.numbers dt { font-size: 15px; color: var(--ink-2); margin-top: 8px; }
+.struck { margin: 40px 0 32px; padding: 0; list-style: none; display: grid; gap: 0 56px; }
+@media (min-width: 900px) { .struck { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.struck li { border-top: 1px solid var(--rule); padding: 24px 0 28px; }
+.struck s {
+  font: 600 clamp(22px, 2.4vw, 28px)/1.25 var(--font-display); letter-spacing: -0.02em; color: var(--ink);
+  text-decoration: line-through 3px var(--red); text-decoration-skip-ink: none;
+}
+.struck s.mono { font: 400 clamp(18px, 2vw, 22px)/1.4 var(--font-mono); letter-spacing: 0; }
+.struck p { font-size: 16px; color: var(--ink-2); margin-top: 10px; }
+.struck p a { white-space: nowrap; }
 
-.split { display: grid; gap: 40px; }
-@media (min-width: 1100px) { .split { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; } }
-.aside h3 { font-size: 20px; line-height: 1.3; margin: 0 0 12px; letter-spacing: -0.01em; }
-.aside p { font-size: 16px; }
-.facts { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); max-width: 760px; }
-.facts div { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(0, 1.2fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
-.facts div:first-child { border-top: 1px solid var(--rule); }
-.facts dt { color: var(--ink-2); }
-.facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* What the app holds, in the order and groups of its navigation rail. */
 
-/* What the app holds, by page: name and one line, in columns. */
-
-.areas { margin: 0; padding: 0; list-style: none; display: grid; gap: 0 32px; }
-@media (min-width: 640px) { .areas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1100px) { .areas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.areas li { border-top: 1px solid var(--rule); padding: 14px 0 18px; display: flex; flex-direction: column; gap: 4px; }
-.areas b { font: 600 17px/1.35 var(--font-display); letter-spacing: -0.01em; }
-.areas span { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.areas-section { display: grid; gap: 40px 64px; }
+@media (min-width: 1000px) { .areas-section { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } .areas-text { position: sticky; top: 32px; align-self: start; } }
+.areas-text > p { color: var(--ink-2); }
+.areas-text .small-head { margin-top: 48px; }
+.rail { border-left: 1px solid var(--rule); }
+.rail-group + .rail-group { margin-top: 20px; }
+.rail-group h3 { font: 600 13px/1.4 var(--font-text); letter-spacing: 0; color: var(--ink-3); padding: 0 0 4px 24px; }
+.rail dl { margin: 0; }
+.rail dl div { position: relative; padding: 10px 0 12px 24px; }
+.rail dt { font: 600 20px/1.3 var(--font-display); letter-spacing: -0.015em; }
+.rail dd { margin: 2px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 56ch; }
+/* The first page carries the app's selection mark, as Overview does when the app opens. */
+.rail-group:first-child dl div:first-child::before { content: ''; position: absolute; left: -1.5px; top: 14px; height: 20px; width: 3px; border-radius: 2px; background: var(--accent); }
 
 /* Install */
 
-.install-list { margin: 24px 0 0; display: grid; gap: 12px; }
+.install-list { margin: 0; display: grid; gap: 12px; }
 .install-list div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 16px; align-items: baseline; }
 @media (max-width: 600px) { .install-list div { grid-template-columns: minmax(0, 1fr); } }
 .install-list code { display: inline-block; max-width: 100%; overflow-x: auto; white-space: nowrap; vertical-align: top; }
 .install-list dt { color: var(--ink-2); font-size: 15px; }
 .install-list dd { margin: 0; overflow-x: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .install-list code, pre { background: var(--code); border-radius: 4px; padding: 4px 8px; font-size: 13.5px; }
-pre { padding: 12px 16px; overflow-x: auto; margin: 12px 0 0; max-width: 66ch; }
+pre { padding: 10px 14px; overflow-x: auto; margin: 12px 0 0; max-width: 100%; }
+.install .small-head { margin-top: 24px; }
+.after-list { margin-top: 32px; }
 
 /* Questions */
 
-.faq { margin: 0; display: grid; gap: 0 48px; }
+.faq { margin: 32px 0 0; display: grid; gap: 0 56px; }
 @media (min-width: 900px) { .faq { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.faq div { border-top: 1px solid var(--rule); padding: 20px 0 24px; }
-.faq dt { font: 600 20px/1.3 var(--font-display); letter-spacing: -0.01em; }
+.faq div { border-top: 1px solid var(--rule); padding: 24px 0 28px; }
+.faq dt { font: 600 21px/1.3 var(--font-display); letter-spacing: -0.015em; }
 .faq dd { margin: 8px 0 0; color: var(--ink-2); font-size: 16px; }
 
 /* Footer */

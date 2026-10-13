@@ -16,45 +16,45 @@ const en: Copy = {
     winget: 'or with winget',
     copy: 'Copy',
     copied: 'Copied',
-    spec: {
-      version: 'Version',
-      changes: 'What changed',
-      size: 'Download',
-      needs: 'Runs on',
-      needsValue: 'Windows 11 24H2 or newer, x64',
-      languages: 'Languages',
-      languagesValue: 'English, German',
-      license: 'License',
-      licenseValue: 'Free software, GPL-3.0',
-    },
-    shotCaption: 'The Overview after a scan, here on a test PC in a virtual machine.',
+    facts: (v) => `Version ${v} for Windows 11 24H2 or newer, x64. In English and German. Free software under the GPL-3.0.`,
+    changes: 'What changed',
     preview: 'The exe is not code signed yet, so Windows SmartScreen may warn on the first start.',
     previewLink: 'Why',
+    shotCaption: 'The Overview after a scan, on a test PC in a virtual machine.',
     shotAlt:
       'The Overview page of Tunero: the readiness score, what the scan found, and the recommended changes as a checklist with Apply recommended.',
   },
+  impact: {
+    title: (n, matter) => `All ${n} tweaks are rated for games. ${matter} of them can matter.`,
+    body: [
+      'Every tweak rates its effect on games from 0 to 5 and says what the rating rests on. Some ratings depend on the PC: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. The app rates each tweak for the PC it runs on.',
+    ],
+    measured: 'measured',
+    disputed: 'disputed',
+    some: (base) => `on some PCs, otherwise ${base}`,
+    none: (level) => `No tweak is rated ${level}.`,
+    zeroNamed: 'Popular gaming tweaks with disputed evidence. Offered, rated 0, and their pages explain the dispute.',
+    zeroRest: (n) => `And ${n} more, most of them for privacy, the browser and Windows. They do not promise frame rate.`,
+    row: (level, count) => `Rated ${level}: ${count} ${count === 1 ? 'tweak' : 'tweaks'}`,
+    after: 'The largest gains usually come from problems the scan finds, such as a monitor at 60 Hz or memory below its rated speed.',
+  },
   scan: {
-    label: 'Scan',
-    title: 'It finds what really costs you frame rate',
+    title: 'The scan looks for what really costs frame rate',
     body: (n) => [
-      `${n} read-only checks look for problems that cost frame rate or smoothness: a monitor running at 60 Hz, memory without its XMP or EXPO profile, the Power saver plan on a desktop, a game library on a hard disk. A check that cannot read a value says unknown and gives no advice.`,
+      `${n} read-only checks look for problems that cost frame rate or smoothness. A check that cannot read a value says unknown and gives no advice.`,
       'A profile decides what is recommended and which impact counts: Gaming, Laptop gaming, Battery, Office, Quiet and cool, or Older PC. It changes nothing by itself.',
     ],
-    list: (n) => `All ${n} checks`,
+    list: (n) => `The ${n} checks`,
   },
-  confirm: {
-    label: 'Confirm',
-    title: 'You see every value before it changes',
+  change: {
+    title: 'You see every value before it changes, and you can take it back',
     intro:
       'The confirmation lists each registry value, service, task or setting with its current and its new value. This is what turning off mouse acceleration writes:',
-    columns: ['Key', 'Value', 'Now', 'New'],
-    caption: 'The Now column shows the Windows defaults.',
-    after:
+    columns: ['Value', 'Now', 'New'],
+    caption: 'Now shows the Windows defaults.',
+    expert:
       'Changes that turn off security features or touch the boot configuration stay behind Expert mode, and none of them is ever recommended automatically.',
-  },
-  undo: {
-    label: 'Undo',
-    title: 'Everything it changes can be undone',
+    stepsTitle: 'What happens when you apply',
     steps: [
       { name: 'Restore point', text: 'Created before the first change, when System Protection is on.' },
       { name: 'Backup', text: 'Each value is saved before it changes.' },
@@ -62,28 +62,15 @@ const en: Copy = {
       { name: 'Undo', text: 'The Changes page lists every change with Undo, also after a restart or an update of the app.' },
     ],
     body: [
-      'After a Windows update, it shows which changes Windows reset and offers to apply them again.',
-      'Removed apps and deleted files are the exception, and the app says so before it removes them.',
+      'After a Windows update, it shows which changes Windows reset and offers to apply them again. Removed apps and deleted files are the exception, and the app says so before it removes them.',
     ],
-  },
-  impact: {
-    label: 'Impact',
-    title: 'Every tweak says what it does for games',
-    body: (n, matter) => [
-      `Every tweak rates its effect on games from 0 to 5, and the rating can depend on the PC: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. ${matter} of the ${n} tweaks can matter for games. The others are about privacy, the browser and Windows settings, and their pages say so instead of promising frame rate.`,
-    ],
-    legend: { measured: 'Measured', situational: 'Situational', disputed: 'Disputed', higher: 'Possible on some PCs' },
-    row: (level, count) => `Rating ${level}: ${count} ${count === 1 ? 'tweak' : 'tweaks'}`,
-    higher: (title, level, reason) => `${title}: ${level}. ${reason}`,
-    caption: 'Each square is one tweak. Hover over a square for its name.',
-    after: 'The largest gains usually come from problems the scan finds, such as a monitor at 60 Hz or memory below its rated speed.',
   },
   sources: {
-    label: 'Sources',
     title: 'Every claim has a source',
     intro:
-      'Each check and each tweak has a page in English and German: what it does, why it can help, how solid the evidence is, the trade-offs, and the sources. Impact goes from 0 to 5 and names its basis: measured, situational or disputed. This is the page for a popular tweak the evidence does not support:',
+      'Each check and each tweak has a page in English and German: what it does, why it can help, how solid the evidence is, the trade-offs, and the sources. This is the page for a popular tweak the evidence does not support:',
     docLabel: 'Explanation page in the app',
+    sourcesLabel: 'Sources',
     show: ['Summary', 'Evidence', 'Trade-offs & risks'],
     after:
       'A tweak that is not yet proven on real hardware carries the badge "Not yet tested on a real PC" and is never part of Apply recommended.',
@@ -91,10 +78,8 @@ const en: Copy = {
       'The Tweaks page of Tunero: groups of tweaks with switches, and the explanation of the selected tweak in the details pane.',
   },
   left: {
-    label: 'Left out',
     title: 'What it leaves out, and why',
-    intro: 'Popular tweaks without evidence are not offered. Search for one in the app, and it tells you why.',
-    columns: ['Tweak', 'Why it is not included'],
+    intro: 'Some popular tweaks are not offered at all, because they do harm or change nothing. Search for one in the app, and it tells you why.',
     rows: [
       {
         tweak: 'Realtime priority for games',
@@ -128,47 +113,53 @@ const en: Copy = {
     sourceLink: 'Source',
     all: 'The full list, with sources',
   },
-  facts: {
-    label: 'One app',
+  areas: {
     title: 'Instead of a folder full of tools',
     intro:
-      'Tunero brings together what people otherwise collect from several tweak tools, debloat scripts and system utilities, and leaves out what does nothing.',
-    areas: [
-      ['Scan and fix', 'Checks that find what costs frame rate, with a fix or the steps for the BIOS and drivers.'],
-      ['Tweaks', 'Documented settings for games, privacy, the browser and Windows, each with its evidence.'],
-      ['Remove apps', 'A reviewed list of inbox and manufacturer apps, and programs with their own uninstaller.'],
-      ['Cleanup', 'Temporary files, caches and leftovers, without following links.'],
-      ['Startup', 'Everything that starts with Windows, with signature checks and snapshots to compare.'],
-      ['Services & tasks', 'Start types, with what each service does.'],
-      ['Apps & drivers', 'Install and update apps with winget, and see how old the drivers are.'],
-      ['Windows Update', 'No restarts in the evening, restarts when you choose, monthly updates a week later (Pro and higher).'],
-      ['Health', 'A frame time benchmark with PresentMon, a throttle check and drive health.'],
-      ['Tools', 'Storage analyzer, Windows features, network fixes, Windows Update repair, SFC and DISM.'],
-      ['Changes', 'Every change with Undo, also after a restart or an update of the app.'],
-      ['Export and command line', 'Move your changes to another PC or a fresh install.'],
-    ],
-    numbers: (c) => [
-      ['Read-only checks', c.checks],
-      ['Tweaks', c.tweaks],
-      ['Reviewed removable apps', c.apps],
-      ['Cleanup categories', c.cleanup],
-    ],
-    rows: [
-      ['Background processes', 'None. It runs only when you start it.'],
-      ['Telemetry', 'None'],
-      ['Installation', 'None needed. One exe.'],
+      'Tunero brings together what people otherwise collect from several tweak tools, debloat scripts and system utilities. These are its main pages, grouped as in the app.',
+    groups: (c) => [
+      {
+        name: '',
+        items: [['Overview', `${c.checks} checks that find what costs frame rate, with a fix or the steps for the BIOS and drivers.`]],
+      },
+      {
+        name: 'Optimize',
+        items: [
+          ['Tweaks', `${c.tweaks} documented settings for games, privacy, the browser, Windows and Windows Update, each with its evidence.`],
+          ['Startup', 'Everything that starts with Windows, with signature checks and snapshots to compare.'],
+          ['Services & tasks', 'Start types, with what each service does.'],
+        ],
+      },
+      {
+        name: 'Clean up',
+        items: [
+          ['Remove apps', `${c.apps} reviewed inbox and manufacturer apps, and programs with their own uninstaller.`],
+          ['Cleanup', `${c.cleanup} categories of temporary files, caches and leftovers, without following links.`],
+        ],
+      },
+      {
+        name: 'Maintain and check',
+        items: [
+          ['Apps & drivers', 'Install and update apps with winget, and see how old the drivers are.'],
+          ['Tools', 'Storage analyzer, Windows features, network fixes, Windows Update repair, SFC and DISM.'],
+          ['Health', 'A frame time benchmark with PresentMon, a throttle check and drive health.'],
+        ],
+      },
+      {
+        name: '',
+        items: [['Changes', 'Every change with Undo, and an export to move your changes to another PC or a fresh install.']],
+      },
     ],
   },
   privacy: {
-    label: 'Privacy',
     title: 'It goes online only when you ask it to',
     body: [
-      'No telemetry, no account, no ads. The update check is off until you turn it on. A VirusTotal lookup needs your own key and sends file hashes, never files. The DNS benchmark and app installs run when you start them.',
+      'No telemetry, no account, no ads, and nothing running in the background: it runs only when you start it, as one exe without installation.',
+      'The update check is off until you turn it on. A VirusTotal lookup needs your own key and sends file hashes, never files. The DNS benchmark and app installs run when you start them.',
     ],
     link: 'Everything the app sends, and to whom',
   },
   install: {
-    label: 'Install',
     title: 'Get Tunero',
     steps: [
       { name: 'Download', text: 'The exe of the latest release.' },
@@ -179,7 +170,6 @@ const en: Copy = {
     releases: 'All releases',
   },
   faq: {
-    label: 'Questions',
     title: 'Questions',
     items: [
       {

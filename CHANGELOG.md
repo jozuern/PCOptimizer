@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Website:** a new design for tunero.dev on the Windows 11 surfaces of the app. A board rates all tweaks for games and names every one that can matter, the scan's checks run as one paragraph, registry changes show the old value struck through, and the app's pages appear in the groups of its navigation.
 - **Chocolatey workflow:** while the first version of the package waits for moderation, Chocolatey refuses newer versions; the workflow now says so and passes instead of failing.
 - **Code signing:** SignPath Foundation turned down the first application, because it signs only projects that are already widely known; the project will apply again later. The README and the website say so and explain how to start the exe past the SmartScreen warning.
 - **Settings that work against your profile** have their own section on the Overview, "Works against the Gaming profile", instead of a yellow heading inside the recommendations, where they contradicted "nothing to recommend". Each one has a warning icon and a button: Undo when Tunero made the change, otherwise Details, whose page says how to change it back.
