@@ -11,7 +11,7 @@ const en: Copy = {
   nav: { download: 'Download', source: 'Source code', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
   hero: {
     title: 'Built to be the only PC optimizer you need.',
-    lead: 'Tunero finds what costs your games frame rate, fixes what it can, and puts the useful settings of the popular tweak tools into one app. Every change is explained with sources, backed up first and can be undone.',
+    lead: 'Tunero scans your PC for what costs your games frame rate and fixes what it can. It is built to replace the tweak tools, debloat scripts, startup managers and cleaners you would otherwise collect. Every change is explained with sources, backed up first and can be undone.',
     download: 'Download Tunero.exe',
     winget: 'or with winget',
     copy: 'Copy',
@@ -25,18 +25,19 @@ const en: Copy = {
       'The Overview page of Tunero: the readiness score, what the scan found, and the recommended changes as a checklist with Apply recommended.',
   },
   impact: {
-    title: (n, matter) => `All ${n} tweaks are rated for games. ${matter} of them can matter.`,
-    body: [
-      'Every tweak rates its effect on games from 0 to 5 and says what the rating rests on. Some ratings depend on the PC: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. The app rates each tweak for the PC it runs on.',
+    title: 'Only problems the scan finds rate 5. No tweak does.',
+    body: (n, matter) => [
+      'Checks and tweaks share one scale for games, from 0 to 5. The largest gains come from problems the scan finds, such as a monitor below its refresh rate or a processor held at its base clock.',
+      `Of the ${n} tweaks, ${matter} can matter for games, some only on some PCs: Restore processor turbo rates 4 where the power plan holds the processor at its base clock, and 0 everywhere else. The app rates each tweak for the PC it runs on.`,
     ],
+    top: 'Problems the scan finds. It fixes them or tells you how.',
+    topRow: (n) => `Rated 5: ${n} problems the scan finds`,
     measured: 'measured',
     disputed: 'disputed',
     some: (base) => `on some PCs, otherwise ${base}`,
-    none: (level) => `No tweak is rated ${level}.`,
     zeroNamed: 'Popular gaming tweaks with disputed evidence. Offered, rated 0, and their pages explain the dispute.',
     zeroRest: (n) => `And ${n} more, most of them for privacy, the browser and Windows. They do not promise frame rate.`,
     row: (level, count) => `Rated ${level}: ${count} ${count === 1 ? 'tweak' : 'tweaks'}`,
-    after: 'The largest gains usually come from problems the scan finds, such as a monitor at 60 Hz or memory below its rated speed.',
   },
   scan: {
     title: 'The scan looks for what really costs frame rate',
@@ -114,9 +115,9 @@ const en: Copy = {
     all: 'The full list, with sources',
   },
   areas: {
-    title: 'Instead of a folder full of tools',
+    title: 'Built to replace a folder full of tools',
     intro:
-      'Tunero brings together what people otherwise collect from several tweak tools, debloat scripts and system utilities. These are its main pages, grouped as in the app.',
+      'Tunero brings together what people otherwise collect from tweak tools, debloat scripts, startup managers, cleaners and system utilities, and leaves out what does nothing. These are its main pages, grouped as in the app.',
     groups: (c) => [
       {
         name: '',

@@ -173,6 +173,10 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
   font-variant-numeric: tabular-nums; padding-top: 4px;
 }
 .rating.zero .level { color: var(--ink-3); }
+/* The top row is the scan's: the numeral in the accent, the problems a size larger. */
+.rating.top .level { color: var(--accent); }
+.top-note { font-size: 15px; color: var(--ink-2); margin: 4px 0 8px; }
+.top .names li { font-size: 22px; letter-spacing: -0.015em; }
 .names { list-style: none; margin: 0; padding: 0; columns: 1; column-gap: 40px; }
 @media (min-width: 760px) { .names { columns: 2; } }
 @media (min-width: 1100px) { .names { columns: 3; } }
@@ -180,13 +184,11 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 .names li[title] { cursor: help; }
 .names .tag { display: block; font: 400 13px/1.4 var(--font-text); letter-spacing: 0; color: var(--ink-3); margin-top: 2px; }
 .names li[title] .tag { color: var(--accent); }
-.none { color: var(--ink-3); padding-top: 6px; }
 .zero-note { font-size: 15px; color: var(--ink-2); margin: 4px 0 12px; }
 .zero .names { margin-bottom: 20px; }
 .zero .names li { font-size: 16px; color: var(--ink-2); }
 .cells { display: flex; flex-wrap: wrap; gap: 3px; }
 .cells i { display: block; width: 11px; height: 11px; border-radius: 2px; background: var(--square); }
-.board .after { margin-top: 32px; font-size: 17px; }
 
 /* The scan: the text on the left, every check as one running paragraph on the right. */
 
@@ -276,7 +278,6 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .areas-section { display: grid; gap: 40px 64px; }
 @media (min-width: 1000px) { .areas-section { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } .areas-text { position: sticky; top: 32px; align-self: start; } }
 .areas-text > p { color: var(--ink-2); }
-.areas-text .small-head { margin-top: 48px; }
 .rail { border-left: 1px solid var(--rule); }
 .rail-group + .rail-group { margin-top: 20px; }
 .rail-group h3 { font: 600 13px/1.4 var(--font-text); letter-spacing: 0; color: var(--ink-3); padding: 0 0 4px 24px; }
@@ -286,6 +287,12 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .rail dd { margin: 2px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 56ch; }
 /* The first page carries the app's selection mark, as Overview does when the app opens. */
 .rail-group:first-child dl div:first-child::before { content: ''; position: absolute; left: -1.5px; top: 14px; height: 20px; width: 3px; border-radius: 2px; background: var(--accent); }
+
+/* Privacy: the heading on the left, the facts on the right. */
+
+.privacy { display: grid; gap: 0 64px; }
+@media (min-width: 1000px) { .privacy { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } }
+.privacy p { color: var(--ink-2); }
 
 /* Install */
 

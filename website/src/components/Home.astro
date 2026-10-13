@@ -1,7 +1,7 @@
 ---
 import Shot from './Shot.astro';
 import type { Copy } from '../i18n/types';
-import { counts, version, sizeMb, explanation, registryChanges, checkTitles, tweakImpacts, repo, download, packages } from '../lib/data';
+import { counts, version, sizeMb, explanation, registryChanges, checkTitles, topChecks, tweakImpacts, repo, download, packages } from '../lib/data';
 
 interface Props { t: Copy }
 const { t } = Astro.props;
@@ -9,13 +9,15 @@ const { t } = Astro.props;
 // Every check the scan runs, by the title of its explanation page.
 const checks = checkTitles(t.lang);
 
-// The rating board: every tweak that can matter for games by name, once, in the row of its rating; a tweak that rates
+// The rating board. Only problems the scan finds reach 5, so the top row names those checks. Below it every tweak
+// that can matter for games by name, once, in the row of its rating; a tweak that rates
 // higher on some PCs in the row of its highest rating, with its rating elsewhere. Popular tweaks rated 0 on disputed evidence are named too; the
 // rest of the 0 row is one square per tweak.
 const impacts = tweakImpacts(t.lang);
 type Entry = { title: string; tag?: string; note?: string };
 const tagOf = (basis: string) => (basis === 'measured' ? t.impact.measured : basis === 'disputed' ? t.impact.disputed : undefined);
-const levels = [5, 4, 3, 2, 1].map((level) => {
+const top = topChecks(t.lang);
+const levels = [4, 3, 2, 1].map((level) => {
   const entries: Entry[] = [
     ...impacts.filter((i) => i.impact === level && !i.higher).map((i) => ({ title: i.title, tag: tagOf(i.basis) })),
     ...impacts.filter((i) => i.higher?.impact === level).map((i) => ({ title: i.title, tag: t.impact.some(i.impact), note: i.higher!.reason })),
@@ -79,24 +81,30 @@ const managers = [
 <section class="board" aria-labelledby="impact">
   <div class="container">
     <div class="intro">
-      <h2 id="impact">{t.impact.title(impacts.length, matter)}</h2>
-      {t.impact.body.map((p) => <p>{p}</p>)}
+      <h2 id="impact">{t.impact.title}</h2>
+      <div>{t.impact.body(impacts.length, matter).map((p) => <p>{p}</p>)}</div>
     </div>
     <div class="ratings">
+      <div class="rating top">
+        <span class="level" aria-hidden="true">5</span>
+        <div>
+          <h3 class="sr">{t.impact.topRow(top.length)}</h3>
+          <p class="top-note">{t.impact.top}</p>
+          <ul class="names">
+            {top.map((c) => <li>{c}</li>)}
+          </ul>
+        </div>
+      </div>
       {levels.map((l) => (
         <div class="rating">
           <span class="level" aria-hidden="true">{l.level}</span>
           <div>
             <h3 class="sr">{t.impact.row(l.level, l.entries.length)}</h3>
-            {l.entries.length === 0 ? (
-              <p class="none">{t.impact.none(l.level)}</p>
-            ) : (
-              <ul class="names">
-                {l.entries.map((e) => (
-                  <li title={e.note}>{e.title}{e.tag && <span class="tag">{e.tag}</span>}</li>
-                ))}
-              </ul>
-            )}
+            <ul class="names">
+              {l.entries.map((e) => (
+                <li title={e.note}>{e.title}{e.tag && <span class="tag">{e.tag}</span>}</li>
+              ))}
+            </ul>
           </div>
         </div>
       ))}
@@ -115,7 +123,6 @@ const managers = [
         </div>
       </div>
     </div>
-    <p class="after">{t.impact.after}</p>
   </div>
 </section>
 
@@ -129,6 +136,23 @@ const managers = [
     <ol class="runon">
       {checks.map((c) => <li>{c}</li>)}
     </ol>
+  </div>
+</section>
+
+<section class="section container areas-section" aria-labelledby="areas">
+  <div class="areas-text">
+    <h2 id="areas">{t.areas.title}</h2>
+    <p>{t.areas.intro}</p>
+  </div>
+  <div class="rail">
+    {t.areas.groups(counts).map((g) => (
+      <div class="rail-group">
+        {g.name && <h3>{g.name}</h3>}
+        <dl>
+          {g.items.map(([name, text]) => <div><dt>{name}</dt><dd>{text}</dd></div>)}
+        </dl>
+      </div>
+    ))}
   </div>
 </section>
 
@@ -200,23 +224,11 @@ const managers = [
   <p><a href={`${docsBase}/not-included.md`}>{t.left.all}</a></p>
 </section>
 
-<section class="section container areas-section" aria-labelledby="areas">
-  <div class="areas-text">
-    <h2 id="areas">{t.areas.title}</h2>
-    <p>{t.areas.intro}</p>
-    <h3 id="privacy" class="small-head">{t.privacy.title}</h3>
+<section class="section container privacy" aria-labelledby="privacy">
+  <h2 id="privacy">{t.privacy.title}</h2>
+  <div>
     {t.privacy.body.map((p) => <p>{p}</p>)}
     <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
-  </div>
-  <div class="rail">
-    {t.areas.groups(counts).map((g) => (
-      <div class="rail-group">
-        {g.name && <h3>{g.name}</h3>}
-        <dl>
-          {g.items.map(([name, text]) => <div><dt>{name}</dt><dd>{text}</dd></div>)}
-        </dl>
-      </div>
-    ))}
   </div>
 </section>
 

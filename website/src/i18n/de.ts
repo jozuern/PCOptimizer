@@ -11,7 +11,7 @@ const de: Copy = {
   nav: { download: 'Download', source: 'Quellcode', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
   hero: {
     title: 'Gebaut, damit du nur noch einen PC-Optimierer brauchst.',
-    lead: 'Tunero findet, was deine Spiele FPS kostet, behebt, was es kann, und vereint die sinnvollen Einstellungen der bekannten Tweak-Tools in einer App. Jede Änderung wird mit Quellen erklärt, vorher gesichert und lässt sich rückgängig machen.',
+    lead: 'Tunero sucht auf deinem PC, was deine Spiele FPS kostet, und behebt, was es kann. Es ist gebaut, um die Tweak-Tools, Debloat-Skripte, Autostart-Manager und Aufräumprogramme zu ersetzen, die du sonst zusammensuchst. Jede Änderung wird mit Quellen erklärt, vorher gesichert und lässt sich rückgängig machen.',
     download: 'Tunero.exe herunterladen',
     winget: 'oder mit winget',
     copy: 'Kopieren',
@@ -25,18 +25,19 @@ const de: Copy = {
       'Die Übersicht von Tunero: die Eignung, was der Scan gefunden hat, und die empfohlenen Änderungen als Checkliste mit „Empfohlene anwenden“.',
   },
   impact: {
-    title: (n, matter) => `Alle ${n} Tweaks sind für Spiele bewertet. ${matter} davon können zählen.`,
-    body: [
-      'Jeder Tweak bewertet seine Wirkung auf Spiele von 0 bis 5 und sagt, worauf die Bewertung beruht. Manche Bewertungen hängen vom PC ab: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. Die App bewertet jeden Tweak für den PC, auf dem sie läuft.',
+    title: 'Eine 5 gibt es nur für Probleme, die der Scan findet. Für keinen Tweak.',
+    body: (n, matter) => [
+      'Prüfungen und Tweaks teilen sich eine Skala für Spiele, von 0 bis 5. Den größten Unterschied machen Probleme, die der Scan findet, etwa ein Monitor unter seiner Bildwiederholrate oder eine CPU, die beim Basistakt festhängt.',
+      `Von den ${n} Tweaks können ${matter} für Spiele zählen, manche nur auf manchen PCs: „CPU-Turbo wiederherstellen“ hat eine 4, wo der Energiesparplan die CPU beim Basistakt hält, und überall sonst eine 0. Die App bewertet jeden Tweak für den PC, auf dem sie läuft.`,
     ],
+    top: 'Probleme, die der Scan findet. Er behebt sie oder sagt dir, wie.',
+    topRow: (n) => `Wirkung 5: ${n} Probleme, die der Scan findet`,
     measured: 'gemessen',
     disputed: 'umstritten',
     some: (base) => `auf manchen PCs, sonst ${base}`,
-    none: (level) => `Kein Tweak hat eine ${level}.`,
     zeroNamed: 'Beliebte Gaming-Tweaks mit umstrittenen Belegen. Angeboten, mit 0 bewertet, und ihre Seiten erklären den Streit.',
     zeroRest: (n) => `Dazu ${n} weitere, die meisten für Datenschutz, den Browser und Windows. Sie versprechen keine FPS.`,
     row: (level, count) => `Wirkung ${level}: ${count} ${count === 1 ? 'Tweak' : 'Tweaks'}`,
-    after: 'Den größten Unterschied macht meist, was der Scan findet, etwa ein Monitor mit 60 Hz oder Arbeitsspeicher unter seinem Nenntakt.',
   },
   scan: {
     title: 'Der Scan sucht, was dich wirklich FPS kostet',
@@ -114,9 +115,9 @@ const de: Copy = {
     all: 'Die ganze Liste, mit Quellen (Englisch)',
   },
   areas: {
-    title: 'Statt eines Ordners voller Tools',
+    title: 'Gebaut, um einen Ordner voller Tools zu ersetzen',
     intro:
-      'Tunero vereint, was man sonst aus mehreren Tweak-Tools, Debloat-Skripten und Systemprogrammen zusammensucht. Das sind seine wichtigsten Seiten, gruppiert wie in der App.',
+      'Tunero vereint, was man sonst aus Tweak-Tools, Debloat-Skripten, Autostart-Managern, Aufräumprogrammen und Systemprogrammen zusammensucht, und lässt weg, was nichts bringt. Das sind seine wichtigsten Seiten, gruppiert wie in der App.',
     groups: (c) => [
       {
         name: '',

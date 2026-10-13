@@ -27,18 +27,18 @@ export interface Copy {
     shotAlt: string;
   };
   impact: {
-    title: (tweaks: number, matter: number) => string;
-    body: string[];
+    title: string;
+    body: (tweaks: number, matter: number) => string[];
+    /** Over the checks in the top row. */
+    top: string;
+    topRow: (count: number) => string;
     measured: string;
     disputed: string;
     /** A tweak that rates higher on some PCs, with its rating elsewhere. */
     some: (base: number) => string;
-    /** Shown in a rating row no tweak reaches. */
-    none: (level: number) => string;
     zeroNamed: string;
     zeroRest: (count: number) => string;
     row: (level: number, count: number) => string;
-    after: string;
   };
   scan: { title: string; body: (checks: number) => string[]; list: (checks: number) => string };
   change: {
