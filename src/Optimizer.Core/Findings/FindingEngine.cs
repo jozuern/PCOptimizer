@@ -7,10 +7,10 @@ namespace Optimizer.Core.Findings;
 
 /// <summary>Runs all read-only checks. A failing check yields an Unknown result instead of breaking the scan.</summary>
 /// <param name="bcd">Reads the BCD elements of {current} (bcdedit needs admin rights); null or a null result = unknown.</param>
-public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? registry = null, Func<IReadOnlySet<string>?>? bcd = null)
+public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? registry = null, Func<IReadOnlyDictionary<string, string>?>? bcd = null)
 {
     /// <summary>All checks; <paramref name="registry"/> gives access to the session user's hive (F4).</summary>
-    public static IReadOnlyList<IFindingCheck> CreateChecks(Actions.IRegistryRoots? registry, Func<IReadOnlySet<string>?>? bcd = null) =>
+    public static IReadOnlyList<IFindingCheck> CreateChecks(Actions.IRegistryRoots? registry, Func<IReadOnlyDictionary<string, string>?>? bcd = null) =>
     [
         new RefreshRateCheck(),
         new EdidRefreshCheck(),

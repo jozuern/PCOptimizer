@@ -17,7 +17,7 @@ public sealed record ScanResult(HardwareProfile Profile, IReadOnlyList<Finding> 
 /// NVIDIA read is closed, and the checks are evaluated on the result.
 /// </summary>
 /// <param name="engine">Reads ahead for the tweak detection that follows; null when no detection follows (the report).</param>
-public sealed class ScanService(CatalogData catalog, IRegistryRoots? registry, Func<IReadOnlySet<string>?>? bcd, TweakEngine? engine = null,
+public sealed class ScanService(CatalogData catalog, IRegistryRoots? registry, Func<IReadOnlyDictionary<string, string>?>? bcd, TweakEngine? engine = null,
     IEnumerable<TweakDefinition>? tweaks = null)
 {
     /// <param name="previous">The last result, after a change made by this app: slow parts no change can affect are reused.</param>

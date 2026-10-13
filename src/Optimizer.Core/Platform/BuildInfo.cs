@@ -76,12 +76,20 @@ public sealed record BuildInfo(
     }
 }
 
-public enum OsGateResult { Supported, SupportedNotValidated, BlockedTooOld, BlockedArchitecture }
+public enum OsGateResult { Supported, SupportedNotValidated, Unsupported, BlockedTooOld, BlockedArchitecture }
 
-/// <summary>OS gate: block below 26100 and non-x64; never block an unknown newer build.</summary>
+/// <summary>
+/// OS gate: 25H2 (26200) and newer are supported. 24H2 (26100) still starts with an "unsupported" note, so changes made
+/// there by an earlier version can still be undone (and the app updated). Below 24H2 and non-x64 are blocked; an unknown
+/// newer build is never blocked.
+/// </summary>
 public static class OsGate
 {
+    /// <summary>Oldest build the app starts on.</summary>
     public const int MinimumBuild = 26100;
+
+    /// <summary>Oldest supported build (25H2). Home and Pro 24H2 get no updates since 2026-10-13.</summary>
+    public const int SupportedBuild = 26200;
 
     /// <summary>Newest build the catalog was validated on. Above it the app runs with a "not validated" note.</summary>
     public const int NewestValidatedBuild = 26300;
@@ -90,11 +98,7 @@ public static class OsGate
     {
         if (arch != CpuArchitecture.X64) return OsGateResult.BlockedArchitecture;
         if (build < MinimumBuild) return OsGateResult.BlockedTooOld;
+        if (build < SupportedBuild) return OsGateResult.Unsupported;
         return build > NewestValidatedBuild ? OsGateResult.SupportedNotValidated : OsGateResult.Supported;
     }
-
-    /// <summary>24H2 Home/Pro end of updates (info note, no block).</summary>
-    public static bool Is24H2EndOfUpdates(int build, string edition, DateOnly today) =>
-        build == 26100 && today >= new DateOnly(2026, 10, 13) &&
-        (edition.StartsWith("Core", StringComparison.OrdinalIgnoreCase) || edition.StartsWith("Professional", StringComparison.OrdinalIgnoreCase));
 }

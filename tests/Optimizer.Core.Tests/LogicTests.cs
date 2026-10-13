@@ -12,21 +12,12 @@ public class OsGateTests
     [Theory]
     [InlineData(19045, CpuArchitecture.X64, OsGateResult.BlockedTooOld)]   // Windows 10 22H2
     [InlineData(22631, CpuArchitecture.X64, OsGateResult.BlockedTooOld)]   // Windows 11 23H2
-    [InlineData(26100, CpuArchitecture.X64, OsGateResult.Supported)]
+    [InlineData(26100, CpuArchitecture.X64, OsGateResult.Unsupported)]     // 24H2: starts, so changes made there can be undone
     [InlineData(26200, CpuArchitecture.X64, OsGateResult.Supported)]
     [InlineData(26300, CpuArchitecture.X64, OsGateResult.Supported)]       // 26H2 GA
     [InlineData(26340, CpuArchitecture.X64, OsGateResult.SupportedNotValidated)] // Experimental channel
     [InlineData(28000, CpuArchitecture.Arm64, OsGateResult.BlockedArchitecture)]
     public void Gate(int build, CpuArchitecture arch, OsGateResult expected) => Assert.Equal(expected, OsGate.Evaluate(build, arch));
-
-    [Fact]
-    public void EndOfUpdatesNoteOnlyFor24H2HomePro()
-    {
-        Assert.True(OsGate.Is24H2EndOfUpdates(26100, "Professional", new DateOnly(2026, 10, 13)));
-        Assert.False(OsGate.Is24H2EndOfUpdates(26100, "Professional", new DateOnly(2026, 10, 12)));
-        Assert.False(OsGate.Is24H2EndOfUpdates(26100, "Enterprise", new DateOnly(2026, 11, 1)));
-        Assert.False(OsGate.Is24H2EndOfUpdates(26200, "Core", new DateOnly(2026, 11, 1)));
-    }
 }
 
 public class CpuTests
@@ -55,6 +46,16 @@ public class CpuTests
     [Fact]
     public void SymmetricUnknownCpuIsNotX3d() =>
         Assert.Equal(X3dLayout.None, X3d.Classify(Cpu("AMD Ryzen 9 11950X 16-Core Processor", Vendor.Amd, 27, 1, null, 48, 48), CatalogData.Current));
+
+    [Theory]
+    [InlineData("AMD Ryzen AI 9 HX 370 w/ Radeon 890M")]
+    [InlineData("AMD Ryzen AI 9 365 w/ Radeon 880M")]
+    public void ZenCClustersAreNotX3d(string name) =>
+        Assert.Equal(X3dLayout.None, X3d.Classify(Cpu(name, Vendor.Amd, 26, 36, null, 16, 8), CatalogData.Current));
+
+    [Fact]
+    public void UnlistedAsymmetricX3dIsMultiCcd() =>
+        Assert.Equal(X3dLayout.MultiCcdAsymmetric, X3d.Classify(Cpu("AMD Ryzen 9 11950X3D 16-Core Processor", Vendor.Amd, 27, 1, null, 96, 32), CatalogData.Current));
 
     [Fact]
     public void SingleCcdX3d() =>

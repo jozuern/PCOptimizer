@@ -28,6 +28,8 @@ public static class CommandLineApply
     public const int Busy = 5;
     public const int Error = 6;
     public const int NotSupported = 7;
+    /// <summary>The start was refused before anything ran: a profiler variable, or an unsafe data or runtime folder.</summary>
+    public const int StartRefused = 8;
 
     /// <summary>How long a run waits for a change of another Tunero (the window, another run) to finish.</summary>
     public static TimeSpan LockWait { get; set; } = TimeSpan.FromMinutes(5);
@@ -97,7 +99,7 @@ public static class CommandLineApply
         // The same scan as the window: the facts decide what applies to this PC and what is on already.
         var catalog = CatalogData.Current;
         var visible = services.Catalog.Visible.ToList();
-        var scan = await new ScanService(catalog, services.Context.Registry, services.BcdElements, services.Engine, visible).RunAsync();
+        var scan = await new ScanService(catalog, services.Context.Registry, services.BcdValues, services.Engine, visible).RunAsync();
         var facts = FactsBuilder.Build(scan.Profile, scan.Findings, catalog, services.Context.Registry);
         var applied = services.Engine.DetectAll(visible, facts)
             .Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);

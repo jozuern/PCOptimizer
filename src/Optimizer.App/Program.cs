@@ -22,6 +22,13 @@ public static class Program
 #pragma warning disable IL3000
         var bundle = string.IsNullOrEmpty(typeof(Program).Assembly.Location);
 #pragma warning restore IL3000
+        // --apply and --undo-all run without a window: a refusal is an exit code, never a dialog a script waits on.
+        var commandLineRun = args.Any(a => a.Equals("--apply", StringComparison.OrdinalIgnoreCase) || a.Equals("--undo-all", StringComparison.OrdinalIgnoreCase));
+        int Refuse(string text)
+        {
+            if (!commandLineRun) ShowError(text);
+            return commandLineRun ? Services.CommandLineApply.StartRefused : 1;
+        }
         // A data folder from before the rename gets the new name first, before anything reads or secures it.
         DataPaths.MigrateLegacy();
         var runtimeBase = SingleFileRuntime.ExtractBase(DataPaths.Root);
@@ -34,8 +41,7 @@ public static class Program
         // elevated app with code from a user-writable place in it must not go on. Startup hooks are off (StartupHookSupport=false).
         if (DataPaths.ProcessIsElevated && ProcessHardening.DiagnosticsRequested(Environment.GetEnvironmentVariable) is { } variable)
         {
-            ShowError(string.Format(Text("Startup_ProfilerSet"), variable));
-            return 1;
+            return Refuse(string.Format(Text("Startup_ProfilerSet"), variable));
         }
 
         // Files the app creates must be owned by Administrators, or the data folder would distrust them (UAC off,
@@ -43,8 +49,7 @@ public static class Program
         if (DataPaths.ProcessIsElevated) DefaultOwner.SetAdministrators();
         if (DataPaths.ProcessIsElevated && !SecureFolder.PrepareRoot(DataPaths.Root))
         {
-            ShowError(string.Format(Text("Startup_DataFolderUnsafe"), DataPaths.Root));
-            return 1;
+            return Refuse(string.Format(Text("Startup_DataFolderUnsafe"), DataPaths.Root));
         }
         Log.EnableFile();
         if (DataPaths.MovedFrom is { } oldFolder) Log.Info("app", "data folder moved to the new name", new { from = oldFolder, to = DataPaths.Root });
@@ -62,8 +67,7 @@ public static class Program
         if (start == RuntimeStart.Refuse)
         {
             Log.Error("app", "the native runtime folder is not the protected one; refusing to start elevated");
-            ShowError(string.Format(Text("Startup_RuntimeFolderUnsafe"), SingleFileRuntime.ExtractVariable, SingleFileRuntime.RestartedVariable));
-            return 1;
+            return Refuse(string.Format(Text("Startup_RuntimeFolderUnsafe"), SingleFileRuntime.ExtractVariable, SingleFileRuntime.RestartedVariable));
         }
 
         // The embedded catalogs take about 200 ms to read (JSON, and the serializer's first use): read beside WPF's start,

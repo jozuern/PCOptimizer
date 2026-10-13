@@ -97,7 +97,7 @@ public partial class App : Application
         var args = new CliArgs(e.Args);
         Log.Info("app", "start", new { version = AppInfo.Text, args = e.Args });
 
-        // OS gate: block below 26100 and non-x64 before scanning anything.
+        // OS gate: block below 24H2 (26100) and non-x64 before scanning anything; 24H2 itself starts with a note.
         var os = BuildInfo.Read();
         var gate = OsGate.Evaluate(os.Build, os.NativeArchitecture);
         if (gate is OsGateResult.BlockedTooOld or OsGateResult.BlockedArchitecture)
@@ -426,7 +426,7 @@ public partial class App : Application
         {
             var catalog = CatalogData.Current;
             // The window's scan pipeline, waiting for the background CPU sample (no tweak detection follows here).
-            var (profile, findings, _) = await new ScanService(catalog, services.Context.Registry, services.BcdElements).RunAsync();
+            var (profile, findings, _) = await new ScanService(catalog, services.Context.Registry, services.BcdValues).RunAsync();
             var sb = new StringBuilder();
             sb.AppendLine($"# Tunero scan report ({DateTime.Now:yyyy-MM-dd HH:mm})").AppendLine();
             sb.AppendLine($"Readiness score: **{ReadinessScore.Compute(findings)}/100**, Windows {profile.Os.DisplayVersion} build {profile.Os.BuildString}, elevated: {profile.Elevation?.IsElevated}").AppendLine();

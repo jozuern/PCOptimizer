@@ -400,10 +400,12 @@ public class CheckEdgeCaseTests
     [Fact]
     public void LeftoverCheckWithInjectedBcd()
     {
-        var problem = One(new LeftoverCheck(() => new HashSet<string> { "useplatformclock", "description" }), P());
+        var problem = One(new LeftoverCheck(() => new Dictionary<string, string> { ["useplatformclock"] = "Yes", ["description"] = "Windows 11" }), P());
         Assert.Equal(FindingStatus.Problem, problem.Status);
         AssertRenders(problem);
-        Assert.Equal(FindingStatus.Ok, One(new LeftoverCheck(() => new HashSet<string> { "description" }), P()).Status);
+        Assert.Equal(FindingStatus.Ok, One(new LeftoverCheck(() => new Dictionary<string, string> { ["description"] = "Windows 11" }), P()).Status);
+        // "No" is the timer Windows picks anyway: not a problem.
+        Assert.Equal(FindingStatus.Ok, One(new LeftoverCheck(() => new Dictionary<string, string> { ["useplatformclock"] = "No" }), P()).Status);
         Assert.Equal(FindingStatus.Unknown, One(new LeftoverCheck(() => null), P()).Status);
         Assert.Equal(FindingStatus.Unknown, One(new LeftoverCheck(() => throw new UnauthorizedAccessException()), P()).Status);
     }
@@ -429,7 +431,7 @@ public class CheckEdgeCaseTests
     [Fact]
     public void FindingEngineGivesTheBcdReaderToTheLeftoverCheck()
     {
-        var findings = new FindingEngine(CatalogData.Current, bcd: () => new HashSet<string> { "useplatformclock" }).Evaluate(P());
+        var findings = new FindingEngine(CatalogData.Current, bcd: () => new Dictionary<string, string> { ["useplatformclock"] = "Yes" }).Evaluate(P());
         Assert.Equal(FindingStatus.Problem, Assert.Single(findings, f => f.Id == LeftoverCheck.Id).Status);
         Assert.Equal(FindingStatus.Unknown, Assert.Single(new FindingEngine(CatalogData.Current).Evaluate(P()), f => f.Id == LeftoverCheck.Id).Status);
     }

@@ -26,7 +26,7 @@ public sealed class AppServices
         Engine = new TweakEngine(Context, Store, RestorePoints, Optimizer.Core.Platform.AppInfo.Text, Os.Build, Os.BuildString);
 
         // bcdedit needs admin rights; without them the BCD part of F21 is reported as unknown.
-        BcdElements = Elevation.IsElevated ? () => Context.Bcd.CurrentElements() : () => null;
+        BcdValues = Elevation.IsElevated ? () => Context.Bcd.CurrentValues() : () => null;
         Log.Info("app", "services ready", new { Elevation.IsElevated, Elevation.AdministratorProtection, user = Elevation.SessionUser });
     }
 
@@ -74,7 +74,7 @@ public sealed class AppServices
     public static string DataFolder => Optimizer.Core.Platform.DataPaths.Root;
 
     /// <summary>BCD elements of {current} for the findings (bcdedit needs admin rights; not elevated = unknown).</summary>
-    public Func<IReadOnlySet<string>?> BcdElements { get; }
+    public Func<IReadOnlyDictionary<string, string>?> BcdValues { get; }
 
     /// <summary>Extracted helper tools (PresentMon) and capture files.</summary>
     public static string ToolsFolder => Optimizer.Core.Platform.DataPaths.Tools;

@@ -8,6 +8,16 @@
 
 - **Health, live sensor readings:** instead of one long list of lines, every component (processor, graphics card, memory, mainboard, drives) has its own card with its main values set large: the hottest temperature, the total load with a bar, the fastest core clock, power and fan, each with the sensor it comes from and its peak since you switched the readings on. "All readings" opens a table of every sensor of that component by kind, with the value now and the peak. The values change in place every two seconds, so an open table stays open, and a line under the switch says when the sensors are still opening. The library's two memory entries share one card. New developer switch `--sensors on|all` for screenshots.
 
+- **Windows 11 25H2 or newer:** Home and Pro 24H2 get no updates since 13 October 2026, so Tunero now supports 25H2 (build 26200) and newer. On 24H2 the app still starts, with a note that the version is no longer supported, so changes made there can still be undone; update Windows before you make new changes.
+- **Command line:** `--apply` and `--undo-all` no longer show a message box when the start is refused for safety (a profiler variable, or a data or runtime folder other accounts can change); they end with the new exit code 8, so a script does not wait on a dialog.
+
+### Fixed
+
+- **Import:** a file with two or more changes that need their own confirmation (Expert, preview or anti-cheat sensitive) applied only the first one and refused the others as "busy", because each change starts a scan. A change now waits for the running scan instead.
+- **Ryzen AI 300 laptops** (for example the Ryzen AI 9 HX 370) were taken for a Ryzen X3D with two chiplets, because their two core clusters have L3 caches of different size. The app then blocked the High performance plan, reported a problem with impact 4 and guarded the Xbox Game Bar. Only processors named X3D count now.
+- **A failed scan** was never shown: the Overview kept saying "The scan is reading this PC". The verdict now says the scan could not finish, and the result bar shows the error.
+- **Leftovers check:** the boot option useplatformclock set to No counted as a problem; only Yes forces the slower timer.
+
 ## 0.9.14 (preview)
 
 ### Changed

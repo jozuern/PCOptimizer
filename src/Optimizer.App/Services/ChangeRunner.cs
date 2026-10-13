@@ -26,6 +26,9 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
 
+    /// <summary>The scan that runs now, or a completed task: a change waits for it (see <see cref="ExclusiveAsync"/>).</summary>
+    public Func<Task> ScanInProgress { get; init; } = () => Task.CompletedTask;
+
     public event EventHandler<ResultMessage>? Status;
     public event EventHandler<bool>? BusyChanged;
 
@@ -82,6 +85,9 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// </summary>
     private async Task<T> ExclusiveAsync<T>(string what, Func<Task<T>> work, T whenNotRun)
     {
+        // Every change starts a rescan; a change that follows at once (the next item of an import, a DNS choice after an
+        // apply) waits for it instead of being refused as busy.
+        if (ChangeGate.Instance is { Scanning: true, Busy: false, Updating: false }) await ScanInProgress();
         if (!ChangeGate.Instance.CanChange || !_gate.Wait(0))
         {
             Report(Loc.Instance["Change_Busy"], InfoBarSeverity.Warning);

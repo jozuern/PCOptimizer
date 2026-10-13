@@ -202,7 +202,7 @@ public sealed partial class MainViewModel : ObservableObject
         _dialogs = dialogs;
         _expertMode = settings.ExpertMode;
         _checkForUpdates = settings.CheckForUpdates;
-        Runner = new ChangeRunner(services, dialogs, () => _facts, AppliedIds, () => ExpertMode);
+        Runner = new ChangeRunner(services, dialogs, () => _facts, AppliedIds, () => ExpertMode) { ScanInProgress = () => ScanInProgress };
         Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
         Runner.BusyChanged += (_, busy) => IsBusy = busy;
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
@@ -267,6 +267,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private Page _currentPage = Page.Overview;
     [ObservableProperty] private bool _isScanning;
+
+    /// <summary>The last scan stopped with an error: the verdict says so instead of "the scan is reading this PC".</summary>
+    [ObservableProperty] private bool _scanFailed;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _scanStatus = "";
     [ObservableProperty] private HardwareProfile? _profile;
@@ -552,7 +555,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool HasScore => Profile is not null && !IsScanning;
 
     /// <summary>While a scan runs (and before the first): what the scan is doing, not an old or empty verdict.</summary>
-    public string VerdictShown => HasScore ? Verdict : Loc.Instance["Dash_VerdictPending"];
+    public string VerdictShown => HasScore ? Verdict : ScanFailed && !IsScanning ? Loc.Instance["Dash_VerdictFailed"] : Loc.Instance["Dash_VerdictPending"];
     public string ReadinessShown => HasScore ? ReadinessLine : "";
     public string? AdvisorLinkShown => HasScore ? AdvisorLinkText : null;
 
@@ -566,6 +569,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnReadinessLineChanged(string value) => NotifyScore();
     partial void OnAdvisorLinkTextChanged(string? value) => NotifyScore();
     partial void OnProfileChanged(HardwareProfile? value) => NotifyScore();
+    partial void OnScanFailedChanged(bool value) => NotifyScore();
 
     partial void OnIsScanningChanged(bool value)
     {
@@ -1200,10 +1204,13 @@ public sealed partial class MainViewModel : ObservableObject
         }
         finally
         {
+            ScanFailed = error is not null;
             IsScanning = false;
             ScanStatus = error ?? Loc.Instance["Scan_Idle"];
             OnPropertyChanged(nameof(LogFile));
         }
+        // The pane footer shows the scan status only while a scan runs: an error goes to the result bar, which stays.
+        if (error is not null) ShowResult(error, InfoBarSeverity.Error);
         await RefreshChangesStateAsync();
         if (pendingSample is not null && Profile is { } scanned) CompleteBackgroundSampleAsync(scanned, pendingSample).Forget("background CPU sample");
     }
@@ -1211,7 +1218,7 @@ public sealed partial class MainViewModel : ObservableObject
     private IReadOnlyList<Optimizer.Core.Tools.ProcessCpu>? _lastBackgroundSample;
 
     /// <summary>The scan pipeline (hardware probes, reads ahead for the tweak detection, checks), the same as --report uses.</summary>
-    private ScanService ScanService => new(_catalog, _services.Context.Registry, _services.BcdElements, _services.Engine, _services.Catalog.Visible);
+    private ScanService ScanService => new(_catalog, _services.Context.Registry, _services.BcdValues, _services.Engine, _services.Catalog.Visible);
 
     /// <summary>
     /// The 3 second background CPU sample finished after the page was ready: its check (F11) is evaluated now. Skipped
@@ -2051,11 +2058,12 @@ public sealed partial class MainViewModel : ObservableObject
         var pending = _tweakStates.Concat(_deviceStates).Count(s => s.State is TweakState.PendingRestart or TweakState.UndoPendingRestart);
         if (pending > 0) Banners.Add(new Banner(Loc.Instance.Format("Banner_Restart", pending), true));
         var os = Profile.Os;
-        if (OsGate.Evaluate(os.Build, os.NativeArchitecture) == OsGateResult.SupportedNotValidated)
+        var gate = OsGate.Evaluate(os.Build, os.NativeArchitecture);
+        if (gate == OsGateResult.SupportedNotValidated)
             Banners.Add(new Banner(Loc.Instance.Format("Banner_NotValidated", os.BuildString), true));
+        if (gate == OsGateResult.Unsupported)
+            Banners.Add(new Banner(Loc.Instance["Banner_Unsupported"], true));
         if (os.FlightingActive) Banners.Add(new Banner(Loc.Instance.Format("Banner_Insider", os.FlightingDetail), false));
-        if (OsGate.Is24H2EndOfUpdates(os.Build, os.Edition, DateOnly.FromDateTime(DateTime.Today)))
-            Banners.Add(new Banner(Loc.Instance["Banner_EndOfUpdates"], true));
         if (Profile.Managed?.IsManaged == true) Banners.Add(new Banner(Loc.Instance["Banner_Managed"], true));
         if (Profile.Elevation is { } e)
         {

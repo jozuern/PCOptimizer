@@ -191,16 +191,17 @@ public sealed class LeftoverCheck : IFindingCheck
     public const string Id = "F21.leftovers";
     public IReadOnlyList<string> DocIds => [Id];
 
-    private readonly Func<IReadOnlySet<string>?> _bcd;
+    private readonly Func<IReadOnlyDictionary<string, string>?> _bcd;
 
-    /// <param name="bcd">BCD elements of {current} (the app passes a reader only when elevated); null = unknown.</param>
-    public LeftoverCheck(Func<IReadOnlySet<string>?>? bcd = null) => _bcd = bcd ?? (() => null);
+    /// <param name="bcd">BCD elements of {current} with their values (the app passes a reader only when elevated); null = unknown.</param>
+    public LeftoverCheck(Func<IReadOnlyDictionary<string, string>?>? bcd = null) => _bcd = bcd ?? (() => null);
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         var found = new List<Fact>();
         var bcd = SafeBcd(_bcd);
-        if (bcd?.Contains("useplatformclock") == true) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
+        // Only "Yes" forces the platform timer; "No" is what Windows does anyway (and what the fix of other tools leaves).
+        if (bcd is not null && bcd.TryGetValue("useplatformclock", out var clock) && IsYes(clock)) found.Add(new Fact("fact.leftoverValue", "BCD {current} useplatformclock"));
 
         yield return new Finding
         {
@@ -213,7 +214,9 @@ public sealed class LeftoverCheck : IFindingCheck
         };
     }
 
-    private static IReadOnlySet<string>? SafeBcd(Func<IReadOnlySet<string>?> read)
+    private static bool IsYes(string value) => value.Trim() is var v && (v.Equals("Yes", StringComparison.OrdinalIgnoreCase) || v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase) || v.Equals("on", StringComparison.OrdinalIgnoreCase));
+
+    private static IReadOnlyDictionary<string, string>? SafeBcd(Func<IReadOnlyDictionary<string, string>?> read)
     {
         try
         {

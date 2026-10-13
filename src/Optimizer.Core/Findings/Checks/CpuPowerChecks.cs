@@ -52,7 +52,10 @@ public sealed class MicrocodeCheck : IPhysicalHardwareCheck
 
 public enum X3dLayout { None, SingleCcd, MultiCcdAsymmetric, DualVCache }
 
-/// <summary>X3D topology: asymmetric L3 sizes (largest ≥ 2 × smallest) = one CCD with V-Cache.</summary>
+/// <summary>
+/// X3D topology: asymmetric L3 sizes (largest ≥ 2 × smallest) = one CCD with V-Cache. Only for processors named X3D:
+/// mobile chips with Zen 5 and Zen 5c clusters (Ryzen AI 300: 16 MB and 8 MB of L3) are asymmetric without V-Cache.
+/// </summary>
 public static class X3d
 {
     public static X3dLayout Classify(CpuInfo cpu, CatalogData c)
@@ -60,7 +63,8 @@ public static class X3d
         if (cpu.Vendor != Vendor.Amd) return X3dLayout.None;
         if (c.Cpu.X3dSymmetricDualModels.Any(m => cpu.Name.Contains(m, StringComparison.OrdinalIgnoreCase))) return X3dLayout.DualVCache;
         var sizes = cpu.L3Domains.Select(d => d.SizeBytes).Where(s => s > 0).ToList();
-        if (sizes.Count >= 2 && sizes.Max() >= c.Cpu.X3dAsymmetryFactor * sizes.Min()) return X3dLayout.MultiCcdAsymmetric;
+        if (cpu.Name.Contains("X3D", StringComparison.OrdinalIgnoreCase) && sizes.Count >= 2 && sizes.Max() >= c.Cpu.X3dAsymmetryFactor * sizes.Min())
+            return X3dLayout.MultiCcdAsymmetric;
         if (c.Cpu.X3dMultiCcdModels.Any(m => cpu.Name.Contains(m, StringComparison.OrdinalIgnoreCase))) return X3dLayout.MultiCcdAsymmetric;
         if (c.Cpu.X3dSingleCcdModels.Any(m => cpu.Name.Contains(m, StringComparison.OrdinalIgnoreCase))) return X3dLayout.SingleCcd;
         return X3dLayout.None;
