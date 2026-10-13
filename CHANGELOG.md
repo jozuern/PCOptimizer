@@ -11,6 +11,7 @@
 ### Fixed
 
 - **Hand cursor on whole pages:** on every page with tabs (Services & tasks, Remove apps, Install & update, Tools, for example the storage analyzer or the driver list) the mouse showed the hand everywhere, also over text and cards that do nothing. The hand cursor of a tab now applies to its header only; a test keeps it so.
+- **Developer switches:** an elevated `--screenshot` run with `--search` on a real desktop kept running after both pictures. The search results close again after their picture, and a `--screenshot` or `--perf` run that is still running 10 seconds after it finished notes that in the log and ends.
 - **Result bar:** a message without a link or button ran under the bar's close button ("99 %", "Fehlgeschlagen: 0." were cut). The close button now has its own room.
 - **Search for "update tunero":** the in-app search knew the update setting only as "update pcoptimizer"; it now finds it under the new name too.
 

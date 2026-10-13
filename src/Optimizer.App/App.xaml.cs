@@ -152,7 +152,7 @@ public partial class App : Application
         window.Show();
         // "System" theme: WPF-UI's watcher switches the brushes when Windows changes its mode; content built from brushes follows.
         ApplicationThemeManager.Changed += (_, _) => Dispatcher.BeginInvoke(RefreshThemedContent);
-        // Developer aid: render the window while the first scan still runs (placeholders instead of the score).
+        // Developer aid: render the window while the first scan still runs (the Overview says the scan is reading the PC).
         if (args.Value("--shot-scanning") is { } scanningShot)
         {
             await Task.Delay(1200);
@@ -172,12 +172,12 @@ public partial class App : Application
                 await preload;
                 Mark("pages loaded in the background");
                 await WritePerfReportAsync(vm, perfFile);
-                Shutdown(0);
+                EndDeveloperRun(0);
             }
             catch (Exception ex)
             {
                 Log.Error("app", "perf report failed", ex);
-                Shutdown(1);
+                EndDeveloperRun(1);
             }
             return;
         }
@@ -197,12 +197,12 @@ public partial class App : Application
             try
             {
                 await SaveScreenshotsAsync(args, vm, window, services, shot);
-                Shutdown(0);
+                EndDeveloperRun(0);
             }
             catch (Exception ex)
             {
                 Log.Error("app", "screenshot failed", ex);
-                Shutdown(1);
+                EndDeveloperRun(1);
             }
         }
     }
@@ -235,6 +235,9 @@ public partial class App : Application
             // The results are a popup, outside the window's picture: saved next to it.
             if (window.SearchPopup.Child is FrameworkElement results)
                 SaveVisual(results, window, System.IO.Path.ChangeExtension(shot, null) + "-search.png");
+            // Closed again: an open popup keeps the mouse captured, and on a real desktop Windows moves it onto the screen
+            vm.SearchResultsOpen = false;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         }
         // The inspector document is built in the background: wait for it before the picture.
         if (vm.SelectedItem is { } selected) await selected.MarkdownAsync();
@@ -527,6 +530,22 @@ public partial class App : Application
             if (child is T match) yield return match;
             foreach (var deeper in Descendants<T>(child)) yield return deeper;
         }
+    }
+
+    /// <summary>
+    /// Ends a developer run (--screenshot, --perf). Nobody can close its window below the screen, so a run that does not
+    /// end after Shutdown (seen once: an elevated --search run on a real desktop kept running after both pictures) writes
+    /// that to the log and ends the process after 10 seconds.
+    /// </summary>
+    private void EndDeveloperRun(int exitCode)
+    {
+        Shutdown(exitCode);
+        new System.Threading.Thread(() =>
+        {
+            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10));
+            Log.Warn("app", "developer run still running 10 s after shutdown, ended", new { exitCode });
+            Environment.Exit(exitCode);
+        }) { IsBackground = true, Name = "developer run end" }.Start();
     }
 
     /// <summary>
