@@ -36,6 +36,9 @@ public sealed class AppSettings
     /// <summary>The overview's note on how the app works (reads only, asks first, can undo) was dismissed.</summary>
     public bool IntroSeen { get; set; }
 
+    /// <summary>Scan results the user ignores (<see cref="ViewModels.MainViewModel.IgnoreKey"/>): left out of the lists and the score.</summary>
+    public List<string> IgnoredFindings { get; set; } = [];
+
     /// <summary>Usage profile id ("gaming", "battery", ...); null until the first scan suggests one.</summary>
     public string? Profile { get; set; }
 

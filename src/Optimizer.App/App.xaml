@@ -216,7 +216,7 @@
             <!-- Finding / advisor row: status icon, title, summary, impact line; Fix button when there is one -->
             <DataTemplate x:Key="FindingRow">
                 <!-- The card opens the details: screen readers announce it by its title and state -->
-                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
+                <v:ClickCard Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
                                 AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding MetaText}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Icon>
@@ -239,7 +239,7 @@
                                        Command="{Binding DataContext.RunActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                         </Grid>
                     </StackPanel>
-                </ui:CardControl>
+                </v:ClickCard>
             </DataTemplate>
 
             <!-- Tweak row: switch on the right (on = confirm and apply, off = undo) -->
@@ -323,7 +323,7 @@
             </DataTemplate>
 
             <DataTemplate x:Key="TweakRow">
-                <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
+                <v:ClickCard Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" Style="{StaticResource SelectableCard}"
                                 AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding MetaText}"
                                 Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                     <ui:CardControl.Header>
@@ -362,7 +362,7 @@
                                       ToolTip="{Binding ImpactTooltip}" AutomationProperties.Name="{Binding ImpactText}" />
                         <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
                     </StackPanel>
-                </ui:CardControl>
+                </v:ClickCard>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

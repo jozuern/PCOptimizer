@@ -70,7 +70,7 @@ public sealed partial class MainViewModel
 
     private void RestoreSelection(string? key) =>
         SelectedItem = key is null ? null :
-            Findings.Cast<InspectorItem>().Concat(AdvisorItems).Concat(Tweaks).Concat(Network.DeviceTweaks).Append(GameAccess).FirstOrDefault(i => i?.Key == key);
+            Findings.Cast<InspectorItem>().Concat(AdvisorItems).Concat(IgnoredItems).Concat(Tweaks).Concat(Network.DeviceTweaks).Append(GameAccess).FirstOrDefault(i => i?.Key == key);
 
     /// <summary>The finding and advisor lists, the score and the counts on the overview.</summary>
     private void BuildFindingLists()
@@ -82,6 +82,7 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(AdvisorEmpty));
         var access = _profiledFindings.FirstOrDefault(f => f.Kind == FindingKind.GameAccess);
         GameAccess = access is null ? null : new FindingItemViewModel(access, lang);
+        BuildIgnored(lang);
         var hidden = ProfileView.HiddenProblems(_usage, _findings);
         HiddenFindingsText = hidden > 0 ? Loc.Instance.Format("Findings_HiddenByProfile", hidden) : null;
         var passed = ShowPassed ? 0 : _profiledFindings.Count(f => f.Kind == FindingKind.Advisor && f.Status is FindingStatus.Ok or FindingStatus.Unsupported);

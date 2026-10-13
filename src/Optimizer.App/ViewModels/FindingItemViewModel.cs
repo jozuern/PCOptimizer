@@ -45,5 +45,13 @@ public sealed class FindingItemViewModel : InspectorItem
     public TweakDefinition? Fix { get; }
 
     public bool IsProblem => Finding.Status == FindingStatus.Problem;
+
+    /// <summary>A result the user can ignore: a problem, a note or an unknown on the Overview or Manual checks (not a passed check).</summary>
+    public bool CanIgnore => Finding.Kind is FindingKind.Finding or FindingKind.Advisor && Finding.Status is not (FindingStatus.Ok or FindingStatus.Unsupported);
+
+    /// <summary>Listed under "Ignored": the details pane offers Stop ignoring instead.</summary>
+    public bool IsIgnored { get; init; }
+
+    public bool OffersIgnore => CanIgnore && !IsIgnored;
     public override string Key => "finding:" + Finding.Key;
 }

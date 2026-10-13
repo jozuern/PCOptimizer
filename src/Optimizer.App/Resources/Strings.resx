@@ -923,6 +923,11 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Findings_HiddenByProfile" xml:space="preserve">
     <value>Problems that only matter for other profiles: {0}. Switch the profile to see them.</value>
   </data>
+  <data name="Findings_Ignore" xml:space="preserve"><value>Ignore this result</value></data>
+  <data name="Findings_StopIgnoring" xml:space="preserve"><value>Stop ignoring</value></data>
+  <data name="Findings_IgnoredCount" xml:space="preserve"><value>Ignored results: {0}. Show or hide them</value></data>
+  <data name="Findings_IgnoredResult" xml:space="preserve"><value>Ignored: {0}. It no longer counts in the score; Stop ignoring brings it back.</value></data>
+  <data name="Findings_UnignoredResult" xml:space="preserve"><value>Shown again: {0}.</value></data>
   <data name="Impact_TooltipGoal" xml:space="preserve">
     <value>Impact on {0}: {1} of 5</value>
   </data>

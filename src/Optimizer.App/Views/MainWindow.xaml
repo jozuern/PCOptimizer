@@ -190,6 +190,15 @@
                                           Visibility="{Binding Note, Converter={StaticResource NullToVisibility}}" />
                         </StackPanel>
                     </DockPanel>
+                    <!-- A scan result kept on purpose (a game library on a hard disk): ignored, or back again -->
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,16,8" DataContext="{Binding SelectedItem}">
+                        <ui:Button Content="{l:Tr Findings_Ignore}" Icon="{ui:SymbolIcon EyeOff20}" Appearance="Secondary"
+                                   Visibility="{Binding OffersIgnore, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}"
+                                   Command="{Binding DataContext.IgnoreFindingCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                        <ui:Button Content="{l:Tr Findings_StopIgnoring}" Icon="{ui:SymbolIcon Eye20}" Appearance="Secondary"
+                                   Visibility="{Binding IsIgnored, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}"
+                                   Command="{Binding DataContext.StopIgnoringCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                    </WrapPanel>
                     <StackPanel DockPanel.Dock="Top" Margin="0,4,16,16" DataContext="{Binding SelectedItem}"
                                 Visibility="{Binding HasAction, Converter={StaticResource BoolToVisibility}}">
                         <ui:Button Appearance="Primary" Content="{Binding ActionText}" HorizontalAlignment="Left" MinWidth="120"

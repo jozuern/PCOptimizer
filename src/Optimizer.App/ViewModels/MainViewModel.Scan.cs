@@ -250,7 +250,7 @@ public sealed partial class MainViewModel
     private void ApplyProfile()
     {
         _profiled = ProfileView.For(_usage, _tweakStates, _facts);
-        _profiledFindings = ProfileView.Findings(_usage, _findings);
+        _profiledFindings = WithoutIgnored(ProfileView.Findings(_usage, _findings));
         _plan = Optimizer.Core.Tweaks.Recommendations.Build(_profiled, _profiledFindings);
     }
 

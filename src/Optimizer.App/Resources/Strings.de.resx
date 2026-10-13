@@ -923,6 +923,11 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Findings_HiddenByProfile" xml:space="preserve">
     <value>Probleme, die nur für andere Profile zählen: {0}. Wechsle das Profil, um sie zu sehen.</value>
   </data>
+  <data name="Findings_Ignore" xml:space="preserve"><value>Dieses Ergebnis ignorieren</value></data>
+  <data name="Findings_StopIgnoring" xml:space="preserve"><value>Nicht mehr ignorieren</value></data>
+  <data name="Findings_IgnoredCount" xml:space="preserve"><value>Ignorierte Ergebnisse: {0}. Anzeigen oder ausblenden</value></data>
+  <data name="Findings_IgnoredResult" xml:space="preserve"><value>Ignoriert: {0}. Es zählt nicht mehr in die Bewertung; „Nicht mehr ignorieren“ holt es zurück.</value></data>
+  <data name="Findings_UnignoredResult" xml:space="preserve"><value>Wieder angezeigt: {0}.</value></data>
   <data name="Impact_TooltipGoal" xml:space="preserve">
     <value>Wirkung auf {0}: {1} von 5</value>
   </data>

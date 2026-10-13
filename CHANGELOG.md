@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Ignore a scan result:** a result you keep on purpose (a game library on a hard disk as a backup, or because copying is faster than downloading) can be ignored in its details. It leaves the list, the score and the problem count, and stays under "Ignored results" on the Overview with Stop ignoring. Only that result is ignored: another library on a hard disk still shows.
 - **Apply my changes again when Windows resets them** (Settings, off by default): a scheduled task starts Tunero two minutes after you sign in, as your account with administrator rights, and applies again only the changes the Overview lists as reset (what "Apply again" offers; no Expert, boot-critical or anti-cheat sensitive change). Nothing keeps running. The task is a change on the Changes page, and undo removes it. It can only be turned on when Tunero is in a folder only administrators can change (Program Files, or winget or Chocolatey for all users), since the task starts it elevated without asking. The same run is `--reapply` on the command line.
 - **Drive letters first and no "- Shortcut" suffix:** two Explorer tweaks, as in Winaero Tweaker. This PC shows "(C:) Local Disk" (after Explorer restarts), and new shortcuts are named without "- Shortcut". Microsoft does not document either value; a VM test showed both working and both gone again after Undo.
 - **Faster submenus and a shorter hover time:** two new Personalize tweaks set the submenu delay to 100 ms and the hover time to 200 ms (Windows: 400 ms each) through SystemParametersInfo, the documented way: they take effect at once without signing out, and Undo sets the earlier values. Checked in the VM: the running session had the new values right away, and the old ones after Undo.
@@ -16,6 +17,7 @@
 
 ### Fixed
 
+- **Screen readers and voice control, clickable cards:** the cards that open details or a group were reported as a plain "pane" without a way to click them through UI Automation; they are now buttons that Narrator announces as such and Voice Access can click by name.
 - **German, change targets and values:** targets that stayed English ("Task Scheduler\...", registry values changed bit by bit, a network adapter without a name) and stored states ("Disabled", a service's "Manual") now read in German in the confirmation, the explanation page and the change log, as the other targets already did.
 
 ## 1.0.0

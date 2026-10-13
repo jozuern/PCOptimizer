@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <!-- Lists of one kind (games, devices): one line per row, the section explains the rest. Click opens the details. -->
         <DataTemplate x:Key="CompactTweakRow">
-            <ui:CardControl Margin="0,0,0,2" Padding="16,6" Style="{StaticResource SelectableCard}" AutomationProperties.Name="{Binding Title}"
+            <v:ClickCard Margin="0,0,0,2" Padding="16,6" Style="{StaticResource SelectableCard}" AutomationProperties.Name="{Binding Title}"
                             Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                 <ui:CardControl.Header>
                     <!-- As on the Tweaks page: the icon only in front of a row that needs attention, no empty icon column -->
@@ -21,7 +21,7 @@
                     </WrapPanel>
                 </ui:CardControl.Header>
                 <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TweakSwitch}" />
-            </ui:CardControl>
+            </v:ClickCard>
         </DataTemplate>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">

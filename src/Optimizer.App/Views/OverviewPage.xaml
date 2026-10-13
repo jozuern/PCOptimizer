@@ -60,6 +60,12 @@
             <v:ItemList ItemsSource="{Binding Findings}" ItemTemplate="{StaticResource FindingRow}" />
             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding HiddenFindingsText}" Margin="0,4,0,0"
                           Visibility="{Binding HiddenFindingsText, Converter={StaticResource NullToVisibility}}" />
+            <!-- Results the user ignores: out of the list and the score, one click away -->
+            <StackPanel Visibility="{Binding IgnoredText, Converter={StaticResource NullToVisibility}}" Margin="0,4,0,0">
+                <ui:HyperlinkButton Content="{Binding IgnoredText}" Command="{Binding ToggleIgnoredCommand}" Padding="0" />
+                <v:ItemList ItemsSource="{Binding IgnoredItems}" ItemTemplate="{StaticResource FindingRow}" Margin="0,8,0,0"
+                            Visibility="{Binding ShowIgnored, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
 
             <!-- Usage profile: decides recommendations and what counts; changes nothing by itself. After the findings: the verdict
                  comes first, the setting that shapes it follows. -->
