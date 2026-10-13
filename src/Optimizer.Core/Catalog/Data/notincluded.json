@@ -311,6 +311,26 @@
         "de": "Die Richtlinie gilt nicht für Edge-Profile mit Microsoft-Konto, und nur diese sehen Rewards; sie würde also nichts ändern. Schalte Rewards in Edge unter Einstellungen > Profile ab."
       },
       "keywords": ["rewards", "microsoft rewards", "showmicrosoftrewards", "edge rewards", "bing rewards"]
+    },
+    {
+      "id": "liveProcessRules",
+      "doc": "Live process rules",
+      "title": { "en": "Live process rules (ProBalance, power plan per game)", "de": "Prozessregeln zur Laufzeit (ProBalance, Energieplan pro Spiel)" },
+      "reason": {
+        "en": "They need a program that watches everything in the background, and Tunero leaves nothing running. Use the start priorities on the Tools page, which Windows applies itself.",
+        "de": "Sie brauchen ein Programm, das im Hintergrund alles überwacht, und Tunero lässt nichts laufen. Nutze die Startprioritäten auf der Seite Tools, die Windows selbst anwendet."
+      },
+      "keywords": ["process lasso", "probalance", "power plan per game", "energieplan pro spiel", "smarttrim", "process rules"]
+    },
+    {
+      "id": "affinity",
+      "doc": "A fixed set of processor cores per game",
+      "title": { "en": "Fixed processor cores per game (affinity)", "de": "Feste Prozessorkerne pro Spiel (Affinität)" },
+      "reason": {
+        "en": "Windows has no setting that applies an affinity every time a program starts; it can only be set for one launch or by a program running in the background.",
+        "de": "Windows hat keine Einstellung, die bei jedem Programmstart eine Affinität setzt; sie lässt sich nur für einen Start oder durch ein Programm im Hintergrund setzen."
+      },
+      "keywords": ["affinity", "affinität", "cpu affinity", "processor affinity", "kerne zuweisen"]
     }
   ]
 }
