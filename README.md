@@ -6,8 +6,6 @@
 
 Tunero finds what really costs your games frame rate, fixes what it can and tells you how to fix the rest. It brings the useful settings of the popular tweak tools, debloat scripts and system utilities into one app (privacy, debloat, cleanup, startup, services, Windows Update) and leaves out the placebo. Every finding and every change comes with an explanation and sources, and every setting it changes is backed up first and can be undone. Gaming first, with profiles for laptops, battery, office, quiet and older PCs. One exe for Windows 11 25H2 or newer (x64), in English and German. Website: [tunero.dev](https://tunero.dev).
 
-> **Status: preview.** The tests apply and undo every catalog tweak made of registry values against a registry sandbox, restore a saved backup of every kind of change the way an earlier version wrote it, and run the other changes against fake system interfaces; the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 Pro in a Hyper-V virtual machine before releases (Home and 25H2 are supported but have been tested less). A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
-
 <p align="center"><img src="docs/screenshots/flow.gif" width="800" alt="The scan, the confirmation of the recommended changes with the exact values, the question to turn on System Protection for a restore point, the Changes page, and Undo all"></p>
 
 ## Download
@@ -65,6 +63,10 @@ The app uses settings that Microsoft or the hardware vendor documents. A few har
 - **No placebo.** Popular tweaks without evidence are left out, and the search says why when you look for one. The full list with sources is in [docs/not-included.md](docs/not-included.md).
 - **It looks at your PC first.** It recommends only what fits this PC and your profile, and keeps risky changes behind Expert mode.
 - **Nothing runs in the background.** No service, no tray icon, no telemetry. Windows applies the settings itself; the app runs only when you start it.
+
+## How it is tested
+
+The tests apply and undo every catalog tweak made of registry values against a registry sandbox, restore a saved backup of every kind of change the way an earlier version wrote it, and run the other changes against fake system interfaces; the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 Pro in a Hyper-V virtual machine before releases (Home and 25H2 are supported but have been tested less). A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
 
 ## What it does not replace
 

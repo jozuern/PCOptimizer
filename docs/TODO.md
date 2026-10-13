@@ -2,12 +2,12 @@
 
 What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-2026-10-13.md)) and its fixes. Every high finding and every medium marked as a 1.0 blocker there is fixed in code; what follows needs a person, a VM image or hardware we do not have, or is planned work.
 
-## Before 1.0
+## Left from the 1.0 list
 
 - **Backup update key in the Scoop bucket:** the key pair exists (public half committed as `update-key-backup.pem`, private half offline with the owner) and every workflow here checks against both keys; the bucket's pinned copy in `keys/` still needs it.
 - **VM runs we could not do yet:** the core plan on Windows 11 25H2 Pro and on a Home edition (needs those VM images), and once on 24H2 to see the "no longer supported" note with a working Undo.
-- **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): small screen at 150 % (needs a basic session: in an enhanced session the remote desktop client sets the scale), a failed start after a self-update (needs a signed release newer than the installed one: the update to 1.0.1), the Startup page's task rows, Update all with machine and user scope.
-- **Release:** rename `## Unreleased` in CHANGELOG.md to `## 1.0.0`, drop "(preview)" and the README status banner, decide on code signing (SignPath declined on 2026-10-13), and get the first winget and Chocolatey versions through review or keep them marked pending.
+- **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): a failed start after a self-update (needs a signed release newer than the installed one: the update to 1.0.1).
+- **Release:** decide on code signing (SignPath declined on 2026-10-13), and get the first winget and Chocolatey versions through review or keep them marked pending.
 - **Listen once with Narrator** over Overview, Tweaks, the confirmation and Changes. The Tab order and the names it reads were checked on every page and in the confirmation with `--tab-order` and UI Automation (2026-10-13); what is left is hearing it on a desktop, for example whether a result is announced.
 
 ## Checks in the VM (from earlier runs)

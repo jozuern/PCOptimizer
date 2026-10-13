@@ -240,7 +240,10 @@ public static class HardwareReport
         if (p.Memory is { } m)
         {
             var first = m.Modules.FirstOrDefault();
-            var detail = first is null ? "" : f.F("memoryValue", first.Type, RamSpeed.NormalizeConfigured(first), m.Modules.Count);
+            // Without a reported speed (virtual machines, some firmware) the line leaves it out instead of showing " MT/s".
+            var detail = first is null ? "" : RamSpeed.NormalizeConfigured(first) is { } speed
+                ? f.F("memoryValue", first.Type, speed, m.Modules.Count)
+                : f.F("memoryNoSpeedValue", first.Type, m.Modules.Count);
             tiles.Add(new HwTile(l["Hw_Memory"], f.Gb(m.TotalBytes), detail, SymbolRegular.Ram20));
         }
         if (p.Displays is { Count: > 0 } d)
