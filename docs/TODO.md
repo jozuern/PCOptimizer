@@ -4,11 +4,9 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 ## Left from the 1.0 list
 
-- **Backup update key in the Scoop bucket:** the key pair exists (public half committed as `update-key-backup.pem`, private half offline with the owner) and every workflow here checks against both keys; the bucket's pinned copy in `keys/` still needs it.
-- **VM runs we could not do yet:** the core plan on Windows 11 25H2 Pro and on a Home edition (needs those VM images), and once on 24H2 to see the "no longer supported" note with a working Undo.
+- **VM run on a Home edition:** the core plan on Windows 11 Home (26H2, from the official ISO). 25H2 and 24H2 are not run: Microsoft offers only the current release, and the owner decided against building older images from update files (2026-10-13).
 - **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): a failed start after a self-update (needs a signed release newer than the installed one: the update to 1.0.1).
-- **Release:** decide on code signing (SignPath declined on 2026-10-13), and get the first winget and Chocolatey versions through review or keep them marked pending.
-- **Listen once with Narrator** over Overview, Tweaks, the confirmation and Changes. The Tab order and the names it reads were checked on every page and in the confirmation with `--tab-order` and UI Automation (2026-10-13); what is left is hearing it on a desktop, for example whether a result is announced.
+- **Code signing:** apply to the SignPath Foundation again once the project is better known (declined 2026-10-13 for too little public visibility); Azure Trusted Signing takes only companies, not individuals. Until then the exe stays unsigned. The first winget and Chocolatey versions are in review.
 
 ## Checks in the VM (from earlier runs)
 
