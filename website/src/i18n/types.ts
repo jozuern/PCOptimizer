@@ -41,17 +41,28 @@ export interface Copy {
     row: (level: number, count: number) => string;
   };
   scan: { title: string; body: (checks: number) => string[]; list: (checks: number) => string };
-  change: {
+  /** One tweak followed end to end: its explanation page with what it writes, the apply steps, the app window. */
+  tweak: {
     title: string;
     intro: string;
+    docLabel: string;
+    /** The tweak's rating, as the app writes it. */
+    impact: (level: number) => string;
+    /** The app's generated section with the registry values, between the summary and the rest. */
+    changes: string;
     columns: [string, string, string];
     caption: string;
-    expert: string;
+    /** The sections of the page shown on the site, in order; the first is followed by the values. */
+    show: string[];
+    sourcesLabel: string;
+    /** Under the page: the evidence a popular tweak's own page gives, where it does not hold up. */
+    disputed: { intro: (title: string) => string; link: string };
     stepsTitle: string;
     steps: { name: string; text: string }[];
     body: string[];
+    shotAlt: string;
+    shotCaption: string;
   };
-  sources: { title: string; intro: string; docLabel: string; sourcesLabel: string; show: string[]; after: string; shotAlt: string };
   left: {
     title: string;
     intro: string;

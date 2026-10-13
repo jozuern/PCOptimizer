@@ -47,14 +47,21 @@ const de: Copy = {
     ],
     list: (n) => `Die ${n} Prüfungen`,
   },
-  change: {
-    title: 'Du siehst jeden Wert, bevor er sich ändert, und kannst ihn zurückholen',
+  tweak: {
+    title: 'Jede Änderung wird vorher erklärt und lässt sich rückgängig machen',
     intro:
-      'Die Bestätigung listet jeden Registry-Wert, Dienst, jede Aufgabe und Einstellung mit dem aktuellen und dem neuen Wert. So sieht das aus, wenn du die Mausbeschleunigung ausschaltest:',
+      'Jede Prüfung und jeder Tweak hat eine Seite auf Deutsch und Englisch: was er tut, was er schreibt, warum er helfen kann, wie belastbar die Belege sind, und die Quellen. Die App zeigt sie neben dem Schalter. Das ist die Seite zum Ausschalten der Mausbeschleunigung:',
+    docLabel: 'Erklärseite in der App',
+    impact: (n) => `Wirkung ${n} von 5`,
+    changes: 'Was sich ändert',
     columns: ['Wert', 'Jetzt', 'Neu'],
-    caption: '„Jetzt“ zeigt die Standardwerte von Windows.',
-    expert:
-      'Änderungen, die Sicherheitsfunktionen ausschalten oder die Startkonfiguration ändern, bleiben im Expertenmodus, und keine davon wird je automatisch empfohlen.',
+    caption: '„Jetzt“ zeigt die Standardwerte von Windows. Die App zeigt die Werte deines PCs.',
+    show: ['Zusammenfassung', 'So funktioniert es', 'Belege', 'Nachteile & Risiken'],
+    sourcesLabel: 'Quellen',
+    disputed: {
+      intro: (title) => `Wo die Belege nicht tragen, sagt die Seite das. Die Seite zu ${title}, einem beliebten Tweak:`,
+      link: 'Die ganze Seite lesen',
+    },
     stepsTitle: 'Was beim Anwenden passiert',
     steps: [
       { name: 'Wiederherstellungspunkt', text: 'Vor der ersten Änderung, wenn der Computerschutz eingeschaltet ist.' },
@@ -63,20 +70,12 @@ const de: Copy = {
       { name: 'Rückgängig', text: 'Die Seite Änderungen listet jede Änderung mit „Rückgängig“, auch nach einem Neustart oder einem Update der App.' },
     ],
     body: [
-      'Nach einem Windows-Update zeigt sie, welche Änderungen Windows zurückgesetzt hat, und bietet an, sie erneut anzuwenden. Entfernte Apps und gelöschte Dateien sind die Ausnahme, und das sagt die App, bevor sie etwas entfernt.',
+      'Nach einem Windows-Update zeigt die App, welche Änderungen Windows zurückgesetzt hat, und bietet an, sie erneut anzuwenden. Entfernte Apps und gelöschte Dateien sind die Ausnahme, und das sagt die App, bevor sie etwas entfernt.',
+      'Änderungen, die Sicherheitsfunktionen ausschalten oder die Startkonfiguration ändern, bleiben im Expertenmodus, und keine davon wird je automatisch empfohlen. Ein Tweak, der auf echter Hardware noch nicht erprobt ist, trägt das Abzeichen „Noch nicht auf einem echten PC getestet“ und ist nie Teil von „Empfohlene anwenden“.',
     ],
-  },
-  sources: {
-    title: 'Jede Aussage hat eine Quelle',
-    intro:
-      'Jede Prüfung und jeder Tweak hat eine Seite auf Deutsch und Englisch: was er tut, warum er helfen kann, wie belastbar die Belege sind, die Nachteile und die Quellen. Das ist die Seite eines beliebten Tweaks, den die Belege nicht stützen:',
-    docLabel: 'Erklärseite in der App',
-    sourcesLabel: 'Quellen',
-    show: ['Zusammenfassung', 'Belege', 'Nachteile & Risiken'],
-    after:
-      'Ein Tweak, der auf echter Hardware noch nicht erprobt ist, trägt das Abzeichen „Noch nicht auf einem echten PC getestet“ und ist nie Teil von „Empfohlene anwenden“.',
     shotAlt:
-      'Die Seite Tweaks von Tunero: Gruppen von Tweaks mit Schaltern und die Erklärung des gewählten Tweaks im Detailbereich.',
+      'Die Seite Tweaks von Tunero, gewählt ist „Mausbeschleunigung aus“: Gruppen von Tweaks mit Schaltern und die Erklärung im Detailbereich.',
+    shotCaption: 'Derselbe Tweak auf der Seite Tweaks.',
   },
   left: {
     title: 'Was es weglässt, und warum',

@@ -47,14 +47,21 @@ const en: Copy = {
     ],
     list: (n) => `The ${n} checks`,
   },
-  change: {
-    title: 'You see every value before it changes, and you can take it back',
+  tweak: {
+    title: 'Every change is explained before it happens, and can be undone',
     intro:
-      'The confirmation lists each registry value, service, task or setting with its current and its new value. This is what turning off mouse acceleration writes:',
+      'Each check and each tweak has a page in English and German: what it does, what it writes, why it can help, how solid the evidence is, and the sources. The app shows it next to the switch. This is the page for turning off mouse acceleration:',
+    docLabel: 'Explanation page in the app',
+    impact: (n) => `Impact ${n} of 5`,
+    changes: 'What changes',
     columns: ['Value', 'Now', 'New'],
-    caption: 'Now shows the Windows defaults.',
-    expert:
-      'Changes that turn off security features or touch the boot configuration stay behind Expert mode, and none of them is ever recommended automatically.',
+    caption: 'Now shows the Windows defaults. The app shows the values of your PC.',
+    show: ['Summary', 'How it works', 'Evidence', 'Trade-offs & risks'],
+    sourcesLabel: 'Sources',
+    disputed: {
+      intro: (title) => `Where the evidence does not hold up, the page says so. The page for ${title}, a popular tweak:`,
+      link: 'Read the whole page',
+    },
     stepsTitle: 'What happens when you apply',
     steps: [
       { name: 'Restore point', text: 'Created before the first change, when System Protection is on.' },
@@ -63,20 +70,12 @@ const en: Copy = {
       { name: 'Undo', text: 'The Changes page lists every change with Undo, also after a restart or an update of the app.' },
     ],
     body: [
-      'After a Windows update, it shows which changes Windows reset and offers to apply them again. Removed apps and deleted files are the exception, and the app says so before it removes them.',
+      'After a Windows update, the app shows which changes Windows reset and offers to apply them again. Removed apps and deleted files are the exception, and the app says so before it removes them.',
+      'Changes that turn off security features or touch the boot configuration stay behind Expert mode, and none of them is ever recommended automatically. A tweak that is not yet proven on real hardware carries the badge "Not yet tested on a real PC" and is never part of Apply recommended.',
     ],
-  },
-  sources: {
-    title: 'Every claim has a source',
-    intro:
-      'Each check and each tweak has a page in English and German: what it does, why it can help, how solid the evidence is, the trade-offs, and the sources. This is the page for a popular tweak the evidence does not support:',
-    docLabel: 'Explanation page in the app',
-    sourcesLabel: 'Sources',
-    show: ['Summary', 'Evidence', 'Trade-offs & risks'],
-    after:
-      'A tweak that is not yet proven on real hardware carries the badge "Not yet tested on a real PC" and is never part of Apply recommended.',
     shotAlt:
-      'The Tweaks page of Tunero: groups of tweaks with switches, and the explanation of the selected tweak in the details pane.',
+      'The Tweaks page of Tunero with Mouse acceleration off selected: groups of tweaks with switches, and its explanation in the details pane.',
+    shotCaption: 'The same tweak on the Tweaks page.',
   },
   left: {
     title: 'What it leaves out, and why',

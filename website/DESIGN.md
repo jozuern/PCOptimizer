@@ -49,24 +49,32 @@ Two colors with a meaning each, both from Windows 11. No gradients.
 The scan comes before the tweaks, and the one-app claim comes right after it: the largest gains come from problems
 the scan finds, and replacing a folder of tools is the positioning.
 
-1. **Hero:** the claim across the page, the lead (scan first, then "built to replace" the tool kinds) and the download
-   side by side, then the Overview window. The window hangs into the rating board below it.
+The page has three kinds of section, so it does not repeat one rhythm ten times: the argument (board, scan, one tweak,
+areas, left out) under large headings, each laid out its own way; and the reference area at the end under small ones.
+
+1. **Hero:** the claim across the page in two lines (a hyphenated word such as "PC-Optimierer" stays whole), the lead
+   (scan first, then "built to replace" the tool kinds) and the download side by side, then the Overview window. The
+   window hangs into the rating board below it.
 2. **Rating board** (the loud element): checks and tweaks share the 0 to 5 scale, numerals down the side. Row 5 has an
    accent numeral and names the checks rated 5 (`topChecks`, read from the check code), because no tweak reaches 5.
    Rows 4 to 1 name every tweak that can matter for games, once, in the row of its highest rating; "on some PCs,
    otherwise N" when the rating depends on the PC. Row 0 names the popular gaming tweaks rated 0 on disputed evidence,
    then one square per remaining tweak.
 3. **Scan:** the text on the left (sticky), every check as one running paragraph on the right, alternating ink.
-4. **Areas:** "Built to replace a folder full of tools", the app's pages in the groups and order of its navigation
-   rail, with the selection mark on Overview.
-5. **Change:** the registry values with the old value struck in red and the new one in accent, next to the steps of an
-   apply as a numbered sequence (a real order, so numbers are right there).
-6. **Sources:** an explanation page of the app set as a sheet, the sources in its margin; then the Tweaks window.
-7. **Left out:** tweak names struck through in red, the reason and source below.
-8. **Privacy**, **Install** (a numbered sequence along a line) and **Questions**.
+4. **One tweak, end to end:** Mouse acceleration off, its explanation page from the catalog set as a sheet. The
+   registry values sit in it where the app puts "What changes", after the summary, old value struck in red and new
+   one in accent; the sources sit in its margin. Under the sheet, the Evidence section of the Ultimate Performance
+   page quoted (a popular tweak whose evidence does not hold up; the build fails if it stops being rated disputed),
+   then the apply steps as a numbered sequence across the page (a real order), then the Tweaks window with the same
+   tweak selected.
+5. **Areas:** "Built to replace a folder full of tools", heading on top, then the app's pages in the groups and order
+   of its navigation rail, in two columns, with the selection mark on Overview.
+6. **Left out:** tweak names struck through in red, the reason and source below.
+7. **Reference area:** Privacy, Install (a numbered sequence down a line) and Questions as rows of a settings page: a
+   heading of 24 to 30 px on the left, the content on the right, a heavy rule over the first row and thin ones between.
 
 Sections are separated by space, not rules. Rules appear only inside things you read as a set (board rows, tables,
-the left-out list, questions).
+the left-out list, the reference rows).
 
 ## Markup
 

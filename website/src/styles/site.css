@@ -73,7 +73,7 @@ a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
 p { margin: 0 0 16px; max-width: 66ch; }
-:lang(de) p, :lang(de) dd, :lang(de) li { hyphens: auto; }
+:lang(de) p, :lang(de) dd, :lang(de) li, :lang(de) .doc h3 { hyphens: auto; }
 p:last-child { margin-bottom: 0; }
 
 h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
@@ -87,6 +87,7 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 
 .skip { position: absolute; left: -9999px; }
 .skip:focus { left: var(--gutter); top: 8px; background: var(--bg); padding: 8px 12px; z-index: 10; }
+.nowrap { white-space: nowrap; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Header */
@@ -100,11 +101,11 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 .site-header nav a:hover { color: var(--ink); text-decoration: underline; }
 @media (max-width: 600px) { .site-header nav .wide { display: none; } }
 
-/* Hero: the claim across the page, the lead and the download under it, then the app's window. The window hangs into
+/* Hero: the claim across the page in two lines, the lead and the download under it, then the app's window. The window hangs into
    the rating board below. */
 
 .hero { --overhang: clamp(56px, 14vw, 200px); padding-top: clamp(40px, 7vw, 88px); position: relative; z-index: 1; }
-.hero h1 { font-size: clamp(42px, 7.4vw, 92px); line-height: 1; letter-spacing: -0.035em; max-width: 14ch; }
+.hero h1 { font-size: clamp(42px, 7.4vw, 92px); line-height: 1; letter-spacing: -0.035em; max-width: 24ch; }
 .hero-text { display: grid; gap: 24px 64px; margin-top: 32px; }
 @media (min-width: 1000px) { .hero-text { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; } }
 .hero .lead { font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 52ch; margin: 0; }
@@ -201,22 +202,28 @@ code, kbd, .mono { font-family: var(--font-mono); font-size: 0.875em; }
 .runon li::after { content: '.'; color: var(--ink-3); margin-right: 0.3em; }
 .runon li:nth-child(even) { color: var(--ink-2); }
 
-/* Before and after a change: the registry values, then the order of things. */
-
-.change-grid { display: grid; gap: 48px 64px; margin-top: 8px; }
-@media (min-width: 1000px) { .change-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
-.change-grid > div > p { color: var(--ink-2); }
+/* One tweak followed end to end: its page with the values it writes, the apply steps, then the app window. */
 
 table { border-collapse: collapse; width: 100%; }
 caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-text); color: var(--ink-3); padding-top: 12px; }
-.diff { margin-top: 24px; font-family: var(--font-mono); max-width: 560px; }
+.diff { margin: 8px 0 8px; font-family: var(--font-mono); max-width: 520px; }
 .diff th { text-align: left; font: 400 13px/1.4 var(--font-text); color: var(--ink-3); padding: 0 16px 8px 0; border-bottom: 1px solid var(--rule); }
 .diff th.key { font: 400 14px/1.5 var(--font-mono); color: var(--ink); padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
-.diff td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--rule); font-size: 17px; white-space: nowrap; }
+.diff td { padding: 10px 16px 10px 0; border-bottom: 1px solid var(--rule); font-size: 16px; white-space: nowrap; }
 .diff td:first-child { width: 60%; }
 .diff del { color: var(--red); text-decoration-thickness: 2px; }
 .diff ins { text-decoration: none; font-weight: 700; color: var(--accent); }
-.expert { margin-top: 32px; font-size: 16px; }
+
+.tweak-after { display: grid; gap: 0 64px; margin-top: 8px; }
+@media (min-width: 1000px) { .tweak-after { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tweak-after p { color: var(--ink-2); font-size: 16px; }
+.tweak-after + .shot { margin-top: clamp(48px, 6vw, 72px); }
+/* Under the sheet: what a popular tweak's own page says when its evidence does not hold up. */
+.counter { margin: 32px 0 0; max-width: 66ch; }
+.counter figcaption { color: var(--ink-2); font-size: 16px; margin-bottom: 12px; }
+.counter blockquote { margin: 0 0 12px; padding-left: 20px; border-left: 2px solid var(--ink-3); }
+.counter blockquote p { font: 400 clamp(19px, 1.9vw, 22px)/1.45 var(--font-display); letter-spacing: -0.01em; color: var(--ink); }
+.counter + .small-head { margin-top: clamp(48px, 6vw, 64px); }
 
 /* A real sequence: a line down the side with a mark at each step. */
 .sequence { list-style: none; margin: 0 0 24px; padding: 0; counter-reset: step; }
@@ -231,23 +238,25 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .sequence b { font: 600 19px/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--ink); }
 .sequence .button, .sequence pre { margin-top: 12px; align-self: flex-start; }
 
-/* Across the page from 760 px: the line runs along the top. */
-@media (min-width: 760px) {
-  .sequence.across { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: 16px; }
+/* Across the page from 1000 px: the line runs along the top. */
+@media (min-width: 1000px) {
+  .sequence.across { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 32px; margin-top: 16px; }
   .sequence.across li { padding: 40px 0 0; }
   .sequence.across li::after { left: 32px; right: -28px; top: 11.25px; bottom: auto; width: auto; height: 1.5px; }
 }
 
-/* An explanation page of the app, set as a printed sheet, the sources in the margin next to the text. */
+/* The explanation page, set as a sheet, the sources in the margin next to the text. */
 
 .doc {
   margin: 40px 0 24px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
   padding: clamp(24px, 4vw, 48px); display: grid; gap: 24px 56px;
 }
-@media (min-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr) 260px; } .doc-notes { padding-top: 34px; border-left: 1px solid var(--rule); padding-left: 32px; } }
+@media (min-width: 1000px) { .doc { grid-template-columns: minmax(0, 64ch) minmax(240px, 1fr); } .doc-notes { padding-top: 34px; border-left: 1px solid var(--rule); padding-left: 32px; } }
 .doc-main { max-width: 64ch; }
 .doc .doc-label { font-size: 14px; color: var(--ink-3); margin: 0 0 8px; }
-.doc h3 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 20px; }
+.doc .doc-impact { font-size: 15px; color: var(--ink-2); margin: -12px 0 0; }
+.doc h3 { font-size: clamp(24px, 6vw, 30px); line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 20px; }
+.doc .doc-main > h4:first-of-type { margin-top: 32px; }
 .doc h4 { font: 600 15px/1.4 var(--font-text); margin: 24px 0 4px; }
 .doc p { font-size: 17px; }
 .doc sup a { text-decoration: none; font: 600 11px/1 var(--font-text); padding: 0 2px; }
@@ -258,7 +267,6 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .doc-notes a { text-decoration: none; color: var(--ink-3); }
 .doc-notes a .host { color: var(--accent); }
 .doc-notes a:hover .host { text-decoration: underline; }
-.doc-after { margin-bottom: 48px; color: var(--ink-2); }
 
 /* Tweaks left out: the name crossed out in red, the reason below. */
 
@@ -273,26 +281,30 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .struck p { font-size: 16px; color: var(--ink-2); margin-top: 10px; }
 .struck p a { white-space: nowrap; }
 
-/* What the app holds, in the order and groups of its navigation rail. */
+/* What the app holds, in the order and groups of its navigation rail, in two columns under the heading. */
 
-.areas-section { display: grid; gap: 40px 64px; }
-@media (min-width: 1000px) { .areas-section { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } .areas-text { position: sticky; top: 32px; align-self: start; } }
-.areas-text > p { color: var(--ink-2); }
-.rail { border-left: 1px solid var(--rule); }
-.rail-group + .rail-group { margin-top: 20px; }
+.rail { margin-top: 48px; column-gap: 64px; }
+@media (min-width: 760px) { .rail { columns: 2; } }
+.rail-group { break-inside: avoid; border-left: 1px solid var(--rule); padding-bottom: 20px; }
 .rail-group h3 { font: 600 13px/1.4 var(--font-text); letter-spacing: 0; color: var(--ink-3); padding: 0 0 4px 24px; }
 .rail dl { margin: 0; }
 .rail dl div { position: relative; padding: 10px 0 12px 24px; }
 .rail dt { font: 600 20px/1.3 var(--font-display); letter-spacing: -0.015em; }
-.rail dd { margin: 2px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 56ch; }
+.rail dd { margin: 2px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 52ch; }
 /* The first page carries the app's selection mark, as Overview does when the app opens. */
-.rail-group:first-child dl div:first-child::before { content: ''; position: absolute; left: -1.5px; top: 14px; height: 20px; width: 3px; border-radius: 2px; background: var(--accent); }
+.rail-group:first-child dl div:first-child::before { content: ''; position: absolute; left: -2px; top: 14px; height: 20px; width: 3px; border-radius: 2px; background: var(--accent); }
 
-/* Privacy: the heading on the left, the facts on the right. */
+/* The reference area at the end: privacy, install and questions as rows of a settings page, a smaller heading on the
+   left and the content on the right, a rule between the rows. */
 
-.privacy { display: grid; gap: 0 64px; }
-@media (min-width: 1000px) { .privacy { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } }
-.privacy p { color: var(--ink-2); }
+.reference { padding-top: clamp(96px, 12vw, 160px); padding-bottom: clamp(80px, 10vw, 128px); }
+.ref-row { display: grid; gap: 16px 64px; padding: 32px 0 48px; border-top: 1px solid var(--rule); }
+.ref-row:first-child { border-top: 2px solid var(--ink); }
+.ref-row:last-child { padding-bottom: 0; }
+@media (min-width: 1000px) { .ref-row { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); } }
+.ref-row h2 { font-size: clamp(24px, 2.6vw, 30px); line-height: 1.2; letter-spacing: -0.02em; max-width: 16ch; }
+.ref-row p { color: var(--ink-2); }
+@media (min-width: 1000px) { .ref-row > div, .ref-row > dl { padding-top: 4px; } }
 
 /* Install */
 
@@ -304,16 +316,14 @@ caption { caption-side: bottom; text-align: left; font: 400 14px/1.5 var(--font-
 .install-list dd { margin: 0; overflow-x: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .install-list code, pre { background: var(--code); border-radius: 4px; padding: 4px 8px; font-size: 13.5px; }
 pre { padding: 10px 14px; overflow-x: auto; margin: 12px 0 0; max-width: 100%; }
-.install .small-head { margin-top: 24px; }
+.ref-row .small-head { margin-top: 8px; }
 .after-list { margin-top: 32px; }
 
 /* Questions */
 
-.faq { margin: 32px 0 0; display: grid; gap: 0 56px; }
-@media (min-width: 900px) { .faq { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.faq div { border-top: 1px solid var(--rule); padding: 24px 0 28px; }
-.faq dt { font: 600 21px/1.3 var(--font-display); letter-spacing: -0.015em; }
-.faq dd { margin: 8px 0 0; color: var(--ink-2); font-size: 16px; }
+.faq { margin: 0; display: grid; gap: 28px; }
+.faq dt { font: 600 19px/1.3 var(--font-display); letter-spacing: -0.01em; }
+.faq dd { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; max-width: 66ch; }
 
 /* Footer */
 

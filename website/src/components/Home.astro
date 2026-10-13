@@ -35,9 +35,16 @@ const zeroNamed = zero.filter((i) => i.basis === 'disputed');
 const zeroRest = zero.filter((i) => i.basis !== 'disputed');
 const matter = impacts.filter((i) => i.impact > 0 || i.higher).length;
 
-// The page of a popular tweak that the evidence does not support, straight from the app's catalog.
-const doc = explanation('power.ultimatePlan', t.lang);
-const docSections = doc.sections.filter((s) => t.sources.show.includes(s.heading));
+// One tweak followed end to end: its explanation page straight from the app's catalog, with the registry values it
+// writes where the app puts them, after the summary. The Tweaks screenshot shows the same tweak selected.
+const specimen = 'input.mouseAccelOff';
+const doc = explanation(specimen, t.lang);
+const docSections = t.tweak.show.map((heading) => {
+  const section = doc.sections.find((s) => s.heading === heading);
+  if (!section) throw new Error(`The page ${specimen} (${t.lang}) has no section ${heading}`);
+  return section;
+});
+const specimenImpact = impacts.find((i) => i.id === specimen)!.impact;
 // Splits "text [1] text" so the references can link to the numbered sources.
 // The space before a reference goes, so the number sits on the word.
 const withRefs = (text: string) => text.split(/\s*\[(\d+)\]/).map((part, i) => ({ ref: i % 2 === 1, part }));
@@ -47,8 +54,21 @@ const source = (url: string) => {
   return { host: u.host.replace(/^www\./, ''), path: (u.pathname + u.search).replace(/\/$/, '') };
 };
 
-// What turning off mouse acceleration writes; the Windows defaults are the Now column.
-const mouse = registryChanges('input.mouseAccelOff', { MouseSpeed: '1', MouseThreshold1: '6', MouseThreshold2: '10' });
+// A popular tweak whose own page says the evidence does not hold up, quoted under the sheet.
+const disputedId = 'power.ultimatePlan';
+if (impacts.find((i) => i.id === disputedId)?.basis !== 'disputed')
+  throw new Error(`The site quotes ${disputedId} as a tweak with disputed evidence`);
+const disputedDoc = explanation(disputedId, t.lang);
+const disputedEvidence = disputedDoc.sections.findIndex((s) => s.heading === t.tweak.show[2]);
+if (disputedEvidence < 0) throw new Error(`The page ${disputedId} (${t.lang}) has no section ${t.tweak.show[2]}`);
+const disputedQuote = disputedDoc.sections[disputedEvidence].body;
+const disputedHref = `${repo}/blob/main/src/Optimizer.Core/Catalog/Docs/${t.lang}/${disputedId}.md`;
+
+// The hero claim: a hyphenated word such as "PC-Optimierer" stays on one line.
+const titleParts = t.hero.title.split(/(\S+-\S+)/).map((part, i) => ({ keep: i % 2 === 1, part }));
+
+// What the tweak writes; the Windows defaults are the Now column.
+const mouse = registryChanges(specimen, { MouseSpeed: '1', MouseThreshold1: '6', MouseThreshold2: '10' });
 
 const faqSmartScreen = t.faq.items[1].id;
 const docsBase = `${repo}/blob/main/docs`;
@@ -60,7 +80,7 @@ const managers = [
 ---
 
 <section class="hero container" aria-labelledby="title">
-  <h1 id="title">{t.hero.title}</h1>
+  <h1 id="title">{titleParts.map((x) => (x.keep ? <span class="nowrap">{x.part}</span> : x.part))}</h1>
   <div class="hero-text">
     <p class="lead">{t.hero.lead}</p>
     <div class="get">
@@ -145,11 +165,9 @@ const managers = [
   </div>
 </section>
 
-<section class="section container areas-section" aria-labelledby="areas">
-  <div class="areas-text">
-    <h2 id="areas">{t.areas.title}</h2>
-    <p>{t.areas.intro}</p>
-  </div>
+<section class="section container" aria-labelledby="areas">
+  <h2 id="areas">{t.areas.title}</h2>
+  <p>{t.areas.intro}</p>
   <div class="rail">
     {t.areas.groups(counts).map((g) => (
       <div class="rail-group">
@@ -162,58 +180,58 @@ const managers = [
   </div>
 </section>
 
-<section class="section container change" aria-labelledby="confirm">
-  <h2 id="confirm">{t.change.title}</h2>
-  <div class="change-grid">
-    <div>
-      <p>{t.change.intro}</p>
-      <table class="diff">
-        <caption>{t.change.caption}</caption>
-        <thead>
-          <tr><th scope="colgroup" colspan="3" class="key">{mouse[0].key}</th></tr>
-          <tr>{t.change.columns.map((c) => <th scope="col">{c}</th>)}</tr>
-        </thead>
-        <tbody>
-          {mouse.map((r) => (
-            <tr><td>{r.name}</td><td class="now"><del>{r.from}</del></td><td class="new"><ins>{r.to}</ins></td></tr>
-          ))}
-        </tbody>
-      </table>
-      <p class="expert">{t.change.expert}</p>
-    </div>
-    <div>
-      <h3 class="small-head">{t.change.stepsTitle}</h3>
-      <ol class="sequence">
-        {t.change.steps.map((s) => <li><b>{s.name}</b><span>{s.text}</span></li>)}
-      </ol>
-      {t.change.body.map((p) => <p>{p}</p>)}
-    </div>
-  </div>
-</section>
-
-<section class="section container" aria-labelledby="sources">
-  <h2 id="sources">{t.sources.title}</h2>
-  <p>{t.sources.intro}</p>
-  <article class="doc" aria-label={t.sources.docLabel}>
+<section class="section container" aria-labelledby="tweak">
+  <h2 id="tweak">{t.tweak.title}</h2>
+  <p>{t.tweak.intro}</p>
+  <article class="doc" aria-labelledby="doc-title">
     <div class="doc-main">
-      <p class="doc-label">{t.sources.docLabel}</p>
-      <h3>{doc.title}</h3>
-      {docSections.map((s) => (
+      <p class="doc-label">{t.tweak.docLabel}</p>
+      <h3 id="doc-title">{doc.title}</h3>
+      <p class="doc-impact">{t.tweak.impact(specimenImpact)}</p>
+      {docSections.map((s, i) => (
         <>
           <h4>{s.heading}</h4>
           <p>
             {withRefs(s.body).map((x) => (x.ref ? <sup><a href={`#src-${x.part}`}>{x.part}</a></sup> : x.part))}
           </p>
+          {i === 0 && (
+            <>
+              <h4>{t.tweak.changes}</h4>
+              <table class="diff">
+                <caption>{t.tweak.caption}</caption>
+                <thead>
+                  <tr><th scope="colgroup" colspan="3" class="key">{mouse[0].key}</th></tr>
+                  <tr>{t.tweak.columns.map((c) => <th scope="col">{c}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {mouse.map((r) => (
+                    <tr><td>{r.name}</td><td class="now"><del>{r.from}</del></td><td class="new"><ins>{r.to}</ins></td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </>
       ))}
     </div>
     <aside class="doc-notes">
-      <h4>{t.sources.sourcesLabel}</h4>
+      <h4>{t.tweak.sourcesLabel}</h4>
       <ol>{doc.sources.map((url, i) => <li id={`src-${i + 1}`}><a href={url}><span class="host">{source(url).host}</span>{source(url).path}</a></li>)}</ol>
     </aside>
   </article>
-  <p class="doc-after">{t.sources.after}</p>
-  <Shot name="tweaks" lang={t.lang} alt={t.sources.shotAlt} sizes="(min-width: 1208px) 1160px, calc(100vw - 32px)" />
+  <figure class="counter">
+    <figcaption>{t.tweak.disputed.intro(disputedDoc.title)}</figcaption>
+    <blockquote cite={disputedHref}><p>{disputedQuote}</p></blockquote>
+    <p><a href={disputedHref}>{t.tweak.disputed.link}</a></p>
+  </figure>
+  <h3 class="small-head">{t.tweak.stepsTitle}</h3>
+  <ol class="sequence across">
+    {t.tweak.steps.map((s) => <li><b>{s.name}</b><span>{s.text}</span></li>)}
+  </ol>
+  <div class="tweak-after">
+    {t.tweak.body.map((p) => <p>{p}</p>)}
+  </div>
+  <Shot name="tweaks" lang={t.lang} alt={t.tweak.shotAlt} caption={t.tweak.shotCaption} sizes="(min-width: 1208px) 1160px, calc(100vw - 32px)" />
 </section>
 
 <section class="section container" aria-labelledby="left">
@@ -230,44 +248,48 @@ const managers = [
   <p><a href={`${docsBase}/not-included.md`}>{t.left.all}</a></p>
 </section>
 
-<section class="section container privacy" aria-labelledby="privacy">
-  <h2 id="privacy">{t.privacy.title}</h2>
-  <div>
-    {t.privacy.body.map((p) => <p>{p}</p>)}
-    <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
-  </div>
-</section>
+<div class="reference container">
+  <section class="ref-row" aria-labelledby="privacy">
+    <h2 id="privacy">{t.privacy.title}</h2>
+    <div>
+      {t.privacy.body.map((p) => <p>{p}</p>)}
+      <p><a href={`${docsBase}/PRIVACY.md${t.lang === 'de' ? '#datenschutz' : ''}`}>{t.privacy.link}</a></p>
+    </div>
+  </section>
 
-<section class="section container install" aria-labelledby="install">
-  <h2 id="install">{t.install.title}</h2>
-  <ol class="sequence across">
-    <li>
-      <b>{t.install.steps[0].name}</b><span>{t.install.steps[0].text}</span>
-      <a class="button" href={download}>{t.hero.download}{sizeMb && <span class="size">{sizeMb} MB</span>}</a>
-    </li>
-    <li>
-      <b>{t.install.steps[1].name}</b><span>{t.install.steps[1].text}</span>
-      <pre><code>Get-FileHash Tunero.exe</code></pre>
-    </li>
-    <li><b>{t.install.steps[2].name}</b><span>{t.install.steps[2].text}</span></li>
-  </ol>
-  {managers.length > 0 && (
-    <>
-      <h3 class="small-head">{t.install.managers}</h3>
-      <dl class="install-list">
-        {managers.map((m) => <div><dt>{m.name}</dt><dd>{m.commands.map((c) => <code>{c}</code>)}</dd></div>)}
-      </dl>
-    </>
-  )}
-  <p class="after-list"><a href={`${repo}/releases`}>{t.install.releases}</a></p>
-</section>
+  <section class="ref-row" aria-labelledby="install">
+    <h2 id="install">{t.install.title}</h2>
+    <div>
+      <ol class="sequence">
+        <li>
+          <b>{t.install.steps[0].name}</b><span>{t.install.steps[0].text}</span>
+          <a class="button" href={download}>{t.hero.download}{sizeMb && <span class="size">{sizeMb} MB</span>}</a>
+        </li>
+        <li>
+          <b>{t.install.steps[1].name}</b><span>{t.install.steps[1].text}</span>
+          <pre><code>Get-FileHash Tunero.exe</code></pre>
+        </li>
+        <li><b>{t.install.steps[2].name}</b><span>{t.install.steps[2].text}</span></li>
+      </ol>
+      {managers.length > 0 && (
+        <>
+          <h3 class="small-head">{t.install.managers}</h3>
+          <dl class="install-list">
+            {managers.map((m) => <div><dt>{m.name}</dt><dd>{m.commands.map((c) => <code>{c}</code>)}</dd></div>)}
+          </dl>
+        </>
+      )}
+      <p class="after-list"><a href={`${repo}/releases`}>{t.install.releases}</a></p>
+    </div>
+  </section>
 
-<section class="section container" aria-labelledby="faq">
-  <h2 id="faq">{t.faq.title}</h2>
-  <dl class="faq">
-    {t.faq.items.map((f) => <div><dt id={f.id}>{f.q}</dt><dd>{f.a}</dd></div>)}
-  </dl>
-</section>
+  <section class="ref-row" aria-labelledby="faq">
+    <h2 id="faq">{t.faq.title}</h2>
+    <dl class="faq">
+      {t.faq.items.map((f) => <div><dt id={f.id}>{f.q}</dt><dd>{f.a}</dd></div>)}
+    </dl>
+  </section>
+</div>
 
 <script>
   // The only script on the site: copy the winget command. The button stays hidden without script or clipboard access.
