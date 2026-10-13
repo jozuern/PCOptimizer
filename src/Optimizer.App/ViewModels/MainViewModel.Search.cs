@@ -202,15 +202,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void Refresh()
     {
-        var reload = CurrentPage switch
-        {
-            Page.Debloat => DebloatTab == 1 ? Apps.LoadProgramsCommand : Debloat.ReloadCommand,
-            Page.Cleanup => Cleanup.ReloadCommand,
-            Page.Startup => Startup.ReloadCommand,
-            Page.Services => ServicesPage.ReloadCommand,
-            Page.Apps => Apps.ReloadCommand,
-            _ => null,
-        };
+        var reload = Views.PageRegistry.Of(CurrentPage).Reload?.Invoke(this);
         if (reload is not null) reload.Execute(null);
         else if (ScanCommand.CanExecute(null)) ScanCommand.Execute(null);
     }

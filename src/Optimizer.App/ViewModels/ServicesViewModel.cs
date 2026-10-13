@@ -116,7 +116,7 @@ public sealed partial class ServiceRowVm : ObservableObject
     }
 }
 
-public sealed partial class ServicesViewModel(MainViewModel owner, AppServices services, ChangeRunner runner) : PageViewModel(owner)
+public sealed partial class ServicesViewModel(IPageHost owner, AppServices services, ChangeRunner runner) : PageViewModel(owner)
 {
     private List<ServiceRowVm> _all = [];
 

@@ -14,7 +14,7 @@ using Wpf.Ui.Controls;
 
 namespace Optimizer.App.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IShell
+public sealed partial class MainViewModel : ObservableObject, IPageHost
 {
     private readonly CatalogData _catalog = CatalogData.Current;
     private readonly AppSettings _settings;
@@ -349,19 +349,7 @@ public sealed partial class MainViewModel : ObservableObject, IShell
     {
         SelectedItem = null;
         if (value == Page.Changes) BuildChanges();
-        (value switch
-        {
-            // The page also lists the installed programs, which the Apps view model reads.
-            Page.Debloat => Task.WhenAll(Debloat.EnsureLoadedAsync(), Apps.EnsureLoadedAsync()),
-            Page.Cleanup => Cleanup.EnsureLoadedAsync(),
-            Page.Startup => Startup.EnsureLoadedAsync(),
-            Page.Services => ServicesPage.EnsureLoadedAsync(),
-            Page.Apps => Apps.EnsureLoadedAsync(),
-            Page.Tools => Tools.EnsureLoadedAsync(),
-            Page.Health => Health.EnsureLoadedAsync(),
-            Page.Network => Network.EnsureLoadedAsync(),
-            _ => Task.CompletedTask,
-        }).Forget($"loading page {value}");
+        (Views.PageRegistry.Of(value).Load?.Invoke(this) ?? Task.CompletedTask).Forget($"loading page {value}");
     }
 
     /// <summary>Developer switch --expert on: Expert mode for this session only (not saved, no confirmation).</summary>

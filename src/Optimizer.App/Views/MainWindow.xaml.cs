@@ -14,24 +14,6 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     private readonly MainViewModel _vm;
     private readonly Dictionary<Type, FrameworkElement> _pages = [];
 
-    public static readonly IReadOnlyDictionary<Page, Type> PageTypes = new Dictionary<Page, Type>
-    {
-        [Page.Overview] = typeof(OverviewPage),
-        [Page.Tweaks] = typeof(TweaksPage),
-        [Page.Advisor] = typeof(AdvisorPage),
-        [Page.Network] = typeof(NetworkPage),
-        [Page.Debloat] = typeof(DebloatPage),
-        [Page.Cleanup] = typeof(CleanupPage),
-        [Page.Startup] = typeof(StartupPage),
-        [Page.Services] = typeof(ServicesPage),
-        [Page.Apps] = typeof(AppsPage),
-        [Page.Tools] = typeof(ToolsPage),
-        [Page.Health] = typeof(HealthPage),
-        [Page.Changes] = typeof(ChangesPage),
-        [Page.Hardware] = typeof(HardwarePage),
-        [Page.Settings] = typeof(SettingsPage),
-    };
-
     private bool _syncing;
 
     public MainWindow(MainViewModel vm)
@@ -43,9 +25,9 @@ public partial class MainWindow : FluentWindow, IServiceProvider
         Nav.Navigated += (_, e) =>
         {
             if (_syncing || e.Page is null) return;
-            var page = PageTypes.FirstOrDefault(p => p.Value == e.Page.GetType()).Key;
+            if (PageRegistry.ForView(e.Page.GetType()) is not { } page) return;
             _syncing = true;
-            vm.CurrentPage = page;
+            vm.CurrentPage = page.Id;
             _syncing = false;
         };
         SourceInitialized += (_, _) => FitToWorkArea();
@@ -187,7 +169,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     /// <summary>Pages are created once and share the main view model.</summary>
     public object? GetService(Type serviceType)
     {
-        if (!PageTypes.Values.Contains(serviceType)) return null;
+        if (PageRegistry.ForView(serviceType) is null) return null;
         if (!_pages.TryGetValue(serviceType, out var page))
         {
             page = (FrameworkElement)Activator.CreateInstance(serviceType)!;
@@ -205,7 +187,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             RenderDetails();
             FitPanes();
         }
-        if (e.PropertyName == nameof(MainViewModel.CurrentPage) && !_syncing && PageTypes.TryGetValue(_vm.CurrentPage, out var type))
+        if (e.PropertyName == nameof(MainViewModel.CurrentPage) && !_syncing && PageRegistry.Of(_vm.CurrentPage).View is var type)
         {
             _syncing = true;
             Nav.Navigate(type);

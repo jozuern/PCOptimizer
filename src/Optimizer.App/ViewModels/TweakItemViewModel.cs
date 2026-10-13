@@ -10,12 +10,12 @@ public enum RowAction { None, Apply, ApplyAgain, Undo }
 /// <summary>One tweak row (card with a switch) and its inspector page, in the current language.</summary>
 public sealed class TweakItemViewModel : InspectorItem
 {
-    private readonly MainViewModel? _owner;
+    private readonly IPageHost? _owner;
     private bool _switch;
 
     /// <param name="subjectAsTitle">Lists of one kind (games, devices): the subject is the title, the section explains the rest.</param>
     /// <param name="profiled">The status seen through the active profile: its impact, recommendation and "works against".</param>
-    public TweakItemViewModel(TweakStatus status, string lang, TweakEngine engine, MainViewModel? owner, bool subjectAsTitle = false,
+    public TweakItemViewModel(TweakStatus status, string lang, TweakEngine engine, IPageHost? owner, bool subjectAsTitle = false,
         ProfiledTweak? profiled = null, UsageProfile? profile = null)
     {
         _owner = owner;

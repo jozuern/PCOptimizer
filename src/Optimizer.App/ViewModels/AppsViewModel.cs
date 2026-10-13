@@ -145,7 +145,7 @@ public sealed partial class LeftoverRow(Leftover leftover, string program) : Obs
     [ObservableProperty] private string? _stateText;
 }
 
-public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class AppsViewModel(IPageHost owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
     /// <summary>The installed state of the catalog apps comes from the scan result (installed programs).</summary>
     protected override bool UsesProfile => true;
@@ -816,6 +816,6 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
     [RelayCommand]
     private void OpenDriverPage(string? url)
     {
-        if (url is not null) Owner.OpenLinkCommand.Execute(url);
+        if (url is not null) Owner.OpenLink(url);
     }
 }

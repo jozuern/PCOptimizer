@@ -69,7 +69,7 @@ public sealed record StepRow(string Text, bool Ok, string? Detail)
     public override string ToString() => Text;
 }
 
-public sealed partial class ToolsViewModel(MainViewModel owner, AppServices services, ChangeRunner runner, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class ToolsViewModel(IPageHost owner, AppServices services, ChangeRunner runner, IDialogs dialogs) : PageViewModel(owner)
 {
     /// <summary>The game lists come from the scan result.</summary>
     protected override bool UsesProfile => true;

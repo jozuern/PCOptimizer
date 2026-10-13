@@ -78,7 +78,7 @@ public sealed record RunRow(string Label, string AvgFps, string Low, string Fram
     public override string ToString() => Label;
 }
 
-public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class HealthViewModel(IPageHost owner, IDialogs dialogs) : PageViewModel(owner)
 {
     /// <summary>The disk rows come from the scan result: built again after every scan.</summary>
     protected override bool UsesProfile => true;
@@ -246,7 +246,7 @@ public sealed partial class HealthViewModel(MainViewModel owner, IDialogs dialog
                 Optimizer.Core.Tools.HealthStore.SaveThrottle(Optimizer.Core.Tools.HealthStore.DefaultFolder, result);
                 ThrottleResult = Describe(result);
                 // Updates the throttling finding; while a change or an update runs the next scan does it.
-                if (Owner.ScanCommand.CanExecute(null)) await Owner.ScanAsync();
+                if (Owner.ScanCommand.CanExecute(null)) await Owner.ScanCommand.ExecuteAsync(null);
             }
             else
             {

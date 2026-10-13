@@ -15,14 +15,14 @@ public abstract partial class PageViewModel : ObservableObject
 {
     private Task? _load;
 
-    protected PageViewModel(MainViewModel owner)
+    protected PageViewModel(IPageHost owner)
     {
         Owner = owner;
         // What a page read may no longer be true after any change (a switch on the page changes only its own row).
         owner.Runner.Changed += (_, _) => _dataStale = true;
     }
 
-    protected MainViewModel Owner { get; }
+    protected IPageHost Owner { get; }
 
     /// <summary>A change was made since the last full load: a language switch reads the page again instead of relabeling.</summary>
     private bool _dataStale;
@@ -231,7 +231,7 @@ public sealed record DnsResultRow(string Name, string Server, string Median, str
     public override string ToString() => Name;
 }
 
-public sealed partial class NetworkViewModel(MainViewModel owner, AppServices services) : PageViewModel(owner)
+public sealed partial class NetworkViewModel(IPageHost owner, AppServices services) : PageViewModel(owner)
 {
     public ObservableCollection<TweakItemViewModel> GameProfiles { get; } = [];
     public ObservableCollection<TweakItemViewModel> DeviceTweaks { get; } = [];
@@ -350,7 +350,7 @@ public sealed partial class NetworkViewModel(MainViewModel owner, AppServices se
                 if (!await Owner.Runner.UndoAsync(current.Item.Tweak)) return;
                 // The undo starts a rescan, and no change can run while it does: wait for it (it also brings the facts the
                 // check below needs up to date) instead of having the apply refused as busy.
-                await Owner.ScanAsync();
+                await Owner.ScanCommand.ExecuteAsync(null);
                 // Undo brings back the servers from before, which may already be the choice (usually automatic).
                 var facts = Owner.Facts;
                 var applied = Owner.AppliedIds();
@@ -544,7 +544,7 @@ public sealed record RemovedRow(string Name, string When, string? StoreLink)
     public override string ToString() => Name;
 }
 
-public sealed partial class DebloatViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class DebloatViewModel(IPageHost owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
     /// <summary>Offers and guards depend on the scan result (games, platform).</summary>
     protected override bool UsesProfile => true;
@@ -725,7 +725,7 @@ public sealed partial class DebloatViewModel(MainViewModel owner, AppServices se
     }
 
     [RelayCommand]
-    private void OpenStore(string link) => Owner.OpenLinkCommand.Execute(link);
+    private void OpenStore(string link) => Owner.OpenLink(link);
 }
 
 // ---------------- Cleanup ----------------
@@ -783,7 +783,7 @@ public sealed partial class CleanupRow(Optimizer.Core.Cleanup.CleanupCategory ca
     partial void OnIsEmptyChanged(bool value) => OnPropertyChanged(nameof(Checked));
 }
 
-public sealed partial class CleanupViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
+public sealed partial class CleanupViewModel(IPageHost owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
 {
     public ObservableCollection<CleanupRow> Rows { get; } = [];
 

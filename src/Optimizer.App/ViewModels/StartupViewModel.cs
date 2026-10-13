@@ -119,7 +119,7 @@ public sealed record FilterOption(string Key, string Text)
     public override string ToString() => Text;
 }
 
-public sealed partial class StartupViewModel(MainViewModel owner, AppServices services, ChangeRunner runner) : PageViewModel(owner)
+public sealed partial class StartupViewModel(IPageHost owner, AppServices services, ChangeRunner runner) : PageViewModel(owner)
 {
     private List<StartupRow> _all = [];
     private CancellationTokenSource? _vtCancel;
@@ -429,6 +429,6 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
     [RelayCommand]
     private void OpenReport(string? url)
     {
-        if (url is not null) Owner.OpenLinkCommand.Execute(url);
+        if (url is not null) Owner.OpenLink(url);
     }
 }
