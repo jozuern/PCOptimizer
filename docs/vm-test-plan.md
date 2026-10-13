@@ -344,7 +344,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Cleanup | Each of the 12 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
 | Storage analyzer | Delete one duplicate: it goes to the Recycle Bin; Windows and program folders cannot be selected | |
 | Apps | Install one per-user app (runs as the signed-in user) and one machine-wide app with winget | |
-| DNS presets | Choose Cloudflare in the DNS servers list, check `Get-DnsClientServerAddress`; choose Google: Cloudflare is undone first (its own confirmation), then Google is applied; choose Automatic: DHCP or the old servers are back; cancel a dialog: the list shows the servers in use again | |
+| DNS presets | Choose Cloudflare in the DNS servers list, check `Get-DnsClientServerAddress`; choose Google: Cloudflare is undone first (its own confirmation), then Google is applied; choose Automatic: DHCP or the old servers are back; cancel a dialog: the list shows the servers in use again | OK on 26H2 Pro, 2026-10-13, through `--apply` and `--undo-all` (Cloudflare set, then DHCP again; the change through WMI with time limits) |
 | DNS benchmark | Runs, shows results, changes nothing | |
 | Tools | Winsock reset (restart needed), Explorer restart, DNS flush, Windows Update repair, SFC and DISM with live output | |
 | Health | Frame time benchmark with PresentMon; throttle check; PawnIO install from the Health page and uninstall with winget | |
