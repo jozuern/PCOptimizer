@@ -7,7 +7,11 @@ using Optimizer.Core.Tweaks;
 namespace Optimizer.Core.Backup;
 
 /// <summary>A start priority rule in a transfer file.</summary>
-public sealed record TransferPriority(string Exe, CpuPriority Cpu, bool LowIo);
+public sealed record TransferPriority(string Exe, CpuPriority Cpu, bool LowIo)
+{
+    /// <summary>Low memory priority (PagePriority); missing in files from 1.0.4 and older, which means off.</summary>
+    public bool LowMemory { get; init; }
+}
 
 /// <summary>
 /// The changes of one PC as a file, to apply them on another PC or after a reinstall. It holds only catalog tweak ids
@@ -77,7 +81,7 @@ public static partial class ChangeTransfer
             else if (catalog.Get(id) is null) pcSpecific++;
         }
         var rules = priorities.Where(r => r.Cpu is not null && ProgramPriority.IsValidExe(r.Exe))
-            .Select(r => new TransferPriority(r.Exe, r.Cpu!.Value, r.LowIo)).ToList();
+            .Select(r => new TransferPriority(r.Exe, r.Cpu!.Value, r.LowIo) { LowMemory = r.LowMemory }).ToList();
         tweaks.Sort(StringComparer.Ordinal);
         return (new TransferFile(FileKind, CurrentFormat, appVersion, windowsBuild, DateTimeOffset.Now, tweaks, rules), pcSpecific);
     }
@@ -126,7 +130,7 @@ public static partial class ChangeTransfer
             else unknown++;
         }
         foreach (var p in file.Priorities.DistinctBy(p => p.Exe.ToLowerInvariant()))
-            Add(ProgramPriority.Tweak(p.Exe, p.Cpu, p.LowIo));
+            Add(ProgramPriority.Tweak(p.Exe, p.Cpu, p.LowIo, p.LowMemory));
         return new ImportPlan(together, oneByOne, on, notHere, unknown);
     }
 }

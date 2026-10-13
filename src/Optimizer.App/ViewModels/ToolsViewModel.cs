@@ -111,6 +111,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     [ObservableProperty] private string _newPriorityExe = "";
     [ObservableProperty] private FilterOption? _newPriority;
     [ObservableProperty] private bool _newPriorityLowIo;
+    [ObservableProperty] private bool _newPriorityLowMemory;
     [ObservableProperty] private string? _priorityNote;
 
     /// <summary>Reads the rules in the background: Image File Execution Options has a key per program.</summary>
@@ -122,7 +123,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         foreach (var r in rules)
             PriorityRules.Add(new PriorityRow(r, r.Cpu is { } c ? PriorityChoices.First(o => o.Key == c.ToString()).Text
                     : r.OtherCpu is { } o ? Loc.Instance.Format("Prio_Other", o) : "",
-                r.LowIo ? Loc.Instance["Prio_LowIo"] : null));
+                string.Join(", ", new[] { r.LowIo ? Loc.Instance["Prio_LowIo"] : null, r.LowMemory ? Loc.Instance["Prio_LowMemory"] : null }.OfType<string>()) is { Length: > 0 } low ? low : null));
     }
 
     [RelayCommand]
@@ -144,7 +145,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
         }
         var cpu = Enum.Parse<CpuPriority>((NewPriority ?? PriorityChoices[0]).Key);
         PriorityNote = null;
-        if (await runner.ApplyAsync(ProgramPriority.Tweak(exe, cpu, NewPriorityLowIo))) NewPriorityExe = "";
+        if (await runner.ApplyAsync(ProgramPriority.Tweak(exe, cpu, NewPriorityLowIo, NewPriorityLowMemory))) NewPriorityExe = "";
         await LoadPriorityRulesAsync();
     }
 
@@ -153,7 +154,7 @@ public sealed partial class ToolsViewModel(MainViewModel owner, AppServices serv
     private async Task RemovePriorityRuleAsync(PriorityRow? row)
     {
         if (row is null) return;
-        var ours = ProgramPriority.Tweak(row.Rule.Exe, row.Rule.Cpu ?? CpuPriority.AboveNormal, row.Rule.LowIo);
+        var ours = ProgramPriority.Tweak(row.Rule.Exe, row.Rule.Cpu ?? CpuPriority.AboveNormal, row.Rule.LowIo, row.Rule.LowMemory);
         if (services.Store.Exists(ours.Id)) await runner.UndoAsync(ours);
         else await runner.ApplyAsync(ProgramPriority.RemoveTweak(row.Rule.Exe));
         await LoadPriorityRulesAsync();

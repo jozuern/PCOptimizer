@@ -1082,6 +1082,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Prio_Hint" xml:space="preserve"><value>Windows startet das Programm jedes Mal mit dieser CPU-Priorität, ohne Hintergrundprogramm. Sinnvoll für ein Spiel, das mit beschäftigten Hintergrundprogrammen konkurriert, oder damit ein Backup- oder Download-Tool sich zurückhält. Microsoft dokumentiert diese Werte nicht, deshalb tragen die Regeln das Etikett Vorschau, und manche Anti-Cheat-Systeme prüfen diesen Teil der Registry.</value></data>
   <data name="Prio_ExePlaceholder" xml:space="preserve"><value>Programmdatei, zum Beispiel game.exe</value></data>
   <data name="Prio_LowIoOption" xml:space="preserve"><value>Niedrige Datenträgerpriorität</value></data>
+  <data name="Prio_LowMemoryOption" xml:space="preserve"><value>Niedrige Speicherpriorität</value></data>
+  <data name="Prio_LowMemoryHint" xml:space="preserve"><value>Wird der Arbeitsspeicher knapp, nimmt Windows ihn zuerst diesem Programm weg, damit andere ihren behalten. Für Hintergrundprogramme, nicht für Spiele.</value></data>
+  <data name="Prio_LowMemory" xml:space="preserve"><value>niedrige Speicherpriorität</value></data>
   <data name="Prio_Add" xml:space="preserve"><value>Regel hinzufügen</value></data>
   <data name="Prio_Remove" xml:space="preserve"><value>Entfernen</value></data>
   <data name="Prio_AboveNormal" xml:space="preserve"><value>Höher als normal</value></data>

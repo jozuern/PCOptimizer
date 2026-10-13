@@ -14,7 +14,11 @@ public enum CpuPriority { Low = 1, BelowNormal = 5, AboveNormal = 6, High = 3 }
 
 /// <summary>A start priority rule for one program file name.</summary>
 /// <param name="OtherCpu">A CpuPriorityClass this app does not offer (Normal, Realtime), set by another program.</param>
-public sealed record PriorityRule(string Exe, CpuPriority? Cpu, bool LowIo, int? OtherCpu = null);
+public sealed record PriorityRule(string Exe, CpuPriority? Cpu, bool LowIo, int? OtherCpu = null)
+{
+    /// <summary>A memory priority below normal (PagePriority): its pages are trimmed from memory before others.</summary>
+    public bool LowMemory { get; init; }
+}
 
 /// <summary>
 /// Persistent start priorities without a background program: Windows reads PerfOptions when the program starts.
@@ -28,6 +32,13 @@ public static partial class ProgramPriority
     /// <summary>The test that showed Windows applies the PerfOptions values (CONTRIBUTING, "Undocumented values").</summary>
     public const string Proof = "VM test 2026-10-13, Windows 11 build 26300: PING.EXE with Below normal and low disk priority started with priority " +
         "class BelowNormal and I/O priority 1 (NtQueryInformationProcess), and with Normal and 2 again after Undo.";
+
+    /// <summary>The test that showed Windows applies PagePriority (the memory priority of the process).</summary>
+    public const string MemoryProof = "VM test 2026-10-13, Windows 11 build 26300.9550: PING.EXE with PagePriority 1, 2 and 3 started with memory " +
+        "priority 1, 2 and 3 (GetProcessInformation, ProcessMemoryPriority), and with 5 (normal) again when the value was removed.";
+
+    /// <summary>MEMORY_PRIORITY_LOW: trimmed from the working set before normal programs, but not as early as very low.</summary>
+    public const int LowMemoryPriority = 2;
 
     public static bool IsValidExe(string name) => ExeRegex().IsMatch(name);
 
@@ -52,7 +63,8 @@ public static partial class ProgramPriority
             CpuPriority? cpu = raw is { } c && Enum.IsDefined(typeof(CpuPriority), c) ? (CpuPriority)c : null;
             int? other = raw is not null && cpu is null ? raw : null;
             var lowIo = perf.GetValue("IoPriority") is int io && io < 2;
-            if (cpu is not null || other is not null || lowIo) list.Add(new PriorityRule(exe, cpu, lowIo, other));
+            var lowMemory = perf.GetValue("PagePriority") is int page && page is >= 1 and < 5;
+            if (cpu is not null || other is not null || lowIo || lowMemory) list.Add(new PriorityRule(exe, cpu, lowIo, other) { LowMemory = lowMemory });
         }
         return list.OrderBy(r => r.Exe, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -67,13 +79,15 @@ public static partial class ProgramPriority
     };
 
     /// <summary>Engine tweak that sets the rule (backup and undo like every other change).</summary>
-    public static TweakDefinition Tweak(string exe, CpuPriority cpu, bool lowIo)
+    public static TweakDefinition Tweak(string exe, CpuPriority cpu, bool lowIo, bool lowMemory = false)
     {
         if (!IsValidExe(exe)) throw new ArgumentException($"invalid program name {exe}");
         var actions = new List<TweakAction> { Value(exe, "CpuPriorityClass", (uint)cpu) };
-        // Without low disk priority, a value left from an earlier rule is removed (undo puts it back).
+        // Without low disk or memory priority, a value left from an earlier rule is removed (undo puts it back).
         actions.Add(lowIo ? Value(exe, "IoPriority", 1)
             : new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "IoPriority", Delete = true });
+        actions.Add(lowMemory ? Value(exe, "PagePriority", LowMemoryPriority)
+            : new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "PagePriority", Delete = true });
         return new TweakDefinition
         {
             Id = $"priority.{TweakIds.Slug(exe.ToLowerInvariant())}",
@@ -84,7 +98,7 @@ public static partial class ProgramPriority
             Risk = Risk.Moderate,
             Hidden = true,
             Undocumented = true,
-            Proof = [Proof],
+            Proof = [Proof, MemoryProof],
             AntiCheatSensitive = true,
             Actions = actions,
             Sources = ["https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities"],
@@ -108,6 +122,7 @@ public static partial class ProgramPriority
             [
                 new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "CpuPriorityClass", Delete = true },
                 new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "IoPriority", Delete = true },
+                new RegistryAction { Hive = Hive.Machine, Path = $@"{Ifeo}\{exe}\PerfOptions", Name = "PagePriority", Delete = true },
             ],
             Sources = ["https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities"],
         };

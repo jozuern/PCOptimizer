@@ -1082,6 +1082,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Prio_Hint" xml:space="preserve"><value>Windows starts the program with this CPU priority every time, without a background program. Useful for a game that competes with busy background programs, or to keep a backup or download tool out of the way. Microsoft does not document these values, so the rules are tagged Preview, and some anti-cheat systems check this part of the registry.</value></data>
   <data name="Prio_ExePlaceholder" xml:space="preserve"><value>Program file, for example game.exe</value></data>
   <data name="Prio_LowIoOption" xml:space="preserve"><value>Low disk priority</value></data>
+  <data name="Prio_LowMemoryOption" xml:space="preserve"><value>Low memory priority</value></data>
+  <data name="Prio_LowMemoryHint" xml:space="preserve"><value>Windows takes memory from this program first when memory runs short, so other programs keep theirs. For background programs, not for games.</value></data>
+  <data name="Prio_LowMemory" xml:space="preserve"><value>low memory priority</value></data>
   <data name="Prio_Add" xml:space="preserve"><value>Add rule</value></data>
   <data name="Prio_Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Prio_AboveNormal" xml:space="preserve"><value>Above normal</value></data>

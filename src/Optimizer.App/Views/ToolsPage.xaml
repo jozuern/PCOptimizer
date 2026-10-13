@@ -250,6 +250,8 @@
                                     <ui:Button Content="{l:Tr Prio_Browse}" Icon="{ui:SymbolIcon FolderOpen20}" Command="{Binding Tools.BrowsePriorityExeCommand}" Margin="0,0,16,8" />
                                     <ComboBox ItemsSource="{Binding Tools.PriorityChoices}" SelectedItem="{Binding Tools.NewPriority}" DisplayMemberPath="Text" MinWidth="180" Margin="0,0,8,8" AutomationProperties.Name="{l:Tr Prio_Priority}" />
                                     <CheckBox Content="{l:Tr Prio_LowIoOption}" IsChecked="{Binding Tools.NewPriorityLowIo}" Margin="0,0,8,8" VerticalAlignment="Center" />
+                                    <CheckBox Content="{l:Tr Prio_LowMemoryOption}" IsChecked="{Binding Tools.NewPriorityLowMemory}" Margin="0,0,8,8" VerticalAlignment="Center"
+                                              ToolTip="{l:Tr Prio_LowMemoryHint}" />
                                     <ui:Button Content="{l:Tr Prio_Add}" Icon="{ui:SymbolIcon Add20}" Command="{Binding Tools.AddPriorityRuleCommand}" Margin="0,0,0,8" />
                                 </WrapPanel>
                                 <ui:TextBlock Style="{StaticResource Caption}" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding Tools.PriorityNote}"
