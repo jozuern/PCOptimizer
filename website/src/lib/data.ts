@@ -120,6 +120,7 @@ export function topChecks(lang: Lang): string[] {
 
 /** A tweak's gaming impact (0 to 5) on most PCs, and the highest rating a condition on some PCs gives it. */
 export interface TweakImpact {
+  id: string;
   title: string;
   impact: number;
   basis: string;
@@ -142,6 +143,7 @@ export function tweakImpacts(lang: Lang): TweakImpact[] {
         .filter((o) => (o.gaming ?? 0) > t.impact.gaming)
         .sort((a, b) => b.gaming! - a.gaming!)[0];
       return {
+        id: t.id,
         title: t.subject ? `${title}: ${t.subject}` : title,
         impact: t.impact.gaming,
         basis: t.impact.basis,

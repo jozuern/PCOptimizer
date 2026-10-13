@@ -24,6 +24,12 @@ const levels = [4, 3, 2, 1].map((level) => {
   ];
   return { level, entries };
 });
+// The board's title and text state facts the catalog decides, so the build fails when they stop being true.
+if (impacts.some((i) => i.impact >= 5 || (i.higher?.impact ?? 0) >= 5))
+  throw new Error('A tweak is rated 5: the board has no tweak row 5, and its title says that no tweak reaches 5');
+const turbo = impacts.find((i) => i.id === 'power.turboRestore');
+if (turbo?.impact !== 0 || turbo.higher?.impact !== 4)
+  throw new Error('The board text says that Restore processor turbo rates 4 on some PCs and 0 everywhere else');
 const zero = impacts.filter((i) => i.impact === 0 && !i.higher);
 const zeroNamed = zero.filter((i) => i.basis === 'disputed');
 const zeroRest = zero.filter((i) => i.basis !== 'disputed');
