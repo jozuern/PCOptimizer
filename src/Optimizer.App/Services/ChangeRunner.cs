@@ -134,6 +134,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>Confirms and applies one tweak. Returns true when something was written.</summary>
     public Task<bool> ApplyAsync(TweakDefinition t) => ExclusiveAsync($"apply {t.Id}", async () =>
     {
+        ChangeLogText.Remember(t);
         var applied = appliedIds();
         var currentFacts = facts();
         var status = await Task.Run(() => services.Engine.Detect(t, currentFacts, applied));
@@ -181,6 +182,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>Confirms and undoes one tweak from its backup.</summary>
     public Task<bool> UndoAsync(TweakDefinition t) => ExclusiveAsync($"undo {t.Id}", async () =>
     {
+        ChangeLogText.Remember(t);
         var lang = Loc.Instance.Language;
         TweakBackup? backup;
         try
@@ -225,7 +227,14 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// </summary>
     public Task<bool> UndoAllAsync(bool confirm = true, string? incompleteNote = null) => ExclusiveAsync("undo all", async () =>
     {
-        var count = await Task.Run(() => services.Store.All().Count);
+        var count = await Task.Run(() =>
+        {
+            var backups = services.Store.All();
+            // The undo deletes the backups that hold run-time tweaks: keep their titles for the change log.
+            foreach (var b in backups)
+                if (services.Engine.Resolve(b) is { } t) ChangeLogText.Remember(t);
+            return backups.Count;
+        });
         if (count == 0 || (confirm && !dialogs.ConfirmUndoAll(count))) return false;
         try
         {
@@ -245,6 +254,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     public Task<IReadOnlyList<BatchItemResult>> ApplyBatchAsync(IReadOnlyList<TweakDefinition> tweaks, string title, string summary) =>
         tweaks.Count == 0 ? Task.FromResult<IReadOnlyList<BatchItemResult>>([]) : ExclusiveAsync<IReadOnlyList<BatchItemResult>>("apply batch", async () =>
     {
+        foreach (var t in tweaks) ChangeLogText.Remember(t);
         var lang = Loc.Instance.Language;
         var preview = await Task.Run(() => tweaks.SelectMany(t => services.Engine.Preview(t).Select(c => c with { Target = $"{Title(t)}\n{c.Target}" })).ToList());
         var badges = new List<string> { Loc.Instance.Format("Rec_Count", tweaks.Count) };

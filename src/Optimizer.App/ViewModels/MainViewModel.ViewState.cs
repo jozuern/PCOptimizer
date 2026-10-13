@@ -392,6 +392,7 @@ public sealed partial class MainViewModel
         {
             var t = _services.Catalog.Get(b.TweakId) ?? _findings.Select(f => f.Fix).FirstOrDefault(f => f?.Id == b.TweakId) ?? _backupTweaks.GetValueOrDefault(b.TweakId);
             var title = t is null ? b.TweakId : Runner.Title(t);
+            if (t is not null) ChangeLogText.Remember(t);
             var state = _tweakStates.Concat(_deviceStates).FirstOrDefault(s => s.Tweak.Id == b.TweakId)?.State
                 ?? (_otherChangeStates.TryGetValue(b.TweakId, out var other) ? other : null);
             var drift = _drift.FirstOrDefault(d => d.Tweak.Id == b.TweakId);

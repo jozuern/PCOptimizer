@@ -46,7 +46,15 @@ public static class ChangeLogText
     /// <summary>Entries without the data (written by an older version): the message as logged.</summary>
     private static string Legacy(LogEntry entry) => entry.Message + (entry.Data is { } d ? "  " + d : "");
 
-    /// <summary>The catalog title; tweaks built at run time (startup entries, services, devices) have their page's title or the id.</summary>
+    /// <summary>
+    /// Tweaks built at run time (startup entries, services, devices) seen in this session. Their definition lives in the
+    /// backup, which an undo deletes: the log line of that undo still needs the title ("Delete startup entry: Steam").
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, TweakDefinition> Seen = new(StringComparer.Ordinal);
+
+    public static void Remember(TweakDefinition t) => Seen[t.Id] = t;
+
+    /// <summary>The catalog title, or a run-time tweak's title with its subject; else its page's title or the id.</summary>
     private static string Title(string id, string lang) =>
-        TweakCatalog.Current.Get(id) is { } t ? ChangeRunner.TitleOf(t, lang) : DocStore.GetOrEnglish(id, lang)?.Title ?? id;
+        (TweakCatalog.Current.Get(id) ?? Seen.GetValueOrDefault(id)) is { } t ? ChangeRunner.TitleOf(t, lang) : DocStore.GetOrEnglish(id, lang)?.Title ?? id;
 }
