@@ -203,7 +203,7 @@
     <value>There is nothing recommended to apply.</value>
   </data>
   <data name="Rec_ExcludedTitle" xml:space="preserve">
-    <value>Not included, apply them one by one if you want them</value>
+    <value>Not in the one-click list: apply these one by one if you want them</value>
   </data>
   <data name="Rec_Fixes" xml:space="preserve">
     <value>Fixes: {0}</value>

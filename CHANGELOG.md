@@ -10,6 +10,7 @@
 - **Settings that work against your profile** have their own section on the Overview, "Works against the Gaming profile", instead of a yellow heading inside the recommendations, where they contradicted "nothing to recommend". Each one has a warning icon and a button: Undo when Tunero made the change, otherwise Details, whose page says how to change it back.
 - **Tweaks page, cleaner rows:** the switches of a list stand in one column, and "Already on" starts where they do. A row's grey line no longer repeats "Off" or "On" next to the switch, and the warning icon of a row that needs attention sits in front of its title instead of an empty icon column on every other row. Counts leave out zeros ("202 tweaks: 91 already set", "12 of 34 on"), and the links under the search no longer get cut off in a narrow window.
 - **Details pane in a narrow window:** it takes at most 45 % of the window and leaves the list at least 640 px, so a row's text no longer runs over six lines; the width you drag it to comes back when the window is wider again.
+- **Overview order:** the findings now follow right after the counts and the game access card, so "2 problems" is answered right below the number; the recommendations and the settings against your profile come after them. Each count shows a small arrow, since a click opens its list, and the changes the one-click list leaves out sit under a line in the same card instead of a second card inside it.
 
 ### Fixed
 

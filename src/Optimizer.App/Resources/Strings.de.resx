@@ -203,7 +203,7 @@
     <value>Es gibt nichts Empfohlenes anzuwenden.</value>
   </data>
   <data name="Rec_ExcludedTitle" xml:space="preserve">
-    <value>Nicht enthalten, bei Bedarf einzeln anwenden</value>
+    <value>Nicht in der Liste für einen Klick: bei Bedarf einzeln anwenden</value>
   </data>
   <data name="Rec_Fixes" xml:space="preserve">
     <value>Behebt: {0}</value>
