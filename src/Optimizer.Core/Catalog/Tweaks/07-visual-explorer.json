@@ -178,6 +178,63 @@
       ]
     },
     {
+      "id": "explorer.driveLettersFirst",
+      "undocumented": true,
+      "proof": [ "VM test 2026-10-13, Windows 11 build 26300: after an Explorer restart This PC showed \"(C:) Local Disk\" with the value and \"Local Disk (C:)\" again without it" ],
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+          "name": "ShowDriveLettersFirst",
+          "kind": "dword",
+          "value": 4,
+          "notify": "settings"
+        }
+      ],
+      "sources": [
+        "https://winaero.com/show-drive-letters-before-drive-names-in-this-pc-computer-folder/"
+      ]
+    },
+    {
+      "id": "explorer.shortcutSuffixOff",
+      "undocumented": true,
+      "proof": [ "VM test 2026-10-13, Windows 11 build 26300: the shell's Create shortcut on Doc.txt made \"Doc.lnk\" with the value and \"Doc - Shortcut.lnk\" before and after it" ],
+      "category": "Explorer",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "user",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\NamingTemplates",
+          "name": "ShortcutNameTemplate",
+          "kind": "string",
+          "value": "%s.lnk"
+        }
+      ],
+      "sources": [
+        "https://winaero.com/disable-the-shortcut-text-addition-for-shortcuts-in-windows-11"
+      ]
+    },
+    {
       "id": "explorer.endTask",
       "undocumented": true,
       "proof": [ "docs/vm-test-results-2026-10-11.md in git 60c3a93^: Settings > System > Advanced showed \"End task\" On after apply and Off after undo; the taskbar right-click menu of Notepad showed \"End task\" only while applied" ],

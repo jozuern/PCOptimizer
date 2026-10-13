@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 228 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 230 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -145,6 +145,8 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `background.widgetsOff` | Widgets off | safe |  | registry | |
 | `visual.transparencyOff` | Transparency effects off | safe |  | registry | |
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
+| `explorer.driveLettersFirst` | Drive letters first | safe |  | registry | |
+| `explorer.shortcutSuffixOff` | No "- Shortcut" in new shortcut names | safe |  | registry | |
 | `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
 | `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
 | `network.dns.google` | Public DNS servers | safe |  | dns | |
