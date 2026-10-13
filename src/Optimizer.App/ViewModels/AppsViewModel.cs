@@ -56,6 +56,21 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
     [ObservableProperty] private string _stateText = installed ? Loc.Instance["Apps_Installed"] : "";
 }
 
+/// <summary>A package from a winget search: not on the reviewed list, installed only after its own confirmation.</summary>
+public sealed partial class WingetResultRow(WingetPackage package) : ObservableObject
+{
+    // What screen readers announce for this item in a list.
+    public override string ToString() => Name;
+
+    public WingetPackage Package { get; } = package;
+    public string Name => Package.Name;
+    public string Meta { get; } = Loc.Instance.Format("Apps_SearchMeta", package.Id, package.Version);
+    public string InstallLabel => Loc.Instance.Format("Apps_InstallName", Name);
+
+    [ObservableProperty] private bool _isInstalling;
+    [ObservableProperty] private string _stateText = "";
+}
+
 public sealed record DriverItem(string Device, string ClassText, string Provider, string Version, string DateText, string? UpdateUrl, bool Old)
 {
     // What screen readers announce for this item in a list or combo box.
@@ -520,6 +535,8 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         for (var i = 0; i < Leftovers.Count; i++)
             Leftovers[i] = new LeftoverRow(Leftovers[i].Leftover, Leftovers[i].ProgramName) { Selected = Leftovers[i].Selected };
         OnPropertyChanged(nameof(UninstallSelectedText));
+        for (var i = 0; i < SearchResults.Count; i++) SearchResults[i] = new WingetResultRow(SearchResults[i].Package);
+        if (!IsSearching && SearchResults.Count > 0) SearchNote = Loc.Instance.Format("Apps_SearchCount", SearchResults.Count);
         return Task.CompletedTask;
     }
 
@@ -643,6 +660,101 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                         : Loc.Instance.Format("Apps_UpdateFailed", $"0x{code:X8}");
                 }))
                 row.StateText = Loc.Instance["Apps_Installed"];
+        }
+        finally
+        {
+            row.IsInstalling = false;
+        }
+    }
+
+    // ---------------- any package from winget ----------------
+
+    public ObservableCollection<WingetResultRow> SearchResults { get; } = [];
+    [ObservableProperty] private string _wingetQuery = "";
+    [ObservableProperty] private bool _isSearching;
+    [ObservableProperty] private string? _searchNote;
+
+    /// <summary>What winget printed for an install from the search, under the results (the page's own output box is below the long list).</summary>
+    [ObservableProperty] private string _searchOutput = "";
+
+    /// <summary>Searches the winget community repository with the trusted winget (a read: nothing is installed).</summary>
+    [RelayCommand]
+    private async Task SearchWingetAsync()
+    {
+        if (IsSearching) return;
+        var query = WingetQuery.Trim();
+        if (!Winget.IsSafeQuery(query))
+        {
+            SearchNote = Loc.Instance["Apps_SearchInvalid"];
+            return;
+        }
+        if (_winget is null)
+        {
+            SearchNote = Loc.Instance["Apps_NoWinget"];
+            return;
+        }
+        IsSearching = true;
+        SearchNote = Loc.Instance["Apps_Searching"];
+        SearchResults.Clear();
+        try
+        {
+            var found = await Winget.SearchAsync(_winget, query, CancellationToken.None);
+            foreach (var p in found) SearchResults.Add(new WingetResultRow(p));
+            SearchNote = found.Count == 0 ? Loc.Instance.Format("Apps_SearchNone", query) : Loc.Instance.Format("Apps_SearchCount", found.Count);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or IOException)
+        {
+            SearchNote = Loc.Instance.Format("Result_Error", ex.Message);
+        }
+        finally
+        {
+            IsSearching = false;
+        }
+    }
+
+    /// <summary>
+    /// Installs a package from the search after a confirmation that says Tunero did not review it: for the whole PC where
+    /// the package offers that, else (only a per-user installer) for the signed-in user in winget's own window.
+    /// </summary>
+    [RelayCommand]
+    private async Task InstallFoundAsync(WingetResultRow? row)
+    {
+        if (row is null || row.IsInstalling) return;
+        if (_winget is null)
+        {
+            row.StateText = Loc.Instance["Apps_NoWinget"];
+            return;
+        }
+        if (!dialogs.Ask(Loc.Instance.Format("Apps_FoundConfirmTitle", row.Name), Loc.Instance.Format("Apps_FoundConfirmText", row.Name, row.Package.Id),
+                Loc.Instance["Apps_Install"])) return;
+        var app = new AppEntry { Id = row.Package.Id, Name = row.Name, WingetScope = "machine" };
+        row.IsInstalling = true;
+        row.StateText = Loc.Instance["Apps_Installing"];
+        var lines = new List<string>();
+        var progress = new Progress<string>(l =>
+        {
+            lines.Add(l);
+            if (lines.Count > 40) lines.RemoveAt(0);
+            SearchOutput = string.Join("\n", lines);
+        });
+        try
+        {
+            var winget = _winget;
+            if (!await RunWorkAsync($"install {app.Id} (search)", async () =>
+                {
+                    var code = await Winget.InstallAsync(winget, app, progress, CancellationToken.None);
+                    if (code == Winget.NoApplicableInstaller && _wingetForUser is { } forUser)
+                    {
+                        // Only a per-user installer: it runs as the signed-in user, in winget's own window.
+                        var path = Winget.InstallForUser(forUser, new AppEntry { Id = app.Id, Name = app.Name, Scope = "user", WingetScope = "user" }, services.Elevation);
+                        row.StateText = path == DeElevatedLauncher.Path.Failed ? Loc.Instance.Format("Result_Error", "winget") : Loc.Instance["Apps_StartedForUser"];
+                    }
+                    else
+                    {
+                        row.StateText = Winget.IsSuccess(code) ? Loc.Instance["Apps_Installed"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
+                    }
+                }))
+                row.StateText = "";
         }
         finally
         {

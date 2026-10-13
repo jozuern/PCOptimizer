@@ -1195,6 +1195,17 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Debloat_TabStore" xml:space="preserve"><value>Vorinstallierte Apps</value></data>
   <data name="Apps_TabApps" xml:space="preserve"><value>Apps holen</value></data>
   <data name="Apps_TabAppsHint" xml:space="preserve"><value>Installiert mit winget aus den offiziellen Quellen.</value></data>
+  <data name="Apps_SearchTitle" xml:space="preserve"><value>Weitere Apps über winget suchen</value></data>
+  <data name="Apps_SearchHint" xml:space="preserve"><value>Jedes Paket aus dem winget-Community-Verzeichnis, über die Liste unten hinaus. Tunero hat diese nicht geprüft: winget installiert das Paket so, wie sein Eintrag dort es angibt, aus dem Download des Herstellers.</value></data>
+  <data name="Apps_SearchPlaceholder" xml:space="preserve"><value>Name oder ID, zum Beispiel Blender</value></data>
+  <data name="Apps_SearchButton" xml:space="preserve"><value>Suchen</value></data>
+  <data name="Apps_Searching" xml:space="preserve"><value>winget wird durchsucht</value></data>
+  <data name="Apps_SearchInvalid" xml:space="preserve"><value>Gib 2 bis 60 Buchstaben oder Ziffern ein; Leerzeichen und . - _ + sind auch erlaubt.</value></data>
+  <data name="Apps_SearchNone" xml:space="preserve"><value>Nichts gefunden für "{0}".</value></data>
+  <data name="Apps_SearchCount" xml:space="preserve"><value>Gefunden: {0}. winget zeigt höchstens 50; such genauer, um die Liste einzugrenzen.</value></data>
+  <data name="Apps_SearchMeta" xml:space="preserve"><value>{0}, Version {1}</value></data>
+  <data name="Apps_FoundConfirmTitle" xml:space="preserve"><value>{0} installieren?</value></data>
+  <data name="Apps_FoundConfirmText" xml:space="preserve"><value>{0} ({1}) steht nicht auf Tuneros geprüfter Liste. winget lädt und installiert es so, wie sein Eintrag im Community-Verzeichnis es angibt, für den ganzen PC, wo das Paket das anbietet, sonst für dein Konto. Installiere es nur, wenn du dem Hersteller vertraust.</value></data>
   <data name="Quick_TabFixes" xml:space="preserve"><value>Hilfen und Reparatur</value></data>
   <data name="Tag_Restart" xml:space="preserve"><value>Neustart nötig</value></data>
   <data name="Quick_DnsAction" xml:space="preserve"><value>Leeren</value></data>

@@ -1195,6 +1195,17 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Debloat_TabStore" xml:space="preserve"><value>Preinstalled apps</value></data>
   <data name="Apps_TabApps" xml:space="preserve"><value>Get apps</value></data>
   <data name="Apps_TabAppsHint" xml:space="preserve"><value>Installed with winget from their official sources.</value></data>
+  <data name="Apps_SearchTitle" xml:space="preserve"><value>Search winget for other apps</value></data>
+  <data name="Apps_SearchHint" xml:space="preserve"><value>Any package of the winget community repository, beyond the list below. Tunero has not reviewed these: winget installs the package as its listing there says, from the vendor's download.</value></data>
+  <data name="Apps_SearchPlaceholder" xml:space="preserve"><value>Name or id, for example Blender</value></data>
+  <data name="Apps_SearchButton" xml:space="preserve"><value>Search</value></data>
+  <data name="Apps_Searching" xml:space="preserve"><value>Searching winget</value></data>
+  <data name="Apps_SearchInvalid" xml:space="preserve"><value>Enter 2 to 60 letters or digits; spaces and . - _ + are allowed too.</value></data>
+  <data name="Apps_SearchNone" xml:space="preserve"><value>Nothing found for "{0}".</value></data>
+  <data name="Apps_SearchCount" xml:space="preserve"><value>Found: {0}. winget shows at most 50; search more precisely to narrow it down.</value></data>
+  <data name="Apps_SearchMeta" xml:space="preserve"><value>{0}, version {1}</value></data>
+  <data name="Apps_FoundConfirmTitle" xml:space="preserve"><value>Install {0}?</value></data>
+  <data name="Apps_FoundConfirmText" xml:space="preserve"><value>{0} ({1}) is not on Tunero's reviewed list. winget downloads and installs it as its listing in the community repository says, for the whole PC where the package offers that, else for your account. Install it only if you trust the vendor.</value></data>
   <data name="Quick_TabFixes" xml:space="preserve"><value>Fixes and repair</value></data>
   <data name="Tag_Restart" xml:space="preserve"><value>Restart needed</value></data>
   <data name="Quick_DnsAction" xml:space="preserve"><value>Flush</value></data>

@@ -28,7 +28,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 In the order of the audit's promise gaps:
 
-1. A winget search for any package (the list of 91 apps is done).
+1. Installer: done (91 reviewed apps and a winget search for any package); the search needs its VM row.
 2. Orphaned Program Files folders without an uninstall entry (bulk and quiet uninstall and the leftover check after an uninstall are done and passed in the VM).
 3. Process Lasso style rules: the page priority (proof needed). Start priorities are proven; live rules and affinity are on the not-included page.
 4. Autoruns: done (the locations, the CSV export and Delete with a backup for registry values, Startup folder files and tasks of other programs); Delete for files and tasks needs its VM row.

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Optimizer.Core.Hardware.Probes;
 using Optimizer.Core.Platform;
 
@@ -168,4 +168,72 @@ public static class Winget
     public static bool IsSuccess(int exitCode) => exitCode is 0
         or UpdateNotApplicable
         or unchecked((int)0x8A150109); // APPINSTALLER_CLI_ERROR_INSTALL_REBOOT_REQUIRED_TO_FINISH
+
+    /// <summary>APPINSTALLER_CLI_ERROR_NO_APPLICABLE_INSTALLER: for an install with --scope machine, the package has only a per-user installer.</summary>
+    public const int NoApplicableInstaller = unchecked((int)0x8A150010);
+
+    /// <summary>APPINSTALLER_CLI_ERROR_NO_APPLICATIONS_FOUND: a search found nothing.</summary>
+    public const int NoPackagesFound = unchecked((int)0x8A150014);
+
+    // ---------------- search ----------------
+
+    /// <summary>A search goes into a command line: letters, digits, spaces and . - _ + only, 2 to 60 characters.</summary>
+    public static bool IsSafeQuery(string query) =>
+        query.Trim().Length is >= 2 and <= 60 && query.All(c => char.IsLetterOrDigit(c) || c is ' ' or '.' or '-' or '_' or '+');
+
+    /// <summary>A substring search of name, id and moniker in the winget community repository (not the Store), at most 50 results.</summary>
+    public static string SearchArguments(string query) =>
+        IsSafeQuery(query) ? $"search --query \"{query.Trim()}\" --source winget --count 50 --accept-source-agreements --disable-interactivity"
+        : throw new ArgumentException($"invalid search {query}");
+
+    /// <summary>
+    /// The table winget search prints: a header, a line of dashes, then one package per line in fixed-width columns. The
+    /// headers are translated, so the columns are found by where the header words start; the first three are always name,
+    /// id and version. Rows whose id winget shortened (ending in an ellipsis) or that hold anything but id characters are left out, and so
+    /// are the notes below the table (empty lines are already gone when the lines come from <see cref="StreamingProcess"/>).
+    /// </summary>
+    public static IReadOnlyList<WingetPackage> ParseSearch(string output)
+    {
+        // Progress spinners are written with carriage returns: only the text after the last one is on screen.
+        var lines = output.Split('\n').Select(l => l.TrimEnd('\r')).Select(l => l[(l.LastIndexOf('\r') + 1)..]).ToList();
+        var dashes = lines.FindIndex(l => l.Trim() is { Length: >= 10 } t && t.All(c => c == '-'));
+        if (dashes < 1) return [];
+        var header = lines[dashes - 1];
+        var starts = Enumerable.Range(0, header.Length).Where(i => header[i] != ' ' && (i == 0 || header[i - 1] == ' ')).ToList();
+        if (starts.Count < 3) return [];
+        var list = new List<WingetPackage>();
+        foreach (var line in lines.Skip(dashes + 1))
+        {
+            if (string.IsNullOrWhiteSpace(line)) break;
+            string Cut(int from, int to) => from >= line.Length ? "" : line[from..Math.Min(to, line.Length)].Trim();
+            var name = Cut(0, starts[1]);
+            var id = Cut(starts[1], starts[2]);
+            var version = Cut(starts[2], starts.Count > 3 ? starts[3] : line.Length);
+            // Ids in the winget repository are Publisher.Package: a line without a dot is a note below the table.
+            if (id.Contains('\u2026') || !IsSafeId(id) || !id.Contains('.') || name.Length == 0) continue;
+            list.Add(new WingetPackage(name, id, version));
+        }
+        return list;
+    }
+
+    /// <summary>Runs the search with the trusted winget; the packages it found (empty when none).</summary>
+    public static async Task<IReadOnlyList<WingetPackage>> SearchAsync(string winget, string query, CancellationToken ct)
+    {
+        var output = new System.Text.StringBuilder();
+        await StreamingProcess.RunAsync(winget, SearchArguments(query), new SynchronousProgress(l => { lock (output) output.AppendLine(l); }), ct);
+        lock (output) return ParseSearch(output.ToString());
+    }
+
+    /// <summary>Reports on the reading thread: the parse after the run must see every line.</summary>
+    private sealed class SynchronousProgress(Action<string> report) : IProgress<string>
+    {
+        public void Report(string value) => report(value);
+    }
+}
+
+/// <summary>One result of a winget search.</summary>
+public sealed record WingetPackage(string Name, string Id, string Version)
+{
+    // What screen readers announce for this item in a list.
+    public override string ToString() => Name;
 }

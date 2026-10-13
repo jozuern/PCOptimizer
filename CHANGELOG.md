@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Install & update, search winget:** besides the 91 reviewed apps, a search finds any package of the winget community repository by name or id (at most 50 results). Installing one asks first and says that Tunero has not reviewed it; it installs for the whole PC where the package offers that, otherwise winget opens for your account.
 - **Startup page, Delete for files and tasks:** Delete entry now also works for a file in a Startup folder and for a scheduled task of another program, as in Autoruns. The file's content or the task's XML goes into the backup first, and Undo on the Changes page writes the file back or registers the task again under the same name and account. A task that keeps a stored password is not offered, since it could only come back with that password; Windows' own tasks stay on Services & tasks.
 - **Tools, four more quick fixes:** "Rebuild the icon cache" for blank or wrong icons (Explorer ends, the signed-in user's IconCache.db is deleted as Microsoft's troubleshooting article does, Explorer starts again as that user). "Update Microsoft Defender" downloads the newest definitions now (Update-MpSignature). "Reset winget sources" restores winget's default sources when Install & update cannot reach the catalog; sources you added are removed, so it asks first. "Restart to Advanced startup" restarts into the menu where Startup Settings offers Safe Mode, for DDU for example; nothing in the boot settings changes, so the next start is normal again without a way back to set up.
 

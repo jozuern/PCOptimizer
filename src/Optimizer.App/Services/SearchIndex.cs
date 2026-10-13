@@ -78,6 +78,7 @@ public sealed class SearchIndex(TweakCatalog tweaks, CatalogData catalog) : ISea
             (SearchKind.Tool, "Debloat", "Debloat_OneDriveTitle", null, ["onedrive", "uninstall onedrive"]),
             (SearchKind.Tool, "Debloat", "Programs_Title", "Programs_Hint", ["uninstall program", "programme deinstallieren", "installed apps", "bulk uninstall", "bulk crap uninstaller", "quiet uninstall", "leftovers", "mehrere deinstallieren", "reste"]),
             (SearchKind.Tool, "Apps", "Apps_UpdateAll", null, ["winget upgrade", "update apps", "apps aktualisieren"]),
+            (SearchKind.Tool, "Apps", "Apps_SearchTitle", "Apps_SearchHint", ["winget search", "find app", "install any app", "app suchen", "winget suche"]),
             (SearchKind.Tool, "Apps", "Drv_Title", "Drv_Hint", ["driver update", "treiber", "chipset", "graphics driver", "grafiktreiber"]),
             (SearchKind.Tool, "Apps", "Drv_CleanTitle", "Drv_CleanHint", ["ddu", "display driver uninstaller", "clean driver install"]),
             (SearchKind.Tool, "Startup", "Startup_Title", "Startup_Hint", ["autostart", "autoruns", "startup programs", "run key"]),
