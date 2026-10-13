@@ -64,6 +64,15 @@ Native libraries: `NativeLibraryGuard` resolves P/Invoke targets to System32 or 
 
 Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/profiles.json` (profiles: per-profile impact of tweaks and findings, recommendations, what works against each), `Data/labels.json` (generated text, EN and DE), `Docs/{en,de}/*.md` (one explanation page per tweak and check). Entries marked `verified: false` (one anti-cheat, some service names) say so on their explanation page. Tweaks the evidence does not support are listed in [docs/not-included.md](docs/not-included.md) instead of the catalog.
 
+## App design
+
+The app is WPF with WPF-UI and nothing else (no WinForms, WebView2 or WinUI inside it), in the Windows 11 Fluent vocabulary: theme brushes and the Windows accent, Segoe UI Variable, spacing in steps of 4, light and dark. One element carries the app's own look, the **rating mark** (`Views/RatingMark.cs`): a tweak's or check's impact 0 to 5 as a light numeral and five bars, outlined when the evidence is disputed, nothing for 0. It is the same scale as the rating board on tunero.dev.
+
+- The light weight belongs to what the scan says: the rating marks and the Overview's verdict sentence. Headings and text keep the regular Fluent weights.
+- A row's impact is its mark, in one column beside the switch or button; the row's grey line names what it affects, and the details pane puts the mark next to "Impact 2 of 5".
+- Lists keep their columns: switches, marks and buttons have fixed places on every row, so a list can be read down a column.
+- Check a UI change with `--screenshot` in both themes and languages and at 1040 px with the details pane open, and with `--perf` before and after.
+
 ## Testing changes safely
 
 - `dotnet test` runs the engine against a registry sandbox under `HKCU\Software\TuneroTest` and fake system APIs. Nothing on the real system changes.
