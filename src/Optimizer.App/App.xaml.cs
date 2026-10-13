@@ -385,6 +385,7 @@ public partial class App : Application
         }
         var (dark, accent) = TargetTheme(setting);
         var appTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        foreach (var key in ContrastBrushKeys) Resources.Remove(key);   // set by TryApplyHighContrast
         // The theme dictionary builds some brushes (the "on" fill of switches) from the accent colors when it loads.
         // Set the accent for the new theme first, then load the theme, then set the accent again for the brushes the
         // accent manager owns. Loading the theme with the Windows accent would leave switches gray on a gray accent.
@@ -415,6 +416,10 @@ public partial class App : Application
         try
         {
             ApplicationThemeManager.Apply(ApplicationTheme.HighContrast, WindowBackdropType.None, false);
+            // The contrast themes keep the accent text brushes the accent manager set for Light or Dark: the
+            // "Recommended" lines were dark blue on black (VM, Night sky). They take Windows' link color, as text in the
+            // accent color does in Windows' own apps; leaving the contrast theme sets the accent again (ApplyTheme).
+            foreach (var key in ContrastBrushKeys) Resources[key] = SystemColors.HotTrackBrush;
             _appliedTheme = null;
             return true;
         }
@@ -424,6 +429,8 @@ public partial class App : Application
             return false;
         }
     }
+
+    private static readonly string[] ContrastBrushKeys = ["AccentTextFillColorPrimaryBrush", "AccentTextFillColorSecondaryBrush", "AccentTextFillColorTertiaryBrush"];
 
     private bool _contrastHooked;
 
@@ -664,16 +671,24 @@ public partial class App : Application
     {
         var lines = new List<string>();
         var seen = new HashSet<DependencyObject>();
+        var next = new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next);
         window.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.First));
-        for (var i = 0; i < 400 && System.Windows.Input.FocusManager.GetFocusedElement(window) is UIElement element && seen.Add(element); i++)
+        // Links in the explanation are content elements, not UI elements: both kinds are stops.
+        for (var i = 0; i < 400 && System.Windows.Input.FocusManager.GetFocusedElement(window) is DependencyObject element && seen.Add(element); i++)
         {
-            var peer = System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(element);
+            var peer = element switch
+            {
+                UIElement ui => System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(ui),
+                ContentElement content => System.Windows.Automation.Peers.ContentElementAutomationPeer.CreatePeerForElement(content),
+                _ => null,
+            };
             var name = peer?.GetName() ?? "";
             var label = $"{i + 1,3}  {peer?.GetLocalizedControlType() ?? "?"}  \"{name}\"  {element.GetType().Name}"
                 + (element is FrameworkElement { Name.Length: > 0 } fe ? $" #{fe.Name}" : "")
                 + (name.Length == 0 ? "  NO NAME" : "");
             lines.Add(label);
-            element.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next));
+            if (element is UIElement u) u.MoveFocus(next);
+            else if (element is ContentElement c) c.MoveFocus(next);
         }
         File.WriteAllLines(path, lines);
     }

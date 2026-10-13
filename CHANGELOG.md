@@ -35,6 +35,7 @@
 ### Fixed
 
 - **Keyboard and screen readers:** Tab no longer stops on cards and lists that do nothing (a screen reader read them as an empty "pane" or "list", and on Tools every card before its own button), the group headings in the navigation are no Tab stops and are read by their text instead of a control type name, and the navigation button, the window buttons and the explanation in the details pane have names. Checked on every page and in the confirmation: every stop now has a name.
+- **Contrast themes:** text in the accent color (the "Recommended" lines on the Tweaks page, the place of a search result) stayed dark blue on black. It now uses Windows' link color, like Windows' own apps.
 - **Undo all and `--undo-all`** passed over a backup they could not read (damaged, locked by another program, or written by a newer version), so the change it records stayed in place without a word. It is now reported as not undone, with the file and the reason.
 - **Restore point:** within Windows' limit (one restore point a day unless the limit is lifted) Windows skips a new one and still reports success, so the app counted an older restore point as made for this change. It now checks the limit first and asks you, as when System Protection is off.
 - **Backup not updated after a change:** when the backup could not be updated after an apply (the originals are saved before the first write), the result said only "Applied". It now says so; Undo still restores the original values.

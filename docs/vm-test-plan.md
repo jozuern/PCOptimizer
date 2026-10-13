@@ -57,8 +57,8 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 | Update check | Turn on, restart the app: no error; with a newer published release a banner links to the release page | |
 | 24H2 | On a 24H2 VM (build 26100): the app starts with the note that 24H2 is no longer supported; Undo of a change made there works | |
 | Small screen | Display at 1920 x 1080 and 150 % scaling: the window fits above the taskbar (footer and result bar visible); a confirmation with many changes (Apply recommended) keeps its buttons on screen | |
-| High contrast | Turn on a contrast theme (Settings > Accessibility > Contrast themes) while the app runs: it switches to Windows' colors, every page stays readable; turn it off: Light or Dark again | |
-| Sources | Select a tweak, click a source at the end of its page: it opens in the browser of the signed-in user; Tab reaches the links | |
+| High contrast | Turn on a contrast theme (Settings > Accessibility > Contrast themes) while the app runs: it switches to Windows' colors, every page stays readable; turn it off: Light or Dark again | OK 2026-10-13 (26H2, enhanced session): Overview, Tweaks, Changes and Settings in the contrast colors, Light again afterwards; the accent text ("Recommended" lines) was dark blue on black, fixed to Windows' link color |
+| Sources | Select a tweak, click a source at the end of its page: it opens in the browser of the signed-in user; Tab reaches the links | OK 2026-10-13 (26H2): Tab from the explanation to source 1, Enter opens it in Edge as the signed-in user, not elevated |
 | Failed self-update start | Update with the new exe blocked (an antivirus quarantine, or delete the new exe in the second between install and start under a debugger): the previous version is put back and the message says so | |
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
