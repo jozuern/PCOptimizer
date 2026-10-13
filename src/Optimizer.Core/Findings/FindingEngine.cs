@@ -17,6 +17,7 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new VrrCheck(),
         new NvidiaGlobalCheck(),
         new PowerModeCheck(),
+        new MemoryIntegrityCheck(),
         new OverlaysCheck(),
         new AmdChipsetCheck(),
         new SecureBootCertsCheck(),

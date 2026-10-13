@@ -29,7 +29,7 @@ Prüft, ob der RAM mit der Geschwindigkeit aus seiner Teilenummer läuft. Dafür
 :::
 
 ## Warum das wichtig ist
-Speichermodule starten zuerst mit einer sicheren Standardgeschwindigkeit (JEDEC) [1]. Die höhere Geschwindigkeit von der Verpackung ist als Profil gespeichert (Intel XMP, AMD EXPO) und muss im BIOS eingeschaltet werden [1][2]. ASUS-Mainboards zeigen **DOCP**, wenn das Kit das Profil des jeweils anderen Herstellers trägt, zum Beispiel ein XMP-Kit auf einem AMD-Mainboard [3]. Intel und AMD bezeichnen diese Profile als Speicherübertaktung, und laut Intel kann eine Änderung von Takt oder Spannung die Garantie gefährden und die Stabilität verringern [1][2]. Ohne Profil läuft der Speicher langsamer als angegeben, und Spiele, die von Speicherbandbreite und -latenz abhängen, können FPS verlieren; wie viel, hängt vom Spiel und von der Plattform ab.
+Speichermodule starten zuerst mit einer sicheren Standardgeschwindigkeit (JEDEC) [1]. Die höhere Geschwindigkeit von der Verpackung ist als Profil gespeichert (Intel XMP, AMD EXPO) und muss im BIOS eingeschaltet werden [1][2]. ASUS-Mainboards zeigen **DOCP**, wenn das Kit das Profil des jeweils anderen Herstellers trägt, zum Beispiel ein XMP-Kit auf einem AMD-Mainboard [3]. Intel und AMD bezeichnen diese Profile als Speicherübertaktung, und laut Intel kann eine Änderung von Takt oder Spannung die Garantie gefährden und die Stabilität verringern [1][2]. Ohne Profil läuft der Speicher langsamer als angegeben, und Spiele, die von Speicherbandbreite und -latenz abhängen, verlieren FPS. TechSpot hat 13 Spiele mit DDR5 in Grundgeschwindigkeit und mit Profil gemessen: im Schnitt 12 % mehr mit einem Ryzen 7 7700X und 11 % mit einem Core i7-12700K, in Hogwarts Legacy bis zu 17 % und 20 % mit 29 % und 31 % besseren 1-%-Lows, aber nur 4 % mit einem Ryzen 7 7800X3D, dessen großer Cache die Speichergeschwindigkeit verdeckt, und mit einem Core i7-14700K [18].
 ::: variant laptop
 Die meisten Laptops bieten kein XMP an. Ihre Speichergeschwindigkeit legt der Hersteller fest.
 :::
@@ -90,3 +90,4 @@ Starte den Scan erneut. Die aktuelle Geschwindigkeit sollte der Nenngeschwindigk
 15. https://www.intel.com/content/www/us/en/products/sku/199316/intel-core-i710700-processor-16m-cache-up-to-4-80-ghz/specifications.html
 16. https://edc.intel.com/content/www/us/en/design/products/platforms/details/raptor-lake-s/13th-generation-core-processors-datasheet-volume-1-of-2/005/processor-sku-support-matrix/
 17. https://edc.intel.com/content/www/us/en/design/products/platforms/details/arrow-lake-s/core-ultra-200s-series-processors-datasheet-volume-1-of-2/processor-sku-support-matrix/
+18. https://www.techspot.com/review/2866-ddr5-ram-stock-vs-xmp-expo/

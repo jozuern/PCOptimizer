@@ -114,7 +114,36 @@ public class AdvisorCheckTests
         Assert.Equal(FindingStatus.Info, f.Status);
         Assert.Null(f.Fix);
         AssertRenders(f);
-        Assert.Equal(FindingStatus.Ok, One(new NvidiaGlobalCheck(), Nv(vsync: Nvapi.VSyncForceOn, vrrEnabled: true)).Status);
+        // With G-SYNC, forced V-Sync plus a cap a few FPS below the refresh rate is the recommended setup: fine.
+        Assert.Equal(FindingStatus.Ok, One(new NvidiaGlobalCheck(), Nv(frl: 141, vsync: Nvapi.VSyncForceOn, vrrEnabled: true)).Status);
+    }
+
+    [Fact]
+    public void GsyncWithForcedVsyncAndNoCapGetsACapBelowTheRefreshRate()
+    {
+        var f = One(new NvidiaGlobalCheck(), Nv(vsync: Nvapi.VSyncForceOn, vrrEnabled: true));
+        Assert.Equal((FindingStatus.Info, 2), (f.Status, f.Impact));
+        Assert.Equal("141", f.Params["capTarget"]); // 144 Hz display
+        var cap = Assert.IsType<NvidiaDrsAction>(Assert.Single(f.Fix!.Actions));
+        Assert.Equal((Nvapi.SettingFrameRateLimiter, (uint?)141), (cap.SettingId, cap.Value));
+        Assert.True(f.Fix.Preview);
+        AssertRenders(f);
+        // G-SYNC without forced V-Sync: nothing to report.
+        Assert.Equal(FindingStatus.Ok, One(new NvidiaGlobalCheck(), Nv(vrrEnabled: true)).Status);
+    }
+
+    // ---------------- F31 ----------------
+
+    [Fact]
+    public void MemoryIntegrityRunningIsInfoAndCostsMoreWithoutMbec()
+    {
+        var on = One(new MemoryIntegrityCheck(), P(p => p with { Firmware = TestData.Firmware() with { HvciRunning = true } }));
+        Assert.Equal((FindingStatus.Info, 2, null), (on.Status, on.Impact, on.Variant));
+        AssertRenders(on);
+        var emulated = One(new MemoryIntegrityCheck(), P(p => p with { Firmware = TestData.Firmware() with { HvciRunning = true, MbecAvailable = false } }));
+        Assert.Equal((FindingStatus.Info, 3, "noMbec"), (emulated.Status, emulated.Impact, emulated.Variant));
+        AssertRenders(emulated);
+        Assert.Equal(FindingStatus.Ok, One(new MemoryIntegrityCheck(), P(p => p with { Firmware = TestData.Firmware() })).Status);
     }
 
     [Fact]

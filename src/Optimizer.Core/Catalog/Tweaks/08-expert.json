@@ -3,9 +3,10 @@
     {
       "id": "security.vbsOff",
       "category": "Expert",
+      "fixes": [ "F31.memoryIntegrity" ],
       "impact": {
         "gaming": 2,
-        "basis": "situational",
+        "basis": "measured",
         "effect": [
           "fps",
           "lows"

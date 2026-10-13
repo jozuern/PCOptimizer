@@ -540,7 +540,19 @@ public class CheckEdgeCaseTests
         Assert.Equal((FindingStatus.Problem, "off", 2), (f.Status, f.Variant, f.Impact));
         AssertRenders(f);
         var arc = One(new RebarCheck(), P(p => p with { Gpus = [TestData.Gpu("Intel(R) Arc(TM) B580 Graphics", Vendor.Intel, 256L << 20)] }));
-        Assert.Equal(5, arc.Impact); // Intel calls ReBAR required for Arc
+        Assert.Equal(4, arc.Impact); // Intel calls ReBAR required for Arc; measured about 23 % without it
+        var nvidia = One(new RebarCheck(), P(p => p with { Cpu = TestData.Cpu13700K(), Gpus = [TestData.Gpu("NVIDIA GeForce RTX 4070", Vendor.Nvidia, 256L << 20)] }));
+        Assert.Equal(1, nvidia.Impact); // 0 to 2 % on average
+    }
+
+    [Fact]
+    public void XmpImpactDependsOnTheProcessor()
+    {
+        // TechSpot 2024: 11 to 12 % for a Ryzen 7 7700X and a Core i7-12700K, 4 % for a 7800X3D and a 14700K.
+        Assert.Equal(3, XmpCheck.Impact(TestData.Cpu9700K() with { Name = "12th Gen Intel(R) Core(TM) i7-12700K" }, C));
+        Assert.Equal(1, XmpCheck.Impact(TestData.Cpu13700K(), C));
+        Assert.Equal(1, XmpCheck.Impact(TestData.Cpu9700K() with { Name = "14th Gen Intel(R) Core(TM) i7-14700K" }, C));
+        Assert.Equal(3, XmpCheck.Impact(null, C));
     }
 
     [Fact]

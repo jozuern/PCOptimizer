@@ -280,6 +280,9 @@ public partial class App : Application
                     Loc.Instance["Confirm_Cancel"], Loc.Instance["Update_Restart"])),
                 (System.IO.Path.ChangeExtension(messageShot, null) + "-3.png", new MessageWindow(Loc.Instance["Rp_AskTitle"], Loc.Instance["Rp_AskText"],
                     Loc.Instance["Confirm_Cancel"], Loc.Instance["Rp_Continue"], Loc.Instance["Rp_Enable"])),
+                (System.IO.Path.ChangeExtension(messageShot, null) + "-uninstall.png", Dialogs.UninstallDialog(3, DataPaths.Root)),
+                (System.IO.Path.ChangeExtension(messageShot, null) + "-uninstall-0.png", Dialogs.UninstallDialog(0, DataPaths.Root)),
+                (System.IO.Path.ChangeExtension(messageShot, null) + "-expert.png", Dialogs.ExpertDialog()),
             };
             foreach (var (file, dlg) in dialogs)
             {

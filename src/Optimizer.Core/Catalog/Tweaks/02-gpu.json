@@ -125,6 +125,9 @@
           "stutter"
         ]
       },
+      "impactOverrides": [
+        { "when": { "fact": "cpu.x3dMultiCcd", "eq": true }, "gaming": 3, "effect": [ "fps", "lows" ], "reasonKey": "impact.x3dGameMode" }
+      ],
       "risk": "safe",
       "scope": "user",
       "actions": [

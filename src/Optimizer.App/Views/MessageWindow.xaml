@@ -5,7 +5,8 @@
                  Width="560" MinHeight="0" SizeToContent="Height" ResizeMode="NoResize"
                  WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
                  ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
-    <!-- Laid out like a Windows 11 content dialog: title and text, then a footer band with the buttons side by side. -->
+    <!-- Laid out like a Windows 11 content dialog: title, one short text, an optional warning bar for what cannot be taken
+         back, optional details in secondary text, then a footer band with the buttons side by side. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -19,6 +20,9 @@
             <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
             <ui:TextBlock x:Name="BodyText" FontTypography="Body" TextWrapping="Wrap" Margin="0,12,0,0"
                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+            <ui:InfoBar x:Name="WarningBar" Severity="Warning" IsClosable="False" IsOpen="False" Margin="0,16,0,0" />
+            <ui:TextBlock x:Name="DetailsText" FontTypography="Caption" TextWrapping="Wrap" Margin="0,16,0,0" Visibility="Collapsed"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <Border Grid.Row="2" Padding="24" BorderThickness="0,1,0,0"
                 Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">

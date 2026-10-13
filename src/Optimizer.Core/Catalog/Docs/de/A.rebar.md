@@ -21,7 +21,7 @@ Prüft, ob Resizable BAR (bei AMD: Smart Access Memory) für die Grafikkarte akt
 :::
 
 ## Warum das wichtig ist
-Ohne Resizable BAR sieht der Prozessor den Grafikspeicher durch ein Fenster, das meist 256 MB groß ist [3]. Mit Resizable BAR vergrößert Windows dieses Fenster beim Start auf den gesamten Grafikspeicher [3]. NVIDIA schaltet es nur in Spielen ein, in denen die eigenen Tests einen Gewinn zeigen, von wenigen Prozent bis 12 %, und manche Spiele laufen damit langsamer [1]. Laut Intel brauchen Arc-Karten es für ein gutes Spielerlebnis: Ohne werden Ausreißer bei den Frametimes größer, die Karten funktionieren aber trotzdem [4][5]. Nötig sind eine neuere Grafikkarte (NVIDIA ab RTX 30 [1], AMD Radeon ab RX 5000 [7], Intel Arc), UEFI-Start und eine BIOS-Einstellung [6]. Für Smart Access Memory nennt AMD einen Ryzen ab Serie 3000 auf einem Mainboard ab der 500er-Serie [7].
+Ohne Resizable BAR sieht der Prozessor den Grafikspeicher durch ein Fenster, das meist 256 MB groß ist [3]. Mit Resizable BAR vergrößert Windows dieses Fenster beim Start auf den gesamten Grafikspeicher [3]. NVIDIA schaltet es nur in Spielen ein, in denen die eigenen Tests einen Gewinn zeigen, von wenigen Prozent bis 12 %, und manche Spiele laufen damit langsamer [1]. Laut Intel brauchen Arc-Karten es für ein gutes Spielerlebnis: Ohne werden Ausreißer bei den Frametimes größer, die Karten funktionieren aber trotzdem [4][5]. Gemessen unterscheidet sich der Gewinn je nach Hersteller: Eine Intel Arc A770 erreichte im Test von TechPowerUp ohne Resizable BAR nur 77 % ihrer Leistung in 1080p und 76 % in 1440p [11]; bei AMD hat Club386 bis zu 17,5 % mehr in Atomic Heart und 1 bis 17 % in fünf aktuellen Spielen gemessen [12], TechSpot im Schnitt 3 % in 1440p; mit einer NVIDIA RTX 3080 maß TechSpot keinen Gewinn in 1080p und 1 bis 2 % in 1440p und 4K über alle Spiele [13]. Nötig sind eine neuere Grafikkarte (NVIDIA ab RTX 30 [1], AMD Radeon ab RX 5000 [7], Intel Arc), UEFI-Start und eine BIOS-Einstellung [6]. Für Smart Access Memory nennt AMD einen Ryzen ab Serie 3000 auf einem Mainboard ab der 500er-Serie [7].
 ::: variant unsupported
 Ältere Karten wie die GeForce-RTX-20-Serie unterstützen es nicht, die Einstellung hätte also keine Wirkung.
 :::
@@ -76,3 +76,6 @@ Starte den Scan erneut. Das größte Speicherfenster sollte der Größe des Graf
 8. https://learn.microsoft.com/de-de/windows/deployment/mbr-to-gpt
 9. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
 10. https://learn.microsoft.com/de-de/windows/security/operating-system-security/data-protection/bitlocker/operations-guide
+11. https://thinkcomputers.org/intel-arc-a7-gpus-become-useless-without-resizable-bar/
+12. https://www.club386.com/?p=145731
+13. https://www.techspot.com/review/2234-nvidia-resizable-bar/

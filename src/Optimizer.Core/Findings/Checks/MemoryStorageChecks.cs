@@ -83,6 +83,18 @@ public sealed class XmpCheck : IPhysicalHardwareCheck
     /// <summary>AMD's specified speed for four DDR5 modules (product pages, "4x1R DDR5-3600").</summary>
     public const int FourDimmDdr5Mts = 3600;
 
+    /// <summary>
+    /// Gaming impact of memory below its rating, by processor: TechSpot (2024, 13 games) measured 11 to 12 % on average for
+    /// a Ryzen 7 7700X and a Core i7-12700K, but 4 % for a Ryzen 7 7800X3D (the large cache hides memory speed) and a Core
+    /// i7-14700K. X3D and Intel 13th and 14th gen rate 1, other processors 3.
+    /// </summary>
+    public static int Impact(CpuInfo? cpu, CatalogData c)
+    {
+        if (cpu is null) return 3;
+        if (X3d.Classify(cpu, c) != X3dLayout.None) return 1;
+        return cpu.Vendor == Vendor.Intel && RegexCache.Get(@"\bi[3579]-1[34]\d{3}").IsMatch(cpu.Name) ? 1 : 3;
+    }
+
     public IReadOnlyList<string> DocIds => [Id];
 
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
@@ -117,7 +129,7 @@ public sealed class XmpCheck : IPhysicalHardwareCheck
             // A non-Z Intel board of 8th to 10th generation runs memory at the processor's specified speed at most.
             Status = (laptop || fourDimms || intelLocked) && status == FindingStatus.Problem ? FindingStatus.Info : status,
             Variant = laptop ? "laptop" : fourDimms && status == FindingStatus.Problem ? (p.Cpu?.Vendor == Vendor.Intel ? "fourDimmsIntel" : "fourDimms") : intelLocked ? "intelLocked" : null,
-            Impact = 4,
+            Impact = Impact(p.Cpu, c),
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
             [

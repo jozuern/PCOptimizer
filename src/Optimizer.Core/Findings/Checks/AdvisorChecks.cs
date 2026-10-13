@@ -117,6 +117,10 @@ public sealed class NvidiaGlobalCheck : IFindingCheck
         var powerMin = nv.PowerMode == Nvapi.PStatePreferMin;
         var vrrOn = nv.Vrr.Values.Any(v => v.Enabled);
         var vsyncForced = nv.VSyncMode == Nvapi.VSyncForceOn && !vrrOn;
+        // G-SYNC with V-Sync forced on and no cap: once a game runs faster than the refresh rate, G-SYNC falls back to
+        // V-Sync and buffers 2 to 6 frames (Blur Busters); a cap 3 FPS below the refresh rate avoids that.
+        var capTarget = refresh >= 60 ? (int)Math.Floor(refresh) - 3 : 0;
+        var gsyncNoCap = vrrOn && nv.VSyncMode == Nvapi.VSyncForceOn && frl is null && capTarget > 0;
 
         var reset = new List<uint>();
         if (lowCap) reset.Add(Nvapi.SettingFrameRateLimiter);
@@ -126,9 +130,9 @@ public sealed class NvidiaGlobalCheck : IFindingCheck
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = reset.Count > 0 ? FindingStatus.Problem : vsyncForced ? FindingStatus.Info : FindingStatus.Ok,
-            Impact = 4,
-            Effects = [Effect.Fps, Effect.Latency],
+            Status = reset.Count > 0 ? FindingStatus.Problem : vsyncForced || gsyncNoCap ? FindingStatus.Info : FindingStatus.Ok,
+            Impact = reset.Count == 0 && gsyncNoCap ? 2 : 4,
+            Effects = reset.Count == 0 && gsyncNoCap ? [Effect.Latency] : [Effect.Fps, Effect.Latency],
             Facts =
             [
                 new("fact.nvidiaDriver", nv.DriverVersion ?? "@unknown"),
@@ -151,10 +155,12 @@ public sealed class NvidiaGlobalCheck : IFindingCheck
                 new("fact.gsyncEnabled", nv.Vrr.Count == 0 ? "@unknown" : vrrOn ? "@yes" : "@no"),
                 new("fact.currentRefresh", refresh > 0 ? $"{refresh:0.##} Hz" : "@unknown"),
             ],
-            Fix = reset.Count > 0 ? RuntimeFixes.NvidiaGlobalReset(reset) : null,
+            Fix = reset.Count > 0 ? RuntimeFixes.NvidiaGlobalReset(reset) : gsyncNoCap ? RuntimeFixes.NvidiaFrameCap(capTarget) : null,
             Params = new Dictionary<string, string>
             {
                 ["lowCap"] = lowCap ? "yes" : "",
+                ["gsyncNoCap"] = gsyncNoCap ? "yes" : "",
+                ["capTarget"] = capTarget > 0 ? capTarget.ToString(CultureInfo.InvariantCulture) : "",
                 ["powerMin"] = powerMin ? "yes" : "",
                 ["vsyncForced"] = vsyncForced ? "yes" : "",
                 ["cap"] = frl?.ToString(CultureInfo.InvariantCulture) ?? "",

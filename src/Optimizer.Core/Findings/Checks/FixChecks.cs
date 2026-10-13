@@ -1,6 +1,7 @@
 using Optimizer.Core.Actions;
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Hardware;
+using Optimizer.Core.Interop;
 using Optimizer.Core.Platform;
 using Optimizer.Core.Tweaks;
 
@@ -29,10 +30,11 @@ public static class RuntimeFixes
     };
 
     public const string NvidiaGlobalDoc = "fix.nvidiaGlobal";
+    public const string NvidiaFrameCapDoc = "fix.nvidiaFrameCap";
     public const string PowerModeDoc = "fix.powerMode";
     public const string EthernetAutoDoc = "fix.ethernetAuto";
 
-    public static IReadOnlyList<string> DocIds => [RefreshRateDoc, GpuPreferenceDoc, NvidiaGlobalDoc, PowerModeDoc, EthernetAutoDoc];
+    public static IReadOnlyList<string> DocIds => [RefreshRateDoc, GpuPreferenceDoc, NvidiaGlobalDoc, NvidiaFrameCapDoc, PowerModeDoc, EthernetAutoDoc];
 
     /// <summary>Removes the global profile's own values for the given settings, so the driver defaults apply again.</summary>
     public static TweakDefinition NvidiaGlobalReset(IEnumerable<uint> settings) => new()
@@ -50,6 +52,28 @@ public static class RuntimeFixes
         [
             "https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__drsapi.html",
             "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h",
+        ],
+    };
+
+    /// <summary>
+    /// Global NVIDIA frame rate limit (FRL_FPS_ID, documented in NvApiDriverSettings.h) 3 FPS below the G-SYNC display's
+    /// refresh rate. Preview: that the NVIDIA App's "Max Frame Rate" is this setting is not yet confirmed on real hardware.
+    /// </summary>
+    public static TweakDefinition NvidiaFrameCap(int fps) => new()
+    {
+        Id = "fix.nvidiaFrameCap",
+        Docs = NvidiaFrameCapDoc,
+        Category = "Fixes",
+        Impact = new ImpactInfo { Gaming = 2, Basis = "situational", Effect = ["latency"] },
+        Risk = Risk.Safe,
+        Preview = true,
+        Hidden = true,
+        Actions = [new NvidiaDrsAction { Profile = "global", SettingId = Nvapi.SettingFrameRateLimiter, Value = (uint)fps }],
+        Fixes = [NvidiaGlobalCheck.Id],
+        Sources =
+        [
+            "https://github.com/NVIDIA/nvapi/blob/main/NvApiDriverSettings.h",
+            "https://blurbusters.com/gsync/gsync101-input-lag-tests-and-settings/5/",
         ],
     };
 

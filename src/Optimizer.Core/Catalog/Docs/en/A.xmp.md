@@ -29,7 +29,7 @@ Checks whether the memory runs at the speed printed in its part number, which us
 :::
 
 ## Why it matters
-Memory modules first start at a safe standard speed (JEDEC) [1]. The faster speed on the box is stored as a profile (Intel XMP, AMD EXPO) that must be switched on in the BIOS [1][2]. ASUS boards show **DOCP** when the kit carries the other vendor's profile, for example an XMP kit on an AMD board [3]. Intel and AMD describe these profiles as memory overclocking, and Intel notes that changing clock or voltage can affect warranties and reduce stability [1][2]. Without the profile, the memory runs slower than its rating, and games that depend on memory bandwidth and latency can lose frame rate; how much depends on the game and the platform.
+Memory modules first start at a safe standard speed (JEDEC) [1]. The faster speed on the box is stored as a profile (Intel XMP, AMD EXPO) that must be switched on in the BIOS [1][2]. ASUS boards show **DOCP** when the kit carries the other vendor's profile, for example an XMP kit on an AMD board [3]. Intel and AMD describe these profiles as memory overclocking, and Intel notes that changing clock or voltage can affect warranties and reduce stability [1][2]. Without the profile, the memory runs slower than its rating, and games that depend on memory bandwidth and latency lose frame rate. TechSpot measured 13 games with DDR5 at base speed and with the profile: 12 % more on average for a Ryzen 7 7700X and 11 % for a Core i7-12700K, up to 17 % and 20 % with 29 % and 31 % better 1 % lows in Hogwarts Legacy, but only 4 % for a Ryzen 7 7800X3D, whose large cache hides memory speed, and for a Core i7-14700K [18].
 ::: variant laptop
 Most laptops do not offer XMP; their memory speed is fixed by the manufacturer.
 :::
@@ -90,3 +90,4 @@ Run the scan again. Current speed should equal the rated speed. Task Manager > P
 15. https://www.intel.com/content/www/us/en/products/sku/199316/intel-core-i710700-processor-16m-cache-up-to-4-80-ghz/specifications.html
 16. https://edc.intel.com/content/www/us/en/design/products/platforms/details/raptor-lake-s/13th-generation-core-processors-datasheet-volume-1-of-2/005/processor-sku-support-matrix/
 17. https://edc.intel.com/content/www/us/en/design/products/platforms/details/arrow-lake-s/core-ultra-200s-series-processors-datasheet-volume-1-of-2/processor-sku-support-matrix/
+18. https://www.techspot.com/review/2866-ddr5-ram-stock-vs-xmp-expo/

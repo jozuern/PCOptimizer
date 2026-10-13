@@ -115,7 +115,10 @@
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Shows changes that trade security for performance or edit the boot configuration. They are never recommended automatically.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Data folder</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Turn on Expert mode?</value></data>
-  <data name="Expert_ConfirmText" xml:space="preserve"><value>Expert changes can weaken Windows security (for example memory integrity or Spectre protection) or change how Windows starts. Some anti-cheats refuse to run without these protections. Every change is backed up and explained, but read each one before you apply it.</value></data>
+  <data name="Expert_ConfirmText" xml:space="preserve"><value>Expert mode shows changes that can weaken Windows security or change how Windows starts. Each one is backed up and explained.</value></data>
+  <data name="Expert_ConfirmWarningTitle" xml:space="preserve"><value>Some anti-cheats refuse to run without these protections</value></data>
+  <data name="Expert_ConfirmWarning" xml:space="preserve"><value>For example memory integrity or Spectre protection. Read each change before you apply it.</value></data>
+  <data name="Expert_ConfirmButton" xml:space="preserve"><value>Turn on</value></data>
   <data name="Confirm_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Confirm_Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Confirm_Cancel" xml:space="preserve"><value>Cancel</value></data>
@@ -1129,10 +1132,13 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Uninstall_Hint" xml:space="preserve"><value>Offers to undo its changes first, then deletes the app, its data folder with backups and logs, and its Start menu entry.</value></data>
   <data name="Uninstall_Button" xml:space="preserve"><value>Uninstall</value></data>
   <data name="Uninstall_Title" xml:space="preserve"><value>Uninstall Tunero?</value></data>
-  <data name="Uninstall_Text" xml:space="preserve"><value>Tunero closes and deletes its exe, its data folder {0} with backups, logs and settings, and its Start menu entry. Restore points, apps you installed through Tunero and the PawnIO driver stay; remove them in Windows under Settings &gt; Apps &gt; Installed apps if you no longer need them.</value></data>
-  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Changes still active: {0}. Undo them first to get the previous settings back. If you keep them, they stay after the uninstall, and Tunero can no longer undo them, because their backups are deleted.</value></data>
-  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Undo changes and uninstall</value></data>
-  <data name="Uninstall_Keep" xml:space="preserve"><value>Keep changes and uninstall</value></data>
+  <data name="Uninstall_Text" xml:space="preserve"><value>Tunero closes and deletes its exe, its backups, logs and settings, and its Start menu entry.</value></data>
+  <data name="Uninstall_WarningTitle" xml:space="preserve"><value>Changes still active: {0}</value></data>
+  <data name="Uninstall_Warning" xml:space="preserve"><value>Their backups are deleted with the app, so changes you keep can no longer be undone.</value></data>
+  <data name="Uninstall_Details" xml:space="preserve"><value>Stays on the PC: restore points, apps you installed through Tunero and the PawnIO driver (remove them under Settings &gt; Apps &gt; Installed apps).</value></data>
+  <data name="Uninstall_DataFolder" xml:space="preserve"><value>Data folder: {0}</value></data>
+  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Undo and uninstall</value></data>
+  <data name="Uninstall_Keep" xml:space="preserve"><value>Uninstall</value></data>
   <data name="Uninstall_Busy" xml:space="preserve"><value>Wait until the current change has finished, then uninstall.</value></data>
   <data name="Uninstall_UndoFailed" xml:space="preserve"><value>Tunero was not removed.</value></data>
   <data name="Uninstall_Failed" xml:space="preserve"><value>The uninstall could not be started: {0}</value></data>

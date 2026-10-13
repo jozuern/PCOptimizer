@@ -115,7 +115,10 @@
   <data name="Settings_ExpertHint" xml:space="preserve"><value>Zeigt Änderungen, die Sicherheit gegen Leistung tauschen oder die Startkonfiguration bearbeiten. Sie werden nie automatisch empfohlen.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Datenordner</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Expertenmodus einschalten?</value></data>
-  <data name="Expert_ConfirmText" xml:space="preserve"><value>Experten-Änderungen können die Sicherheit von Windows schwächen (zum Beispiel Speicherintegrität oder Spectre-Schutz) oder ändern, wie Windows startet. Manche Anti-Cheats laufen ohne diese Schutzfunktionen nicht. Jede Änderung wird gesichert und erklärt, lies sie aber vor dem Anwenden.</value></data>
+  <data name="Expert_ConfirmText" xml:space="preserve"><value>Der Expertenmodus zeigt Änderungen, die die Sicherheit von Windows schwächen oder ändern können, wie Windows startet. Jede wird gesichert und erklärt.</value></data>
+  <data name="Expert_ConfirmWarningTitle" xml:space="preserve"><value>Manche Anti-Cheats starten ohne diese Schutzfunktionen nicht</value></data>
+  <data name="Expert_ConfirmWarning" xml:space="preserve"><value>Zum Beispiel Speicherintegrität oder der Schutz vor Spectre. Lies jede Änderung, bevor du sie anwendest.</value></data>
+  <data name="Expert_ConfirmButton" xml:space="preserve"><value>Einschalten</value></data>
   <data name="Confirm_Apply" xml:space="preserve"><value>Anwenden</value></data>
   <data name="Confirm_Undo" xml:space="preserve"><value>Rückgängig machen</value></data>
   <data name="Confirm_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
@@ -1129,10 +1132,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Uninstall_Hint" xml:space="preserve"><value>Bietet zuerst an, die Änderungen rückgängig zu machen, und löscht dann die App, ihren Datenordner mit Sicherungen und Protokollen und ihren Eintrag im Startmenü.</value></data>
   <data name="Uninstall_Button" xml:space="preserve"><value>Deinstallieren</value></data>
   <data name="Uninstall_Title" xml:space="preserve"><value>Tunero deinstallieren?</value></data>
-  <data name="Uninstall_Text" xml:space="preserve"><value>Tunero schließt sich und löscht seine exe, seinen Datenordner {0} mit Sicherungen, Protokollen und Einstellungen und seinen Eintrag im Startmenü. Wiederherstellungspunkte, Apps, die du über Tunero installiert hast, und der PawnIO-Treiber bleiben; entferne sie in Windows unter Einstellungen &gt; Apps &gt; Installierte Apps, wenn du sie nicht mehr brauchst.</value></data>
-  <data name="Uninstall_TextChanges" xml:space="preserve"><value>Noch aktive Änderungen: {0}. Mache sie zuerst rückgängig, um die vorherigen Einstellungen zurückzubekommen. Behältst du sie, bleiben sie nach der Deinstallation bestehen, und Tunero kann sie nicht mehr rückgängig machen, weil ihre Sicherungen gelöscht werden.</value></data>
-  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Rückgängig machen und deinstallieren</value></data>
-  <data name="Uninstall_Keep" xml:space="preserve"><value>Änderungen behalten und deinstallieren</value></data>
+  <data name="Uninstall_Text" xml:space="preserve"><value>Tunero schließt sich und löscht seine exe, seine Sicherungen, Protokolle und Einstellungen und seinen Eintrag im Startmenü.</value></data>
+  <data name="Uninstall_WarningTitle" xml:space="preserve"><value>Noch aktive Änderungen: {0}</value></data>
+  <data name="Uninstall_Warning" xml:space="preserve"><value>Ihre Sicherungen werden mit der App gelöscht. Behaltene Änderungen lassen sich danach nicht mehr rückgängig machen.</value></data>
+  <data name="Uninstall_Details" xml:space="preserve"><value>Bleibt auf dem PC: Wiederherstellungspunkte, Apps, die du über Tunero installiert hast, und der PawnIO-Treiber (entfernen unter Einstellungen &gt; Apps &gt; Installierte Apps).</value></data>
+  <data name="Uninstall_DataFolder" xml:space="preserve"><value>Datenordner: {0}</value></data>
+  <data name="Uninstall_UndoFirst" xml:space="preserve"><value>Zurücksetzen und deinstallieren</value></data>
+  <data name="Uninstall_Keep" xml:space="preserve"><value>Deinstallieren</value></data>
   <data name="Uninstall_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung fertig ist, und deinstalliere dann.</value></data>
   <data name="Uninstall_UndoFailed" xml:space="preserve"><value>Tunero wurde nicht entfernt.</value></data>
   <data name="Uninstall_Failed" xml:space="preserve"><value>Die Deinstallation konnte nicht gestartet werden: {0}</value></data>

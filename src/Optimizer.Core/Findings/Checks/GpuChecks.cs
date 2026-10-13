@@ -176,8 +176,9 @@ public sealed class RebarCheck : IPhysicalHardwareCheck
                 Kind = FindingKind.Advisor,
                 Status = status,
                 Variant = variant,
-                // NVIDIA: "a few percent, up to 12%" in profiled games; Intel calls ReBAR required for Arc.
-                Impact = rule?.Critical == true ? 5 : 2,
+                // Measured per vendor: Intel Arc (Intel: "must be enabled") about 23 % slower without it at 1080p, AMD up
+                // to 17 % in recent games and 3 % on average, NVIDIA 0 to 2 % on average (TechPowerUp, Club386, TechSpot).
+                Impact = rule?.Critical == true ? 4 : g.Vendor == Vendor.Nvidia ? 1 : 2,
                 Effects = [Effect.Fps, Effect.Lows],
                 Facts =
                 [

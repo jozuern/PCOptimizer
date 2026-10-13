@@ -21,7 +21,7 @@ Checks whether Resizable BAR (AMD: Smart Access Memory) is active for the graphi
 :::
 
 ## Why it matters
-Without Resizable BAR, the processor sees the video memory through a window that is usually 256 MB [3]. With it, Windows enlarges that window at startup so it covers the whole video memory [3]. NVIDIA enables it only in games where its tests show a gain, from a few percent up to 12 %, and some games run slower with it [1]. Intel says Arc cards need it for a good experience: without it, frame time spikes get larger, although the cards still work [4][5]. Support needs a recent graphics card (NVIDIA RTX 30 series and newer [1], AMD Radeon RX 5000 series and newer [7], Intel Arc), UEFI boot and a BIOS setting [6]. For Smart Access Memory, AMD names a Ryzen 3000 or newer processor on a 500 series board or newer [7].
+Without Resizable BAR, the processor sees the video memory through a window that is usually 256 MB [3]. With it, Windows enlarges that window at startup so it covers the whole video memory [3]. NVIDIA enables it only in games where its tests show a gain, from a few percent up to 12 %, and some games run slower with it [1]. Intel says Arc cards need it for a good experience: without it, frame time spikes get larger, although the cards still work [4][5]. Measured, the gain differs by maker: an Intel Arc A770 reached only 77 % of its performance without it at 1080p and 76 % at 1440p in TechPowerUp's test [11]; on AMD, Club386 measured up to 17.5 % more in Atomic Heart and 1 to 17 % in five recent games [12], and TechSpot found 3 % on average at 1440p; on an NVIDIA RTX 3080, TechSpot measured no gain at 1080p and 1 to 2 % at 1440p and 4K across its games [13]. Support needs a recent graphics card (NVIDIA RTX 30 series and newer [1], AMD Radeon RX 5000 series and newer [7], Intel Arc), UEFI boot and a BIOS setting [6]. For Smart Access Memory, AMD names a Ryzen 3000 or newer processor on a 500 series board or newer [7].
 ::: variant unsupported
 Older cards like the GeForce RTX 20 series do not support it, so the setting would have no effect.
 :::
@@ -76,3 +76,6 @@ Run the scan again. The largest memory window should match the video memory size
 8. https://learn.microsoft.com/en-us/windows/deployment/mbr-to-gpt
 9. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/recovery-overview
 10. https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/operations-guide
+11. https://thinkcomputers.org/intel-arc-a7-gpus-become-useless-without-resizable-bar/
+12. https://www.club386.com/?p=145731
+13. https://www.techspot.com/review/2234-nvidia-resizable-bar/
