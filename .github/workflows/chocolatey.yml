@@ -46,7 +46,7 @@ jobs:
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         sparse-checkout: |
-          src/Optimizer.Core/Updates/update-key.pem
+          src/Optimizer.Core/Updates/update-key*.pem
           scripts/chocolatey-package.ps1
         sparse-checkout-cone-mode: false
         path: repo
@@ -64,13 +64,15 @@ jobs:
         if ($hash -ne $listed) { Write-Error "Tunero.exe has SHA-256 $hash, the release lists $listed"; exit 1 }
         $statement = [System.Text.Encoding]::UTF8.GetBytes("PCOptimizer $($env:TAG.TrimStart('v'))`n$hash`n")
         $signature = [Convert]::FromBase64String((Get-Content -Raw assets/Tunero.exe.sig).Trim())
-        $public = [System.Security.Cryptography.ECDsa]::Create()
-        try {
-          $public.ImportFromPem((Get-Content -Raw repo/src/Optimizer.Core/Updates/update-key.pem))
-          if (-not $public.VerifyData($statement, $signature, [System.Security.Cryptography.HashAlgorithmName]::SHA256)) {
-            Write-Error "The release signature does not match the app's key for $env:TAG"; exit 1
-          }
-        } finally { $public.Dispose() }
+        $matched = $false
+        foreach ($pem in Get-ChildItem repo/src/Optimizer.Core/Updates -Filter 'update-key*.pem') {
+          $public = [System.Security.Cryptography.ECDsa]::Create()
+          try {
+            $public.ImportFromPem((Get-Content -Raw $pem.FullName))
+            if ($public.VerifyData($statement, $signature, [System.Security.Cryptography.HashAlgorithmName]::SHA256)) { $matched = $true }
+          } finally { $public.Dispose() }
+        }
+        if (-not $matched) { Write-Error "The release signature matches none of the app's update keys for $env:TAG"; exit 1 }
         "SHA256=$hash" >> $env:GITHUB_ENV
         "Verified Tunero.exe SHA-256 $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 

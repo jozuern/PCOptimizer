@@ -45,9 +45,12 @@ public sealed record ServiceRow(
     /// the Windows folder counts as a Windows service, so a failed check never unlocks Disabled for it; except in the
     /// folders there that standard users can write to (Temp, Tasks, Tracing and similar), where anything can be placed.
     /// </summary>
-    public bool IsMicrosoft => Signature is { Status: SignatureStatus.Signed } s
+    public bool IsMicrosoft => IsWindowsService(Signature, File);
+
+    /// <summary>The rule of <see cref="IsMicrosoft"/> for any service file (the Startup page's service rows use it too).</summary>
+    public static bool IsWindowsService(SignatureInfo? signature, string? file) => signature is { Status: SignatureStatus.Signed } s
         ? s.IsMicrosoft
-        : File is { } f && f.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows) + "\\", StringComparison.OrdinalIgnoreCase)
+        : file is { } f && f.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows) + "\\", StringComparison.OrdinalIgnoreCase)
           && !Startup.CommandLine.IsInUserWritableWindowsFolder(f);
 
     /// <summary>

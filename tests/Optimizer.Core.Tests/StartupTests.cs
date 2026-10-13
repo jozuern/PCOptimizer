@@ -187,6 +187,54 @@ public class StartupTests
         Assert.True(ps.RunsScriptHost);
     }
 
+    /// <summary>
+    /// Every program of a task is its own entry (a second one cannot hide behind a signed first one); a COM handler task
+    /// shows the DLL registered for it; Windows' own tasks are listed but switched only on Services &amp; tasks; tasks of
+    /// other programs are listed whatever starts them, as in Autoruns.
+    /// </summary>
+    [Fact]
+    public void TasksShowEveryProgramTheirHandlerAndWhoMaySwitchThem()
+    {
+        using var fx = new EngineFixture();
+        fx.Tasks.Listed.Add(new ScheduledTaskInfo(@"\Vendor\Two", true, "Vendor", @"C:\Windows\System32\cmd.exe", "/c exit", true, false, null,
+            [(@"C:\Users\Public\x.exe", null)]));
+        const string clsid = "{12345678-1234-1234-1234-123456789ABC}";
+        RegistryValue.Write(fx.Registry, Hive.Machine, $@"SOFTWARE\Classes\CLSID\{clsid}\InprocServer32", "", "string", @"C:\Windows\System32\fixture.dll");
+        fx.Tasks.Listed.Add(new ScheduledTaskInfo(@"\Microsoft\Windows\Fixture\Handler", true, "Microsoft", null, null, true, false, null, null, clsid));
+        fx.Tasks.Listed.Add(new ScheduledTaskInfo(@"\Vendor\Daily", true, "Vendor", @"C:\Vendor\up.exe", null, false, false, null));
+        fx.Tasks.Listed.Add(new ScheduledTaskInfo(@"\Microsoft\Windows\Fixture\Daily", true, "Microsoft", @"C:\Windows\System32\x.exe", null, false, false, null));
+
+        var scanner = new StartupScanner(fx.Registry, fx.Tasks, null);
+        var all = scanner.ScheduledTasks().ToList();
+        Assert.Equal([@"C:\Windows\System32\cmd.exe", @"C:\Users\Public\x.exe"], all.Where(e => e.Target == @"\Vendor\Two").Select(e => e.ImagePath!));
+        Assert.Equal(2, all.Where(e => e.Target == @"\Vendor\Two").Select(e => e.Key).Distinct().Count());
+        var handler = Assert.Single(all, e => e.Target == @"\Microsoft\Windows\Fixture\Handler");
+        Assert.Equal(@"C:\Windows\System32\fixture.dll", handler.ImagePath, ignoreCase: true);
+        Assert.Null(StartupTweaks.Set(handler, false));
+        Assert.Contains(all, e => e.Target == @"\Vendor\Daily");
+        Assert.DoesNotContain(all, e => e.Target == @"\Microsoft\Windows\Fixture\Daily");
+        // The startup check counts only what starts with Windows.
+        Assert.DoesNotContain(scanner.LogonTasks(), e => e.Target == @"\Vendor\Daily");
+    }
+
+    /// <summary>A variable of the user's own (inherited by this app) cannot make a script look like one from System32.</summary>
+    [Fact]
+    public void UserVariablesDoNotMakeAScriptTrusted()
+    {
+        const string name = "TUNERO_TEST_SYS32";
+        Environment.SetEnvironmentVariable(name, Environment.SystemDirectory);
+        try
+        {
+            var entry = new StartupEntry(StartupKind.RunKey, "x", $@"C:\Windows\System32\wscript.exe %{name}%\a.vbs", @"C:\Windows\System32\wscript.exe",
+                @"HKCU\Run", Hive.User, true, "run:x");
+            Assert.True(entry.RunsScriptHost);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(name, null);
+        }
+    }
+
     [Fact]
     public void StartupFolderShortcutWithArgumentsPointsAtItsTarget()
     {

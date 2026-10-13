@@ -106,7 +106,9 @@ public sealed partial class StartupRow : SwitchRow
     {
         _runsScriptHost = runsScriptHost;
         IsMicrosoft = s.IsMicrosoft;
-        UpdateCanToggle(s.IsMicrosoft || s.Status == SignatureStatus.Error);
+        // The Services page's rule: without a valid signature (CryptSvc off, a failed check) a file in the Windows folder
+        // still counts as Windows' own, so Dhcp or the firewall never become switchable here.
+        UpdateCanToggle(ServiceRow.IsWindowsService(s, Entry.ImagePath) || s.Status == SignatureStatus.Error);
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
         // Not signed and a bad signature are tags under the name: the line does not say it a second time.
         SignatureText = s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid ? "" : Labels.Current.Get(lang, $"signature.{s.Status}");
@@ -829,8 +831,11 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
             var winget = _winget;
             await RunWorkAsync("winget upgrade all", async () =>
             {
-                var code = await StreamingProcess.RunAsync(winget, Winget.UpgradeAllArguments, progress);
-                lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}"));
+                var code = await StreamingProcess.RunAsync(winget, Winget.UpgradeAllArguments("machine"), progress);
+                lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_UpdateFailed", $"0x{code:X8}"));
+                // Per-user programs update as the signed-in user, in a window of their own.
+                if (_wingetForUser is { } forUser && Winget.UpgradeAllForUser(forUser, services.Elevation) != DeElevatedLauncher.Path.Failed)
+                    lines.Add(Loc.Instance["Apps_UpdateAllUser"]);
                 Output = string.Join("\n", lines);
             });
         }
@@ -987,10 +992,9 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
             if (!await RunWorkAsync($"update {row.App.Id}", async () =>
                 {
                     var code = await Winget.UpgradeAsync(winget, row.App, progress, CancellationToken.None);
-                    // 0x8A15002B: no newer version in the source.
-                    row.StateText = code == unchecked((int)0x8A15002B) ? Loc.Instance["Apps_UpToDate"]
+                    row.StateText = code == Winget.UpdateNotApplicable ? Loc.Instance["Apps_UpToDate"]
                         : Winget.IsSuccess(code) ? Loc.Instance["Apps_Updated"]
-                        : Loc.Instance.Format("Apps_Failed", $"0x{code:X8}");
+                        : Loc.Instance.Format("Apps_UpdateFailed", $"0x{code:X8}");
                 }))
                 row.StateText = Loc.Instance["Apps_Installed"];
         }

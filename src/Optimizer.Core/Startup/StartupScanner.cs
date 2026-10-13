@@ -37,9 +37,11 @@ public sealed record StartupEntry(
 
     /// <summary>
     /// Runs PowerShell, cmd, mshta or a similar script host: Microsoft-signed, but the command decides what runs, so
-    /// such entries are never hidden as "Microsoft".
+    /// such entries are never hidden as "Microsoft". Variables are expanded with the machine's values only: this app
+    /// inherits the user's own variables (HKCU\Environment), which a program running as the user can point at
+    /// System32 for this check and somewhere else at the next sign-in.
     /// </summary>
-    public bool RunsScriptHost => CommandLine.RunsUnverifiedScript(Command);
+    public bool RunsScriptHost => CommandLine.RunsUnverifiedScript(Command, Platform.MachineEnvironment.Expand);
 }
 
 /// <summary>Reads every autostart location the app knows (Autoruns-style), through the swappable registry and task interfaces.</summary>
@@ -71,7 +73,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
         }
         Try("run", () => list.AddRange(RunKeys()));
         Try("folders", () => list.AddRange(StartupFolders()));
-        Try("tasks", () => list.AddRange(LogonTasks()));
+        Try("tasks", () => list.AddRange(ScheduledTasks()));
         Try("shellext", () => list.AddRange(ShellExtensions()));
         Try("winlogon", () => list.AddRange(WinlogonEntries()));
         Try("ifeo", () => list.AddRange(ImageHijacks()));
@@ -176,17 +178,53 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
 
     // ---------------- Scheduled tasks ----------------
 
-    public IEnumerable<StartupEntry> LogonTasks() =>
-        tasks.List().Where(t => t.AtLogon || t.AtBoot).Select(t =>
+    /// <summary>Tasks that start with Windows or at sign-in (the startup check counts these).</summary>
+    public IEnumerable<StartupEntry> LogonTasks() => TaskEntries(t => t.AtLogon || t.AtBoot);
+
+    /// <summary>
+    /// What the Startup page lists, as Autoruns does: tasks at start or sign-in, and every other task that is not one of
+    /// Windows' own (an updater that runs daily). Windows' own tasks are on Services &amp; tasks.
+    /// </summary>
+    public IEnumerable<StartupEntry> ScheduledTasks() => TaskEntries(t => t.AtLogon || t.AtBoot || !IsWindowsTask(t.Path));
+
+    /// <summary>Windows' own tasks (\Microsoft\Windows\...): listed, but switched only on Services &amp; tasks, where a catalog explains them.</summary>
+    public static bool IsWindowsTask(string? path) => path?.StartsWith(@"\Microsoft\Windows\", StringComparison.OrdinalIgnoreCase) == true;
+
+    /// <summary>
+    /// One entry per program a task runs: a second action is checked and shown on its own, so it cannot hide behind a
+    /// signed first one. A task that runs a COM handler shows the DLL registered for it, so Windows' own handler tasks
+    /// are recognized as Microsoft's instead of "no publisher".
+    /// </summary>
+    private IEnumerable<StartupEntry> TaskEntries(Func<ScheduledTaskInfo, bool> include)
+    {
+        foreach (var t in tasks.List().Where(include))
         {
-            // A task's program path is often stored with quotes already: quote it only once.
-            var command = t.Command is null ? null : $"\"{t.Command.Trim().Trim('"')}\" {t.Arguments}".Trim();
-            return new StartupEntry(StartupKind.LogonTask, t.Path.TrimStart('\\'), command, CommandLine.ImagePath(command, _userExpand),
-                t.Path, Hive.Machine, t.Enabled, $"task:{t.Path}")
+            var programs = new List<(string? Command, string? Arguments)> { (t.Command, t.Arguments) };
+            programs.AddRange((t.OtherActions ?? []).Select(a => ((string?)a.Command, a.Arguments)));
+            for (var i = 0; i < programs.Count; i++)
             {
-                Target = t.Path,
-            };
-        });
+                var (program, arguments) = programs[i];
+                // A task's program path is often stored with quotes already: quote it only once.
+                var command = program is null ? null : $"\"{program.Trim().Trim('"')}\" {arguments}".Trim();
+                var image = command is not null ? CommandLine.ImagePath(command, _userExpand) : ComServer(t.ComHandler);
+                var name = t.Path.TrimStart('\\') + (i == 0 ? "" : $" ({i + 1})");
+                yield return new StartupEntry(StartupKind.LogonTask, name, command ?? image, image, t.Path, Hive.Machine, t.Enabled,
+                    i == 0 ? $"task:{t.Path}" : $"task:{t.Path}#{i + 1}")
+                {
+                    Target = t.Path,
+                };
+            }
+        }
+    }
+
+    /// <summary>The DLL registered for a COM class (InprocServer32), expanded with the machine's variables; null when unknown.</summary>
+    private string? ComServer(string? clsid)
+    {
+        if (clsid is null || !Guid.TryParse(clsid, out var g)) return null;
+        using var server = Open(Hive.Machine, $@"SOFTWARE\Classes\CLSID\{g.ToString("B").ToUpperInvariant()}\InprocServer32");
+        var dll = server?.GetValue("", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
+        return CommandLine.ImagePath(dll);
+    }
 
     // ---------------- Services and drivers ----------------
 
@@ -428,6 +466,9 @@ public static class StartupTweaks
             {
                 Hive = e.Hive, Path = e.Target!.Split('|')[0], Name = e.Target.Split('|')[1], Enabled = enabled,
             },
+            // Windows' own tasks are switched on Services & tasks, where the catalog says which are safe to turn off (turning
+            // off TextServicesFramework\MsCtfMonitor, for example, stops typing in Start search).
+            StartupKind.LogonTask when StartupScanner.IsWindowsTask(e.Target) => null,
             StartupKind.LogonTask => new ScheduledTaskAction { Path = e.Target!, Enabled = enabled },
             // Blocked shell extensions are listed by CLSID under Shell Extensions\Blocked (read by Explorer at start).
             StartupKind.ShellExtension => new RegistryAction

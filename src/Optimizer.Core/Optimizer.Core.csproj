@@ -25,6 +25,8 @@
     <EmbeddedResource Include="Tools\Vendor\PresentMon-2.6.0-x64.exe" LogicalName="Tools.PresentMon.exe" />
     <!-- Public key that must have signed a release before self-update installs it (scripts/new-update-key.ps1). -->
     <EmbeddedResource Include="Updates\update-key.pem" LogicalName="Updates.update-key.pem" Condition="Exists('Updates\update-key.pem')" />
+    <!-- The offline backup key: accepted too, so a lost release key does not strand every installed copy. -->
+    <EmbeddedResource Include="Updates\update-key-backup.pem" LogicalName="Updates.update-key-backup.pem" Condition="Exists('Updates\update-key-backup.pem')" />
   </ItemGroup>
 
   <ItemGroup>

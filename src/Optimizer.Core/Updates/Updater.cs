@@ -28,13 +28,15 @@ public sealed partial class Updater(HttpMessageHandler? handler = null, string? 
     // The checksum and signature files are a few hundred bytes: a larger buffered answer is refused. The exe is streamed
     // (not buffered), so this limit does not apply to it.
     private readonly HttpClient _http = new(handler ?? new HttpClientHandler()) { Timeout = TimeSpan.FromMinutes(10), MaxResponseContentBufferSize = 64 << 10 };
-    private readonly string? _key = publicKeyPem ?? UpdateSignature.PublicKeyPem;
+    // Null: any of the embedded keys (the release key and the offline backup key) may have signed the release.
+    private readonly string? _key = publicKeyPem;
 
     /// <param name="folder">Where the download goes: the app's protected data folder (updates).</param>
     /// <param name="progress">Percent, when the server sends the size.</param>
     public async Task<UpdateDownload> DownloadAsync(ReleaseCheckResult release, string folder, IProgress<int>? progress = null, CancellationToken ct = default)
     {
-        if (release.Status != ReleaseCheckStatus.NewerAvailable || release.Assets is not { } assets || release.Latest is not { } version || _key is null)
+        if (release.Status != ReleaseCheckStatus.NewerAvailable || release.Assets is not { } assets || release.Latest is not { } version ||
+            (_key is null && !UpdateSignature.IsConfigured))
             return new(UpdateOutcome.NoAssets);
         var target = Path.Combine(folder, $"Tunero-{version.ToString(3)}.exe");
         var partial = target + ".partial";

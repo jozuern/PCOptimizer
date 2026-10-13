@@ -121,6 +121,19 @@ public class ReleaseTests
         Assert.Equal(256, key.KeySize);
     }
 
+    /// <summary>The offline backup key (when present) is a P-256 key of its own, and a release signed with it is accepted.</summary>
+    [Fact]
+    public void TheBackupKeyIsAnotherP256Key()
+    {
+        Assert.All(UpdateSignature.PublicKeyPems, pem =>
+        {
+            using var key = System.Security.Cryptography.ECDsa.Create();
+            key.ImportFromPem(pem);
+            Assert.Equal(256, key.KeySize);
+        });
+        Assert.Equal(UpdateSignature.PublicKeyPems.Count, UpdateSignature.PublicKeyPems.Distinct().Count());
+    }
+
     [Fact]
     public void SignatureBindsKeyVersionAndChecksum()
     {

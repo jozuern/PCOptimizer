@@ -835,13 +835,21 @@ public sealed partial class MainViewModel : ObservableObject
             bool started;
             try
             {
-                started = Updater.StartVerified(exe, download.Sha256!, path => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false })?.Dispose());
+                started = Updater.StartVerified(exe, download.Sha256!, path =>
+                {
+                    // Like the start's own restart: no profiler or startup hook from the user's environment in the new process.
+                    var start = new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false };
+                    Optimizer.Core.Platform.ProcessHardening.RemoveCodeLoadingVariables(start.Environment);
+                    System.Diagnostics.Process.Start(start)?.Dispose();
+                });
             }
             catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
             {
-                // The new version is in place; only its start failed (a program holds the file, or antivirus blocked it).
-                Log.Error("update", "installed, but the restart failed", ex);
-                ShowResult(Loc.Instance.Format("Update_RestartFailed", version), InfoBarSeverity.Warning);
+                // The new exe is in place but did not start: antivirus took it away or blocked it (an unsigned exe), or a
+                // program holds it. The running version goes back in its place, so the shortcut still starts something.
+                var rolledBack = Updater.RollBack(exe);
+                Log.Error("update", $"installed, but the restart failed (previous exe put back: {rolledBack})", ex);
+                ShowResult(Loc.Instance.Format(rolledBack ? "Update_RestartFailedRolledBack" : "Update_RestartFailed", version), InfoBarSeverity.Warning);
                 return;
             }
             if (!started)

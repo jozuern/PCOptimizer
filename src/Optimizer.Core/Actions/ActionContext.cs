@@ -69,7 +69,11 @@ public interface ITaskScheduler
 }
 
 /// <summary>A scheduled task: first action's program, author, and whether it starts at logon or at boot.</summary>
-public sealed record ScheduledTaskInfo(string Path, bool Enabled, string? Author, string? Command, string? Arguments, bool AtLogon, bool AtBoot, DateTime? LastRun);
+/// <param name="Command">The first program the task runs, null when it runs none (a COM handler).</param>
+/// <param name="OtherActions">Further programs it runs after the first, as (program, arguments).</param>
+/// <param name="ComHandler">The CLSID of a COM handler the task runs instead of a program (many of Windows' own tasks).</param>
+public sealed record ScheduledTaskInfo(string Path, bool Enabled, string? Author, string? Command, string? Arguments, bool AtLogon, bool AtBoot, DateTime? LastRun,
+    IReadOnlyList<(string Command, string? Arguments)>? OtherActions = null, string? ComHandler = null);
 
 public interface IDisplayManager
 {

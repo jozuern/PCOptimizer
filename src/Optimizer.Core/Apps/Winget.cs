@@ -126,9 +126,18 @@ public static class Winget
         return StreamingProcess.RunAsync(winget, UpgradeArguments(app.Id), lines, ct);
     }
 
-    /// <summary>Upgrades every package with a newer version in the winget source.</summary>
-    public const string UpgradeAllArguments =
-        "upgrade --all --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+    /// <summary>
+    /// Upgrades every package of one scope with a newer version in the winget source. Machine-scope packages run in the
+    /// elevated app; per-user packages run as the signed-in user (an elevated run would install them for the wrong
+    /// account or be refused, and would also try to replace a running copy of this app installed by winget).
+    /// </summary>
+    public static string UpgradeAllArguments(string scope) => scope is "machine" or "user"
+        ? $"upgrade --all --scope {scope} --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity"
+        : throw new ArgumentException($"unknown scope {scope}");
+
+    /// <summary>Starts the upgrade of the per-user packages as the signed-in user, in its own window.</summary>
+    public static DeElevatedLauncher.Path UpgradeAllForUser(string winget, ElevationInfo? elevation) =>
+        DeElevatedLauncher.Open(winget, UpgradeAllArguments("user"), elevation);
 
     /// <summary>Only the two values winget documents; anything else is left out.</summary>
     private static string ScopeArgument(string? scope) => scope is "machine" or "user" ? $" --scope {scope}" : "";
@@ -152,8 +161,11 @@ public static class Winget
         return DeElevatedLauncher.Open(winget, InstallArguments(app.Id, app.WingetScope, app.InstallerType), elevation);
     }
 
+    /// <summary>APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE: already installed, no newer version in the source.</summary>
+    public const int UpdateNotApplicable = unchecked((int)0x8A15002B);
+
     /// <summary>winget's documented exit codes that are not failures for an install request.</summary>
     public static bool IsSuccess(int exitCode) => exitCode is 0
-        or unchecked((int)0x8A15002B) // APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE: already installed, no newer version
+        or UpdateNotApplicable
         or unchecked((int)0x8A150109); // APPINSTALLER_CLI_ERROR_INSTALL_REBOOT_REQUIRED_TO_FINISH
 }

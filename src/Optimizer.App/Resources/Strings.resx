@@ -966,6 +966,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Update_BadSignature" xml:space="preserve"><value>The downloaded update is not signed with the Tunero release key and was deleted. Nothing was changed. Use the download page and report this.</value></data>
   <data name="Update_CannotReplace" xml:space="preserve"><value>The update was downloaded, but this exe could not be replaced ({0}). Use the download page instead.</value></data>
   <data name="Update_RestartFailed" xml:space="preserve"><value>Version {0} is installed, but it could not be started. Close Tunero and start it again.</value></data>
+  <data name="Update_RestartFailedRolledBack" xml:space="preserve"><value>Version {0} could not be started, perhaps because antivirus blocked it. The version you are using was put back. Try the update again later, or download it from the releases page.</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Wait until the current change has finished, then update.</value></data>
   <data name="Update_PackageText" xml:space="preserve"><value>Tunero was installed with {0}, so {0} installs version {1}. Tunero closes, {0} updates it in its own window and Tunero starts again; Windows asks for administrator rights as on every start. Your changes, backups and settings stay.</value></data>
   <data name="Update_PackageTextElevated" xml:space="preserve"><value>Tunero was installed with {0}, so {0} installs version {1}. Tunero closes, {0} updates it in its own window with administrator rights and then starts Tunero again with them, so Windows does not ask again. Your changes, backups and settings stay.</value></data>
@@ -1056,8 +1057,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Programs_NoUninstaller" xml:space="preserve"><value>This program has no uninstall command Windows can run.</value></data>
   <data name="Apps_UpdateAll" xml:space="preserve"><value>Update all apps</value></data>
   <data name="Apps_UpdateAllTitle" xml:space="preserve"><value>Update all apps with winget?</value></data>
-  <data name="Apps_UpdateAllText" xml:space="preserve"><value>winget updates every installed program it knows a newer version for in its source, without asking per program. Programs that are open may need a restart. Programs installed only for your account may be skipped.</value></data>
+  <data name="Apps_UpdateAllText" xml:space="preserve"><value>winget updates every installed program it knows a newer version for in its source, without asking per program. Programs installed for the whole PC update here; programs installed only for your account update in a winget window of their own. Programs that are open may need a restart.</value></data>
   <data name="Apps_UpdateAllDone" xml:space="preserve"><value>winget finished updating.</value></data>
+  <data name="Apps_UpdateAllUser" xml:space="preserve"><value>Programs installed only for your account are updating in a winget window of their own.</value></data>
+  <data name="Apps_UpdateFailed" xml:space="preserve"><value>Update failed (winget code {0}).</value></data>
   <data name="Net_UseFastest" xml:space="preserve"><value>Use the fastest: {0}</value></data>
   <data name="Changes_OpenRestore" xml:space="preserve"><value>Open System Restore</value></data>
   <data name="Debloat_CameBack" xml:space="preserve"><value>These apps you removed are installed again, for example by a Windows update or the PC maker's software: {0}. They are listed below if you want to remove them again.</value></data>
