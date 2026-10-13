@@ -43,17 +43,29 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// <summary>
     /// A registry path of the signed-in user as people know it ("HKCU\Software\...") instead of "HKU\S-1-5-21-...\Software\...".
     /// Only when this app runs as that user: with a separate administrator account the SID stays, since HKCU would be
-    /// that account's hive. Other targets ("Service Spooler (start type)") in the UI language, line by line.
+    /// that account's hive. Other targets ("Service Spooler (start type)") in the UI language, line by line; a target only
+    /// known as English text (a backup or log of 1.0.0 or older) is translated by its pattern.
     /// </summary>
     public static string ShortTarget(string target) =>
         string.Join("\n", target.Split('\n').Select(line => Labels.Current.Target(Loc.Instance.Language, ShortHive(line))));
+
+    /// <summary>A change line's target in the UI language. A title line in front of the target (Apply recommended) stays.</summary>
+    public static string ShortTarget(ChangeLine line) => line.Label is { } label ? ShortTarget(line.Target, label) : ShortTarget(line.Target);
+
+    /// <summary>The last line of <paramref name="target"/> rendered from its label; the lines before it stay as they are.</summary>
+    public static string ShortTarget(string target, TargetText label)
+    {
+        var rendered = Labels.Current.Render(Loc.Instance.Language, label with { Args = label.Args.Select(ShortHive).ToList() });
+        var cut = target.LastIndexOf('\n');
+        return cut < 0 ? rendered : target[..(cut + 1)] + rendered;
+    }
 
     private static string ShortHive(string target) =>
         OwnHive is { } own && target.StartsWith(own, StringComparison.OrdinalIgnoreCase) && (target.Length == own.Length || target[own.Length] == '\\')
             ? "HKCU" + target[own.Length..]
             : target;
 
-    public static IReadOnlyList<ChangeLine> ShortTargets(IReadOnlyList<ChangeLine> lines) => lines.Select(c => c with { Target = ShortTarget(c.Target) }).ToList();
+    public static IReadOnlyList<ChangeLine> ShortTargets(IReadOnlyList<ChangeLine> lines) => lines.Select(c => c with { Target = ShortTarget(c), Label = null }).ToList();
 
     /// <summary>The explanation page's title, with the subject for tweaks that share a page (DNS presets, services).</summary>
     public static string TitleOf(TweakDefinition t, string lang)
@@ -201,7 +213,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
                 : Loc.Instance["Tweak_NoBackup"], InfoBarSeverity.Warning);
             return false;
         }
-        var lines = backup.Entries.Select(e => new ChangeLine(e.Description, e.Applied?.Display ?? "?", e.Original.Display)).ToList();
+        var lines = backup.Entries.Select(e => new ChangeLine(e.Description, e.Applied?.Display ?? "?", e.Original.Display, e.Label)).ToList();
         var warnings = t.IsBootCritical ? new List<string> { Labels.Current.Get(lang, "undo.bootCritical") } : [];
         var title = Title(t);
         if (dialogs.ConfirmApply(new ConfirmRequest(title, Labels.Current.Get(lang, "undo.reversible"), lines, [], warnings, null, true)) is null) return false;

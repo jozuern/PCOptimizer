@@ -14,7 +14,7 @@ public sealed partial class OptionalCapabilityAction : TweakAction
     public bool Installed { get; init; }
 
     public override string TargetKey => $"capability:{Capability}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Windows capability {Capability}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.capability", Capability);
     public override StoredValue Desired(ActionContext c) => new(true, "feature", Installed ? "Enabled" : "Disabled");
 
     public override StoredValue? Read(ActionContext c) => ReadState(c.Processes, Capability) is { } s ? new StoredValue(true, "feature", s) : null;

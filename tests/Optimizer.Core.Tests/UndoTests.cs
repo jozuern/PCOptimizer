@@ -353,7 +353,7 @@ public class UndoTests
         public override ActionState State(ActionContext c) => ActionState.NotApplied;
         public override void Apply(ActionContext c) { }
         public override void Restore(ActionContext c, StoredValue original) { }
-        public override string Describe(ActionContext c) => "test target";
+        public override TargetText TargetLabel(ActionContext c) => TargetText.Verbatim("test target");
     }
 
     /// <summary>Backups written before the kind was recorded ("scheme") keep the old behavior: the plan counts as created.</summary>

@@ -141,11 +141,12 @@ public static partial class DocStore
                 Generated(DocHeadings.GeneratedChanges[lang], () =>
                 {
                     // "from Power saver to Tunero Gaming" reads as one change; a value that already is the target says so.
-                    var (from, to, already) = lang == "de" ? ("von", "auf", "schon") : ("from", "to", "already");
+                    var labels = Labels.Current;
+                    var (from, to, already) = (labels.Get(lang, "change.from"), labels.Get(lang, "change.to"), labels.Get(lang, "change.already"));
                     foreach (var c in changes)
                     {
-                        string before = Labels.Current.Display(lang, c.Before), after = Labels.Current.Display(lang, c.After);
-                        sb.Append("- `").Append(c.Target).Append("`: ");
+                        string before = labels.Display(lang, c.Before), after = labels.Display(lang, c.After);
+                        sb.Append("- `").Append(c.Label is { } label ? labels.Render(lang, label) : c.Target).Append("`: ");
                         if (c.Before.Length > 0 && c.Before != "?" && c.Before == c.After) sb.Append(already).Append(" **").Append(after).AppendLine("**");
                         else sb.Append(from).Append(' ').Append(before).Append(' ').Append(to).Append(" **").Append(after).AppendLine("**");
                     }
@@ -224,10 +225,20 @@ public sealed partial class Labels
     }
 
     /// <summary>
-    /// A change target in the UI language ("Service Spooler (start type)" becomes "Dienst Spooler (Starttyp)"). The
-    /// actions describe their targets in English, also in stored backups; a "target.*" label holds that English form with
-    /// {0}, {1} for the parts that stay as they are (names, paths, ids) and its translation. Registry paths and targets
-    /// without a template stay as they are.
+    /// A change target in a language: its "target.*" template with the parts filled in ("Dienst Spooler (Starttyp)"),
+    /// or the text itself for a target without a key (a registry path). A missing template falls back to English.
+    /// </summary>
+    public string Render(string lang, Actions.TargetText target)
+    {
+        if (target.Key is null) return target.Args.Count > 0 ? target.Args[0] : "";
+        var args = target.Args;
+        return Placeholder().Replace(Get(lang, target.Key), p => int.Parse(p.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) is var i && i < args.Count ? args[i] : p.Value);
+    }
+
+    /// <summary>
+    /// A target only known as English text in the UI language ("Service Spooler (start type)" becomes "Dienst Spooler
+    /// (Starttyp)"): backups and change logs written before targets carried their label key (1.0.0 and older). A
+    /// "target.*" template is matched as a pattern; registry paths and targets without a template stay as they are.
     /// </summary>
     public string Target(string lang, string target)
     {
@@ -259,13 +270,15 @@ public sealed partial class Labels
         : _byLang.TryGetValue("en", out var en) && en.TryGetValue(key, out var e) ? e
         : key;
 
-    /// <summary>Stored-value placeholders ("(not set)", "(unavailable)") in the UI language.</summary>
+    /// <summary>Stored-value placeholders ("(not set)", "(unavailable)") and stored states ("Disabled") in the UI language.</summary>
     public string Display(string lang, string value) => value switch
     {
         "(not set)" => Get(lang, "value.notSet"),
         "(unavailable)" or "(unreadable)" => Get(lang, "value.unknown"),
         // Windows' own power plans, named in the language of the app (PowerSchemeAction)
         _ when value.StartsWith("@plan.", StringComparison.Ordinal) => Value(lang, value),
+        // The states actions store ("Disabled", a service's "Manual"), as Windows names them in that language
+        _ when Has(lang, "state." + value) => Get(lang, "state." + value),
         _ => value,
     };
 

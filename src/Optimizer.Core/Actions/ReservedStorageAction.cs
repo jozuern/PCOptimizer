@@ -11,7 +11,7 @@ public sealed partial class ReservedStorageAction : TweakAction
     public bool Enabled { get; init; }
 
     public override string TargetKey => "dism:reservedstorage";
-    public override string Describe(ActionContext c) => "Reserved storage (DISM /Set-ReservedStorageState)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.reservedStorage");
     public override EarlyRead EarlyRead => EarlyRead.WithScan;
     public override StoredValue Desired(ActionContext c) => new(true, "reservedstorage", Enabled ? "Enabled" : "Disabled");
 

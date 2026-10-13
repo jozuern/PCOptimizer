@@ -72,7 +72,7 @@ public sealed class ScheduledTaskDeleteAction : TweakAction
     public string Path { get; init; } = "";
 
     public override string TargetKey => $"taskdelete:{Path}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $@"Task Scheduler{(Path.StartsWith('\\') ? "" : "\\")}{Path}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.taskDelete", (Path.StartsWith('\\') ? "" : "\\") + Path);
 
     public override StoredValue Desired(ActionContext c) => StoredValue.Missing;
 
@@ -110,7 +110,7 @@ public sealed class StartupFileDeleteAction : TweakAction
     public string Path { get; init; } = "";
 
     public override string TargetKey => $"startupfile:{Path}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => Path;
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Verbatim(Path);
 
     public override StoredValue Desired(ActionContext c) => StoredValue.Missing;
 

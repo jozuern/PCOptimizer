@@ -13,7 +13,7 @@ public sealed class DohAutoUpgradeAction : TweakAction
     public bool AutoUpgrade { get; init; } = true;
 
     public override string TargetKey => "doh:autoupgrade:" + string.Join(",", Servers.Order(StringComparer.Ordinal)).ToLowerInvariant();
-    public override string Describe(ActionContext c) => "DNS over HTTPS automatic upgrade (Set-DnsClientDohServerAddress)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.doh");
     public override EarlyRead EarlyRead => EarlyRead.WithScan;
 
     private IEnumerable<string> Valid => Servers.Where(s => IPAddress.TryParse(s, out _)).Order(StringComparer.Ordinal);

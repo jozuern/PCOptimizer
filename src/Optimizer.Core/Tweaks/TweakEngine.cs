@@ -408,7 +408,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 before[a.TargetKey] = current;
                 if (backup.Entry(a.TargetKey) is not { } entry)
                 {
-                    backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+                    var label = a.TargetLabel(ctx);
+                    backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = Docs.Labels.Current.Render("en", label), Label = label, Original = current });
                     added.Add(a.TargetKey);
                 }
                 // The action that wrote the change first restores it (Revert): a later catalog version can write less under
@@ -504,7 +505,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         if (pendingUndo is not null) store.ClearPendingUndo(t.Id);
 
         // The data lets the Changes page show the line in the UI language; the message stays English for the log file.
-        foreach (var line in changes) Log.Info("change", $"{t.Id}: {line.Target}", new { tweak = t.Id, kind = "apply", target = line.Target, before = line.Before, after = line.After });
+        foreach (var line in changes)
+            Log.Info("change", $"{t.Id}: {line.Target}", new { tweak = t.Id, kind = "apply", target = line.Target, label = line.Label, before = line.Before, after = line.After });
 
         // Verify: re-read every action. "afterRestart" tweaks are confirmed on the next scan after a reboot.
         var ineffective = t.Verify != "afterRestart" && done.Any(a => !a.TakesEffectAfterRestart && SafeState(a) != ActionState.Applied);
@@ -582,7 +584,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                 // Parts changed since (one side of a power setting, one adapter keyword) keep the value set since.
                 if (outcome == RestoreOutcome.PartlyRestored) skipped.Add(entry.Description);
                 if (a.TakesEffectAfterRestart) restartBound.Add(entry);
-                Log.Info("change", $"{t.Id}: undo {entry.Description}", new { tweak = t.Id, kind = "undo", target = entry.Description, restored = entry.Original.Display });
+                Log.Info("change", $"{t.Id}: undo {entry.Description}", new { tweak = t.Id, kind = "undo", target = entry.Description, label = entry.Label, restored = entry.Original.Display });
             }
             catch (Exception ex)
             {

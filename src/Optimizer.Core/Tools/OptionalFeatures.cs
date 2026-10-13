@@ -42,7 +42,7 @@ public sealed partial class OptionalFeatureAction : TweakAction
     public bool Enabled { get; init; }
 
     public override string TargetKey => $"feature:{Feature}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Windows feature {Feature}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.feature", Feature);
     public override StoredValue Desired(ActionContext c) => new(true, "feature", Enabled ? "Enabled" : "Disabled");
 
     public override StoredValue? Read(ActionContext c) => ReadState(c.Processes, Feature) is { } s ? new StoredValue(true, "feature", s) : null;

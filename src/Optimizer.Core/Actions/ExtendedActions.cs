@@ -21,8 +21,9 @@ public sealed class NvidiaDrsAction : TweakAction
 
     public override string TargetKey => $"drs:{Profile}:{SettingId:X8}".ToLowerInvariant();
 
-    public override string Describe(ActionContext c) =>
-        $"NVIDIA {(Profile == "global" ? "global profile" : $"profile of {Path.GetFileName(Profile)}")}: setting 0x{SettingId:X8}";
+    public override TargetText TargetLabel(ActionContext c) => Profile == "global"
+        ? TargetText.Of("target.nvidiaGlobal", $"0x{SettingId:X8}")
+        : TargetText.Of("target.nvidiaProfile", Path.GetFileName(Profile), $"0x{SettingId:X8}");
 
     public override StoredValue Desired(ActionContext c) => Value is { } v ? Stored(v) : StoredValue.Missing;
 
@@ -70,12 +71,12 @@ public sealed class PowerModeAction : TweakAction
     public PowerModeAction For(string source) => new() { Overlay = Overlay, Source = source };
 
     public override string TargetKey => Source is null ? "pwr:overlay" : $"pwr:overlay:{Source}";
-    public override string Describe(ActionContext c) => Source switch
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of(Source switch
     {
-        "ac" => "Windows power mode (plugged in)",
-        "dc" => "Windows power mode (on battery)",
-        _ => "Windows power mode",
-    };
+        "ac" => "target.powerModeAc",
+        "dc" => "target.powerModeDc",
+        _ => "target.powerMode",
+    });
 
     public override StoredValue Desired(ActionContext c) => new(true, "overlay", Overlay.ToString());
 
@@ -129,7 +130,9 @@ public sealed class NicPropertyAction : TweakAction
     public NicAdapter? Adapter { get; init; }
 
     public override string TargetKey => $"nic:{Adapter?.ClassKey}:{string.Join(",", Keys())}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"{Adapter?.Description ?? "Network adapter"}: {string.Join(", ", Keys())}";
+    public override TargetText TargetLabel(ActionContext c) => Adapter?.Description is { } name
+        ? TargetText.Of("target.nicProperties", name, string.Join(", ", Keys()))
+        : TargetText.Of("target.nicPropertiesUnknown", string.Join(", ", Keys()));
 
     private IEnumerable<string> Keys() => Applicable(null).Select(p => p.Key).Concat(Dwords.Keys).OrderBy(k => k, StringComparer.OrdinalIgnoreCase);
 
@@ -333,14 +336,14 @@ public sealed class DnsAction : TweakAction
     public string Servers { get; init; } = "dhcp";
 
     public override string TargetKey => $"dns:{InterfaceGuid}".ToLowerInvariant();
-    public override string Describe(ActionContext c)
+    public override TargetText TargetLabel(ActionContext c)
     {
         // The adapter's name, so the confirmation does not show only a GUID; the GUID stays for adapters that look alike.
         var name = NicAdapters.Enumerate(c.Registry, includeSynthetic: true)
             .FirstOrDefault(a => a.InterfaceGuid.Equals(InterfaceGuid, StringComparison.OrdinalIgnoreCase))?.Description;
         return name is null || name.Equals(InterfaceGuid, StringComparison.OrdinalIgnoreCase)
-            ? $"IPv4 DNS servers of adapter {InterfaceGuid}"
-            : $"IPv4 DNS servers of {name} {InterfaceGuid}";
+            ? TargetText.Of("target.dnsAdapter", InterfaceGuid)
+            : TargetText.Of("target.dnsNamed", name, InterfaceGuid);
     }
     public override StoredValue Desired(ActionContext c) => new(true, "dns", Servers);
 
@@ -576,7 +579,7 @@ public sealed class AccessibilityShortcutAction : TweakAction
     public bool Shortcut { get; init; }
 
     public override string TargetKey => $"spi:{Feature}:hotkey".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"{Feature} keyboard shortcut (SystemParametersInfo)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.shortcut", Feature.ToString());
     public override StoredValue Desired(ActionContext c) => State(Shortcut);
 
     private static StoredValue State(bool on) => new(true, "bool", on ? "On" : "Off");

@@ -51,7 +51,7 @@ public sealed class RegistryAction : TweakAction
 
     public override string TargetKey => $"reg:{Hive}:{Path}\\{Name}".ToLowerInvariant();
 
-    public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{(Name.Length == 0 ? "(Default)" : Name)}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Verbatim($"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{(Name.Length == 0 ? "(Default)" : Name)}");
 
     public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, Kind, Serialize(Kind, Value));
 
@@ -111,7 +111,7 @@ public sealed class RegistryBitsAction : TweakAction
 
     public override string TargetKey => $"regbits:{Hive}:{Path}\\{Name}:{Set:X}:{Clear:X}".ToLowerInvariant();
 
-    public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name} (bits)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.registryBits", $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}");
 
     private uint Current(ActionContext c) =>
         RegistryValue.Read(c.Registry, Hive, Path, Name) is { Existed: true, Data: { } d } && uint.TryParse(d, out var v) ? v : 0;
@@ -162,7 +162,7 @@ public sealed class RegistryBinaryBitsAction : TweakAction
 
     public override string TargetKey => $"regbinbits:{Hive}:{Path}\\{Name}:{Set}:{Clear}".ToLowerInvariant();
 
-    public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name} (bits)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.registryBits", $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}");
 
     private byte[]? Current(ActionContext c) =>
         RegistryValue.Read(c.Registry, Hive, Path, Name) is { Existed: true, Kind: "binary", Data: { } d } ? Convert.FromHexString(d) : null;
@@ -233,7 +233,7 @@ public sealed class RegistryTokenAction : TweakAction
 
     public override string TargetKey => $"regtoken:{Hive}:{Path}\\{Name}:{Token}".ToLowerInvariant();
 
-    public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}, token {Token}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.registryToken", $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}", Token);
 
     public static Dictionary<string, string> Parse(string? s) =>
         (s ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

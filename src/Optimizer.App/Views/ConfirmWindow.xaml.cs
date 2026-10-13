@@ -48,8 +48,8 @@ public partial class ConfirmWindow : FluentWindow
         // changes: "0" under Now and New read like a change.
         var rows = request.Changes
             .Select(c => IsUnchanged(c)
-                ? new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Loc.Instance["Confirm_AlreadySet"], true)
-                : new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Show(c.After), false))
+                ? new Row(ChangeRunner.ShortTarget(c), Show(c.Before), Loc.Instance["Confirm_AlreadySet"], true)
+                : new Row(ChangeRunner.ShortTarget(c), Show(c.Before), Show(c.After), false))
             .OrderBy(r => r.Unchanged)
             .ToList();
         ChangeList.ItemsSource = rows;

@@ -11,6 +11,12 @@ public sealed class BackupEntry
     public required string TargetKey { get; init; }
     public required string Description { get; init; }
 
+    /// <summary>
+    /// The target as a label key and its parts, so the Changes page shows it in the UI language. Entries written by 1.0.0
+    /// and older have only the English <see cref="Description"/>.
+    /// </summary>
+    public TargetText? Label { get; init; }
+
     /// <summary>The true original: written once, at the first apply (first-original rule).</summary>
     public required StoredValue Original { get; init; }
 

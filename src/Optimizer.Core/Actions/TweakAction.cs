@@ -33,8 +33,31 @@ public enum RestoreOutcome
     PartlyRestored,
 }
 
-/// <summary>One exact change for the confirmation dialog and the generated "What changes" section.</summary>
-public sealed record ChangeLine(string Target, string Before, string After)
+/// <summary>
+/// A change target as a label key ("target.service", see Catalog/Data/labels.json) and the parts that stay as they are
+/// in every language (names, paths, ids), so each language renders it from its own template. Without a key the target
+/// reads the same in every language (a registry path, a file) and its one part is the text.
+/// </summary>
+public sealed record TargetText
+{
+    public string? Key { get; init; }
+    public IReadOnlyList<string> Args { get; init; } = [];
+
+    public static TargetText Of(string key, params string[] args) => new() { Key = key, Args = args };
+
+    public static TargetText Verbatim(string text) => new() { Args = [text] };
+
+    // Records compare lists by reference: two texts of the same target are equal.
+    public bool Equals(TargetText? other) => other is not null && Key == other.Key && Args.SequenceEqual(other.Args);
+
+    public override int GetHashCode() => HashCode.Combine(Key, string.Join('\n', Args));
+}
+
+/// <summary>
+/// One exact change for the confirmation dialog and the generated "What changes" section. <see cref="Target"/> is the
+/// English text (logs); <see cref="Label"/>, when set, renders it in the UI language.
+/// </summary>
+public sealed record ChangeLine(string Target, string Before, string After, TargetText? Label = null)
 {
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Target;
@@ -100,8 +123,11 @@ public abstract class TweakAction
     /// <summary>Writes a stored original back (deleting the target when it did not exist).</summary>
     public abstract void Restore(ActionContext c, StoredValue original);
 
-    /// <summary>Human-readable target, e.g. "HKLM\SYSTEM\...\HwSchMode".</summary>
-    public abstract string Describe(ActionContext c);
+    /// <summary>The changed target as a label key and its parts, e.g. "target.service" and "Spooler".</summary>
+    public abstract TargetText TargetLabel(ActionContext c);
+
+    /// <summary>The target in English, e.g. "HKLM\SYSTEM\...\HwSchMode" or "Service Spooler (start type)": logs, backups, errors.</summary>
+    public string Describe(ActionContext c) => Docs.Labels.Current.Render("en", TargetLabel(c));
 
     /// <summary>Boot configuration and similar changes that the app's own undo cannot fix if the PC does not start.</summary>
     public virtual bool IsBootCritical => false;
@@ -156,7 +182,8 @@ public abstract class TweakAction
     public ChangeLine Change(ActionContext c)
     {
         var current = Read(c);
-        return new ChangeLine(Describe(c), current is null ? "(unavailable)" : Show(c, current), Show(c, Desired(c)));
+        var label = TargetLabel(c);
+        return new ChangeLine(Docs.Labels.Current.Render("en", label), current is null ? "(unavailable)" : Show(c, current), Show(c, Desired(c)), label);
     }
 
     /// <summary>A value as the preview shows it. Actions that store an id (a power plan GUID) show its name instead.</summary>

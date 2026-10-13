@@ -9,7 +9,7 @@ public sealed class ServiceAction : TweakAction
     public ServiceStart StartType { get; init; } = ServiceStart.Manual;
 
     public override string TargetKey => $"svc:{Name}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Service {Name} (start type)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.service", Name);
 
     public override StoredValue Desired(ActionContext c) => new(true, "service", StartType.ToString());
 
@@ -47,8 +47,9 @@ public sealed class PowerSettingAction : TweakAction
     // Backups written before schemes were part of the key have no scheme; their key stays the same.
     public override string TargetKey => Scheme is { } s ? $"pwr:{s}:{Sub}:{Set}" : $"pwr:{Sub}:{Set}";
     // The plan by the name Windows shows (its GUID only when it has none), as in the active-plan preview.
-    public override string Describe(ActionContext c) =>
-        $"Power plan {(SchemeOf(c) is var scheme && c.Power.Schemes().FirstOrDefault(s => s.Id == scheme).Name is { Length: > 0 } name ? name : scheme)}: {Setting} ({Subgroup})";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.powerSetting",
+        SchemeOf(c) is var scheme && c.Power.Schemes().FirstOrDefault(s => s.Id == scheme).Name is { Length: > 0 } name ? name : scheme.ToString(),
+        Setting.ToString(), Subgroup.ToString());
 
     public PowerSettingAction For(Guid scheme) => new() { Subgroup = Subgroup, Setting = Setting, Ac = Ac, Dc = Dc, Scheme = scheme };
 
@@ -146,7 +147,7 @@ public sealed class PowerSchemeAction : TweakAction
     public List<string> FormerNames { get; init; } = [];
 
     public override string TargetKey => "pwr:activescheme";
-    public override string Describe(ActionContext c) => "Active power plan";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.activePowerPlan");
 
     private Guid? Target(ActionContext c)
     {
@@ -291,7 +292,7 @@ public sealed class BcdAction : TweakAction
 
     public override bool IsBootCritical => true;
     public override string TargetKey => $"bcd:{Element}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Boot configuration {{current}}: {Element}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.boot", Element);
 
     public override StoredValue Desired(ActionContext c) => Delete ? StoredValue.Missing : new StoredValue(true, "bcd", Normalize(Value ?? "yes"));
 
@@ -338,7 +339,7 @@ public sealed class ScheduledTaskAction : TweakAction
     public bool Enabled { get; init; }
 
     public override string TargetKey => $"task:{Path}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Scheduled task {Path}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.task", Path);
     public override StoredValue Desired(ActionContext c) => new(true, "task", Enabled ? "Enabled" : "Disabled");
 
     public override StoredValue? Read(ActionContext c) =>
@@ -362,7 +363,7 @@ public sealed class HibernationAction : TweakAction
     public bool Enabled { get; init; }
 
     public override string TargetKey => "power:hibernation";
-    public override string Describe(ActionContext c) => "Hibernation (powercfg /hibernate)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.hibernation");
     public override StoredValue Desired(ActionContext c) => new(true, "bool", Enabled ? "On" : "Off");
 
     public override StoredValue? Read(ActionContext c)
@@ -394,7 +395,7 @@ public sealed class MemoryCompressionAction : TweakAction
     public bool Enabled { get; init; }
 
     public override string TargetKey => "mmagent:memorycompression";
-    public override string Describe(ActionContext c) => "Memory compression (MMAgent)";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.memoryCompression");
     public override StoredValue Desired(ActionContext c) => new(true, "bool", Enabled ? "True" : "False");
 
     // Enable-MMAgent and Disable-MMAgent change the setting for the next start; Get-MMAgent shows the running state.
@@ -426,7 +427,7 @@ public sealed class DisplayModeAction : TweakAction
     public int RefreshHz { get; init; }
 
     public override string TargetKey => $"display:{GdiName}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"Display {GdiName}: refresh rate at {Width}×{Height}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Of("target.refreshRate", GdiName, $"{Width}×{Height}");
     public override StoredValue Desired(ActionContext c) => new(true, "hz", RefreshHz.ToString(CultureInfo.InvariantCulture));
 
     public override StoredValue? Read(ActionContext c) =>

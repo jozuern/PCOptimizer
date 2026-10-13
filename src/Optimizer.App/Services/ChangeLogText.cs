@@ -21,7 +21,9 @@ public static class ChangeLogText
             string? Get(string name) => root.TryGetProperty(name, out var v) && v.ValueKind is JsonValueKind.String or JsonValueKind.Number ? v.ToString() : null;
             if (Get("tweak") is not { } id || Get("kind") is not { } kind || Get("target") is not { } target) return Legacy(entry);
             var title = Title(id, lang);
-            var where = ChangeRunner.ShortTarget(target).Replace('\n', ' ');
+            // The label (written since 1.0.1) renders the target in the UI language; older lines have only the English text.
+            var label = root.TryGetProperty("label", out var l) && l.ValueKind == JsonValueKind.Object ? l.Deserialize<Optimizer.Core.Actions.TargetText>() : null;
+            var where = (label is { } known ? ChangeRunner.ShortTarget(target, known) : ChangeRunner.ShortTarget(target)).Replace('\n', ' ');
             return kind switch
             {
                 "apply" => Loc.Instance.Format("ChangeLog_Apply", title, where, Value(Get("before"), lang), Value(Get("after"), lang)),

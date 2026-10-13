@@ -458,7 +458,7 @@ public sealed class StartupApprovedAction : TweakAction
         || !byte.TryParse(hex.AsSpan(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var first) || (first & 0x1) == 0;
 
     public override string TargetKey => $"startupapproved:{Hive}:{Path}\\{Name}".ToLowerInvariant();
-    public override string Describe(ActionContext c) => $"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}";
+    public override TargetText TargetLabel(ActionContext c) => TargetText.Verbatim($"{c.Registry.DisplayRoot(Hive)}\\{Path}\\{Name}");
 
     // Data = "Enabled"/"Disabled" (shown and compared); Kind carries the raw bytes for restore ("raw:" + hex, or "raw:" when missing).
     private static StoredValue Semantic(StoredValue raw) =>

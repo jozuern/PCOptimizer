@@ -208,6 +208,42 @@ public class BackupFormatTests
         Assert.All(types, t => Assert.Contains(t, stored));
     }
 
+    /// <summary>
+    /// Every action type names its target with a label each language has, with a part for every placeholder. A backup of
+    /// 1.0.0 or older holds only the English text: read back by pattern, it gives the same text as the label.
+    /// </summary>
+    [Fact]
+    public void EveryActionTypeRendersItsTargetInEveryLanguage()
+    {
+        var labels = Optimizer.Core.Docs.Labels.Current;
+        var covered = new HashSet<Type>();
+        foreach (var s in Scenarios)
+        {
+            using var fx = Prepare(s);
+            foreach (var a in s.Actions)
+            {
+                covered.Add(a.GetType());
+                var label = a.TargetLabel(fx.Context);
+                Assert.Equal(labels.Render("en", label), a.Describe(fx.Context));
+                if (label.Key is null)
+                {
+                    Assert.Single(label.Args);
+                    continue;
+                }
+                foreach (var lang in Optimizer.Core.Docs.DocStore.Languages)
+                {
+                    Assert.True(labels.Has(lang, label.Key), $"{lang}: no label {label.Key} ({s.Name})");
+                    var used = System.Text.RegularExpressions.Regex.Matches(labels.Get(lang, label.Key), @"\{(\d)\}").Select(m => int.Parse(m.Groups[1].Value)).ToHashSet();
+                    Assert.True(used.SetEquals(Enumerable.Range(0, label.Args.Count)), $"{lang}: {label.Key} has placeholders {string.Join(",", used)} for {label.Args.Count} parts");
+                }
+                Assert.Equal(labels.Render("de", label), labels.Target("de", labels.Render("en", label)));
+            }
+        }
+        var types = typeof(TweakAction).GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonDerivedTypeAttribute), false)
+            .Cast<System.Text.Json.Serialization.JsonDerivedTypeAttribute>().Select(a => a.DerivedType);
+        Assert.All(types, t => Assert.Contains(t, covered));
+    }
+
     [Theory]
     [MemberData(nameof(FixtureFiles))]
     public void BackupOfAnEarlierVersionIsUndone(string fixture)
