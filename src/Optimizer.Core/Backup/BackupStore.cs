@@ -24,8 +24,22 @@ public sealed class BackupEntry
     public string? Action { get; set; }
 }
 
+/// <summary>
+/// Version of the backup and pending-undo files. Undo must work on every file an earlier release wrote: the property
+/// names, the action type names (<see cref="TweakAction"/>), the target keys and the stored value encodings of format 1
+/// are frozen, and tests restore a saved file of every action type (tests/Optimizer.Core.Tests/Fixtures/backups). A
+/// change that older versions would misread gets a new number; a file of a newer format is never applied or undone.
+/// </summary>
+public static class BackupFormat
+{
+    public const int Current = 1;
+}
+
 public sealed class TweakBackup
 {
+    /// <summary>Files written before the format was recorded are format 1.</summary>
+    public int Format { get; init; } = BackupFormat.Current;
+
     public required string TweakId { get; init; }
     public DateTimeOffset Created { get; init; } = DateTimeOffset.Now;
     public DateTimeOffset LastApplied { get; set; } = DateTimeOffset.Now;
@@ -61,6 +75,8 @@ public sealed class TweakBackup
 /// <summary>An undo whose restored values take effect after the next restart (<see cref="BackupStore.GetPendingUndo"/>).</summary>
 public sealed class PendingUndo
 {
+    public int Format { get; init; } = BackupFormat.Current;
+
     public required string TweakId { get; init; }
 
     /// <summary>Time of the undo; a boot after it means the restored values are in effect.</summary>
@@ -154,10 +170,14 @@ public sealed class BackupStore
     public TweakBackup? Get(string tweakId)
     {
         var file = FileFor(tweakId);
-        if (!File.Exists(file) || !Trusted(file)) return null;
+        if (!File.Exists(file)) return null;
+        // A file not owned by Administrators was not written by this app (it sets the owner on every save): never read,
+        // and never "no backup" either, which would let an apply overwrite it or an undo report success.
+        if (!Trusted(file)) throw new BackupUnreadableException(file, BackupUnreadableException.Reason.Untrusted);
         var (backup, damaged) = TryRead(file);
         if (damaged && !Quarantine(file)) throw new BackupUnreadableException(file);
         if (!damaged && backup is null) throw new BackupUnreadableException(file);
+        if (backup is { Format: > BackupFormat.Current }) throw new BackupUnreadableException(file, BackupUnreadableException.Reason.NewerFormat);
         return OfAnotherAccount(backup) ? null : backup;
     }
 
@@ -199,6 +219,11 @@ public sealed class BackupStore
         foreach (var file in folders.SelectMany(f => Directory.EnumerateFiles(f, "*.json")).Where(Trusted))
         {
             var (backup, damaged) = TryRead(file);
+            if (backup is { Format: > BackupFormat.Current })
+            {
+                Log.Warn("backup", $"{file} was written by a newer version of the app (format {backup.Format}); it is left as it is");
+                continue;
+            }
             if (backup is not null && !OfAnotherAccount(backup) && !list.Any(b => b.TweakId == backup.TweakId)) list.Add(backup);
             else if (damaged) Quarantine(file);
         }
@@ -235,7 +260,15 @@ public sealed class BackupStore
     /// Written to a temporary file, flushed to the disk and then moved over the old file: a power loss right after a
     /// boot configuration change leaves either the old or the new backup, never an empty one.
     /// </summary>
-    private static void WriteDurably(string file, string json) => Platform.DurableFile.WriteAllText(file, json);
+    private void WriteDurably(string file, string json)
+    {
+        Platform.DurableFile.WriteAllText(file, json);
+        // The data folder trusts only files owned by Administrators or SYSTEM. The default owner is set at start, but where
+        // that failed (UAC off, Administrator protection) a file owned by the account would be ignored on the next read
+        // and removed on the next start, with the originals in it: set the owner here, or fail before the first change.
+        if (_secure && !SecureFolder.IsOwnedByAdmins(file) && !SecureFolder.MakeOwnedByAdmins(file))
+            throw new IOException($"{file} could not be given to the Administrators group; the change is not made.");
+    }
 
     /// <summary>Moves a damaged backup aside (it still holds the originals). False when it could not be moved.</summary>
     private static bool Quarantine(string file)
@@ -282,7 +315,8 @@ public sealed class BackupStore
         if (!File.Exists(file) || !Trusted(file)) return null;
         try
         {
-            return JsonSerializer.Deserialize<PendingUndo>(File.ReadAllText(file), Json);
+            var pending = JsonSerializer.Deserialize<PendingUndo>(File.ReadAllText(file), Json);
+            return pending is { Format: > BackupFormat.Current } ? null : pending;
         }
         catch (Exception ex)
         {
@@ -344,10 +378,22 @@ public sealed class BackupStore
     private static string Sanitize(string id) => string.Concat(id.Select(ch => char.IsLetterOrDigit(ch) || ch is '.' or '-' or '_' ? ch : '_'));
 }
 
-/// <summary>A backup file exists but could not be read (locked by another process); nothing may rely on "no backup".</summary>
-public sealed class BackupUnreadableException(string file) : IOException($"The backup file {file} cannot be read right now. Try again in a moment.")
+/// <summary>
+/// A backup file exists but cannot be used: locked by another process, written by a newer version of the app, or not
+/// written by this app (not owned by Administrators). Nothing may rely on "no backup".
+/// </summary>
+public sealed class BackupUnreadableException(string file, BackupUnreadableException.Reason reason = BackupUnreadableException.Reason.Locked)
+    : IOException(reason switch
+    {
+        Reason.NewerFormat => $"The backup file {file} was written by a newer version of Tunero. Update Tunero to undo this change.",
+        Reason.Untrusted => $"The backup file {file} was not written by Tunero (it is not owned by Administrators) and is not used.",
+        _ => $"The backup file {file} cannot be read right now. Try again in a moment.",
+    })
 {
+    public enum Reason { Locked, NewerFormat, Untrusted }
+
     public string File { get; } = file;
+    public Reason Why { get; } = reason;
 }
 
 public static class SecureFolder
@@ -558,6 +604,24 @@ public static class SecureFolder
     }
 
     public static bool IsOwnedByAdmins(string file) => IsOwnedByAdmins(new FileInfo(file));
+
+    /// <summary>Makes the Administrators group the owner of a file this elevated app wrote. False when Windows refused.</summary>
+    public static bool MakeOwnedByAdmins(string file)
+    {
+        try
+        {
+            var info = new FileInfo(file);
+            var security = info.GetAccessControl();
+            security.SetOwner(Admins);
+            info.SetAccessControl(security);
+            return IsOwnedByAdmins(info);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or InvalidOperationException or PrivilegeNotHeldException)
+        {
+            Log.Warn("backup", $"owner of {file} not set to Administrators: {ex.Message}");
+            return false;
+        }
+    }
 
     public static bool IsOwnedByAdmins(FileSystemInfo entry)
     {

@@ -101,11 +101,16 @@ public sealed class PowerModeAction : TweakAction
 /// </summary>
 public sealed class NicPropertyAction : TweakAction
 {
+    // Driver keywords are case-insensitive. The setters keep that for dictionaries read back from a backup, whose JSON
+    // reader builds case-sensitive ones: otherwise the stored action of an undo would name a different target.
+    private readonly Dictionary<string, string> _properties = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, uint> _dwords = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Keyword -> value (string, as the driver stores it).</summary>
-    public Dictionary<string, string> Properties { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> Properties { get => _properties; init => _properties = new(value, StringComparer.OrdinalIgnoreCase); }
 
     /// <summary>DWORD values written directly in the class key (e.g. PnPCapabilities), not driver keywords.</summary>
-    public Dictionary<string, uint> Dwords { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, uint> Dwords { get => _dwords; init => _dwords = new(value, StringComparer.OrdinalIgnoreCase); }
 
     /// <summary>Only Ethernet / only Wi-Fi / both: "ethernet", "wifi", "any".</summary>
     public string Media { get; init; } = "any";
@@ -123,7 +128,11 @@ public sealed class NicPropertyAction : TweakAction
 
     /// <summary>Keywords this adapter's driver supports with the wanted value.</summary>
     private IEnumerable<KeyValuePair<string, string>> Applicable(ActionContext? c) =>
-        Adapter is null ? [] : Properties.Where(p => Adapter.Allowed.TryGetValue(p.Key, out var values) && values.Contains(p.Value, StringComparer.OrdinalIgnoreCase));
+        Adapter is null ? [] : Properties.Where(p => AllowedValues(p.Key) is { } values && values.Contains(p.Value, StringComparer.OrdinalIgnoreCase));
+
+    private IReadOnlyList<string>? AllowedValues(string keyword) =>
+        Adapter!.Allowed.TryGetValue(keyword, out var values) ? values
+        : Adapter.Allowed.FirstOrDefault(a => a.Key.Equals(keyword, StringComparison.OrdinalIgnoreCase)).Value;
 
     public override StoredValue Desired(ActionContext c)
     {

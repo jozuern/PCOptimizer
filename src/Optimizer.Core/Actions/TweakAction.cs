@@ -120,6 +120,12 @@ public abstract class TweakAction
     /// </summary>
     public virtual StoredValue? AppliedValue(ActionContext c) => TakesEffectAfterRestart ? Desired(c) : Read(c);
 
+    /// <summary>
+    /// The applied value to record when the backup already has one from an earlier apply (apply again after Windows or the
+    /// user changed the value). By default the new one; an action keeps what only the earlier apply could know.
+    /// </summary>
+    public virtual StoredValue? MergeApplied(StoredValue? earlier, StoredValue? now) => now;
+
     public virtual ActionState State(ActionContext c)
     {
         var current = Read(c);

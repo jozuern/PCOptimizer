@@ -90,6 +90,10 @@ The app is WPF with WPF-UI and nothing else (no WinForms, WebView2 or WinUI insi
 4. Regenerate the VM test plan tables: run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`. The counts in README.md are checked against the catalog (`DocsConsistencyTests`).
 5. A tweak that is removed later stays undoable: undo uses the action stored with each backup entry.
 
+### Backup files are a promise
+
+Undo has to work on every backup file an earlier release wrote, also after an update. Action type names (`[JsonDerivedType]` on `TweakAction`), action property names, target keys (`reg:`, `pwr:`, `nic:` and so on) and the encodings of stored values (`missingKeys:N`, `scheme-created`, `raw:<hex>`) are frozen: add, never rename or remove. `BackupFormatTests` restores a saved backup of every action type from `tests/Optimizer.Core.Tests/Fixtures/backups` and fails when one no longer undoes. A new action type needs a scenario there; run the tests once with `TUNERO_WRITE_BACKUP_FIXTURES=1` to write its file, and commit the new file without touching the others. A change older versions would misread raises `BackupFormat.Current`; the app then refuses files of a newer format instead of guessing.
+
 A tweak left out goes into [docs/not-included.md](docs/not-included.md) with its reason and sources, and into `Catalog/Data/notincluded.json` with a short reason in EN and DE and the words people search for, so the app's search explains it instead of finding nothing. `NotIncludedEntriesMatchTheDocument` checks that both lists have the same entries.
 
 ## Undocumented values

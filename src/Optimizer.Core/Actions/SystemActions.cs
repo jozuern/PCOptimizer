@@ -213,6 +213,15 @@ public sealed class PowerSchemeAction : TweakAction
         Read(c) is { } value && DuplicateFrom is not null && Name is not null ? value with { Kind = _created ? CreatedKind : ExistingKind } : Read(c);
 
     /// <summary>
+    /// Applied again after the user picked another plan: the plan is found by its name now, but it is still the one the
+    /// first apply created, and undo must remove it.
+    /// </summary>
+    public override StoredValue? MergeApplied(StoredValue? earlier, StoredValue? now) =>
+        earlier is { Kind: CreatedKind } && now is { Kind: ExistingKind } && string.Equals(earlier.Data, now.Data, StringComparison.OrdinalIgnoreCase)
+            ? now with { Kind = CreatedKind }
+            : now;
+
+    /// <summary>
     /// Undo always runs: when the user picked another plan since, the active plan stays as it is, but a plan this action
     /// created is still removed (otherwise it would be left behind for good). The plan this action activated (its GUID)
     /// identifies a created plan even after the user renamed it.

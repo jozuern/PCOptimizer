@@ -1,0 +1,23 @@
+{
+  "TweakId": "fixture.memoryCompression",
+  "Since": "2026-10-13T15:31:02.126174+02:00",
+  "Entries": [
+    {
+      "TargetKey": "mmagent:memorycompression",
+      "Description": "Memory compression (MMAgent)",
+      "Original": {
+        "Existed": true,
+        "Kind": "bool",
+        "Data": "True",
+        "Display": "True"
+      },
+      "Applied": {
+        "Existed": true,
+        "Kind": "bool",
+        "Data": "False",
+        "Display": "False"
+      },
+      "Action": "{\u0022type\u0022:\u0022memoryCompression\u0022,\u0022Enabled\u0022:false,\u0022TargetKey\u0022:\u0022mmagent:memorycompression\u0022,\u0022TakesEffectAfterRestart\u0022:true,\u0022EarlyRead\u0022:\u0022withScan\u0022,\u0022IsBootCritical\u0022:false}"
+    }
+  ]
+}

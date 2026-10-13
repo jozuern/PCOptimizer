@@ -313,6 +313,49 @@ public class UndoTests
         Assert.True(fx.Power.SchemeExists(existing));
     }
 
+    /// <summary>
+    /// Applied, then the user picked another plan, then "Apply again": the plan is found by its name the second time, but
+    /// it is still the one the first apply created, so undo removes it.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAgainAfterAPlanSwitchStillRemovesTheCreatedPlan()
+    {
+        using var fx = new EngineFixture();
+        var t = Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" });
+        await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        fx.Power.Active = FakePower.Balanced;
+        await fx.Engine.ApplyAsync(Tweak("test.plan", new PowerSchemeAction { DuplicateFrom = "highPerformance", Name = "Tunero Test" }), Facts, new HashSet<string>(), Options);
+        Assert.Equal(PowerSchemeAction.CreatedKind, fx.Store.Get(t.Id)!.Entries.Single().Applied!.Kind);
+
+        Assert.True(fx.Engine.Revert(t).Success);
+        Assert.Equal(FakePower.Balanced, fx.Power.Active);
+        Assert.DoesNotContain("Tunero Test", fx.Power.SchemeNames.Values);
+    }
+
+    /// <summary>A read that fails is not a target that is absent: the apply stops before it writes anything.</summary>
+    [Fact]
+    public async Task AReadThatFailsStopsTheApply()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"SOFTWARE\Test\ReadFails";
+        var t = Tweak("test.readFails", Reg(path, "A", 1), new ThrowingRead());
+        var r = await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
+        Assert.Equal(ApplyOutcome.Failed, r.Outcome);
+        Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, "A").Existed);
+        Assert.Null(fx.Store.Get(t.Id));
+    }
+
+    private sealed class ThrowingRead : TweakAction
+    {
+        public override string TargetKey => "test:throwing";
+        public override StoredValue Desired(ActionContext c) => new(true, "test", "1");
+        public override StoredValue? Read(ActionContext c) => throw new TimeoutException("the tool did not answer");
+        public override ActionState State(ActionContext c) => ActionState.NotApplied;
+        public override void Apply(ActionContext c) { }
+        public override void Restore(ActionContext c, StoredValue original) { }
+        public override string Describe(ActionContext c) => "test target";
+    }
+
     /// <summary>Backups written before the kind was recorded ("scheme") keep the old behavior: the plan counts as created.</summary>
     [Fact]
     public async Task OlderBackupsStillRemoveTheirPlan()
@@ -371,6 +414,17 @@ public class UndoTests
         Assert.True(fx.Engine.Revert(t).Success);
         Assert.Equal("Both", RegistryValue.Read(fx.Registry, Hive.Machine, path, "ThreadingModel").Data);
         Assert.False(RegistryValue.Read(fx.Registry, Hive.Machine, path, "").Existed);
+    }
+
+    [Fact]
+    public void NicActionReadBackFromABackupNamesTheSameTarget()
+    {
+        var adapter = new NicAdapter(@"SYSTEM\Class\0001", "{11111111-1111-1111-1111-111111111111}", "Test NIC", @"PCI\VEN_8086", false,
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase) { ["*eee"] = ["0", "1"] });
+        var action = new NicPropertyAction { Properties = new(StringComparer.OrdinalIgnoreCase) { ["*EEE"] = "0" }, Adapter = adapter };
+        var stored = JsonSerializer.Deserialize<TweakAction>(JsonSerializer.Serialize<TweakAction>(action, TweakCatalog.JsonOptions), TweakCatalog.JsonOptions)!;
+        Assert.Contains("*eee", action.TargetKey);
+        Assert.Equal(action.TargetKey, stored.TargetKey);
     }
 
     [Fact]

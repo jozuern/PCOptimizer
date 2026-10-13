@@ -379,33 +379,53 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // First-original rule: an entry is written once and never overwritten by a later apply.
         var before = new Dictionary<string, StoredValue>();
         var added = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var a in actions)
+        try
         {
-            var current = SafeRead(a);
-            if (current is null) continue;
-            // Undone and not restarted yet: the setting is the restored original, not the running value.
-            if (a.TakesEffectAfterRestart && pendingUndo?.Entries.FirstOrDefault(e => e.TargetKey == a.TargetKey) is { } restored) current = restored.Original;
-            before[a.TargetKey] = current;
-            if (backup.Entry(a.TargetKey) is not { } entry)
+            foreach (var a in actions)
             {
-                backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
-                added.Add(a.TargetKey);
+                StoredValue? current;
+                try
+                {
+                    current = a.Read(ctx);
+                }
+                catch (Exception ex)
+                {
+                    // A read that fails is not a target that is absent: skipping it would leave part of the confirmed change
+                    // unwritten and still report it as applied. Nothing is written yet.
+                    DeleteExports(backup.Exports.Skip(exportsBefore).ToList());
+                    return Fail(t, changes, $"{a.TargetKey} could not be read ({ex.Message}); nothing was changed.");
+                }
+                if (current is null) continue; // the target does not exist on this PC
+                // Undone and not restarted yet: the setting is the restored original, not the running value.
+                if (a.TakesEffectAfterRestart && pendingUndo?.Entries.FirstOrDefault(e => e.TargetKey == a.TargetKey) is { } restored) current = restored.Original;
+                before[a.TargetKey] = current;
+                if (backup.Entry(a.TargetKey) is not { } entry)
+                {
+                    backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = a.Describe(ctx), Original = current });
+                    added.Add(a.TargetKey);
+                }
+                // The action that wrote the change first restores it (Revert): a later catalog version can write less under
+                // the same target (one side of a power setting), and its action would leave the rest changed for good.
+                entry.Action ??= JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
             }
-            // The action that wrote the change first restores it (Revert): a later catalog version can write less under
-            // the same target (one side of a power setting), and its action would leave the rest changed for good.
-            entry.Action ??= JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
+            // Nothing could be read (a tool timed out after the state check): no originals, so nothing may be written.
+            if (before.Count == 0)
+            {
+                // Nothing is changed, so the exports made for this run are not needed.
+                DeleteExports(backup.Exports.Skip(exportsBefore).ToList());
+                return Fail(t, changes, "The current values could not be read; nothing was changed.");
+            }
+            // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
+            // definition is what detection compares against; each entry restores itself through its own action.
+            if (_catalog.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
+            store.Save(backup); // persisted before the first write, so a crash mid-way still has the originals
         }
-        // Nothing could be read (a tool timed out after the state check): no originals, so nothing may be written.
-        if (before.Count == 0)
+        catch (Exception ex)
         {
-            // Nothing is changed, so the exports made for this run are not needed.
+            // Describe or the first save failed: nothing was written, and the exports made for this run are not needed.
             DeleteExports(backup.Exports.Skip(exportsBefore).ToList());
-            return Fail(t, changes, "The current values could not be read; nothing was changed.");
+            return Fail(t, changes, ex.Message);
         }
-        // Runtime tweaks keep one id while their content can change (a service's start type, a game list): the latest
-        // definition is what detection compares against; each entry restores itself through its own action.
-        if (_catalog.Get(t.Id) is null) backup.Definition = JsonSerializer.Serialize(t, TweakCatalog.JsonOptions);
-        store.Save(backup); // persisted before the first write, so a crash mid-way still has the originals
 
         // Apply in order; on failure roll back what this run changed (per-tweak transaction).
         var done = new List<TweakAction>();
@@ -466,7 +486,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // A change that takes effect after a restart still reads the old value: record what was written instead, or undo
         // would later take the new running value for a change by Windows and skip it.
         foreach (var a in done)
-            if (backup.Entry(a.TargetKey) is { } e) e.Applied = SafeApplied(a);
+            if (backup.Entry(a.TargetKey) is { } e) e.Applied = a.MergeApplied(e.Applied, SafeApplied(a));
         backup.LastApplied = DateTimeOffset.Now;
         backup.AppliedOnVersion = WindowsVersion;
         if (t.Restart || t.Verify == "afterRestart" || done.Any(a => a.TakesEffectAfterRestart)) backup.PendingRestartSince = DateTimeOffset.Now;
@@ -665,15 +685,30 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         }
     }
 
-    /// <summary>Undoes every backed-up change: catalog tweaks and runtime tweaks (from their stored definition).</summary>
+    /// <summary>
+    /// Undoes every backed-up change: catalog tweaks and runtime tweaks (from their stored definition). Also the settings
+    /// of "permanent" tweaks: what they deleted (Recall snapshots) does not come back, but their values do, as with their
+    /// own Undo. A backup nothing describes any more is reported as failed with the reason, so "Undo all" never claims more
+    /// than it did.
+    /// </summary>
     public IReadOnlyList<(TweakDefinition Tweak, RevertResult Result)> RevertAll()
     {
         var results = new List<(TweakDefinition, RevertResult)>();
         foreach (var b in store.All())
-            if (Resolve(b.TweakId) is { Reversibility: Reversibility.Reversible } t)
+        {
+            if (Resolve(b) is not { } t)
+                results.Add((Placeholder(b.TweakId), new RevertResult(false, [], ["This change is not described by this version of the app; undo it on its explanation page or by hand."])));
+            else
                 results.Add((t, Revert(t)));
+        }
         return results;
     }
+
+    private static TweakDefinition Placeholder(string id) => new()
+    {
+        Id = id, Category = "Retired", Docs = "retired", Subject = id, Hidden = true,
+        Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] }, Actions = [],
+    };
 
     /// <summary>
     /// Every change this app made (catalog and runtime tweaks) whose values are no longer in place. Run after each scan;

@@ -13,6 +13,12 @@
 
 ### Fixed
 
+- **Undo across updates is tested:** backup files now record their format, and the tests restore a saved backup of every kind of change (registry, services, power plans, boot options, tasks, DNS, network adapter, NVIDIA and the others) the way an earlier version wrote it. A backup from a newer version of Tunero is left alone instead of being misread, and the stored catalog version now changes with every catalog change.
+- **A setting that could not be read** during an apply was skipped, and the change was still reported as applied. The apply now stops before it writes anything and says which setting it could not read.
+- **Power plan undo after "Apply again":** when you had switched to another plan and applied Tunero's plan again, undo switched back but left the plan Tunero created in Power Options. It is removed again.
+- **Backups not owned by Administrators** counted as "no backup", so undo reported success without restoring anything, and the next start deleted the file. Every backup is now given to the Administrators group when it is saved (or the change is not made), and a file owned by another account blocks apply and undo of that change instead.
+- **Network adapter undo** could fail for a change made with an adapter that is no longer connected, when the driver spelled a keyword differently.
+- **Undo all** now also restores the settings of the two "permanent" AI tweaks (what they deleted does not come back), so undoing everything before uninstalling no longer leaves them, and it reports a change it cannot undo instead of skipping it silently.
 - **Import:** a file with two or more changes that need their own confirmation (Expert, preview or anti-cheat sensitive) applied only the first one and refused the others as "busy", because each change starts a scan. A change now waits for the running scan instead.
 - **Ryzen AI 300 laptops** (for example the Ryzen AI 9 HX 370) were taken for a Ryzen X3D with two chiplets, because their two core clusters have L3 caches of different size. The app then blocked the High performance plan, reported a problem with impact 4 and guarded the Xbox Game Bar. Only processors named X3D count now.
 - **A failed scan** was never shown: the Overview kept saying "The scan is reading this PC". The verdict now says the scan could not finish, and the result bar shows the error.

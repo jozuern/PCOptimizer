@@ -26,27 +26,38 @@ public sealed class TweakCatalog
     private static readonly Lazy<TweakCatalog> Lazy = new(Load);
     public static TweakCatalog Current => Lazy.Value;
 
-    /// <summary>Bumped whenever catalog content changes; stored with every backup record.</summary>
-    public const string Version = "2026.10.3";
+    /// <summary>
+    /// The embedded catalog's content as a short hash, stored with every backup record: it changes with every catalog
+    /// change by itself (a hand-kept number was forgotten for weeks).
+    /// </summary>
+    public static string Version => Current.ContentVersion;
 
     public required IReadOnlyList<TweakDefinition> Tweaks { get; init; }
 
-    public TweakDefinition? Get(string id) => Tweaks.FirstOrDefault(t => t.Id == id);
+    /// <summary>SHA-256 of the catalog files, first 12 hex digits; empty for a catalog built in code.</summary>
+    public string ContentVersion { get; init; } = "";
+
+    private Dictionary<string, TweakDefinition>? _byId;
+
+    public TweakDefinition? Get(string id) => (_byId ??= Tweaks.ToDictionary(t => t.Id, StringComparer.Ordinal)).GetValueOrDefault(id);
 
     public IEnumerable<TweakDefinition> Visible => Tweaks.Where(t => !t.Hidden);
 
     public static TweakCatalog Load()
     {
         var list = new List<TweakDefinition>();
+        using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
         foreach (var name in CatalogData.ResourceNames("Catalog.Tweaks.").OrderBy(n => n, StringComparer.Ordinal))
         {
-            var file = JsonSerializer.Deserialize<CatalogFile>(CatalogData.ReadResourceText(name), CatalogJsonOptions)
+            var text = CatalogData.ReadResourceText(name);
+            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(text));
+            var file = JsonSerializer.Deserialize<CatalogFile>(text, CatalogJsonOptions)
                        ?? throw new InvalidDataException($"Empty catalog file {name}");
             list.AddRange(file.Tweaks);
         }
         var duplicate = list.GroupBy(t => t.Id).FirstOrDefault(g => g.Count() > 1);
         if (duplicate is not null) throw new InvalidDataException($"Duplicate tweak id {duplicate.Key}");
-        return new TweakCatalog { Tweaks = list };
+        return new TweakCatalog { Tweaks = list, ContentVersion = Convert.ToHexString(hash.GetHashAndReset())[..12].ToLowerInvariant() };
     }
 
     private sealed class CatalogFile
