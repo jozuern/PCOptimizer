@@ -126,6 +126,7 @@ const en: Copy = {
         name: 'Optimize',
         items: [
           ['Tweaks', `${c.tweaks} documented settings for games, privacy, the browser, Windows and Windows Update, each with its evidence.`],
+          ['Graphics & DNS', 'NVIDIA driver settings, maximum performance only for the games you pick, and a DNS benchmark.'],
           ['Startup', 'Everything that starts with Windows, with signature checks and snapshots to compare.'],
           ['Services & tasks', 'Start types, with what each service does.'],
         ],
@@ -140,7 +141,7 @@ const en: Copy = {
       {
         name: 'Maintain and check',
         items: [
-          ['Apps & drivers', 'Install and update apps with winget, and see how old the drivers are.'],
+          ['Install & update', 'Install and update apps with winget, and see how old the drivers are.'],
           ['Tools', 'Storage analyzer, Windows features, network fixes, Windows Update repair, SFC and DISM.'],
           ['Health', 'A frame time benchmark with PresentMon, a throttle check and drive health.'],
         ],

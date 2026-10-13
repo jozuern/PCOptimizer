@@ -126,6 +126,7 @@ const de: Copy = {
         name: 'Optimieren',
         items: [
           ['Tweaks', `${c.tweaks} dokumentierte Einstellungen für Spiele, Datenschutz, den Browser, Windows und Windows Update, jede mit ihren Belegen.`],
+          ['Grafik & DNS', 'NVIDIA-Treibereinstellungen, maximale Leistung nur für die Spiele, die du auswählst, und ein DNS-Benchmark.'],
           ['Autostart', 'Alles, was mit Windows startet, mit Signaturprüfung und Schnappschüssen zum Vergleichen.'],
           ['Dienste & Aufgaben', 'Starttypen, mit dem, was jeder Dienst tut.'],
         ],
@@ -140,7 +141,7 @@ const de: Copy = {
       {
         name: 'Pflegen und prüfen',
         items: [
-          ['Apps & Treiber', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
+          ['Installieren & aktualisieren', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
           ['Tools', 'Speicheranalyse, Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
           ['Zustand', 'Ein Frametime-Benchmark mit PresentMon, eine Drosselungsprüfung und der Zustand der Laufwerke.'],
         ],
