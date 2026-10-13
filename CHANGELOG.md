@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.14 (preview)
 
 ### Changed
 
@@ -8,7 +8,6 @@
 - **Rating mark:** every tweak and check shows its impact on the profile's goal as a light numeral and five bars, in one column beside its switch or Fix button, the same 0 to 5 scale as the rating board on tunero.dev. A rating on disputed evidence draws its bars as outlines; tweaks without effect show none. The grey line under a row no longer spells out "Impact 2 of 5", and the details pane puts the mark next to those words, so it explains the mark. On a narrow page the switches go without their "Applied" label, as in Windows Settings, so the rows keep room for their text.
 - **Overview, the verdict first:** the page opens with one sentence on what holds this PC back ("2 problems hold this PC back."), with those problems right under it and their rating marks. The readiness score, the passed checks and the way to Manual checks share one quiet line below the sentence; the two cards with large numbers are gone, and the profile follows the findings.
 - **Overview, no problems but recommended changes:** the sentence says both ("No problems found. 2 recommended changes can still help.") instead of only "nothing holds this PC back", and the line under it says that the readiness score is counted from the problems the scan finds. 100 of 100 next to two recommended changes read as a contradiction; the score never counted tweaks.
-
 - **Start menu entry "Tunero PC Optimizer":** Windows Search finds an app only by the name of its Start menu entry, so a search for "optimizer" found nothing. The entry is now called "Tunero PC Optimizer" (also in Scoop), and an entry "Tunero" from an earlier version gets the new name on the next start. The app and its window keep the name Tunero.
 
 ### Fixed
