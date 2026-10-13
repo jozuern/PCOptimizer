@@ -39,8 +39,8 @@
         </StackPanel>
         <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource SelectorTab}" SelectedIndex="{Binding ToolsTab}">
             <TabItem Header="{l:Tr Quick_TabFixes}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <!-- Quick fixes in three groups; the last one repairs Windows (system files, updates, drive) -->
                         <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupNetwork}" Margin="0,0,0,8" />
                         <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
@@ -124,8 +124,8 @@
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="{l:Tr Storage_Title}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <!-- Storage analyzer -->
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" Margin="0,0,0,8" />
                         <ui:Card Padding="16,12">
@@ -194,8 +194,8 @@
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="{l:Tr Feat_Title}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <!-- Optional features -->
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Feat_Hint}" Margin="0,0,0,8" />
                         <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Tools.IsLoading, Converter={StaticResource BoolToVisibility}}" />
@@ -229,8 +229,8 @@
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="{l:Tr Prio_Title}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <!-- Start priorities (Image File Execution Options) -->
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Prio_Hint}" Margin="0,0,0,8" TextWrapping="Wrap" />
                         <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">

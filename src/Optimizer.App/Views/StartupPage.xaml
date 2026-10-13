@@ -59,10 +59,11 @@
                                       Visibility="{Binding Startup.SnapshotText, Converter={StaticResource NullToVisibility}}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Startup.VirusTotalStatus}" Margin="0,4,0,0"
                                       Visibility="{Binding Startup.VirusTotalStatus, Converter={StaticResource NullToVisibility}}" />
-                        <ui:HyperlinkButton Content="{l:Tr Vt_AddKey}" Command="{Binding OpenSettingsCommand}" Padding="0" Margin="0,4,0,0" HorizontalAlignment="Left"
-                                            ToolTip="{l:Tr Vt_Hint}" Visibility="{Binding VirusTotalConfigured, Converter={StaticResource InverseBoolToVisibility}}" />
                     </StackPanel>
                 </DockPanel>
+                <!-- Below, across the card: a link does not wrap, so next to the buttons a narrow window cut it off -->
+                <ui:HyperlinkButton Content="{l:Tr Vt_AddKey}" Command="{Binding OpenSettingsCommand}" Padding="0" Margin="0,4,0,0" HorizontalAlignment="Left"
+                                    ToolTip="{l:Tr Vt_Hint}" Visibility="{Binding VirusTotalConfigured, Converter={StaticResource InverseBoolToVisibility}}" />
             </StackPanel>
         </ui:Card>
 

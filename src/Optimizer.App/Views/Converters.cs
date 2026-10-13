@@ -115,18 +115,6 @@ public sealed class SameItemConverter : IMultiValueConverter
     public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
-/// <summary>A layout width to set on a child: 0 (not laid out yet) means automatic, so nothing collapses before the first layout.</summary>
-public sealed class LayoutWidthConverter : IValueConverter
-{
-    /// <param name="parameter">Pixels to take off (the scroll bar's gutter), as a string.</param>
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is double w && w > 0
-            ? Math.Max(0, w - (double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var cut) ? cut : 0))
-            : double.NaN;
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
-}
-
 /// <summary>
 /// The width of a page's content: the page minus its padding and the room of a scroll bar, at most 1000 px (as in
 /// Windows Settings). Every page then ends at the same place, also one whose content alone would be narrower.
@@ -137,6 +125,29 @@ public sealed class PageWidthConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         value is double w && w > Padding ? Math.Min(Max, w - Padding) : double.NaN;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// The margin that takes a page's scrolling list out to the page's right edge: past the page padding and the room beside
+/// content of at most 1000 px. Its scroll bar then sits where a page that scrolls as a whole has it, at the window edge,
+/// and the wheel works over that room too; the list used to end 16 px after its cards, with the scroll bar mid-window.
+/// </summary>
+public sealed class EdgeMarginConverter : IValueConverter
+{
+    /// <summary>The page's left padding (PagePadding in App.xaml).</summary>
+    public const double PageLeft = 24;
+
+    /// <param name="parameter">The top margin, as a string ("8" under a tab bar).</param>
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var top = double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var t) ? t : 0;
+        var extra = value is double w && w > PageWidthConverter.Padding
+            ? w - PageLeft - Math.Min(PageWidthConverter.Max, w - PageWidthConverter.Padding)
+            : 16;
+        return new Thickness(0, top, -extra, 0);
+    }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

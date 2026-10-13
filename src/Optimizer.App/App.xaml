@@ -25,8 +25,8 @@
             <v:NullToBoolConverter x:Key="NullToBool" />
             <v:AllTrueConverter x:Key="AllTrue" />
             <v:CountToVisibilityConverter x:Key="EmptyToVisibility" Invert="True" />
-            <v:LayoutWidthConverter x:Key="LayoutWidth" />
             <v:PageWidthConverter x:Key="PageWidth" />
+            <v:EdgeMarginConverter x:Key="EdgeMargin" />
             <v:SameItemConverter x:Key="SameItem" />
             <v:AtLeastConverter x:Key="AtLeast" />
 
@@ -122,16 +122,17 @@
                     </Setter.Value>
                 </Setter>
                 <Setter Property="Template" Value="{StaticResource VirtualList}" />
-                <!-- The scroll bar sits in the page's right padding, beside the cards instead of over their edge -->
-                <Setter Property="Margin" Value="0,0,-16,0" />
+                <!-- The list reaches the page's right edge: its scroll bar sits at the window edge, as on pages that scroll as a
+                     whole, and the wheel works beside the cards too -->
+                <Setter Property="Margin" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EdgeMargin}}" />
                 <!-- The panel lays every card out as wide as the widest one it ever measured, also cards realized off
                      screen that kept a width from before the details pane opened (the switches were cut off): give each
-                     card exactly the visible width. -->
+                     card exactly the page's content width. -->
                 <Setter Property="ItemContainerStyle">
                     <Setter.Value>
                         <Style TargetType="ContentPresenter">
-                            <Setter Property="Width" Value="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LayoutWidth}, ConverterParameter=16}" />
-                            <!-- Left, so the 16 px for the scroll bar stay on the right and the cards line up with the page -->
+                            <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource PageWidth}}" />
+                            <!-- Left, so the cards line up with the page and the room on the right stays for the scroll bar -->
                             <Setter Property="HorizontalAlignment" Value="Left" />
                         </Style>
                     </Setter.Value>
@@ -139,6 +140,21 @@
             </Style>
 
 
+
+            <!-- A page part that scrolls on its own (a tab, the Cleanup categories): out to the page's right edge like the
+                 lists above, with its content as wide as the page's -->
+            <Style x:Key="EdgeScroll" TargetType="ScrollViewer">
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                <Setter Property="Margin" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EdgeMargin}}" />
+            </Style>
+            <Style x:Key="EdgeContent" TargetType="StackPanel">
+                <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource PageWidth}}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+            </Style>
+            <!-- The same under a tab bar: 8 px from the tabs -->
+            <Style x:Key="EdgeTabScroll" TargetType="ScrollViewer" BasedOn="{StaticResource EdgeScroll}">
+                <Setter Property="Margin" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EdgeMargin}, ConverterParameter=8}" />
+            </Style>
 
             <!-- Tabs drawn like the Windows 11 selector bar: the selected tab gets an accent line under its text (pages with
                  several parts: Services, Remove apps, Apps, Tools). -->

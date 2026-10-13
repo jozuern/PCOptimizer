@@ -20,8 +20,8 @@
 
         <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource SelectorTab}" SelectedIndex="{Binding AppsTab}">
             <TabItem Header="{l:Tr Apps_TabApps}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <!-- Update all at the top, not after the last of about thirty apps -->
                         <DockPanel Margin="0,0,0,8">
                             <ui:Button DockPanel.Dock="Right" Content="{l:Tr Apps_UpdateAll}" Icon="{ui:SymbolIcon ArrowDownload20}" Command="{Binding Apps.UpdateAllCommand}"
@@ -84,8 +84,8 @@
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="{l:Tr Drv_Title}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,-16,0">
-                    <StackPanel Margin="0,0,16,0">
+                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
+                    <StackPanel Style="{StaticResource EdgeContent}">
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Drv_Hint}" Margin="0,0,0,8" TextWrapping="Wrap" />
                         <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                             <ui:CardControl.Header>
