@@ -379,7 +379,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Autostart</value>
   </data>
   <data name="Startup_Hint" xml:space="preserve">
-    <value>Alles, was mit Windows startet: Autostart-Programme, geplante Aufgaben, Dienste, Treiber, Explorer-Erweiterungen und Anmeldeeinträge. Abschalten funktioniert wie im Task-Manager und lässt sich rückgängig machen.</value>
+    <value>Was mit Windows startet oder von selbst läuft: Autostart-Programme, geplante Aufgaben anderer Programme, Dienste, Treiber, Explorer-Erweiterungen, Anmeldeeinträge und die anderen Stellen, die Autoruns zeigt. Abschalten funktioniert wie im Task-Manager und lässt sich rückgängig machen.</value>
   </data>
   <data name="Startup_AllKinds" xml:space="preserve">
     <value>Alle Orte</value>

@@ -35,6 +35,9 @@ public sealed record StartupEntry(
     /// <summary>Non-default Winlogon values and IFEO debuggers deserve attention (often malware or leftovers).</summary>
     public bool Suspicious { get; init; }
 
+    /// <summary>A task that runs at sign-in or at boot; false for a task on another trigger (a daily updater).</summary>
+    public bool StartsWithWindows { get; init; } = true;
+
     /// <summary>
     /// Runs PowerShell, cmd, mshta or a similar script host: Microsoft-signed, but the command decides what runs, so
     /// such entries are never hidden as "Microsoft". Variables are expanded with the machine's values only: this app
@@ -212,6 +215,7 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
                     i == 0 ? $"task:{t.Path}" : $"task:{t.Path}#{i + 1}")
                 {
                     Target = t.Path,
+                    StartsWithWindows = t.AtLogon || t.AtBoot,
                 };
             }
         }

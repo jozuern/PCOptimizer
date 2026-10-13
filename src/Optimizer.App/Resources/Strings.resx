@@ -379,7 +379,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Startup</value>
   </data>
   <data name="Startup_Hint" xml:space="preserve">
-    <value>Everything that starts with Windows: startup programs, scheduled tasks, services, drivers, Explorer extensions and sign-in entries. Switching off works like Task Manager and can be undone.</value>
+    <value>What starts with Windows or runs on its own: startup programs, scheduled tasks of other programs, services, drivers, Explorer extensions, sign-in entries and the other places Autoruns lists. Switching off works like Task Manager and can be undone.</value>
   </data>
   <data name="Startup_AllKinds" xml:space="preserve">
     <value>All locations</value>

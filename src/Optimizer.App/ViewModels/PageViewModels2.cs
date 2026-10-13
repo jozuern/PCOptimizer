@@ -222,7 +222,7 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
 
     private const string SignInKey = "signIn";
 
-    private static bool IsSignIn(StartupEntry e) => e.Kind is StartupKind.RunKey or StartupKind.StartupFolder or StartupKind.LogonTask;
+    private static bool IsSignIn(StartupEntry e) => e.Kind is StartupKind.RunKey or StartupKind.StartupFolder || e is { Kind: StartupKind.LogonTask, StartsWithWindows: true };
 
     private void Filter()
     {
