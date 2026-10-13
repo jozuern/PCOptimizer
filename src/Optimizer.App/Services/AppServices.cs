@@ -24,6 +24,7 @@ public sealed class AppServices
         Context = SystemNotify.CreateContext(sid, Store.ExportFolder, CurrentInterfaceIds);
         RestorePoints = new RestorePointService(Context.Processes);
         Engine = new TweakEngine(Context, Store, RestorePoints, Optimizer.Core.Platform.AppInfo.Text, Os.Build, Os.BuildString);
+        Session = new ChangeSession(Engine, RestorePoints);
 
         // bcdedit needs admin rights; without them the BCD part of F21 is reported as unknown.
         BcdValues = Elevation.IsElevated ? () => Context.Bcd.CurrentValues() : () => null;
@@ -36,6 +37,9 @@ public sealed class AppServices
     public ActionContext Context { get; }
     public RestorePointService RestorePoints { get; }
     public TweakEngine Engine { get; }
+
+    /// <summary>The steps of every change, shared by the window (<see cref="ChangeRunner"/>) and the command line.</summary>
+    public ChangeSession Session { get; }
     public TweakCatalog Catalog => TweakCatalog.Current;
 
     /// <summary>The search over the catalog, tools, settings and the lists the pages load (built on the first search).</summary>
@@ -128,7 +132,5 @@ public sealed record ConfirmRequest(
 }
 
 public sealed record ConfirmResult(bool AcknowledgedAntiCheat);
-
-public enum RestorePointChoice { Enable, Continue, Cancel }
 
 public enum UninstallChoice { UndoFirst, Keep, Cancel }

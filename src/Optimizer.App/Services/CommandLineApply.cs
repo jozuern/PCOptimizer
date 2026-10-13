@@ -184,48 +184,28 @@ public static class CommandLineApply
     }
 
     /// <summary>The scan the window runs: the facts decide what applies to this PC and what is on already.</summary>
-    private sealed record PcState(Facts Facts, IReadOnlyList<TweakStatus> States, IReadOnlySet<string> Applied, IReadOnlyList<Finding> Findings);
+    private static Task<PcSnapshot> ScanAsync(AppServices services) =>
+        ChangeSession.ScanAsync(CatalogData.Current, services.Catalog, services.Engine, services.Context.Registry, services.BcdValues);
 
-    private static async Task<PcState> ScanAsync(AppServices services)
-    {
-        var catalog = CatalogData.Current;
-        var visible = services.Catalog.Visible.ToList();
-        var scan = await new ScanService(catalog, services.Context.Registry, services.BcdValues, services.Engine, visible).RunAsync();
-        var facts = FactsBuilder.Build(scan.Profile, scan.Findings, catalog, services.Context.Registry);
-        var states = await Task.Run(() => services.Engine.DetectAll(visible, facts));
-        var applied = states.Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
-        return new PcState(facts, states, applied, scan.Findings);
-    }
-
-    /// <summary>Applies the batch-safe changes in one go (one restore point) and lists the rest for the app.</summary>
-    private static async Task<int> ApplyTogetherAsync(AppServices services, PcState pc, IReadOnlyList<TweakDefinition> together, IReadOnlyList<TweakDefinition> inApp,
+    /// <summary>
+    /// Applies the batch-safe changes in one go (one restore point) and lists the rest for the app. Without a restore
+    /// point the run stops, unless --no-restore-point said to go on (there is nobody to ask).
+    /// </summary>
+    private static async Task<int> ApplyTogetherAsync(AppServices services, PcSnapshot pc, IReadOnlyList<TweakDefinition> together, IReadOnlyList<TweakDefinition> inApp,
         bool withoutRestorePoint, List<string> lines, Func<int, int, int, string> summary)
     {
         var lang = Loc.Instance.Language;
-        int ok = 0, failed = 0, skipped = 0;
-        if (together.Count > 0)
+        var outcome = await services.Session.ApplyBatchAsync(together, pc.Facts, pc.Applied, new ApplyOptions { ContinueWithoutRestorePoint = withoutRestorePoint },
+            () => RestorePointChoice.Cancel);
+        if (together.Count > 0 && (outcome.Results.Count == 0 || outcome.StoppedForRestorePoint))
         {
-            var options = new ApplyOptions { ContinueWithoutRestorePoint = withoutRestorePoint };
-            var results = await Task.Run(() => services.Engine.ApplyBatchAsync(together, pc.Facts, pc.Applied, options));
-            if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
-            {
-                lines.Add(Loc.Instance["Cli_NoRestorePoint"]);
-                return NoRestorePoint;
-            }
-            foreach (var r in results)
-            {
-                lines.Add(ChangeRunner.ResultText(r.Tweak, ChangeRunner.TitleOf(r.Tweak, lang), r.Result));
-                switch (r.Result.Outcome)
-                {
-                    case ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective: ok++; break;
-                    case ApplyOutcome.Failed: failed++; break;
-                    default: skipped++; break;
-                }
-            }
+            lines.Add(Loc.Instance["Cli_NoRestorePoint"]);
+            return NoRestorePoint;
         }
+        foreach (var r in outcome.Results) lines.Add(ChangeRunner.ResultText(r.Tweak, ChangeRunner.TitleOf(r.Tweak, lang), r.Result));
         foreach (var t in inApp) lines.Add(Loc.Instance.Format("Cli_NeedsApp", ChangeRunner.TitleOf(t, lang)));
-        lines.Add(summary(ok, failed, skipped + inApp.Count));
-        return failed > 0 ? SomeFailed : Done;
+        lines.Add(summary(outcome.Applied, outcome.Failed, outcome.Skipped + inApp.Count));
+        return outcome.Failed > 0 ? SomeFailed : Done;
     }
 
     private static async Task<int> UndoCoreAsync(AppServices services, List<string> lines)
@@ -235,21 +215,15 @@ public static class CommandLineApply
             lines.Add(Loc.Instance["Cli_NotElevated"]);
             return NotElevated;
         }
-        var results = await Task.Run(() => services.Engine.RevertAll());
+        var outcome = await services.Session.UndoAllAsync();
         var lang = Loc.Instance.Language;
-        var failed = 0;
-        foreach (var (tweak, result) in results)
+        foreach (var (tweak, result) in outcome.Results)
         {
             var title = ChangeRunner.TitleOf(tweak, lang);
-            if (result.Success) lines.Add(Loc.Instance.Format("Result_Undone", title));
-            else
-            {
-                failed++;
-                lines.Add(Loc.Instance.Format("Result_UndoIncomplete", title, string.Join("; ", result.Errors)));
-            }
+            lines.Add(result.Success ? Loc.Instance.Format("Result_Undone", title) : Loc.Instance.Format("Result_UndoIncomplete", title, string.Join("; ", result.Errors)));
         }
-        lines.Add(Loc.Instance.Format("Cli_UndoSummary", results.Count - failed, failed));
-        return failed > 0 ? SomeFailed : Done;
+        lines.Add(Loc.Instance.Format("Cli_UndoSummary", outcome.Undone, outcome.Failed));
+        return outcome.Failed > 0 ? SomeFailed : Done;
     }
 
     /// <summary>

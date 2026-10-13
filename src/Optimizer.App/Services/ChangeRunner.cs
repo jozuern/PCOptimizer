@@ -155,15 +155,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (confirm is null) return false;
 
         var options = new ApplyOptions { ExpertMode = expertMode(), AcknowledgeAntiCheat = confirm.AcknowledgedAntiCheat };
-        var result = await Task.Run(() => services.Engine.ApplyAsync(t, currentFacts, applied, options));
-        if (result.Outcome == ApplyOutcome.NeedsRestorePointDecision)
-        {
-            var choice = dialogs.AskRestorePoint();
-            if (choice == RestorePointChoice.Cancel) return false;
-            if (choice == RestorePointChoice.Enable) await Task.Run(() => services.RestorePoints.Enable());
-            options = new ApplyOptions { ExpertMode = options.ExpertMode, AcknowledgeAntiCheat = options.AcknowledgeAntiCheat, ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue };
-            result = await Task.Run(() => services.Engine.ApplyAsync(t, currentFacts, applied, options));
-        }
+        if (await services.Session.ApplyAsync(t, currentFacts, applied, options, dialogs.AskRestorePoint) is not { } result) return false;
         Report(ResultText(t, request.Title, result), SeverityOf(result));
         var written = result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective;
         // A failed apply can leave a backup behind (a rollback that did not work): the pages show it as a change.
@@ -219,7 +211,7 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (dialogs.ConfirmApply(new ConfirmRequest(title, Labels.Current.Get(lang, "undo.reversible"), lines, [], warnings, null, true)) is null) return false;
         try
         {
-            var result = await Task.Run(() => services.Engine.Revert(t));
+            var result = await services.Session.UndoAsync(t);
             if (!result.Success) Report(Loc.Instance.Format("Result_UndoIncomplete", title, string.Join("; ", result.Errors)), InfoBarSeverity.Error);
             else if (result.AlreadyRevertedByWindows.Count > 0) Report(Loc.Instance.Format("Result_UndoneSkipped", title, result.AlreadyRevertedByWindows.Count));
             else Report(Loc.Instance.Format("Result_Undone", title), InfoBarSeverity.Success);
@@ -250,11 +242,10 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (count == 0 || (confirm && !dialogs.ConfirmUndoAll(count))) return false;
         try
         {
-            var results = await Task.Run(() => services.Engine.RevertAll());
-            var failed = results.Where(r => !r.Result.Success).ToList();
-            if (failed.Count == 0) Report(Loc.Instance.Format("Result_UndoAll", results.Count), InfoBarSeverity.Success);
-            else Report((Loc.Instance.Format("Result_UndoAllIncomplete", results.Count - failed.Count, failed.Count) + " " + incompleteNote).TrimEnd(), InfoBarSeverity.Error);
-            return failed.Count == 0;
+            var outcome = await services.Session.UndoAllAsync();
+            if (outcome.Failed == 0) Report(Loc.Instance.Format("Result_UndoAll", outcome.Results.Count), InfoBarSeverity.Success);
+            else Report((Loc.Instance.Format("Result_UndoAllIncomplete", outcome.Undone, outcome.Failed) + " " + incompleteNote).TrimEnd(), InfoBarSeverity.Error);
+            return outcome.Failed == 0;
         }
         finally
         {
@@ -273,35 +264,21 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (tweaks.Any(t => t.Restart)) badges.Add(Labels.Current.Get(lang, "badge.restart"));
         if (dialogs.ConfirmApply(new ConfirmRequest(title, summary, preview, badges, [], null, false)) is null) return [];
 
-        var options = new ApplyOptions { ExpertMode = expertMode() };
-        var currentFacts = facts();
-        var applied = appliedIds();
-        IReadOnlyList<BatchItemResult> results = await Task.Run(() => services.Engine.ApplyBatchAsync(tweaks, currentFacts, applied, options));
-        if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
-        {
-            var choice = dialogs.AskRestorePoint();
-            // Nothing was changed: an empty result, like a cancelled confirmation (Import then stops too).
-            if (choice == RestorePointChoice.Cancel) return [];
-            if (choice == RestorePointChoice.Enable) await Task.Run(() => services.RestorePoints.Enable());
-            options = new ApplyOptions { ExpertMode = options.ExpertMode, ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue };
-            results = await Task.Run(() => services.Engine.ApplyBatchAsync(tweaks, currentFacts, applied, options));
-        }
-        if (results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision))
+        var outcome = await services.Session.ApplyBatchAsync(tweaks, facts(), appliedIds(), new ApplyOptions { ExpertMode = expertMode() }, dialogs.AskRestorePoint);
+        // Cancelled at the restore point question: nothing was changed, like a cancelled confirmation (Import then stops too).
+        if (outcome.Results.Count == 0) return [];
+        if (outcome.StoppedForRestorePoint)
         {
             // Enabling System Protection did not lead to a restore point: the batch stopped before changing anything.
             Report(Loc.Instance["Result_NoRestorePoint"], InfoBarSeverity.Warning);
             return [];
         }
-        var ok = results.Count(r => r.Result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective);
-        var failed = results.Count(r => r.Result.Outcome == ApplyOutcome.Failed);
-        var skipped = results.Count - ok - failed;
-        var notUpdated = results.Any(r => r.Result.BackupNotUpdated);
-        var text = Loc.Instance.Format("Result_Batch", ok, failed, skipped);
-        Report(notUpdated ? $"{text} {Loc.Instance["Result_BackupsNotUpdated"]}" : text,
-            failed > 0 || notUpdated ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+        var text = Loc.Instance.Format("Result_Batch", outcome.Applied, outcome.Failed, outcome.Skipped);
+        Report(outcome.BackupsNotUpdated ? $"{text} {Loc.Instance["Result_BackupsNotUpdated"]}" : text,
+            outcome.Failed > 0 || outcome.BackupsNotUpdated ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
         // Several changes at once: null makes the app read everything again (a single page-level item would not).
-        if (ok > 0 || failed > 0) Changed?.Invoke(this, tweaks.Count == 1 ? tweaks[0] : null);
-        return results;
+        if (outcome.Applied > 0 || outcome.Failed > 0) Changed?.Invoke(this, tweaks.Count == 1 ? tweaks[0] : null);
+        return outcome.Results;
     }, []);
 
     public static string ResultText(TweakDefinition t, string title, ApplyResult result)

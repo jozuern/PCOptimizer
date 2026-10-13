@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Optimizer.App.Services;
+using Optimizer.Core.Tweaks;
 using Wpf.Ui.Controls;
 
 namespace Optimizer.App.Views;
