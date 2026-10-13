@@ -66,9 +66,27 @@ public static class Program
             return 1;
         }
 
+        // The embedded catalogs take about 200 ms to read (JSON, and the serializer's first use): read beside WPF's start,
+        // which loads the theme dictionaries meanwhile, instead of after it on the UI thread. A caller that comes first
+        // waits for the same read; an error reaches it as before (the lazy values keep it).
+        Task.Run(Preload);
         var app = new App();
         app.InitializeComponent();
         return app.Run();
+    }
+
+    private static void Preload()
+    {
+        try
+        {
+            _ = Optimizer.Core.Tweaks.TweakCatalog.Current;
+            _ = Optimizer.Core.Catalog.CatalogData.Current;
+            _ = Optimizer.Core.Docs.Labels.Current;
+        }
+        catch (Exception)
+        {
+            // Reported where the app uses the catalog.
+        }
     }
 
     /// <summary>
