@@ -1,10 +1,10 @@
 {
   "TweakId": "fixture.dohAutoUpgrade",
-  "Created": "2026-10-13T15:31:01.9440432+02:00",
-  "LastApplied": "2026-10-13T15:31:01.9496631+02:00",
+  "Created": "2026-10-13T16:08:07.8202763+02:00",
+  "LastApplied": "2026-10-13T16:08:07.8292075+02:00",
   "WindowsBuild": 26300,
   "AppVersion": "test",
-  "CatalogVersion": "2026.10.3",
+  "CatalogVersion": "ed994eb95c5d",
   "Entries": [
     {
       "TargetKey": "doh:autoupgrade:1.1.1.1,8.8.8.8",
@@ -18,8 +18,8 @@
       "Applied": {
         "Existed": true,
         "Kind": "doh",
-        "Data": "1.1.1.1=0;8.8.8.8=1",
-        "Display": "1.1.1.1=0;8.8.8.8=1"
+        "Data": "1.1.1.1=1;8.8.8.8=1",
+        "Display": "1.1.1.1=1;8.8.8.8=1"
       },
       "Action": "{\u0022type\u0022:\u0022dohAutoUpgrade\u0022,\u0022Servers\u0022:[\u00221.1.1.1\u0022,\u00228.8.8.8\u0022],\u0022AutoUpgrade\u0022:true,\u0022TargetKey\u0022:\u0022doh:autoupgrade:1.1.1.1,8.8.8.8\u0022,\u0022EarlyRead\u0022:\u0022withScan\u0022,\u0022IsBootCritical\u0022:false,\u0022TakesEffectAfterRestart\u0022:false}"
     }

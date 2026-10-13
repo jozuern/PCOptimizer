@@ -99,54 +99,10 @@ public class BackupFormatTests
         RegistryValue.Write(fx.Registry, Hive.Machine, NicKey, "*EEE", "string", "1");
     }
 
-    /// <summary>The command-line tools the actions call (DISM, powercfg, the DoH cmdlet), as the real ones answer.</summary>
-    private sealed class FakeTools(EngineFixture fx)
-    {
-        private bool _reserved = true;
-        private readonly Dictionary<string, string> _features = new(StringComparer.OrdinalIgnoreCase) { ["Microsoft-Hyper-V-All"] = "Disabled" };
-        private readonly Dictionary<string, string> _capabilities = new(StringComparer.OrdinalIgnoreCase) { ["Media.WindowsMediaPlayer~~~~0.0.12.0"] = "Installed" };
-
-        public (int, string)? Run(string file, string args)
-        {
-            string? Arg(string name) => args.Split(' ').FirstOrDefault(a => a.StartsWith(name, StringComparison.OrdinalIgnoreCase))?[name.Length..];
-            if (file == "dism.exe" && args.Contains("/Get-ReservedStorageState")) return (0, $"Reserved storage is {(_reserved ? "enabled" : "disabled")}.");
-            if (file == "dism.exe" && args.Contains("/Set-ReservedStorageState"))
-            {
-                _reserved = args.Contains("/State:Enabled");
-                return (0, "");
-            }
-            if (file == "dism.exe" && Arg("/FeatureName:") is { } feature)
-            {
-                if (args.Contains("/Get-FeatureInfo")) return _features.TryGetValue(feature, out var s) ? (0, $"Feature Name : {feature}\nState : {s}\n") : (1, "");
-                _features[feature] = args.Contains("/Enable-Feature") ? "Enabled" : "Disabled";
-                return (3010, "");
-            }
-            if (file == "dism.exe" && Arg("/CapabilityName:") is { } capability)
-            {
-                if (args.Contains("/Get-CapabilityInfo")) return _capabilities.TryGetValue(capability, out var s) ? (0, $"Capability Identity : {capability}\nState : {s}\n") : (1, "");
-                _capabilities[capability] = args.Contains("/Add-Capability") ? "Installed" : "Not Present";
-                return (0, "");
-            }
-            if (file == "powercfg.exe" && args.StartsWith("/hibernate", StringComparison.Ordinal))
-            {
-                RegistryValue.Write(fx.Registry, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", "dword", args.EndsWith("on", StringComparison.Ordinal) ? "1" : "0");
-                return (0, "");
-            }
-            if (args.Contains("Set-DnsClientDohServerAddress"))
-            {
-                var server = args.Split('\'')[1];
-                fx.Network.Doh![server] = args.Contains("-AutoUpgrade $true");
-                return (0, "");
-            }
-            return null;
-        }
-    }
-
     private static EngineFixture Prepare(Scenario s)
     {
         var fx = new EngineFixture(DnsGuid);
-        var tools = new FakeTools(fx);
-        fx.Processes.Handler = tools.Run;
+        fx.Processes.Handler = new FakeSystemTools(fx).Run;
         s.Setup(fx);
         return fx;
     }
