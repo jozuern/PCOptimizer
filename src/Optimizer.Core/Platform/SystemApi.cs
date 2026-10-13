@@ -442,9 +442,10 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         {
             folder = service.GetFolder(folderPath);
         }
-        catch (COMException)
+        catch (Exception ex) when (ex is COMException or FileNotFoundException or DirectoryNotFoundException)
         {
-            // The folder went with the task (an uninstaller removed it): create it again.
+            // The folder went with the task (an uninstaller removed it), or was never there (the app's own \Tunero folder):
+            // create it. A missing folder comes back as 0x80070002, which .NET turns into FileNotFoundException.
             folder = service.GetFolder("\\").CreateFolder(folderPath.TrimStart('\\'), null);
         }
         folder.RegisterTask(path[(i + 1)..], xml, TaskSchedulerCom.CreateOrUpdate, user, null, logonType, null);

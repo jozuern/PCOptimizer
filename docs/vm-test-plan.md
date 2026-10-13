@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 230 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 235 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -147,6 +147,11 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `explorer.fileExtensions` | Show file extensions | safe |  | registry | |
 | `explorer.driveLettersFirst` | Drive letters first | safe |  | registry | |
 | `explorer.shortcutSuffixOff` | No "- Shortcut" in new shortcut names | safe |  | registry | |
+| `explorer.menuGiveAccessOff` | No "Give access to" in the right-click menu | safe |  | registry | |
+| `explorer.menuPreviousVersionsOff` | No "Restore previous versions" in the right-click menu | safe |  | registry | |
+| `explorer.menuTerminalOff` | No "Open in Terminal" in the right-click menu | safe |  | registry | |
+| `explorer.menuCastOff` | No "Cast to Device" in the right-click menu | safe |  | registry | |
+| `explorer.menuShareOff` | No "Share" in the right-click menu | safe |  | registry | |
 | `explorer.endTask` | "End task" in the taskbar menu | safe |  | registry | |
 | `network.dns.cloudflare` | Public DNS servers | safe |  | dns | |
 | `network.dns.google` | Public DNS servers | safe |  | dns | |
@@ -347,7 +352,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Services | Change one explained service to Manual, restart, undo | |
 | Scheduled tasks | Turn one task off and on again | |
 | Command line recommended and export | `--apply-recommended --profile battery` on a desktop: exit 9 and the profiles this PC offers; `--apply-recommended --profile gaming --log r.txt`: exit 0, the profile and each change in the log; `--export x.json`: exit 0 and the applied ids in the file, again to the same path: exit 2 (never overwritten); `--undo-all`, then `--apply x.json` and `--undo-all` again: everything comes back and goes again | OK 2026-10-13 (26H2: three changes applied, exported, undone, applied from the file, undone) |
-| Re-apply task | Copy the exe to `C:\Program Files\Tunero`, start it there: Settings offers "Apply my changes again"; turn it on (the confirmation names the task), `Get-ScheduledTask -TaskPath \Tunero\` lists it with a logon trigger, highest privileges and `--reapply`. Apply "Advertising ID off", delete its value by hand, `Start-ScheduledTask`: the value is back and the change log says so. Turn the switch off: the task is gone. From Downloads the switch is off with the reason |  |
+| Re-apply task | Copy the exe to `C:\Program Files\Tunero`, start it there: Settings offers "Apply my changes again"; turn it on (the confirmation names the task), `Get-ScheduledTask -TaskPath \Tunero\` lists it with a logon trigger, highest privileges and `--reapply`. Apply "Advertising ID off", delete its value by hand, `Start-ScheduledTask`: the value is back and the change log says so. Turn the switch off: the task is gone. From Downloads the switch is off with the reason || OK 2026-10-13 (26H2, from Program Files): switch on with its confirmation, task with logon trigger, PT2M, highest privileges and --reapply; MouseSpeed set back by hand returned when the task was started by hand ("Applied again: 1"); Undo all removed the task. Found and fixed: registering into the missing \Tunero folder failed |
 | Startup Delete entry | Add a Run value pointing to a missing file, a RunOnce value and a cmd.exe AutoRun by hand; Delete entry on each: the confirmation shows the value, the entries leave the list, the Changes page lists three deletions, and Undo writes each back with its type (an expandable string stays one) | OK 2026-10-13 (26H2: Run, RunOnce and AutoRun deleted, three rows on Changes, Undo all wrote each back, the Run value as an expandable string again) |
 | Unused program folders | Create `C:\Program Files\Old Tool` with a file dated a year back (`(Get-Item ...).LastWriteTime`), and keep 7-Zip (MSI) installed: "Find unused program folders" lists Old Tool unticked with size and date, never 7-Zip, Common Files, Windows' own folders or a folder of a running program; Move to Recycle Bin after ticking it | OK 2026-10-13 (26H2: only the year-old Old Tool listed, unticked, with size and date; 7-Zip, Steam, Common Files and Windows' folders not listed) |
 | Search winget | Install & update: search "notepad": up to 50 results with name, id and version; "a" or a query with quotes is refused with a note. Install a machine package from the results (Notepad++): the confirmation says it is not reviewed, winget's lines show under the results, "Installed". Install a package with only a per-user installer: winget opens for the signed-in user, not elevated | OK 2026-10-13 (26H2: "a" refused with the note; "notepad" found 35 with id and version; Notepad3 installed for the whole PC after the confirmation. The per-user fallback is not run yet) |
