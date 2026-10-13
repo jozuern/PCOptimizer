@@ -5,7 +5,9 @@ namespace Optimizer.Core.Startup;
 
 /// <summary>
 /// Autostart locations that are only listed (Autoruns-style): RunOnce, Active Setup, the Load value, Boot Execute,
-/// KnownDLLs, Winsock providers, print monitors, LSA packages, network providers, codecs and WMI event consumers.
+/// KnownDLLs, Winsock providers, print monitors, LSA packages, network providers, codecs and DirectShow filters, WMI
+/// event consumers, the Command Processor AutoRun, Explorer add-ons (icon overlays, shell service objects, copy hooks),
+/// per-user context menu handlers, file type hijacks, SilentProcessExit monitors, credential providers and AppCertDlls.
 /// The program that owns an entry changes it; the page shows where it is and whether the file is signed.
 /// </summary>
 public sealed partial class StartupScanner
@@ -263,5 +265,205 @@ public sealed partial class StartupScanner
             }
         }
         return list;
+    }
+
+    /// <summary>
+    /// The Command Processor's AutoRun runs a command every time cmd.exe starts (also inside scripts and installers).
+    /// Windows sets none, so each one is marked for a look.
+    /// </summary>
+    public IEnumerable<StartupEntry> CommandAutoRuns()
+    {
+        foreach (var (hive, path) in new[]
+                 {
+                     (Hive.Machine, @"SOFTWARE\Microsoft\Command Processor"), (Hive.Machine, @"SOFTWARE\WOW6432Node\Microsoft\Command Processor"),
+                     (Hive.User, @"Software\Microsoft\Command Processor"),
+                 })
+        {
+            using var key = Open(hive, path);
+            if (key?.GetValue("AutoRun", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is not { Length: > 0 } command) continue;
+            yield return new StartupEntry(StartupKind.CommandAutoRun, "cmd.exe AutoRun", command, CommandLine.ImagePath(command, hive == Hive.User ? _userExpand : Platform.MachineEnvironment.Expand),
+                $@"{Root(hive)}\{path}\AutoRun", hive, null, $"cmdautorun:{hive}:{path}")
+            {
+                Suspicious = true,
+            };
+        }
+    }
+
+    /// <summary>
+    /// Explorer add-ons loaded with every Explorer window: icon overlay handlers, shell service objects (loaded at
+    /// Explorer's start), shared task schedulers and copy hooks (called for every folder copy or move).
+    /// </summary>
+    public IEnumerable<StartupEntry> ExplorerAddOns()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        IEnumerable<StartupEntry> FromSubKeys(string path, string what)
+        {
+            using var key = Open(Hive.Machine, path);
+            foreach (var name in key?.GetSubKeyNames() ?? [])
+            {
+                using var sub = key!.OpenSubKey(name);
+                var clsid = sub?.GetValue("")?.ToString();
+                if (string.IsNullOrEmpty(clsid) && Guid.TryParse(name, out _)) clsid = name;
+                if (Entry(name.Trim(), clsid, path, what) is { } e) yield return e;
+            }
+        }
+        IEnumerable<StartupEntry> FromValues(string path, string what, bool clsidIsName)
+        {
+            using var key = Open(Hive.Machine, path);
+            foreach (var name in key?.GetValueNames().Where(n => n.Length > 0) ?? [])
+                if (Entry(clsidIsName ? NameOf(name) ?? name : name, clsidIsName ? name : key!.GetValue(name)?.ToString(), path, what) is { } e) yield return e;
+        }
+        StartupEntry? Entry(string name, string? clsid, string path, string what)
+        {
+            if (clsid is null || !Guid.TryParse(clsid, out var g)) return null;
+            var id = g.ToString("B").ToUpperInvariant();
+            if (!seen.Add($"{what}:{id}")) return null;
+            var dll = ComServer(id);
+            return new StartupEntry(StartupKind.ExplorerAddOn, $"{what}: {name}", dll ?? id, dll, $@"HKLM\{path}", Hive.Machine, null, $"exploreraddon:{what}:{id}");
+        }
+        string? NameOf(string clsid)
+        {
+            if (!Guid.TryParse(clsid, out var g)) return null;
+            using var cls = Open(Hive.Machine, $@"SOFTWARE\Classes\CLSID\{g.ToString("B").ToUpperInvariant()}");
+            return cls?.GetValue("")?.ToString() is { Length: > 0 } n ? n : null;
+        }
+
+        foreach (var path in new[] { @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers", @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers" })
+            foreach (var e in FromSubKeys(path, "Icon overlay")) yield return e;
+        foreach (var path in new[] { @"SOFTWARE\Classes\Directory\shellex\CopyHookHandlers", @"SOFTWARE\Classes\Directory\Background\shellex\CopyHookHandlers" })
+            foreach (var e in FromSubKeys(path, "Copy hook")) yield return e;
+        foreach (var e in FromValues(@"SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad", "Shell service object", clsidIsName: false)) yield return e;
+        foreach (var e in FromValues(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler", "Shared task scheduler", clsidIsName: true)) yield return e;
+    }
+
+    /// <summary>
+    /// Context menu handlers registered for this account only (HKCU\Software\Classes). A program installed for one
+    /// user puts them here without administrator rights; they load into Explorer like the machine's own.
+    /// </summary>
+    public IEnumerable<StartupEntry> UserShellExtensions()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var handlerRoot in HandlerRoots)
+        {
+            using var key = Open(Hive.User, $@"Software\Classes\{handlerRoot}");
+            foreach (var handler in key?.GetSubKeyNames() ?? [])
+            {
+                using var h = key!.OpenSubKey(handler);
+                var clsid = h?.GetValue("")?.ToString();
+                if (string.IsNullOrEmpty(clsid) && Guid.TryParse(handler, out _)) clsid = handler;
+                if (clsid is null || !Guid.TryParse(clsid, out var g)) continue;
+                var id = g.ToString("B").ToUpperInvariant();
+                if (!seen.Add(id)) continue;
+                // The account's own registration wins over the machine's: read its server first.
+                using var server = Open(Hive.User, $@"Software\Classes\CLSID\{id}\InprocServer32");
+                var dll = server?.GetValue("", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is { Length: > 0 } own
+                    ? CommandLine.ImagePath(own, _userExpand)
+                    : ComServer(id);
+                yield return new StartupEntry(StartupKind.ShellExtension, handler, dll ?? id, dll, $@"HKCU\Software\Classes\{handlerRoot}\{handler}", Hive.User, null, $"usershellext:{id}");
+            }
+        }
+    }
+
+    /// <summary>What Windows runs to open a program, a batch file or a script: "%1" %* by default.</summary>
+    private static readonly (string Type, string Default)[] FileTypes =
+    [
+        ("exefile", "\"%1\" %*"), ("comfile", "\"%1\" %*"), ("batfile", "\"%1\" %*"), ("cmdfile", "\"%1\" %*"), ("piffile", "\"%1\" %*"),
+    ];
+
+    /// <summary>
+    /// The open command of programs and batch files. Malware changes it so that it runs first, with the real program as
+    /// an argument. Listed when it differs from Windows' default, or when the account has its own (HKCU), which Windows
+    /// never writes.
+    /// </summary>
+    public IEnumerable<StartupEntry> FileTypeHijacks()
+    {
+        foreach (var (type, expected) in FileTypes)
+        {
+            foreach (var (hive, path) in new[] { (Hive.Machine, $@"SOFTWARE\Classes\{type}\shell\open\command"), (Hive.User, $@"Software\Classes\{type}\shell\open\command") })
+            {
+                using var key = Open(hive, path);
+                if (key?.GetValue("", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString() is not { Length: > 0 } command) continue;
+                if (hive == Hive.Machine && string.Equals(command.Trim(), expected, StringComparison.OrdinalIgnoreCase)) continue;
+                yield return new StartupEntry(StartupKind.FileTypeHijack, $"{type} open", command, CommandLine.ImagePath(command, hive == Hive.User ? _userExpand : Platform.MachineEnvironment.Expand),
+                    $@"{Root(hive)}\{path}", hive, null, $"filetype:{hive}:{type}")
+                {
+                    Suspicious = true,
+                };
+            }
+        }
+    }
+
+    /// <summary>
+    /// SilentProcessExit monitors: a program Windows starts whenever the named program ends. A debugging aid that
+    /// Windows does not set up by itself, and a known way to start something unseen.
+    /// </summary>
+    public IEnumerable<StartupEntry> SilentProcessExits()
+    {
+        const string path = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit";
+        using var key = Open(Hive.Machine, path);
+        foreach (var exe in key?.GetSubKeyNames() ?? [])
+        {
+            using var sub = key!.OpenSubKey(exe);
+            if (sub?.GetValue("MonitorProcess")?.ToString() is not { Length: > 0 } monitor) continue;
+            yield return new StartupEntry(StartupKind.SilentProcessExit, exe, monitor, CommandLine.ImagePath(monitor, Platform.MachineEnvironment.Expand), $@"HKLM\{path}\{exe}", Hive.Machine, null, $"silentexit:{exe}")
+            {
+                Suspicious = true,
+            };
+        }
+    }
+
+    /// <summary>Credential providers: the tiles of the sign-in screen (password, PIN, Windows Hello, smart cards, and those of security software).</summary>
+    public IEnumerable<StartupEntry> CredentialProviders()
+    {
+        foreach (var path in new[]
+                 {
+                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers",
+                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters",
+                 })
+        {
+            using var key = Open(Hive.Machine, path);
+            foreach (var id in key?.GetSubKeyNames() ?? [])
+            {
+                if (!Guid.TryParse(id, out var g)) continue;
+                using var sub = key!.OpenSubKey(id);
+                var name = sub?.GetValue("")?.ToString() is { Length: > 0 } n ? n : id;
+                var dll = ComServer(g.ToString("B").ToUpperInvariant());
+                yield return new StartupEntry(StartupKind.CredentialProvider, name, dll ?? id, dll, $@"HKLM\{path}\{id}", Hive.Machine, null, $"credprovider:{path}:{id}");
+            }
+        }
+    }
+
+    /// <summary>AppCertDlls: DLLs loaded into every process that starts a program. Windows sets none.</summary>
+    public IEnumerable<StartupEntry> AppCertDlls()
+    {
+        const string path = @"SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls";
+        using var key = Open(Hive.Machine, path);
+        foreach (var name in key?.GetValueNames().Where(n => n.Length > 0) ?? [])
+        {
+            if (key!.GetValue(name) is not string { Length: > 0 } dll) continue;
+            yield return new StartupEntry(StartupKind.AppCertDll, name, dll, SystemFile(dll), $@"HKLM\{path}", Hive.Machine, null, $"appcert:{name}")
+            {
+                Suspicious = true,
+            };
+        }
+    }
+
+    /// <summary>DirectShow filters: codecs and splitters that media players load (the "Codecs" tab of Autoruns).</summary>
+    public IEnumerable<StartupEntry> DirectShowFilters()
+    {
+        const string instance = @"SOFTWARE\Classes\CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance";
+        foreach (var path in new[] { instance, instance.Replace(@"SOFTWARE\Classes", @"SOFTWARE\Classes\WOW6432Node", StringComparison.Ordinal) })
+        {
+            using var key = Open(Hive.Machine, path);
+            foreach (var id in key?.GetSubKeyNames() ?? [])
+            {
+                if (!Guid.TryParse(id, out var g)) continue;
+                using var sub = key!.OpenSubKey(id);
+                var name = sub?.GetValue("FriendlyName")?.ToString() is { Length: > 0 } n ? n : id;
+                var dll = ComServer(g.ToString("B").ToUpperInvariant());
+                if (dll is null) continue;
+                yield return new StartupEntry(StartupKind.Codec, name, dll, dll, $@"HKLM\{path}\{id}", Hive.Machine, null, $"directshow:{path}:{id}");
+            }
+        }
     }
 }

@@ -13,6 +13,7 @@ public enum StartupKind
 
     // Listed only (Autoruns-style locations): changed by the program that owns them or by hand.
     RunOnce, ActiveSetup, LoadValue, BootExecute, KnownDll, WinsockProvider, PrintMonitor, LsaPackage, NetworkProvider, Codec, WmiConsumer,
+    CommandAutoRun, ExplorerAddOn, FileTypeHijack, SilentProcessExit, CredentialProvider, AppCertDll,
 }
 
 /// <summary>
@@ -92,6 +93,14 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
         Try("lsa", () => list.AddRange(LsaPackages()));
         Try("netproviders", () => list.AddRange(NetworkProviders()));
         Try("codecs", () => list.AddRange(Codecs()));
+        Try("cmdautorun", () => list.AddRange(CommandAutoRuns()));
+        Try("exploreraddons", () => list.AddRange(ExplorerAddOns()));
+        Try("usershellext", () => list.AddRange(UserShellExtensions()));
+        Try("filetypes", () => list.AddRange(FileTypeHijacks()));
+        Try("silentexit", () => list.AddRange(SilentProcessExits()));
+        Try("credproviders", () => list.AddRange(CredentialProviders()));
+        Try("appcert", () => list.AddRange(AppCertDlls()));
+        Try("directshow", () => list.AddRange(DirectShowFilters()));
         if (includeWmi) Try("wmi", () => list.AddRange(WmiConsumers()));
         return list;
     }
@@ -227,7 +236,8 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
         if (clsid is null || !Guid.TryParse(clsid, out var g)) return null;
         using var server = Open(Hive.Machine, $@"SOFTWARE\Classes\CLSID\{g.ToString("B").ToUpperInvariant()}\InprocServer32");
         var dll = server?.GetValue("", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames)?.ToString();
-        return CommandLine.ImagePath(dll);
+        // A file path, not a command line: spaces in "C:\Program Files\..." are part of it.
+        return string.IsNullOrWhiteSpace(dll) ? null : Platform.MachineEnvironment.Expand(dll.Trim().Trim('"'));
     }
 
     // ---------------- Services and drivers ----------------
@@ -338,6 +348,16 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             };
         }
 
+        // Values Windows does not set: a program started with the desktop (Taskman), at sign-in (AppSetup), an old
+        // sign-in DLL (GinaDLL) or extra programs started with the session (System).
+        foreach (var name in new[] { "Taskman", "AppSetup", "GinaDLL", "System" })
+            if (key.GetValue(name)?.ToString() is { Length: > 0 } extra)
+                yield return new StartupEntry(StartupKind.Winlogon, name, extra, CommandLine.ImagePath(extra.Split(',')[0], Platform.MachineEnvironment.Expand), $@"HKLM\{Winlogon}",
+                    Hive.Machine, null, $"winlogon:{name}")
+                {
+                    Suspicious = true,
+                };
+
         // A Shell value in the user's own Winlogon key replaces Explorer for that user and needs no administrator
         // rights to set; Windows does not create it.
         using var user = Open(Hive.User, @"Software\Microsoft\Windows NT\CurrentVersion\Winlogon");
@@ -349,18 +369,24 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
             };
     }
 
+    public const string Ifeo32 = @"SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options";
+
+    /// <summary>A Debugger value starts another program instead of the one named; 32-bit programs read the WOW6432Node copy.</summary>
     public IEnumerable<StartupEntry> ImageHijacks()
     {
-        using var key = Open(Hive.Machine, Ifeo);
-        foreach (var exe in key?.GetSubKeyNames() ?? [])
+        foreach (var (path, prefix) in new[] { (Ifeo, "ifeo"), (Ifeo32, "ifeo32") })
         {
-            using var sub = key!.OpenSubKey(exe);
-            if (sub?.GetValue("Debugger")?.ToString() is not { Length: > 0 } debugger) continue;
-            yield return new StartupEntry(StartupKind.ImageHijack, exe, debugger, CommandLine.ImagePath(debugger), $@"HKLM\{Ifeo}\{exe}", Hive.Machine, true, $"ifeo:{exe}")
+            using var key = Open(Hive.Machine, path);
+            foreach (var exe in key?.GetSubKeyNames() ?? [])
             {
-                Target = $@"{Ifeo}\{exe}",
-                Suspicious = true,
-            };
+                using var sub = key!.OpenSubKey(exe);
+                if (sub?.GetValue("Debugger")?.ToString() is not { Length: > 0 } debugger) continue;
+                yield return new StartupEntry(StartupKind.ImageHijack, exe, debugger, CommandLine.ImagePath(debugger), $@"HKLM\{path}\{exe}", Hive.Machine, true, $"{prefix}:{exe}")
+                {
+                    Target = $@"{path}\{exe}",
+                    Suspicious = true,
+                };
+            }
         }
     }
 

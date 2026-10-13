@@ -217,6 +217,47 @@ public class StartupTests
         Assert.DoesNotContain(scanner.LogonTasks(), e => e.Target == @"\Vendor\Daily");
     }
 
+    /// <summary>
+    /// The Autoruns locations added in 0.9.30: the cmd.exe AutoRun, a changed open command of programs (the default is
+    /// not listed), SilentProcessExit monitors, AppCertDlls, Explorer add-ons, sign-in providers, the account's own context
+    /// menu handlers, the 32-bit IFEO key and Winlogon values Windows does not set. All are listed only, and the ones
+    /// Windows never sets are marked for a look.
+    /// </summary>
+    [Fact]
+    public void MoreAutorunsLocationsAreListed()
+    {
+        using var fx = new EngineFixture();
+        var r = fx.Registry;
+        RegistryValue.Write(r, Hive.User, @"Software\Microsoft\Command Processor", "AutoRun", "string", @"C:\Users\Public\x.cmd");
+        RegistryValue.Write(r, Hive.Machine, @"SOFTWARE\Classes\exefile\shell\open\command", "", "string", "\"%1\" %*");
+        RegistryValue.Write(r, Hive.Machine, @"SOFTWARE\Classes\batfile\shell\open\command", "", "string", @"C:\evil.exe ""%1"" %*");
+        RegistryValue.Write(r, Hive.Machine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit\notepad.exe", "MonitorProcess", "string", @"C:\evil.exe");
+        RegistryValue.Write(r, Hive.Machine, @"SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls", "x", "string", @"C:\evil.dll");
+        const string clsid = "{11111111-2222-3333-4444-555555555555}";
+        RegistryValue.Write(r, Hive.Machine, $@"SOFTWARE\Classes\CLSID\{clsid}\InprocServer32", "", "string", @"C:\Program Files\Vendor\overlay.dll");
+        RegistryValue.Write(r, Hive.Machine, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ VendorSync", "", "string", clsid);
+        RegistryValue.Write(r, Hive.Machine, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{clsid}", "", "string", "Vendor sign-in");
+        RegistryValue.Write(r, Hive.User, $@"Software\Classes\*\shellex\ContextMenuHandlers\VendorMenu", "", "string", clsid);
+        RegistryValue.Write(r, Hive.Machine, $@"{StartupScanner.Ifeo32}\game.exe", "Debugger", "string", @"C:\evil.exe");
+        RegistryValue.Write(r, Hive.Machine, StartupScanner.Winlogon, "Taskman", "string", @"C:\evil.exe");
+
+        var all = new StartupScanner(r, fx.Tasks, null).ScanAll(includeServicesAndDrivers: false, includeWmi: false);
+        StartupEntry One(StartupKind kind, Func<StartupEntry, bool>? where = null) => Assert.Single(all, e => e.Kind == kind && (where?.Invoke(e) ?? true));
+
+        Assert.True(One(StartupKind.CommandAutoRun).Suspicious);
+        var hijack = One(StartupKind.FileTypeHijack);
+        Assert.Equal("batfile open", hijack.Name);
+        Assert.Equal(@"C:\evil.exe", One(StartupKind.SilentProcessExit).ImagePath);
+        Assert.True(One(StartupKind.AppCertDll).Suspicious);
+        Assert.Equal(@"C:\Program Files\Vendor\overlay.dll", One(StartupKind.ExplorerAddOn).ImagePath);
+        Assert.Equal("Vendor sign-in", One(StartupKind.CredentialProvider).Name);
+        Assert.Null(One(StartupKind.ShellExtension, e => e.Hive == Hive.User).Enabled);
+        Assert.Equal(@"SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\game.exe", One(StartupKind.ImageHijack).Target);
+        Assert.True(One(StartupKind.Winlogon, e => e.Name == "Taskman").Suspicious);
+        Assert.All(all.Where(e => e.Kind is StartupKind.CommandAutoRun or StartupKind.FileTypeHijack or StartupKind.SilentProcessExit or StartupKind.AppCertDll
+            or StartupKind.ExplorerAddOn or StartupKind.CredentialProvider), e => Assert.Null(e.Enabled));
+    }
+
     /// <summary>A variable of the user's own (inherited by this app) cannot make a script look like one from System32.</summary>
     [Fact]
     public void UserVariablesDoNotMakeAScriptTrusted()
