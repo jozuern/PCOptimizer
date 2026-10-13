@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 
 namespace Optimizer.Core.Actions;
 
@@ -30,18 +29,14 @@ public sealed class DohAutoUpgradeAction : TweakAction
 
     public override StoredValue Desired(ActionContext c) => new(true, "doh", Format(Valid.Select(s => KeyValuePair.Create(s, AutoUpgrade))));
 
-    /// <summary>Null when PowerShell cannot list the DoH servers or one of ours is not known to Windows.</summary>
+    /// <summary>Null when Windows cannot list the DoH servers or one of ours is not known to it.</summary>
     public override StoredValue? Read(ActionContext c)
     {
         // One list for every DoH action of a scan (the read is shared through the cache, the servers are filtered here).
         var list = ReadCache.Get(c, "doh:list", () =>
-        {
-            var (code, output) = c.Processes.Run("powershell.exe",
-                "-NoProfile -NonInteractive -Command \"Get-DnsClientDohServerAddress | Select-Object ServerAddress,AutoUpgrade | ConvertTo-Json -Compress\"");
-            return code == 0 ? new StoredValue(true, "dohlist", output) : null;
-        });
-        if (list?.Data is not { } json) return null;
-        var known = ParseList(json);
+            c.Network.DohServers() is { } servers ? new StoredValue(true, "dohlist", Format(servers)) : null);
+        if (list?.Data is not { } data) return null;
+        var known = ParseStored(data);
         var states = new List<KeyValuePair<string, bool>>();
         foreach (var s in Valid)
         {
@@ -49,25 +44,6 @@ public sealed class DohAutoUpgradeAction : TweakAction
             states.Add(KeyValuePair.Create(s, on));
         }
         return new StoredValue(true, "doh", Format(states));
-    }
-
-    public static Dictionary<string, bool> ParseList(string json)
-    {
-        var result = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        json = json.Trim();
-        if (json.Length == 0) return result;
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            var items = doc.RootElement.ValueKind == JsonValueKind.Array ? doc.RootElement.EnumerateArray().ToList() : [doc.RootElement];
-            foreach (var e in items)
-                if (e.TryGetProperty("ServerAddress", out var a) && a.GetString() is { } address && e.TryGetProperty("AutoUpgrade", out var u))
-                    result[address] = u.ValueKind == JsonValueKind.True;
-        }
-        catch (JsonException)
-        {
-        }
-        return result;
     }
 
     public override void Apply(ActionContext c) => Write(c, Valid.Select(s => KeyValuePair.Create(s, AutoUpgrade)));

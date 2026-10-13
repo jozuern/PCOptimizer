@@ -108,6 +108,7 @@ public sealed class ActionContext
     public required IPowerModeManager PowerMode { get; init; }
     public required IDeviceManager Devices { get; init; }
     public required INetworkManager Network { get; init; }
+    public required IMemoryAgent MemoryAgent { get; init; }
     public required INvidiaSettings Nvidia { get; init; }
     public required IAccessibilitySettings Accessibility { get; init; }
 

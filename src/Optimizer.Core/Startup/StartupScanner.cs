@@ -165,20 +165,8 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
     {
         try
         {
-            var type = Type.GetTypeFromProgID("WScript.Shell");
-            if (type is null) return null;
-            dynamic shell = Activator.CreateInstance(type)!;
-            try
-            {
-                var shortcut = shell.CreateShortcut(lnk);
-                string target = shortcut.TargetPath;
-                string args = shortcut.Arguments;
-                return string.IsNullOrEmpty(args) ? target : $"\"{target}\" {args}";
-            }
-            finally
-            {
-                Marshal.FinalReleaseComObject(shell);
-            }
+            var (target, args) = Platform.ShellLinkFile.Read(lnk);
+            return string.IsNullOrEmpty(args) ? target : $"\"{target}\" {args}";
         }
         catch (Exception)
         {

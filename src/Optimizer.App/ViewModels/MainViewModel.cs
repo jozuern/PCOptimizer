@@ -1173,14 +1173,19 @@ public sealed partial class MainViewModel : ObservableObject
             _reuseSlowParts = false;
             var service = ScanService;
             var lastSample = _lastBackgroundSample;
-            // Scan and findings in one trip to the background: at the start the UI thread is busy drawing the window,
-            // and a return to it in between waited for that. The page is ready without the 3 second background CPU
-            // sample; that one check follows when it is done.
-            var (profile, findings, sampleTask) = await Task.Run(() => service.RunAsync(progress, previous, lastSample, waitForBackgroundSample: false));
+            // Scan, findings and every tweak's state in one trip to the background: at the start the UI thread is busy
+            // drawing the window, and a return to it in between waited for that (the states were read only after the
+            // window was drawn). The page is ready without the 3 second background CPU sample; that one check follows
+            // when it is done.
+            var (profile, findings, sampleTask, tweaks) = await Task.Run(async () =>
+            {
+                var (p, f, sample) = await service.RunAsync(progress, previous, lastSample, waitForBackgroundSample: false);
+                return (p, f, sample, ReadTweakStates(p, f));
+            });
             pendingSample = sampleTask;
             _findings = findings;
             Profile = profile;
-            await RefreshTweaksAsync();
+            ShowTweakStates(tweaks);
             _lastScanTime = DateTime.Now;
             var rows = System.Diagnostics.Stopwatch.StartNew();
             Rebuild();
@@ -1273,30 +1278,40 @@ public sealed partial class MainViewModel : ObservableObject
         return changed.Any(read.Contains);
     }
 
-    /// <summary>Re-reads every tweak's state (after a scan or after applying/undoing).</summary>
+    /// <summary>Re-reads every tweak's state (after applying/undoing; a scan reads them in its own background trip).</summary>
     private async Task RefreshTweaksAsync()
     {
         if (Profile is null) return;
-        InspectorItem.ClearMarkdownCache();
         var profile = Profile;
         var findings = _findings;
-        var engine = _services.Engine;
-        var registry = _services.Context.Registry;
-        var visible = _services.Catalog.Visible;
-        var store = _services.Store;
         // One trip to the background and back (each return to the UI thread waits for what it is drawing).
-        (_facts, _tweakStates, _deviceStates, _drift, var count) = await Task.Run(() =>
-        {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-            var facts = FactsBuilder.Build(profile, findings, _catalog, registry);
-            var catalog = engine.DetectAll(visible, facts);
-            var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
-            Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });
-            // The states just read are not read again (runtime tweaks of other pages are).
-            var known = catalog.Concat(device).GroupBy(s => s.Tweak.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().State, StringComparer.Ordinal);
-            var drift = engine.CheckDrift(facts, known);
-            return (facts, catalog, device, drift, store.All().Count);
-        });
+        ShowTweakStates(await Task.Run(() => ReadTweakStates(profile, findings)));
+    }
+
+    /// <summary>Every tweak's state, the facts it was read with, the changes Windows reset, and the number of backups.</summary>
+    private sealed record TweakRead(Facts Facts, IReadOnlyList<TweakStatus> Catalog, IReadOnlyList<TweakStatus> Device,
+        IReadOnlyList<DriftItem> Drift, int Backups);
+
+    /// <summary>Reads the system: runs off the UI thread.</summary>
+    private TweakRead ReadTweakStates(HardwareProfile profile, IReadOnlyList<Finding> findings)
+    {
+        var engine = _services.Engine;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var facts = FactsBuilder.Build(profile, findings, _catalog, _services.Context.Registry);
+        var catalog = engine.DetectAll(_services.Catalog.Visible, facts);
+        var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
+        Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });
+        // The states just read are not read again (runtime tweaks of other pages are).
+        var known = catalog.Concat(device).GroupBy(s => s.Tweak.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().State, StringComparer.Ordinal);
+        var drift = engine.CheckDrift(facts, known);
+        return new TweakRead(facts, catalog, device, drift, _services.Store.All().Count);
+    }
+
+    private void ShowTweakStates(TweakRead read)
+    {
+        InspectorItem.ClearMarkdownCache();
+        (_facts, _tweakStates, _deviceStates, _drift) = (read.Facts, read.Catalog, read.Device, read.Drift);
+        var count = read.Backups;
         EnsureProfile();
         ApplyProfile();
         foreach (var d in _drift)

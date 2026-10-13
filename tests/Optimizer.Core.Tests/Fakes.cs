@@ -162,6 +162,24 @@ internal sealed class FakeNetwork(SandboxRegistry registry) : INetworkManager
     public void SetDns(string interfaceGuid, string[]? servers) =>
         RegistryValue.Write(registry, Hive.Machine, $@"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{interfaceGuid}", "NameServer", "string",
             servers is null ? "" : string.Join(",", servers));
+
+    /// <summary>The DoH servers Windows knows; null = the list cannot be read.</summary>
+    public Dictionary<string, bool>? Doh { get; set; } = [];
+
+    /// <summary>How often the DoH list was read (the scan shares one read through <see cref="ReadCache"/>).</summary>
+    public int DohReads { get; private set; }
+
+    public IReadOnlyDictionary<string, bool>? DohServers()
+    {
+        DohReads++;
+        return Doh is null ? null : new Dictionary<string, bool>(Doh);
+    }
+}
+
+/// <summary>Reads the memory compression state the fake MMAgent cmdlets change (<see cref="FakeProcesses"/>).</summary>
+internal sealed class FakeMemoryAgent(FakeProcesses processes) : IMemoryAgent
+{
+    public bool? MemoryCompression() => processes.MemoryCompression;
 }
 
 internal sealed class FakeNvidia : INvidiaSettings
@@ -224,6 +242,7 @@ internal sealed class EngineFixture : IDisposable
     public FakeDevices Devices { get; } = new();
     public FakeNvidia Nvidia { get; } = new();
     public FakeAccessibility Accessibility { get; } = new();
+    public FakeNetwork Network { get; }
     public string BackupRoot { get; } = Path.Combine(Path.GetTempPath(), "pco-test-" + Guid.NewGuid().ToString("N"));
     public ActionContext Context { get; }
     public BackupStore Store { get; }
@@ -231,6 +250,7 @@ internal sealed class EngineFixture : IDisposable
 
     public EngineFixture(params string[] nics)
     {
+        Network = new FakeNetwork(Registry);
         Context = new ActionContext
         {
             Registry = Registry,
@@ -242,7 +262,8 @@ internal sealed class EngineFixture : IDisposable
             Processes = Processes,
             PowerMode = PowerMode,
             Devices = Devices,
-            Network = new FakeNetwork(Registry),
+            Network = Network,
+            MemoryAgent = new FakeMemoryAgent(Processes),
             Nvidia = Nvidia,
             Accessibility = Accessibility,
             ExportFolder = BackupRoot,

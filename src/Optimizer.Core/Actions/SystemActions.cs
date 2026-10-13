@@ -377,7 +377,7 @@ public sealed class HibernationAction : TweakAction
     }
 }
 
-/// <summary>Memory compression via the MMAgent cmdlets (the documented interface; the command is logged).</summary>
+/// <summary>Memory compression: read like Get-MMAgent (<see cref="IMemoryAgent"/>), changed with the MMAgent cmdlets (logged).</summary>
 public sealed class MemoryCompressionAction : TweakAction
 {
     public bool Enabled { get; init; }
@@ -392,11 +392,7 @@ public sealed class MemoryCompressionAction : TweakAction
     public override EarlyRead EarlyRead => EarlyRead.WithScan;
 
     public override StoredValue? Read(ActionContext c) => ReadCache.Get(c, TargetKey, () =>
-    {
-        var (code, output) = c.Processes.Run("powershell.exe", "-NoProfile -NonInteractive -Command \"(Get-MMAgent).MemoryCompression\"");
-        var text = output.Trim();
-        return code == 0 && text is "True" or "False" ? new StoredValue(true, "bool", text) : null;
-    });
+        c.MemoryAgent.MemoryCompression() is { } on ? new StoredValue(true, "bool", on ? "True" : "False") : null);
 
     public override void Apply(ActionContext c) => Run(c, Enabled);
 

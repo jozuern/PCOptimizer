@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Management;
+using Optimizer.Core.Hardware;
 using Optimizer.Core.Interop;
 using Optimizer.Core.Logging;
 using Optimizer.Core.Platform;
@@ -371,6 +372,16 @@ public interface INetworkManager
 {
     /// <summary>Null = obtain DNS servers automatically (DHCP).</summary>
     void SetDns(string interfaceGuid, string[]? servers);
+
+    /// <summary>Every DoH server Windows knows, with its AutoUpgrade state; null when the list cannot be read.</summary>
+    IReadOnlyDictionary<string, bool>? DohServers();
+}
+
+/// <summary>The memory manager's settings (what Get-MMAgent shows).</summary>
+public interface IMemoryAgent
+{
+    /// <summary>Null when the setting cannot be read (it needs administrator rights).</summary>
+    bool? MemoryCompression();
 }
 
 public interface INvidiaSettings
@@ -401,8 +412,50 @@ public sealed class SystemDeviceManager : IDeviceManager
     }
 }
 
+/// <summary>
+/// Get-MMAgent is a thin PowerShell wrapper (CDXML) around the static method PS_MMAgent.Get: called directly it answers
+/// in milliseconds, where starting PowerShell for it took about half a second (VM, 2026-10-13).
+/// </summary>
+public sealed class SystemMemoryAgent : IMemoryAgent
+{
+    public bool? MemoryCompression()
+    {
+        try
+        {
+            using var agent = new ManagementClass(new ManagementScope(@"root\Microsoft\Windows\PS_MMAgent"), new ManagementPath("PS_MMAgent"), null);
+            using var result = agent.InvokeMethod("Get", null, null);
+            return result?["cmdletOutput"] is ManagementBaseObject settings && settings["MemoryCompression"] is bool on ? on : null;
+        }
+        catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            Log.Warn("mmagent", $"memory compression not readable: {ex.Message}");
+            return null;
+        }
+    }
+}
+
 public sealed class SystemNetworkManager : INetworkManager
 {
+    /// <summary>
+    /// MSFT_DNSClientDohServerAddress, the class behind Get-DnsClientDohServerAddress: read directly instead of starting
+    /// PowerShell for it (milliseconds instead of about a second).
+    /// </summary>
+    public IReadOnlyDictionary<string, bool>? DohServers()
+    {
+        try
+        {
+            var servers = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in Wmi.Query("SELECT ServerAddress, AutoUpgrade FROM MSFT_DNSClientDohServerAddress", @"root\StandardCimv2"))
+                if (row.Str("ServerAddress") is { Length: > 0 } address) servers[address] = row.Bool("AutoUpgrade") == true;
+            return servers;
+        }
+        catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            Log.Warn("dns", $"DoH servers not readable: {ex.Message}");
+            return null;
+        }
+    }
+
     public void SetDns(string interfaceGuid, string[]? servers)
     {
         if (!Guid.TryParse(interfaceGuid, out var g)) throw new ArgumentException($"Invalid interface id {interfaceGuid}");

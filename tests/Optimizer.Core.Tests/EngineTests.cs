@@ -431,7 +431,7 @@ public class EngineTests
     private static ActionContext Copy(ActionContext c, IServiceManager services, IReadOnlyList<string> nics) => new()
     {
         Registry = c.Registry, Services = services, Power = c.Power, Bcd = c.Bcd, Tasks = c.Tasks, Displays = c.Displays, Processes = c.Processes,
-        PowerMode = c.PowerMode, Devices = c.Devices, Network = c.Network, Nvidia = c.Nvidia, Accessibility = c.Accessibility, Notify = c.Notify, ExportFolder = c.ExportFolder,
+        PowerMode = c.PowerMode, Devices = c.Devices, Network = c.Network, MemoryAgent = c.MemoryAgent, Nvidia = c.Nvidia, Accessibility = c.Accessibility, Notify = c.Notify, ExportFolder = c.ExportFolder,
         NetworkInterfaceIds = nics,
     };
 
@@ -474,6 +474,9 @@ public class EngineTests
         Assert.False(fx.Processes.MemoryCompression);
         fx.Engine.Revert(t);
         Assert.True(fx.Processes.MemoryCompression);
+        // Reads go to the MMAgent's WMI class: PowerShell starts only for the cmdlets that change the setting.
+        Assert.All(fx.Processes.Calls, c => Assert.DoesNotContain("Get-MMAgent", c));
+        Assert.Contains(fx.Processes.Calls, c => c.Contains("Disable-MMAgent"));
     }
 
     /// <summary>Simulated restart: pending changes take effect and the backup's restart time lies before the boot.</summary>

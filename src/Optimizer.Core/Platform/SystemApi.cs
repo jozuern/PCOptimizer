@@ -234,14 +234,14 @@ public sealed class SystemBcdStore(IProcessRunner processes) : IBcdStore
     });
 }
 
-/// <summary>Task Scheduler 2.0 via its COM API (late-bound).</summary>
+/// <summary>Task Scheduler 2.0 via its COM API (<see cref="TaskSchedulerCom"/>).</summary>
 public sealed class SystemTaskScheduler : ITaskScheduler
 {
     public bool? IsEnabled(string path)
     {
         try
         {
-            return (bool)GetTask(path).Enabled;
+            return GetTask(path).Enabled;
         }
         catch (Exception)
         {
@@ -278,16 +278,7 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         return tasks;
     }
 
-    // TASK_TRIGGER_BOOT = 8, TASK_TRIGGER_LOGON = 9, TASK_ACTION_EXEC = 0 (taskschd.h)
-    private const int TriggerBoot = 8, TriggerLogon = 9, ActionExec = 0;
-
-    private static dynamic Connect()
-    {
-        var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Task Scheduler not available");
-        dynamic service = Activator.CreateInstance(type)!;
-        service.Connect();
-        return service;
-    }
+    private static TaskSchedulerCom.ITaskService Connect() => TaskSchedulerCom.Connect();
 
     /// <summary>
     /// Every task of every folder. The folders are listed first, then read by up to four threads, each with its own
@@ -298,15 +289,16 @@ public sealed class SystemTaskScheduler : ITaskScheduler
     {
         var service = Connect();
         var folders = new List<string>();
-        var stack = new Stack<dynamic>();
+        var stack = new Stack<TaskSchedulerCom.ITaskFolder>();
         stack.Push(service.GetFolder("\\"));
         while (stack.Count > 0)
         {
             var folder = stack.Pop();
-            folders.Add((string)folder.Path);
+            folders.Add(folder.Path);
             try
             {
-                foreach (var sub in folder.GetFolders(0)) stack.Push(sub);
+                var subs = folder.GetFolders(0);
+                for (var i = 1; i <= subs.Count; i++) stack.Push(subs.Item(i));
             }
             catch (Exception ex)
             {
@@ -315,15 +307,16 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         }
 
         var list = new System.Collections.Concurrent.ConcurrentBag<ScheduledTaskInfo>();
-        void ReadFolder(dynamic connection, string path)
+        void ReadFolder(TaskSchedulerCom.ITaskService connection, string path)
         {
             try
             {
-                foreach (var task in connection.GetFolder(path).GetTasks(1 /* TASK_ENUM_HIDDEN */))
+                var tasks = connection.GetFolder(path).GetTasks(TaskSchedulerCom.EnumHidden);
+                for (var i = 1; i <= tasks.Count; i++)
                 {
                     try
                     {
-                        list.Add(Describe(task));
+                        list.Add(Describe(tasks.Item(i)));
                     }
                     catch (Exception ex)
                     {
@@ -337,7 +330,7 @@ public sealed class SystemTaskScheduler : ITaskScheduler
             }
         }
         if (Thread.CurrentThread.GetApartmentState() == ApartmentState.MTA)
-            Parallel.ForEach(folders, new ParallelOptions { MaxDegreeOfParallelism = 4 }, () => (object?)null, (path, _, connection) =>
+            Parallel.ForEach(folders, new ParallelOptions { MaxDegreeOfParallelism = 4 }, () => (TaskSchedulerCom.ITaskService?)null, (path, _, connection) =>
             {
                 connection ??= Connect();
                 ReadFolder(connection, path);
@@ -351,21 +344,20 @@ public sealed class SystemTaskScheduler : ITaskScheduler
     private static readonly System.Xml.Linq.XNamespace TaskNamespace = "http://schemas.microsoft.com/windows/2004/02/mit/task";
 
     /// <summary>
-    /// Triggers, the first program action and the author from the task's XML: one COM call instead of about ten
-    /// late-bound ones per task (the list took about a second, most of it in those calls). An author that is a
-    /// resource string ("$(@%SystemRoot%\system32\x.dll,-101)") is read through COM, which resolves it. A task whose
-    /// XML cannot be read is described property by property as before.
+    /// Triggers, the first program action and the author from the task's XML: one COM call instead of about ten per
+    /// task. An author that is a resource string ("$(@%SystemRoot%\system32\x.dll,-101)") is read through COM, which
+    /// resolves it. A task whose XML cannot be read is described property by property.
     /// </summary>
-    private static ScheduledTaskInfo Describe(dynamic task)
+    private static ScheduledTaskInfo Describe(TaskSchedulerCom.IRegisteredTask task)
     {
-        string path = task.Path;
-        bool enabled = task.Enabled;
-        DateTime lastRun = task.LastRunTime;
+        var path = task.Path;
+        var enabled = task.Enabled;
+        var lastRun = DateTime.FromOADate(task.LastRunTime);
         var lastRunOrNull = lastRun.Year < 2000 ? (DateTime?)null : lastRun;
         System.Xml.Linq.XElement? root;
         try
         {
-            root = System.Xml.Linq.XDocument.Parse((string)task.Xml).Root;
+            root = System.Xml.Linq.XDocument.Parse(task.Xml).Root;
         }
         catch (System.Xml.XmlException)
         {
@@ -377,33 +369,35 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         var triggers = root.Element(ns + "Triggers")?.Elements().Select(e => e.Name.LocalName).ToList() ?? [];
         var exec = root.Element(ns + "Actions")?.Elements(ns + "Exec").FirstOrDefault();
         var author = root.Element(ns + "RegistrationInfo")?.Element(ns + "Author")?.Value;
-        if (author?.StartsWith("$(", StringComparison.Ordinal) == true) author = (string?)task.Definition.RegistrationInfo.Author;
+        if (author?.StartsWith("$(", StringComparison.Ordinal) == true) author = task.Definition.RegistrationInfo.Author;
         return new ScheduledTaskInfo(path, enabled, author, exec?.Element(ns + "Command")?.Value, exec?.Element(ns + "Arguments")?.Value,
             triggers.Contains("LogonTrigger"), triggers.Contains("BootTrigger"), lastRunOrNull);
     }
 
-    private static ScheduledTaskInfo DescribeByProperties(dynamic task, string path, bool enabled, DateTime? lastRun)
+    private static ScheduledTaskInfo DescribeByProperties(TaskSchedulerCom.IRegisteredTask task, string path, bool enabled, DateTime? lastRun)
     {
         var definition = task.Definition;
         bool logon = false, boot = false;
-        foreach (var trigger in definition.Triggers)
+        var triggers = definition.Triggers;
+        for (var i = 1; i <= triggers.Count; i++)
         {
-            int t = trigger.Type;
-            if (t == TriggerLogon) logon = true;
-            if (t == TriggerBoot) boot = true;
+            var t = triggers.Item(i).Type;
+            if (t == TaskSchedulerCom.TriggerLogon) logon = true;
+            if (t == TaskSchedulerCom.TriggerBoot) boot = true;
         }
         string? command = null, arguments = null;
-        foreach (var action in definition.Actions)
+        var actions = definition.Actions;
+        for (var i = 1; i <= actions.Count; i++)
         {
-            if ((int)action.Type != ActionExec) continue;
+            if (actions.Item(i) is not TaskSchedulerCom.IExecAction { Type: TaskSchedulerCom.ActionExec } action) continue;
             command = action.Path;
             arguments = action.Arguments;
             break;
         }
-        return new ScheduledTaskInfo(path, enabled, (string?)definition.RegistrationInfo.Author, command, arguments, logon, boot, lastRun);
+        return new ScheduledTaskInfo(path, enabled, definition.RegistrationInfo.Author, command, arguments, logon, boot, lastRun);
     }
 
-    private static dynamic GetTask(string path)
+    private static TaskSchedulerCom.IRegisteredTask GetTask(string path)
     {
         var service = Connect();
         var i = path.LastIndexOf('\\');
@@ -555,6 +549,7 @@ public static class SystemNotify
             PowerMode = new SystemPowerModeManager(),
             Devices = new SystemDeviceManager(),
             Network = new SystemNetworkManager(),
+            MemoryAgent = new SystemMemoryAgent(),
             Nvidia = new SystemNvidiaSettings(),
             Accessibility = new SystemAccessibilitySettings(userSid),
             Notify = what => Handle(registry, what),

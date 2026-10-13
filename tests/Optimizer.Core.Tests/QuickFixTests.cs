@@ -52,17 +52,22 @@ public class QuickFixTests
     }
 }
 
-/// <summary>DoH auto-upgrade through the documented cmdlets, with each server's previous state restored on undo.</summary>
+/// <summary>DoH auto-upgrade: read from WMI, set through the documented cmdlet, each server's previous state restored on undo.</summary>
 public class DohTests
 {
     private sealed class DohState
     {
         public Dictionary<string, bool> Servers { get; } = new() { ["1.1.1.1"] = false, ["8.8.8.8"] = true, ["9.9.9.9"] = false };
 
+        /// <summary>Windows' list (read through <see cref="FakeNetwork.Doh"/>) and the cmdlet that changes it.</summary>
+        public DohState(EngineFixture fx)
+        {
+            fx.Network.Doh = Servers;
+            fx.Processes.Handler = Handle;
+        }
+
         public (int, string)? Handle(string file, string args)
         {
-            if (args.Contains("Get-DnsClientDohServerAddress"))
-                return (0, System.Text.Json.JsonSerializer.Serialize(Servers.Select(s => new { ServerAddress = s.Key, AutoUpgrade = s.Value })));
             if (!args.Contains("Set-DnsClientDohServerAddress")) return null;
             foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(args, @"-ServerAddress '([^']+)' -AutoUpgrade \$(true|false)"))
                 Servers[m.Groups[1].Value] = m.Groups[2].Value == "true";
@@ -74,8 +79,7 @@ public class DohTests
     public async Task AutoUpgradeIsTurnedOnAndEachServerRestored()
     {
         using var fx = new EngineFixture();
-        var state = new DohState();
-        fx.Processes.Handler = state.Handle;
+        var state = new DohState(fx);
         var t = Tweaks.TweakCatalog.Current.Tweaks.Single(x => x.Id == "network.dohAutoUpgrade");
         var action = Assert.IsType<Actions.DohAutoUpgradeAction>(Assert.Single(t.Actions));
         var only = new Tweaks.TweakDefinition
@@ -104,7 +108,7 @@ public class DohTests
     public void AFailingServerIsReportedAndTheOthersStillSet()
     {
         using var fx = new EngineFixture();
-        var state = new DohState();
+        var state = new DohState(fx);
         fx.Processes.Handler = (f, a) => a.Contains("'8.8.8.8'") ? (1, "access denied") : state.Handle(f, a);
         var action = new Actions.DohAutoUpgradeAction { Servers = ["1.1.1.1", "8.8.8.8", "9.9.9.9"] };
         var ex = Assert.Throws<InvalidOperationException>(() => action.Apply(fx.Context));
@@ -128,15 +132,14 @@ public class DohTests
     {
         using var fx = new EngineFixture();
         Actions.ReadCache.Enable(fx.Processes, TimeSpan.FromMinutes(5));
-        var state = new DohState();
-        fx.Processes.Handler = state.Handle;
+        _ = new DohState(fx);
         var action = new Actions.DohAutoUpgradeAction { Servers = ["1.1.1.1"] };
         action.Read(fx.Context);
         action.Read(fx.Context);
-        Assert.Equal(1, fx.Processes.Calls.Count(c => c.Contains("Get-DnsClientDohServerAddress")));
+        Assert.Equal(1, fx.Network.DohReads);
         action.Apply(fx.Context);
         Assert.Equal("1.1.1.1=1", action.Read(fx.Context)!.Data);
-        Assert.Equal(2, fx.Processes.Calls.Count(c => c.Contains("Get-DnsClientDohServerAddress")));
+        Assert.Equal(2, fx.Network.DohReads);
     }
 }
 

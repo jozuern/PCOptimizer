@@ -29,7 +29,8 @@ internal static class ReadOnlyContext
             Processes = new ReadOnlyProcesses(real.Processes),
             PowerMode = new PowerMode(real.PowerMode),
             Devices = new Devices(),
-            Network = new Network(),
+            Network = new Network(real.Network),
+            MemoryAgent = real.MemoryAgent,
             Nvidia = new Nvidia(real.Nvidia),
             Accessibility = new Accessibility(real.Accessibility),
             ExportFolder = Path.GetTempPath(),
@@ -104,9 +105,10 @@ internal static class ReadOnlyContext
         public void Restart(string deviceInstanceId) => throw Refused($"device restart {deviceInstanceId}");
     }
 
-    private sealed class Network : INetworkManager
+    private sealed class Network(INetworkManager real) : INetworkManager
     {
         public void SetDns(string interfaceGuid, string[]? servers) => throw Refused($"DNS of {interfaceGuid}");
+        public IReadOnlyDictionary<string, bool>? DohServers() => real.DohServers();
     }
 
     private sealed class Nvidia(INvidiaSettings real) : INvidiaSettings
