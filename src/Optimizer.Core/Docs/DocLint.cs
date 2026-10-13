@@ -15,33 +15,6 @@ public static partial class DocLint
 {
     public const int MaxSummaryLength = 200;
 
-    /// <summary>
-    /// Marketing words and filler that make text sound generated (style guide: facts over adjectives). Matched as whole
-    /// words, case-insensitive, after removing the <see cref="AllowedPhrases"/>.
-    /// </summary>
-    public static readonly string[] BannedWords =
-    [
-        "boost your", "unleash", "massive", "guaranteed", "insane", "turbocharge", "supercharge", "seamless", "seamlessly", "robust",
-        "leverage", "comprehensive", "powerful", "effortless", "effortlessly", "elevate", "unlock", "dive into", "ultimate",
-        "game-changer", "game changer", "cutting-edge", "state-of-the-art", "next-level", "blazing",
-        "gewaltig", "gewaltige", "garantiert", "enorm", "enorme", "brutal schnell", "nahtlos", "nahtlose", "nahtlosen", "mühelos", "mühelose",
-        "leistungsstark", "leistungsstarke", "leistungsstarken", "revolutionär", "revolutionäre",
-    ];
-
-    /// <summary>Names that contain a banned word: a Windows power plan, Windows' own boost mode names, laptop vendor modes.</summary>
-    public static readonly string[] AllowedPhrases =
-    [
-        "ultimate performance", "pcoptimizer ultimate", "tunero ultimate", "\"ultimate\"", "„ultimate“", "aggressive at guaranteed", "garantierter leistung",
-    ];
-
-    /// <summary>Banned words found in <paramref name="text"/>.</summary>
-    public static IEnumerable<string> FindBannedWords(string text)
-    {
-        var lower = text.ToLowerInvariant();
-        foreach (var allowed in AllowedPhrases) lower = lower.Replace(allowed, " ", StringComparison.Ordinal);
-        return BannedWords.Where(w => Regex.IsMatch(lower, $@"(?<![\p{{L}}\-]){Regex.Escape(w)}(?![\p{{L}}\-])"));
-    }
-
     public static IEnumerable<string> RequiredDocIds() =>
         FindingEngine.CreateChecks(null).SelectMany(c => c.DocIds).Distinct(StringComparer.Ordinal);
 
@@ -130,9 +103,6 @@ public static partial class DocLint
             if (plain.Length > MaxSummaryLength)
                 yield return new LintIssue(page.Id, lang, $"summary is {plain.Length} characters (max {MaxSummaryLength})");
         }
-
-        foreach (var word in FindBannedWords(page.Raw))
-            yield return new LintIssue(page.Id, lang, $"banned marketing word '{word}'");
 
         // Every [n] reference must resolve to an entry in the Sources section.
         var sources = page.Section(DocHeadings.Sources[lang])?.Body ?? "";

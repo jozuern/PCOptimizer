@@ -4,6 +4,9 @@
 
 ### New
 
+- **Memory integrity check:** the scan tells you when memory integrity (core isolation) is on and what it costs: ComputerBase measured 6 % lower average frame rates and 8 % lower 1 % lows in games limited by the processor, more on processors without MBEC/GMET. Windows updates turn it on for more PCs from October 2026. It stays information: the fix is the Expert tweak, with its security and anti-cheat warnings.
+- **Frame limit for G-SYNC:** with G-SYNC and V-Sync forced on but no frame limit, the NVIDIA check offers a global limit 3 FPS below the refresh rate, which keeps games out of the V-Sync delay that Blur Busters measured at 2 to 6 frames. Marked "Not yet tested on a real PC".
+- **Dialogs:** the uninstall and Expert mode questions now say what happens in one sentence, put what cannot be undone in a warning bar and the rest in small text, and keep every button label on one line.
 - **Update found at start:** when the check at start finds a new version, a bar at the bottom of the window says so on any page, with "Update now" (or "Open download page" for a copy that cannot update itself), and stays until it is closed; Settings in the navigation carries a badge until the update is installed. A copy from winget, Chocolatey or Scoop shows the bar once per version and says that the package manager offers it once its package is updated, which can take a few days after the release.
 
 ### Fixed
@@ -22,9 +25,14 @@
 
 ### Changed
 
+- **Ratings from measurements:** Resizable BAR off rates 4 on Intel Arc, 2 on AMD and 1 on NVIDIA (measured 23 %, up to 17 % and 0 to 2 %). Memory below its XMP or EXPO speed rates 3, or 1 on Ryzen X3D and Intel 13th and 14th gen (TechSpot: 11 to 12 % against 4 %). Game Mode rates 3 on Ryzen 9 X3D processors with two CCDs, whose driver needs it. The memory integrity tweak now cites measurements.
 - **No count on Changes in the navigation:** the number of changes stayed there all the time, read like something to fix and could push towards undoing changes made on purpose. The Changes page itself still lists them.
 - **Releases** carry only Tunero.exe: the PCOptimizer.exe copy helped versions up to 0.7.3 only until the repository was renamed.
 - **Package scripts** check the release signature (`scripts/verify-release.ps1`) before they write a hash, and the Scoop manifest no longer updates itself from the release's checksum file alone.
+
+### Development
+
+- **Truth, not tone:** the list of banned marketing words and its tests are gone. Strong wording is fine as long as it is true; claims about an effect still need sources (docs/explanation-style-guide.md).
 
 ## 0.8.0 (preview)
 

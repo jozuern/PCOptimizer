@@ -150,43 +150,10 @@ public partial class DocLintTests(ITestOutputHelper output)
     private static bool IsQuotedReference(string file) =>
         file.EndsWith("Windows_Optimizer_Tools_Feature_Reference.md", StringComparison.Ordinal);
 
-    /// <summary>Filler words in everything the user reads besides the explanation pages (which the docs lint covers).</summary>
-    [Fact]
-    public void UserVisibleTextHasNoMarketingWords()
-    {
-        var offenders = new List<string>();
-        void Check(string name, string text) => offenders.AddRange(DocLint.FindBannedWords(text).Select(w => $"{name}: {w}"));
-        foreach (var name in Catalog.CatalogData.ResourceNames("Catalog.Data."))
-            Check(name, Catalog.CatalogData.ReadResourceText(name));
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepoPaths.App, "Resources"), "Strings*.resx"))
-            Check(Path.GetFileName(file), string.Join("\n", XDocument.Load(file).Descendants("data").Select(d => (string?)d.Element("value") ?? "")));
-        foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.xaml", SearchOption.AllDirectories).Where(f => !IsBuildOutput(f)))
-            Check(Path.GetFileName(file), XamlComment().Replace(File.ReadAllText(file), ""));
-        // The style guide quotes the banned words as examples; the feature reference quotes other tools.
-        foreach (var file in RepositoryFiles("*.md").Where(f => !f.Replace('\\', '/').Contains("/Catalog/Docs/", StringComparison.Ordinal) && !f.EndsWith("explanation-style-guide.md", StringComparison.Ordinal) && !IsQuotedReference(f)))
-            Check(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file));
-        foreach (var file in WebsiteCopy())
-            Check(Path.GetRelativePath(RepoPaths.Root, file), File.ReadAllText(file));
-        foreach (var o in offenders) output.WriteLine(o);
-        Assert.Empty(offenders);
-    }
-
     /// <summary>The text of tunero.dev: its English and German copy and its pages (website/src).</summary>
     private static IEnumerable<string> WebsiteCopy() =>
         RepositoryFiles("*.ts").Concat(RepositoryFiles("*.astro"))
             .Where(f => Path.GetRelativePath(RepoPaths.Root, f).Replace('\\', '/').StartsWith("website/src/", StringComparison.Ordinal));
-
-    [Theory]
-    [InlineData("A seamless experience", true)]
-    [InlineData("Ultimate Performance power plan", false)]
-    [InlineData("Ultimate gaming", true)]
-    [InlineData("The process runs elevated", false)]
-    [InlineData("Unlock more FPS", true)]
-    [InlineData("Aggressive at guaranteed", false)]
-    [InlineData("Eine nahtlose Erfahrung", true)]
-    [InlineData("nahtlos integriert", true)]
-    public void BannedWordsMatchWholeWordsOnly(string text, bool banned) =>
-        Assert.Equal(banned, DocLint.FindBannedWords(text).Any());
 
     private static readonly char[] Banned = ['\u2013', '\u2014', '\u2022', '\u00B7', '\u2026'];
 

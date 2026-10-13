@@ -2,7 +2,9 @@
 
 # Tunero
 
-A PC optimizer for Windows 11, gaming first, with profiles for laptops, battery, office, quiet and older PCs. It explains every finding and every change with sources, backs up what it changes and can undo it. A single exe for Windows 11 24H2 or newer, x64 only, in English and German. Website: [tunero.dev](https://tunero.dev).
+**Built to be the only PC optimizer you need on Windows 11.**
+
+Tunero finds what really costs your games frame rate, fixes what it can and tells you how to fix the rest. It brings the useful settings of the popular tweak tools, debloat scripts and system utilities into one app (privacy, debloat, cleanup, startup, services, Windows Update) and leaves out the placebo. Every finding and every change comes with an explanation and sources, and every change is backed up first and can be undone. Gaming first, with profiles for laptops, battery, office, quiet and older PCs. One exe for Windows 11 24H2 or newer (x64), in English and German. Website: [tunero.dev](https://tunero.dev).
 
 > **Status: preview.** Every change is tested for apply and undo against a registry sandbox, and the [VM test plan](docs/vm-test-plan.md) runs on Windows 11 26H2 in a Hyper-V virtual machine before releases. A few parts need hardware a virtual machine does not have (NVIDIA driver settings, network adapter properties, laptop and battery checks, AMD-specific checks): tweaks that are not proven yet carry a **Not yet tested on a real PC** badge and are never part of "Apply recommended". Create a restore point or a backup before you change anything; the app creates one before its first change if System Protection is on.
 
@@ -26,7 +28,7 @@ A copy installed this way is updated by its package manager: "Update now" in the
 
 **For everyday use**
 
-- **Scan and fix:** 48 read-only checks find real problems (a monitor at 60 Hz, memory without XMP, the wrong power plan, a game library on a hard disk) and give BIOS and hardware advice (on the Manual checks page, which starts with a summary) and game access per anti-cheat. Each comes with what was found, why it matters, how to fix it and sources, in English and German. A check that cannot read something says "unknown" and gives no advice.
+- **Scan and fix:** 49 read-only checks find real problems (a monitor at 60 Hz, memory without XMP, the wrong power plan, a game library on a hard disk) and give BIOS and hardware advice (on the Manual checks page, which starts with a summary) and game access per anti-cheat. Each comes with what was found, why it matters, how to fix it and sources, in English and German. A check that cannot read something says "unknown" and gives no advice.
 - **Recommended for this PC:** after the scan, the Overview lists the fixes and changes that fit this PC and your profile as a checklist. Untick what you do not want; one confirmation lists every change before it is made. Expert, boot-critical, anti-cheat sensitive, Preview and not fully reversible items are never included.
 - **Profiles:** Gaming, Laptop gaming, Battery, Office, Quiet and cool, Older PC. A profile changes nothing by itself; it decides what is recommended and which impact is shown.
 - **Undo:** every change is backed up first (plus a restore point once per session), verified after applying and listed on the Changes page with Undo, also after a restart. After a Windows update the app lists changes Windows reset and offers to apply them again.
@@ -101,7 +103,7 @@ What stays: restore points, apps you installed through Tunero and the PawnIO sen
 
 **What does "Not yet tested on a real PC" mean?** This badge (a "Preview" in the catalog) marks tweaks that are risky or whose effect is not proven on real Windows yet: every Expert and boot-critical change, undocumented values without proof, and settings not yet tested on real hardware (such as the NVIDIA driver settings). "Apply recommended" never includes it. Apply it on its own, after a restore point, and check the result.
 
-**Will it make my games faster?** Sometimes. The biggest gains come from fixing real problems the scan finds (a monitor at 60 Hz, memory without XMP, the wrong power plan). Most tweaks change little; each page says how solid the evidence is, and the benchmark on the Health page lets you measure your own games.
+**Will it make my games faster?** When the scan finds a real problem, often clearly: a monitor at 60 Hz, memory without XMP or a processor held at its base clock cost a lot of frame rate, and the app fixes them or tells you how. Most catalog tweaks are about privacy, the browser and Windows settings and rate 0 for games; the ones that can matter are rated per PC, and each page says how solid the evidence is. The benchmark on the Health page lets you measure your own games.
 
 **Can I undo everything?** Every change the app makes is backed up and can be undone on the Changes page, also after a restart or an update of the app. Removing an inbox app cannot be undone by the app; the Store link stays where the Store still offers it.
 

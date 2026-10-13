@@ -20,7 +20,7 @@ Conditional blocks: `::: status Problem,Ok`, `::: variant smr`, `::: if param`, 
 
 ## Writing rules
 
-- Facts over adjectives. No "boost", "unleash", "massive", "guaranteed" (lint list in `DocLint.BannedWords`).
+- Say only what is true. Strong words are fine when the facts carry them; a claim about an effect needs a source, and a disputed effect says so.
 - Give numbers (%, ms) only with a source, or as plain arithmetic (60 Hz = 16.7 ms).
 - Disputed effects say so in the summary.
 - Explain the mechanism in three steps: what Windows normally does, what this setting changes, and when that matters in games.
