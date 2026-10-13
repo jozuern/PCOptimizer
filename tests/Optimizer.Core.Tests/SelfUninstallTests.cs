@@ -172,6 +172,10 @@ public class SelfUninstallTests
         };
         ProcessHardening.Apply(psi); // as the app starts it
         using var p = Process.Start(psi)!;
-        Assert.True(p.WaitForExit(60_000), "the cleanup script did not finish");
+        // The first powershell.exe on a cold CI runner took over a minute just to start (2026-10-13, twice); the script
+        // itself runs in seconds.
+        var finished = p.WaitForExit(180_000);
+        if (!finished) ProcessHardening.KillTree(p);
+        Assert.True(finished, "the cleanup script did not finish");
     }
 }
