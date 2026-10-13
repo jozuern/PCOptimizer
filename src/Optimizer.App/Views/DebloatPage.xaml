@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <!-- Everything that removes apps in one place: Store apps that came with Windows, and desktop programs -->
     <Grid Style="{StaticResource PageRoot}">
@@ -34,8 +35,8 @@
                         <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Visibility="{Binding Debloat.IsLoading, Converter={StaticResource BoolToVisibility}}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Debloat_Empty}" Visibility="{Binding Debloat.ItemsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
-                        <ItemsControl ItemsSource="{Binding Debloat.Items}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Debloat.Items}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" IsHitTestVisible="True">
                                         <ui:CardControl.Icon>
@@ -56,8 +57,8 @@
                                                    Command="{Binding DataContext.Debloat.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                     </ui:CardControl>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
 
                         <!-- Apps nobody reviewed: off by default, with a warning, in a section of their own after the reviewed list
                              (the switch between the list and OneDrive read as one more app) -->
@@ -76,8 +77,8 @@
                         </ui:CardControl>
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Debloat_UnreviewedEmpty}" Margin="0,8,0,0"
                                       Visibility="{Binding Debloat.UnreviewedEmpty, Converter={StaticResource BoolToVisibility}}" />
-                        <ItemsControl ItemsSource="{Binding Debloat.Unreviewed}" Margin="0,8,0,0">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Debloat.Unreviewed}" Margin="0,8,0,0">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                                         <ui:CardControl.Icon>
@@ -93,8 +94,8 @@
                                                    Command="{Binding DataContext.Debloat.RemoveUnreviewedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                     </ui:CardControl>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
 
                         <!-- OneDrive -->
                         <ui:TextBlock Style="{StaticResource SectionHeader}" Text="OneDrive" />
@@ -128,8 +129,8 @@
                         <!-- Removed apps -->
                         <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Debloat_RemovedTitle}" />
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Debloat_RemovedEmpty}" Visibility="{Binding Debloat.RemovedEmpty, Converter={StaticResource BoolToVisibility}}" />
-                        <ItemsControl ItemsSource="{Binding Debloat.Removed}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Debloat.Removed}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                                         <ui:CardControl.Header>
@@ -143,8 +144,8 @@
                                                    Visibility="{Binding StoreLink, Converter={StaticResource NullToVisibility}}" />
                                     </ui:CardControl>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -187,8 +188,8 @@
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Leftovers_Title}" />
                                 <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Leftovers_Hint}" TextWrapping="Wrap" Margin="0,4,0,8" />
                                 <ScrollViewer MaxHeight="216" VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding Apps.Leftovers}">
-                                        <ItemsControl.ItemTemplate>
+                                    <v:ItemList ItemsSource="{Binding Apps.Leftovers}">
+                                        <v:ItemList.ItemTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding Selected}" Margin="0,4" AutomationProperties.Name="{Binding Path}">
                                                     <StackPanel>
@@ -199,8 +200,8 @@
                                                     </StackPanel>
                                                 </CheckBox>
                                             </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                        </v:ItemList.ItemTemplate>
+                                    </v:ItemList>
                                 </ScrollViewer>
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                     <ui:Button Appearance="Primary" Content="{l:Tr Leftovers_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Apps.RecycleLeftoversCommand}" Margin="0,0,8,0"
@@ -210,8 +211,8 @@
                             </StackPanel>
                         </ui:Card>
                     </StackPanel>
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Apps.ProgramRows}" Style="{StaticResource VirtualCardList}">
-                        <ItemsControl.ItemTemplate>
+                    <v:ItemList Grid.Row="1" ItemsSource="{Binding Apps.ProgramRows}" Style="{StaticResource VirtualCardList}">
+                        <v:ItemList.ItemTemplate>
                             <DataTemplate>
                                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                                     <ui:CardControl.Header>
@@ -233,8 +234,8 @@
                                     </StackPanel>
                                 </ui:CardControl>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </v:ItemList.ItemTemplate>
+                    </v:ItemList>
                 </Grid>
             </TabItem>
         </TabControl>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <!-- Title, total and the Clean button stay in place; the categories scroll below them -->
     <Grid Style="{StaticResource PageRoot}">
@@ -32,8 +33,8 @@
         <ScrollViewer Grid.Row="1" Style="{StaticResource EdgeScroll}">
         <StackPanel Style="{StaticResource EdgeContent}">
 
-            <ItemsControl ItemsSource="{Binding Cleanup.Rows}">
-                <ItemsControl.ItemTemplate>
+            <v:ItemList ItemsSource="{Binding Cleanup.Rows}">
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:Card x:Name="Card" Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <DockPanel>
@@ -65,8 +66,8 @@
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
 
             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Cleanup.EmptyText}" Margin="0,4,0,0" TextWrapping="Wrap"
                           Visibility="{Binding Cleanup.EmptyText, Converter={StaticResource NullToVisibility}}" />

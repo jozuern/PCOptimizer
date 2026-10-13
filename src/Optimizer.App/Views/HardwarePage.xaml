@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <UserControl.Resources>
         <!-- One label/value row; rows after the first get a divider line. A fixed label column lines the values up down
@@ -53,13 +54,13 @@
             </DockPanel>
 
             <!-- Summary tiles: what is looked up most, like Settings > System > About -->
-            <ItemsControl ItemsSource="{Binding HardwareTiles}" Margin="0,0,-8,8">
-                <ItemsControl.ItemsPanel>
+            <v:ItemList ItemsSource="{Binding HardwareTiles}" Margin="0,0,-8,8">
+                <v:ItemList.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="3" />
                     </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
+                </v:ItemList.ItemsPanel>
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:Card Padding="16" Margin="0,0,8,8" VerticalAlignment="Stretch" VerticalContentAlignment="Top">
                             <DockPanel>
@@ -75,11 +76,11 @@
                             </DockPanel>
                         </ui:Card>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
 
-            <ItemsControl ItemsSource="{Binding HardwareSections}">
-                <ItemsControl.ItemTemplate>
+            <v:ItemList ItemsSource="{Binding HardwareSections}">
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:Card Padding="16,12" Margin="0,0,0,12">
                             <StackPanel>
@@ -88,19 +89,19 @@
                                                    Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource HwRow}" Margin="32,0,0,0" />
+                                <v:ItemList ItemsSource="{Binding Items}" ItemTemplate="{StaticResource HwRow}" Margin="32,0,0,0" />
                                 <!-- Technical rows: only with the switch on; the divider continues the list above. -->
                                 <Grid Visibility="{Binding DataContext.ShowHardwareDetails, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
                                     <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="32,0,0,0"
                                             Visibility="{Binding Technical.Count, Converter={StaticResource CountToVisibility}}">
-                                        <ItemsControl ItemsSource="{Binding Technical}" ItemTemplate="{StaticResource HwRow}" />
+                                        <v:ItemList ItemsSource="{Binding Technical}" ItemTemplate="{StaticResource HwRow}" />
                                     </Border>
                                 </Grid>
                             </StackPanel>
                         </ui:Card>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

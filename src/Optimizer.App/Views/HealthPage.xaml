@@ -109,8 +109,8 @@
                                    Visibility="{Binding Health.HasRuns, Converter={StaticResource BoolToVisibility}}" />
                     </WrapPanel>
                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Health.BenchmarkStatus}" Margin="0,8,0,0" Visibility="{Binding Health.BenchmarkStatus, Converter={StaticResource NullToVisibility}}" />
-                    <ItemsControl ItemsSource="{Binding Health.Runs}" Margin="0,8,0,0">
-                        <ItemsControl.ItemTemplate>
+                    <v:ItemList ItemsSource="{Binding Health.Runs}" Margin="0,8,0,0">
+                        <v:ItemList.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
                                     <Grid.ColumnDefinitions>
@@ -125,16 +125,16 @@
                                     <ui:TextBlock Grid.Column="3" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Frames}" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </v:ItemList.ItemTemplate>
+                    </v:ItemList>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Health.ComparisonText}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="{Binding Health.ComparisonText, Converter={StaticResource NullToVisibility}}" />
                 </StackPanel>
             </ui:Card>
 
             <!-- Drives -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Health_Disks}" />
-            <ItemsControl ItemsSource="{Binding Health.Disks}">
-                <ItemsControl.ItemTemplate>
+            <v:ItemList ItemsSource="{Binding Health.Disks}">
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <ui:CardControl.Icon>
@@ -149,8 +149,8 @@
                             <ui:TextBlock FontTypography="Body" Text="{Binding Health}" />
                         </ui:CardControl>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
 
             <!-- Sensors (opt-in) -->
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Sensors_Title}" />
@@ -174,8 +174,8 @@
             <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Health.SensorsStatus}" Margin="0,8,0,0"
                           Visibility="{Binding Health.SensorsStatus, Converter={StaticResource NullToVisibility}}" />
             <!-- One card per component: its headline values large, every reading folded below (the values change in place) -->
-            <ItemsControl ItemsSource="{Binding Health.SensorGroups}" Margin="0,8,0,0">
-                <ItemsControl.ItemTemplate>
+            <v:ItemList ItemsSource="{Binding Health.SensorGroups}" Margin="0,8,0,0">
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:CardExpander Margin="{StaticResource CardRowMargin}" IsExpanded="{Binding IsExpanded}" HorizontalContentAlignment="Stretch">
                             <ui:CardExpander.Header>
@@ -186,13 +186,13 @@
                                         <ui:TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}" Text="{Binding Kind}" VerticalAlignment="Center" Margin="16,0,0,0" />
                                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" VerticalAlignment="Center" />
                                     </DockPanel>
-                                    <ItemsControl ItemsSource="{Binding Tiles}" Margin="32,12,0,0" Focusable="False">
-                                        <ItemsControl.ItemsPanel>
+                                    <v:ItemList ItemsSource="{Binding Tiles}" Margin="32,12,0,0" Focusable="False">
+                                        <v:ItemList.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel />
                                             </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
+                                        </v:ItemList.ItemsPanel>
+                                        <v:ItemList.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Width="144" Margin="0,0,16,4">
                                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Title}" />
@@ -222,14 +222,14 @@
                                                     <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Peak}" />
                                                 </StackPanel>
                                             </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                        </v:ItemList.ItemTemplate>
+                                    </v:ItemList>
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding AllTitle}" Margin="32,4,0,0" />
                                 </StackPanel>
                             </ui:CardExpander.Header>
                             <!-- Every reading, by kind: name, value now, peak since the readings were switched on -->
-                            <ItemsControl ItemsSource="{Binding Sections}" Width="560" HorizontalAlignment="Left" Margin="32,0,0,0" Focusable="False">
-                                <ItemsControl.ItemTemplate>
+                            <v:ItemList ItemsSource="{Binding Sections}" Width="560" HorizontalAlignment="Left" Margin="32,0,0,0" Focusable="False">
+                                <v:ItemList.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="0,0,0,12">
                                             <Grid Margin="0,0,0,4">
@@ -242,8 +242,8 @@
                                                 <ui:TextBlock Grid.Column="1" Style="{StaticResource Caption}" Text="{l:Tr Sensors_Now}" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
                                                 <ui:TextBlock Grid.Column="2" Style="{StaticResource Caption}" Text="{l:Tr Sensors_PeakColumn}" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
                                             </Grid>
-                                            <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
-                                                <ItemsControl.ItemTemplate>
+                                            <v:ItemList ItemsSource="{Binding Rows}" Focusable="False">
+                                                <v:ItemList.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="0,4">
                                                             <Grid>
@@ -259,16 +259,16 @@
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
+                                                </v:ItemList.ItemTemplate>
+                                            </v:ItemList>
                                         </StackPanel>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </v:ItemList.ItemTemplate>
+                            </v:ItemList>
                         </ui:CardExpander>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

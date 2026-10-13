@@ -4,6 +4,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:s="clr-namespace:Optimizer.App.Services"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <Grid Style="{StaticResource PageRoot}">
         <Grid.RowDefinitions>
@@ -37,8 +38,8 @@
                                              Visibility="{Binding ServicesPage.IsLoading, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </ui:Card>
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding ServicesPage.Rows}" Style="{StaticResource VirtualCardList}">
-                        <ItemsControl.ItemTemplate>
+                    <v:ItemList Grid.Row="1" ItemsSource="{Binding ServicesPage.Rows}" Style="{StaticResource VirtualCardList}">
+                        <v:ItemList.ItemTemplate>
                             <DataTemplate>
                                 <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                     <DockPanel>
@@ -80,8 +81,8 @@
                                     </DockPanel>
                                 </ui:Card>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </v:ItemList.ItemTemplate>
+                    </v:ItemList>
                 </Grid>
             </TabItem>
             <TabItem Header="{l:Tr Svc_TabTasks}">
@@ -96,8 +97,8 @@
                             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Task_Hint}" Margin="0,8,0,0" />
                         </StackPanel>
                     </ui:Card>
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding ServicesPage.Tasks}" Style="{StaticResource VirtualCardList}">
-                        <ItemsControl.ItemTemplate>
+                    <v:ItemList Grid.Row="1" ItemsSource="{Binding ServicesPage.Tasks}" Style="{StaticResource VirtualCardList}">
+                        <v:ItemList.ItemTemplate>
                             <DataTemplate>
                                 <ui:Card Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                     <DockPanel>
@@ -118,8 +119,8 @@
                                     </DockPanel>
                                 </ui:Card>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </v:ItemList.ItemTemplate>
+                    </v:ItemList>
                 </Grid>
             </TabItem>
         </TabControl>

@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:l="clr-namespace:Optimizer.App.Services"
+                 xmlns:v="clr-namespace:Optimizer.App.Views"
                  Width="760" MinHeight="0" SizeToContent="Height" MaxHeight="820" ResizeMode="NoResize"
                  WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
                  ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
@@ -20,37 +21,37 @@
                 <ui:TextBlock x:Name="TitleText" FontTypography="Subtitle" TextWrapping="Wrap" />
                 <ui:TextBlock x:Name="SummaryText" FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
                 <!-- Facts about the change as tags, as on the tweak rows -->
-                <ItemsControl x:Name="BadgeList" Margin="0,8,0,0" Focusable="False">
-                    <ItemsControl.ItemsPanel>
+                <v:ItemList x:Name="BadgeList" Margin="0,8,0,0" Focusable="False">
+                    <v:ItemList.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel />
                         </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
+                    </v:ItemList.ItemsPanel>
+                    <v:ItemList.ItemTemplate>
                         <DataTemplate>
                             <Border CornerRadius="4" Padding="6,1,6,2" Margin="0,2,4,2" BorderThickness="1"
                                     Background="{DynamicResource SubtleFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                                 <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             </Border>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </v:ItemList.ItemTemplate>
+                </v:ItemList>
                 <!-- What stops the change first (error), then the notes about it (caution) -->
-                <ItemsControl x:Name="BlockList" Margin="0,8,0,0">
-                    <ItemsControl.ItemTemplate>
+                <v:ItemList x:Name="BlockList" Margin="0,8,0,0">
+                    <v:ItemList.ItemTemplate>
                         <DataTemplate>
                             <ui:InfoBar Title="" Message="{Binding}" Severity="Error" IsOpen="True" IsClosable="False" Margin="0,0,0,4" />
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </v:ItemList.ItemTemplate>
+                </v:ItemList>
                 <ui:InfoBar x:Name="NothingToDo" Title="" Message="{l:Tr Confirm_NothingToChange}" Severity="Informational" IsOpen="False" IsClosable="False" Margin="0,0,0,4" />
-                <ItemsControl x:Name="WarningList">
-                    <ItemsControl.ItemTemplate>
+                <v:ItemList x:Name="WarningList">
+                    <v:ItemList.ItemTemplate>
                         <DataTemplate>
                             <ui:InfoBar Title="" Message="{Binding}" Severity="Warning" IsOpen="True" IsClosable="False" Margin="0,0,0,4" />
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </v:ItemList.ItemTemplate>
+                </v:ItemList>
                 <CheckBox x:Name="AntiCheatAck" Content="{l:Tr Confirm_AntiCheatAck}" Margin="0,8,0,0" Visibility="Collapsed"
                           Checked="AntiCheat_Changed" Unchecked="AntiCheat_Changed" />
 
@@ -69,8 +70,8 @@
             </StackPanel>
 
             <ScrollViewer x:Name="ChangeScroll" VerticalScrollBarVisibility="Auto" MaxHeight="360">
-                <ItemsControl x:Name="ChangeList">
-                    <ItemsControl.ItemTemplate>
+                <v:ItemList x:Name="ChangeList">
+                    <v:ItemList.ItemTemplate>
                         <DataTemplate>
                             <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" Padding="0,8">
                                 <Grid>
@@ -93,8 +94,8 @@
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </v:ItemList.ItemTemplate>
+                </v:ItemList>
             </ScrollViewer>
         </DockPanel>
         <!-- Footer band with the buttons, as in a Windows 11 content dialog -->

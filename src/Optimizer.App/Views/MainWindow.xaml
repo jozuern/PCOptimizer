@@ -168,14 +168,14 @@
                         <!-- Title first, then the state, the action and the explanation (the document leaves out its own title) -->
                         <StackPanel Margin="0,4,8,0">
                             <ui:TextBlock FontTypography="Subtitle" Text="{Binding Title}" TextWrapping="Wrap" />
-                            <ItemsControl ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False" Margin="0,6,0,0"
+                            <v:ItemList ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False" Margin="0,6,0,0"
                                           Visibility="{Binding Badges.Count, Converter={StaticResource CountToVisibility}}">
-                                <ItemsControl.ItemsPanel>
+                                <v:ItemList.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <WrapPanel />
                                     </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
+                                </v:ItemList.ItemsPanel>
+                            </v:ItemList>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <ui:SymbolIcon Symbol="{Binding StatusSymbol}" Filled="True" FontSize="20" Margin="0,0,8,0"
                                                v:ThemeBrush.Key="{Binding StatusBrushKey}" />

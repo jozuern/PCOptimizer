@@ -106,14 +106,6 @@
                 <Setter Property="Margin" Value="0,8,0,0" />
             </Style>
 
-            <!--
-                Keyboard and screen reader: Tab stops only where something happens. A plain list of items is layout; as
-                a stop it reads as an empty "list" (the developer switch tab-order lists every stop). Cards: App.xaml.cs.
-            -->
-            <Style TargetType="ItemsControl">
-                <Setter Property="Focusable" Value="False" />
-            </Style>
-
             <!-- Long lists (startup entries, services, tasks): virtualized, pixel scrolling, no selection -->
             <ControlTemplate x:Key="VirtualList" TargetType="ItemsControl">
                 <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
@@ -126,7 +118,6 @@
                 scrolling so it moves like the rest of the app). Rebuilding a list of 75 cards then costs a few cards.
             -->
             <Style x:Key="VirtualCardList" TargetType="ItemsControl">
-                <Setter Property="Focusable" Value="False" />
                 <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
                 <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
                 <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
@@ -352,13 +343,13 @@
                                 <!-- Collapsed when empty: its margin would move the tags off the title's left edge -->
                                 <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding MetaText}" TextWrapping="Wrap"
                                               VerticalAlignment="Center" Margin="0,0,8,0" Visibility="{Binding MetaText, Converter={StaticResource NullToVisibility}}" />
-                                <ItemsControl ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False">
-                                    <ItemsControl.ItemsPanel>
+                                <v:ItemList ItemsSource="{Binding Badges}" ItemTemplate="{StaticResource BadgeTag}" Focusable="False">
+                                    <v:ItemList.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel />
                                         </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
+                                    </v:ItemList.ItemsPanel>
+                                </v:ItemList>
                             </WrapPanel>
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ToggleNote}" TextWrapping="Wrap"
                                           Margin="0,4,0,0" Visibility="{Binding ToggleNote, Converter={StaticResource NullToVisibility}}" />

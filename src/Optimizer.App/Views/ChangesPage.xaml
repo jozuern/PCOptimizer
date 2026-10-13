@@ -17,8 +17,8 @@
                 <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Changes_Backups}" VerticalAlignment="Center" />
             </DockPanel>
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Changes_Empty}" Visibility="{Binding ChangesEmpty, Converter={StaticResource BoolToVisibility}}" />
-            <ItemsControl ItemsSource="{Binding ChangeRecords}">
-                <ItemsControl.ItemTemplate>
+            <v:ItemList ItemsSource="{Binding ChangeRecords}">
+                <v:ItemList.ItemTemplate>
                     <DataTemplate>
                         <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                             <ui:CardControl.Icon>
@@ -43,14 +43,14 @@
                             </StackPanel>
                         </ui:CardControl>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </v:ItemList.ItemTemplate>
+            </v:ItemList>
 
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Changes_Log}" />
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Changes_LogEmpty}" Visibility="{Binding ChangeLogEmpty, Converter={StaticResource BoolToVisibility}}" />
             <ui:Card Padding="16,12" Visibility="{Binding ChangeLogEmpty, Converter={StaticResource InverseBoolToVisibility}}">
-                <ItemsControl ItemsSource="{Binding ChangeLog}">
-                    <ItemsControl.ItemTemplate>
+                <v:ItemList ItemsSource="{Binding ChangeLog}">
+                    <v:ItemList.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,2">
                                 <Grid.ColumnDefinitions>
@@ -61,8 +61,8 @@
                                 <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding Text}" TextWrapping="Wrap" />
                             </Grid>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </v:ItemList.ItemTemplate>
+                </v:ItemList>
             </ui:Card>
 
             <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Changes_Safety}" />

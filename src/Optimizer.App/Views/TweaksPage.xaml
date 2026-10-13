@@ -60,8 +60,8 @@
         </StackPanel>
         <!-- One list for the group headings and the tweaks of the open groups, so only the cards in view are built. The
              tweaks are indented under their heading. -->
-        <ItemsControl Grid.Row="1" Style="{StaticResource VirtualCardList}" ItemsSource="{Binding TweakRows}">
-            <ItemsControl.ItemTemplateSelector>
+        <v:ItemList Grid.Row="1" Style="{StaticResource VirtualCardList}" ItemsSource="{Binding TweakRows}">
+            <v:ItemList.ItemTemplateSelector>
                 <v:TweakListTemplateSelector>
                     <v:TweakListTemplateSelector.Group>
                         <DataTemplate>
@@ -92,7 +92,7 @@
                         </DataTemplate>
                     </v:TweakListTemplateSelector.Tweak>
                 </v:TweakListTemplateSelector>
-            </ItemsControl.ItemTemplateSelector>
-        </ItemsControl>
+            </v:ItemList.ItemTemplateSelector>
+        </v:ItemList>
     </Grid>
 </UserControl>

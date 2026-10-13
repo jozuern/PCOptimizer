@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <!-- The list scrolls on its own and builds only the cards in view. -->
     <Grid Style="{StaticResource PageRoot}">
@@ -36,6 +37,6 @@
             </ui:Card>
             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Empty_List}" Visibility="{Binding AdvisorEmpty, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
-        <ItemsControl Grid.Row="1" Style="{StaticResource VirtualCardList}" ItemsSource="{Binding AdvisorItems}" ItemTemplate="{StaticResource FindingRow}" />
+        <v:ItemList Grid.Row="1" Style="{StaticResource VirtualCardList}" ItemsSource="{Binding AdvisorItems}" ItemTemplate="{StaticResource FindingRow}" />
     </Grid>
 </UserControl>

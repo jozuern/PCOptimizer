@@ -4,6 +4,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:s="clr-namespace:Optimizer.App.Services"
              xmlns:l="clr-namespace:Optimizer.App.Services"
+             xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <UserControl.Resources>
         <DataTemplate x:Key="QuickFixRow">
@@ -64,7 +65,7 @@
                             </ui:CardControl.Header>
                             <ui:Button Content="{l:Tr Quick_WinsockAction}" MinWidth="96" Command="{Binding Tools.WinsockResetCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
                         </ui:CardControl>
-                        <ItemsControl ItemsSource="{Binding Tools.QuickNetworkRows}" ItemTemplate="{StaticResource QuickFixRow}" />
+                        <v:ItemList ItemsSource="{Binding Tools.QuickNetworkRows}" ItemTemplate="{StaticResource QuickFixRow}" />
 
                         <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRestart}" />
                         <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
@@ -76,7 +77,7 @@
                             </ui:CardControl.Header>
                             <ui:Button Content="{l:Tr Quick_ExplorerAction}" MinWidth="96" Command="{Binding Tools.RestartExplorerCommand}" IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
                         </ui:CardControl>
-                        <ItemsControl ItemsSource="{Binding Tools.QuickRestartRows}" ItemTemplate="{StaticResource QuickFixRow}" />
+                        <v:ItemList ItemsSource="{Binding Tools.QuickRestartRows}" ItemTemplate="{StaticResource QuickFixRow}" />
 
                         <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Quick_GroupRepair}" />
                         <!-- System files (sfc, DISM): commands of the Health view model -->
@@ -103,8 +104,8 @@
                             <ui:Button Content="{l:Tr Repair_Run}" MinWidth="96" Command="{Binding Tools.RepairUpdateCommand}"
                                        IsEnabled="{Binding Tools.IsWorking, Converter={StaticResource InverseBool}}" />
                         </ui:CardControl>
-                        <ItemsControl ItemsSource="{Binding Tools.RepairSteps}" Margin="0,4,0,8" Visibility="{Binding Tools.RepairSteps.Count, Converter={StaticResource CountToVisibility}}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Tools.RepairSteps}" Margin="0,4,0,8" Visibility="{Binding Tools.RepairSteps.Count, Converter={StaticResource CountToVisibility}}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Margin="0,2">
                                         <Grid Width="16" Margin="0,0,8,0" VerticalAlignment="Center">
@@ -117,9 +118,9 @@
                                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Detail}" Margin="12,0,0,0" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <ItemsControl ItemsSource="{Binding Tools.QuickRepairRows}" ItemTemplate="{StaticResource QuickFixRow}" />
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
+                        <v:ItemList ItemsSource="{Binding Tools.QuickRepairRows}" ItemTemplate="{StaticResource QuickFixRow}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -142,8 +143,8 @@
                             </StackPanel>
                         </ui:Card>
                         <ui:CardExpander Header="{l:Tr Storage_Largest}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
-                            <ItemsControl ItemsSource="{Binding Tools.LargestFiles}">
-                                <ItemsControl.ItemTemplate>
+                            <v:ItemList ItemsSource="{Binding Tools.LargestFiles}">
+                                <v:ItemList.ItemTemplate>
                                     <DataTemplate>
                                         <DockPanel Margin="0,4">
                                             <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
@@ -155,12 +156,12 @@
                                             </CheckBox>
                                         </DockPanel>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </v:ItemList.ItemTemplate>
+                            </v:ItemList>
                         </ui:CardExpander>
                         <ui:CardExpander Header="{l:Tr Storage_Folders}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFolders.Count, Converter={StaticResource CountToVisibility}}">
-                            <ItemsControl ItemsSource="{Binding Tools.LargestFolders}">
-                                <ItemsControl.ItemTemplate>
+                            <v:ItemList ItemsSource="{Binding Tools.LargestFolders}">
+                                <v:ItemList.ItemTemplate>
                                     <DataTemplate>
                                         <DockPanel Margin="0,4">
                                             <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
@@ -170,12 +171,12 @@
                                             </StackPanel>
                                         </DockPanel>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </v:ItemList.ItemTemplate>
+                            </v:ItemList>
                         </ui:CardExpander>
                         <ui:CardExpander Header="{l:Tr Storage_Duplicates}" Margin="0,4,0,0" Visibility="{Binding Tools.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
-                            <ItemsControl ItemsSource="{Binding Tools.Duplicates}">
-                                <ItemsControl.ItemTemplate>
+                            <v:ItemList ItemsSource="{Binding Tools.Duplicates}">
+                                <v:ItemList.ItemTemplate>
                                     <DataTemplate>
                                         <DockPanel Margin="0,4">
                                             <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
@@ -187,8 +188,8 @@
                                             </CheckBox>
                                         </DockPanel>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </v:ItemList.ItemTemplate>
+                            </v:ItemList>
                         </ui:CardExpander>
                     </StackPanel>
                 </ScrollViewer>
@@ -201,8 +202,8 @@
                         <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Tools.IsLoading, Converter={StaticResource BoolToVisibility}}" />
                         <ui:InfoBar Title="" Message="{Binding Tools.FeaturesNote}" Severity="Informational" IsClosable="False" Margin="0,0,0,8"
                                     IsOpen="{Binding Tools.FeaturesNote, Converter={StaticResource NullToBool}}" />
-                        <ItemsControl ItemsSource="{Binding Tools.Features}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Tools.Features}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                                         <ui:CardControl.Header>
@@ -223,8 +224,8 @@
                                         </ui:ToggleSwitch>
                                     </ui:CardControl>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -246,8 +247,8 @@
                                               Visibility="{Binding Tools.PriorityNote, Converter={StaticResource NullToVisibility}}" />
                             </StackPanel>
                         </ui:Card>
-                        <ItemsControl ItemsSource="{Binding Tools.PriorityRules}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Tools.PriorityRules}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <ui:CardControl Padding="{StaticResource CardPadding}" Margin="{StaticResource CardRowMargin}">
                                         <ui:CardControl.Header>
@@ -260,8 +261,8 @@
                                                    Command="{Binding DataContext.Tools.RemovePriorityRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
                                     </ui:CardControl>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

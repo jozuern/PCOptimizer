@@ -37,8 +37,8 @@
                             <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Apps_Loading}" VerticalAlignment="Center" />
                         </StackPanel>
 
-                        <ItemsControl ItemsSource="{Binding Apps.Apps}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Apps.Apps}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <!-- Category heading above the first app of each category -->
                                     <DockPanel>
@@ -77,8 +77,8 @@
                                     </ui:CardControl>
                                     </DockPanel>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
                         <TextBox Style="{StaticResource OutputBox}" Text="{Binding Apps.Output, Mode=OneWay}" Visibility="{Binding Apps.Output, Converter={StaticResource NullToVisibility}}" />
                     </StackPanel>
                 </ScrollViewer>
@@ -97,8 +97,8 @@
                             <ui:Button Content="{l:Tr Drv_CleanOpen}" Icon="{ui:SymbolIcon Open20}" Command="{Binding OpenLinkCommand}"
                                        CommandParameter="https://www.guru3d.com/download/display-driver-uninstaller-download/" />
                         </ui:CardControl>
-                        <ItemsControl ItemsSource="{Binding Apps.Drivers}">
-                            <ItemsControl.ItemTemplate>
+                        <v:ItemList ItemsSource="{Binding Apps.Drivers}">
+                            <v:ItemList.ItemTemplate>
                                 <DataTemplate>
                                     <!-- One link per update source above its first driver, not one per row -->
                                     <DockPanel>
@@ -124,8 +124,8 @@
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </v:ItemList.ItemTemplate>
+                        </v:ItemList>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
