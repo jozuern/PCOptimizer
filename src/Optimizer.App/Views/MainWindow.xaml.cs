@@ -309,7 +309,14 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     private void SetTitleBarIcon(double scale)
     {
         var size = scale >= 1.75 ? 32 : scale >= 1.25 ? 24 : 16;
+        // The window's markup already shows the 16 px one: at 100 % nothing is decoded a second time.
+        if (size == _titleIconSize) return;
+        _titleIconSize = size;
         var image = new System.Windows.Media.Imaging.BitmapImage(new Uri($"pack://application:,,,/Assets/icon-{size}.png"));
+        image.Freeze();
         TitleIcon.Source = image;
     }
+
+    /// <summary>The size of the bitmap the title bar shows (MainWindow.xaml starts with icon-16.png).</summary>
+    private int _titleIconSize = 16;
 }

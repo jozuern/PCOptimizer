@@ -72,11 +72,19 @@ public sealed partial class StartupRow : SwitchRow
     [ObservableProperty] private string? _readOnlyNote;
     public bool Suspicious => Entry.Suspicious;
 
+    /// <summary>
+    /// <see cref="StartupEntry.RunsScriptHost"/> parses the command line and checks its paths: read once per row, in the
+    /// background with the signature (<see cref="SetSignature"/>), and only here if something asks before that.
+    /// </summary>
+    private bool? _runsScriptHost;
+
+    private bool RunsScriptHost => _runsScriptHost ??= Entry.RunsScriptHost;
+
     /// <summary>Signed by Microsoft does not mean harmless here: the command line decides what the script host runs.</summary>
-    public string? ScriptHostNote => Entry.RunsScriptHost ? Loc.Instance["Startup_ScriptHost"] : null;
+    public string? ScriptHostNote => RunsScriptHost ? Loc.Instance["Startup_ScriptHost"] : null;
 
     /// <summary>Hidden by "Hide Microsoft entries" only when signed by Microsoft and nothing else needs a look.</summary>
-    public bool IsPlainMicrosoft => IsMicrosoft && !Entry.Suspicious && !Entry.RunsScriptHost;
+    public bool IsPlainMicrosoft => IsMicrosoft && !Entry.Suspicious && !RunsScriptHost;
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(MetaText))] private string _publisherText = "";
     [ObservableProperty, NotifyPropertyChangedFor(nameof(MetaText))] private string _signatureText = "";
@@ -94,18 +102,19 @@ public sealed partial class StartupRow : SwitchRow
     /// <summary>Added or changed since the saved snapshot (set after a comparison).</summary>
     [ObservableProperty] private bool _isNew;
 
-    public void SetSignature(SignatureInfo s, string lang)
+    public void SetSignature(SignatureInfo s, bool runsScriptHost, string lang)
     {
+        _runsScriptHost = runsScriptHost;
         IsMicrosoft = s.IsMicrosoft;
         UpdateCanToggle(s.IsMicrosoft || s.Status == SignatureStatus.Error);
         PublisherText = s.Publisher ?? Loc.Instance["Startup_NoPublisher"];
         // Not signed and a bad signature are tags under the name: the line does not say it a second time.
         SignatureText = s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid ? "" : Labels.Current.Get(lang, $"signature.{s.Status}");
-        NeedsAttention = Entry.Suspicious || Entry.RunsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
+        NeedsAttention = Entry.Suspicious || runsScriptHost || s.Status is SignatureStatus.Unsigned or SignatureStatus.Invalid;
         var tags = new List<string>();
         if (s.Status == SignatureStatus.Invalid) tags.Add(Loc.Instance["Startup_TagBadSignature"]);
         else if (s.Status == SignatureStatus.Unsigned) tags.Add(Loc.Instance["Startup_TagUnsigned"]);
-        if (Entry.RunsScriptHost) tags.Add(Loc.Instance["Startup_TagScript"]);
+        if (runsScriptHost) tags.Add(Loc.Instance["Startup_TagScript"]);
         if (Entry.Suspicious) tags.Add(Loc.Instance["Startup_TagUnusual"]);
         AttentionTags = tags;
     }
@@ -204,8 +213,8 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         // Signatures in the background, shown together: Microsoft entries are hidden once verified.
         var rows = _all.ToList();
         var signatures = await Task.Run(() => rows.AsParallel().AsOrdered().WithDegreeOfParallelism(4)
-            .Select(row => SignatureVerifier.Verify(row.Entry.ImagePath)).ToList());
-        for (var i = 0; i < rows.Count; i++) rows[i].SetSignature(signatures[i], lang);
+            .Select(row => (Signature: SignatureVerifier.Verify(row.Entry.ImagePath), ScriptHost: row.Entry.RunsScriptHost)).ToList());
+        for (var i = 0; i < rows.Count; i++) rows[i].SetSignature(signatures[i].Signature, signatures[i].ScriptHost, lang);
         Filter();
     }
 
