@@ -52,9 +52,9 @@ A copy installed this way is updated by its package manager: "Update now" in the
 
 The app uses settings that Microsoft or the hardware vendor documents. A few harmless, fully reversible tweaks use a value Microsoft does not document (the value behind a Windows Settings switch, or a widely used one such as the classic right-click menu): they carry an "Undocumented value" badge, their explanation page says so, and they stay previews until a test has shown that the value works. It never recommends turning off security features that anti-cheats require, and keeps changes that turn off security features or touch the boot configuration in Expert mode.
 
-<p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: readiness score, what the scan found and the recommended changes as a checklist"></p>
+<p align="center"><img src="docs/screenshots/overview-en-dark.png" width="800" alt="Overview page: the verdict of the scan, the findings with their impact rating, and the recommended changes as a checklist"></p>
 
-<p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page: the Show and Profile filters, groups with Turn on, and the explanation of the selected tweak"></p>
+<p align="center"><img src="docs/screenshots/tweaks-en-light.png" width="800" alt="Tweaks page: the Show filter, groups with Turn on, rows with their impact rating, and the explanation of the selected tweak"></p>
 
 <p align="center"><img src="docs/screenshots/system-info-en-dark.png" width="800" alt="System info page: summary tiles and one card per area"></p>
 
@@ -66,7 +66,7 @@ The app uses settings that Microsoft or the hardware vendor documents. A few har
 - **It looks at your PC first.** It recommends only what fits this PC and your profile, and keeps risky changes behind Expert mode.
 - **Nothing runs in the background.** No service, no tray icon, no telemetry. Windows applies the settings itself; the app runs only when you start it.
 
-<p align="center"><img src="docs/screenshots/search-en-light.png" width="800" alt="Search for defender: the reason why turning off Defender is not offered comes first, then the Defender drivers and services"></p>
+<p align="center"><img src="docs/screenshots/search-en-light.png" width="800" alt="Search for defender: the reason why turning off Defender is not offered comes first, then what the app offers for Defender"></p>
 
 ## Command line
 
