@@ -297,10 +297,20 @@
       "doc": "Text and image generation for apps off through the registry",
       "title": { "en": "Text and image generation for apps off", "de": "Text- und Bildgenerierung für Apps aus" },
       "reason": {
-        "en": "Writing the value behind the Settings switch does not turn it off, and Microsoft offers no policy. Turn it off in Settings > Privacy & security > Text and image generation.",
-        "de": "Den Wert hinter dem Schalter in den Einstellungen zu schreiben schaltet ihn nicht ab, und Microsoft bietet keine Richtlinie. Schalte es unter Einstellungen > Datenschutz und Sicherheit > Text- und Bildgenerierung ab."
+        "en": "Writing the value behind the Settings switch does not turn it off, and Microsoft has not documented a policy for it yet. Turn it off in Settings > Privacy & security > Text and image generation.",
+        "de": "Den Wert hinter dem Schalter in den Einstellungen zu schreiben schaltet ihn nicht ab, und Microsoft hat noch keine Richtlinie dafür dokumentiert. Schalte es unter Einstellungen > Datenschutz und Sicherheit > Text- und Bildgenerierung ab."
       },
       "keywords": ["text and image generation", "systemaimodels", "generative ai", "ai models", "bildgenerierung"]
+    },
+    {
+      "id": "edgeRewards",
+      "doc": "Microsoft Rewards in Edge off",
+      "title": { "en": "Microsoft Rewards in Edge off", "de": "Microsoft Rewards in Edge aus" },
+      "reason": {
+        "en": "The policy does not apply to Edge profiles signed in with a Microsoft account, and only those see Rewards, so it would change nothing. Turn Rewards off in Edge under Settings > Profiles.",
+        "de": "Die Richtlinie gilt nicht für Edge-Profile mit Microsoft-Konto, und nur diese sehen Rewards; sie würde also nichts ändern. Schalte Rewards in Edge unter Einstellungen > Profile ab."
+      },
+      "keywords": ["rewards", "microsoft rewards", "showmicrosoftrewards", "edge rewards", "bing rewards"]
     }
   ]
 }

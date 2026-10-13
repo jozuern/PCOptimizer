@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 221 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 224 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -174,6 +174,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `privacy.messageSyncOff` | Text message cloud backup off | safe |  | registry | |
 | `privacy.mapsTrafficOff` | Offline maps updates off | safe |  | registry | |
 | `privacy.clipboardHistoryOff` | Clipboard history off | moderate |  | registry | |
+| `privacy.speechModelUpdatesOff` | No automatic speech model updates | safe |  | registry | |
 | `services.gamingPreset` | Conservative services preset | safe |  | service | |
 | `battery.boostOffDc` | Processor boost off on battery | moderate |  | powerSetting | |
 | `battery.wifiPowerSavingDc` | Wi-Fi power saving on battery: maximum | safe |  | powerSetting | |
@@ -225,6 +226,8 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `perm.phoneOff` | Windows apps: no phone calls | safe |  | registry | |
 | `perm.radiosOff` | Windows apps: no control of radios | safe |  | registry | |
 | `perm.devicesOff` | Windows apps: no unpaired or trusted devices | safe |  | registry | |
+| `perm.screenshotsOff` | Windows apps: no screenshots of other windows | safe, preview |  | registry | |
+| `perm.presenceOff` | Windows apps: no presence sensing | safe |  | registry | |
 | `privacy.searchConnectedOff` | Windows Search: no web results and no location | safe |  | registry | |
 | `privacy.malwareReportOff` | Malicious Software Removal Tool: no infection reports | safe |  | registry | |
 | `privacy.thirdPartySpotlightOff` | Windows Spotlight: no third-party suggestions | safe |  | registry | |
@@ -352,7 +355,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Update all (winget) | Runs `winget upgrade --all --scope machine` with the output in the app, then a winget window as the signed-in user for per-user programs; a winget copy of Tunero is not replaced while it runs | |
 | .NET Desktop Runtimes | Install .NET Desktop Runtime 8 and 10 from the Apps page | |
 | Fixes and repair (Tools) | Each of the 10 quick fixes: renew IP (connection back afterwards, also when one adapter fails to release), TCP/IP reset (restart needed), audio, Bluetooth and Search restart, graphics driver restart (screen flashes, apps keep running), time sync, performance counters, chkdsk /scan (output shown), recovery environment on | |
-| Program start priorities (Preview) | Add a rule for notepad.exe with "Below normal" and low disk priority, start Notepad: Task Manager shows the priority; remove the rule: back to normal | |
+| Program start priorities | Add a rule for PING.EXE with "Below normal" and low disk priority (notepad.exe on Windows 11 is only a stub for the Store app), start `ping -n 6 127.0.0.1`: Task Manager shows the priority; remove the rule: back to normal | OK 2026-10-13, build 26300: BelowNormal and I/O priority 1 with the rule, Normal and 2 after Undo, PerfOptions key removed |
 | Windows capabilities | Remove WordPad or the Steps Recorder and add it back (needs Windows Update) | |
 | Reserved storage | Turn off and on again with DISM; while an update uses the space, the change is refused with DISM's message | |
 | Start menu entry | First start of the published exe: the question appears once; "Add to Start menu" creates `Tunero PC Optimizer.lnk` in the signed-in user's Start menu and Windows Search finds it as "Tunero" and as "optimizer"; an entry `Tunero.lnk` from an earlier version that starts the same exe gets the new name on the next start; the switch in Settings removes and adds it; the question does not come back on the next start | OK 2026-10-13 (26H2): rename of `Tunero.lnk` and Windows Search for "optimizer" |
