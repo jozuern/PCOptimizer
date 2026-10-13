@@ -28,11 +28,11 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 In the order of the audit's promise gaps:
 
-1. A larger app installer list (the gaming and utility shortlist of the 2026-10-11 comparison with 17 tweak tools, about 60 entries) and a winget search for any package.
-2. Bulk and quiet uninstall, a leftover scan after an uninstall, orphaned Program Files folders.
-3. Process Lasso style rules: prove the start priorities, add the page priority (proof needed), and say on the not-included page why live rules and affinity are left out.
-4. Autoruns completeness: the missing locations (icon overlays, ShellServiceObjectDelayLoad, SharedTaskScheduler, copy hooks, Command Processor AutoRun, exefile and cmdfile open commands, SilentProcessExit, the WOW6432Node IFEO key, Winlogon Taskman, AppSetup and notification packages, credential providers, AppCertDlls, DirectShow filters), Delete with a backup, export as CSV or text.
-5. About 25 documented policies left over (AI permissions, speech model updates, cross-device resume, desktop Spotlight, sync per category, Edge promotions, quality update deferral and more).
+1. A winget search for any package (the list of 91 apps is done).
+2. Orphaned Program Files folders without an uninstall entry (bulk and quiet uninstall and the leftover check after an uninstall are done; the leftover check needs a VM run).
+3. Process Lasso style rules: the page priority (proof needed). Start priorities are proven; live rules and affinity are on the not-included page.
+4. Autoruns: Delete with a backup (the locations and the CSV export are done).
+5. The documented policies still left over (sync per category, quality update deferral and more); AI permissions without documented values, cross-device resume, desktop Spotlight and Edge promotions were checked and stay out, with the reasons in the commit history and on the not-included page.
 6. About 30 cosmetic tweaks (menu delays, drive letters first, shortcut suffix, Photo Viewer, Folder Options, taskbar on several displays, Num Lock, startup sound and others); many need VM proof.
 7. Export and command line: removed apps, service start types and startup entries in the export; `--export`, `--profile ... --apply-recommended` and `--include-preview`.
 8. An "also for new users" scope, an opt-in re-apply task after feature updates, and small quick fixes (pending restart check, Defender signature update, winget repair, icon cache reset, Restart into Safe Mode).

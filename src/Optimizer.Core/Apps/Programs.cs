@@ -5,7 +5,10 @@ using Optimizer.Core.Startup;
 
 namespace Optimizer.Core.Apps;
 
-/// <summary>A desktop program from the Windows uninstall list (what Settings > Apps > Installed apps shows).</summary>
+/// <summary>
+/// A desktop program from the Windows uninstall list (what Settings > Apps > Installed apps shows). The quiet command,
+/// install folder and icon come from the same key and are only read for a quiet uninstall and the leftover scan.
+/// </summary>
 public sealed record DesktopProgram(
     string Name,
     string? Publisher,
@@ -15,7 +18,10 @@ public sealed record DesktopProgram(
     string? UninstallString,
     string? ProductCode,
     bool PerUser,
-    string RegistryKey)
+    string RegistryKey,
+    string? QuietUninstallString = null,
+    string? InstallLocation = null,
+    string? DisplayIcon = null)
 {
     public bool CanUninstall => ProductCode is not null || !string.IsNullOrWhiteSpace(UninstallString);
 }
@@ -87,7 +93,76 @@ public static class Programs
         long? size = app.GetValue("EstimatedSize") is int kb && kb > 0 ? kb : null;
         DateTime? date = app.GetValue("InstallDate") is string d && DateTime.TryParseExact(d, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : null;
         return new DesktopProgram(name.Trim(), app.GetValue("Publisher") as string, app.GetValue("DisplayVersion") as string, size, date,
-            uninstall, productCode, hive == Hive.User, $@"{(hive == Hive.Machine ? "HKLM" : "HKCU")}\{path}\{sub}");
+            uninstall, productCode, hive == Hive.User, $@"{(hive == Hive.Machine ? "HKLM" : "HKCU")}\{path}\{sub}",
+            app.GetValue("QuietUninstallString", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames) as string,
+            app.GetValue("InstallLocation", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames) as string,
+            app.GetValue("DisplayIcon", null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames) as string);
+    }
+
+    /// <summary>True while the program's uninstall key still exists (the uninstaller has not finished or was cancelled).</summary>
+    public static bool StillListed(IRegistryRoots registry, DesktopProgram p)
+    {
+        var (hive, path) = p.RegistryKey.StartsWith(@"HKLM\", StringComparison.OrdinalIgnoreCase) ? (Hive.Machine, p.RegistryKey[5..])
+            : p.RegistryKey.StartsWith(@"HKCU\", StringComparison.OrdinalIgnoreCase) ? (Hive.User, p.RegistryKey[5..])
+            : (Hive.Machine, "");
+        if (path.Length == 0) return false;
+        try
+        {
+            using var key = registry.Open(hive, path, writable: false);
+            return key is not null;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Every folder the uninstall entries (also the components and updates the list hides) and the services point into:
+    /// a folder that holds one of them still belongs to something installed (<see cref="ProgramLeftovers"/>).
+    /// </summary>
+    public static IReadOnlyList<string> ReferencedPaths(IRegistryRoots registry)
+    {
+        var paths = new List<string>();
+        void Add(string? value, bool command)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            var path = command ? CommandLine.ImagePath(value) : ProgramLeftovers.CleanPath(value);
+            if (path is { Length: > 0 }) paths.Add(path);
+        }
+        foreach (var (hive, path) in new[] { (Hive.Machine, Uninstall), (Hive.Machine, Uninstall32), (Hive.User, Uninstall) })
+        {
+            try
+            {
+                using var key = registry.Open(hive, path, writable: false);
+                foreach (var sub in key?.GetSubKeyNames() ?? [])
+                {
+                    using var app = key!.OpenSubKey(sub);
+                    if (app is null) continue;
+                    Add(app.GetValue("InstallLocation") as string, command: false);
+                    Add(app.GetValue("UninstallString") as string, command: true);
+                    Add(app.GetValue("QuietUninstallString") as string, command: true);
+                    Add(app.GetValue("DisplayIcon") as string, command: false);
+                }
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or System.Security.SecurityException or IOException)
+            {
+                // no user hive
+            }
+        }
+        try
+        {
+            using var services = registry.Open(Hive.Machine, @"SYSTEM\CurrentControlSet\Services", writable: false);
+            foreach (var sub in services?.GetSubKeyNames() ?? [])
+            {
+                using var service = services!.OpenSubKey(sub);
+                Add(service?.GetValue("ImagePath") as string, command: true);
+            }
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+        }
+        return paths;
     }
 
     /// <summary>
@@ -96,6 +171,27 @@ public static class Programs
     /// planted entry cannot make an elevated msiexec remove a program installed for the whole PC. Other uninstallers run
     /// elevated only when the program and, for rundll32 lines, its DLL are in folders only administrators can change.
     /// </summary>
+    /// <summary>
+    /// The uninstall without questions, or null when the program has none: Windows Installer gets /qn /norestart (a
+    /// needed restart is left to the user), other programs only their own QuietUninstallString, under the same rules for
+    /// running elevated as <see cref="Command"/>.
+    /// </summary>
+    public static UninstallCommand? QuietCommand(DesktopProgram p, Func<string, bool>? isAdminOnly = null, Func<string, bool>? exists = null)
+    {
+        if (Command(p, isAdminOnly, exists) is { } normal && IsWindowsInstaller(normal)) return Quiet(normal);
+        if (string.IsNullOrWhiteSpace(p.QuietUninstallString)) return null;
+        var quiet = Command(p with { UninstallString = p.QuietUninstallString, ProductCode = null }, isAdminOnly, exists);
+        return quiet is not null && IsWindowsInstaller(quiet) ? Quiet(quiet) : quiet;
+    }
+
+    private static bool IsWindowsInstaller(UninstallCommand c) =>
+        string.Equals(c.File, ProcessHardening.ResolveSystemTool("msiexec.exe"), StringComparison.OrdinalIgnoreCase);
+
+    private static UninstallCommand Quiet(UninstallCommand msi) => msi with { Arguments = msi.Arguments + " /qn /norestart" };
+
+    /// <summary>Exit codes of a finished uninstall: 3010 and 1641 are Windows Installer's "done, restart needed".</summary>
+    public static bool Succeeded(int code) => code is 0 or 3010 or 1641;
+
     public static UninstallCommand? Command(DesktopProgram p, Func<string, bool>? isAdminOnly = null, Func<string, bool>? exists = null)
     {
         isAdminOnly ??= TrustedPath.IsAdminOnlyWritable;

@@ -1051,7 +1051,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Startup_CopyLocation" xml:space="preserve"><value>Ort kopieren</value></data>
   <data name="Startup_FileMissing" xml:space="preserve"><value>Die Datei dieses Eintrags existiert nicht.</value></data>
   <data name="Programs_Title" xml:space="preserve"><value>Installierte Programme</value></data>
-  <data name="Programs_Hint" xml:space="preserve"><value>Desktopprogramme aus der Deinstallationsliste von Windows. Deinstallieren startet das eigene Deinstallationsprogramm mit seinem Fenster. Vor der ersten Deinstallation einer Sitzung legt die App einen Wiederherstellungspunkt an, wenn der Computerschutz an ist.</value></data>
+  <data name="Programs_Hint" xml:space="preserve"><value>Desktopprogramme aus der Deinstallationsliste von Windows. Deinstallieren startet das eigene Deinstallationsprogramm mit seinem Fenster. Hake mehrere an, um sie nacheinander zu deinstallieren, ohne Rückfragen, wo das Programm es anbietet, und zu sehen, was sie zurücklassen. Vor der ersten Deinstallation einer Sitzung legt die App einen Wiederherstellungspunkt an, wenn der Computerschutz an ist.</value></data>
   <data name="Programs_Search" xml:space="preserve"><value>Programme suchen</value></data>
   <data name="Programs_Count" xml:space="preserve"><value>{0} Programme</value></data>
   <data name="Programs_Uninstall" xml:space="preserve"><value>Deinstallieren</value></data>
@@ -1244,6 +1244,29 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Debloat_TabNote" xml:space="preserve"><value>Angeboten werden nur Apps aus einer geprüften Liste, Teile von Windows und Apps, die Spiele brauchen, nie. Das Entfernen lässt sich hier nicht rückgängig machen; für Apps, die es noch im Microsoft Store gibt, enthält die Liste der entfernten Apps einen Link zum Neuinstallieren.</value></data>
   <data name="Debloat_RemoveName" xml:space="preserve"><value>{0} entfernen</value></data>
   <data name="Programs_UninstallName" xml:space="preserve"><value>{0} deinstallieren</value></data>
+  <data name="Programs_SelectName" xml:space="preserve"><value>{0} auswählen</value></data>
+  <data name="Programs_UninstallSelected" xml:space="preserve"><value>Auswahl deinstallieren ({0})</value></data>
+  <data name="Programs_Quiet" xml:space="preserve"><value>Ohne Rückfragen, wo möglich</value></data>
+  <data name="Programs_QuietHint" xml:space="preserve"><value>Nutzt die stille Deinstallation, die das Programm anbietet (Windows Installer oder den eigenen stillen Befehl des Herstellers). Sie beantwortet die Fragen des Deinstallationsprogramms mit dessen Vorgaben. Programme ohne sie zeigen ihr Fenster.</value></data>
+  <data name="Programs_BulkConfirmTitle" xml:space="preserve"><value>Programme deinstallieren?</value></data>
+  <data name="Programs_BulkConfirmText" xml:space="preserve"><value>Deinstalliert {0} Programme nacheinander. Jedes Deinstallationsprogramm entscheidet selbst, was entfernt wird, auch deine Einstellungen für das Programm.</value></data>
+  <data name="Programs_BulkQuiet" xml:space="preserve"><value>Ohne Rückfragen: {0}</value></data>
+  <data name="Programs_BulkWindow" xml:space="preserve"><value>Mit dem Fenster des Deinstallationsprogramms: {0}</value></data>
+  <data name="Programs_QueueProgress" xml:space="preserve"><value>Deinstalliere {0} von {1}: {2}</value></data>
+  <data name="Programs_QueueWaiting" xml:space="preserve"><value>Wartet, bis das Programm aus der Liste verschwindet. Ist sein Fenster fertig oder geschlossen, wähle Weiter.</value></data>
+  <data name="Programs_QueueContinue" xml:space="preserve"><value>Weiter</value></data>
+  <data name="Programs_QueueContinueHint" xml:space="preserve"><value>Startet das nächste Deinstallationsprogramm, ohne auf dieses zu warten.</value></data>
+  <data name="Programs_QueueStop" xml:space="preserve"><value>Anhalten</value></data>
+  <data name="Programs_QueueStopHint" xml:space="preserve"><value>Startet kein weiteres Deinstallationsprogramm. Ein laufendes wird in seinem eigenen Fenster fertig.</value></data>
+  <data name="Programs_BulkDone" xml:space="preserve"><value>{0} von {1} Programmen deinstalliert.</value></data>
+  <data name="Leftovers_Title" xml:space="preserve"><value>Zurückgeblieben</value></data>
+  <data name="Leftovers_Hint" xml:space="preserve"><value>Ordner und Verknüpfungen der deinstallierten Programme, die noch da sind. Aufgeführt sind nur Ordner, die kein installiertes Programm und kein Dienst nutzt. Prüfe die Liste: alles kommt in den Papierkorb, aus dem du es wiederherstellen kannst.</value></data>
+  <data name="Leftovers_FolderMeta" xml:space="preserve"><value>Ordner, {0}, von {1}</value></data>
+  <data name="Leftovers_ShortcutMeta" xml:space="preserve"><value>Verknüpfung, von {0}</value></data>
+  <data name="Leftovers_Recycle" xml:space="preserve"><value>In den Papierkorb</value></data>
+  <data name="Leftovers_Dismiss" xml:space="preserve"><value>Alle behalten</value></data>
+  <data name="Leftovers_Failed" xml:space="preserve"><value>Nicht verschoben: wird verwendet, hat sich geändert oder Windows hat es abgelehnt.</value></data>
+  <data name="Leftovers_Recycled" xml:space="preserve"><value>In den Papierkorb verschoben: {0}</value></data>
   <data name="Apps_InstallName" xml:space="preserve"><value>{0} installieren</value></data>
   <data name="Storage_Drive" xml:space="preserve"><value>Laufwerk</value></data>
   <data name="Prio_Priority" xml:space="preserve"><value>CPU-Priorität</value></data>

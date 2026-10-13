@@ -42,6 +42,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |
 | `--profile <id>` | start with a profile: gaming, laptopGaming, battery, office, quiet, lowEnd (saved only when changed in the app) |
 | `--preview-drift on` | shows the "changes reset" banner with sample entries (nothing is read or changed) |
+| `--preview-uninstall on` | opens Remove apps > Installed programs, ticks the first two programs and shows a waiting uninstall queue and sample leftovers (nothing is started or moved) |
 | `--expert on` | Expert mode for this session (runs without admin rights only) |
 
 ## Layout

@@ -72,7 +72,7 @@ public sealed class SearchIndex(TweakCatalog tweaks, CatalogData catalog) : ISea
             (SearchKind.Tool, "Cleanup", "Cleanup_ComponentTitle", "Cleanup_ComponentHint", ["winsxs", "component store", "komponentenspeicher"]),
             (SearchKind.Tool, "Debloat", "Debloat_Title", "Debloat_Hint", ["bloatware", "preinstalled apps", "remove apps", "apps entfernen", "vorinstalliert"]),
             (SearchKind.Tool, "Debloat", "Debloat_OneDriveTitle", null, ["onedrive", "uninstall onedrive"]),
-            (SearchKind.Tool, "Debloat", "Programs_Title", "Programs_Hint", ["uninstall program", "programme deinstallieren", "installed apps"]),
+            (SearchKind.Tool, "Debloat", "Programs_Title", "Programs_Hint", ["uninstall program", "programme deinstallieren", "installed apps", "bulk uninstall", "bulk crap uninstaller", "quiet uninstall", "leftovers", "mehrere deinstallieren", "reste"]),
             (SearchKind.Tool, "Apps", "Apps_UpdateAll", null, ["winget upgrade", "update apps", "apps aktualisieren"]),
             (SearchKind.Tool, "Apps", "Drv_Title", "Drv_Hint", ["driver update", "treiber", "chipset", "graphics driver", "grafiktreiber"]),
             (SearchKind.Tool, "Apps", "Drv_CleanTitle", "Drv_CleanHint", ["ddu", "display driver uninstaller", "clean driver install"]),

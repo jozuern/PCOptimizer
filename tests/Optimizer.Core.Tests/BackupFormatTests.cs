@@ -164,7 +164,7 @@ public class BackupFormatTests
             .SelectMany(file => JsonSerializer.Deserialize<TweakBackup>(File.ReadAllText(Path.Combine(FixtureFolder, file)))!.Entries)
             .Select(e => JsonDocument.Parse(e.Action!).RootElement.GetProperty("type").GetString())
             .ToHashSet();
-        Assert.Empty(types.Where(t => !stored.Contains(t)));
+        Assert.All(types, t => Assert.Contains(t, stored));
     }
 
     [Theory]

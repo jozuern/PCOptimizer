@@ -99,9 +99,33 @@ public sealed partial class ProgramRow(DesktopProgram program) : ObservableObjec
 
     [ObservableProperty] private string? _stateText;
     [ObservableProperty] private bool _isRemoving;
+    [ObservableProperty] private bool _isSelected;
+
+    /// <summary>Tells the page that the number of selected programs changed.</summary>
+    internal Action? SelectionChanged { get; init; }
+
+    partial void OnIsSelectedChanged(bool value) => SelectionChanged?.Invoke();
 
     /// <summary>"Uninstall Steam": what a screen reader says for the button (each row has one).</summary>
     public string UninstallLabel => Loc.Instance.Format("Programs_UninstallName", Name);
+
+    public string SelectLabel => Loc.Instance.Format("Programs_SelectName", Name);
+}
+
+/// <summary>A folder or shortcut an uninstalled program left behind, offered for the Recycle Bin.</summary>
+public sealed partial class LeftoverRow(Leftover leftover, string program) : ObservableObject
+{
+    public Leftover Leftover { get; } = leftover;
+    public string ProgramName { get; } = program;
+    public string Path => Leftover.Path;
+
+    /// <summary>"Folder, 120 MB, left by App", in the language of the moment: a language switch builds new rows.</summary>
+    public string Meta { get; } = leftover.Kind == LeftoverKind.Folder
+        ? Loc.Instance.Format("Leftovers_FolderMeta", CleanupViewModel.Size(leftover.Bytes), program)
+        : Loc.Instance.Format("Leftovers_ShortcutMeta", program);
+
+    [ObservableProperty] private bool _selected = true;
+    [ObservableProperty] private string? _stateText;
 }
 
 public sealed partial class AppsViewModel(MainViewModel owner, AppServices services, IDialogs dialogs) : PageViewModel(owner)
@@ -113,9 +137,32 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
 
     public ObservableCollection<ProgramRow> ProgramRows { get; } = [];
 
+    /// <summary>What uninstalled programs left behind, for the user to review (see <see cref="ProgramLeftovers"/>).</summary>
+    public ObservableCollection<LeftoverRow> Leftovers { get; } = [];
+
     [ObservableProperty] private string _programSearch = "";
     [ObservableProperty] private string _programsText = "";
     [ObservableProperty] private bool _isUpdatingAll;
+    [ObservableProperty] private int _selectedCount;
+    [ObservableProperty] private bool _quietUninstall = true;
+    [ObservableProperty] private bool _isQueueRunning;
+    [ObservableProperty] private bool _isWaitingForUninstaller;
+    [ObservableProperty] private string _queueText = "";
+    [ObservableProperty] private bool _isRecycling;
+
+    private CancellationTokenSource? _queueStop;
+    private TaskCompletionSource? _skipWait;
+
+    public bool HasSelection => SelectedCount > 0;
+    public string UninstallSelectedText => Loc.Instance.Format("Programs_UninstallSelected", SelectedCount);
+
+    partial void OnSelectedCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(UninstallSelectedText));
+    }
+
+    private void UpdateSelection() => SelectedCount = _allPrograms.Count(r => r.IsSelected);
 
     partial void OnProgramSearchChanged(string value) => FilterPrograms();
 
@@ -133,7 +180,15 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
     private async Task LoadProgramsAsync()
     {
         var list = await Task.Run(() => Programs.Read(services.Context.Registry));
-        _allPrograms = list.Select(p => new ProgramRow(p)).ToList();
+        // The selection and the state lines survive a reload for the programs that are still listed.
+        var old = _allPrograms.GroupBy(r => r.Program.RegistryKey, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        _allPrograms = list.Select(p => new ProgramRow(p)
+        {
+            IsSelected = old.TryGetValue(p.RegistryKey, out var o) && o.IsSelected,
+            StateText = o?.StateText,
+            SelectionChanged = UpdateSelection,
+        }).ToList();
+        UpdateSelection();
         services.Search.UpdateRuntime(Optimizer.Core.Search.SearchKind.InstalledProgram, _allPrograms.Select(r => ("Debloat", r.Program.RegistryKey, r.Name, r.Meta)));
         FilterPrograms();
     }
@@ -157,18 +212,10 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         {
             await RunWorkAsync($"uninstall {row.Name}", async () =>
             {
-                // A restore point before the first uninstall of the session. When none can be made (System Protection
-                // off, or Windows' limit of one per day), the user decides whether to go on.
-                if (!_restorePointReady)
+                if (!await EnsureRestorePointAsync())
                 {
-                    var made = await Task.Run(() => services.RestorePoints.IsEnabled()) == true
-                               && await services.RestorePoints.CreateAsync(Loc.Instance["Programs_RestorePointName"]);
-                    if (!made && !dialogs.Ask(Loc.Instance["Programs_NoRestorePointTitle"], Loc.Instance["Programs_NoRestorePointText"], Loc.Instance["Programs_Uninstall"]))
-                    {
-                        state = "";
-                        return;
-                    }
-                    _restorePointReady = true;
+                    state = "";
+                    return;
                 }
                 var code = await ProgramUninstaller.RunAsync(command, services.Elevation);
                 if (code is null)
@@ -187,6 +234,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                 else
                 {
                     ProgramsText = Loc.Instance.Format("Programs_RemovedName", row.Name);
+                    await FindLeftoversAsync([row.Program]);
                 }
             });
         }
@@ -196,6 +244,187 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
             if (state is not null) row.StateText = state;
             else if (row.StateText == Loc.Instance["Programs_Running"]) row.StateText = "";
         }
+    }
+
+    /// <summary>
+    /// A restore point before the first uninstall of the session. When none can be made (System Protection off, or
+    /// Windows' limit of one per day), the user decides whether to go on.
+    /// </summary>
+    private async Task<bool> EnsureRestorePointAsync()
+    {
+        if (_restorePointReady) return true;
+        var made = await Task.Run(() => services.RestorePoints.IsEnabled()) == true
+                   && await services.RestorePoints.CreateAsync(Loc.Instance["Programs_RestorePointName"]);
+        if (!made && !dialogs.Ask(Loc.Instance["Programs_NoRestorePointTitle"], Loc.Instance["Programs_NoRestorePointText"], Loc.Instance["Programs_Uninstall"]))
+            return false;
+        _restorePointReady = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Uninstalls the selected programs one after the other (Bulk Crap Uninstaller's queue): quietly where the program
+    /// has a quiet command and the switch is on, else with the uninstaller's window. The next one starts when the
+    /// program has left the uninstall list, when the user selects Continue, or after 30 minutes; Stop starts no more.
+    /// </summary>
+    [RelayCommand]
+    private async Task UninstallSelectedAsync()
+    {
+        if (IsQueueRunning) return;
+        var quietOn = QuietUninstall;
+        var plan = _allPrograms.Where(r => r.IsSelected && !r.IsRemoving).Select(r =>
+        {
+            var quiet = quietOn ? Programs.QuietCommand(r.Program) : null;
+            return (Row: r, Command: quiet ?? Programs.Command(r.Program), Quiet: quiet is not null);
+        }).ToList();
+        foreach (var p in plan.Where(p => p.Command is null)) p.Row.StateText = Loc.Instance["Programs_NoUninstaller"];
+        var queue = plan.Where(p => p.Command is not null).ToList();
+        if (queue.Count == 0) return;
+        var text = Loc.Instance.Format("Programs_BulkConfirmText", queue.Count);
+        if (queue.Where(p => p.Quiet).Select(p => p.Row.Name).ToList() is { Count: > 0 } quietNames)
+            text += "\n\n" + Loc.Instance.Format("Programs_BulkQuiet", string.Join(", ", quietNames));
+        if (queue.Where(p => !p.Quiet).Select(p => p.Row.Name).ToList() is { Count: > 0 } windowNames)
+            text += "\n\n" + Loc.Instance.Format("Programs_BulkWindow", string.Join(", ", windowNames));
+        if (!dialogs.Ask(Loc.Instance["Programs_BulkConfirmTitle"], text, Loc.Instance["Programs_Uninstall"])) return;
+
+        IsQueueRunning = true;
+        using var stop = new CancellationTokenSource();
+        _queueStop = stop;
+        var removed = new List<DesktopProgram>();
+        var started = 0;
+        try
+        {
+            await RunWorkAsync("uninstall selected programs", async () =>
+            {
+                if (!await EnsureRestorePointAsync()) return;
+                foreach (var (row, command, _) in queue)
+                {
+                    if (stop.IsCancellationRequested) break;
+                    started++;
+                    QueueText = Loc.Instance.Format("Programs_QueueProgress", started, queue.Count, row.Name);
+                    row.IsRemoving = true;
+                    row.StateText = Loc.Instance["Programs_Running"];
+                    try
+                    {
+                        var code = await ProgramUninstaller.RunAsync(command!, services.Elevation);
+                        // Started as the user, or ended at once after starting a copy of itself: wait for the entry to go.
+                        if (code is null || Programs.Succeeded(code.Value)) await WaitUntilGoneAsync(row.Program, stop.Token);
+                        if (!await Task.Run(() => Programs.StillListed(services.Context.Registry, row.Program)))
+                        {
+                            removed.Add(row.Program);
+                            row.StateText = Loc.Instance.Format("Programs_RemovedName", row.Name);
+                        }
+                        else
+                        {
+                            row.StateText = code is { } c && !Programs.Succeeded(c) ? Loc.Instance.Format("Programs_StillThere", c) : Loc.Instance["Programs_MaybeStillRunning"];
+                        }
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+                    {
+                        row.StateText = Loc.Instance.Format("Result_Error", ex.Message);
+                    }
+                    finally
+                    {
+                        row.IsRemoving = false;
+                    }
+                }
+            });
+        }
+        finally
+        {
+            _queueStop = null;
+            IsQueueRunning = false;
+            IsWaitingForUninstaller = false;
+            QueueText = "";
+        }
+        if (started == 0) return;
+        await LoadProgramsAsync();
+        Owner.ShowResult(Loc.Instance.Format("Programs_BulkDone", removed.Count, queue.Count),
+            removed.Count == queue.Count ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
+        if (removed.Count > 0) await FindLeftoversAsync(removed);
+    }
+
+    private async Task WaitUntilGoneAsync(DesktopProgram program, CancellationToken stop)
+    {
+        var skip = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _skipWait = skip;
+        IsWaitingForUninstaller = true;
+        try
+        {
+            var until = DateTime.UtcNow.AddMinutes(30);
+            while (DateTime.UtcNow < until && !stop.IsCancellationRequested && !skip.Task.IsCompleted
+                   && await Task.Run(() => Programs.StillListed(services.Context.Registry, program)))
+                await Task.WhenAny(Task.Delay(TimeSpan.FromSeconds(2), stop), skip.Task);
+        }
+        finally
+        {
+            _skipWait = null;
+            IsWaitingForUninstaller = false;
+        }
+    }
+
+    /// <summary>Starts the next uninstaller without waiting for the current one to leave the list.</summary>
+    [RelayCommand]
+    private void ContinueQueue() => _skipWait?.TrySetResult();
+
+    /// <summary>Starts no further uninstaller; the one running goes on in its own window.</summary>
+    [RelayCommand]
+    private void StopQueue()
+    {
+        _queueStop?.Cancel();
+        _skipWait?.TrySetResult();
+    }
+
+    private async Task FindLeftoversAsync(IReadOnlyList<DesktopProgram> removed)
+    {
+        var roots = LeftoverRoots.ForPc(services.ProfilePath);
+        var found = await Task.Run(() =>
+        {
+            var referenced = Programs.ReferencedPaths(services.Context.Registry);
+            return ProgramLeftovers.FindAll(removed, roots, referenced);
+        });
+        foreach (var (program, l) in found)
+            if (!Leftovers.Any(x => string.Equals(x.Path, l.Path, StringComparison.OrdinalIgnoreCase))) Leftovers.Add(new LeftoverRow(l, program.Name));
+    }
+
+    /// <summary>Moves the ticked leftovers to the Recycle Bin, where they can be restored.</summary>
+    [RelayCommand]
+    private async Task RecycleLeftoversAsync()
+    {
+        var picked = Leftovers.Where(r => r.Selected).ToList();
+        if (picked.Count == 0 || IsRecycling) return;
+        IsRecycling = true;
+        try
+        {
+            var failed = await Task.Run(() => picked.Where(r => !StorageAnalyzer.RecycleLeftover(r.Path)).ToList());
+            foreach (var r in picked.Except(failed)) Leftovers.Remove(r);
+            foreach (var r in failed) r.StateText = Loc.Instance["Leftovers_Failed"];
+            Owner.ShowResult(Loc.Instance.Format("Leftovers_Recycled", picked.Count - failed.Count),
+                failed.Count == 0 ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
+        }
+        finally
+        {
+            IsRecycling = false;
+        }
+    }
+
+    [RelayCommand]
+    private void DismissLeftovers() => Leftovers.Clear();
+
+    /// <summary>
+    /// Developer aid for screenshots (--preview-uninstall): ticks the first two programs and shows a waiting queue and
+    /// sample leftovers. Nothing is started, read from disk or moved.
+    /// </summary>
+    public void PreviewUninstall()
+    {
+        foreach (var r in _allPrograms.Take(2)) r.IsSelected = true;
+        var name = _allPrograms.FirstOrDefault()?.Name ?? "Contoso";
+        IsQueueRunning = true;
+        IsWaitingForUninstaller = true;
+        QueueText = Loc.Instance.Format("Programs_QueueProgress", 1, 2, name);
+        var folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Contoso Tool");
+        Leftovers.Add(new LeftoverRow(new Leftover(LeftoverKind.Folder, folder, 48_234_496), "Contoso Tool"));
+        Leftovers.Add(new LeftoverRow(new Leftover(LeftoverKind.Shortcut,
+            System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "Contoso Tool.lnk"), 0), "Contoso Tool"));
     }
 
     /// <summary>winget upgrade --all: every package winget knows an update for, from the winget source.</summary>
@@ -264,6 +493,9 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         ShowApps();
         FilterPrograms();
         ShowDrivers(_drivers);
+        for (var i = 0; i < Leftovers.Count; i++)
+            Leftovers[i] = new LeftoverRow(Leftovers[i].Leftover, Leftovers[i].ProgramName) { Selected = Leftovers[i].Selected };
+        OnPropertyChanged(nameof(UninstallSelectedText));
         return Task.CompletedTask;
     }
 

@@ -160,18 +160,71 @@
                             <ui:TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}" Text="{Binding Apps.ProgramsText}" VerticalAlignment="Center" Margin="12,0,0,0" />
                             <ui:TextBox PlaceholderText="{l:Tr Programs_Search}" AutomationProperties.Name="{l:Tr Programs_Search}" Icon="{ui:SymbolIcon Search20}" Text="{Binding Apps.ProgramSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                         </DockPanel>
+                        <!-- Several programs in one go: one after the other, quietly where the program offers it -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding Apps.HasSelection, Converter={StaticResource BoolToVisibility}}">
+                            <ui:Button Appearance="Primary" Content="{Binding Apps.UninstallSelectedText}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Apps.UninstallSelectedCommand}"
+                                       IsEnabled="{Binding Apps.IsQueueRunning, Converter={StaticResource InverseBool}}" />
+                            <CheckBox Content="{l:Tr Programs_Quiet}" IsChecked="{Binding Apps.QuietUninstall}" Margin="16,0,0,0" VerticalAlignment="Center" ToolTip="{l:Tr Programs_QuietHint}" />
+                        </StackPanel>
+                        <ui:Card Padding="16,12" Margin="0,0,0,8" Visibility="{Binding Apps.IsQueueRunning, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                    <ui:Button Content="{l:Tr Programs_QueueContinue}" Command="{Binding Apps.ContinueQueueCommand}" Margin="0,0,8,0" ToolTip="{l:Tr Programs_QueueContinueHint}"
+                                               Visibility="{Binding Apps.IsWaitingForUninstaller, Converter={StaticResource BoolToVisibility}}" />
+                                    <ui:Button Content="{l:Tr Programs_QueueStop}" Command="{Binding Apps.StopQueueCommand}" ToolTip="{l:Tr Programs_QueueStopHint}" />
+                                </StackPanel>
+                                <ui:ProgressRing DockPanel.Dock="Left" IsIndeterminate="True" Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <ui:TextBlock FontTypography="Body" Text="{Binding Apps.QueueText}" TextWrapping="Wrap" />
+                                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Programs_QueueWaiting}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                  Visibility="{Binding Apps.IsWaitingForUninstaller, Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </ui:Card>
+                        <!-- What uninstalled programs left behind: reviewed here, then moved to the Recycle Bin -->
+                        <ui:Card Padding="16,12" Margin="0,0,0,8" Visibility="{Binding Apps.Leftovers.Count, Converter={StaticResource CountToVisibility}}">
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="BodyStrong" Text="{l:Tr Leftovers_Title}" />
+                                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Leftovers_Hint}" TextWrapping="Wrap" Margin="0,4,0,8" />
+                                <ScrollViewer MaxHeight="216" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Apps.Leftovers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected}" Margin="0,4" AutomationProperties.Name="{Binding Path}">
+                                                    <StackPanel>
+                                                        <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
+                                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding StateText}" TextWrapping="Wrap"
+                                                                      Visibility="{Binding StateText, Converter={StaticResource NullToVisibility}}" />
+                                                    </StackPanel>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <ui:Button Appearance="Primary" Content="{l:Tr Leftovers_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Apps.RecycleLeftoversCommand}" Margin="0,0,8,0"
+                                               IsEnabled="{Binding Apps.IsRecycling, Converter={StaticResource InverseBool}}" />
+                                    <ui:Button Content="{l:Tr Leftovers_Dismiss}" Command="{Binding Apps.DismissLeftoversCommand}" Appearance="Transparent" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ui:Card>
                     </StackPanel>
                     <ItemsControl Grid.Row="1" ItemsSource="{Binding Apps.ProgramRows}" Style="{StaticResource VirtualCardList}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}">
                                     <ui:CardControl.Header>
-                                        <StackPanel>
-                                            <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextWrapping="Wrap" />
-                                            <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Meta}" Margin="0,4,0,0" />
-                                            <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding StateText}" Margin="0,4,0,0" TextWrapping="Wrap"
-                                                          Visibility="{Binding StateText, Converter={StaticResource NullToVisibility}}" />
-                                        </StackPanel>
+                                        <DockPanel>
+                                            <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}" MinWidth="0" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                      AutomationProperties.Name="{Binding SelectLabel}" IsEnabled="{Binding IsRemoving, Converter={StaticResource InverseBool}}" />
+                                            <StackPanel>
+                                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextWrapping="Wrap" />
+                                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Meta}" Margin="0,4,0,0" />
+                                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding StateText}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                              Visibility="{Binding StateText, Converter={StaticResource NullToVisibility}}" />
+                                            </StackPanel>
+                                        </DockPanel>
                                     </ui:CardControl.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,12,0" Visibility="{Binding IsRemoving, Converter={StaticResource BoolToVisibility}}" />

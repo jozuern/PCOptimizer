@@ -1,0 +1,223 @@
+using Optimizer.Core.Platform;
+using Optimizer.Core.Startup;
+
+namespace Optimizer.Core.Apps;
+
+public enum LeftoverKind { Folder, Shortcut }
+
+/// <summary>A folder or shortcut an uninstalled program left behind; <see cref="Bytes"/> is 0 for a shortcut.</summary>
+public sealed record Leftover(LeftoverKind Kind, string Path, long Bytes);
+
+/// <summary>
+/// Where leftovers may be offered: the program folders of the PC and of the signed-in user, the Start menu and desktop
+/// folders for shortcuts, and folders that are never offered (this app and its data).
+/// </summary>
+public sealed record LeftoverRoots(IReadOnlyList<string> Folders, IReadOnlyList<string> ShortcutFolders, IReadOnlyList<string> Keep)
+{
+    /// <param name="profile">The signed-in user's profile folder; null leaves out the per-user folders.</param>
+    public static LeftoverRoots ForPc(string? profile)
+    {
+        var folders = new List<string>
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        };
+        var shortcuts = new List<string>
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory),
+        };
+        if (profile is { Length: > 0 })
+        {
+            folders.Add(Path.Combine(profile, "AppData", "Local"));
+            folders.Add(Path.Combine(profile, "AppData", "Roaming"));
+            shortcuts.Add(Path.Combine(profile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs"));
+            shortcuts.Add(Path.Combine(profile, "Desktop"));
+        }
+        var keep = new List<string> { DataPaths.Root };
+        if (Path.GetDirectoryName(Environment.ProcessPath) is { } self) keep.Add(self);
+        return new LeftoverRoots(folders.Where(f => f.Length > 0).ToList(), shortcuts.Where(f => f.Length > 0).ToList(), keep);
+    }
+}
+
+/// <summary>
+/// What an uninstalled program left behind, the way Bulk Crap Uninstaller looks for it, but only where the evidence is
+/// clear: the program's own folder (its install location, the folder of its uninstaller or its icon) when it still
+/// exists after the uninstall entry is gone, and Start menu or desktop shortcuts that point into that folder. A folder is
+/// offered only below a program folder (Program Files, ProgramData, the user's AppData), not at the first level of a
+/// folder many programs share (Common Files, Microsoft, Programs), and never when another uninstall entry, a hidden
+/// component or a service still points into it or above it. Everything found goes to the Recycle Bin after the user
+/// reviewed it, never straight away.
+/// </summary>
+public static class ProgramLeftovers
+{
+    /// <summary>Folders below a program folder that hold the files of many programs or of Windows: only their subfolders can be leftovers.</summary>
+    private static readonly HashSet<string> Shared = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Common Files", "Microsoft", "Microsoft Shared", "Microsoft.NET", "Windows", "WindowsApps", "ModifiableWindowsApps",
+        "Windows Defender", "Windows Defender Advanced Threat Protection", "Windows NT", "Windows Mail", "Windows Media Player",
+        "Windows Photo Viewer", "Windows Sidebar", "Windows Security", "Windows Portable Devices", "WindowsPowerShell", "PowerShell",
+        "PackageManagement", "Package Cache", "Internet Explorer", "Reference Assemblies", "MSBuild", "dotnet", "Uninstall Information",
+        "Programs", "Packages", "Temp", "Application Data", "Start Menu", "Desktop", "Documents", "regid.1991-06.com.microsoft",
+        "USOShared", "USOPrivate", "ssh", "Comms", "SoftwareDistribution", "NVIDIA Corporation", "NVIDIA", "Intel", "AMD",
+        "ATI Technologies", "Realtek",
+    };
+
+    /// <summary>Shared folders deeper down (relative to a program folder): never offered themselves, only what is inside them.</summary>
+    private static readonly HashSet<string> SharedDeeper = new(StringComparer.OrdinalIgnoreCase)
+    {
+        @"Microsoft\WindowsApps", @"Microsoft\Windows", @"Microsoft\Windows\Start Menu", @"Microsoft\Windows\Start Menu\Programs",
+        @"Microsoft\Windows\Start Menu\Programs\Startup", @"Microsoft\WinGet", @"Microsoft\WinGet\Packages", @"Microsoft\WinGet\Links",
+        @"Microsoft\Edge", @"Microsoft\EdgeUpdate", @"Microsoft\OneDrive", @"Microsoft\Teams", @"Microsoft\Windows Defender",
+        @"Microsoft\Crypto", @"Microsoft\Protect", @"Microsoft\Credentials", @"Microsoft\Vault", @"Microsoft\Office",
+    };
+
+    /// <summary>A folder path from a registry value: quotes, an icon index (",0") and a trailing backslash removed; a file gives its folder.</summary>
+    public static string? CleanPath(string? value, Func<string, bool>? isFile = null)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var s = Environment.ExpandEnvironmentVariables(value.Trim());
+        // "C:\App\app.exe",0 or C:\App\app.exe,0: the icon index after the path.
+        var comma = s.LastIndexOf(',');
+        if (comma > 0 && int.TryParse(s[(comma + 1)..].Trim(), out _)) s = s[..comma].Trim();
+        s = s.Trim('"').Trim();
+        if (s.Length < 3 || !Path.IsPathFullyQualified(s)) return null;
+        try
+        {
+            s = Path.GetFullPath(s).TrimEnd('\\');
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return null;
+        }
+        return (isFile ?? File.Exists)(s) ? Path.GetDirectoryName(s) : s;
+    }
+
+    /// <summary>The program's own folders: its install location and the folders of its uninstaller and its icon (not System32's msiexec).</summary>
+    public static IReadOnlyList<string> Folders(DesktopProgram p, Func<string, bool>? isFile = null)
+    {
+        isFile ??= File.Exists;
+        var list = new List<string>();
+        if (CleanPath(p.InstallLocation, isFile) is { } location) list.Add(location);
+        foreach (var command in new[] { p.UninstallString, p.QuietUninstallString })
+        {
+            // The program the line starts: a rundll32 line gives rundll32 (skipped), not a DLL in a shared folder.
+            if (p.ProductCode is not null || CommandLine.Program(command, null, isFile) is not var (image, _)) continue;
+            if (image.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows) + "\\", StringComparison.OrdinalIgnoreCase)) continue;
+            if (Path.IsPathFullyQualified(image) && Path.GetDirectoryName(image) is { } folder) list.Add(folder.TrimEnd('\\'));
+        }
+        // An icon is often the program itself; an icon in the Installer cache or in Windows says nothing about the folder.
+        if (CleanPath(p.DisplayIcon, _ => true) is { } icon && !icon.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows) + "\\", StringComparison.OrdinalIgnoreCase))
+            list.Add(icon);
+        return list.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>
+    /// True when the folder lies below a program folder (not at the first level of a shared one), holds nothing an
+    /// installed program or service still uses, and is neither inside nor above such a folder or a folder to keep.
+    /// </summary>
+    public static bool MayOffer(string folder, LeftoverRoots roots, IEnumerable<string> referenced)
+    {
+        var f = folder.TrimEnd('\\');
+        var root = roots.Folders.Select(r => r.TrimEnd('\\'))
+            .Where(r => f.StartsWith(r + "\\", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.Length).FirstOrDefault();
+        if (root is null) return false;
+        var parts = f[(root.Length + 1)..].Split('\\', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0 || (parts.Length == 1 && Shared.Contains(parts[0])) || SharedDeeper.Contains(string.Join('\\', parts))) return false;
+        if (roots.Folders.Any(r => Inside(r.TrimEnd('\\'), f) || Same(r.TrimEnd('\\'), f))) return false;
+        if (roots.Keep.Any(k => Same(k.TrimEnd('\\'), f) || Inside(k.TrimEnd('\\'), f) || Inside(f, k.TrimEnd('\\')))) return false;
+        // A path of something still installed in the folder, or a still installed program whose folder contains it. An
+        // entry that names a whole program folder (Program Files itself, which some installers write) says nothing.
+        return !referenced.Any(r => Same(r, f) || Inside(r, f)
+                                    || (Inside(f, r) && !roots.Folders.Any(root => Same(root, r) || Inside(root, r))));
+    }
+
+    /// <summary>
+    /// Leftovers of a program whose uninstall entry is gone. <paramref name="referenced"/> comes from
+    /// <see cref="Programs.ReferencedPaths"/>, read after the uninstall.
+    /// </summary>
+    public static IReadOnlyList<Leftover> Find(DesktopProgram removed, LeftoverRoots roots, IReadOnlyCollection<string> referenced,
+        Func<string, string?>? shortcutTarget = null)
+    {
+        shortcutTarget ??= ShortcutTarget;
+        var folders = Folders(removed).Where(f => MayOffer(f, roots, referenced)).ToList();
+        if (folders.Count == 0) return [];
+        // A folder inside another one found here is moved with it.
+        folders = folders.Where(f => !folders.Any(o => Inside(f, o))).ToList();
+        var found = new List<Leftover>();
+        foreach (var f in folders)
+        {
+            if (Directory.Exists(f) && SafeDelete.HasNoLinks(f)) found.Add(new Leftover(LeftoverKind.Folder, f, Size(f)));
+        }
+        foreach (var shortcutFolder in roots.ShortcutFolders.Where(Directory.Exists))
+        {
+            foreach (var lnk in Shortcuts(shortcutFolder))
+            {
+                if (shortcutTarget(lnk) is not { Length: > 0 } target) continue;
+                if (folders.Any(f => target.StartsWith(f + "\\", StringComparison.OrdinalIgnoreCase)) && SafeDelete.HasNoLinks(lnk))
+                    found.Add(new Leftover(LeftoverKind.Shortcut, lnk, 0));
+            }
+        }
+        return found;
+    }
+
+    /// <summary>Leftovers of several removed programs; each shortcut is read once, not once per program.</summary>
+    public static IReadOnlyList<(DesktopProgram Program, Leftover Leftover)> FindAll(IEnumerable<DesktopProgram> removed, LeftoverRoots roots,
+        IReadOnlyCollection<string> referenced)
+    {
+        var targets = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        string? Cached(string lnk) => targets.TryGetValue(lnk, out var t) ? t : targets[lnk] = ShortcutTarget(lnk);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        return removed.SelectMany(p => Find(p, roots, referenced, Cached).Select(l => (p, l))).Where(x => seen.Add(x.l.Path)).ToList();
+    }
+
+    private static IEnumerable<string> Shortcuts(string folder)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(folder, "*.lnk", new EnumerationOptions
+            {
+                RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint, MaxRecursionDepth = 4,
+            }).ToList();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+    }
+
+    private static string? ShortcutTarget(string lnk)
+    {
+        try
+        {
+            return ShellLinkFile.Read(lnk).Target;
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or IOException or UnauthorizedAccessException or InvalidCastException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Bytes of the files in the folder, without following links.</summary>
+    public static long Size(string folder)
+    {
+        try
+        {
+            return new DirectoryInfo(folder).EnumerateFiles("*", new EnumerationOptions
+            {
+                RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint,
+            }).Sum(f => f.Length);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+    }
+
+    private static bool Same(string a, string b) => string.Equals(a.TrimEnd('\\'), b.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>True when <paramref name="path"/> lies inside <paramref name="folder"/>.</summary>
+    private static bool Inside(string path, string folder) => path.StartsWith(folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+}

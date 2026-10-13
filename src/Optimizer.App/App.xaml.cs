@@ -247,6 +247,12 @@ public partial class App : Application
         if (Version.TryParse(args.Value("--update-shot"), out var newer)) vm.PreviewUpdateFound(newer);
         if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
+        if (args.Value("--preview-uninstall") is "on")
+        {
+            vm.CurrentPage = Page.Debloat;
+            vm.DebloatTab = 1;
+            vm.Apps.PreviewUninstall();
+        }
         // Developer aid: live sensor readings on the Health page (read only); "all" also opens every full list.
         if (args.Value("--sensors") is "on" or "all")
         {

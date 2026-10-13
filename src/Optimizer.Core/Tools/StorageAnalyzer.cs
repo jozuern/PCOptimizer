@@ -233,28 +233,43 @@ public static class StorageAnalyzer
                 failed.Add(p);
                 continue;
             }
-            using var pin = Platform.SafeDelete.Pin(Path.GetDirectoryName(Path.GetFullPath(p))!);
-            if (pin is null || !Platform.SafeDelete.ResolvesToItself(p))
-            {
-                failed.Add(p);
-                continue;
-            }
-            var op = new SHFILEOPSTRUCT
-            {
-                wFunc = FoDelete,
-                pFrom = p + "\0\0",
-                fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
-            };
-            var result = OnStaThread(() => SHFileOperation(ref op));
-            if (!pin.StillReal())
-            {
-                failed.Add(p);
-                Log.Error("storage", $"a folder of {p} became a link while it was moved to the Recycle Bin: check the Recycle Bin");
-            }
-            else if (result != 0 || op.fAnyOperationsAborted || File.Exists(p)) failed.Add(p);
-            else Log.Info("storage", $"recycled {p}");
+            if (!MoveToRecycleBin(p, folder: false)) failed.Add(p);
         }
         return failed;
+    }
+
+    /// <summary>
+    /// Moves a leftover of an uninstalled program (a folder as a whole, or a shortcut) to the Recycle Bin, with the
+    /// same link checks as <see cref="Recycle"/>. Which paths may be offered is decided by
+    /// <see cref="Apps.ProgramLeftovers.MayOffer"/>, so the protected roots are not checked here. A folder is moved by
+    /// renaming it into the Recycle Bin, which takes a link inside it along as a link and never follows it.
+    /// </summary>
+    public static bool RecycleLeftover(string path)
+    {
+        var full = Path.GetFullPath(path).TrimEnd('\\');
+        if (Directory.Exists(full)) return Platform.SafeDelete.HasNoLinks(full) && MoveToRecycleBin(full, folder: true);
+        return File.Exists(full) && (File.GetAttributes(full) & FileAttributes.System) == 0 && MoveToRecycleBin(full, folder: false);
+    }
+
+    private static bool MoveToRecycleBin(string p, bool folder)
+    {
+        using var pin = Platform.SafeDelete.Pin(Path.GetDirectoryName(Path.GetFullPath(p))!);
+        if (pin is null || !(folder ? Platform.SafeDelete.HasNoLinks(p) : Platform.SafeDelete.ResolvesToItself(p))) return false;
+        var op = new SHFILEOPSTRUCT
+        {
+            wFunc = FoDelete,
+            pFrom = p + "\0\0",
+            fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
+        };
+        var result = OnStaThread(() => SHFileOperation(ref op));
+        if (!pin.StillReal())
+        {
+            Log.Error("storage", $"a folder of {p} became a link while it was moved to the Recycle Bin: check the Recycle Bin");
+            return false;
+        }
+        if (result != 0 || op.fAnyOperationsAborted || Path.Exists(p)) return false;
+        Log.Info("storage", $"recycled {p}");
+        return true;
     }
 
     /// <summary>
