@@ -912,11 +912,12 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Fixes for problems that matter for the {0} profile, and the changes that fit it on this PC. Only safe and fully reversible changes; everything is shown before it is applied.</value>
   </data>
   <data name="Rec_AgainstTitle" xml:space="preserve">
-    <value>Changes on this PC that work against this profile</value>
+    <value>Works against the {0} profile</value>
   </data>
   <data name="Rec_AgainstHint" xml:space="preserve">
-    <value>Undo is offered for changes this app made. Others were set by Windows, another tool or you.</value>
+    <value>These settings are on and cost what this profile is about. Undo brings back what Tunero changed; for a setting made outside Tunero, Details says how to change it back.</value>
   </data>
+  <data name="Rec_AgainstOutside" xml:space="preserve"><value>Set outside this app</value></data>
   <data name="Dash_ScoreFor" xml:space="preserve">
     <value>Readiness: {0}</value>
   </data>

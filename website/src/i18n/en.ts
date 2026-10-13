@@ -190,7 +190,7 @@ const en: Copy = {
       {
         id: 'smartscreen',
         q: 'Why does Windows warn when I start it?',
-        a: 'The exe is not code signed yet. Signing by the SignPath Foundation is applied for. Until then, compare the SHA-256 of the download with the .sha256 file on the release page.',
+        a: 'The exe is not code signed yet, so SmartScreen does not know it. Click More info, then Run anyway. SignPath Foundation, which signs open source projects for free, signs only projects that are already widely known; Tunero will apply again once it is. Until then, compare the SHA-256 of the download with the .sha256 file on the release page.',
       },
       {
         id: 'admin',

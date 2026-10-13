@@ -912,11 +912,12 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Behebungen von Problemen, die für das Profil {0} zählen, und die Änderungen, die auf diesem PC dazu passen. Nur sichere, vollständig umkehrbare Änderungen; alles wird vorher angezeigt.</value>
   </data>
   <data name="Rec_AgainstTitle" xml:space="preserve">
-    <value>Änderungen auf diesem PC, die gegen dieses Profil wirken</value>
+    <value>Wirkt gegen das Profil {0}</value>
   </data>
   <data name="Rec_AgainstHint" xml:space="preserve">
-    <value>Rückgängig machen lässt sich nur, was diese App geändert hat. Den Rest haben Windows, ein anderes Tool oder du selbst eingestellt.</value>
+    <value>Diese Einstellungen sind an und kosten, worum es diesem Profil geht. „Rückgängig“ stellt her, was Tunero geändert hat; bei einer Einstellung von außerhalb sagt „Details“, wie du sie zurückstellst.</value>
   </data>
+  <data name="Rec_AgainstOutside" xml:space="preserve"><value>Außerhalb dieser App gesetzt</value></data>
   <data name="Dash_ScoreFor" xml:space="preserve">
     <value>Eignung für {0}</value>
   </data>

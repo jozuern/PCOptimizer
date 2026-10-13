@@ -190,7 +190,7 @@ const de: Copy = {
       {
         id: 'smartscreen',
         q: 'Warum warnt Windows beim Start?',
-        a: 'Die exe ist noch nicht signiert. Die Signatur durch die SignPath Foundation ist beantragt. Bis dahin vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite.',
+        a: 'Die exe ist noch nicht signiert, deshalb kennt SmartScreen sie nicht. Klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Die SignPath Foundation, die Open-Source-Projekte kostenlos signiert, signiert nur Projekte, die schon bekannt sind; Tunero bewirbt sich wieder, sobald es so weit ist. Bis dahin vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite.',
       },
       {
         id: 'admin',

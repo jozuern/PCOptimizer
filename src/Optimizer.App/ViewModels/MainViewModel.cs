@@ -165,9 +165,14 @@ public sealed record ProfileOption(string Id, string Name, string Description, S
     public override string ToString() => Name;
 }
 
-/// <summary>A change on this PC that works against the active profile (with Undo when this app made it).</summary>
+/// <summary>
+/// A setting on this PC that works against the active profile: Undo when this app made it, otherwise Details, whose page
+/// says how to change it back (the app has no original value to restore).
+/// </summary>
 public sealed record AgainstLine(string TweakId, string Title, string Reason, bool CanUndo)
 {
+    public bool SetOutside => !CanUndo;
+
     // What screen readers announce for this item in a list or combo box.
     public override string ToString() => Title;
 }
@@ -327,6 +332,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string? _advisorPassedText;
     [ObservableProperty] private string _recommendationsIntro = "";
     [ObservableProperty] private bool _hasAgainst;
+    [ObservableProperty] private string _againstTitle = "";
 
     public ObservableCollection<ProfileOption> ProfileOptions { get; } = [];
     public ObservableCollection<AgainstLine> AgainstProfile { get; } = [];
@@ -1899,6 +1905,18 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var p in _profiled.Where(p => p.Flagged).OrderBy(p => p.Impact))
             AgainstProfile.Add(new AgainstLine(p.Tweak.Id, Runner.Title(p.Tweak), p.ReasonKey is { } k ? Labels.Current.Get(lang, k) : "", p.Status.HasBackup));
         HasAgainst = AgainstProfile.Count > 0;
+        AgainstTitle = Loc.Instance.Format("Rec_AgainstTitle", ProfileName(_usage));
+    }
+
+    /// <summary>Opens a tweak in the details pane on the Tweaks page, as the search does.</summary>
+    [RelayCommand]
+    private void ShowTweak(string? tweakId)
+    {
+        if (Tweaks.FirstOrDefault(t => t.Tweak.Id == tweakId) is not { } tweak) return;
+        TweakViewMode = TweakView.Applicable;
+        TweakSearch = tweak.Title;
+        CurrentPage = Page.Tweaks;
+        SelectedItem = tweak;
     }
 
     public void BuildChanges()

@@ -12,7 +12,7 @@ Tunero finds what really costs your games frame rate, fixes what it can and tell
 
 ## Download
 
-Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash Tunero.exe`). The in-app update also checks the release signature (`Tunero.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start; code signing by SignPath Foundation is applied for ([Code signing policy](#code-signing-policy)). The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
+Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash Tunero.exe`). The in-app update also checks the release signature (`Tunero.exe.sig`) and installs nothing without a valid one. The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start: "More info", then "Run anyway" ([Code signing](#code-signing)). The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
 
 Or with a package manager:
 
@@ -117,16 +117,18 @@ Copyright (c) 2026 Joshua Zürn. Tunero is free software: you can use, study, ch
 
 The exe contains third-party components under their own licenses (MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, LGPL-2.1-or-later, Apache-2.0); the full texts are in the app under Settings > About > Licenses and listed in [docs/THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md).
 
-## Code signing policy
+## Code signing
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). The project is applying to SignPath Foundation; until it is accepted, releases are not code signed, and this section describes how signing will work.
+Releases are not code signed yet. [SignPath Foundation](https://signpath.org/), which signs open source projects for free, turned down the first application in October 2026: it signs projects that are already widely known (stars, forks, articles, discussions), and Tunero is new. The project will apply again once it is better known. Until then, the SHA-256 file and the release signature (`Tunero.exe.sig`, checked by the in-app update) are how to check a download.
+
+The policy that will apply once releases are signed:
 
 - **Who is involved:** the project has one member, [Joshua Zürn](https://github.com/jozuern), who is committer, reviewer and approver. Changes from anyone else (pull requests) are reviewed by him before they are merged. Signing requests are approved by him, one release at a time.
 - **What gets signed:** only `Tunero.exe` as built by the [release workflow](.github/workflows/release.yml) on GitHub's runners from a version tag on `main`. SignPath checks that the file comes from that build and that its product name and version match the release ([artifact configuration](.signpath/artifact-configuration.xml)). Nothing built elsewhere and no third-party program is signed.
 - **Accounts:** GitHub and SignPath accounts of the team use multi-factor authentication.
 - **Privacy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The features that go online when you start or turn them on are listed in [docs/PRIVACY.md](docs/PRIVACY.md).
 
-Windows shows "SignPath Foundation" as the publisher of a signed release. To check a download: right-click the exe, Properties > Digital Signatures, or `Get-AuthenticodeSignature Tunero.exe` in PowerShell; and compare its SHA-256 with the `.sha256` file of the release.
+Once releases are signed, Windows shows "SignPath Foundation" as their publisher. To check a download: right-click the exe, Properties > Digital Signatures, or `Get-AuthenticodeSignature Tunero.exe` in PowerShell; and compare its SHA-256 with the `.sha256` file of the release.
 
 ## Support
 

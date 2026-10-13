@@ -101,8 +101,21 @@ jobs:
       if: env.REACHABLE == 'true'
       shell: pwsh
       run: |
-        choco push $env:PACKAGE --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
-        if ($LASTEXITCODE -ne 0) { Write-Error "choco push failed ($LASTEXITCODE)"; exit 1 }
+        $out = choco push $env:PACKAGE --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY 2>&1
+        $code = $LASTEXITCODE
+        $out | Write-Host
+        if ($code -ne 0) {
+          # Chocolatey refuses (403) every new version while the package has a version in moderation and none approved
+          # (docs.chocolatey.org, Common Errors). That is the first version waiting for review, not a broken release.
+          $approved = choco search tunero --exact --limit-output --source https://community.chocolatey.org/api/v2/
+          if (($out -join "`n") -match '403' -and -not $approved) {
+            "Not pushed: Chocolatey takes a new version only after the first version of tunero is approved. Once it is, run this workflow by hand for $env:TAG (Actions > chocolatey > Run workflow)." | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+            "::notice::Chocolatey: the first version of tunero is still in moderation, $env:TAG was not pushed"
+            $global:LASTEXITCODE = 0
+            exit 0
+          }
+          Write-Error "choco push failed ($code)"; exit 1
+        }
         "Pushed $(Split-Path -Leaf $env:PACKAGE): https://community.chocolatey.org/packages/tunero" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
       env:
         CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
