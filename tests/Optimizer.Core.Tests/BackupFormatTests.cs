@@ -44,6 +44,14 @@ public class BackupFormatTests
             Reg(Hive.User, @"Software\Fixture\Registry", "Mode", "qword", 5)),
         new("registryDelete", fx => RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\Delete", "Gone", "string", "here"),
             Reg(Hive.Machine, @"SOFTWARE\Fixture\Delete", "Gone", "string", "", delete: true)),
+        new("registryKey", fx =>
+            {
+                RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\WholeKey", "", "string", "default");
+                RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\WholeKey", "Paths", "multiString", "a\nb");
+                RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\WholeKey\Sub\Deeper", "Blob", "binary", "0102FF");
+                RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\WholeKey\Sub", "Home", "expandString", "%SystemRoot%\\x");
+            },
+            new RegistryKeyAction { Hive = Hive.Machine, Path = @"SOFTWARE\Fixture\WholeKey" }),
         new("registryBits", fx => RegistryValue.Write(fx.Registry, Hive.Machine, @"SOFTWARE\Fixture\Bits", "Flags", "dword", "16"),
             new RegistryBitsAction { Hive = Hive.Machine, Path = @"SOFTWARE\Fixture\Bits", Name = "Flags", Set = 0x1, Clear = 0x10 }),
         new("registryBinaryBits", fx => RegistryValue.Write(fx.Registry, Hive.User, @"Software\Fixture\Binary", "Mask", "binary", "9012038010000000"),
@@ -325,7 +333,7 @@ public class BackupFormatTests
         Assert.Equal(
             ["accessibilityShortcut", "bcd", "displayMode", "dns", "dohAutoUpgrade", "hibernation", "memoryCompression", "nicProperty", "nvidiaDrs",
              "optionalCapability", "optionalFeature", "powerMode", "powerScheme", "powerSetting", "registry", "registryBinaryBits", "registryBits",
-             "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete"],
+             "registryKey", "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete"],
             types);
     }
 }

@@ -9,7 +9,7 @@ public sealed record StoredValue(bool Existed, string? Kind = null, string? Data
 {
     public static readonly StoredValue Missing = new(false);
 
-    public string Display => !Existed ? "(not set)" : Data ?? "";
+    public string Display => !Existed ? "(not set)" : Kind == "regkey" ? RegistryKeyAction.Summary(Data) : Data ?? "";
 
     /// <summary>Same presence and data, and the same registry type when both are registry values (a REG_SZ "1" is not a DWORD 1).</summary>
     public bool SameAs(StoredValue other) =>
@@ -84,6 +84,7 @@ public enum EarlyRead
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(RegistryAction), "registry")]
+[JsonDerivedType(typeof(RegistryKeyAction), "registryKey")]
 [JsonDerivedType(typeof(RegistryBitsAction), "registryBits")]
 [JsonDerivedType(typeof(RegistryTokenAction), "registryToken")]
 [JsonDerivedType(typeof(RegistryBinaryBitsAction), "registryBinaryBits")]

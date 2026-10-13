@@ -277,6 +277,9 @@ public sealed partial class Labels
         "(unavailable)" or "(unreadable)" => Get(lang, "value.unknown"),
         // Windows' own power plans, named in the language of the app (PowerSchemeAction)
         _ when value.StartsWith("@plan.", StringComparison.Ordinal) => Value(lang, value),
+        // A whole registry key (RegistryKeyAction): its size instead of the saved JSON
+        _ when value.StartsWith("@regkey:", StringComparison.Ordinal) && value.Split(':') is [_, var values, var keys] =>
+            string.Format(System.Globalization.CultureInfo.InvariantCulture, Get(lang, "value.regkey"), values, keys),
         // The states actions store ("Disabled", a service's "Manual"), as Windows names them in that language
         _ when Has(lang, "state." + value) => Get(lang, "state." + value),
         _ => value,
