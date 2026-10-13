@@ -1,4 +1,4 @@
-﻿using Optimizer.Core.Apps;
+using Optimizer.Core.Apps;
 
 namespace Optimizer.Core.Tests;
 

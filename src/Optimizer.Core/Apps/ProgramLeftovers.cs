@@ -6,7 +6,11 @@ namespace Optimizer.Core.Apps;
 public enum LeftoverKind { Folder, Shortcut }
 
 /// <summary>A folder or shortcut an uninstalled program left behind; <see cref="Bytes"/> is 0 for a shortcut.</summary>
-public sealed record Leftover(LeftoverKind Kind, string Path, long Bytes);
+public sealed record Leftover(LeftoverKind Kind, string Path, long Bytes)
+{
+    /// <summary>When anything in the folder last changed; set for folders no program uses (<see cref="ProgramOrphans"/>).</summary>
+    public DateTime? LastChangeUtc { get; init; }
+}
 
 /// <summary>
 /// Where leftovers may be offered: the program folders of the PC and of the signed-in user, the Start menu and desktop
@@ -264,7 +268,7 @@ public static class ProgramLeftovers
         return removed.SelectMany(p => Find(p, roots, referenced, Cached).Select(l => (p, l))).Where(x => seen.Add(x.l.Path)).ToList();
     }
 
-    private static IEnumerable<string> Shortcuts(string folder)
+    internal static IEnumerable<string> Shortcuts(string folder)
     {
         try
         {
@@ -279,7 +283,7 @@ public static class ProgramLeftovers
         }
     }
 
-    private static string? ShortcutTarget(string lnk)
+    internal static string? ShortcutTarget(string lnk)
     {
         try
         {

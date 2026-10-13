@@ -135,7 +135,9 @@ public sealed partial class LeftoverRow(Leftover leftover, string program) : Obs
     public string Path => Leftover.Path;
 
     /// <summary>"Folder, 120 MB, left by App", in the language of the moment: a language switch builds new rows.</summary>
-    public string Meta { get; } = leftover.Kind == LeftoverKind.Folder
+    public string Meta { get; } = leftover.LastChangeUtc is { } changed
+        ? Loc.Instance.Format("Leftovers_OrphanMeta", CleanupViewModel.Size(leftover.Bytes), changed.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture))
+        : leftover.Kind == LeftoverKind.Folder
         ? Loc.Instance.Format("Leftovers_FolderMeta", CleanupViewModel.Size(leftover.Bytes), program)
         : Loc.Instance.Format("Leftovers_ShortcutMeta", program);
 
@@ -448,6 +450,55 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
 
     [RelayCommand]
     private void DismissLeftovers() => Leftovers.Clear();
+
+    [ObservableProperty] private bool _isFindingOrphans;
+
+    /// <summary>
+    /// Program Files folders that no installed program, service, autostart entry, COM server, running program or shortcut
+    /// uses (<see cref="ProgramOrphans"/>). They join the Left behind list unticked: the user decides each one.
+    /// </summary>
+    [RelayCommand]
+    private async Task FindOrphansAsync()
+    {
+        if (IsFindingOrphans) return;
+        IsFindingOrphans = true;
+        try
+        {
+            var roots = LeftoverRoots.ForPc(services.ProfilePath);
+            var found = await Task.Run(() =>
+            {
+                var inUse = new List<string>();
+                // Every autostart location of the Startup page (services, drivers, tasks, extensions among them).
+                foreach (var e in new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath).ScanAll(includeServicesAndDrivers: true, includeWmi: false))
+                    if (e.ImagePath is { Length: > 0 } image) inUse.Add(image);
+                foreach (var p in System.Diagnostics.Process.GetProcesses())
+                {
+                    using (p)
+                    {
+                        try
+                        {
+                            if (p.MainModule?.FileName is { } file) inUse.Add(file);
+                        }
+                        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or NotSupportedException)
+                        {
+                            // a protected or ended process
+                        }
+                    }
+                }
+                var evidence = ProgramOrphans.ReadEvidence(services.Context.Registry, inUse);
+                return ProgramOrphans.Find([Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)],
+                    roots, evidence, DateTime.UtcNow);
+            });
+            foreach (var l in found)
+                if (!Leftovers.Any(x => string.Equals(x.Path, l.Path, StringComparison.OrdinalIgnoreCase))) Leftovers.Add(new LeftoverRow(l, "") { Selected = false });
+            Owner.ShowResult(found.Count == 0 ? Loc.Instance["Orphans_None"] : Loc.Instance.Format("Orphans_Found", found.Count),
+                found.Count == 0 ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Informational);
+        }
+        finally
+        {
+            IsFindingOrphans = false;
+        }
+    }
 
     /// <summary>
     /// Developer aid for screenshots (--preview-uninstall): ticks the first two programs and shows a waiting queue and

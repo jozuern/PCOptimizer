@@ -1304,6 +1304,11 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Leftovers_Dismiss" xml:space="preserve"><value>Keep all</value></data>
   <data name="Leftovers_Failed" xml:space="preserve"><value>Not moved: it is in use, has changed or Windows refused.</value></data>
   <data name="Leftovers_Recycled" xml:space="preserve"><value>Moved to the Recycle Bin: {0}</value></data>
+  <data name="Orphans_Find" xml:space="preserve"><value>Find unused program folders</value></data>
+  <data name="Orphans_FindHint" xml:space="preserve"><value>Looks in Program Files for folders of programs that are no longer installed: no installed program, service, autostart entry, running program or shortcut uses them, and nothing in them changed for 30 days. They are listed under Left behind without a tick: check each one.</value></data>
+  <data name="Orphans_None" xml:space="preserve"><value>No unused program folders found.</value></data>
+  <data name="Orphans_Found" xml:space="preserve"><value>Unused program folders: {0}. They are listed under Left behind without a tick; check each one before you move it.</value></data>
+  <data name="Leftovers_OrphanMeta" xml:space="preserve"><value>Folder, {0}, no installed program uses it, last changed {1}</value></data>
   <data name="Apps_InstallName" xml:space="preserve"><value>Install {0}</value></data>
   <data name="Storage_Drive" xml:space="preserve"><value>Drive</value></data>
   <data name="Prio_Priority" xml:space="preserve"><value>CPU priority</value></data>
