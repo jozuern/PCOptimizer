@@ -416,7 +416,10 @@ public sealed class EthernetSpeedCheck : IFindingCheck
                 InstanceKey = n.Id,
                 Subject = n.Description,
                 Kind = FindingKind.Finding,
-                Status = variant is null ? FindingStatus.Ok : variant == "negotiatedBattery" ? FindingStatus.Info : FindingStatus.Problem,
+                // A link at 100 Mbit/s the adapter negotiated itself is often the other end (a router port, a powerline
+                // adapter, an older switch), which the scan cannot see: worth a look, not a problem. A speed forced lower
+                // than the adapter supports is one.
+                Status = variant is null ? FindingStatus.Ok : variant == "forced" ? FindingStatus.Problem : FindingStatus.Info,
                 Variant = variant,
                 Impact = 1,
                 Effects = [Effect.Latency],

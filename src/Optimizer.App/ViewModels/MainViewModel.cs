@@ -966,7 +966,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 if (StartMenuShortcut.RenameLegacy(folder, exe, Loc.Instance["StartMenu_Description"])) Log.Info("startmenu", "entry renamed", new { folder });
             }
-            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException or ArgumentException or NotSupportedException)
             {
                 Log.Error("startmenu", "entry not renamed", ex);
             }

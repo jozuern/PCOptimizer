@@ -50,7 +50,7 @@ public class WingetPackageTests
             Assert.False(StartMenuShortcut.Exists(folder));
             Assert.Null(StartMenuShortcut.Target(folder));
 
-            StartMenuShortcut.Create(folder, exe, "Test");
+            StartMenuShortcut.Create(folder, exe, "Test", folder);
             Assert.True(StartMenuShortcut.Exists(folder));
             Assert.Equal(exe, StartMenuShortcut.Target(folder), ignoreCase: true);
 
@@ -81,22 +81,22 @@ public class WingetPackageTests
             var old = Path.Combine(folder, legacy);
 
             // An old entry that starts another copy stays as it is.
-            StartMenuShortcut.Create(folder, other, "Test");
+            StartMenuShortcut.Create(folder, other, "Test", folder);
             File.Move(current, old);
-            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test", folder));
             Assert.True(File.Exists(old));
             Assert.False(File.Exists(current));
 
             // One that starts this exe gets the new name, and the old file is gone.
-            StartMenuShortcut.Create(folder, exe, "Test");
+            StartMenuShortcut.Create(folder, exe, "Test", folder);
             File.Move(current, old);
-            Assert.True(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+            Assert.True(StartMenuShortcut.RenameLegacy(folder, exe, "Test", folder));
             Assert.True(File.Exists(current));
             Assert.False(File.Exists(old));
             Assert.Equal(exe, StartMenuShortcut.Target(folder), ignoreCase: true);
 
             // With the new name in place there is nothing to do.
-            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test", folder));
         }
         finally
         {

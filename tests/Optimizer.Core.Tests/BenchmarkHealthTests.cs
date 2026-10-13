@@ -15,6 +15,7 @@ using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class BenchmarkHealthTests
 {
     private static IEnumerable<string> Csv(params double[] ms) =>

@@ -50,9 +50,9 @@ public static class StartMenuShortcut
         if (!Directory.Exists(folder)) throw new DirectoryNotFoundException($"{folder} does not exist");
         workFolder ??= ProcessHardening.TempFolder ?? Path.GetTempPath();
         var draft = Path.Combine(workFolder, $"{Guid.NewGuid():N}.lnk");
-        ShellLinkFile.Write(draft, exe, description);
         try
         {
+            ShellLinkFile.Write(draft, exe, description);
             var bytes = File.ReadAllBytes(draft);
             Remove(folder);
             using var target = SafeDelete.CreateNew(Path.Combine(folder, FileName));
@@ -60,7 +60,7 @@ public static class StartMenuShortcut
         }
         finally
         {
-            File.Delete(draft);
+            if (File.Exists(draft)) File.Delete(draft);
         }
     }
 
@@ -71,7 +71,8 @@ public static class StartMenuShortcut
     /// </summary>
     public static bool RenameLegacy(string folder, string exe, string description, string? workFolder = null)
     {
-        if (File.Exists(Path.Combine(folder, FileName)) || Target(folder) is not { } target) return false;
+        // A shortcut to something that is not a file (a shell folder, a URL) has an empty target.
+        if (File.Exists(Path.Combine(folder, FileName)) || Target(folder) is not { Length: > 0 } target) return false;
         if (!string.Equals(Path.GetFullPath(target), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase)) return false;
         Create(folder, exe, description, workFolder);
         return true;

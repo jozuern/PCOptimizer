@@ -31,6 +31,12 @@ public static class DataPaths
     private static string BaseFolder =>
         Environment.GetFolderPath(ProcessIsElevated ? Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData);
 
+    /// <summary>
+    /// Points the data folder somewhere else for this process. Only the tests call it (a temp folder), so no test can
+    /// write into the real data folder of the PC it runs on, even by accident.
+    /// </summary>
+    public static void UseRoot(string folder) => _root = folder;
+
     /// <summary>Moves a data folder from before the rename to the new name (<see cref="ResolveRoot"/>). Only the app's start calls this.</summary>
     public static void MigrateLegacy() => _root = ResolveRoot(BaseFolder);
 

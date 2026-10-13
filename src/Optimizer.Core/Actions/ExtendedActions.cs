@@ -427,12 +427,16 @@ public sealed class SystemDeviceManager : IDeviceManager
 /// </summary>
 public sealed class SystemMemoryAgent : IMemoryAgent
 {
+    internal static readonly TimeSpan WmiTimeout = TimeSpan.FromSeconds(20);
+
     public bool? MemoryCompression()
     {
         try
         {
-            using var agent = new ManagementClass(new ManagementScope(@"root\Microsoft\Windows\PS_MMAgent"), new ManagementPath("PS_MMAgent"), null);
-            using var result = agent.InvokeMethod("Get", null, null);
+            // A stuck WMI service must not stall the tweak detection of every scan: connect and call have a time limit.
+            var scope = new ManagementScope(@"root\Microsoft\Windows\PS_MMAgent", new ConnectionOptions { Timeout = WmiTimeout });
+            using var agent = new ManagementClass(scope, new ManagementPath("PS_MMAgent"), null);
+            using var result = agent.InvokeMethod("Get", null, new InvokeMethodOptions { Timeout = WmiTimeout });
             return result?["cmdletOutput"] is ManagementBaseObject settings && settings["MemoryCompression"] is bool on ? on : null;
         }
         catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
@@ -468,11 +472,18 @@ public sealed class SystemNetworkManager : INetworkManager
     public void SetDns(string interfaceGuid, string[]? servers)
     {
         if (!Guid.TryParse(interfaceGuid, out var g)) throw new ArgumentException($"Invalid interface id {interfaceGuid}");
-        using var searcher = new ManagementObjectSearcher($"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE SettingID = '{g:B}'");
+        // Time limits on connect, query and call: a hung WMI service fails the change instead of blocking it for good.
+        var timeout = SystemMemoryAgent.WmiTimeout;
+        var scope = new ManagementScope(@"root\cimv2", new ConnectionOptions { Timeout = timeout });
+        using var searcher = new ManagementObjectSearcher(scope, new ObjectQuery($"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE SettingID = '{g:B}'"),
+            new System.Management.EnumerationOptions { Timeout = timeout });
         foreach (var o in searcher.Get())
         {
             using var mo = (ManagementObject)o;
-            var code = Convert.ToUInt32(mo.InvokeMethod("SetDNSServerSearchOrder", [servers]), CultureInfo.InvariantCulture);
+            using var input = mo.GetMethodParameters("SetDNSServerSearchOrder");
+            input["DNSServerSearchOrder"] = servers;
+            using var output = mo.InvokeMethod("SetDNSServerSearchOrder", input, new InvokeMethodOptions { Timeout = timeout });
+            var code = Convert.ToUInt32(output?["ReturnValue"], CultureInfo.InvariantCulture);
             // 0 = done, 1 = done but needs a restart (documented return codes of the method).
             if (code is not (0 or 1)) throw new InvalidOperationException($"SetDNSServerSearchOrder returned {code}");
             Log.Info("dns", $"{g:B}: {(servers is null ? "DHCP" : string.Join(", ", servers))}");

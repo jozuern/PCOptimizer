@@ -18,6 +18,12 @@ public static class ExtrasProbe
     /// <summary>How long background CPU use is sampled (F11).</summary>
     public static readonly TimeSpan SampleWindow = TimeSpan.FromSeconds(3);
 
+    /// <summary>
+    /// Longest wait for one part. A part that hangs (a signature check of a file on a network share that does not answer,
+    /// a stuck WLAN service or WMI query) leaves only its own result empty; the other parts and their checks still count.
+    /// </summary>
+    public static TimeSpan PartTimeLimit { get; set; } = TimeSpan.FromSeconds(30);
+
     private const string NicClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
 
     /// <param name="cpu">
@@ -32,7 +38,7 @@ public static class ExtrasProbe
     public static HardwareExtras Read(CatalogData catalog, Task<CpuInfo?> cpu, Task<IReadOnlyList<GpuInfo>?> gpus, Task<FirmwareInfo?> firmware,
         Task<IReadOnlyList<DisplayInfo>?> displays, Task<ElevationInfo?> elevation, HardwareExtras? reuse = null)
     {
-        Task<T?> Part<T>(string part, Func<T> f) => Task.Run(() =>
+        Task<T?> Part<T>(string part, Func<T> f) => Limited(part, Task.Run(() =>
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             try
@@ -49,7 +55,7 @@ public static class ExtrasProbe
                 // Slow parts are worth knowing about: the extras are on the scan's critical path.
                 if (watch.ElapsedMilliseconds > 250) Log.Debug("scan", $"extras/{part} took {watch.ElapsedMilliseconds} ms");
             }
-        });
+        }));
         // A part that needs another probe's result starts when that probe is done (without holding a thread meanwhile).
         async Task<T?> After<TProbe, T>(string part, Task<TProbe> probe, Func<TProbe, T> f)
         {
@@ -113,6 +119,19 @@ public static class ExtrasProbe
             BackgroundCpu = reuse?.BackgroundCpu,
             LastThrottle = throttle.Result,
         };
+    }
+
+    private static async Task<T?> Limited<T>(string part, Task<T?> work)
+    {
+        try
+        {
+            return await work.WaitAsync(PartTimeLimit).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            Log.Warn("scan", $"extras/{part}: no answer within {PartTimeLimit.TotalSeconds:0} s");
+            return default;
+        }
     }
 
     /// <summary>First SMBIOS string that carries an AGESA version, with the string itself (the package name tells desktop from mobile).</summary>

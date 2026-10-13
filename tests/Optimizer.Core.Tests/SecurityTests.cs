@@ -5,6 +5,7 @@ using Optimizer.Core.Updates;
 namespace Optimizer.Core.Tests;
 
 /// <summary>The app runs as administrator: links, downloads and files in user-writable places must not be trusted blindly.</summary>
+[Collection(GlobalStateCollection.Name)]
 public class SecurityTests
 {
     private const string Download = "https://github.com/jozuern/Tunero/releases/download/v1.0.0/";

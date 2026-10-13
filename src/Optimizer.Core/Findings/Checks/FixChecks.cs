@@ -13,6 +13,8 @@ public static class RuntimeFixes
     public const string RefreshRateDoc = "fix.refreshRate";
     public const string GpuPreferenceDoc = "fix.gpuPreference";
 
+    // The two ids below are built by hand, from before TweakIds.Slug: they stay, because backups of earlier versions
+    // carry them, and a display name or an interface GUID is already unique and plain.
     public static TweakDefinition RefreshRate(DisplayInfo d) => new()
     {
         Id = $"fix.refreshRate.{d.GdiName.TrimStart('\\', '.')}",

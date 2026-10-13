@@ -39,14 +39,14 @@ public sealed record SystemInfo(string Manufacturer, string Model, IReadOnlyList
     public bool IsLaptop => HasBattery && (LidPresent || ChassisTypes.Any(LaptopChassis.Contains));
 
     /// <summary>
-    /// A virtual machine (Hyper-V, VMware, VirtualBox, QEMU/KVM, Xen, Parallels), from the maker and model the firmware
+    /// A virtual machine (Hyper-V and Azure, VMware, VirtualBox, QEMU/KVM, Xen, Parallels, Amazon EC2, Google Compute Engine), from the maker and model the firmware
     /// reports. Not HypervisorPresent: that is also true on a real PC with memory integrity or Hyper-V on.
     /// </summary>
     public bool IsVirtualMachine =>
         (Manufacturer == "Microsoft Corporation" && Model == "Virtual Machine") ||
         VirtualMakers.Any(v => Manufacturer.Contains(v, StringComparison.OrdinalIgnoreCase) || Model.Contains(v, StringComparison.OrdinalIgnoreCase));
 
-    private static readonly string[] VirtualMakers = ["VMware", "VirtualBox", "innotek", "QEMU", "KVM", "Xen", "Parallels", "Bochs"];
+    private static readonly string[] VirtualMakers = ["VMware", "VirtualBox", "innotek", "QEMU", "KVM", "Xen", "Parallels", "Bochs", "Amazon EC2", "Google Compute Engine"];
 }
 
 // ---------------- CPU ----------------

@@ -285,16 +285,20 @@ public sealed class GamesOnHddCheck : IFindingCheck
     public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
     {
         if (p.Storage is null || p.Software is null || p.Software.GameLibraryPaths.Count == 0) yield break;
-        foreach (var library in p.Software.GameLibraryPaths)
+        var storage = p.Storage;
+        // One finding per disk: two libraries on the same hard disk are one problem, not two.
+        var byDisk = p.Software.GameLibraryPaths
+            .Select(library => (Library: library, Disk: storage.DiskOf(storage.Volumes.FirstOrDefault(v => string.Equals(v.Root, Path.GetPathRoot(library), StringComparison.OrdinalIgnoreCase)))))
+            .Where(x => x.Disk is not null)
+            .GroupBy(x => x.Disk!);
+        foreach (var group in byDisk)
         {
-            var root = Path.GetPathRoot(library);
-            var volume = p.Storage.Volumes.FirstOrDefault(v => string.Equals(v.Root, root, StringComparison.OrdinalIgnoreCase));
-            var disk = p.Storage.DiskOf(volume);
-            if (disk is null) continue;
+            var disk = group.Key;
+            var library = string.Join(", ", group.Select(x => x.Library));
             yield return new Finding
             {
                 Id = Id,
-                InstanceKey = library,
+                InstanceKey = group.First().Library,
                 Subject = library,
                 Kind = FindingKind.Finding,
                 Status = disk.MediaType == "HDD" ? FindingStatus.Problem : disk.MediaType == "Unspecified" ? FindingStatus.Unknown : FindingStatus.Ok,
@@ -304,7 +308,7 @@ public sealed class GamesOnHddCheck : IFindingCheck
                 Effects = [Effect.Stutter],
                 Facts =
                 [
-                    new("fact.library", library),
+                .. group.Select(x => new Fact("fact.library", x.Library)),
                     new("fact.disk", $"{disk.FriendlyName} ({disk.MediaType}, {disk.BusType})"),
                     new("fact.smr", disk.IsSmrSuspect ? "@yes" : "@no"),
                 ],

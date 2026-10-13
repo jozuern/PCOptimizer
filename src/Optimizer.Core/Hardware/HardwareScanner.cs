@@ -19,6 +19,9 @@ public sealed class HardwareScanner(CatalogData catalog)
     /// </summary>
     public static readonly TimeSpan ProbeTimeLimit = TimeSpan.FromSeconds(60);
 
+    /// <summary>Probes that timed out and are still running, by name.</summary>
+    private static readonly ConcurrentDictionary<string, Task> StillRunning = new();
+
     /// <summary>
     /// The background CPU sample of the last scan when the scan did not wait for it (it measures for a fixed 3
     /// seconds). Complete it with <see cref="WithBackgroundSample"/>; only the background activity check (F11) needs it.
@@ -55,6 +58,17 @@ public sealed class HardwareScanner(CatalogData catalog)
         async Task<T?> Run<T>(string name, Func<T> probe, TimeSpan? limit = null) where T : class
         {
             var timeLimit = limit ?? ProbeTimeLimit;
+            // A probe that timed out cannot be cancelled and still holds its thread: "Scan again" does not start a second
+            // one beside it (every rescan would add a thread while WMI stays stuck).
+            if (StillRunning.TryGetValue(name, out var earlier))
+            {
+                if (!earlier.IsCompleted)
+                {
+                    errors[name] = "the previous read has not answered yet";
+                    return null;
+                }
+                StillRunning.TryRemove(name, out _);
+            }
             var work = Task.Run(() =>
             {
                 ct.ThrowIfCancellationRequested();
@@ -81,6 +95,7 @@ public sealed class HardwareScanner(CatalogData catalog)
             }
             catch (TimeoutException)
             {
+                StillRunning[name] = work;
                 errors[name] = $"no answer within {timeLimit.TotalSeconds:0} s";
                 Log.Error("scan", $"{name} timed out");
                 return null;

@@ -19,17 +19,19 @@ public sealed class MemoryIntegrityCheck : IFindingCheck
     {
         if (p.Firmware is not { } fw) yield break;
         var running = fw.VbsRunning && fw.HvciRunning;
+        // VbsStatus < 0: Win32_DeviceGuard could not be read, so memory integrity is unknown, not off.
+        var unknown = fw.VbsStatus < 0;
         yield return new Finding
         {
             Id = Id,
             Kind = FindingKind.Finding,
-            Status = running ? FindingStatus.Info : FindingStatus.Ok,
+            Status = unknown ? FindingStatus.Unknown : running ? FindingStatus.Info : FindingStatus.Ok,
             Variant = running && !fw.MbecAvailable ? "noMbec" : null,
             Impact = fw.MbecAvailable ? 2 : 3,
             Effects = [Effect.Fps, Effect.Lows],
             Facts =
             [
-                new("fact.hvci", running ? "@on" : "@off"),
+                new("fact.hvci", unknown ? "@unknown" : running ? "@on" : "@off"),
                 new("fact.mbec", fw.MbecAvailable ? "@yes" : "@no"),
             ],
         };
