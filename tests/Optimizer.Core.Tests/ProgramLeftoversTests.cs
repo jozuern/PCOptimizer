@@ -19,6 +19,43 @@ public class ProgramLeftoversTests : IDisposable
         new("App", null, null, null, null, uninstall, productCode, perUser, "k", quiet, location, icon);
 
     [Fact]
+    public void WindowsInstallerProductsWithoutALocationGetTheFolderOfTheirFiles()
+    {
+        // 7-Zip 25.01's MSI: its packed code as Windows Installer writes it (read in the VM).
+        const string sevenZip = "{23170F69-40C1-2702-2501-000001000000}";
+        Assert.Equal("96F071321C0420725210000010000000", ProgramLeftovers.PackedGuid(sevenZip));
+        Assert.Null(ProgramLeftovers.PackedGuid("not a guid"));
+
+        using var registry = new SandboxRegistry();
+        const string components = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components";
+        void Component(string name, string value, string path) =>
+            RegistryValue.Write(registry, Hive.Machine, $@"{components}\{name}", value, "string", path);
+        var packed = ProgramLeftovers.PackedGuid(sevenZip)!;
+        Component("A1", packed, @"C:\Program Files\7-Zip\7z.exe");
+        Component("A2", packed, @"C:\Program Files\7-Zip\Lang\en.ttt");
+        Component("A3", packed, @"C:\Program Files\7-Zip\");
+        Component("A4", packed, @"21:\Software\7-Zip\Path"); // a registry component: not a folder
+        Component("A5", ProgramLeftovers.PackedGuid(Code)!, @"C:\Program Files\Other\other.exe");
+        Component("A6", ProgramLeftovers.PackedGuid(Code)!, @"C:\Windows\System32\other.dll"); // no common folder below the drive
+        var found = ProgramLeftovers.MsiFolders(registry, [sevenZip, Code]);
+        Assert.Equal(@"C:\Program Files\7-Zip", found[sevenZip]);
+        Assert.False(found.ContainsKey(Code));
+
+        Assert.Equal(@"C:\Program Files\App", ProgramLeftovers.CommonFolder([@"C:\Program Files\App\bin", @"c:\program files\app"]));
+        Assert.Null(ProgramLeftovers.CommonFolder([]));
+    }
+
+    [Fact]
+    public void FootprintCountsTheFilesThatAreStillThere()
+    {
+        var app = Path.Combine(_root, "App");
+        Directory.CreateDirectory(Path.Combine(app, "sub"));
+        File.WriteAllText(Path.Combine(app, "a.txt"), "12345");
+        File.WriteAllText(Path.Combine(app, "sub", "b.txt"), "123");
+        Assert.Equal((2, 8L), ProgramLeftovers.Footprint([app, Path.Combine(_root, "missing")]));
+    }
+
+    [Fact]
     public void QuietUninstallUsesWindowsInstallerOrTheProgramsOwnQuietCommand()
     {
         var msi = Program($"MsiExec.exe /I{Code}", productCode: Code);

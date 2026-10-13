@@ -217,6 +217,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                     state = "";
                     return;
                 }
+                var msi = await MsiFoldersAsync([row.Program]);
                 var code = await ProgramUninstaller.RunAsync(command, services.Elevation);
                 if (code is null)
                 {
@@ -234,7 +235,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                 else
                 {
                     ProgramsText = Loc.Instance.Format("Programs_RemovedName", row.Name);
-                    await FindLeftoversAsync([row.Program]);
+                    await FindLeftoversAsync([WithMsiFolder(row.Program, msi)]);
                 }
             });
         }
@@ -296,6 +297,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
             await RunWorkAsync("uninstall selected programs", async () =>
             {
                 if (!await EnsureRestorePointAsync()) return;
+                var msi = await MsiFoldersAsync(queue.Select(q => q.Row.Program));
                 foreach (var (row, command, _) in queue)
                 {
                     if (stop.IsCancellationRequested) break;
@@ -310,7 +312,7 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
                         if (code is null || Programs.Succeeded(code.Value)) await WaitUntilGoneAsync(row.Program, stop.Token);
                         if (!await Task.Run(() => Programs.StillListed(services.Context.Registry, row.Program)))
                         {
-                            removed.Add(row.Program);
+                            removed.Add(WithMsiFolder(row.Program, msi));
                             row.StateText = Loc.Instance.Format("Programs_RemovedName", row.Name);
                         }
                         else
@@ -374,11 +376,32 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         _skipWait?.TrySetResult();
     }
 
+    /// <summary>Install folders of the Windows Installer programs without an install location, read before their uninstall removes the records.</summary>
+    private Task<IReadOnlyDictionary<string, string>> MsiFoldersAsync(IEnumerable<DesktopProgram> programs)
+    {
+        var codes = programs.Where(p => p.ProductCode is not null && string.IsNullOrWhiteSpace(p.InstallLocation)).Select(p => p.ProductCode!).ToList();
+        return Task.Run(() => ProgramLeftovers.MsiFolders(services.Context.Registry, codes));
+    }
+
+    private static DesktopProgram WithMsiFolder(DesktopProgram p, IReadOnlyDictionary<string, string> msi) =>
+        p.ProductCode is { } code && string.IsNullOrWhiteSpace(p.InstallLocation) && msi.TryGetValue(code, out var folder) ? p with { InstallLocation = folder } : p;
+
     private async Task FindLeftoversAsync(IReadOnlyList<DesktopProgram> removed)
     {
         var roots = LeftoverRoots.ForPc(services.ProfilePath);
-        var found = await Task.Run(() =>
+        var found = await Task.Run(async () =>
         {
+            // Some uninstallers remove their entry first and delete the files afterwards: wait until the folders stop
+            // changing (at most a minute), so nothing is offered while it is still being deleted.
+            var folders = removed.SelectMany(p => ProgramLeftovers.Folders(p)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var last = ProgramLeftovers.Footprint(folders);
+            for (var i = 0; i < 30; i++)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                var now = ProgramLeftovers.Footprint(folders);
+                if (now == last) break;
+                last = now;
+            }
             var referenced = Programs.ReferencedPaths(services.Context.Registry);
             return ProgramLeftovers.FindAll(removed, roots, referenced);
         });
@@ -395,7 +418,8 @@ public sealed partial class AppsViewModel(MainViewModel owner, AppServices servi
         IsRecycling = true;
         try
         {
-            var failed = await Task.Run(() => picked.Where(r => !StorageAnalyzer.RecycleLeftover(r.Path)).ToList());
+            // Gone already (the uninstaller finished after the check): nothing left to move.
+            var failed = await Task.Run(() => picked.Where(r => Path.Exists(r.Path) && !StorageAnalyzer.RecycleLeftover(r.Path)).ToList());
             foreach (var r in picked.Except(failed)) Leftovers.Remove(r);
             foreach (var r in failed) r.StateText = Loc.Instance["Leftovers_Failed"];
             Owner.ShowResult(Loc.Instance.Format("Leftovers_Recycled", picked.Count - failed.Count),

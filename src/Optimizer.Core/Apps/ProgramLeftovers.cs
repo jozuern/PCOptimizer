@@ -94,6 +94,97 @@ public static class ProgramLeftovers
         return (isFile ?? File.Exists)(s) ? Path.GetDirectoryName(s) : s;
     }
 
+    private const string MsiComponents = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Components";
+
+    /// <summary>
+    /// The folder of each per-machine Windows Installer product, from the files it registered (Installer\UserData\S-1-5-18\
+    /// Components, one value per product under its packed code). Many MSI packages record no install location (7-Zip's),
+    /// and the uninstall removes these records: read them before it. A product whose files have no common folder below
+    /// a drive gets none. One pass over the components for all products.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> MsiFolders(Actions.IRegistryRoots registry, IEnumerable<string> productCodes)
+    {
+        var packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var code in productCodes)
+            if (PackedGuid(code) is { } p) packed[p] = code;
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (packed.Count == 0) return result;
+        using var components = registry.Open(Actions.Hive.Machine, MsiComponents, writable: false);
+        if (components is null) return result;
+        var files = packed.Values.ToDictionary(c => c, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
+        foreach (var name in components.GetSubKeyNames())
+        {
+            using var component = components.OpenSubKey(name);
+            if (component is null) continue;
+            foreach (var value in component.GetValueNames())
+                // Registry key paths ("01:\Software\...") and empty values are skipped: only file and folder paths count.
+                if (packed.TryGetValue(value, out var code) && component.GetValue(value) is string path && path.Length > 3 && char.IsAsciiLetter(path[0])
+                    && path[1] == ':' && path[2] == '\\')
+                    // A folder component ends with a backslash; a file gives its folder.
+                    files[code].Add(path.EndsWith('\\') ? path.TrimEnd('\\') : Path.GetDirectoryName(path) ?? path);
+        }
+        foreach (var (code, folders) in files)
+            if (CommonFolder(folders) is { } common) result[code] = common;
+        return result;
+    }
+
+    /// <summary>The deepest folder all of <paramref name="folders"/> lie in; null when that is a drive root or there are none.</summary>
+    public static string? CommonFolder(IReadOnlyList<string> folders)
+    {
+        if (folders.Count == 0) return null;
+        var common = folders[0].TrimEnd('\\').Split('\\');
+        var length = common.Length;
+        foreach (var f in folders.Skip(1))
+        {
+            var parts = f.TrimEnd('\\').Split('\\');
+            length = Math.Min(length, parts.Length);
+            for (var i = 0; i < length; i++)
+                if (!string.Equals(parts[i], common[i], StringComparison.OrdinalIgnoreCase)) { length = i; break; }
+        }
+        return length < 2 ? null : string.Join('\\', common.Take(length));
+    }
+
+    /// <summary>
+    /// Windows Installer's packed form of a product code: the first three groups reversed, then each byte of the last
+    /// two with its two hex digits swapped ({23170F69-40C1-2702-...} becomes 96F07132 1C04 2072 ...).
+    /// </summary>
+    public static string? PackedGuid(string productCode)
+    {
+        if (!Guid.TryParse(productCode, out var g)) return null;
+        var h = g.ToString("N").ToUpperInvariant();
+        static string Reversed(string s) => new(s.Reverse().ToArray());
+        var sb = new System.Text.StringBuilder(32).Append(Reversed(h[..8])).Append(Reversed(h[8..12])).Append(Reversed(h[12..16]));
+        for (var i = 16; i < 32; i += 2) sb.Append(h[i + 1]).Append(h[i]);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// File count and bytes below the program's existing folders. An uninstaller can remove the uninstall entry before it
+    /// deletes the files (VS Code's): the leftover check waits until this stops changing.
+    /// </summary>
+    public static (int Files, long Bytes) Footprint(IEnumerable<string> folders)
+    {
+        var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
+        int files = 0;
+        long bytes = 0;
+        foreach (var folder in folders.Where(Directory.Exists))
+        {
+            try
+            {
+                foreach (var f in new DirectoryInfo(folder).EnumerateFiles("*", options))
+                {
+                    files++;
+                    bytes += f.Length;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // A folder deleted while it is read: the next look counts again.
+            }
+        }
+        return (files, bytes);
+    }
+
     /// <summary>The program's own folders: its install location and the folders of its uninstaller and its icon (not System32's msiexec).</summary>
     public static IReadOnlyList<string> Folders(DesktopProgram p, Func<string, bool>? isFile = null)
     {
