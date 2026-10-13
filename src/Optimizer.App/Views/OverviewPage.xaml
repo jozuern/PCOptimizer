@@ -86,7 +86,7 @@
             <StackPanel Visibility="{Binding GameAccess, Converter={StaticResource NullToVisibility}}">
                 <ui:TextBlock Style="{StaticResource SectionHeader}" Text="{l:Tr Dash_GameAccess}" />
                 <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Dash_GameAccessHint}" Margin="0,0,0,8" />
-                <ContentControl Content="{Binding GameAccess}" ContentTemplate="{StaticResource FindingRow}" />
+                <ContentControl Content="{Binding GameAccess}" ContentTemplate="{StaticResource FindingRow}" Focusable="False" />
             </StackPanel>
 
             <!-- Apply recommended -->

@@ -65,7 +65,7 @@
                 <v:TweakListTemplateSelector>
                     <v:TweakListTemplateSelector.Group>
                         <DataTemplate>
-                            <ui:CardControl Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" AutomationProperties.Name="{Binding AutomationName}"
+                            <ui:CardControl Focusable="True" Margin="{StaticResource CardRowMargin}" Padding="{StaticResource CardPadding}" AutomationProperties.Name="{Binding AutomationName}"
                                             Command="{Binding DataContext.ToggleTweakGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                 <ui:CardControl.Icon>
                                     <ui:SymbolIcon Symbol="{Binding Icon}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />

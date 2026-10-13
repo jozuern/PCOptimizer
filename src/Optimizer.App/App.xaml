@@ -106,6 +106,14 @@
                 <Setter Property="Margin" Value="0,8,0,0" />
             </Style>
 
+            <!--
+                Keyboard and screen reader: Tab stops only where something happens. A plain list of items is layout; as
+                a stop it reads as an empty "list" (the developer switch tab-order lists every stop). Cards: App.xaml.cs.
+            -->
+            <Style TargetType="ItemsControl">
+                <Setter Property="Focusable" Value="False" />
+            </Style>
+
             <!-- Long lists (startup entries, services, tasks): virtualized, pixel scrolling, no selection -->
             <ControlTemplate x:Key="VirtualList" TargetType="ItemsControl">
                 <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
@@ -118,6 +126,7 @@
                 scrolling so it moves like the rest of the app). Rebuilding a list of 75 cards then costs a few cards.
             -->
             <Style x:Key="VirtualCardList" TargetType="ItemsControl">
+                <Setter Property="Focusable" Value="False" />
                 <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
                 <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
                 <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
@@ -198,6 +207,8 @@
 
             <!-- A card that opens the details pane: an accent border marks the one the pane shows. -->
             <Style x:Key="SelectableCard" TargetType="ui:CardControl" BasedOn="{StaticResource {x:Type ui:CardControl}}">
+                <!-- Cards are no Tab stops by default (App.xaml.cs); this one opens something -->
+                <Setter Property="Focusable" Value="True" />
                 <Style.Triggers>
                     <DataTrigger Value="True">
                         <DataTrigger.Binding>

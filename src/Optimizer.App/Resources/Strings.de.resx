@@ -1099,6 +1099,9 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Prio_Other" xml:space="preserve"><value>Prioritätsklasse {0}, von einem anderen Programm gesetzt</value></data>
   <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>Ich habe sie selbst wieder installiert</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="Nav_Toggle" xml:space="preserve"><value>Navigation ein- oder ausblenden</value></data>
+  <data name="Window_Minimize" xml:space="preserve"><value>Minimieren</value></data>
+  <data name="Window_Maximize" xml:space="preserve"><value>Maximieren</value></data>
   <data name="Nav_GroupOptimize" xml:space="preserve"><value>Optimieren</value></data>
   <data name="Nav_GroupCleanUp" xml:space="preserve"><value>Aufräumen</value></data>
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Pflegen und prüfen</value></data>

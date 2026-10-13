@@ -19,6 +19,9 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="Margin" Value="4,16,0,4" />
+            <!-- A label, not a Tab stop; a screen reader reads its text, not the control's type name -->
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
         </Style>
     </ui:FluentWindow.Resources>
     <Grid>
@@ -195,7 +198,8 @@
                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource SystemFillColorCautionBrush}" Text="{Binding ActionNote}" TextWrapping="Wrap" Margin="0,8,0,0"
                                       Visibility="{Binding ActionNote, Converter={StaticResource NullToVisibility}}" />
                     </StackPanel>
-                    <FlowDocumentScrollViewer x:Name="DetailsViewer" VerticalScrollBarVisibility="Auto" IsToolBarVisible="False" />
+                    <FlowDocumentScrollViewer x:Name="DetailsViewer" VerticalScrollBarVisibility="Auto" IsToolBarVisible="False"
+                                              AutomationProperties.Name="{Binding SelectedItem.Title}" />
                 </DockPanel>
             </Border>
             <Thumb Grid.Column="1" Width="6" HorizontalAlignment="Left" Cursor="SizeWE" DragDelta="DetailsResize_DragDelta"

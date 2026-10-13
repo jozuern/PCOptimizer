@@ -36,6 +36,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--sensors on\|all` | switches the live sensor readings on (Health page, read only) and waits for the first values; `all` also opens every component's full list |
 | `--lang en\|de`, `--theme System\|Dark\|Light` | override saved preferences |
 | `--confirm <tweak id> --confirm-shot <file.png>` | with `--screenshot`: renders the confirmation dialog of a tweak (nothing is applied) |
+| `--tab-order <file.txt>` | with `--screenshot`: writes every Tab stop of the page in order with the name and type a screen reader announces (`NO NAME` marks a stop without one); with `--confirm` also the confirmation's to `<file>-confirm.txt` |
 | `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
 | `--licenses-shot <file.png>` | with `--screenshot`: renders the Licenses window |
 | `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors, and switches that keep the old accent) |

@@ -1099,6 +1099,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Prio_Other" xml:space="preserve"><value>Priority class {0}, set by another program</value></data>
   <data name="Debloat_CameBackDismiss" xml:space="preserve"><value>I installed them again myself</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Nav_Toggle" xml:space="preserve"><value>Show or hide navigation</value></data>
+  <data name="Window_Minimize" xml:space="preserve"><value>Minimize</value></data>
+  <data name="Window_Maximize" xml:space="preserve"><value>Maximize</value></data>
   <data name="Nav_GroupOptimize" xml:space="preserve"><value>Optimize</value></data>
   <data name="Nav_GroupCleanUp" xml:space="preserve"><value>Clean up</value></data>
   <data name="Nav_GroupMaintain" xml:space="preserve"><value>Maintain and check</value></data>

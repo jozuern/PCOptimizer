@@ -77,6 +77,11 @@ public partial class App : Application
         // keeps Windows' regional format. Everything a click starts later would show "52,6 GB" on an English page.
         _settings = AppSettings.Load();
         Loc.Instance.SetLanguage(new CliArgs(e.Args).Value("--lang") ?? _settings.Language ?? Loc.Instance.Language);
+        // A card is a button in WPF-UI, so every card was a Tab stop. Most are layout (a title with a switch or button
+        // that has its own stop) and read as "pane" or as the name of their button: cards are no stops unless they have
+        // a command (SelectableCard, the Tweaks group headers set Focusable). Not as a style for the card type: that
+        // replaces WPF-UI's own and loses its template.
+        UIElement.FocusableProperty.OverrideMetadata(typeof(CardControl), new FrameworkPropertyMetadata(false));
         StartAsync(e);
     }
 
@@ -301,6 +306,7 @@ public partial class App : Application
         }
         await Task.Delay(400);
         SaveScreenshot(window, shot);
+        if (args.Value("--tab-order") is { } tabFile) WriteTabOrder(window, tabFile);
 
         // Developer aid: render the confirmation dialog of a tweak without applying anything.
         if (args.Value("--confirm") is { } confirmId && services.Catalog.Get(confirmId) is { } ct && args.Value("--confirm-shot") is { } confirmShot)
@@ -313,6 +319,7 @@ public partial class App : Application
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await Task.Delay(400);
             SaveScreenshot(dlg, confirmShot);
+            if (args.Value("--tab-order") is { } confirmTabs) WriteTabOrder(dlg, System.IO.Path.ChangeExtension(confirmTabs, null) + "-confirm.txt");
             dlg.Close();
         }
 
@@ -646,6 +653,29 @@ public partial class App : Application
         window.Top = SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight + 100;
         window.ShowActivated = false;
         window.ShowInTaskbar = false;
+    }
+
+    /// <summary>
+    /// Developer aid (--tab-order): goes through the window with Tab as a keyboard user does and writes every stop with
+    /// the name and type a screen reader announces, so stops without a name and stops that do nothing show up without
+    /// Narrator. The window stays inactive: WPF moves the logical focus, which is where Tab would go.
+    /// </summary>
+    private static void WriteTabOrder(Window window, string path)
+    {
+        var lines = new List<string>();
+        var seen = new HashSet<DependencyObject>();
+        window.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.First));
+        for (var i = 0; i < 400 && System.Windows.Input.FocusManager.GetFocusedElement(window) is UIElement element && seen.Add(element); i++)
+        {
+            var peer = System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(element);
+            var name = peer?.GetName() ?? "";
+            var label = $"{i + 1,3}  {peer?.GetLocalizedControlType() ?? "?"}  \"{name}\"  {element.GetType().Name}"
+                + (element is FrameworkElement { Name.Length: > 0 } fe ? $" #{fe.Name}" : "")
+                + (name.Length == 0 ? "  NO NAME" : "");
+            lines.Add(label);
+            element.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next));
+        }
+        File.WriteAllLines(path, lines);
     }
 
     private static void SaveScreenshot(Window window, string path)
