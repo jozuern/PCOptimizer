@@ -233,6 +233,29 @@ public class CheckEdgeCaseTests
         Assert.Empty(new MonitorOnIgpuCheck().Evaluate(Desktop(Monitor("AOC", Igpu().Name)) with { System = LaptopSystem }, C));
     }
 
+    // ---------------- A.restartPending ----------------
+
+    [Fact]
+    public void PendingRestartIsInfoNamingWhatWaits()
+    {
+        using var registry = new SandboxRegistry();
+        var ok = One(new RestartPendingCheck(registry), P());
+        Assert.Equal(FindingStatus.Ok, ok.Status);
+        AssertRenders(ok);
+
+        registry.Open(Hive.Machine, RestartPendingCheck.ServicingKey, writable: true, create: true)!.Dispose();
+        var servicing = One(new RestartPendingCheck(registry), P());
+        Assert.Equal((FindingStatus.Info, "servicing"), (servicing.Status, servicing.Variant));
+        AssertRenders(servicing);
+
+        registry.Open(Hive.Machine, RestartPendingCheck.WindowsUpdateKey, writable: true, create: true)!.Dispose();
+        var update = One(new RestartPendingCheck(registry), P());
+        Assert.Equal((FindingStatus.Info, "update"), (update.Status, update.Variant));
+        AssertRenders(update);
+
+        Assert.Empty(new RestartPendingCheck(null).Evaluate(P(), C));
+    }
+
     // ---------------- F4 ----------------
 
     [Fact]

@@ -54,6 +54,7 @@ public sealed class FindingEngine(CatalogData catalog, Actions.IRegistryRoots? r
         new MixedMemoryCheck(),
         new VirtualizationCheck(),
         new UnexpectedRestartCheck(),
+        new RestartPendingCheck(registry),
         new RebarCheck(),
         new PcieLinkCheck(),
         new MicrocodeCheck(),

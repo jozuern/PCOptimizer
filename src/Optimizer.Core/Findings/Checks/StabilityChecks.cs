@@ -1,4 +1,5 @@
 using System.Globalization;
+using Optimizer.Core.Actions;
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Hardware;
 
@@ -125,4 +126,46 @@ public sealed class UnexpectedRestartCheck : IFindingCheck
 
     /// <summary>Event 41 stores the bug check code in decimal; documentation lists it as 0x0000009F.</summary>
     public static string StopCode(uint code) => $"0x{code:X8}";
+}
+
+/// <summary>
+/// A.restartPending: Windows waits for a restart to finish updates or a feature change. Read from the two keys
+/// Configuration Manager uses for its "Pending Restart" column (Windows Update's RebootRequired and component based
+/// servicing's RebootPending). PendingFileRenameOperations is left out on purpose: programs queue file deletions there
+/// all the time, and a restart is not needed for them.
+/// </summary>
+public sealed class RestartPendingCheck(IRegistryRoots? registry) : IFindingCheck
+{
+    public const string Id = "A.restartPending";
+    public IReadOnlyList<string> DocIds => [Id];
+
+    public const string WindowsUpdateKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired";
+    public const string ServicingKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending";
+
+    public IEnumerable<Finding> Evaluate(HardwareProfile p, CatalogData c)
+    {
+        if (registry is null) yield break;
+        var updates = Exists(registry, WindowsUpdateKey);
+        var servicing = Exists(registry, ServicingKey);
+        yield return new Finding
+        {
+            Id = Id,
+            Kind = FindingKind.Advisor,
+            Status = updates || servicing ? FindingStatus.Info : FindingStatus.Ok,
+            Variant = updates ? "update" : servicing ? "servicing" : null,
+            Impact = 1,
+            Effects = [Effect.Stability],
+            Facts =
+            [
+                new("fact.restartForUpdates", updates ? "@yes" : "@no"),
+                new("fact.restartForServicing", servicing ? "@yes" : "@no"),
+            ],
+        };
+    }
+
+    private static bool Exists(IRegistryRoots registry, string path)
+    {
+        using var key = registry.Open(Hive.Machine, path, writable: false);
+        return key is not null;
+    }
 }
