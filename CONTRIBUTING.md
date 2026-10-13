@@ -128,7 +128,7 @@ The app was called PCOptimizer up to 0.7.3. The order matters for the in-app upd
 2. Then rename the repository on GitHub (Settings > General > Repository name: `Tunero`). GitHub redirects the old address. Versions from 0.8.0 on ask for releases by the repository's id (`ReleaseCheck.RepositoryId`) and accept links under both names, so they keep updating; versions up to 0.7.3 that did not update before the rename open the release page instead.
 3. winget: the first submission (pull request #450585, `jozuern.PCOptimizer` 0.6.4) is replaced by `jozuern.Tunero` 0.8.0 from `scripts/winget-manifest.ps1`. The `winget` workflow (`wingetcreate update`) takes over once that package is merged.
 4. Chocolatey and Scoop download from `github.com/jozuern/Tunero`, which exists only after the rename: run the `chocolatey` workflow from the tag after the rename (its automatic run on publishing pushes nothing before it), and add the first manifest to the Scoop bucket after the rename.
-5. Releases after 0.8.0 carry only `Tunero.exe`. Keep the legacy names in the code (`LegacyFolderName`, `LegacyFileName`, `FormerNames`, `LegacyOwnProfileName`, `LegacyRepository`, `LegacyExeAsset`, `WingetPackage.LegacyId`) for longer: they cost nothing and keep old installs working.
+5. Releases after 0.8.0 carry only `Tunero.exe`. Keep the legacy names in the code (`LegacyFolderName`, `StartMenuShortcut.LegacyFileNames`, `FormerNames`, `LegacyOwnProfileName`, `LegacyRepository`, `LegacyExeAsset`, `WingetPackage.LegacyId`) for longer: they cost nothing and keep old installs working.
 
 ### Code signing (SignPath Foundation)
 

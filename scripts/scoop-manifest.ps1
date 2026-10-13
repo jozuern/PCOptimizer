@@ -7,9 +7,10 @@
 # take the hash from the release's .sha256 file unchecked. Without -Sha256 the hash comes from verify-release.ps1
 # (checked against the release signature). Copy the written tunero.json to bucket/ in the bucket repo.
 # Users: scoop bucket add tunero https://github.com/jozuern/scoop-bucket, then scoop install tunero/tunero.
-# Scoop creates the Start menu entry (Scoop Apps\Tunero) from "shortcuts" and removes it with the app; the app does not
-# offer its own entry for a Scoop copy. No "bin": the exe asks for administrator rights on every start, which a console
-# shim would only get in the way of.
+# Scoop creates the Start menu entry (Scoop Apps\Tunero PC Optimizer: Windows Search matches only an entry's name, and
+# people search for "optimizer") from "shortcuts" and removes it with the app; the app does not offer its own entry
+# for a Scoop copy. No "bin": the exe asks for administrator rights on every start, which a console shim would only get
+# in the way of.
 param(
     [Parameter(Mandatory)][string]$Version,
     [string]$OutDir = (Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\scoop"),
@@ -37,7 +38,7 @@ $manifest = [ordered]@{
     architecture = [ordered]@{
         "64bit" = [ordered]@{ url = $exeUrl; hash = $Sha256 }
     }
-    shortcuts    = @(, @("Tunero.exe", "Tunero"))
+    shortcuts    = @(, @("Tunero.exe", "Tunero PC Optimizer"))
     # No checkver or autoupdate: the bucket's Excavator would take any new release's .sha256 unchecked, and Scoop
     # installs what the manifest names. Every release gets a manifest with a hash verified against the signature.
 }

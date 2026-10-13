@@ -64,6 +64,46 @@ public class WingetPackageTests
         }
     }
 
+    [Theory]
+    [InlineData("Tunero.lnk")]
+    [InlineData("PCOptimizer.lnk")]
+    public void StartMenuEntryUnderAnEarlierNameIsRenamedOnlyForThisExe(string legacy)
+    {
+        var folder = TestFolders.Create("startmenu-rename");
+        try
+        {
+            var exe = Path.Combine(folder, "Tunero.exe");
+            var other = Path.Combine(folder, "other", "Tunero.exe");
+            Directory.CreateDirectory(Path.GetDirectoryName(other)!);
+            File.WriteAllBytes(exe, []);
+            File.WriteAllBytes(other, []);
+            var current = Path.Combine(folder, StartMenuShortcut.FileName);
+            var old = Path.Combine(folder, legacy);
+
+            // An old entry that starts another copy stays as it is.
+            StartMenuShortcut.Create(folder, other, "Test");
+            File.Move(current, old);
+            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+            Assert.True(File.Exists(old));
+            Assert.False(File.Exists(current));
+
+            // One that starts this exe gets the new name, and the old file is gone.
+            StartMenuShortcut.Create(folder, exe, "Test");
+            File.Move(current, old);
+            Assert.True(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+            Assert.True(File.Exists(current));
+            Assert.False(File.Exists(old));
+            Assert.Equal(exe, StartMenuShortcut.Target(folder), ignoreCase: true);
+
+            // With the new name in place there is nothing to do.
+            Assert.False(StartMenuShortcut.RenameLegacy(folder, exe, "Test"));
+        }
+        finally
+        {
+            TestFolders.Delete(folder);
+        }
+    }
+
     [Fact]
     public void StartMenuFolderOfAnotherAdminAccountIsTheSignedInUsers()
     {

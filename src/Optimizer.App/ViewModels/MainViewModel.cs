@@ -950,9 +950,23 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>First start of the published exe: asks once whether to add the Start menu entry.</summary>
+    /// <summary>
+    /// Every start: an entry under an earlier name ("Tunero", "PCOptimizer") that starts this exe gets the new name. First
+    /// start of the published exe: asks once whether to add the entry.
+    /// </summary>
     public void OfferStartMenuEntry()
     {
+        if (CanAddToStartMenu && StartMenuFolder is { } folder && Environment.ProcessPath is { } exe)
+        {
+            try
+            {
+                if (StartMenuShortcut.RenameLegacy(folder, exe, Loc.Instance["StartMenu_Description"])) Log.Info("startmenu", "entry renamed", new { folder });
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+            {
+                Log.Error("startmenu", "entry not renamed", ex);
+            }
+        }
         if (_settings.StartMenuAsked || !CanAddToStartMenu || StartMenuEntry) return;
         _settings.StartMenuAsked = true;
         _settings.Save();
