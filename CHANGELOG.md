@@ -20,6 +20,7 @@
 
 ### Fixed
 
+- **Tools, quick fixes:** the confirmation of a fix now names its own action on the button ("Restart" for Restart to Advanced startup, not "Run"), and each fix's button carries the fix's name for screen readers instead of only "Run" or "Restart".
 - **Startup page, undo of a deleted task:** when the task's folder in Task Scheduler had gone too (an uninstaller removed it), putting the task back failed with "file not found"; the folder is now created again.
 - **Screen readers and voice control, clickable cards:** the cards that open details or a group were reported as a plain "pane" without a way to click them through UI Automation; they are now buttons that Narrator announces as such and Voice Access can click by name.
 - **German, change targets and values:** targets that stayed English ("Task Scheduler\...", registry values changed bit by bit, a network adapter without a name) and stored states ("Disabled", a service's "Manual") now read in German in the confirmation, the explanation page and the change log, as the other targets already did.

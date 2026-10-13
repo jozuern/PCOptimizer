@@ -22,7 +22,8 @@
                         <TextBox Style="{StaticResource OutputBox}" Text="{Binding Output, Mode=OneWay}" Visibility="{Binding Output, Converter={StaticResource NullToVisibility}}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:Button Content="{Binding ActionText}" CommandParameter="{Binding}" MinWidth="96"
+                <!-- Named after its card: every row's button says "Run" or "Restart", which tells a screen reader nothing -->
+                <ui:Button Content="{Binding ActionText}" CommandParameter="{Binding}" MinWidth="96" AutomationProperties.Name="{Binding Title}"
                            Command="{Binding DataContext.Tools.RunQuickFixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            IsEnabled="{Binding DataContext.Tools.IsWorking, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBool}}" />
             </ui:CardControl>

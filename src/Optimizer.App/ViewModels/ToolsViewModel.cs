@@ -384,7 +384,7 @@ public sealed partial class ToolsViewModel(IPageHost owner, AppServices services
     private async Task RunQuickFixAsync(QuickFixRow row)
     {
         var fix = row.Fix;
-        if (fix.Confirm && !dialogs.Ask(row.Title, Loc.Instance[$"Quick_{fix.Id}Confirm"], Loc.Instance["Cleanup_Run"])) return;
+        if (fix.Confirm && !dialogs.Ask(row.Title, Loc.Instance[$"Quick_{fix.Id}Confirm"], row.ActionText)) return;
         row.Output = null;
         await RunWorkAsync($"quick fix {fix.Id}", async () =>
         {
