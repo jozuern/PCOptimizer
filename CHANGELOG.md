@@ -12,6 +12,7 @@
 
 - **Hand cursor on whole pages:** on every page with tabs (Services & tasks, Remove apps, Install & update, Tools, for example the storage analyzer or the driver list) the mouse showed the hand everywhere, also over text and cards that do nothing. The hand cursor of a tab now applies to its header only; a test keeps it so.
 - **Result bar:** a message without a link or button ran under the bar's close button ("99 %", "Fehlgeschlagen: 0." were cut). The close button now has its own room.
+- **Search for "update tunero":** the in-app search knew the update setting only as "update pcoptimizer"; it now finds it under the new name too.
 
 ## 0.9.0 (preview)
 

@@ -85,7 +85,7 @@ public sealed class SearchIndex(TweakCatalog tweaks, CatalogData catalog) : ISea
             (SearchKind.Setting, "Settings", "Settings_Theme", null, ["dark mode", "light mode", "dunkel", "hell", "design"]),
             (SearchKind.Setting, "Settings", "StartMenu_Setting", "StartMenu_Hint", ["start menu", "shortcut", "verknuepfung", "startmenue"]),
             (SearchKind.Setting, "Settings", "Settings_Expert", "Settings_ExpertHint", ["advanced", "expert", "boot", "experte"]),
-            (SearchKind.Setting, "Settings", "Update_AtStart", "Update_Hint", ["update pcoptimizer", "new version", "neue version"]),
+            (SearchKind.Setting, "Settings", "Update_AtStart", "Update_Hint", ["update tunero", "update pcoptimizer", "new version", "neue version"]),
             (SearchKind.Setting, "Settings", "Settings_Report", "Settings_ReportHint", ["bug", "issue", "fehler melden", "log"]),
             (SearchKind.Setting, "Settings", "Uninstall_Setting", "Uninstall_Hint", ["uninstall", "remove", "deinstallieren", "entfernen"]),
             (SearchKind.Setting, "Settings", "About_Support", null, ["donate", "ko-fi", "support", "spenden", "unterstuetzen"]),
