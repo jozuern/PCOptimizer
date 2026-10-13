@@ -51,7 +51,9 @@
                         <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Startup.StopVirusTotalCommand}"
                                    Visibility="{Binding Startup.IsCheckingVirusTotal, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
                         <ui:Button Content="{l:Tr Startup_SaveSnapshot}" Icon="{ui:SymbolIcon Save20}" Command="{Binding Startup.SaveSnapshotCommand}" Margin="0,0,4,0" Appearance="Transparent" />
-                        <ui:Button Content="{l:Tr Startup_CompareSnapshot}" Icon="{ui:SymbolIcon BranchCompare20}" Command="{Binding Startup.CompareSnapshotCommand}" Appearance="Transparent" />
+                        <ui:Button Content="{l:Tr Startup_CompareSnapshot}" Icon="{ui:SymbolIcon BranchCompare20}" Command="{Binding Startup.CompareSnapshotCommand}" Margin="0,0,4,0" Appearance="Transparent" />
+                        <ui:Button Content="{l:Tr Startup_Export}" Icon="{ui:SymbolIcon ArrowExportUp20}" Command="{Binding Startup.ExportListCommand}" Appearance="Transparent"
+                                   ToolTip="{l:Tr Startup_ExportHint}" />
                     </WrapPanel>
                     <StackPanel VerticalAlignment="Center">
                         <ui:TextBlock FontTypography="Body" Text="{Binding Startup.SummaryText}" TextWrapping="Wrap" />

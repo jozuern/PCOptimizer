@@ -1034,6 +1034,13 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Quick_RecoveryEnableDone" xml:space="preserve"><value>Fertig. reagentc meldet:</value></data>
   <data name="Startup_SaveSnapshot" xml:space="preserve"><value>Stand speichern</value></data>
   <data name="Startup_CompareSnapshot" xml:space="preserve"><value>Mit Stand vergleichen</value></data>
+  <data name="Startup_Export" xml:space="preserve"><value>Liste exportieren</value></data>
+  <data name="Startup_ExportHint" xml:space="preserve"><value>Speichert jeden Eintrag mit Datei, Herausgeber und Signatur als CSV-Datei, für einen Forenbeitrag oder zum späteren Vergleich.</value></data>
+  <data name="Startup_ExportFileType" xml:space="preserve"><value>CSV-Datei</value></data>
+  <data name="Startup_ExportHeaders" xml:space="preserve"><value>Name|Art|Zustand|Herausgeber|Signatur|Befehl|Datei|Ort</value></data>
+  <data name="Startup_ExportOn" xml:space="preserve"><value>An</value></data>
+  <data name="Startup_ExportOff" xml:space="preserve"><value>Aus</value></data>
+  <data name="Startup_Exported" xml:space="preserve"><value>{0} Einträge in {1} gespeichert.</value></data>
   <data name="Startup_OnlyNew" xml:space="preserve"><value>Nur Neues seit dem Stand</value></data>
   <data name="Startup_SnapshotSaved" xml:space="preserve"><value>Stand mit {0} Einträgen gespeichert. Installiere oder aktualisiere etwas und vergleiche dann, um zu sehen, was hinzukam.</value></data>
   <data name="Startup_NoSnapshot" xml:space="preserve"><value>Noch kein Stand gespeichert. Speichere zuerst einen.</value></data>

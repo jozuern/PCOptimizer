@@ -101,6 +101,9 @@ public sealed partial class MainViewModel
     [ObservableProperty] private InfoBarSeverity _resultSeverity = InfoBarSeverity.Informational;
 
     /// <summary>Shows the result of an action; failures in the caution or error style, so they are not read as done.</summary>
+    /// <summary>The save dialog, for pages that write a file the user picks (the Startup list export).</summary>
+    public string? PickSaveFile(string defaultName, string filterName, string extension) => _dialogs.PickSaveFile(defaultName, filterName, extension);
+
     public void ShowResult(string text, InfoBarSeverity severity = InfoBarSeverity.Informational)
     {
         ResultSeverity = severity;

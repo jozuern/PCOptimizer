@@ -1034,6 +1034,13 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Quick_RecoveryEnableDone" xml:space="preserve"><value>Done. reagentc reports:</value></data>
   <data name="Startup_SaveSnapshot" xml:space="preserve"><value>Save snapshot</value></data>
   <data name="Startup_CompareSnapshot" xml:space="preserve"><value>Compare with snapshot</value></data>
+  <data name="Startup_Export" xml:space="preserve"><value>Export list</value></data>
+  <data name="Startup_ExportHint" xml:space="preserve"><value>Saves every entry with its file, publisher and signature as a CSV file, for a forum post or to compare later.</value></data>
+  <data name="Startup_ExportFileType" xml:space="preserve"><value>CSV file</value></data>
+  <data name="Startup_ExportHeaders" xml:space="preserve"><value>Name|Kind|State|Publisher|Signature|Command|File|Location</value></data>
+  <data name="Startup_ExportOn" xml:space="preserve"><value>On</value></data>
+  <data name="Startup_ExportOff" xml:space="preserve"><value>Off</value></data>
+  <data name="Startup_Exported" xml:space="preserve"><value>Saved {0} entries to {1}.</value></data>
   <data name="Startup_OnlyNew" xml:space="preserve"><value>Only new since the snapshot</value></data>
   <data name="Startup_SnapshotSaved" xml:space="preserve"><value>Snapshot saved with {0} entries. Install or update something, then compare to see what it added.</value></data>
   <data name="Startup_NoSnapshot" xml:space="preserve"><value>No snapshot saved yet. Save one first.</value></data>

@@ -332,6 +332,33 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
         Filter();
     }
 
+    /// <summary>Saves every entry (not only the filtered ones) as a CSV file, in the UI language.</summary>
+    [RelayCommand]
+    private async Task ExportListAsync()
+    {
+        if (IsLoading || _all.Count == 0)
+        {
+            SnapshotText = Loc.Instance["Startup_SnapshotWait"];
+            return;
+        }
+        var name = $"Tunero-Startup-{Environment.MachineName}-{DateTime.Now:yyyy-MM-dd}.csv";
+        if (Owner.PickSaveFile(name, Loc.Instance["Startup_ExportFileType"], ".csv") is not { } path) return;
+        var rows = _all.Select(r => new StartupExportRow(r.Name, r.KindText,
+            r.Entry.Enabled switch { true => Loc.Instance["Startup_ExportOn"], false => Loc.Instance["Startup_ExportOff"], null => Loc.Instance["Startup_ReadOnly"] },
+            r.PublisherText, r.SignatureText, r.Command, r.Entry.ImagePath, r.Location)).ToList();
+        string[] headers = [.. Loc.Instance["Startup_ExportHeaders"].Split('|')];
+        try
+        {
+            var csv = StartupExport.ToCsv(rows, headers, StartupExport.SeparatorFor(System.Globalization.CultureInfo.CurrentCulture));
+            await File.WriteAllTextAsync(path, csv, new System.Text.UTF8Encoding(true));
+            Owner.ShowResult(Loc.Instance.Format("Startup_Exported", rows.Count, Path.GetFileName(path)), Wpf.Ui.Controls.InfoBarSeverity.Success);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), Wpf.Ui.Controls.InfoBarSeverity.Error);
+        }
+    }
+
     [RelayCommand]
     private async Task CompareSnapshotAsync()
     {

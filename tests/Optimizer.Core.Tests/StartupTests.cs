@@ -258,6 +258,25 @@ public class StartupTests
             or StartupKind.ExplorerAddOn or StartupKind.CredentialProvider), e => Assert.Null(e.Enabled));
     }
 
+    /// <summary>
+    /// The exported list quotes cells with separators or quotes, keeps one line per entry, and never lets a spreadsheet
+    /// read a command line as a formula.
+    /// </summary>
+    [Fact]
+    public void ExportedListIsSafeCsv()
+    {
+        var rows = new[]
+        {
+            new StartupExportRow("Vendor; Updater", "Task", "On", "Vendor \"Inc\"", "Signed", "=cmd /c calc", @"C:\x.exe", "line1\nline2"),
+        };
+        var csv = StartupExport.ToCsv(rows, ["Name", "Kind", "State", "Publisher", "Signature", "Command", "File", "Location"], ';');
+        var lines = csv.TrimEnd().Split(Environment.NewLine);
+        Assert.Equal(2, lines.Length);
+        Assert.Equal("\"Vendor; Updater\";Task;On;\"Vendor \"\"Inc\"\"\";Signed;'=cmd /c calc;C:\\x.exe;line1 line2", lines[1]);
+        Assert.Equal(';', StartupExport.SeparatorFor(new System.Globalization.CultureInfo("de-DE")));
+        Assert.Equal(',', StartupExport.SeparatorFor(new System.Globalization.CultureInfo("en-US")));
+    }
+
     /// <summary>A variable of the user's own (inherited by this app) cannot make a script look like one from System32.</summary>
     [Fact]
     public void UserVariablesDoNotMakeAScriptTrusted()
