@@ -113,6 +113,8 @@ public static class Program
             ProcessHardening.RemoveCodeLoadingVariables(start.Environment, SingleFileRuntime.ExtractVariable);
             start.Environment[SingleFileRuntime.ExtractVariable] = runtimeBase;
             start.Environment[SingleFileRuntime.RestartedVariable] = "1";
+            using (var self = Process.GetCurrentProcess())
+                start.Environment[SingleFileRuntime.LaunchedVariable] = self.StartTime.ToUniversalTime().Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
             using var child = Process.Start(start);
             if (child is null) return null;
             hold.Dispose();

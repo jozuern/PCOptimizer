@@ -546,11 +546,14 @@ public partial class App : Application
         var lines = new List<string>();
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Mark("idle after the first scan");
-        // The start, counted from the process start (a single-file exe that restarts itself: from the second process).
+        // The start, counted from the launch the user saw: the published exe starts itself once more for its protected
+        // runtime folder, and the first process hands its start time to the second.
         DateTime processStart;
         using (var self = System.Diagnostics.Process.GetCurrentProcess()) processStart = self.StartTime;
-        lines.Add("start (ms after the process started)");
-        foreach (var (name, at) in _startMarks) lines.Add($"{at:HH:mm:ss.fff} {(at - processStart).TotalMilliseconds,6:0} ms  {name}");
+        var launch = long.TryParse(Environment.GetEnvironmentVariable(SingleFileRuntime.LaunchedVariable), System.Globalization.NumberStyles.None,
+            CultureInfo.InvariantCulture, out var ticks) && ticks > 0 ? new DateTime(ticks, DateTimeKind.Utc).ToLocalTime() : processStart;
+        lines.Add(launch == processStart ? "start (ms after the process started)" : $"start (ms after the launch; this process started {(processStart - launch).TotalMilliseconds:0} ms after it)");
+        foreach (var (name, at) in _startMarks) lines.Add($"{at:HH:mm:ss.fff} {(at - launch).TotalMilliseconds,6:0} ms  {name}");
         // What the scan spent its time on: the probe times and every tool it started, from the session log.
         lines.AddRange(["", "scan steps and tools (session log)"]);
         foreach (var entry in Log.Snapshot(Log.MaxEntries).Where(e => e.Source is "scan" or "command"))

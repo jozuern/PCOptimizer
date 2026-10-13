@@ -17,6 +17,12 @@ public static class SingleFileRuntime
     /// </summary>
     public const string RestartedVariable = "TUNERO_RUNTIME_RESTARTED";
 
+    /// <summary>
+    /// The first process's start (UTC ticks), handed to the second, so --perf counts the start from the launch the user
+    /// saw and not from the restart. Read only by the perf report.
+    /// </summary>
+    public const string LaunchedVariable = "TUNERO_LAUNCHED_AT";
+
     public static string ExtractBase(string dataRoot) => Path.Combine(dataRoot, Path.GetFileName(DataPaths.Runtime));
 
     /// <summary>
