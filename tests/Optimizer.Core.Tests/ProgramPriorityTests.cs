@@ -39,7 +39,9 @@ public class ProgramPriorityTests
         var low = ProgramPriority.Tweak("backup.exe", CpuPriority.Low, lowIo: true);
         await fx.Engine.ApplyAsync(low, Facts, new HashSet<string>(), Options);
         Assert.Equal(new PriorityRule("backup.exe", CpuPriority.Low, true), Assert.Single(ProgramPriority.Read(fx.Registry)));
-        Assert.True(low.Undocumented && low.Preview && low.AntiCheatSensitive);
+        // Undocumented, but proven in the VM: no longer a Preview, and the proof travels with the rule.
+        Assert.True(low.Undocumented && !low.Preview && low.AntiCheatSensitive);
+        Assert.Equal([ProgramPriority.Proof], low.Proof);
         Assert.DoesNotContain(Enum.GetValues<CpuPriority>(), p => (int)p == 4); // never realtime
 
         // The same program again without low disk priority: the earlier value goes, undo brings it back.

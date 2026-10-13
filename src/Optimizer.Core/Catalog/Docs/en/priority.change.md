@@ -4,7 +4,7 @@
 Windows starts this program with the chosen CPU priority, and optionally a low disk priority, every time, without a program running in the background. Realtime is never offered.
 
 ## How it works
-Every process has a priority class; Windows gives processor time to higher classes first [1]. Image File Execution Options are per-program settings Windows reads when the program starts [2]. The app writes CpuPriorityClass (and IoPriority for low disk priority) under Image File Execution Options\<program>\PerfOptions. Microsoft documents the priority classes and Image File Execution Options, but does not document the PerfOptions values, so the rule is a Preview until a test confirms it.
+Every process has a priority class; Windows gives processor time to higher classes first [1]. Image File Execution Options are per-program settings Windows reads when the program starts [2]. The app writes CpuPriorityClass (and IoPriority for low disk priority) under Image File Execution Options\<program>\PerfOptions. Microsoft documents the priority classes and Image File Execution Options, but does not document the PerfOptions values. A test in a virtual machine with Windows 11 confirmed that Windows applies them: a program started with a rule for Below normal and low disk priority ran with both, and with Normal again after Undo.
 
 ## Why it can help
 A game on Above normal keeps its share of the processor when background programs get busy; a backup or download tool on Below normal or Low stays out of the way.

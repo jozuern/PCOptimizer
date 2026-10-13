@@ -19,11 +19,15 @@ public sealed record PriorityRule(string Exe, CpuPriority? Cpu, bool LowIo, int?
 /// <summary>
 /// Persistent start priorities without a background program: Windows reads PerfOptions when the program starts.
 /// Microsoft documents the priority classes and Image File Execution Options, but not the PerfOptions values, so the
-/// rules carry the undocumented badge and stay Preview until tested.
+/// rules carry the undocumented badge; a VM test proved that Windows applies them (<see cref="Proof"/>).
 /// </summary>
 public static partial class ProgramPriority
 {
     private const string Ifeo = StartupScanner.Ifeo;
+
+    /// <summary>The test that showed Windows applies the PerfOptions values (CONTRIBUTING, "Undocumented values").</summary>
+    public const string Proof = "VM test 2026-10-13, Windows 11 build 26300: PING.EXE with Below normal and low disk priority started with priority " +
+        "class BelowNormal and I/O priority 1 (NtQueryInformationProcess), and with Normal and 2 again after Undo.";
 
     public static bool IsValidExe(string name) => ExeRegex().IsMatch(name);
 
@@ -79,8 +83,8 @@ public static partial class ProgramPriority
             Impact = new ImpactInfo { Gaming = 0, Basis = "disputed", Effect = ["none"] },
             Risk = Risk.Moderate,
             Hidden = true,
-            Preview = true,
             Undocumented = true,
+            Proof = [Proof],
             AntiCheatSensitive = true,
             Actions = actions,
             Sources = ["https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities"],

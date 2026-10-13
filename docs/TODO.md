@@ -15,7 +15,6 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 - **`privacy.locationOff` on Home editions:** the tweak uses the documented policy "Turn off location" (`DisableLocation`), proven on Pro, and is left out on Home. Check on a Home VM whether Windows honors the policy there; if it does, drop the edition condition.
 - **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it.
 - **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade`, the NVIDIA settings, MSI mode and interrupt affinity, the network adapter properties (section 5 of the VM plan).
-- **Program start priorities** (Preview): the row in section 6 can be run in the VM today; with a result they leave Preview.
 - **V-Cache driver:** the service name `amd3dvcacheSvc` needs a check on an X3D PC.
 
 ## Code

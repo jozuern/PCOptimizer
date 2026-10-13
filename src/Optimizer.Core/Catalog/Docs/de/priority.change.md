@@ -4,7 +4,7 @@
 Windows startet dieses Programm jedes Mal mit der gewählten CPU-Priorität und auf Wunsch niedriger Datenträgerpriorität, ohne dass ein Programm im Hintergrund läuft. Echtzeit wird nie angeboten.
 
 ## So funktioniert es
-Jeder Prozess hat eine Prioritätsklasse; Windows verteilt CPU-Zeit zuerst an höhere Klassen [1]. Image File Execution Options sind Einstellungen pro Programm, die Windows beim Start des Programms liest [2]. Die App schreibt CpuPriorityClass (und IoPriority für niedrige Datenträgerpriorität) unter Image File Execution Options\<Programm>\PerfOptions. Microsoft beschreibt die Prioritätsklassen und die Image File Execution Options, die PerfOptions-Werte sind aber nicht dokumentiert; bis ein Test sie bestätigt, ist die Regel eine Vorschau.
+Jeder Prozess hat eine Prioritätsklasse; Windows verteilt CPU-Zeit zuerst an höhere Klassen [1]. Image File Execution Options sind Einstellungen pro Programm, die Windows beim Start des Programms liest [2]. Die App schreibt CpuPriorityClass (und IoPriority für niedrige Datenträgerpriorität) unter Image File Execution Options\<Programm>\PerfOptions. Microsoft beschreibt die Prioritätsklassen und die Image File Execution Options, die PerfOptions-Werte sind aber nicht dokumentiert. Ein Test in einer virtuellen Maschine mit Windows 11 hat bestätigt, dass Windows sie anwendet: Ein Programm, das mit einer Regel für „Niedriger als normal“ und niedrige Datenträgerpriorität startete, lief mit beidem, und nach dem Rückgängigmachen wieder mit „Normal“.
 
 ## Warum es helfen kann
 Ein Spiel auf Höher als normal behält seinen Anteil am Prozessor, wenn Hintergrundprogramme viel zu tun haben; ein Backup- oder Download-Tool auf Niedriger als normal oder Niedrig hält sich zurück.
