@@ -80,6 +80,8 @@ public enum EarlyRead
 [JsonDerivedType(typeof(DohAutoUpgradeAction), "dohAutoUpgrade")]
 [JsonDerivedType(typeof(ReservedStorageAction), "reservedStorage")]
 [JsonDerivedType(typeof(Startup.StartupApprovedAction), "startupApproved")]
+[JsonDerivedType(typeof(Startup.StartupFileDeleteAction), "startupFileDelete")]
+[JsonDerivedType(typeof(Startup.ScheduledTaskDeleteAction), "scheduledTaskDelete")]
 [JsonDerivedType(typeof(Tools.OptionalFeatureAction), "optionalFeature")]
 [JsonDerivedType(typeof(Tools.OptionalCapabilityAction), "optionalCapability")]
 public abstract class TweakAction

@@ -1051,7 +1051,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Startup_CopyLocation" xml:space="preserve"><value>Ort kopieren</value></data>
   <data name="Startup_Delete" xml:space="preserve"><value>Eintrag löschen</value></data>
   <data name="Startup_DeleteName" xml:space="preserve"><value>{0} löschen</value></data>
-  <data name="Startup_DeleteHint" xml:space="preserve"><value>Entfernt diesen Wert aus der Registry, wie Autoruns. Er wird vorher gesichert: Rückgängig auf der Seite Änderungen schreibt ihn zurück.</value></data>
+  <data name="Startup_DeleteHint" xml:space="preserve"><value>Entfernt diesen Eintrag (den Registry-Wert, die Datei im Autostart-Ordner oder die Aufgabe), wie Autoruns. Er wird vorher gesichert: Rückgängig auf der Seite Änderungen stellt ihn wieder her.</value></data>
   <data name="Startup_FileMissing" xml:space="preserve"><value>Die Datei dieses Eintrags existiert nicht.</value></data>
   <data name="Programs_Title" xml:space="preserve"><value>Installierte Programme</value></data>
   <data name="Programs_Hint" xml:space="preserve"><value>Desktopprogramme aus der Deinstallationsliste von Windows. Deinstallieren startet das eigene Deinstallationsprogramm mit seinem Fenster. Hake mehrere an, um sie nacheinander zu deinstallieren, ohne Rückfragen, wo das Programm es anbietet, und zu sehen, was sie zurücklassen. Vor der ersten Deinstallation einer Sitzung legt die App einen Wiederherstellungspunkt an, wenn der Computerschutz an ist.</value></data>

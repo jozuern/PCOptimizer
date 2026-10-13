@@ -406,6 +406,50 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         var folder = service.GetFolder(i <= 0 ? "\\" : path[..i]);
         return folder.GetTask(path[(i + 1)..]);
     }
+
+    public string? ExportXml(string path)
+    {
+        try
+        {
+            return GetTask(path).Xml;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    public void Delete(string path)
+    {
+        var i = path.LastIndexOf('\\');
+        Connect().GetFolder(i <= 0 ? "\\" : path[..i]).DeleteTask(path[(i + 1)..], 0);
+        ForgetList();
+    }
+
+    /// <summary>
+    /// Registers the exported XML under its old path, with the account and logon type its principal names. A task that
+    /// stores a password cannot come back this way (<see cref="Startup.ScheduledTaskXml.Principal"/> refuses it).
+    /// </summary>
+    public void Register(string path, string xml)
+    {
+        if (Startup.ScheduledTaskXml.Principal(xml) is not var (logonType, user))
+            throw new InvalidOperationException($"The task {path} runs with a stored password; it cannot be registered again without it.");
+        var service = Connect();
+        var i = path.LastIndexOf('\\');
+        var folderPath = i <= 0 ? "\\" : path[..i];
+        TaskSchedulerCom.ITaskFolder folder;
+        try
+        {
+            folder = service.GetFolder(folderPath);
+        }
+        catch (COMException)
+        {
+            // The folder went with the task (an uninstaller removed it): create it again.
+            folder = service.GetFolder("\\").CreateFolder(folderPath.TrimStart('\\'), null);
+        }
+        folder.RegisterTask(path[(i + 1)..], xml, TaskSchedulerCom.CreateOrUpdate, user, null, logonType, null);
+        ForgetList();
+    }
 }
 
 public sealed class SystemDisplayManager : IDisplayManager

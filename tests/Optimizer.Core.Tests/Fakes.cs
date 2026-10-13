@@ -90,6 +90,18 @@ internal sealed class FakeTasks : ITaskScheduler
 
     public List<ScheduledTaskInfo> Listed { get; } = [];
     public IReadOnlyList<ScheduledTaskInfo> List() => Listed.Select(t => t with { Enabled = Enabled.GetValueOrDefault(t.Path, t.Enabled) }).ToList();
+
+    /// <summary>Registered tasks by path, as their exported XML.</summary>
+    public Dictionary<string, string> Xml { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public string? ExportXml(string path) => Xml.GetValueOrDefault(path);
+
+    public void Delete(string path)
+    {
+        if (!Xml.Remove(path)) throw new InvalidOperationException($"no task {path}");
+        Enabled.Remove(path);
+    }
+
+    public void Register(string path, string xml) => Xml[path] = xml;
 }
 
 internal sealed class FakeDisplays : IDisplayManager

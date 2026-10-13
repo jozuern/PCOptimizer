@@ -538,9 +538,10 @@ public static class StartupTweaks
     }
 
     /// <summary>
-    /// Deletes a registry autostart value the way Autoruns does, but through the engine: the value is backed up first and
-    /// the Changes page puts it back. Null for entries that are not a single value in a Run, RunOnce, policy Run or
-    /// cmd.exe AutoRun key (RunOnceEx entries, files, tasks, services and Windows' own locations stay as they are).
+    /// Deletes an autostart entry the way Autoruns does, but through the engine: the entry is backed up first and the
+    /// Changes page puts it back. A single value in a Run, RunOnce, policy Run or cmd.exe AutoRun key, a file in a Startup
+    /// folder (its bytes are kept) or a scheduled task of another program (its XML is kept). Null for everything else
+    /// (RunOnceEx entries, services, Windows' own tasks and locations stay as they are).
     /// </summary>
     public static TweakDefinition? Delete(StartupEntry e)
     {
@@ -552,7 +553,16 @@ public static class StartupTweaks
             StartupKind.CommandAutoRun => (KeyPath(e.Location[..e.Location.LastIndexOf('\\')]), "AutoRun"),
             _ => (null, null),
         };
-        if (path is null || name is null) return null;
+        TweakAction? action = path is not null && name is not null ? new RegistryAction { Hive = e.Hive, Path = path, Name = name, Delete = true }
+            : e.Kind switch
+            {
+                // Target is "<StartupApproved key>|<file name>", Location the folder.
+                StartupKind.StartupFolder when e.Target?.Split('|') is [_, var file] && StartupFileDeleteAction.IsStartupFile(System.IO.Path.Combine(e.Location, file))
+                    => new StartupFileDeleteAction { Path = System.IO.Path.Combine(e.Location, file) },
+                StartupKind.LogonTask when e.Target is { Length: > 0 } task && !StartupScanner.IsWindowsTask(task) => new ScheduledTaskDeleteAction { Path = task },
+                _ => null,
+            };
+        if (action is null) return null;
         return new TweakDefinition
         {
             Id = $"startup.delete.{e.Kind.ToString().ToLowerInvariant()}.{TweakIds.Slug(e.Key)}",
@@ -562,7 +572,7 @@ public static class StartupTweaks
             Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
             Risk = Risk.Safe,
             Hidden = true,
-            Actions = [new RegistryAction { Hive = e.Hive, Path = path, Name = name, Delete = true }],
+            Actions = [action],
             Sources = ["https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns"],
         };
     }

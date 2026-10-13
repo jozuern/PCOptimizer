@@ -66,6 +66,15 @@ public interface ITaskScheduler
 
     /// <summary>All registered tasks (read-only listing for the startup and task pages).</summary>
     IReadOnlyList<ScheduledTaskInfo> List();
+
+    /// <summary>The task's registration XML, as Task Scheduler exports it; null when the task does not exist.</summary>
+    string? ExportXml(string path) => null;
+
+    /// <summary>Deletes the task.</summary>
+    void Delete(string path) => throw new NotSupportedException("deleting tasks");
+
+    /// <summary>Registers the task from its exported XML again, with the account the XML names (no stored password).</summary>
+    void Register(string path, string xml) => throw new NotSupportedException("registering tasks");
 }
 
 /// <summary>A scheduled task: first action's program, author, and whether it starts at logon or at boot.</summary>

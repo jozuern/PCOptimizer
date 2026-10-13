@@ -47,9 +47,9 @@ public class RuntimeTweakPersistenceTests
         Assert.True(RegistryValue.Read(fx.Registry, Hive.Machine, runOnce, "Finish").Existed);
         Assert.True(RegistryValue.Read(fx.Registry, Hive.User, @"Software\Microsoft\Command Processor", "AutoRun").Existed);
 
-        // Files, tasks, services and RunOnceEx entries have no Delete.
-        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.StartupFolder }));
-        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.LogonTask }));
+        // Windows' own tasks, services and RunOnceEx entries have no Delete (files and other tasks: StartupDeleteTests).
+        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.LogonTask, Target = @"\Microsoft\Windows\TextServicesFramework\MsCtfMonitor" }));
+        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.Service }));
         Assert.Null(StartupTweaks.Delete(once with { Key = "runonceex:0001:x" }));
     }
 

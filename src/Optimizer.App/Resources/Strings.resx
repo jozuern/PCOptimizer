@@ -1051,7 +1051,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Startup_CopyLocation" xml:space="preserve"><value>Copy location</value></data>
   <data name="Startup_Delete" xml:space="preserve"><value>Delete entry</value></data>
   <data name="Startup_DeleteName" xml:space="preserve"><value>Delete {0}</value></data>
-  <data name="Startup_DeleteHint" xml:space="preserve"><value>Removes this value from the registry, as Autoruns does. It is backed up first: Undo on the Changes page puts it back.</value></data>
+  <data name="Startup_DeleteHint" xml:space="preserve"><value>Removes this entry (the registry value, the file in the Startup folder or the task), as Autoruns does. It is backed up first: Undo on the Changes page puts it back.</value></data>
   <data name="Startup_FileMissing" xml:space="preserve"><value>The file of this entry does not exist.</value></data>
   <data name="Programs_Title" xml:space="preserve"><value>Installed programs</value></data>
   <data name="Programs_Hint" xml:space="preserve"><value>Desktop programs from the Windows uninstall list. Uninstall runs the program's own uninstaller with its window. Tick several to uninstall them one after the other, quietly where the program offers it, and to see what they left behind. Before the first uninstall in a session the app creates a restore point when System Protection is on.</value></data>

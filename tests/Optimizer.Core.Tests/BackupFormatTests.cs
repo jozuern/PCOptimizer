@@ -86,7 +86,48 @@ public class BackupFormatTests
             new OptionalFeatureAction { Feature = "Microsoft-Hyper-V-All", Enabled = true }),
         new("optionalCapability", _ => { },
             new OptionalCapabilityAction { Capability = "Media.WindowsMediaPlayer~~~~0.0.12.0", Installed = false }),
+        new("startupFileDelete", _ => SetUpStartupFile(),
+            new Startup.StartupFileDeleteAction { Path = FixtureStartupFile }),
+        new("scheduledTaskDelete", fx => fx.Tasks.Xml[@"\Fixture\Updater"] = FixtureTaskXml,
+            new Startup.ScheduledTaskDeleteAction { Path = @"\Fixture\Updater" }),
     ];
+
+    /// <summary>
+    /// A real file in a Startup folder below the temp folder. The fixture stores <see cref="FixturePlaceholder"/> instead of
+    /// the temp folder of the PC that wrote it (no user name in the repository); <see cref="Swap"/> maps one to the other.
+    /// </summary>
+    private static string FixtureStartupFile => Path.Combine(FixtureRoot, @"Microsoft\Windows\Start Menu\Programs\Startup\Fixture.lnk");
+
+    private static string FixtureRoot => Path.Combine(Path.GetTempPath(), "tunero-backup-fixture");
+    private const string FixturePlaceholder = @"C:\TuneroBackupFixture";
+
+    /// <summary>Replaces a folder in the backup's text: plain, JSON-escaped and escaped twice (the stored action), each also in lower case (target keys).</summary>
+    private static string Swap(string text, string from, string to)
+    {
+        static string Escape(string s) => s.Replace("\\", "\\\\", StringComparison.Ordinal);
+        foreach (var level in new[] { 2, 1, 0 })
+        {
+            var (f, t) = (from, to);
+            for (var i = 0; i < level; i++) (f, t) = (Escape(f), Escape(t));
+            text = text.Replace(f, t, StringComparison.Ordinal).Replace(f.ToLowerInvariant(), t.ToLowerInvariant(), StringComparison.Ordinal);
+        }
+        return text;
+    }
+
+    private static void SetUpStartupFile()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(FixtureStartupFile)!);
+        if (File.Exists(FixtureStartupFile)) File.Delete(FixtureStartupFile);
+        File.WriteAllBytes(FixtureStartupFile, [0x4C, 0, 0, 0, 0x01, 0x14, 0x02, 0x00]);
+    }
+
+    private const string FixtureTaskXml = """
+        <?xml version="1.0" encoding="UTF-16"?>
+        <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+          <Principals><Principal id="Author"><UserId>S-1-5-18</UserId></Principal></Principals>
+          <Actions Context="Author"><Exec><Command>C:\Fixture\updater.exe</Command></Exec></Actions>
+        </Task>
+        """;
 
     private static void SetUpNic(EngineFixture fx)
     {
@@ -130,7 +171,7 @@ public class BackupFormatTests
             var r = await fx.Engine.ApplyAsync(t, Facts, new HashSet<string>(), Options);
             Assert.True(r.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective, $"{s.Name}: {r.Outcome} {r.Error}");
             var file = Path.Combine(folder, s.Name + ".json");
-            if (!File.Exists(file)) File.Copy(Path.Combine(fx.Store.BackupFolder, s.Id + ".json"), file);
+            if (!File.Exists(file)) File.WriteAllText(file, Swap(File.ReadAllText(Path.Combine(fx.Store.BackupFolder, s.Id + ".json")), FixtureRoot, FixturePlaceholder));
         }
 
         // An undo whose value takes effect after a restart is kept as a pending undo.
@@ -171,7 +212,7 @@ public class BackupFormatTests
     [MemberData(nameof(FixtureFiles))]
     public void BackupOfAnEarlierVersionIsUndone(string fixture)
     {
-        var json = File.ReadAllText(Path.Combine(FixtureFolder, fixture));
+        var json = Swap(File.ReadAllText(Path.Combine(FixtureFolder, fixture)), FixturePlaceholder, FixtureRoot);
         var backup = JsonSerializer.Deserialize<TweakBackup>(json)!;
         var scenario = Scenarios.Single(s => s.Id == backup.TweakId);
         using var fx = Prepare(scenario);
@@ -248,7 +289,7 @@ public class BackupFormatTests
         Assert.Equal(
             ["accessibilityShortcut", "bcd", "displayMode", "dns", "dohAutoUpgrade", "hibernation", "memoryCompression", "nicProperty", "nvidiaDrs",
              "optionalCapability", "optionalFeature", "powerMode", "powerScheme", "powerSetting", "registry", "registryBinaryBits", "registryBits",
-             "registryToken", "reservedStorage", "scheduledTask", "service", "startupApproved"],
+             "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete"],
             types);
     }
 }

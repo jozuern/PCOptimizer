@@ -1,0 +1,33 @@
+{
+  "Format": 1,
+  "TweakId": "fixture.scheduledTaskDelete",
+  "Created": "2026-10-13T19:55:05.3009362+02:00",
+  "LastApplied": "2026-10-13T19:55:05.3048997+02:00",
+  "WindowsBuild": 26300,
+  "AppVersion": "test",
+  "CatalogVersion": "c169463e5300",
+  "Entries": [
+    {
+      "TargetKey": "taskdelete:\\fixture\\updater",
+      "Description": "Task Scheduler\\Fixture\\Updater",
+      "Original": {
+        "Existed": true,
+        "Kind": "taskXml",
+        "Data": "\u003C?xml version=\u00221.0\u0022 encoding=\u0022UTF-16\u0022?\u003E\r\n\u003CTask version=\u00221.4\u0022 xmlns=\u0022http://schemas.microsoft.com/windows/2004/02/mit/task\u0022\u003E\r\n  \u003CPrincipals\u003E\u003CPrincipal id=\u0022Author\u0022\u003E\u003CUserId\u003ES-1-5-18\u003C/UserId\u003E\u003C/Principal\u003E\u003C/Principals\u003E\r\n  \u003CActions Context=\u0022Author\u0022\u003E\u003CExec\u003E\u003CCommand\u003EC:\\Fixture\\updater.exe\u003C/Command\u003E\u003C/Exec\u003E\u003C/Actions\u003E\r\n\u003C/Task\u003E",
+        "Display": "\u003C?xml version=\u00221.0\u0022 encoding=\u0022UTF-16\u0022?\u003E\r\n\u003CTask version=\u00221.4\u0022 xmlns=\u0022http://schemas.microsoft.com/windows/2004/02/mit/task\u0022\u003E\r\n  \u003CPrincipals\u003E\u003CPrincipal id=\u0022Author\u0022\u003E\u003CUserId\u003ES-1-5-18\u003C/UserId\u003E\u003C/Principal\u003E\u003C/Principals\u003E\r\n  \u003CActions Context=\u0022Author\u0022\u003E\u003CExec\u003E\u003CCommand\u003EC:\\Fixture\\updater.exe\u003C/Command\u003E\u003C/Exec\u003E\u003C/Actions\u003E\r\n\u003C/Task\u003E"
+      },
+      "Applied": {
+        "Existed": false,
+        "Kind": null,
+        "Data": null,
+        "Display": "(not set)"
+      },
+      "Action": "{\u0022type\u0022:\u0022scheduledTaskDelete\u0022,\u0022Path\u0022:\u0022\\\\Fixture\\\\Updater\u0022,\u0022TargetKey\u0022:\u0022taskdelete:\\\\fixture\\\\updater\u0022,\u0022IsBootCritical\u0022:false,\u0022TakesEffectAfterRestart\u0022:false,\u0022EarlyRead\u0022:\u0022none\u0022}"
+    }
+  ],
+  "AppliedOnVersion": "26300",
+  "PendingRestartSince": null,
+  "Exports": [],
+  "Owner": null,
+  "Definition": "{\u0022Id\u0022:\u0022fixture.scheduledTaskDelete\u0022,\u0022Category\u0022:\u0022Test\u0022,\u0022Subject\u0022:null,\u0022Docs\u0022:null,\u0022Impact\u0022:{\u0022Gaming\u0022:0,\u0022Basis\u0022:\u0022situational\u0022,\u0022Effect\u0022:[\u0022none\u0022]},\u0022ImpactOverrides\u0022:[],\u0022Risk\u0022:\u0022safe\u0022,\u0022Reversibility\u0022:\u0022reversible\u0022,\u0022Restart\u0022:false,\u0022SignOut\u0022:false,\u0022Scope\u0022:\u0022machine\u0022,\u0022BootCritical\u0022:false,\u0022AntiCheatSensitive\u0022:false,\u0022Preview\u0022:false,\u0022Undocumented\u0022:false,\u0022Proof\u0022:[],\u0022Hidden\u0022:true,\u0022AppliesTo\u0022:{\u0022MinBuild\u0022:26100,\u0022MaxBuild\u0022:null,\u0022CpuVendor\u0022:null,\u0022GpuVendor\u0022:null,\u0022FormFactor\u0022:\u0022any\u0022,\u0022When\u0022:null},\u0022Actions\u0022:[{\u0022type\u0022:\u0022scheduledTaskDelete\u0022,\u0022Path\u0022:\u0022\\\\Fixture\\\\Updater\u0022,\u0022TargetKey\u0022:\u0022taskdelete:\\\\fixture\\\\updater\u0022,\u0022IsBootCritical\u0022:false,\u0022TakesEffectAfterRestart\u0022:false,\u0022EarlyRead\u0022:\u0022none\u0022}],\u0022ConflictsWith\u0022:[],\u0022BlockedWhen\u0022:[],\u0022RecommendWhen\u0022:null,\u0022RecommendReasonKey\u0022:null,\u0022Verify\u0022:\u0022actions\u0022,\u0022Sources\u0022:[],\u0022Fixes\u0022:[]}"
+}
