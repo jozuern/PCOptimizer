@@ -4,7 +4,7 @@
 Schaltet die Einträge dieses Programms im Rechtsklickmenü des Explorers ein oder aus. Langsame Erweiterungen sind eine häufige Ursache für ein träges Kontextmenü.
 
 ## So funktioniert es
-Der Explorer lädt die Erweiterung in jedes Rechtsklickmenü. Die App trägt die Erweiterung in die dokumentierte Sperrliste des Explorers ein (Shell Extensions\Blocked), statt sie zu deinstallieren [1]. Der Explorer liest die Liste beim Start, melde dich also ab oder starte den Explorer neu. Rückgängig machen entfernt den Eintrag wieder.
+Der Explorer lädt die Erweiterung in jedes Rechtsklickmenü. Die App trägt die Erweiterung in die Sperrliste des Explorers ein (Shell Extensions\Blocked), statt sie zu deinstallieren [1]. Danach geöffnete Menüs lassen die Erweiterung meist schon weg; zeigt ein Menü sie noch, starte den Explorer neu oder melde dich ab. Rückgängig machen entfernt den Eintrag wieder.
 
 ## Warum es helfen kann
 Ein schnelleres Rechtsklickmenü im Explorer.

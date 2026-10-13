@@ -1,10 +1,10 @@
 # Kein „Teilen“ im Rechtsklickmenü
 
 ## Zusammenfassung
-Entfernt „Teilen“ aus dem klassischen Rechtsklickmenü von Dateien und die Schaltfläche Teilen aus dem Windows-11-Menü. Der Wert ist nicht dokumentiert; ein VM-Test hat ihn bestätigt.
+Entfernt „Teilen“ aus dem klassischen Rechtsklickmenü von Dateien und die Schaltfläche Teilen aus dem Windows-11-Menü. Nicht dokumentiert; ein VM-Test hat es bestätigt.
 
 ## So funktioniert es
-„Teilen“ öffnet das Teilen-Fenster von Windows, das eine Datei an eine App schickt, die Teilen unterstützt [1]. Der Eintrag stammt aus einer Shell-Erweiterung, die ihn dem klassischen Rechtsklickmenü (Weitere Optionen anzeigen) und die Schaltfläche Teilen dem Windows-11-Menü hinzufügt. Der Explorer lädt keine Shell-Erweiterung, deren CLSID als Wert unter HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked steht. Die App trägt {e2bf9676-5f8f-435c-97eb-11607a5bedf7}, die Erweiterung hinter „Teilen“, in diese Liste ein [1]. Diese Liste ist nicht dokumentiert. Ein Test in einer virtuellen Maschine mit Windows 11 hat es bestätigt: „Teilen“ fehlte im klassischen Menü einer Videodatei (ebenso die Schaltfläche Teilen in deren Windows-11-Menü) und war nach dem Entfernen des Werts wieder da. Menüs, die nach der Änderung geöffnet wurden, zeigten die Änderung schon ohne Neustart des Explorers; zeigt ein Menü den Eintrag noch, melde dich ab und wieder an [1].
+„Teilen“ öffnet das Teilen-Fenster von Windows, das eine Datei an eine App schickt, die Teilen unterstützt [1]. Der Eintrag stammt aus einer Shell-Erweiterung: Sie fügt ihn dem klassischen Rechtsklickmenü (Weitere Optionen anzeigen) hinzu und die Schaltfläche Teilen dem Windows-11-Menü. Der Explorer lädt keine Shell-Erweiterungen, deren CLSID als Wert unter HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked steht. Die App trägt {e2bf9676-5f8f-435c-97eb-11607a5bedf7}, die Erweiterung hinter „Teilen“, in diese Liste ein [1]. Diese Liste ist nicht dokumentiert. Ein Test in einer virtuellen Maschine mit Windows 11 hat es bestätigt: „Teilen“ fehlte im klassischen Menü einer Videodatei (ebenso die Schaltfläche Teilen in deren Windows-11-Menü) und war nach dem Entfernen des Werts wieder da. Im VM-Test fehlte der Eintrag schon ohne Neustart des Explorers in jedem danach geöffneten Menü. Zeigt ein Menü ihn noch, melde dich ab und wieder an [1].
 
 ## Warum es helfen kann
 Wenn du nie Dateien über das Teilen-Fenster verschickst, sind Eintrag und Schaltfläche in jedem Dateimenü nur Ballast.

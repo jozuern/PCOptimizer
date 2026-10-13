@@ -238,7 +238,8 @@
       "id": "explorer.menuGiveAccessOff",
       "undocumented": true,
       "proof": [
-        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Give access to\" was gone from the classic menu of a folder and the Sharing tab from its Properties, and back after the value was removed; menus opened after each change showed it without an Explorer restart"
+        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Give access to\" was gone from the classic menu of a folder and the Sharing tab from its Properties, and back after the value was removed; menus opened after each change showed it without an Explorer restart",
+        "VM test 2026-10-13: Tunero 1.0.26 applied the five right-click menu tweaks from the command line and undid them with --undo-all; screenshots of the menus and of the Properties of a folder and a video file showed the entries (and the Sharing and Previous Versions tabs) gone after Apply and back after Undo"
       ],
       "category": "Explorer",
       "impact": {
@@ -267,7 +268,8 @@
       "id": "explorer.menuPreviousVersionsOff",
       "undocumented": true,
       "proof": [
-        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Restore previous versions\" was gone from the classic menu of a folder and of a video file and the Previous Versions tab from the folder's Properties, and back after the value was removed; menus opened after each change showed it without an Explorer restart"
+        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Restore previous versions\" was gone from the classic menu of a folder and of a video file and the Previous Versions tab from the folder's Properties, and back after the value was removed; menus opened after each change showed it without an Explorer restart",
+        "VM test 2026-10-13: Tunero 1.0.26 applied the five right-click menu tweaks from the command line and undid them with --undo-all; screenshots of the menus and of the Properties of a folder and a video file showed the entries (and the Sharing and Previous Versions tabs) gone after Apply and back after Undo"
       ],
       "category": "Explorer",
       "impact": {
@@ -296,7 +298,8 @@
       "id": "explorer.menuTerminalOff",
       "undocumented": true,
       "proof": [
-        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Open in Terminal\" was gone from the Windows 11 menu and the classic menu of a folder, and back after the value was removed; menus opened after each change showed it without an Explorer restart"
+        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Open in Terminal\" was gone from the Windows 11 menu and the classic menu of a folder, and back after the value was removed; menus opened after each change showed it without an Explorer restart",
+        "VM test 2026-10-13: Tunero 1.0.26 applied the five right-click menu tweaks from the command line and undid them with --undo-all; screenshots of the menus and of the Properties of a folder and a video file showed the entries (and the Sharing and Previous Versions tabs) gone after Apply and back after Undo"
       ],
       "category": "Explorer",
       "impact": {
@@ -325,7 +328,8 @@
       "id": "explorer.menuCastOff",
       "undocumented": true,
       "proof": [
-        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Cast to Device\" was gone from the classic menu of a video file, and back after the value was removed; menus opened after each change showed it without an Explorer restart"
+        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Cast to Device\" was gone from the classic menu of a video file, and back after the value was removed; menus opened after each change showed it without an Explorer restart",
+        "VM test 2026-10-13: Tunero 1.0.26 applied the five right-click menu tweaks from the command line and undid them with --undo-all; screenshots of the menus and of the Properties of a folder and a video file showed the entries (and the Sharing and Previous Versions tabs) gone after Apply and back after Undo"
       ],
       "category": "Explorer",
       "impact": {
@@ -354,7 +358,8 @@
       "id": "explorer.menuShareOff",
       "undocumented": true,
       "proof": [
-        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Share\" was gone from the classic menu of a video file and the Share button of its Windows 11 menu, and back after the value was removed; menus opened after each change showed it without an Explorer restart"
+        "VM test 2026-10-13, Windows 11 build 26300: with the value \"Share\" was gone from the classic menu of a video file and the Share button of its Windows 11 menu, and back after the value was removed; menus opened after each change showed it without an Explorer restart",
+        "VM test 2026-10-13: Tunero 1.0.26 applied the five right-click menu tweaks from the command line and undid them with --undo-all; screenshots of the menus and of the Properties of a folder and a video file showed the entries (and the Sharing and Previous Versions tabs) gone after Apply and back after Undo"
       ],
       "category": "Explorer",
       "impact": {

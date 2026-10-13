@@ -4,7 +4,7 @@
 Turns this program's entries in the Explorer right-click menu on or off. Slow extensions are a common cause of a lagging context menu.
 
 ## How it works
-Explorer loads the listed extension into every right-click menu. The app adds the extension to Explorer's documented block list (Shell Extensions\Blocked) instead of uninstalling it [1]. Explorer reads the list when it starts, so sign out or restart Explorer. Undo removes it from the list again.
+Explorer loads the listed extension into every right-click menu. The app adds the extension to Explorer's block list (Shell Extensions\Blocked) instead of uninstalling it [1]. Menus opened afterwards usually leave the extension out; if one still shows it, restart Explorer or sign out. Undo removes it from the list again.
 
 ## Why it can help
 A faster right-click menu in Explorer.
