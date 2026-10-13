@@ -39,6 +39,11 @@ public sealed class AppSettings
     /// <summary>Scan results the user ignores (<see cref="ViewModels.MainViewModel.IgnoreKey"/>): left out of the lists and the score.</summary>
     public List<string> IgnoredFindings { get; set; } = [];
 
+    /// <summary>The opt-in sections of an export on the Changes page (removed apps, service start types, startup entries turned off).</summary>
+    public bool ExportApps { get; set; }
+    public bool ExportServices { get; set; }
+    public bool ExportStartup { get; set; }
+
     /// <summary>Usage profile id ("gaming", "battery", ...); null until the first scan suggests one.</summary>
     public string? Profile { get; set; }
 

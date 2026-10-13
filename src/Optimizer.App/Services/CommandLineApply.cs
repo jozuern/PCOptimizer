@@ -15,7 +15,9 @@ namespace Optimizer.App.Services;
 /// together; previews, Expert, boot-critical and anti-cheat sensitive changes need their own confirmation in the app
 /// and are listed instead), <c>--apply-recommended</c> applies the Overview's recommended list for the profile
 /// (<c>--profile &lt;id&gt;</c>, else the saved one), <c>--export &lt;file&gt;</c> writes the changes file the Changes
-/// page exports, and <c>--undo-all</c> undoes every change of this app. An apply creates a restore point
+/// page exports (<c>--include apps,services,startup</c> adds its opt-in sections), and <c>--undo-all</c> undoes every
+/// change of this app. Removed apps in a file are listed by <c>--apply</c>, never removed: that cannot be undone and
+/// needs its own question in the app. An apply creates a restore point
 /// first, as the window does, and stops when that is not possible unless <c>--no-restore-point</c> is given. A run waits
 /// for a change of another Tunero (<see cref="ChangeLock"/>). The result goes to the session log and, with
 /// <c>--log &lt;file&gt;</c>, to a new text file; the exit code says how it went.
@@ -34,6 +36,11 @@ public static class CommandLineApply
     public const int StartRefused = 8;
     /// <summary>--profile names a profile this version does not know, or one this PC does not offer (a laptop profile on a desktop).</summary>
     public const int UnknownProfile = 9;
+    /// <summary>--include names a part the export does not have.</summary>
+    public const int UnknownSection = 10;
+
+    /// <summary>The names --include takes, in the order of the Changes page.</summary>
+    public static readonly IReadOnlyList<string> Sections = ["apps", "services", "startup"];
 
     /// <summary>How long a run waits for a change of another Tunero (the window, another run) to finish.</summary>
     public static TimeSpan LockWait { get; set; } = TimeSpan.FromMinutes(5);
@@ -56,10 +63,14 @@ public static class CommandLineApply
         return code;
     }
 
-    public static async Task<int> ExportAsync(string path, AppServices services, string? logPath)
+    /// <param name="include">The value of --include: a comma separated list of <see cref="Sections"/>, or null.</param>
+    public static async Task<int> ExportAsync(string path, AppServices services, string? logPath, string? include = null)
     {
         var lines = new List<string>();
-        var code = await Locked(lines, () => ExportCoreAsync(path, services, lines));
+        var parts = (include ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var code = parts.FirstOrDefault(p => !Sections.Contains(p, StringComparer.OrdinalIgnoreCase)) is { } unknown
+            ? Unknown(lines, unknown)
+            : await Locked(lines, () => ExportCoreAsync(path, services, parts.ToHashSet(StringComparer.OrdinalIgnoreCase), lines));
         Finish("export", lines, code, logPath);
         return code;
     }
@@ -71,6 +82,12 @@ public static class CommandLineApply
         var code = await Locked(lines, () => ReapplyCoreAsync(services, lines));
         Finish("reapply", lines, code, logPath);
         return code;
+    }
+
+    private static int Unknown(List<string> lines, string section)
+    {
+        lines.Add(Loc.Instance.Format("Cli_UnknownSection", section, string.Join(", ", Sections)));
+        return UnknownSection;
     }
 
     private static async Task<int> ReapplyCoreAsync(AppServices services, List<string> lines)
@@ -147,8 +164,12 @@ public static class CommandLineApply
         }
 
         var pc = await ScanAsync(services);
-        var plan = ChangeTransfer.Plan(file, services.Catalog, pc.Facts, pc.Applied);
-        Log.Info("cli", "apply plan", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
+        var targets = TransferData.Targets(services, file, pc.Profile);
+        var plan = ChangeTransfer.Plan(file, services.Catalog, pc.Facts, pc.Applied, targets);
+        Log.Info("cli", "apply plan", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, apps = plan.Apps.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
+        // Removing an app cannot be undone: the command line only names them, the app's Import asks for them.
+        if (plan.Apps.Count > 0)
+            lines.Add(Loc.Instance.Format("Cli_AppsInApp", string.Join(", ", plan.Apps.Select(a => a.Entry.Label(Loc.Instance.Language)))));
         return await ApplyTogetherAsync(services, pc, plan.Together, plan.OneByOne, withoutRestorePoint, lines,
             (ok, failed, skipped) => Loc.Instance.Format("Cli_Summary", ok, failed, skipped, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown));
     }
@@ -185,7 +206,7 @@ public static class CommandLineApply
     }
 
     /// <summary>The changes file of the Changes page's Export, written to <paramref name="path"/>.</summary>
-    private static async Task<int> ExportCoreAsync(string path, AppServices services, List<string> lines)
+    private static async Task<int> ExportCoreAsync(string path, AppServices services, IReadOnlySet<string> include, List<string> lines)
     {
         if (!services.Elevation.IsElevated)
         {
@@ -193,8 +214,11 @@ public static class CommandLineApply
             return NotElevated;
         }
         var pc = await ScanAsync(services);
+        var sections = include.Count > 0
+            ? TransferData.Sections(services, pc.Facts, include.Contains("apps"), include.Contains("services"), include.Contains("startup"))
+            : null;
         var (file, pcSpecific) = ChangeTransfer.Create(services.Store.All().Select(b => b.TweakId), pc.Applied, services.Catalog,
-            Optimizer.Core.Tools.ProgramPriority.Read(services.Context.Registry), AppInfo.Text, services.Os.BuildString);
+            Optimizer.Core.Tools.ProgramPriority.Read(services.Context.Registry), AppInfo.Text, services.Os.BuildString, sections);
         try
         {
             // Only a new file when elevated: whoever starts the exe names the path, and the app writes with administrator rights.
@@ -207,7 +231,7 @@ public static class CommandLineApply
             lines.Add(Loc.Instance.Format("Cli_FileUnwritable", path, ex.Message));
             return InvalidFile;
         }
-        lines.Add(Loc.Instance.Format("Cli_Exported", file.Tweaks.Count + file.Priorities.Count, path, pcSpecific));
+        lines.Add(Loc.Instance.Format("Cli_Exported", file.Count, path, pcSpecific));
         return Done;
     }
 

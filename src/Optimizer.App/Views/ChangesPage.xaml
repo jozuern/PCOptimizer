@@ -98,6 +98,18 @@
                     <ui:Button Content="{l:Tr Changes_Import}" Icon="{ui:SymbolIcon ArrowImport20}" Command="{Binding ImportChangesCommand}" />
                 </StackPanel>
             </ui:CardControl>
+            <!-- Opt-in parts of the export: they belong to this PC's apps and programs, so they are left out unless chosen -->
+            <ui:Card Padding="16,12" Margin="0,4,0,0">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body" Text="{l:Tr Changes_ExportAlso}" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <CheckBox Content="{l:Tr Changes_ExportApps}" IsChecked="{Binding ExportApps}" Margin="0,0,24,0" />
+                        <CheckBox Content="{l:Tr Changes_ExportServices}" IsChecked="{Binding ExportServices}" Margin="0,0,24,0" />
+                        <CheckBox Content="{l:Tr Changes_ExportStartup}" IsChecked="{Binding ExportStartup}" />
+                    </WrapPanel>
+                    <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Changes_ExportAlsoHint}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                </StackPanel>
+            </ui:Card>
 
         </StackPanel>
     </ScrollViewer>

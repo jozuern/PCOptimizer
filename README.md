@@ -44,7 +44,7 @@ A copy installed this way is updated by its package manager: "Update now" in the
 - **Apps that were not reviewed:** on request, Remove apps also lists the other removable apps, with a warning.
 - **Install & update:** install common apps with winget or search winget for any other package, update them one at a time or all at once, and see how old the drivers are, grouped by where to get updates.
 - **Tools and health:** storage analyzer, Windows features, program start priorities, network fixes, Windows Update repair, SFC and DISM, quick fixes (icon cache, Defender update, winget sources, Advanced startup for Safe Mode), a frame time benchmark with PresentMon, throttle check, drive health, opt-in sensors.
-- **Export, Import and command line:** move your changes to another PC or a fresh install, in the app or with `--apply` ([Command line](#command-line)).
+- **Export, Import and command line:** move your changes to another PC or a fresh install, if you like with removed apps, service start types and startup entries, in the app or with `--apply` ([Command line](#command-line)).
 - **System info:** everything the scan read, from processor and memory modules to displays, drives, firmware security and the power plan, with a button that copies it all for a forum post or a bug report.
 - **Keyboard:** Ctrl+F search (Down into the results, Enter opens, Esc clears), F5 reads the page again or scans again, Esc closes the details pane.
 
@@ -94,12 +94,13 @@ Start-Process Tunero.exe -ArgumentList '--apply-recommended', '--profile', 'gami
 | `--apply-recommended` | Applies the Overview's recommended list (fixes of problems found, then what the profile recommends for this PC) with the same rules: what needs its own confirmation is listed in the log, not applied. |
 | `--profile <id>` | The profile for `--apply-recommended`: gaming, laptopGaming, battery, office, quiet or lowEnd. Without it, the profile saved in the app (or the one that fits this PC best). |
 | `--export <file>` | Writes the changes file the Changes page exports, to a new file. |
+| `--include <parts>` | Adds opt-in parts to `--export`, separated by commas: `apps` (removed apps), `services` (service start types), `startup` (startup entries turned off). `--apply` changes services and startup entries only where the PC has them and its rules allow it, and lists removed apps without removing them: Import in the app asks for them. |
 | `--reapply` | Applies again the changes Windows reset (what "Apply again" offers on the Overview); the opt-in task in Settings runs this after sign-in. |
 | `--undo-all` | Undoes every change of this app. |
 | `--no-restore-point` | Continues when no restore point can be created (System Protection off); without it, nothing is changed then. |
 | `--log <file>` | Writes the result to a new text file; an existing file is never overwritten. |
 
-Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point, 5 another Tunero window or run was changing the PC for 5 minutes, 6 unexpected error (details in the log), 7 Windows version not supported, 8 the start was refused for safety (a profiler variable, or a data or runtime folder that other accounts can change), 9 unknown profile or one this PC does not offer (a laptop profile on a desktop).
+Exit codes: 0 done, 1 some changes failed, 2 not a valid changes file, 3 no administrator rights, 4 no restore point, 5 another Tunero window or run was changing the PC for 5 minutes, 6 unexpected error (details in the log), 7 Windows version not supported, 8 the start was refused for safety (a profiler variable, or a data or runtime folder that other accounts can change), 9 unknown profile or one this PC does not offer (a laptop profile on a desktop), 10 unknown part for `--include`.
 
 ## Privacy
 

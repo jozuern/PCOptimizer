@@ -16,15 +16,37 @@ namespace Optimizer.App.ViewModels;
 /// </summary>
 public sealed partial class MainViewModel
 {
+    /// <summary>Opt-in sections of the export (Changes page), remembered for the next export.</summary>
+    public bool ExportApps
+    {
+        get => _settings.ExportApps;
+        set { _settings.ExportApps = value; _settings.Save(); OnPropertyChanged(); }
+    }
+
+    public bool ExportServices
+    {
+        get => _settings.ExportServices;
+        set { _settings.ExportServices = value; _settings.Save(); OnPropertyChanged(); }
+    }
+
+    public bool ExportStartup
+    {
+        get => _settings.ExportStartup;
+        set { _settings.ExportStartup = value; _settings.Save(); OnPropertyChanged(); }
+    }
+
     [RelayCommand]
     private async Task ExportChangesAsync()
     {
         try
         {
+            var facts = _facts;
+            var (apps, serviceTypes, startup) = (ExportApps, ExportServices, ExportStartup);
             var (file, pcSpecific) = await Task.Run(() => ChangeTransfer.Create(
                 _services.Store.All().Select(b => b.TweakId), AppliedIds(), _services.Catalog,
-                ProgramPriority.Read(_services.Context.Registry), AppInfo.Text, _services.Os.BuildString));
-            if (file.Tweaks.Count + file.Priorities.Count == 0)
+                ProgramPriority.Read(_services.Context.Registry), AppInfo.Text, _services.Os.BuildString,
+                apps || serviceTypes || startup ? TransferData.Sections(_services, facts, apps, serviceTypes, startup) : null));
+            if (file.Count == 0)
             {
                 ShowResult(Loc.Instance["Transfer_NothingToExport"]);
                 return;
@@ -32,8 +54,8 @@ public sealed partial class MainViewModel
             var name = $"Tunero-{Environment.MachineName}-{DateTime.Now:yyyy-MM-dd}{ChangeTransfer.Extension}";
             if (_dialogs.PickSaveFile(name, Loc.Instance["Transfer_FileType"], ChangeTransfer.Extension) is not { } path) return;
             await File.WriteAllTextAsync(path, ChangeTransfer.Serialize(file));
-            Log.Info("transfer", "exported", new { tweaks = file.Tweaks.Count, priorities = file.Priorities.Count, pcSpecific });
-            ShowResult(Loc.Instance.Format("Transfer_Exported", file.Tweaks.Count + file.Priorities.Count, Path.GetFileName(path), pcSpecific), InfoBarSeverity.Success);
+            Log.Info("transfer", "exported", new { tweaks = file.Tweaks.Count, priorities = file.Priorities.Count, apps = file.Apps?.Count, services = file.Services?.Count, startup = file.Startup?.Count, pcSpecific });
+            ShowResult(Loc.Instance.Format("Transfer_Exported", file.Count, Path.GetFileName(path), pcSpecific), InfoBarSeverity.Success);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -61,8 +83,10 @@ public sealed partial class MainViewModel
             ShowResult(Loc.Instance["Transfer_Invalid"], InfoBarSeverity.Warning);
             return;
         }
-        var plan = ChangeTransfer.Plan(file, _services.Catalog, _facts, AppliedIds());
-        Log.Info("transfer", "import", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
+        var profile = Profile;
+        var targets = await Task.Run(() => TransferData.Targets(_services, file, profile));
+        var plan = ChangeTransfer.Plan(file, _services.Catalog, _facts, AppliedIds(), targets);
+        Log.Info("transfer", "import", new { together = plan.Together.Count, oneByOne = plan.OneByOne.Count, apps = plan.Apps.Count, plan.AlreadyOn, plan.NotForThisPc, plan.Unknown });
         var skipped = Loc.Instance.Format("Transfer_Skipped", plan.AlreadyOn, plan.NotForThisPc, plan.Unknown);
         if (plan.IsEmpty)
         {
@@ -82,6 +106,33 @@ public sealed partial class MainViewModel
             // Each one with its own confirmation (preview, Expert and anti-cheat warnings); cancelling skips it.
             foreach (var t in plan.OneByOne) await Runner.ApplyAsync(t);
         }
+        if (plan.Apps.Count > 0) await RemoveImportedAppsAsync(plan.Apps);
         if (plan.AlreadyOn + plan.NotForThisPc + plan.Unknown > 0) ShowResult(skipped);
+    }
+
+    /// <summary>
+    /// The file's removed apps that this PC has: removing cannot be undone (the Store link stays for apps the Store
+    /// offers), so they are asked for on their own, after the changes, with every name listed.
+    /// </summary>
+    private async Task RemoveImportedAppsAsync(IReadOnlyList<Optimizer.Core.Debloat.DebloatItem> apps)
+    {
+        var lang = Loc.Instance.Language;
+        var names = string.Join(", ", apps.Select(a => a.Entry.Label(lang)));
+        if (!_dialogs.Ask(Loc.Instance["Transfer_AppsTitle"], Loc.Instance.Format("Transfer_AppsText", apps.Count, names), Loc.Instance["Debloat_Remove"])) return;
+        var removed = 0;
+        var errors = new List<string>();
+        await Runner.RunExclusiveAsync("import remove apps", async () =>
+        {
+            var service = new Optimizer.Core.Debloat.DebloatService(_services.Context.Processes, AppServices.DataFolder);
+            foreach (var app in apps)
+            {
+                var error = await Task.Run(() => service.Remove(app.Installed, app.Entry));
+                if (error is null) removed++;
+                else errors.Add($"{app.Entry.Label(lang)}: {error}");
+            }
+        });
+        ShowResult(Loc.Instance.Format("Transfer_AppsRemoved", removed) + (errors.Count > 0 ? " " + string.Join("; ", errors) : ""),
+            errors.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+        await Debloat.ReloadAsync();
     }
 }

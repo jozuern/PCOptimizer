@@ -1154,7 +1154,15 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cleanup_Nothing" xml:space="preserve"><value>Empty</value></data>
   <data name="Settings_Hint" xml:space="preserve"><value>Language, theme, Expert mode, optional online features and diagnostics.</value></data>
   <data name="Changes_Transfer" xml:space="preserve"><value>Move to another PC</value></data>
-  <data name="Changes_TransferText" xml:space="preserve"><value>Export saves the tweaks you turned on and your program priorities to a file. Import applies such a file here, for example after reinstalling Windows. Settings made for this PC only (startup entries, services, device settings) and removed apps are not included.</value></data>
+  <data name="Changes_TransferText" xml:space="preserve"><value>Export saves the tweaks you turned on and your program priorities to a file. Import applies such a file here, for example after reinstalling Windows. Device settings stay with this PC; removed apps, service start types and startup entries go along only when you choose them below.</value></data>
+  <data name="Changes_ExportAlso" xml:space="preserve"><value>Also export</value></data>
+  <data name="Changes_ExportApps" xml:space="preserve"><value>Removed apps</value></data>
+  <data name="Changes_ExportServices" xml:space="preserve"><value>Service start types</value></data>
+  <data name="Changes_ExportStartup" xml:space="preserve"><value>Startup entries turned off</value></data>
+  <data name="Changes_ExportAlsoHint" xml:space="preserve"><value>On import, apps are removed only after their own question (removing cannot be undone), a service changes only where its rules on that PC allow it, and a startup entry is turned off only where it exists.</value></data>
+  <data name="Transfer_AppsTitle" xml:space="preserve"><value>Remove the apps from the file?</value></data>
+  <data name="Transfer_AppsText" xml:space="preserve"><value>The file lists {0} removed apps that are on this PC: {1}. Removing cannot be undone in Tunero; apps the Microsoft Store still offers can be installed from there again.</value></data>
+  <data name="Transfer_AppsRemoved" xml:space="preserve"><value>Apps removed: {0}.</value></data>
   <data name="Changes_Export" xml:space="preserve"><value>Export</value></data>
   <data name="Changes_Import" xml:space="preserve"><value>Import</value></data>
   <data name="Transfer_FileType" xml:space="preserve"><value>Tunero changes</value></data>
@@ -1368,6 +1376,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Cli_UndoSummary" xml:space="preserve"><value>Undone: {0}. Not fully undone: {1}.</value></data>
   <data name="Cli_NothingReset" xml:space="preserve"><value>Nothing was reset: no change needs to be applied again.</value></data>
   <data name="Cli_ReapplySummary" xml:space="preserve"><value>Applied again: {0}. Failed: {1}.</value></data>
+  <data name="Cli_UnknownSection" xml:space="preserve"><value>--include does not know "{0}", so nothing was exported. Parts: {1}</value></data>
+  <data name="Cli_AppsInApp" xml:space="preserve"><value>Removed apps in the file, not removed here because removing cannot be undone (Import in the app asks for them): {0}</value></data>
   <data name="Cli_ExitCode" xml:space="preserve"><value>Exit code: {0}</value></data>
   <data name="Crash_Title" xml:space="preserve"><value>Report the error?</value></data>
   <data name="Crash_Text" xml:space="preserve"><value>Tunero ran into an unexpected error. A report helps to fix it: it opens on GitHub, filled in with the app version, the Windows build and the error details, without your user or computer name. Nothing is sent until you submit it there (you need a GitHub account).</value></data>

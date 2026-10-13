@@ -29,7 +29,11 @@ public sealed record UndoAllOutcome(IReadOnlyList<(TweakDefinition Tweak, Revert
 }
 
 /// <summary>The PC as a scan sees it: the facts that decide what fits, the state of each tweak, the findings.</summary>
-public sealed record PcSnapshot(Facts Facts, IReadOnlyList<TweakStatus> States, IReadOnlySet<string> Applied, IReadOnlyList<Finding> Findings);
+public sealed record PcSnapshot(Facts Facts, IReadOnlyList<TweakStatus> States, IReadOnlySet<string> Applied, IReadOnlyList<Finding> Findings)
+{
+    /// <summary>The hardware the scan read (the guards of the app removal list need it).</summary>
+    public Hardware.HardwareProfile? Profile { get; init; }
+}
 
 /// <summary>
 /// The steps every change takes, for the window and the command line alike: apply one tweak or a set, and when Windows
@@ -104,6 +108,6 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
         var facts = FactsBuilder.Build(scan.Profile, scan.Findings, catalog, registry);
         var states = await Task.Run(() => engine.DetectAll(visible, facts));
         var applied = states.Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
-        return new PcSnapshot(facts, states, applied, scan.Findings);
+        return new PcSnapshot(facts, states, applied, scan.Findings) { Profile = scan.Profile };
     }
 }
