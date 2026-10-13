@@ -530,6 +530,48 @@ public sealed class SystemAccessibilitySettings(string? userSid) : IAccessibilit
     }
 }
 
+/// <summary>
+/// Menu and hover timing through SystemParametersInfo. Like the accessibility settings, the call works on the profile of
+/// the account the process runs as, so it is used only when that account is the signed-in session user.
+/// </summary>
+public sealed partial class SystemParametersSettings(string? userSid) : ISystemParameters
+{
+    private const uint SpiGetMouseHoverTime = 0x0066, SpiSetMouseHoverTime = 0x0067, SpiGetMenuShowDelay = 0x006A, SpiSetMenuShowDelay = 0x006B;
+    private const uint SpifUpdateIniFile = 0x1, SpifSendChange = 0x2;
+
+    [LibraryImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SystemParametersInfoGet(uint action, uint uiParam, out uint pvParam, uint winIni);
+
+    [LibraryImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SystemParametersInfoSet(uint action, uint uiParam, IntPtr pvParam, uint winIni);
+
+    private bool IsSessionUser()
+    {
+        using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+        return userSid is not null && string.Equals(identity.User?.Value, userSid, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (uint Get, uint Set) Spi(SystemParameter p) => p switch
+    {
+        SystemParameter.MenuShowDelay => (SpiGetMenuShowDelay, SpiSetMenuShowDelay),
+        _ => (SpiGetMouseHoverTime, SpiSetMouseHoverTime),
+    };
+
+    public uint? Get(SystemParameter parameter) =>
+        IsSessionUser() && SystemParametersInfoGet(Spi(parameter).Get, 0, out var value, 0) ? value : null;
+
+    public void Set(SystemParameter parameter, uint value)
+    {
+        if (!IsSessionUser()) throw new InvalidOperationException("These settings can only be changed for the account the app runs as.");
+        // Both take the new value in uiParam.
+        if (!SystemParametersInfoSet(Spi(parameter).Set, value, IntPtr.Zero, SpifUpdateIniFile | SpifSendChange))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        Log.Info("systemparameters", $"{parameter} set", new { value });
+    }
+}
+
 public static class SystemNotify
 {
     /// <summary>Live refresh after user-scope changes. Mouse values: SPI without SPIF_UPDATEINIFILE (the hive was written directly).</summary>
@@ -572,6 +614,7 @@ public static class SystemNotify
             MemoryAgent = new SystemMemoryAgent(),
             Nvidia = new SystemNvidiaSettings(),
             Accessibility = new SystemAccessibilitySettings(userSid),
+            SystemParameters = new SystemParametersSettings(userSid),
             Notify = what => Handle(registry, what),
             ExportFolder = exportFolder,
             NetworkInterfaceIdsSource = networkInterfaceIds,

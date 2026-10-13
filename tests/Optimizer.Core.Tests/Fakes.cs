@@ -222,6 +222,18 @@ internal sealed class FakeAccessibility : IAccessibilitySettings
     public void SetFlags(AccessibilityFeature feature, uint flags) => Flags[feature] = flags;
 }
 
+internal sealed class FakeSystemParameters : ISystemParameters
+{
+    /// <summary>Windows defaults: both 400 ms.</summary>
+    public Dictionary<SystemParameter, uint> Values { get; } = new() { [SystemParameter.MenuShowDelay] = 400, [SystemParameter.MouseHoverTime] = 400 };
+
+    /// <summary>The app runs as another account than the session user: nothing can be read.</summary>
+    public bool Unavailable { get; set; }
+
+    public uint? Get(SystemParameter parameter) => Unavailable ? null : Values[parameter];
+    public void Set(SystemParameter parameter, uint value) => Values[parameter] = value;
+}
+
 internal sealed class FakeRestorePoints : IRestorePoints
 {
     public bool? Enabled { get; set; } = true;
@@ -254,6 +266,7 @@ internal sealed class EngineFixture : IDisposable
     public FakeDevices Devices { get; } = new();
     public FakeNvidia Nvidia { get; } = new();
     public FakeAccessibility Accessibility { get; } = new();
+    public FakeSystemParameters SystemParameters { get; } = new();
     public FakeNetwork Network { get; }
     public string BackupRoot { get; } = Path.Combine(Path.GetTempPath(), "pco-test-" + Guid.NewGuid().ToString("N"));
     public ActionContext Context { get; }
@@ -278,6 +291,7 @@ internal sealed class EngineFixture : IDisposable
             MemoryAgent = new FakeMemoryAgent(Processes),
             Nvidia = Nvidia,
             Accessibility = Accessibility,
+            SystemParameters = SystemParameters,
             ExportFolder = BackupRoot,
             NetworkInterfaceIds = nics,
         };

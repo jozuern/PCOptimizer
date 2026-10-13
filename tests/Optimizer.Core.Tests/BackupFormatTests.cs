@@ -84,6 +84,8 @@ public class BackupFormatTests
             new DnsAction { InterfaceGuid = DnsGuid, Servers = "1.1.1.1,1.0.0.1" }),
         new("accessibilityShortcut", _ => { },
             new AccessibilityShortcutAction { Feature = AccessibilityFeature.StickyKeys, Shortcut = false }),
+        new("systemParameter", _ => { },
+            new SystemParameterAction { Parameter = SystemParameter.MenuShowDelay, Value = 100 }),
         new("dohAutoUpgrade", fx => fx.Network.Doh = new Dictionary<string, bool> { ["1.1.1.1"] = false, ["8.8.8.8"] = true },
             new DohAutoUpgradeAction { Servers = ["1.1.1.1", "8.8.8.8"], AutoUpgrade = true }),
         new("reservedStorage", _ => { },
@@ -333,7 +335,7 @@ public class BackupFormatTests
         Assert.Equal(
             ["accessibilityShortcut", "bcd", "displayMode", "dns", "dohAutoUpgrade", "hibernation", "memoryCompression", "nicProperty", "nvidiaDrs",
              "optionalCapability", "optionalFeature", "powerMode", "powerScheme", "powerSetting", "registry", "registryBinaryBits", "registryBits",
-             "registryKey", "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete"],
+             "registryKey", "registryToken", "reservedStorage", "scheduledTask", "scheduledTaskDelete", "service", "startupApproved", "startupFileDelete", "systemParameter"],
             types);
     }
 }

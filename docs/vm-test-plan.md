@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 226 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 228 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -291,6 +291,8 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `personalize.dynamicLightingOff` | Dynamic Lighting off | safe |  | registry | |
 | `personalize.communicationsDuckingOff` | Game audio stays loud during voice calls | safe |  | registry | |
 | `display.autoHdrOn` | Auto HDR on | safe, preview |  | registryToken | |
+| `personalize.menuDelayShort` | Faster submenus | safe |  | systemParameter | |
+| `personalize.hoverTimeShort` | Shorter hover time | safe |  | systemParameter | |
 | `focus.startAccountNotificationsOff` | Start: no account notifications | safe |  | registry | |
 | `focus.altTabTabsOff` | Alt+Tab: open windows only | safe |  | registry | |
 | `privacy.searchHistoryOff` | Search: no history on this device | safe |  | registry | |

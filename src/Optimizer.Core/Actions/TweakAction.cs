@@ -101,6 +101,7 @@ public enum EarlyRead
 [JsonDerivedType(typeof(NicPropertyAction), "nicProperty")]
 [JsonDerivedType(typeof(DnsAction), "dns")]
 [JsonDerivedType(typeof(AccessibilityShortcutAction), "accessibilityShortcut")]
+[JsonDerivedType(typeof(SystemParameterAction), "systemParameter")]
 [JsonDerivedType(typeof(DohAutoUpgradeAction), "dohAutoUpgrade")]
 [JsonDerivedType(typeof(ReservedStorageAction), "reservedStorage")]
 [JsonDerivedType(typeof(Startup.StartupApprovedAction), "startupApproved")]

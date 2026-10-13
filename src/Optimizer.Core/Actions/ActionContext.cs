@@ -103,6 +103,18 @@ public interface IAccessibilitySettings
     void SetFlags(AccessibilityFeature feature, uint flags);
 }
 
+/// <summary>Per-user timing settings of SystemParametersInfo that take milliseconds.</summary>
+public enum SystemParameter { MenuShowDelay, MouseHoverTime }
+
+public interface ISystemParameters
+{
+    /// <summary>The value for the signed-in session user; null when it cannot be read or written for that user.</summary>
+    uint? Get(SystemParameter parameter);
+
+    /// <summary>Sets the value for the session user, saves it to the user profile and tells running programs.</summary>
+    void Set(SystemParameter parameter, uint value);
+}
+
 public interface IProcessRunner
 {
     (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null);
@@ -124,6 +136,9 @@ public sealed class ActionContext
     public required IMemoryAgent MemoryAgent { get; init; }
     public required INvidiaSettings Nvidia { get; init; }
     public required IAccessibilitySettings Accessibility { get; init; }
+
+    /// <summary>Menu and hover timing; null makes the actions that need it unsupported (contexts that do not set it).</summary>
+    public ISystemParameters? SystemParameters { get; init; }
 
     /// <summary>Called after user-scope changes that need a live refresh (mouse, Explorer settings).</summary>
     public Action<string>? Notify { get; init; }

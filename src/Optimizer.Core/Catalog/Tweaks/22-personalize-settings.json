@@ -611,6 +611,52 @@
       "sources": [
         "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-desktop"
       ]
+    },
+    {
+      "id": "personalize.menuDelayShort",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "systemParameter",
+          "parameter": "menuShowDelay",
+          "value": 100
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ]
+    },
+    {
+      "id": "personalize.hoverTimeShort",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "scope": "user",
+      "actions": [
+        {
+          "type": "systemParameter",
+          "parameter": "mouseHoverTime",
+          "value": 200
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ]
     }
   ]
 }
