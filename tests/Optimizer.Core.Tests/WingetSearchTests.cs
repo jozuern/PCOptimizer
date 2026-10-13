@@ -21,9 +21,9 @@ public class WingetSearchTests
     {
         var found = Winget.ParseSearch(English);
         Assert.Equal(5, found.Count);
-        Assert.Equal(new WingetPackage("NoteTab Light", "FookesHolding.NoteTabLight", "7.2"), found[1]);
-        Assert.Equal(new WingetPackage("Notepad++", "Notepad++.Notepad++", "8.9.8.1"), found[2]);
-        Assert.Equal(new WingetPackage("Programmer's Notepad", "SimonSteele.ProgrammersNotepad", "2.4.2"), found[3]);
+        Assert.Equal(new WingetSearchResult("NoteTab Light", "FookesHolding.NoteTabLight", "7.2"), found[1]);
+        Assert.Equal(new WingetSearchResult("Notepad++", "Notepad++.Notepad++", "8.9.8.1"), found[2]);
+        Assert.Equal(new WingetSearchResult("Programmer's Notepad", "SimonSteele.ProgrammersNotepad", "2.4.2"), found[3]);
         Assert.Equal("26.08r6282", found[4].Version);
     }
 
@@ -36,7 +36,7 @@ public class WingetSearchTests
                               "Long app  Vendor.VeryLongPac\u2026 1.0                   winget\n" +
                               "Weitere Ergebnisse sind verfügbar\n";
         var found = Winget.ParseSearch(german);
-        Assert.Equal(new WingetPackage("7-Zip", "7zip.7zip", "26.04"), Assert.Single(found));
+        Assert.Equal(new WingetSearchResult("7-Zip", "7zip.7zip", "26.04"), Assert.Single(found));
         Assert.Empty(Winget.ParseSearch("No package found matching input criteria."));
         Assert.Empty(Winget.ParseSearch(""));
     }

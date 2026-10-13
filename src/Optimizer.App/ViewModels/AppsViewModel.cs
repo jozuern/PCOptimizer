@@ -57,12 +57,12 @@ public sealed partial class AppRow(AppEntry app, string lang, bool installed) : 
 }
 
 /// <summary>A package from a winget search: not on the reviewed list, installed only after its own confirmation.</summary>
-public sealed partial class WingetResultRow(WingetPackage package) : ObservableObject
+public sealed partial class WingetResultRow(WingetSearchResult package) : ObservableObject
 {
     // What screen readers announce for this item in a list.
     public override string ToString() => Name;
 
-    public WingetPackage Package { get; } = package;
+    public WingetSearchResult Package { get; } = package;
     public string Name => Package.Name;
     public string Meta { get; } = Loc.Instance.Format("Apps_SearchMeta", package.Id, package.Version);
     public string InstallLabel => Loc.Instance.Format("Apps_InstallName", Name);

@@ -192,7 +192,7 @@ public static class Winget
     /// id and version. Rows whose id winget shortened (ending in an ellipsis) or that hold anything but id characters are left out, and so
     /// are the notes below the table (empty lines are already gone when the lines come from <see cref="StreamingProcess"/>).
     /// </summary>
-    public static IReadOnlyList<WingetPackage> ParseSearch(string output)
+    public static IReadOnlyList<WingetSearchResult> ParseSearch(string output)
     {
         // Progress spinners are written with carriage returns: only the text after the last one is on screen.
         var lines = output.Split('\n').Select(l => l.TrimEnd('\r')).Select(l => l[(l.LastIndexOf('\r') + 1)..]).ToList();
@@ -201,7 +201,7 @@ public static class Winget
         var header = lines[dashes - 1];
         var starts = Enumerable.Range(0, header.Length).Where(i => header[i] != ' ' && (i == 0 || header[i - 1] == ' ')).ToList();
         if (starts.Count < 3) return [];
-        var list = new List<WingetPackage>();
+        var list = new List<WingetSearchResult>();
         foreach (var line in lines.Skip(dashes + 1))
         {
             if (string.IsNullOrWhiteSpace(line)) break;
@@ -211,13 +211,13 @@ public static class Winget
             var version = Cut(starts[2], starts.Count > 3 ? starts[3] : line.Length);
             // Ids in the winget repository are Publisher.Package: a line without a dot is a note below the table.
             if (id.Contains('\u2026') || !IsSafeId(id) || !id.Contains('.') || name.Length == 0) continue;
-            list.Add(new WingetPackage(name, id, version));
+            list.Add(new WingetSearchResult(name, id, version));
         }
         return list;
     }
 
     /// <summary>Runs the search with the trusted winget; the packages it found (empty when none).</summary>
-    public static async Task<IReadOnlyList<WingetPackage>> SearchAsync(string winget, string query, CancellationToken ct)
+    public static async Task<IReadOnlyList<WingetSearchResult>> SearchAsync(string winget, string query, CancellationToken ct)
     {
         var output = new System.Text.StringBuilder();
         await StreamingProcess.RunAsync(winget, SearchArguments(query), new SynchronousProgress(l => { lock (output) output.AppendLine(l); }), ct);
@@ -232,7 +232,7 @@ public static class Winget
 }
 
 /// <summary>One result of a winget search.</summary>
-public sealed record WingetPackage(string Name, string Id, string Version)
+public sealed record WingetSearchResult(string Name, string Id, string Version)
 {
     // What screen readers announce for this item in a list.
     public override string ToString() => Name;

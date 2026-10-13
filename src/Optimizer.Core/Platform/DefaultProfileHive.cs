@@ -20,6 +20,7 @@ public static class DefaultProfileHive
     private static readonly IntPtr HkeyUsers = new(unchecked((int)0x80000003));
     private static readonly object Gate = new();
     private static int _holds;
+    private static bool _loaded;
 
     /// <summary>The hive file from the profile list (HKLM, administrators only); null when it is not there.</summary>
     public static string? FilePath()
@@ -44,7 +45,7 @@ public static class DefaultProfileHive
     {
         lock (Gate)
         {
-            if (_holds == 0) Load();
+            if (!_loaded) Load();
             _holds++;
         }
         return new Release();
@@ -77,7 +78,7 @@ public static class DefaultProfileHive
         foreach (var name in names.Where(n => n.StartsWith(MountPrefix, StringComparison.OrdinalIgnoreCase)))
         {
             if (int.TryParse(name.AsSpan(MountPrefix.Length), out var pid) && pid != Environment.ProcessId && IsRunning(pid)) continue;
-            if (name.Equals(MountName, StringComparison.OrdinalIgnoreCase) && _holds > 0) continue;
+            if (name.Equals(MountName, StringComparison.OrdinalIgnoreCase) && _loaded) continue;
             Unload(name);
         }
     }
@@ -104,29 +105,33 @@ public static class DefaultProfileHive
         if (restore is null || backup is null) throw new InvalidOperationException("Loading the Default profile needs administrator rights.");
         var rc = RegLoadKey(HkeyUsers, MountName, file);
         if (rc != 0) throw new InvalidOperationException($"The Default profile could not be loaded: {new Win32Exception(rc).Message}");
+        _loaded = true;
         Log.Info("registry", "Default profile loaded", new { file });
     }
 
+    // A key handle that is still open (antivirus, a search indexer) makes the unload fail for a moment: try again.
+    private const int UnloadTries = 20;
+
     private static void Unload(string name)
+    {
+        for (var i = 1; !TryUnload(name, i == UnloadTries); i++) Thread.Sleep(100);
+    }
+
+    /// <summary>One unload attempt; false when it failed and more tries are left.</summary>
+    private static bool TryUnload(string name, bool lastTry)
     {
         using var restore = FirmwareExtras.EnablePrivilege("SeRestorePrivilege");
         using var backup = FirmwareExtras.EnablePrivilege("SeBackupPrivilege");
-        // A key handle that is still open (antivirus, a search indexer) makes the unload fail for a moment: try again.
-        for (var i = 0; i < 20; i++)
+        var rc = RegUnLoadKey(HkeyUsers, name);
+        if (rc is 0 or 2 /* ERROR_FILE_NOT_FOUND: not loaded */)
         {
-            var rc = RegUnLoadKey(HkeyUsers, name);
-            if (rc is 0 or 2 /* ERROR_FILE_NOT_FOUND: not loaded */)
-            {
-                if (rc == 0) Log.Info("registry", "Default profile unloaded", new { name });
-                return;
-            }
-            if (i == 19)
-            {
-                Log.Warn("registry", $"Default profile {name} not unloaded: {new Win32Exception(rc).Message}");
-                return;
-            }
-            Thread.Sleep(100);
+            if (rc == 0) Log.Info("registry", "Default profile unloaded", new { name });
+            if (name.Equals(MountName, StringComparison.OrdinalIgnoreCase)) _loaded = false;
+            return true;
         }
+        if (!lastTry) return false;
+        Log.Warn("registry", $"Default profile {name} not unloaded: {new Win32Exception(rc).Message}");
+        return true;
     }
 
     private sealed class Release : IDisposable
@@ -138,7 +143,17 @@ public static class DefaultProfileHive
             if (Interlocked.Exchange(ref _done, 1) == 1) return;
             lock (Gate)
             {
-                if (--_holds == 0) Unload(MountName);
+                if (--_holds > 0) return;
+            }
+            // Each try takes the gate on its own, so a hold that comes in meanwhile does not wait out the retries:
+            // it keeps the hive that is still loaded, and the last release unloads it.
+            for (var i = 1; ; i++)
+            {
+                lock (Gate)
+                {
+                    if (_holds > 0 || !_loaded || TryUnload(MountName, i == UnloadTries)) return;
+                }
+                Thread.Sleep(100);
             }
         }
     }
