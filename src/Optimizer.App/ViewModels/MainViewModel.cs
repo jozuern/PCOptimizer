@@ -14,7 +14,7 @@ using Wpf.Ui.Controls;
 
 namespace Optimizer.App.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject, IShell
 {
     private readonly CatalogData _catalog = CatalogData.Current;
     private readonly AppSettings _settings;
@@ -26,8 +26,6 @@ public sealed partial class MainViewModel : ObservableObject
     private RecommendationPlan _plan = new([], []);
     private IReadOnlyList<DriftItem> _drift = [];
     private string? _updateNotice;
-    private ReleaseCheckResult? _release;
-    private bool _releaseChecking;
     private Facts _facts = new();
     private DateTime? _lastScanTime;
 
@@ -46,6 +44,11 @@ public sealed partial class MainViewModel : ObservableObject
         _expertMode = settings.ExpertMode;
         _checkForUpdates = settings.CheckForUpdates;
         Runner = new ChangeRunner(services, dialogs, () => _facts, AppliedIds, () => ExpertMode) { ScanInProgress = () => ScanInProgress };
+        Install = InstallFacts.ForThisProcess(services);
+        Updates = new UpdateService(Install, dialogs, this);
+        Updates.StateChanged += (_, _) => OnUpdateStateChanged();
+        Uninstalls = new UninstallService(Install, dialogs, this, Updates, () => services.Store.All().Count,
+            note => Runner.UndoAllAsync(confirm: false, incompleteNote: note), () => StartMenuFolder, DataPaths.Root);
         Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
         Runner.BusyChanged += (_, busy) => IsBusy = busy;
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
@@ -460,66 +463,68 @@ public sealed partial class MainViewModel : ObservableObject
         _settings.Save();
     }
 
-    public string? UpdateStatus => _releaseChecking ? Loc.Instance["Update_Checking"] : _release?.Status switch
+    public InstallFacts Install { get; }
+    public UpdateService Updates { get; }
+    public UninstallService Uninstalls { get; }
+
+    void IShell.OpenLink(string url) => OpenLink(url);
+
+    void IShell.Shutdown() => System.Windows.Application.Current.Shutdown();
+
+    public string? UpdateStatus => Updates.Checking ? Loc.Instance["Update_Checking"] : Updates.Release?.Status switch
     {
         ReleaseCheckStatus.UpToDate => Loc.Instance.Format("Update_UpToDate", Version),
-        ReleaseCheckStatus.NewerAvailable => Loc.Instance.Format("Update_Available", _release.Latest!.ToString(3)),
+        ReleaseCheckStatus.NewerAvailable => Loc.Instance.Format("Update_Available", Updates.Release.Latest!.ToString(3)),
         ReleaseCheckStatus.NoRelease => Loc.Instance["Update_NoRelease"],
         ReleaseCheckStatus.Error => Loc.Instance["Update_Error"],
         _ => null,
     };
 
-    public bool UpdateAvailable => _release?.Status == ReleaseCheckStatus.NewerAvailable;
+    public bool UpdateAvailable => Updates.UpdateAvailable;
+    public bool CanSelfUpdate => Updates.CanSelfUpdate;
+    public bool CanUpdateInApp => Updates.CanUpdateInApp;
+    public bool Updating => Updates.Updating;
+    public PackageInstall? Package => Install.Package;
+    public bool CanUninstall => Uninstalls.CanUninstall;
 
-    /// <summary>At start only when the user turned the check on; "Check now" always asks.</summary>
-    public async Task CheckForUpdatesAsync(bool atStart)
+    /// <summary>The published single-file exe (a Debug or Release build has Tunero.dll next to its exe).</summary>
+    public static bool IsPublishedExe { get; } = InstallFacts.PublishedExe(Environment.ProcessPath);
+
+    private void OnUpdateStateChanged()
     {
-        if ((atStart && !_settings.CheckForUpdates) || _releaseChecking) return;
-        _releaseChecking = true;
-        OnPropertyChanged(nameof(UpdateStatus));
-        try
-        {
-            using var check = new ReleaseCheck();
-            _release = await check.CheckAsync(AppInfo.Version);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("update", "release check failed", ex);
-            _release = new ReleaseCheckResult(ReleaseCheckStatus.Error);
-        }
-        finally
-        {
-            _releaseChecking = false;
-        }
-        Log.Info("update", "release check", new { _release.Status, latest = _release.Latest?.ToString(3) });
         OnPropertyChanged(nameof(UpdateStatus));
         OnPropertyChanged(nameof(UpdateAvailable));
         OnPropertyChanged(nameof(CanSelfUpdate));
         OnPropertyChanged(nameof(CanUpdateInApp));
+        OnPropertyChanged(nameof(Updating));
+    }
+
+    /// <summary>At start only when the user turned the check on; "Check now" always asks.</summary>
+    public async Task CheckForUpdatesAsync(bool atStart)
+    {
+        if (atStart && !_settings.CheckForUpdates) return;
+        await Updates.CheckAsync();
         BuildBanners();
         SettingsBadge = UpdateAvailable ? "1" : null;
         if (atStart && UpdateAvailable) ShowUpdateNotice();
+    }
+
+    /// <summary>Developer aid (--screenshot with --update-shot): as if the check at start had found <paramref name="latest"/>.</summary>
+    public void PreviewUpdateFound(Version latest)
+    {
+        Updates.PreviewFound(latest);
+        BuildBanners();
+        SettingsBadge = "1";
+        ShowUpdateNotice();
     }
 
     /// <summary>
     /// The check at start found a new version: the result bar says so on whatever page is open, with the button that
     /// updates (or opens the release page when this copy cannot update itself), and stays until it is closed or used.
     /// </summary>
-    /// <summary>Developer aid (--screenshot with --update-shot): as if the check at start had found <paramref name="latest"/>.</summary>
-    public void PreviewUpdateFound(Version latest)
-    {
-        _release = new ReleaseCheckResult(ReleaseCheckStatus.NewerAvailable, latest);
-        OnPropertyChanged(nameof(UpdateStatus));
-        OnPropertyChanged(nameof(UpdateAvailable));
-        OnPropertyChanged(nameof(CanUpdateInApp));
-        BuildBanners();
-        SettingsBadge = "1";
-        ShowUpdateNotice();
-    }
-
     private void ShowUpdateNotice()
     {
-        if (_release?.Latest is not { } latest) return;
+        if (Updates.Release?.Latest is not { } latest) return;
         var version = latest.ToString(3);
         // A package manager offers the version only after its review (winget and Chocolatey can take days): its copy gets
         // the bar once per version, saying so; the Settings badge stays until the update is installed.
@@ -587,195 +592,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Downloaded updates (protected data folder); emptied on the next start.</summary>
-    public static string UpdatesFolder => DataPaths.Updates;
-
-    /// <summary>
-    /// Self-update only replaces the published single-file exe running elevated. A Debug build has Tunero.dll next
-    /// to its exe and gets the download page instead. The exe's own name does not matter: browsers save a second download
-    /// as "Tunero (1).exe", and the update replaces the file under the name it has.
-    /// </summary>
-    public bool CanSelfUpdate => UpdateAvailable && _release?.Assets is not null && UpdateSignature.IsConfigured && DataPaths.ProcessIsElevated &&
-        IsPublishedExe && Package is null;
-
-    /// <summary>The published single-file exe (a Debug or Release build has Tunero.dll next to its exe).</summary>
-    public static bool IsPublishedExe { get; } = Environment.ProcessPath is { } exe &&
-        System.IO.Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase) &&
-        !System.IO.File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exe) ?? "", typeof(MainViewModel).Assembly.GetName().Name + ".dll"));
-
-    private PackageInstall? _package;
-    private bool _packageDetected;
-
-    /// <summary>
-    /// Installed with winget, Chocolatey or Scoop: the package manager installs the update and removes the app, so its
-    /// record of the version stays right. Null for a downloaded copy.
-    /// </summary>
-    public PackageInstall? Package
-    {
-        get
-        {
-            if (!_packageDetected)
-            {
-                _package = Environment.ProcessPath is { } exe && IsPublishedExe ? PackageInstall.Detect(exe, _services.ProfilePath) : null;
-                _packageDetected = true;
-            }
-            return _package;
-        }
-    }
-
-    /// <summary>"Update now" is offered: the app replaces its exe, or hands the update to the package manager.</summary>
-    public bool CanUpdateInApp => CanSelfUpdate || (UpdateAvailable && Package is not null);
-
-    [ObservableProperty] private bool _updating;
-
-    partial void OnUpdatingChanged(bool value) => ChangeGate.Instance.Updating = value;
-
-    /// <summary>After confirmation: download the release exe, check its signature and SHA-256, replace this exe and restart.</summary>
     [RelayCommand(CanExecute = nameof(CanChange))]
-    private async Task UpdateNowAsync()
-    {
-        if (Package is { } package && UpdateAvailable && _release?.Latest is { } packageVersion)
-        {
-            UpdateWithPackageManager(package, packageVersion.ToString(3));
-            return;
-        }
-        if (!CanSelfUpdate || _release is not { Latest: { } latest } release || Environment.ProcessPath is not { } exe)
-        {
-            OpenReleasePage();
-            return;
-        }
-        // Any change (tweaks and page operations such as uninstalls) or scan must be finished first.
-        if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating)
-        {
-            ShowResult(Loc.Instance["Update_Busy"]);
-            return;
-        }
-        var version = latest.ToString(3);
-        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format("Update_ConfirmText", version), Loc.Instance["Update_Restart"])) return;
-        Updating = true;
-        try
-        {
-            using var updater = new Updater();
-            ShowResult(Loc.Instance.Format("Update_Downloading", version, 0));
-            var progress = new Progress<int>(p => ShowResult(Loc.Instance.Format("Update_Downloading", version, p)));
-            var download = await updater.DownloadAsync(release, UpdatesFolder, progress);
-            Log.Info("update", "download", new { download.Outcome, version });
-            if (download.Outcome != UpdateOutcome.Ready)
-            {
-                ShowResult(Loc.Instance[download.Outcome switch
-                {
-                    UpdateOutcome.ChecksumMismatch => "Update_BadChecksum",
-                    UpdateOutcome.SignatureInvalid => "Update_BadSignature",
-                    _ => "Update_Failed",
-                }]);
-                return;
-            }
-            // A change may have started while the download ran: never replace the exe in the middle of it.
-            if (ChangeGate.Instance.Busy)
-            {
-                ShowResult(Loc.Instance["Update_Busy"]);
-                return;
-            }
-            try
-            {
-                Updater.Install(download.FilePath!, exe);
-            }
-            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
-            {
-                Log.Error("update", "replacing the exe failed", ex);
-                ShowResult(Loc.Instance.Format("Update_CannotReplace", ex.Message));
-                return;
-            }
-            Log.Info("update", "installed, restarting", new { version });
-            bool started;
-            try
-            {
-                started = Updater.StartVerified(exe, download.Sha256!, path =>
-                {
-                    // Like the start's own restart: no profiler or startup hook from the user's environment in the new process.
-                    var start = new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false };
-                    Optimizer.Core.Platform.ProcessHardening.RemoveCodeLoadingVariables(start.Environment);
-                    System.Diagnostics.Process.Start(start)?.Dispose();
-                });
-            }
-            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
-            {
-                // The new exe is in place but did not start: antivirus took it away or blocked it (an unsigned exe), or a
-                // program holds it. The running version goes back in its place, so the shortcut still starts something.
-                var rolledBack = Updater.RollBack(exe);
-                Log.Error("update", $"installed, but the restart failed (previous exe put back: {rolledBack})", ex);
-                ShowResult(Loc.Instance.Format(rolledBack ? "Update_RestartFailedRolledBack" : "Update_RestartFailed", version), InfoBarSeverity.Warning);
-                return;
-            }
-            if (!started)
-            {
-                // The running version stays in use: it goes back in place of the file that was swapped.
-                var rolledBack = Updater.RollBack(exe);
-                Log.Error("update", $"the installed exe changed before the restart; not started (previous exe put back: {rolledBack})");
-                ShowResult(Loc.Instance["Update_BadChecksum"]);
-                return;
-            }
-            System.Windows.Application.Current.Shutdown();
-        }
-        finally
-        {
-            Updating = false;
-        }
-    }
-
-    /// <summary>
-    /// After confirmation: starts the package manager in its own window and ends the app (no package manager can replace a
-    /// running exe). The window waits for the app to end, updates it and starts it again. winget and Scoop run as the
-    /// signed-in user, Chocolatey elevated (<see cref="PackageInstall"/>).
-    /// </summary>
-    private void UpdateWithPackageManager(PackageInstall package, string version)
-    {
-        if (ChangeGate.Instance.Busy || ChangeGate.Instance.Scanning || Updating || Environment.ProcessPath is not { } exe)
-        {
-            ShowResult(Loc.Instance["Update_Busy"]);
-            return;
-        }
-        // choco.exe is checked once, before the question: the same path goes into the window's command.
-        var choco = package.TrustedChocolatey();
-        if (package.Manager == PackageManager.Chocolatey ? choco is null : !package.CanRunFromApp())
-        {
-            ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
-            return;
-        }
-        // Chocolatey's window is elevated and starts Tunero elevated: Windows does not ask again.
-        var text = package.RunsAsUser ? "Update_PackageText" : "Update_PackageTextElevated";
-        if (!_dialogs.Ask(Loc.Instance.Format("Update_ConfirmTitle", version), Loc.Instance.Format(text, package.DisplayName, version), Loc.Instance["Update_Restart"])) return;
-        var arguments = package.UpdateArguments(Environment.ProcessId, exe, Loc.Instance.Format("Update_PackageRunning", package.DisplayName),
-            Loc.Instance.Format("Update_PackageFailed", package.DisplayName), choco, version);
-        if (!StartPackageManager(package, arguments, out _))
-        {
-            ShowResult(Loc.Instance.Format("Update_PackageManual", package.DisplayName, package.UpdateCommand), InfoBarSeverity.Warning);
-            return;
-        }
-        Log.Info("update", "handed to the package manager, closing", new { package.Manager, version });
-        System.Windows.Application.Current.Shutdown();
-    }
-
-    /// <summary>
-    /// The package manager's PowerShell window: as the signed-in user, or elevated for Chocolatey, whose process id comes
-    /// back in <paramref name="elevatedProcessId"/> (the uninstall cleanup waits for it).
-    /// </summary>
-    private bool StartPackageManager(PackageInstall package, string arguments, out int? elevatedProcessId)
-    {
-        elevatedProcessId = null;
-        if (package.RunsAsUser) return DeElevatedLauncher.Open(WingetPackage.PowerShell, arguments, _services.Elevation) != DeElevatedLauncher.Path.Failed;
-        try
-        {
-            var psi = ProcessLauncher.Info(PowerShellScript.Exe, arguments, hidden: false);
-            package.HardenChocolateyEnvironment(psi.Environment);
-            using var process = ProcessLauncher.Start(psi);
-            elevatedProcessId = process.Id;
-            return true;
-        }
-        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            Log.Error("package", "PowerShell not started", ex);
-            return false;
-        }
-    }
+    private Task UpdateNowAsync() => Updates.UpdateNowAsync();
 }

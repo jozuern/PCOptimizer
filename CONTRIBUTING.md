@@ -54,6 +54,7 @@ src/Optimizer.Core/   scanner, findings, engine, actions, catalog data (Catalog/
 src/Optimizer.App/    WPF UI (WPF-UI 4.3, CommunityToolkit.Mvvm, Markdig): one page per area, shared change runner;
                       Licenses/ holds every license text that ships in the exe (licenses.json lists them)
 tests/                xUnit: rule tests with mocked hardware, engine tests in a registry sandbox, docs lint, read-only hardware checks (Category=Hardware)
+                      Optimizer.App.Tests: the app's services (update, uninstall) with a fake window, dialogs and launches
 docs/                 privacy, third-party notices, VM test plan, open items (TODO), the latest audit, explanation style guide, tweaks left out,
                       gaming impact research, notes from real hardware, brand (icon, logo, colors)
 website/              tunero.dev (Astro, static): reads the counts, catalog and explanation pages at build time; rules in website/DESIGN.md

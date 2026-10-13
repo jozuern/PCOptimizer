@@ -20,7 +20,7 @@ public partial class ArchitectureTests
     public void TestsReachTheRealSystemOnlyReadOnly()
     {
         var problems = new List<string>();
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, "tests", "Optimizer.Core.Tests"), "*.cs"))
+        foreach (var file in new[] { "Optimizer.Core.Tests", "Optimizer.App.Tests" }.SelectMany(t => Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, "tests", t), "*.cs")))
         {
             var name = Path.GetFileName(file);
             if (name is "ReadOnlyContext.cs" or "ArchitectureTests.cs") continue;
@@ -40,7 +40,7 @@ public partial class ArchitectureTests
     {
         ["ProcessLauncher.cs"] = "the one place that builds hardened start infos",
         ["Program.cs"] = "the bundle starting itself again with the protected runtime folder",
-        ["MainViewModel.cs"] = "the updated exe started with the start's own environment rules",
+        ["UpdateService.cs"] = "the updated exe started with the start's own environment rules",
         ["DeElevatedLauncher.cs"] = "the shell opening a file or link as the signed-in user",
     };
 

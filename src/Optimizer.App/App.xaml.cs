@@ -142,7 +142,7 @@ public partial class App : Application
         }
 
         // After a self-update: remove the previous exe and the downloaded file.
-        if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, MainViewModel.UpdatesFolder);
+        if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, DataPaths.Updates);
 
         var services = new AppServices();
         _services = services;
