@@ -63,7 +63,7 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 <!-- Generated from the tweak catalog by DocsConsistencyTests. Do not edit by hand. -->
 
-The tables below cover all 224 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
+The tables below cover all 226 catalog tweaks. Preview tweaks are the risky ones; test each of them on its own.
 
 ## 2. Expert and boot-critical tweaks
 
@@ -218,6 +218,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `brave.extrasOff` | Brave: no News, Talk and Playlist | safe |  | registry | |
 | `ai.paintOff` | Paint: Cocreator, generative fill and Image Creator off | safe |  | registry | |
 | `ai.notepadOff` | Notepad: AI features off | safe |  | registry | |
+| `ai.clickToDoOff` | Click to Do off | safe |  | registry | |
 | `perm.cameraOff` | Windows apps: no camera access | safe |  | registry | |
 | `perm.microphoneOff` | Windows apps: no microphone access | safe |  | registry | |
 | `perm.notificationsOff` | Windows apps: no access to your notifications | safe |  | registry | |
@@ -274,6 +275,7 @@ Preconditions, or there is nothing to change on a clean install: turn on memory 
 | `storage.reservedStorageOff` | Reserved storage off | moderate |  | reservedStorage | |
 | `personalize.darkMode` | Dark mode for Windows and apps | safe |  | registry | |
 | `personalize.accentTitleBars` | Accent color on title bars | safe |  | registry | |
+| `personalize.startRecommendedOff` | Start without Recommended | safe |  | registry | |
 | `explorer.hiddenFiles` | File Explorer: show hidden files | safe |  | registry | |
 | `personalize.taskbarLeft` | Taskbar: icons on the left | safe |  | registry | |
 | `personalize.clockSeconds` | Taskbar clock with seconds | safe |  | registry | |

@@ -120,6 +120,44 @@
       ]
     },
     {
+      "id": "ai.clickToDoOff",
+      "category": "AI",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableClickToDo",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai"
+      ]
+    },
+    {
       "id": "perm.cameraOff",
       "category": "Permissions",
       "impact": {

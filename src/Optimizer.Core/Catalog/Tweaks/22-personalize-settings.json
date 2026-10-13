@@ -68,6 +68,44 @@
       ]
     },
     {
+      "id": "personalize.startRecommendedOff",
+      "category": "Personalize",
+      "impact": {
+        "gaming": 0,
+        "basis": "situational",
+        "effect": [
+          "none"
+        ]
+      },
+      "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "not": {
+            "fact": "os.edition",
+            "in": [
+              "Core",
+              "CoreN",
+              "CoreSingleLanguage",
+              "CoreCountrySpecific"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "registry",
+          "hive": "machine",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "HideRecommendedSection",
+          "kind": "dword",
+          "value": 1
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-start"
+      ]
+    },
+    {
       "id": "explorer.hiddenFiles",
       "undocumented": true,
       "category": "Explorer",
