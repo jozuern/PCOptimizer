@@ -1,13 +1,13 @@
 {
-  "_comment": "Detection lists for advisor checks. verified=false entries are best-known names; an absent name produces 'not found' wording, never a hard problem.",
+  "_comment": "Detection lists for advisor checks. verified=false entries are best-known names; an absent name produces 'not found' wording, never a hard problem. Overlay names go into the finding text of every language as they are: product names only, no words to translate.",
   "overlayProcesses": [
     {
       "process": "Discord",
-      "name": "Discord (overlay may be on)"
+      "name": "Discord"
     },
     {
       "process": "NVIDIA Overlay",
-      "name": "NVIDIA App / GeForce Experience overlay"
+      "name": "NVIDIA App / GeForce Experience"
     },
     {
       "process": "RTSS",
@@ -31,7 +31,7 @@
     },
     {
       "process": "XboxPcAppFT",
-      "name": "Xbox app"
+      "name": "Xbox App"
     },
     {
       "process": "GameBar",

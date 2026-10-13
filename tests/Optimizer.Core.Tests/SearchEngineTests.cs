@@ -95,6 +95,25 @@ public class SearchEngineTests
         Assert.Equal(CatalogData.Current.NotIncluded.Url, hit.Url);
     }
 
+    /// <summary>
+    /// A result is plain text: a check's page holds ":::" blocks per status or variant and {{placeholders}} for the facts
+    /// of one PC, which have no meaning in a search result (they once showed up as "::: status Problem").
+    /// </summary>
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    public void ResultsShowNoPageMarkup(string lang) =>
+        Assert.All(SearchEngine.CatalogItems(TweakCatalog.Current, CatalogData.Current.NotIncluded, lang), item =>
+        {
+            Assert.DoesNotContain(":::", item.Title + item.Snippet, StringComparison.Ordinal);
+            Assert.DoesNotContain("{{", item.Title + item.Snippet, StringComparison.Ordinal);
+        });
+
+    /// <summary>A summary with one text per variant shows the first that needs no fact of this PC.</summary>
+    [Fact]
+    public void VariantSummaryShowsATextWithoutFacts() =>
+        Assert.StartsWith("Checks whether Resizable BAR", SearchEngine.FindingItems("en").Single(i => i.ItemId == "A.rebar").Snippet, StringComparison.Ordinal);
+
     [Fact]
     public void NvidiaTweaksPointToTheGraphicsPage() =>
         Assert.All(SearchEngine.TweakItems(TweakCatalog.Current, "en").Where(i => i.ItemId!.StartsWith("nvidia.", StringComparison.Ordinal)),

@@ -177,7 +177,7 @@ public class AdvisorCheckTests
     [Fact]
     public void RunningOverlayIsInfo()
     {
-        var f = One(new OverlaysCheck(), P(p => p with { Extras = new HardwareExtras { RunningOverlays = ["Discord (overlay may be on)"] } }));
+        var f = One(new OverlaysCheck(), P(p => p with { Extras = new HardwareExtras { RunningOverlays = ["Discord"] } }));
         Assert.Equal(FindingStatus.Info, f.Status);
         AssertRenders(f);
     }

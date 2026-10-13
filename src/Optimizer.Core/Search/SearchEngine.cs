@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Docs;
+using Optimizer.Core.Findings;
 using Optimizer.Core.Tweaks;
 
 namespace Optimizer.Core.Search;
@@ -158,7 +159,8 @@ public sealed partial class SearchEngine
             if (!FindingId().IsMatch(id)) continue;
             var page = DocStore.GetOrEnglish(id, lang);
             if (page is null) continue;
-            yield return new SearchItem(SearchKind.Finding, id.StartsWith("A.", StringComparison.Ordinal) ? "Advisor" : "Overview", id, page.Title, Summary(page), [id]);
+            yield return new SearchItem(SearchKind.Finding, id.StartsWith("A.", StringComparison.Ordinal) ? "Advisor" : "Overview", id,
+                Placeholder().Replace(page.Title, "").Trim(), Summary(page), [id]);
         }
     }
 
@@ -166,7 +168,33 @@ public sealed partial class SearchEngine
         catalog.Entries.Select(e => new SearchItem(SearchKind.NotIncluded, "Tweaks", null, e.TitleIn(lang), e.ReasonIn(lang), [e.Id, .. e.Keywords],
             string.IsNullOrEmpty(catalog.Url) ? null : catalog.Url));
 
-    private static string Summary(DocPage? page) => page?.Section(DocHeadings.Summary(page.Language))?.Body.Trim() ?? "";
+    /// <summary>
+    /// The page's summary as a plain result line. A check's summary holds one text per status or variant (":::" blocks)
+    /// and {{placeholders}} for the facts of this PC, which a search result does not have: it shows the text for a
+    /// problem, or else the first text of any block, that needs no fact. Nothing when every text needs one.
+    /// </summary>
+    private static string Summary(DocPage? page)
+    {
+        var body = page?.Section(DocHeadings.Summary(page.Language))?.Body;
+        if (string.IsNullOrWhiteSpace(body)) return "";
+        var problem = new Finding { Id = page!.Id, Kind = FindingKind.Finding, Status = FindingStatus.Problem, Params = new Dictionary<string, string>() };
+        return FirstComplete(DocStore.ApplyBlocks(body, problem)) ?? FirstComplete(Directive().Replace(body, "")) ?? "";
+
+        static string? FirstComplete(string text) => ParagraphBreak().Split(text)
+            .Select(p => string.Join(' ', p.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)))
+            .FirstOrDefault(p => p.Length > 0 && !p.Contains("{{", StringComparison.Ordinal));
+    }
+
+    /// <summary>A {{placeholder}} with the space before it: titles like "BIOS update with microcode {{min}}" lose it.</summary>
+    [GeneratedRegex(@"\s*\{\{\w+\}\}")]
+    private static partial Regex Placeholder();
+
+    /// <summary>A ":::" line of a conditional block; it becomes a paragraph break.</summary>
+    [GeneratedRegex(@"^[ \t]*:::.*$", RegexOptions.Multiline)]
+    private static partial Regex Directive();
+
+    [GeneratedRegex(@"\r?\n[ \t]*\r?\n")]
+    private static partial Regex ParagraphBreak();
 
     /// <summary>The names an action works on (registry value and key names, services, tasks): the words people search for.</summary>
     private static IEnumerable<string> ActionWords(object action)

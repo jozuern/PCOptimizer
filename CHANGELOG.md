@@ -9,6 +9,11 @@
 - **Code signing:** SignPath Foundation turned down the first application, because it signs only projects that are already widely known; the project will apply again later. The README and the website say so and explain how to start the exe past the SmartScreen warning.
 - **Settings that work against your profile** have their own section on the Overview, "Works against the Gaming profile", instead of a yellow heading inside the recommendations, where they contradicted "nothing to recommend". Each one has a warning icon and a button: Undo when Tunero made the change, otherwise Details, whose page says how to change it back.
 
+### Fixed
+
+- **App search:** results for checks showed the page's raw markup, such as "::: status Problem" or "{{antiCheats}}". They now show the check's text for a problem, or the first text that needs no fact of your PC.
+- **Overlay check in German:** the names of running overlay programs came with English words ("Discord (overlay may be on)"). They are now plain product names in every language.
+
 ## 0.8.8 (preview)
 
 ### New
