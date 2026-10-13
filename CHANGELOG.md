@@ -6,6 +6,12 @@
 
 - **Rating mark:** every tweak and check shows its impact on the profile's goal as a light numeral and five bars, in one column beside its switch or Fix button, the same 0 to 5 scale as the rating board on tunero.dev. A rating on disputed evidence draws its bars as outlines; tweaks without effect show none. The grey line under a row no longer spells out "Impact 2 of 5", and the details pane puts the mark next to those words, so it explains the mark. On a narrow page the switches go without their "Applied" label, as in Windows Settings, so the rows keep room for their text.
 - **Overview, the verdict first:** the page opens with one sentence on what holds this PC back ("2 problems hold this PC back."), with those problems right under it and their rating marks. The readiness score, the passed checks and the way to Manual checks share one quiet line below the sentence; the two cards with large numbers are gone, and the profile follows the findings.
+- **Overview, no problems but recommended changes:** the sentence says both ("No problems found. 2 recommended changes can still help.") instead of only "nothing holds this PC back", and the line under it says that the readiness score is counted from the problems the scan finds. 100 of 100 next to two recommended changes read as a contradiction; the score never counted tweaks.
+
+### Fixed
+
+- **Hand cursor on whole pages:** on every page with tabs (Services & tasks, Remove apps, Install & update, Tools, for example the storage analyzer or the driver list) the mouse showed the hand everywhere, also over text and cards that do nothing. The hand cursor of a tab now applies to its header only; a test keeps it so.
+- **Result bar:** a message without a link or button ran under the bar's close button ("99 %", "Fehlgeschlagen: 0." were cut). The close button now has its own room.
 
 ## 0.9.0 (preview)
 

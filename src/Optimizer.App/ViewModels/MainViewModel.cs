@@ -273,10 +273,25 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _score;
     [ObservableProperty] private string _lastScanText = "";
     [ObservableProperty] private string _headline = "";
-    [ObservableProperty] private string _scoreVerdict = "";
 
     /// <summary>The Overview's verdict: one sentence on what holds this PC back (the problems listed right under it).</summary>
     [ObservableProperty] private string _verdict = "";
+
+    private int _findingProblems;
+
+    /// <summary>
+    /// The verdict: the problems listed under it, or without any, whether recommended changes can still help. The score
+    /// counts only problems, so "100 of 100" and two recommended changes are both true; a sentence that said only "nothing
+    /// holds this PC back" next to the recommendations read as a contradiction.
+    /// </summary>
+    private void UpdateVerdict() => Verdict = _findingProblems switch
+    {
+        0 when _plan.Items.Count == 1 => Loc.Instance["Dash_VerdictNoneOneChange"],
+        0 when _plan.Items.Count > 1 => Loc.Instance.Format("Dash_VerdictNoneChanges", _plan.Items.Count),
+        0 => Loc.Instance["Dash_VerdictNone"],
+        1 => Loc.Instance["Dash_VerdictOne"],
+        _ => Loc.Instance.Format("Dash_VerdictMany", _findingProblems),
+    };
 
     /// <summary>The readiness score and the passed checks, one quiet line under the verdict.</summary>
     [ObservableProperty] private string _readinessLine = "";
@@ -1628,18 +1643,12 @@ public sealed partial class MainViewModel : ObservableObject
         // The score counts what matters for the profile, weighted by the profile's impact.
         Score = ReadinessScore.Compute(_profiledFindings);
         ScoreHint = Loc.Instance.Format("Dash_ScoreHintGoal", Labels.Current.Get(lang, $"effect.{_usage.Goal}"));
-        ScoreVerdict = Loc.Instance[Score >= 85 ? "Verdict_Good" : Score >= 60 ? "Verdict_Fair" : "Verdict_Poor"];
         var findingProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Finding);
         var advisorProblems = _profiledFindings.Count(f => f.IsProblem && f.Kind == FindingKind.Advisor);
-        // The verdict counts the problems listed right under it; BIOS and hardware have their own page and the link.
-        Verdict = findingProblems switch
-        {
-            0 => Loc.Instance["Dash_VerdictNone"],
-            1 => Loc.Instance["Dash_VerdictOne"],
-            _ => Loc.Instance.Format("Dash_VerdictMany", findingProblems),
-        };
-        ReadinessLine = Loc.Instance.Format("Dash_Readiness", ProfileName(_usage), Score, ScoreVerdict,
-            _profiledFindings.Count(f => f.Status == FindingStatus.Ok));
+        // The verdict counts the problems listed right under it (BIOS and hardware have their own page and the link); it
+        // is set once the recommendations are known (UpdateVerdict). The line under it says what the score counts.
+        _findingProblems = findingProblems;
+        ReadinessLine = Loc.Instance.Format("Dash_Readiness", ProfileName(_usage), Score, _profiledFindings.Count(f => f.Status == FindingStatus.Ok));
         AdvisorLinkText = advisorProblems > 0 ? Loc.Instance.Format("Dash_AdvisorLink", advisorProblems) : null;
         // The navigation shows where something waits: problems on the overview, things to change by hand.
         OverviewBadge = findingProblems > 0 ? findingProblems.ToString() : null;
@@ -1905,6 +1914,7 @@ public sealed partial class MainViewModel : ObservableObject
         // Nothing to apply in one click, but fixes that need something first: say so instead of "nothing to recommend".
         RecommendationsEmptyText = _plan.Excluded.Count > 0 ? Loc.Instance["Rec_EmptyButExcluded"] : Loc.Instance["Rec_Empty"];
         UpdateRecommendedButton();
+        UpdateVerdict();
         RecommendationsIntro = Loc.Instance.Format("Rec_IntroProfile", ProfileName(_usage));
 
         // Changes on this PC that lower the profile's goal (for example a battery drain in the Battery profile).

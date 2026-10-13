@@ -63,9 +63,6 @@
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
-  <data name="Verdict_Good" xml:space="preserve"><value>well configured</value></data>
-  <data name="Verdict_Fair" xml:space="preserve"><value>some issues worth fixing</value></data>
-  <data name="Verdict_Poor" xml:space="preserve"><value>significant issues found</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scanning</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
   <data name="LastScan" xml:space="preserve"><value>Last scan {0}</value></data>
@@ -1286,6 +1283,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Dash_VerdictOne" xml:space="preserve"><value>One problem holds this PC back.</value></data>
   <data name="Dash_VerdictMany" xml:space="preserve"><value>{0} problems hold this PC back.</value></data>
   <data name="Dash_VerdictPending" xml:space="preserve"><value>The scan is reading this PC.</value></data>
-  <data name="Dash_Readiness" xml:space="preserve"><value>Readiness for {0}: {1} of 100, {2}. {3} checks passed.</value></data>
+  <data name="Dash_Readiness" xml:space="preserve"><value>Readiness for {0}: {1} of 100, counted from the problems the scan finds. {2} checks passed.</value></data>
   <data name="Dash_AdvisorLink" xml:space="preserve"><value>To change by hand in the BIOS or on the hardware: {0}</value></data>
+  <data name="Dash_VerdictNoneOneChange" xml:space="preserve"><value>No problems found. One recommended change can still help.</value></data>
+  <data name="Dash_VerdictNoneChanges" xml:space="preserve"><value>No problems found. {0} recommended changes can still help.</value></data>
 </root>

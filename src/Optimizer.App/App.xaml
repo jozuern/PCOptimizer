@@ -169,11 +169,12 @@
             <Style x:Key="SelectorTab" TargetType="TabItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                 <Setter Property="FontSize" Value="14" />
-                <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
-                            <Border x:Name="Bg" Background="Transparent" CornerRadius="4" Padding="12,6,12,4" Margin="0,0,4,0">
+                            <!-- The hand only on the header: set on the TabItem, it reached the whole tab's content too (a tab's
+                                 content routes its mouse events through the TabItem), so every text and card showed as clickable -->
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="4" Padding="12,6,12,4" Margin="0,0,4,0" Cursor="Hand">
                                 <StackPanel>
                                     <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
                                     <Border x:Name="Pill" Height="3" Width="16" CornerRadius="1.5" Margin="0,4,0,0" HorizontalAlignment="Center"

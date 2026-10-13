@@ -138,16 +138,19 @@
                  the Changes page lie over it (the WPF-UI InfoBar has no content slot). Errors and warnings stay until closed. -->
             <Grid Grid.Column="0" VerticalAlignment="Bottom" Margin="24" MaxWidth="900" HorizontalAlignment="Center"
                   Visibility="{Binding ResultOpen, Converter={StaticResource BoolToVisibility}}">
+                <!-- The last column is the close button's: the message and the link or button never reach under it (a message
+                     without a link used to run under the X, "99 %" and "Fehlgeschlagen: 0." were cut by it) -->
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="48" />
                 </Grid.ColumnDefinitions>
-                <ui:InfoBar Grid.ColumnSpan="2" Title="" Message="" IsOpen="{Binding ResultOpen, Mode=TwoWay}" IsClosable="True" Severity="{Binding ResultSeverity}" />
+                <ui:InfoBar Grid.ColumnSpan="3" Title="" Message="" IsOpen="{Binding ResultOpen, Mode=TwoWay}" IsClosable="True" Severity="{Binding ResultSeverity}" />
                 <TextBlock x:Name="ResultMessage" Text="{Binding ResultText}" TextWrapping="Wrap" FontSize="14" VerticalAlignment="Center" Margin="46,12,16,12"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" AutomationProperties.LiveSetting="Assertive" />
-                <ui:HyperlinkButton Grid.Column="1" Content="{l:Tr Result_ViewChanges}" Command="{Binding OpenChangesCommand}" VerticalAlignment="Center" Margin="0,0,56,0"
+                <ui:HyperlinkButton Grid.Column="1" Content="{l:Tr Result_ViewChanges}" Command="{Binding OpenChangesCommand}" VerticalAlignment="Center" Margin="0,0,8,0"
                                     Visibility="{Binding ResultShowsChanges, Converter={StaticResource BoolToVisibility}}" />
-                <ui:Button Grid.Column="1" Content="{Binding ResultUpdateText}" Command="{Binding UpdateNowCommand}" Appearance="Primary" VerticalAlignment="Center" Margin="0,0,56,0"
+                <ui:Button Grid.Column="1" Content="{Binding ResultUpdateText}" Command="{Binding UpdateNowCommand}" Appearance="Primary" VerticalAlignment="Center" Margin="0,0,8,0"
                            Visibility="{Binding ResultShowsUpdate, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 

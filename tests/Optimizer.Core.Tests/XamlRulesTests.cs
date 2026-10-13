@@ -1,0 +1,35 @@
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+
+namespace Optimizer.Core.Tests;
+
+/// <summary>Rules for the app's XAML that a screenshot cannot show.</summary>
+public partial class XamlRulesTests
+{
+    private static readonly XNamespace Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+    /// <summary>
+    /// A hand cursor set on a TabItem reaches the whole tab's content (its mouse events route through the TabItem), so every
+    /// text and card on a page with tabs showed as clickable. The hand belongs on the header inside the tab's template.
+    /// </summary>
+    [Fact]
+    public void TabItemsSetNoCursorForTheirContent()
+    {
+        var offenders = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(RepoPaths.App, "*.xaml", SearchOption.AllDirectories)
+                     .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")))
+        {
+            var doc = XDocument.Load(file);
+            var relative = Path.GetRelativePath(RepoPaths.App, file);
+            foreach (var style in doc.Descendants(Presentation + "Style").Where(s => TabItemType().IsMatch((string?)s.Attribute("TargetType") ?? "")))
+                if (style.Elements(Presentation + "Setter").Any(s => (string?)s.Attribute("Property") == "Cursor"))
+                    offenders.Add($"{relative}: a TabItem style sets Cursor");
+            foreach (var item in doc.Descendants(Presentation + "TabItem").Where(i => i.Attribute("Cursor") is not null))
+                offenders.Add($"{relative}: a TabItem sets Cursor");
+        }
+        Assert.Empty(offenders);
+    }
+
+    [GeneratedRegex(@"^(\{x:Type\s+)?TabItem\}?$")]
+    private static partial Regex TabItemType();
+}

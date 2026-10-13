@@ -63,9 +63,6 @@
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Settings_Appearance" xml:space="preserve"><value>Darstellung</value></data>
   <data name="Settings_Diagnostics" xml:space="preserve"><value>Diagnose</value></data>
-  <data name="Verdict_Good" xml:space="preserve"><value>gut eingerichtet</value></data>
-  <data name="Verdict_Fair" xml:space="preserve"><value>einige Punkte lohnen sich</value></data>
-  <data name="Verdict_Poor" xml:space="preserve"><value>deutliche Probleme</value></data>
   <data name="Headline_Scanning" xml:space="preserve"><value>Scan läuft</value></data>
   <data name="Headline" xml:space="preserve"><value>{0}, {1}, {2}</value></data>
   <data name="LastScan" xml:space="preserve"><value>Letzter Scan {0}</value></data>
@@ -1286,6 +1283,8 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Dash_VerdictOne" xml:space="preserve"><value>Ein Problem bremst diesen PC.</value></data>
   <data name="Dash_VerdictMany" xml:space="preserve"><value>{0} Probleme bremsen diesen PC.</value></data>
   <data name="Dash_VerdictPending" xml:space="preserve"><value>Der Scan liest diesen PC.</value></data>
-  <data name="Dash_Readiness" xml:space="preserve"><value>Eignung für {0}: {1} von 100, {2}. {3} Prüfungen bestanden.</value></data>
+  <data name="Dash_Readiness" xml:space="preserve"><value>Eignung für {0}: {1} von 100, gezählt aus den Problemen, die der Scan findet. {2} Prüfungen bestanden.</value></data>
   <data name="Dash_AdvisorLink" xml:space="preserve"><value>Von Hand im BIOS oder an der Hardware zu ändern: {0}</value></data>
+  <data name="Dash_VerdictNoneOneChange" xml:space="preserve"><value>Keine Probleme gefunden. Eine empfohlene Änderung kann noch helfen.</value></data>
+  <data name="Dash_VerdictNoneChanges" xml:space="preserve"><value>Keine Probleme gefunden. {0} empfohlene Änderungen können noch helfen.</value></data>
 </root>
