@@ -17,6 +17,42 @@ namespace Optimizer.Core.Tests;
 
 public class RuntimeTweakPersistenceTests
 {
+    /// <summary>Autoruns-style Delete: the value goes, the change is listed with a backup, and undo writes it back with its type.</summary>
+    [Fact]
+    public async Task DeletedStartupValuesComeBackOnUndo()
+    {
+        using var fx = new EngineFixture();
+        const string runOnce = @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce";
+        RegistryValue.Write(fx.Registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\Run", "Gone", "expandString", @"%LOCALAPPDATA%\Gone\gone.exe");
+        RegistryValue.Write(fx.Registry, Hive.Machine, runOnce, "Finish", "string", @"C:\Vendor\finish.exe");
+        RegistryValue.Write(fx.Registry, Hive.User, @"Software\Microsoft\Command Processor", "AutoRun", "string", "doskey /macrofile=x");
+        var scanner = new StartupScanner(fx.Registry, fx.Tasks, null);
+        var run = scanner.RunKeys().Single(e => e.Name == "Gone");
+        var once = scanner.RunOnceEntries().Single(e => e.Name == "Finish");
+        var auto = scanner.CommandAutoRuns().Single();
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true);
+        var options = new ApplyOptions { ContinueWithoutRestorePoint = true };
+        var deletes = new[] { run, once, auto }.Select(e => StartupTweaks.Delete(e)!).ToList();
+        foreach (var t in deletes) Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(t, facts, new HashSet<string>(), options)).Outcome);
+
+        scanner = new StartupScanner(fx.Registry, fx.Tasks, null);
+        Assert.DoesNotContain(scanner.RunKeys(), e => e.Name == "Gone");
+        Assert.Empty(scanner.RunOnceEntries());
+        Assert.Empty(scanner.CommandAutoRuns());
+
+        // After a restart of the app the stored definitions still undo it.
+        var engine = new TweakEngine(fx.Context, new Backup.BackupStore(fx.BackupRoot, secure: false), fx.RestorePoints, "test", 26300);
+        foreach (var t in deletes) Assert.True(engine.Revert(engine.Resolve(t.Id)!).Success);
+        Assert.Equal(new StoredValue(true, "expandString", @"%LOCALAPPDATA%\Gone\gone.exe"), RegistryValue.Read(fx.Registry, Hive.User, @"Software\Microsoft\Windows\CurrentVersion\Run", "Gone"));
+        Assert.True(RegistryValue.Read(fx.Registry, Hive.Machine, runOnce, "Finish").Existed);
+        Assert.True(RegistryValue.Read(fx.Registry, Hive.User, @"Software\Microsoft\Command Processor", "AutoRun").Existed);
+
+        // Files, tasks, services and RunOnceEx entries have no Delete.
+        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.StartupFolder }));
+        Assert.Null(StartupTweaks.Delete(run with { Kind = StartupKind.LogonTask }));
+        Assert.Null(StartupTweaks.Delete(once with { Key = "runonceex:0001:x" }));
+    }
+
     [Fact]
     public async Task RuntimeTweakCanBeUndoneAfterRestart()
     {

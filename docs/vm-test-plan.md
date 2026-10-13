@@ -340,6 +340,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Startup entries | Disable one Run key entry and one Startup folder item, sign out and in: not started; enable again | |
 | Services | Change one explained service to Manual, restart, undo | |
 | Scheduled tasks | Turn one task off and on again | |
+| Startup Delete entry | Add a Run value pointing to a missing file, a RunOnce value and a cmd.exe AutoRun by hand; Delete entry on each: the confirmation shows the value, the entries leave the list, the Changes page lists three deletions, and Undo writes each back with its type (an expandable string stays one) | |
 | Startup page tasks | Startup lists a third-party task with a daily trigger; Windows' own tasks (TextServicesFramework\MsCtfMonitor) show "Listed only" and no switch; a task that runs a COM handler shows its DLL and "Microsoft" | |
 | Windows features | Turn one optional feature on, restart, turn it off again | |
 | Remove apps | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |

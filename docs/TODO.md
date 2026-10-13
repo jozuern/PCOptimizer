@@ -31,7 +31,7 @@ In the order of the audit's promise gaps:
 1. A winget search for any package (the list of 91 apps is done).
 2. Orphaned Program Files folders without an uninstall entry (bulk and quiet uninstall and the leftover check after an uninstall are done; the leftover check needs a VM run).
 3. Process Lasso style rules: the page priority (proof needed). Start priorities are proven; live rules and affinity are on the not-included page.
-4. Autoruns: Delete with a backup (the locations and the CSV export are done).
+4. Autoruns: Delete for startup folder shortcuts and third-party tasks (registry values can be deleted with a backup; the locations and the CSV export are done).
 5. The documented policies still left over (sync per category, quality update deferral and more); AI permissions without documented values, cross-device resume, desktop Spotlight and Edge promotions were checked and stay out, with the reasons in the commit history and on the not-included page.
 6. About 30 cosmetic tweaks (menu delays, drive letters first, shortcut suffix, Photo Viewer, Folder Options, taskbar on several displays, Num Lock, startup sound and others); many need VM proof.
 7. Export and command line: removed apps, service start types and startup entries in the export; `--export`, `--profile ... --apply-recommended` and `--include-preview`.

@@ -537,9 +537,43 @@ public static class StartupTweaks
         };
     }
 
+    /// <summary>
+    /// Deletes a registry autostart value the way Autoruns does, but through the engine: the value is backed up first and
+    /// the Changes page puts it back. Null for entries that are not a single value in a Run, RunOnce, policy Run or
+    /// cmd.exe AutoRun key (RunOnceEx entries, files, tasks, services and Windows' own locations stay as they are).
+    /// </summary>
+    public static TweakDefinition? Delete(StartupEntry e)
+    {
+        var (path, name) = e.Kind switch
+        {
+            StartupKind.RunKey or StartupKind.PolicyRun => (KeyPath(e.Location), e.Name),
+            StartupKind.RunOnce when e.Key.StartsWith("runonce:", StringComparison.Ordinal) => (KeyPath(e.Location), e.Name),
+            // The location ends with the value name (...\Command Processor\AutoRun).
+            StartupKind.CommandAutoRun => (KeyPath(e.Location[..e.Location.LastIndexOf('\\')]), "AutoRun"),
+            _ => (null, null),
+        };
+        if (path is null || name is null) return null;
+        return new TweakDefinition
+        {
+            Id = $"startup.delete.{e.Kind.ToString().ToLowerInvariant()}.{TweakIds.Slug(e.Key)}",
+            Docs = "startup.delete",
+            Subject = e.Name,
+            Category = "Startup",
+            Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
+            Risk = Risk.Safe,
+            Hidden = true,
+            Actions = [new RegistryAction { Hive = e.Hive, Path = path, Name = name, Delete = true }],
+            Sources = ["https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns"],
+        };
+    }
+
+    /// <summary>"HKLM\SOFTWARE\..." or "HKCU\Software\..." without the root; null for anything else.</summary>
+    private static string? KeyPath(string location) =>
+        location.StartsWith(@"HKLM\", StringComparison.OrdinalIgnoreCase) || location.StartsWith(@"HKCU\", StringComparison.OrdinalIgnoreCase) ? location[5..] : null;
+
     public static IReadOnlyList<string> DocIds =>
         new[] { StartupKind.RunKey, StartupKind.StartupFolder, StartupKind.LogonTask, StartupKind.ShellExtension, StartupKind.Service, StartupKind.ImageHijack }
-            .Select(k => $"startup.{k.ToString().ToLowerInvariant()}").ToList();
+            .Select(k => $"startup.{k.ToString().ToLowerInvariant()}").Append("startup.delete").ToList();
 
     /// <summary>Third-party entries enabled at logon: what F16 counts.</summary>
     public static bool CountsForF16(StartupEntry e) => e.Enabled == true && e.Kind is StartupKind.RunKey or StartupKind.StartupFolder or StartupKind.LogonTask;

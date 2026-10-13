@@ -50,6 +50,11 @@ public sealed partial class StartupRow : SwitchRow
 
     public StartupEntry Entry { get; }
     public string Name => Entry.Name;
+
+    /// <summary>A registry value Autoruns-style Delete can remove, with a backup (<see cref="StartupTweaks.Delete"/>).</summary>
+    public bool CanDelete => StartupTweaks.Delete(Entry) is not null;
+
+    public string DeleteLabel => Loc.Instance.Format("Startup_DeleteName", Name);
     public string KindText { get; }
     public string Location => Entry.Location;
     public string? Command => Entry.Command;
@@ -397,6 +402,14 @@ public sealed partial class StartupViewModel(MainViewModel owner, AppServices se
             return;
         }
         DeElevatedLauncher.Open(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", services.Elevation);
+    }
+
+    /// <summary>Deletes the registry value through the engine: it is backed up first, and the Changes page puts it back.</summary>
+    [RelayCommand]
+    private async Task DeleteEntryAsync(StartupRow? row)
+    {
+        if (row is null || StartupTweaks.Delete(row.Entry) is not { } t) return;
+        if (await runner.ApplyAsync(t)) await ReloadAsync();
     }
 
     [RelayCommand]

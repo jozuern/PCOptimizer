@@ -139,8 +139,12 @@
                                     <ui:HyperlinkButton Content="{l:Tr Startup_ShowFile}" Padding="0" Margin="0,0,16,0"
                                                         Visibility="{Binding Entry.ImagePath, Converter={StaticResource NullToVisibility}}"
                                                         Command="{Binding DataContext.Startup.ShowFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
-                                    <ui:HyperlinkButton Content="{l:Tr Startup_CopyLocation}" Padding="0"
+                                    <ui:HyperlinkButton Content="{l:Tr Startup_CopyLocation}" Padding="0" Margin="0,0,16,0"
                                                         Command="{Binding DataContext.Startup.CopyLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                    <ui:HyperlinkButton Content="{l:Tr Startup_Delete}" Padding="0" AutomationProperties.Name="{Binding DeleteLabel}" ToolTip="{l:Tr Startup_DeleteHint}"
+                                                        Visibility="{Binding CanDelete, Converter={StaticResource BoolToVisibility}}"
+                                                        IsEnabled="{Binding CanChange, Source={x:Static s:ChangeGate.Instance}}"
+                                                        Command="{Binding DataContext.Startup.DeleteEntryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                 </WrapPanel>
                                 <ui:HyperlinkButton Content="{Binding VirusTotalText}" Padding="0" Margin="0,4,0,0"
                                                     Visibility="{Binding VirusTotalText, Converter={StaticResource NullToVisibility}}"
