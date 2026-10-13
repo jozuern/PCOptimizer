@@ -56,7 +56,7 @@ website/              tunero.dev (Astro, static): reads the counts, catalog and 
 .github/workflows/    CI (build, tests without Category=Hardware, single-exe artifact), the tag-triggered release and the website
 ```
 
-Website: `cd website`, `npm ci`, then `npx astro dev` (preview) or `npx astro build` (output in `website/dist`). `pages.yml` builds and publishes it to GitHub Pages on pushes to main that touch the site, the README or the catalog, and after each release. Install commands appear only for package managers whose `live` flag is set in `website/src/lib/data.ts`. The docs lint checks its copy (`website/src`) for banned typography and words.
+Website: `cd website`, `npm ci`, then `npx astro dev` (preview) or `npx astro build` (output in `website/dist`). `pages.yml` builds and publishes it to GitHub Pages on pushes to main that touch the site, the README or the catalog, and after each release. Install commands appear only for package managers whose `live` flag is set in `website/src/lib/data.ts`. The docs lint checks its copy (`website/src`) for banned typography.
 
 Data: `%ProgramData%\Tunero` when elevated; Debug runs without admin rights use `%LocalAppData%\Tunero` instead. Before the first log or settings access, `Program.Main` secures the elevated folder: a link is removed, a folder not created by an administrator is deleted, files inside that Administrators or SYSTEM do not own are removed, and the rest is locked to Administrators and SYSTEM. Contents: `backups\` (originals per change; an account's own settings under `users\<SID>`, undone changes in `history\`, undo that waits for a restart in `pending-undo\`), `exports\` (BCD and power plan exports), `logs\`, `tools\` (PresentMon; its capture files are deleted once read), `temp\` (TEMP for the tools the app starts, emptied at every start), `runtime\` (the native WPF libraries the single-file exe extracts: it restarts itself once with `DOTNET_BUNDLE_EXTRACT_BASE_DIR` pointing here instead of `%TEMP%`), `updates\`, `settings.json` (language, theme, Expert mode, profile, update check), `removed-apps.json`, `throttle.json`, `startup-snapshot.json`, `tcpip-reset.log`.
 
@@ -75,7 +75,7 @@ Catalog data in `src/Optimizer.Core/Catalog/`: `Tweaks/*.json` (tweaks), `Data/p
 ## Adding a tweak
 
 1. Catalog entry in `Catalog/Tweaks/*.json`: a documented setting (Microsoft or the hardware vendor), or an undocumented value under the rules in [Undocumented values](#undocumented-values); correct risk, `restart`/`signOut`, `bootCritical`, `antiCheatSensitive`, impact 0 to 5 with basis `situational` or `disputed` (`measured` only with a cited measurement), sources you opened. Set `"preview": true` when it is risky and not yet tested on real Windows; Expert and boot-critical tweaks must be previews (`CatalogRuleTests`).
-2. EN and DE explanation pages following [docs/explanation-style-guide.md](docs/explanation-style-guide.md); the docs lint checks the structure, summary length, sources, typography and banned words.
+2. EN and DE explanation pages following [docs/explanation-style-guide.md](docs/explanation-style-guide.md); the docs lint checks the structure, summary length, sources and typography.
 3. A sandbox test for apply and undo (see `UndoTests` and `EngineTests`).
 4. Regenerate the VM test plan tables: run `dotnet test` once with the environment variable `PCO_UPDATE_DOCS=1`. The counts in README.md are checked against the catalog (`DocsConsistencyTests`).
 5. A tweak that is removed later stays undoable: undo uses the action stored with each backup entry.

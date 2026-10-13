@@ -84,10 +84,11 @@
                                     <TextBlock x:Name="After" Grid.Column="2" Text="{Binding After}" Style="{StaticResource Mono}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 </Grid>
                             </Border>
-                            <!-- A value that already is what the change writes: not bold, so the real changes stand out -->
+                            <!-- A value that already is what the change writes ("Already set"): not bold, so the real changes stand out -->
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding Unchanged}" Value="True">
                                     <Setter TargetName="After" Property="FontWeight" Value="Normal" />
+                                    <Setter TargetName="After" Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
                                     <Setter TargetName="After" Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
                                 </DataTrigger>
                             </DataTemplate.Triggers>

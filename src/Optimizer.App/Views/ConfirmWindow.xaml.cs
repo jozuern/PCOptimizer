@@ -11,7 +11,7 @@ public partial class ConfirmWindow : FluentWindow
     private readonly bool _needsAck;
     private readonly bool _canApply;
 
-    /// <summary>One line of the table; <see cref="Unchanged"/> when the value already is what the change writes.</summary>
+    /// <summary>One line of the table; <see cref="Unchanged"/> when the value already is what the change writes (After then says so).</summary>
     private sealed record Row(string Target, string Before, string After, bool Unchanged)
     {
         // What screen readers announce for this item in a list.
@@ -28,8 +28,13 @@ public partial class ConfirmWindow : FluentWindow
         BadgeList.Visibility = request.Badges.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         BlockList.ItemsSource = request.Blocks;
         WarningList.ItemsSource = request.AntiCheatWarning is null ? request.Warnings : request.Warnings.Append(request.AntiCheatWarning).ToList();
+        // A value that already is what the change writes says so instead of repeating the number, and goes below the real
+        // changes: "0" under Now and New read like a change.
         var rows = request.Changes
-            .Select(c => new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Show(c.After), IsUnchanged(c)))
+            .Select(c => IsUnchanged(c)
+                ? new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Loc.Instance["Confirm_AlreadySet"], true)
+                : new Row(ChangeRunner.ShortTarget(c.Target), Show(c.Before), Show(c.After), false))
+            .OrderBy(r => r.Unchanged)
             .ToList();
         ChangeList.ItemsSource = rows;
         NewHeader.Text = Loc.Instance[request.IsUndo ? "Confirm_Restore" : "Confirm_New"];

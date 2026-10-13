@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.8 (preview)
 
 ### New
 
@@ -26,6 +26,7 @@
 ### Changed
 
 - **Ratings from measurements:** Resizable BAR off rates 4 on Intel Arc, 2 on AMD and 1 on NVIDIA (measured 23 %, up to 17 % and 0 to 2 %). Memory below its XMP or EXPO speed rates 3, or 1 on Ryzen X3D and Intel 13th and 14th gen (TechSpot: 11 to 12 % against 4 %). Game Mode rates 3 on Ryzen 9 X3D processors with two CCDs, whose driver needs it. The memory integrity tweak now cites measurements.
+- **Values that are already set** say "Already set" in the confirmation instead of showing the same number under Now and New, and come after the real changes.
 - **No count on Changes in the navigation:** the number of changes stayed there all the time, read like something to fix and could push towards undoing changes made on purpose. The Changes page itself still lists them.
 - **Releases** carry only Tunero.exe: the PCOptimizer.exe copy helped versions up to 0.7.3 only until the repository was renamed.
 - **Package scripts** check the release signature (`scripts/verify-release.ps1`) before they write a hash, and the Scoop manifest no longer updates itself from the release's checksum file alone.

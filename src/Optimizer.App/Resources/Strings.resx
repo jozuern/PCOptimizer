@@ -127,6 +127,7 @@
   <data name="Confirm_Now" xml:space="preserve"><value>Now</value></data>
   <data name="Confirm_New" xml:space="preserve"><value>New</value></data>
   <data name="Confirm_Restore" xml:space="preserve"><value>Restored</value></data>
+  <data name="Confirm_AlreadySet" xml:space="preserve"><value>Already set</value></data>
   <data name="Confirm_AntiCheatAck" xml:space="preserve"><value>I understand that games using this anti-cheat may not start.</value></data>
   <data name="Confirm_Backup" xml:space="preserve"><value>The original values are saved before anything changes.</value></data>
   <data name="Confirm_UndoKeeps" xml:space="preserve"><value>Values that cannot be restored stay on the Changes page.</value></data>
