@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Optimizer.Core.Logging;
+using Optimizer.Core.Storage;
 
 namespace Optimizer.Core.Tools;
 
@@ -239,6 +240,55 @@ public static class StorageAnalyzer
             if (!MoveToRecycleBin(p, folder: false)) failed.Add(p);
         }
         return failed;
+    }
+
+    /// <summary>
+    /// Moves files and folders to the Recycle Bin. Each item is checked again with <see cref="RecycleRules.Check"/>
+    /// (protected, kept and system locations are refused, a folder also when it holds one); a folder is moved by renaming
+    /// it into the Recycle Bin after its folders are pinned and it is known to hold no link. Returns the failures.
+    /// </summary>
+    /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
+    /// <param name="progress">The number of items done before each item.</param>
+    public static IReadOnlyList<string> RecycleItems(IReadOnlyList<(string Path, bool Folder)> items, IReadOnlyList<string> protectedRoots,
+        IReadOnlyCollection<string> keptFolders, bool appData = true, IProgress<int>? progress = null)
+    {
+        var failed = new List<string>();
+        var done = 0;
+        foreach (var (path, folder) in items)
+        {
+            progress?.Report(done++);
+            var exists = folder ? Directory.Exists(path) : File.Exists(path);
+            var system = !folder && exists && (File.GetAttributes(path) & FileAttributes.System) != 0;
+            if (!exists || RecycleRules.Check(path, folder, system, protectedRoots, keptFolders, appData) is not null || (folder && HoldsFolderLink(path)) || !MoveToRecycleBin(path, folder))
+                failed.Add(path);
+        }
+        return failed;
+    }
+
+    /// <summary>
+    /// True when a folder below <paramref name="folder"/> is a junction, symbolic link or mount point (or the walk fails):
+    /// such a folder is not recycled as a whole, because what it points to may not be what the user saw. Links are not entered.
+    /// </summary>
+    private static bool HoldsFolderLink(string folder)
+    {
+        var options = new EnumerationOptions { IgnoreInaccessible = false, AttributesToSkip = 0 };
+        var stack = new Stack<string>([folder]);
+        try
+        {
+            while (stack.Count > 0)
+            {
+                foreach (var sub in new DirectoryInfo(stack.Pop()).EnumerateDirectories("*", options))
+                {
+                    if ((sub.Attributes & FileAttributes.ReparsePoint) != 0) return true;
+                    stack.Push(sub.FullName);
+                }
+            }
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
     }
 
     /// <summary>
