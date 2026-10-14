@@ -20,8 +20,8 @@ internal interface IMftSource : IDisposable
 
 /// <summary>
 /// Reads a whole NTFS volume from its file table: every record of $MFT's valid data, read only, in blocks of up to 8 MB
-/// (in the test VM its 550 MB took 0.35 s so, 0.39 s in blocks of 4 MB) into memory aligned for reads without the cache,
-/// so they need no copy. The next block is read while the last one is parsed on all processors straight into an
+/// into memory aligned for reads without the cache, so they need no copy (in the test VM its 550 MB took 0.35 s in
+/// blocks of 8 MB and 0.39 s in blocks of 4 MB). The next block is read while the last one is parsed on all processors straight into an
 /// <see cref="MftTable"/>, then the tree comes from <see cref="MftTreeBuilder"/>. The time the tree reports includes
 /// building it. Needs administrator rights. No record is skipped, not even one $MFT's own bitmap marks free: a wrong
 /// bitmap could hide files no check would notice. Any doubt that the table was read whole (it cannot be opened or
@@ -132,8 +132,11 @@ public sealed class MftScanner : IVolumeScanner
     /// <summary>
     /// What each record of a block is, from its header alone (the signature, the in-use flag and the base reference lie
     /// before the first stride's end, so they read the same before the fixups): records not in use are skipped silently,
-    /// "BAAD" counts as damaged, and every base record in use gets its entry here, in record order. Returns the records
-    /// in use and the damaged ones.
+    /// "BAAD" counts as damaged, and every base record in use gets its entry here, in record order. A record whose first
+    /// four bytes are neither "FILE" nor "BAAD" nor zero is garbage (NTFS formats every record it adds to the table as
+    /// "FILE", and one never written reads as zeros, as the VM's fixture shows: only "FILE" and zero records): bytes from
+    /// the wrong place, such as a run of the table mapped wrong. It counts as in use and damaged, so the 1 % limit
+    /// applies to it. Returns the records in use and the damaged ones.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static (long InUse, long Damaged) Sort(AlignedBlock block, int read, int size, long start, MftTable table, int[] entries)
@@ -150,10 +153,16 @@ public sealed class MftScanner : IVolumeScanner
                 inUse++;
                 damaged++;
             }
-            else if (signature == File && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) != 0)
+            else if (signature == File)
             {
+                if ((BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) == 0) continue;
                 inUse++;
                 entries[k] = MftRecordParser.IsExtension(r) ? Extension : table.Reserve((uint)(start + k));
+            }
+            else if (signature != 0)
+            {
+                inUse++;
+                damaged++;
             }
         }
         return (inUse, damaged);

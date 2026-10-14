@@ -6,7 +6,8 @@ namespace Optimizer.Core.Storage;
 /// <summary>
 /// Picks the reader for a scan: the file table (<see cref="MftScanner"/>) for the root of an NTFS drive when the process
 /// is elevated, otherwise folder by folder (<see cref="EnumerationScanner"/>). When the file table cannot be read whole,
-/// the folder walk starts from scratch, so a result never mixes the two.
+/// or its reader fails in any other way than being stopped, the folder walk starts from scratch, so a result never mixes
+/// the two.
 /// </summary>
 public static class VolumeScanners
 {
@@ -28,6 +29,12 @@ public static class VolumeScanners
             catch (MftUnavailableException ex)
             {
                 Log.Warn("storage", "file table not read, reading folder by folder", new { reason = ex.Message });
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // A fault of the reader itself (a parse it did not expect, memory): the folder walk still gives a result.
+                // The type and message only: the reader's own messages name no file.
+                Log.Warn("storage", "file table reader failed, reading folder by folder", new { type = ex.GetType().Name, reason = ex.Message });
             }
         }
         return await folders.ScanAsync(root, progress, ct).ConfigureAwait(false);

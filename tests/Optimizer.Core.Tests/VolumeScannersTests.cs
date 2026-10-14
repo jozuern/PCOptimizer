@@ -194,6 +194,44 @@ public class VolumeScannersTests
             Scanner(new FixtureSource(Damage(allowed + 1), f.RecordSize, f.SectorSize)).ScanAsync(Root, null, CancellationToken.None));
     }
 
+    /// <summary>
+    /// A record that is neither "FILE" nor "BAAD" nor zeros is garbage (a run mapped wrong): it counts as damaged, so
+    /// one in the fixture's 118 records in use is allowed and two are not. Placed in records the fixture leaves zero.
+    /// </summary>
+    [Fact]
+    public async Task GarbageRecordsCountAsDamaged()
+    {
+        var f = Data.Value;
+        var zero = Enumerable.Range(0, (int)f.Records).Where(n => f.Mft.AsSpan(n * f.RecordSize, f.RecordSize).IndexOfAnyExcept((byte)0) < 0).ToList();
+        Assert.True(Enumerable.Range(0, (int)f.Records).Count(f.InUse) / 100 == 1 && zero.Count >= 2);
+        byte[] Garbage(int count)
+        {
+            var b = (byte[])f.Mft.Clone();
+            foreach (var n in zero.Take(count)) "XQ7!"u8.CopyTo(b.AsSpan(n * f.RecordSize));
+            return b;
+        }
+
+        AssertSameTree(f.Expected, await Scanner(new FixtureSource(Garbage(1), f.RecordSize, f.SectorSize)).ScanAsync(Root, null, CancellationToken.None));
+        await Assert.ThrowsAsync<MftUnavailableException>(() =>
+            Scanner(new FixtureSource(Garbage(2), f.RecordSize, f.SectorSize)).ScanAsync(Root, null, CancellationToken.None));
+    }
+
+    /// <summary>Any fault of the file table reader but Stop falls back to the folder walk (ruling R26).</summary>
+    [Fact]
+    public async Task AnyReaderFaultButStopFallsBackToEnumeration()
+    {
+        var folders = new FakeScanner(ScanReader.Folders);
+        var tree = await VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None,
+            new FakeScanner(ScanReader.FileTable, new InvalidOperationException("an unexpected state")), folders);
+        Assert.Equal(ScanReader.Folders, tree.Reader);
+        Assert.Equal(1, folders.Runs);
+
+        var notRun = new FakeScanner(ScanReader.Folders);
+        await Assert.ThrowsAsync<OperationCanceledException>(() => VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None,
+            new FakeScanner(ScanReader.FileTable, new OperationCanceledException()), notRun));
+        Assert.Equal(0, notRun.Runs);
+    }
+
     [Fact]
     public async Task CancelledMftScanThrows()
     {
@@ -302,12 +340,6 @@ public class VolumeScannersTests
         Assert.Equal(ScanReader.Folders, (await VolumeScanners.ScanAsync(Root, fileTable: false, null, CancellationToken.None, mft, folders)).Reader);
         Assert.Equal(0, mft.Runs);
         Assert.Equal(ScanReader.FileTable, (await VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None, mft, folders)).Reader);
-        Assert.Equal(1, folders.Runs);
-
-        // Only "the file table cannot be read" means fall back; another failure is reported as it is.
-        var failing = new FakeScanner(ScanReader.FileTable, new InvalidOperationException("bug"));
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None, failing, folders));
         Assert.Equal(1, folders.Runs);
     }
 
