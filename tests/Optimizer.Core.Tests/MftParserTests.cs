@@ -29,6 +29,7 @@ public class MftParserTests
 
         Assert.NotNull(r);
         Assert.Equal(40u, r.Number);
+        Assert.Equal(1, r.Sequence);
         Assert.Equal(0ul, r.BaseReference);
         Assert.False(r.IsFolder);
         Assert.Equal(new[] { new MftName(RootRef, "readme.txt", 3) }, r.Names);
@@ -118,6 +119,15 @@ public class MftParserTests
             new MftName(RootRef, "LONGFI~1.TXT", 2),
             new MftName(0x0001_0000_0000_0123, "hard link.txt", 0),
         }, r.Names);
+    }
+
+    [Fact]
+    public void ReadsTheSequenceNumber()
+    {
+        // FILE_RECORD_SEGMENT_HEADER.SequenceNumber at 0x10: what a file reference to this record must carry.
+        var r = Parse(new RecordBuilder { Sequence = 0x1234 }.StandardInformation(T, 0x20).FileName(RootRef, "a", 1).Build());
+        Assert.NotNull(r);
+        Assert.Equal(0x1234, r.Sequence);
     }
 
     [Fact]
@@ -233,6 +243,7 @@ public class MftParserTests
         Assert.NotNull(r);
         Assert.Equal(41u, r.Number);
         Assert.Equal(baseRef, r.BaseReference);
+        Assert.Equal(1, r.Sequence);
         Assert.Equal(default, r.LastWriteUtc); // no $STANDARD_INFORMATION in an extension record
         Assert.Equal(100, r.DataSize);
     }
@@ -441,6 +452,7 @@ public class MftParserTests
         public int Size { get; init; } = 1024;
         public ushort Flags { get; init; } = 0x01;
         public ulong BaseReference { get; init; }
+        public ushort Sequence { get; init; } = 1;
         public List<int> AttributeOffsets { get; } = [];
         private readonly List<byte[]> _attributes = [];
 
@@ -524,7 +536,7 @@ public class MftParserTests
             Encoding.ASCII.GetBytes("FILE").CopyTo(r, 0);
             BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(4), usaOffset);
             BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(6), (ushort)(strides + 1));
-            BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(16), 1);  // sequence number
+            BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(16), Sequence);
             BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(18), 1);  // link count
             var pos = Align8(usaOffset + 2 * (strides + 1));
             BinaryPrimitives.WriteUInt16LittleEndian(r.AsSpan(20), (ushort)pos);

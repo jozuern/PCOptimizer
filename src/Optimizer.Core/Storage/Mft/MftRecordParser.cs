@@ -10,7 +10,9 @@ namespace Optimizer.Core.Storage.Mft;
 public sealed record MftName(ulong ParentReference, string Name, byte Namespace);
 
 /// <summary>
-/// What the storage scan needs from one in-use MFT file record. <paramref name="BaseReference"/> is 0 for a base record
+/// What the storage scan needs from one in-use MFT file record. <paramref name="Sequence"/> is the record's sequence
+/// number, which a file reference to it (a parent or base reference) must carry in its high 16 bits to be current.
+/// <paramref name="BaseReference"/> is 0 for a base record
 /// and the base record's file reference for an extension record. Data sizes are null when the record holds no unnamed
 /// $DATA with sizes (a folder, or the stream lives in an extension record); resident data occupies no clusters, so its
 /// allocated size is 0. <paramref name="LastWriteUtc"/> is default when the record has no valid
@@ -18,7 +20,7 @@ public sealed record MftName(ulong ParentReference, string Name, byte Namespace)
 /// $ATTRIBUTE_LIST names for $FILE_NAME or unnamed $DATA. <paramref name="ReparseTag"/> is the tag of a resident
 /// $REPARSE_POINT in this record, 0 when there is none or it is non-resident.
 /// </summary>
-public sealed record MftRecord(uint Number, ulong BaseReference, bool IsFolder, IReadOnlyList<MftName> Names, long? DataSize,
+public sealed record MftRecord(uint Number, ushort Sequence, ulong BaseReference, bool IsFolder, IReadOnlyList<MftName> Names, long? DataSize,
     long? DataAllocated, DateTime LastWriteUtc, uint FileAttributes, IReadOnlyList<ulong> ExtensionReferences, uint ReparseTag);
 
 /// <summary>
@@ -53,6 +55,8 @@ public static class MftRecordParser
         if ((flags & InUse) == 0) return null;
         if (!ApplyFixups(record, bytesPerSector)) return null;
 
+        // FILE_RECORD_SEGMENT_HEADER: sequence number at 0x10, base file record segment at 0x20.
+        var sequence = U16(record, 0x10);
         var baseReference = U64(record, 0x20);
         var isFolder = (flags & Directory) != 0;
         List<MftName>? names = null;
@@ -137,7 +141,7 @@ public static class MftRecordParser
             pos += (int)length;
         }
 
-        return new MftRecord(number, baseReference, isFolder, (IReadOnlyList<MftName>?)names ?? [], dataSize, dataAllocated,
+        return new MftRecord(number, sequence, baseReference, isFolder, (IReadOnlyList<MftName>?)names ?? [], dataSize, dataAllocated,
             lastWrite, attributes, (IReadOnlyList<ulong>?)extensions ?? [], reparseTag);
     }
 

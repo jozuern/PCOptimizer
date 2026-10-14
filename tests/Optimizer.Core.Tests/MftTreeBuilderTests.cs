@@ -223,14 +223,16 @@ public class MftTreeBuilderTests
         Assert.Equal(1528, f.Tree.Size(f.Entry("level-01-folder"))); // with note.txt two levels down
     }
 
-    // Built in memory: the cases a healthy volume does not show.
+    // Built in memory: the cases a healthy volume does not show. Every record has sequence number 1, as Ref expects.
 
     private static MftRecord Rec(uint number, uint parent, string name, bool folder = false, long? size = 0, long? allocated = 0,
-        uint attributes = 0, uint reparseTag = 0, byte ns = 1, ulong baseReference = 0) =>
-        new(number, baseReference, folder, [new MftName(Ref(parent), name, ns)], folder ? null : size,
+        uint attributes = 0, uint reparseTag = 0, byte ns = 1, ushort sequence = 1) =>
+        new(number, sequence, 0, folder, [new MftName(Ref(parent), name, ns)], folder ? null : size,
             folder ? null : allocated, T, attributes, [], reparseTag);
 
-    private static ulong Ref(uint number) => 0x0001_0000_0000_0000UL | number;
+    private static MftRecord FileRecord(uint number, params MftName[] names) => new(number, 1, 0, false, names, 1, 0, T, 0x20, [], 0);
+
+    private static ulong Ref(uint number, ushort sequence = 1) => (ulong)sequence << 48 | number;
 
     private static MftRecord Root() => Rec(5, 5, ".", folder: true, attributes: 0x6);
 
@@ -244,12 +246,46 @@ public class MftTreeBuilderTests
             Rec(42, 41, "loop b", folder: true),
             Rec(43, 44, "under a file.txt", size: 10),
             Rec(44, 5, "a file.txt", size: 5),
-            new MftRecord(45, 0, false, [], 3, 0, T, 0, [], 0), // no name at all
+            FileRecord(45), // no name at all
         ], @"X:\", TimeSpan.Zero);
 
         Assert.Equal(5, t.Lost);
         Assert.Equal(new[] { "a file.txt" }, t.Children(t.Root).Select(t.Name).ToArray());
         Assert.Equal(5, t.Size(t.Root));
+    }
+
+    [Fact]
+    public void AChildOfAReusedFolderRecordIsLost()
+    {
+        // Read while the volume changes: the file still names record 40 with sequence 1, but that record was freed and
+        // reused for another folder (sequence 2). The file must not appear under the unrelated folder.
+        var t = MftTreeBuilder.Build([
+            Root(),
+            Rec(40, 5, "unrelated", folder: true, sequence: 2),
+            Rec(41, 40, "phantom.txt", size: 100),
+            new MftRecord(42, 1, 0, false, [new MftName(Ref(40, 2), "current.txt", 1)], 7, 0, T, 0x20, [], 0),
+        ], @"X:\", TimeSpan.Zero);
+
+        var folder = Assert.Single(t.Children(t.Root));
+        Assert.Equal(new[] { "current.txt" }, t.Children(folder).Select(t.Name).ToArray());
+        Assert.Equal(1, t.Lost);
+        Assert.Equal(7, t.Size(t.Root));
+    }
+
+    [Fact]
+    public void AnExtensionRecordOfAnEarlierUseOfItsBaseIsNotFolded()
+    {
+        // Record 50 now holds an unrelated file (sequence 3); record 30 is a leftover extension of its earlier use.
+        var stale = new MftRecord(30, 1, Ref(50, 2), false, [new MftName(Ref(5), "old name.bin", 1)], 9000, 12288, default, 0, [], 0);
+        // Its own name is a POSIX link and its data is missing, so a wrongly folded Win32 name and data would show.
+        var current = new MftRecord(50, 3, 0, false, [new MftName(Ref(5), "new.txt", 0)], null, null, T, 0x20, [], 0);
+
+        var t = MftTreeBuilder.Build([Root(), stale, current], @"X:\", TimeSpan.Zero);
+
+        var file = Assert.Single(t.Children(t.Root));
+        Assert.Equal("new.txt", t.Name(file));
+        Assert.Equal(0, t.Size(file));
+        Assert.Equal(0, t.Lost);
     }
 
     [Fact]
@@ -274,9 +310,8 @@ public class MftTreeBuilderTests
     [Fact]
     public void Win32NameWinsOverTheDosNameAndPosixNamesAreKept()
     {
-        var file = new MftRecord(40, 0, false,
-            [new MftName(Ref(5), "LONGFI~1.TXT", 2), new MftName(Ref(5), "Long file name.txt", 1)], 1, 0, T, 0, [], 0);
-        var dosOnly = new MftRecord(41, 0, false, [new MftName(Ref(5), "ONLY.TXT", 2)], 2, 0, T, 0, [], 0);
+        var file = FileRecord(40, new MftName(Ref(5), "LONGFI~1.TXT", 2), new MftName(Ref(5), "Long file name.txt", 1));
+        var dosOnly = FileRecord(41, new MftName(Ref(5), "ONLY.TXT", 2));
         var posix = Rec(42, 5, "posix:name", ns: 0, size: 4);
 
         var t = MftTreeBuilder.Build([Root(), file, dosOnly, posix], @"X:\", TimeSpan.Zero);
@@ -286,22 +321,56 @@ public class MftTreeBuilderTests
     }
 
     [Fact]
+    public void AHardLinkedFileCountsUnderItsWin32NameEvenWhenAPosixLinkComesFirst()
+    {
+        // Windows stores extra hard links as POSIX names, and attribute order can put one before the original name.
+        var file = FileRecord(40,
+            new MftName(Ref(60), "link.txt", 0),
+            new MftName(Ref(61), "ORIGIN~1.TXT", 2),
+            new MftName(Ref(61), "original name.txt", 1),
+            new MftName(Ref(61), "second link.txt", 0));
+        var both = FileRecord(41, new MftName(Ref(60), "other link.txt", 0), new MftName(Ref(61), "SHORT.TXT", 3));
+
+        var t = MftTreeBuilder.Build([Root(), file, both, Rec(60, 5, "a", folder: true), Rec(61, 5, "b", folder: true)],
+            @"X:\", TimeSpan.Zero);
+
+        var a = t.Children(t.Root).Single(c => t.Name(c) == "a");
+        var b = t.Children(t.Root).Single(c => t.Name(c) == "b");
+        Assert.Equal(0, t.ChildCount(a));
+        Assert.Equal(new[] { "SHORT.TXT", "original name.txt" },
+            t.Children(b).Select(t.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(2, t.Files(t.Root));
+    }
+
+    [Fact]
     public void ExtensionRecordsFoldIntoTheirBaseInAnyOrder()
     {
-        // The extension record comes first and holds the data and a second name; the base has only a POSIX link.
-        var extension = new MftRecord(30, Ref(50), false, [new MftName(Ref(60), "second.bin", 1)], 9000, 12288, default, 0, [], 0);
-        var baseRecord = new MftRecord(50, 0, false, [new MftName(Ref(61), "first.bin", 0)], null, null, T, 0x20, [], 0);
+        // The extension record comes first and holds the data and the Win32 name; the base has only a POSIX link.
+        var extension = new MftRecord(30, 1, Ref(50), false, [new MftName(Ref(60), "second.bin", 1)], 9000, 12288, default, 0, [], 0);
+        var baseRecord = new MftRecord(50, 1, 0, false, [new MftName(Ref(61), "first.bin", 0)], null, null, T, 0x20, [], 0);
         var t = MftTreeBuilder.Build([
             extension, Root(), baseRecord, Rec(60, 5, "a", folder: true), Rec(61, 5, "b", folder: true),
         ], @"X:\", TimeSpan.Zero);
 
         Assert.Equal(1, t.Files(t.Root));
-        var b = t.Children(t.Root).Single(c => t.Name(c) == "b");
-        var file = Assert.Single(t.Children(b));
-        Assert.Equal("first.bin", t.Name(file));
+        var a = t.Children(t.Root).Single(c => t.Name(c) == "a");
+        var file = Assert.Single(t.Children(a));
+        Assert.Equal("second.bin", t.Name(file));
         Assert.Equal(9000, t.Size(file));
         Assert.Equal(12288, t.Allocated(file));
         Assert.Equal(T, t.LastWriteUtc(file));
+    }
+
+    [Fact]
+    public void AFileWithoutDataTakesNoSpaceAndKeepsTheTotalsKnown()
+    {
+        var noData = new MftRecord(40, 1, 0, false, [new MftName(Ref(5), "odd.bin", 1)], null, null, T, 0x20, [], 0);
+        var t = MftTreeBuilder.Build([Root(), noData, Rec(41, 5, "normal.bin", size: 100, allocated: 4096)], @"X:\", TimeSpan.Zero);
+
+        var odd = t.Children(t.Root).Single(c => t.Name(c) == "odd.bin");
+        Assert.Equal(0, t.Size(odd));
+        Assert.Equal(0, t.Allocated(odd));
+        Assert.Equal(4096, t.Allocated(t.Root));
     }
 
     [Fact]
@@ -314,7 +383,6 @@ public class MftTreeBuilderTests
             Rec(41, 40, "online only.docx", size: 5000, allocated: 0, attributes: 0x20 | 0x400000),
             Rec(42, 5, "junction", folder: true, attributes: reparse, reparseTag: mountPoint),
             Rec(43, 5, "dir link", folder: true, attributes: reparse, reparseTag: symlink),
-            Rec(44, 5, "unknown tag", folder: true, attributes: reparse),
             Rec(45, 42, "impossible child.txt", size: 1),
             Rec(46, 5, "pagefile.sys", size: 64, attributes: 0x26),
         ], @"X:\", TimeSpan.Zero);
@@ -326,12 +394,28 @@ public class MftTreeBuilderTests
         Assert.Equal(EntryFlags.CloudOnly, t.Flags(online));
         Assert.Equal(5000, t.Size(oneDrive));
 
-        foreach (var link in new[] { "junction", "dir link", "unknown tag" })
+        foreach (var link in new[] { "junction", "dir link" })
         {
             Assert.Equal(EntryFlags.Folder | EntryFlags.ReparsePoint, t.Flags(Named(link)));
             Assert.Equal(0, t.ChildCount(Named(link)));
         }
         Assert.Equal(1, t.Lost); // the child under the junction is not placed
         Assert.Equal(EntryFlags.System, t.Flags(Named("pagefile.sys")));
+    }
+
+    [Fact]
+    public void AReparseFolderWithoutAReadableTagIsEntered()
+    {
+        // As EnumerationScanner.IsLink: only a name surrogate tag makes a link, so both readers agree.
+        var t = MftTreeBuilder.Build([
+            Root(),
+            Rec(40, 5, "unknown tag", folder: true, attributes: 0x400),
+            Rec(41, 40, "inside.txt", size: 30),
+        ], @"X:\", TimeSpan.Zero);
+
+        var folder = Assert.Single(t.Children(t.Root));
+        Assert.Equal(EntryFlags.Folder, t.Flags(folder));
+        Assert.Equal(new[] { "inside.txt" }, t.Children(folder).Select(t.Name).ToArray());
+        Assert.Equal(0, t.Lost);
     }
 }
