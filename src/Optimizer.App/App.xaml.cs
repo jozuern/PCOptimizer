@@ -294,6 +294,8 @@ public partial class App : Application
                 typeGroup.IsExpanded = true;
                 vm.Storage.SelectedType = typeGroup.Extensions.FirstOrDefault(t => t.Extension == storageType.TrimStart('.').ToLowerInvariant());
             }
+            // The file lists add their rows once their path checks are made.
+            await vm.Storage.RowsBuilt;
             // --storage-select a.bin,docs: selects entries by name on the open tab for the command bar (Folders: the
             // first match; the file lists: every match). Only selects; nothing is opened, copied or moved.
             if (args.Value("--storage-select") is { } storageSelect && vm.Storage.Tree is { } storageTree)

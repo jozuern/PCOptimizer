@@ -43,10 +43,21 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         string[] KeptNormalized, RecycleBlock? Above);
 
     /// <summary>
-    /// The path checks of the current tree, by path and kind: they read the disk (long names, folder attributes), and the
-    /// lists are built again after every removal and language switch. The move checks every item again anyway.
+    /// The path checks of the current tree, by path and kind. They read the disk (long names, folder attributes), so a
+    /// file list runs them on a worker thread before its rows are added (<see cref="RowsBuilt"/>), and the lists built
+    /// again after a removal or a language switch find them here. Touched on the UI thread only; the move checks every
+    /// item again anyway.
     /// </summary>
     private readonly Dictionary<(string Path, bool Folder), RecycleBlock?> _blocks = new();
+
+    /// <summary>
+    /// The file rows being built (their path checks run on a worker thread first); complete when none are. Rows built
+    /// again from checks already made are added at once. Tests and the --storage-scan switch wait for it.
+    /// </summary>
+    public Task RowsBuilt { get; private set; } = Task.CompletedTask;
+
+    /// <summary>Raised whenever the file lists are dropped: rows still being built for them are not added.</summary>
+    private int _rowsVersion;
 
     /// <summary>Null before the first analysis: then nothing is offered.</summary>
     private RecycleScope? _rules;
@@ -210,6 +221,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     {
         if (Tree is { } tree) ResultText = Summary(tree);
         if (DuplicatesSearched) ShowDuplicates();
+        _rowsVersion++;
         LargestFiles.Clear();
         _largestFilled = false;
         _foldersFilled = false;
@@ -329,6 +341,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// <summary>The tree changed (new, closed, entries removed): lists are built again when their tab is open.</summary>
     private void RefreshFromTree(bool keepTypes = true)
     {
+        _rowsVersion++;
         LargestFiles.Clear();
         _largestFilled = false;
         _foldersFilled = false;
@@ -383,14 +396,62 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         if (Tab == TabLargest && !_largestFilled && Tree is { } tree)
         {
             _largestFilled = true;
-            foreach (var i in tree.LargestFiles(100)) LargestFiles.Add(FileRow(tree, i));
+            Track(FillFilesAsync(LargestFiles, tree, tree.LargestFiles(100), () => true));
+        }
+    }
+
+    private void Track(Task fill) => RowsBuilt = RowsBuilt.IsCompleted ? fill : Task.WhenAll(RowsBuilt, fill);
+
+    /// <summary>
+    /// Adds the rows of these entries once their path checks are made, off the UI thread; nothing when the list was
+    /// dropped meanwhile or <paramref name="wanted"/> says the rows are no longer asked for (another extension).
+    /// </summary>
+    private async Task FillFilesAsync(ObservableCollection<StorageFileRow> into, DiskTree tree, IReadOnlyList<int> entries, Func<bool> wanted)
+    {
+        var version = _rowsVersion;
+        var paths = entries.Select(tree.FullPath).ToList();
+        try
+        {
+            await CheckPathsAsync(paths);
+        }
+        catch (Exception ex)
+        {
+            // The rows come anyway: their checks are made on the UI thread then.
+            Log.Error("storage", "path checks failed", ex);
+        }
+        if (version != _rowsVersion || !ReferenceEquals(tree, Tree) || !wanted()) return;
+        for (var k = 0; k < entries.Count; k++) into.Add(FileRow(tree, entries[k], paths[k]));
+        UpdateSelection();
+    }
+
+    /// <summary>Makes the path checks of these files that are not made yet, on a worker thread; completes at once when all are.</summary>
+    private async Task CheckPathsAsync(IEnumerable<string> files)
+    {
+        if (_rules is not { } rules) return;
+        var missing = files.Select(p => (Path: p, Folder: false)).Where(k => !_blocks.ContainsKey(k)).Distinct().ToList();
+        if (missing.Count == 0) return;
+        var found = await Task.Run(() => missing.Select(k => (Key: k, Block: PathBlock(k.Path, k.Folder, rules))).ToList());
+        // Another analysis meanwhile: these belong to its predecessor.
+        if (!ReferenceEquals(rules, _rules)) return;
+        foreach (var (key, block) in found) _blocks.TryAdd(key, block);
+    }
+
+    /// <summary>The path rules for one item (reads the disk); a path that cannot be normalized counts as protected. Thread safe.</summary>
+    private RecycleBlock? PathBlock(string path, bool folder, RecycleScope rules)
+    {
+        try
+        {
+            return RecycleRules.CheckNormalized(path, folder, systemFile: false, rules.ProtectedNormalized, rules.KeptNormalized, appData);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return RecycleBlock.Protected;
         }
     }
 
     /// <summary>A file of the tree as a list row: its last change, and why Recycle is not offered for it.</summary>
-    private StorageFileRow FileRow(DiskTree tree, int i)
+    private StorageFileRow FileRow(DiskTree tree, int i, string path)
     {
-        var path = tree.FullPath(i);
         var system = (tree.Flags(i) & EntryFlags.System) != 0;
         return new StorageFileRow(path, tree.Size(i),
             tree.LastWriteUtc(i).ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture),
@@ -410,18 +471,8 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         else
         {
             if (system) block = RecycleBlock.SystemFile;
-            else if (!_blocks.TryGetValue((path, folder), out block))
-            {
-                try
-                {
-                    block = RecycleRules.CheckNormalized(path, folder, systemFile: false, rules.ProtectedNormalized, rules.KeptNormalized, appData);
-                }
-                catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-                {
-                    block = RecycleBlock.Protected;
-                }
-                _blocks[(path, folder)] = block;
-            }
+            // The one entry selected in the tree, or a check the worker could not make: here, once.
+            else if (!_blocks.TryGetValue((path, folder), out block)) _blocks[(path, folder)] = block = PathBlock(path, folder, rules);
             block ??= rules.Above;
         }
         if (block is null && tree is not null && entry >= 0 && entry < tree.Count) block = RecycleRules.CheckEntry(tree, entry);
@@ -485,7 +536,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         foreach (var g in TypeGroups) g.Selected = newValue is not null && g.Extensions.Contains(newValue) ? newValue : null;
         TypeFiles.Clear();
         if (newValue is not null && Tree is { } tree)
-            foreach (var i in tree.LargestFilesOfType(newValue.Extension, 100)) TypeFiles.Add(FileRow(tree, i));
+            Track(FillFilesAsync(TypeFiles, tree, tree.LargestFilesOfType(newValue.Extension, 100), () => ReferenceEquals(SelectedType, newValue)));
         UpdateSelection();
     }
 
@@ -563,7 +614,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             Log.Info("storage", "duplicates found", new { groups = groups.Count, files = groups.Sum(g => g.Paths.Count) });
             // A new analysis or Close result meanwhile: these belong to the old tree.
             if (!ReferenceEquals(tree, Tree)) return;
-            _duplicateGroups = groups.Take(50).ToList();
+            var shown = groups.Take(50).ToList();
+            await CheckPathsAsync(shown.SelectMany(g => g.Paths));
+            if (!ReferenceEquals(tree, Tree)) return;
+            _duplicateGroups = shown;
             _duplicateEntries = entries;
             DuplicatesSearched = true;
             ShowDuplicates();

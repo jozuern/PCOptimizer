@@ -49,11 +49,8 @@ public sealed class TreemapView : FrameworkElement
 
     private static readonly int GroupCount = GroupBrushProperties.Length;
 
-    /// <summary>
-    /// Every rectangle laid out (folders and files), each folder before what is in it; <c>End</c> is the index after the
-    /// last cell inside it (for a file its own index plus one), so a hit test skips every folder the point is not in.
-    /// </summary>
-    private readonly List<(LayoutRect Rect, int Entry, int End)> _cells = [];
+    /// <summary>Every rectangle laid out (folders and files), each folder before what is in it.</summary>
+    private readonly TreemapCells _cells = new();
     private readonly StreamGeometry?[] _groups = new StreamGeometry?[GroupCount];
     private readonly DrawingVisual _selection = new();
     private readonly ToolTip _tip = new() { Placement = PlacementMode.Mouse };
@@ -230,10 +227,9 @@ public sealed class TreemapView : FrameworkElement
                 var c = tree.Child(parent, k);
                 if (tree.IsFolder(c))
                 {
-                    var at = _cells.Count;
-                    _cells.Add((r, c, 0));
+                    var cell = _cells.BeginFolder(r, c);
                     LayOut(c, r);
-                    _cells[at] = (r, c, _cells.Count);
+                    _cells.EndFolder(cell);
                 }
                 else Add(c, r);
             }
@@ -241,7 +237,7 @@ public sealed class TreemapView : FrameworkElement
 
         void Add(int file, LayoutRect r)
         {
-            _cells.Add((r, file, _cells.Count + 1));
+            _cells.AddLeaf(r, file);
             var g = (int)tree.Group(file);
             if (contexts[g] is null)
             {
@@ -277,42 +273,38 @@ public sealed class TreemapView : FrameworkElement
     {
         using var dc = _selection.RenderOpen();
         var selected = SelectedEntry;
-        if (selected < 0 || !_layoutValid) return;
-        foreach (var (rect, entry, _) in _cells)
-        {
-            if (entry != selected) continue;
-            // The 2 px line runs inside the rectangle; around it when the rectangle is too small to hold it.
-            var box = Snap(rect, VisualTreeHelper.GetDpi(this));
-            if (box.Width >= 4 && box.Height >= 4) box.Inflate(-1, -1);
-            else box.Inflate(1, 1);
-            var pen = new Pen((Brush?)GetValue(SelectionBrushProperty), 2);
-            pen.Freeze();
-            dc.DrawRectangle(null, pen, box);
-            return;
-        }
+        var tree = Tree;
+        var folder = Folder;
+        if (selected < 0 || !_layoutValid || tree is null || selected >= tree.Count || folder < 0 || folder >= tree.Count) return;
+        // The folders from the shown one down to the entry: the cell is looked for only inside them. A file shown on its
+        // own is the map's only cell; an entry outside the shown folder has none.
+        var path = new List<int>();
+        if (selected == folder) path.Add(folder);
+        else
+            for (var e = selected; e != folder; e = tree.Parent(e))
+            {
+                if (e < 0) return;
+                path.Add(e);
+            }
+        path.Reverse();
+        var cell = _cells.Find(path);
+        if (cell < 0) return;
+        // The 2 px line runs inside the rectangle; around it when the rectangle is too small to hold it.
+        var box = Snap(_cells.Rect(cell), VisualTreeHelper.GetDpi(this));
+        if (box.Width >= 4 && box.Height >= 4) box.Inflate(-1, -1);
+        else box.Inflate(1, 1);
+        var pen = new Pen((Brush?)GetValue(SelectionBrushProperty), 2);
+        pen.Freeze();
+        dc.DrawRectangle(null, pen, box);
     }
 
-    /// <summary>The deepest entry under a point; -1 outside every rectangle. Goes down only into the folder that holds the point.</summary>
+    /// <summary>The deepest entry under a point; -1 outside every rectangle.</summary>
     private int HitEntry(Point p)
     {
         // Mid-resize the map shows the last layout stretched: back into its coordinates.
         if (_layoutSize != RenderSize && RenderSize.Width > 0 && RenderSize.Height > 0)
             p = new Point(p.X * _layoutSize.Width / RenderSize.Width, p.Y * _layoutSize.Height / RenderSize.Height);
-        var hit = -1;
-        var limit = _cells.Count;
-        for (var i = 0; i < limit;)
-        {
-            var (r, entry, end) = _cells[i];
-            if (p.X >= r.X && p.X < r.X + r.Width && p.Y >= r.Y && p.Y < r.Y + r.Height)
-            {
-                // Siblings do not overlap: only the cells inside this one are left to look at.
-                hit = entry;
-                limit = end;
-                i++;
-            }
-            else i = end;
-        }
-        return hit;
+        return _cells.Hit(p.X, p.Y);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

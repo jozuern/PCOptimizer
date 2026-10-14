@@ -85,6 +85,7 @@ public sealed class StorageViewModelTests : IDisposable
         // Only the open tab builds its rows.
         Assert.Empty(storage.LargestFiles);
         storage.Tab = 2;
+        await storage.RowsBuilt;
         Assert.Equal(3, storage.LargestFiles.Count);
         Assert.Equal(big, storage.LargestFiles[0].Path);
         Assert.Equal(small, storage.LargestFiles[^1].Path);
@@ -116,6 +117,7 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Empty(storage.TypeFiles);
         // The group's selection list drives the selection, and only the group that owns it shows it.
         storage.TypeGroups[0].Selected = storage.TypeGroups[0].Extensions[0];
+        await storage.RowsBuilt;
         Assert.Same(storage.TypeGroups[0].Extensions[0], storage.SelectedType);
         Assert.True(storage.SelectedType!.IsSelected);
         Assert.Equal([a, b], storage.TypeFiles.Select(f => f.Path));
@@ -125,6 +127,8 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Empty(storage.TypeFiles);
         storage.TypeGroups[0].IsExpanded = true;
         storage.SelectedType = storage.TypeGroups[0].Extensions[0];
+        // The checks were made for the first list: the rows come at once.
+        Assert.True(storage.RowsBuilt.IsCompleted);
         Assert.Same(storage.SelectedType, storage.TypeGroups[0].Selected);
         Assert.Equal([a, b], storage.TypeFiles.Select(f => f.Path));
         // Closing the result drops the lists.
@@ -187,6 +191,7 @@ public sealed class StorageViewModelTests : IDisposable
         await storage.EnsureLoadedAsync();
         await storage.AnalyzeFolderAsync(_root);
         storage.Tab = 2;
+        await storage.RowsBuilt;
         var tree = storage.Tree;
         // F5 reads the drive list again: the same drive stays picked, the result and its rows stay as they are.
         await storage.ReloadAsync();
@@ -357,6 +362,7 @@ public sealed class StorageViewModelTests : IDisposable
 
         // A list that mixes an offered file with a protected one: the reason of the protected one, and Recycle is off.
         storage.Tab = StorageViewModel.TabLargest;
+        await storage.RowsBuilt;
         Assert.Empty(storage.SelectedEntries);
         storage.LargestFiles.Single(f => f.Path.EndsWith("plain.bin", StringComparison.Ordinal)).Selected = true;
         Assert.True(storage.RecycleCommand.CanExecute(null));
@@ -418,6 +424,7 @@ public sealed class StorageViewModelTests : IDisposable
         var tree = Assert.IsType<DiskTree>(storage.Tree);
         var before = tree.Size(tree.Root);
         storage.Tab = StorageViewModel.TabLargest;
+        await storage.RowsBuilt;
         storage.LargestFiles.Single(f => f.Path == a).Selected = true;
 
         await storage.RecycleCommand.ExecuteAsync(null);
@@ -465,6 +472,7 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Null(storage.SelectionBlock);
 
         storage.Tab = StorageViewModel.TabLargest;
+        await storage.RowsBuilt;
         Assert.Equal(Loc.Instance["Storage_BlockCloud"], storage.LargestFiles.Single(f => f.Path.EndsWith("report.docx", StringComparison.Ordinal)).BlockText);
         Assert.Null(storage.LargestFiles.Single(f => f.Path.EndsWith("plain.bin", StringComparison.Ordinal)).BlockText);
         storage.LargestFiles.Single(f => f.Path.EndsWith("report.docx", StringComparison.Ordinal)).Selected = true;
@@ -561,6 +569,7 @@ public sealed class StorageViewModelTests : IDisposable
             Assert.Null(storage.SelectionBlock);
 
             storage.Tab = StorageViewModel.TabLargest;
+            await storage.RowsBuilt;
             Assert.Equal(name, storage.LargestFiles.Single(f => f.Path == spaced).BlockText);
             Assert.Null(storage.LargestFiles.Single(f => f.Path == Path.Combine(_root, "report")).BlockText);
             await storage.RecycleCommand.ExecuteAsync(null);
@@ -572,6 +581,97 @@ public sealed class StorageViewModelTests : IDisposable
             foreach (var f in new[] { inside, spaced }) if (System.IO.File.Exists(@"\\?\" + f)) System.IO.File.Delete(@"\\?\" + f);
             if (Directory.Exists(@"\\?\" + odd)) Directory.Delete(@"\\?\" + odd);
         }
+    }
+
+    /// <summary>
+    /// The file lists add their rows only after the path checks, which read the disk, ran on a worker thread; a list
+    /// dropped meanwhile (Close result) gets none, and a list built again from checks already made gets them at once.
+    /// </summary>
+    [Fact]
+    public async Task FileRowsComeAfterTheirChecksAndNotForADroppedList()
+    {
+        File("a.bin", 300);
+        File("b.bin", 200);
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        storage.Tab = StorageViewModel.TabLargest;
+        storage.CloseResultCommand.Execute(null);
+        await storage.RowsBuilt;
+        Assert.Empty(storage.LargestFiles);
+
+        await storage.AnalyzeFolderAsync(_root);
+        await storage.RowsBuilt;
+        Assert.Equal(2, storage.LargestFiles.Count);
+        // A removal builds the list again from the checks already made: the rows are there when the recycle returns.
+        storage.LargestFiles.Single(f => f.Path.EndsWith("b.bin", StringComparison.Ordinal)).Selected = true;
+        await storage.RecycleCommand.ExecuteAsync(null);
+        Assert.True(storage.RowsBuilt.IsCompleted);
+        Assert.Equal([Path.Combine(_root, "a.bin")], storage.LargestFiles.Select(f => f.Path));
+    }
+
+    /// <summary>
+    /// The drive list read again during an analysis (a language switch) can leave another drive picked when the drive
+    /// is gone: the result of the drive analyzed is then dropped, not shown under the other one.
+    /// </summary>
+    [Fact]
+    public async Task AnAnalysisOfADriveThePickerNoLongerShowsIsDropped()
+    {
+        var release = new TaskCompletionSource();
+        var b = new DiskTree.Builder(@"Q:");
+        b.AddFile(b.Root, "a.bin", 100, -1, default, EntryFlags.None);
+        var built = b.Build(ScanReader.Folders, TimeSpan.Zero);
+        var storage = Storage(async (_, _, _) =>
+        {
+            await release.Task;
+            return built;
+        });
+        await storage.EnsureLoadedAsync();
+        storage.Drives.Add(new DriveRow(@"Q:", 1000, 500));
+        storage.SelectedDrive = storage.Drives[^1];
+        var analysis = storage.AnalyzeCommand.ExecuteAsync(null);
+        // As LoadAsync does when the drive is no longer listed: the first drive is picked.
+        storage.SelectedDrive = storage.Drives[0];
+        release.SetResult();
+        await analysis;
+        Assert.Null(storage.Tree);
+        Assert.Null(storage.ResultText);
+        Assert.False(storage.IsAnalyzing);
+    }
+
+    /// <summary>
+    /// An extension picked in a group stays picked when the lists are built again (a removal, a language switch) even
+    /// when it now ranks past the 200 rows the group shows: it is added below them.
+    /// </summary>
+    [Fact]
+    public async Task APickedExtensionPastTheShownRowsSurvivesARebuild()
+    {
+        for (var i = 0; i < 202; i++) File($"f.e{i:D3}", 1000 + i);
+        var small = File("tiny.zzz", 10);
+        var storage = Storage();
+        await storage.EnsureLoadedAsync();
+        await storage.AnalyzeFolderAsync(_root);
+        storage.Tab = StorageViewModel.TabTypes;
+        var group = Assert.Single(storage.TypeGroups);
+        group.IsExpanded = true;
+        Assert.DoesNotContain(group.Extensions, t => t.Extension == "zzz");
+        // Picked as the page would after a rebuild of a list where it ranked higher.
+        var row = group.Show("zzz");
+        Assert.NotNull(row);
+        storage.SelectedType = row;
+        await storage.RowsBuilt;
+        Assert.Equal([small], storage.TypeFiles.Select(f => f.Path));
+
+        // A removal elsewhere builds the File types rows again when the tab opens.
+        storage.Tab = StorageViewModel.TabLargest;
+        await storage.RowsBuilt;
+        storage.LargestFiles[0].Selected = true;
+        await storage.RecycleCommand.ExecuteAsync(null);
+        storage.Tab = StorageViewModel.TabTypes;
+        await storage.RowsBuilt;
+        Assert.Equal("zzz", storage.SelectedType?.Extension);
+        Assert.Equal([small], storage.TypeFiles.Select(f => f.Path));
+        Assert.Contains(storage.TypeGroups.Single().Extensions, t => t.Extension == "zzz");
+        Assert.Null(storage.TypeGroups.Single().Show("none"));
     }
 
     /// <summary>"No" in the confirmation: nothing reaches the recorder and the tree stays as it was.</summary>
