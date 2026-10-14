@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Optimizer.App.Services;
 using Optimizer.Core.Logging;
+using Optimizer.Core.Platform;
 using Optimizer.Core.Storage;
 using Optimizer.Core.Tools;
 using Wpf.Ui.Controls;
@@ -13,19 +14,42 @@ namespace Optimizer.App.ViewModels;
 /// <summary>
 /// The Storage page: a drive (or folder) read into a <see cref="DiskTree"/> on request only, shown in four tabs. Opening
 /// the page reads the drive list and nothing else; Analyze and Find duplicates run under the progress banner with Stop.
-/// Only the open tab builds its rows.
+/// Only the open tab builds its rows. The command bar acts on the selection of the open tab: Open in Explorer, Copy
+/// path, and Move to Recycle Bin for files and folders.
 /// </summary>
 /// <param name="scanner">Reads a root into a tree; tests pass their own. Default: <see cref="VolumeScanners.ScanAsync"/>.</param>
+/// <param name="recycle">
+/// Moves items to the Recycle Bin and returns the paths that were not moved; tests pass a recorder, so no test reaches the
+/// Recycle Bin. Default: <see cref="StorageAnalyzer.RecycleItems"/> with the protected roots and kept folders of the
+/// last analysis, which checks every item again at the moment of the move and always refuses AppData.
+/// </param>
+/// <param name="appData">Refuse every AppData folder in the selection check; off only in tests, whose temp folder lies there.</param>
 public sealed partial class StorageViewModel(IPageHost owner, AppServices services, IDialogs dialogs,
-    Func<string, IProgress<ScanProgress>?, CancellationToken, Task<DiskTree>>? scanner = null) : PageViewModel(owner)
+    Func<string, IProgress<ScanProgress>?, CancellationToken, Task<DiskTree>>? scanner = null,
+    Func<IReadOnlyList<(string Path, bool Folder)>, IReadOnlyList<string>>? recycle = null, bool appData = true) : PageViewModel(owner)
 {
     public const int TabFolders = 0, TabTypes = 1, TabLargest = 2, TabDuplicates = 3;
 
     private readonly Func<string, IProgress<ScanProgress>?, CancellationToken, Task<DiskTree>> _scan =
         scanner ?? ((root, progress, ct) => VolumeScanners.ScanAsync(root, services.Elevation.IsElevated, progress, ct));
 
-    /// <summary>Protected roots of the last analysis (Windows, programs, game libraries of that PC scan).</summary>
-    private IReadOnlyList<string> _protected = [];
+    /// <summary>
+    /// What the last analysis may not offer: protected roots (Windows, programs, game libraries of that PC scan) and kept
+    /// folders (drive roots, profiles, Desktop and the like), read once per analysis and normalized once for the
+    /// per-row check (<see cref="RecycleRules.CheckNormalized"/>).
+    /// </summary>
+    private sealed record RecycleScope(IReadOnlyList<string> Protected, IReadOnlyCollection<string> Kept, string[] ProtectedNormalized, string[] KeptNormalized);
+
+    /// <summary>Null before the first analysis: then nothing is offered.</summary>
+    private RecycleScope? _rules;
+
+    /// <summary>A selected entry as the command bar acts on it; <see cref="Block"/> is why it may not be recycled.</summary>
+    private sealed record Pick(int Entry, string Path, bool Folder, long Bytes, string? Block);
+
+    private IReadOnlyList<Pick> _picks = [];
+
+    // The tests pass no services.
+    private ElevationInfo? Elevation => services?.Elevation;
 
     public ObservableCollection<DriveRow> Drives { get; } = [];
     public ObservableCollection<StorageFileRow> LargestFiles { get; } = [];
@@ -84,21 +108,37 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// <summary>"Duplicates: 1.2 GB can be freed" after Find duplicates.</summary>
     [ObservableProperty] private string? _duplicatesText;
 
-    /// <summary>Something is ticked: "Move selected to Recycle Bin" has work to do.</summary>
+    /// <summary>How many entries the open tab has selected (the folder list one, the file lists every ticked row).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(CanRecycle), nameof(CanOpenInExplorer), nameof(CanCopyPath), nameof(RecycleText))]
+    [NotifyCanExecuteChangedFor(nameof(RecycleCommand), nameof(OpenInExplorerCommand), nameof(CopyPathCommand))]
+    private int _selectionCount;
+
+    /// <summary>The tree entries of the selection (-1 for a duplicate the tree does not know).</summary>
+    [ObservableProperty] private IReadOnlyList<int> _selectedEntries = [];
+
+    /// <summary>Why the selection may not go to the Recycle Bin: the reason of the first refused entry, or every copy of a duplicate group; null when it may.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRecycle))]
-    [NotifyCanExecuteChangedFor(nameof(RecycleSelectedCommand))]
-    private bool _hasSelection;
+    [NotifyCanExecuteChangedFor(nameof(RecycleCommand))]
+    private string? _selectionBlock;
 
+    public bool HasSelection => SelectionCount > 0;
     public bool HasResult => Tree is not null;
     public bool NoResult => Tree is null;
     public bool IsBusy => IsAnalyzing || IsFindingDuplicates;
+
+    /// <summary>"Move to Recycle Bin (3)" with a selection.</summary>
+    public string RecycleText => SelectionCount > 0 ? Loc.Instance.Format("Storage_RecycleCount", SelectionCount) : Loc.Instance["Storage_Recycle"];
 
     // Analyze, Find duplicates and Recycle exclude each other: the tree is not thread safe, and a recycle removes entries
     // from it while Find duplicates would read it on a worker thread.
     public bool CanAnalyze => !IsBusy && !IsWorking;
     public bool CanFindDuplicates => Tree is not null && !IsBusy && !IsWorking;
-    public bool CanRecycle => HasSelection && !IsBusy && !IsWorking;
+    public bool CanRecycle => SelectionCount > 0 && SelectionBlock is null && !IsBusy && !IsWorking;
+    /// <summary>File Explorer selects one item: with more, it would be a guess which.</summary>
+    public bool CanOpenInExplorer => SelectionCount == 1;
+    public bool CanCopyPath => SelectionCount > 0;
 
     partial void OnIsAnalyzingChanged(bool value) => BusyChanged();
     partial void OnIsFindingDuplicatesChanged(bool value) => BusyChanged();
@@ -111,7 +151,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         OnPropertyChanged(nameof(CanRecycle));
         AnalyzeCommand.NotifyCanExecuteChanged();
         FindDuplicatesCommand.NotifyCanExecuteChanged();
-        RecycleSelectedCommand.NotifyCanExecuteChanged();
+        RecycleCommand.NotifyCanExecuteChanged();
     }
     public bool NoDuplicates => DuplicatesSearched && Duplicates.Count == 0;
 
@@ -166,8 +206,8 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         _largestFilled = false;
         _foldersFilled = false;
         ResetTypes(keep: true);
-        UpdateSelection();
         FillTab();
+        UpdateSelection();
         TreeChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -193,7 +233,12 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         if (!_refreshingDrives && Tree is not null && !string.Equals(oldValue?.Root, newValue?.Root, StringComparison.OrdinalIgnoreCase)) SetTree(null);
     }
 
-    partial void OnTabChanged(int value) => FillTab();
+    // The command bar follows the open tab's selection.
+    partial void OnTabChanged(int value)
+    {
+        FillTab();
+        UpdateSelection();
+    }
 
     [RelayCommand(CanExecute = nameof(CanAnalyze))]
     private Task AnalyzeAsync() => SelectedDrive is { } drive ? AnalyzeRootAsync(drive.Root) : Task.CompletedTask;
@@ -215,14 +260,19 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         IsAnalyzing = true;
         try
         {
-            // Read for every analysis: a scan since the page opened may have found a new library.
-            var protectedRoots = await Task.Run(() => StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders)));
+            // Read for every analysis: a scan since the page opened may have found a new library, a profile may be new.
+            var rules = await Task.Run(() =>
+            {
+                var protectedRoots = StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders));
+                var kept = RecycleRules.KeptFolders();
+                return new RecycleScope(protectedRoots, kept, RecycleRules.NormalizeAll(protectedRoots), RecycleRules.NormalizeAll(kept));
+            });
             // Only reads: no change gate, but the banner (with Stop) like every long run. The tree before stays until the
             // new one is complete, so a stopped analysis leaves the page as it was.
             using var work = Owner.Runner.Work.Begin(Loc.Instance["Work_StorageScan"], _cancel);
             var progress = new Progress<ScanProgress>(p => work.Report(p.Percent, Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes))));
             var tree = await _scan(root, progress, _cancel.Token);
-            _protected = protectedRoots;
+            _rules = rules;
             Log.Info("storage", "analysis done", new { reader = tree.Reader.ToString(), files = tree.Files(tree.Root), lost = tree.Lost, ms = (long)tree.Elapsed.TotalMilliseconds });
             SetTree(tree);
         }
@@ -273,8 +323,8 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             Crumbs.Clear();
             SelectedEntry = -1;
         }
-        UpdateSelection();
         FillTab();
+        UpdateSelection();
         TreeChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -311,14 +361,43 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         }
     }
 
-    /// <summary>A file of the tree as a list row: its last change, and a tick where Recycle is allowed.</summary>
+    /// <summary>A file of the tree as a list row: its last change, and why Recycle is not offered for it.</summary>
     private StorageFileRow FileRow(DiskTree tree, int i)
     {
         var path = tree.FullPath(i);
         var system = (tree.Flags(i) & EntryFlags.System) != 0;
         return new StorageFileRow(path, tree.Size(i),
             tree.LastWriteUtc(i).ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture),
-            !system && !StorageAnalyzer.IsProtected(path, _protected), i, UpdateSelection);
+            BlockText(path, folder: false, system), i, UpdateSelection);
+    }
+
+    /// <summary>
+    /// Why a file or folder is not offered for the Recycle Bin, in the app language; null when it is. Uses the lists the
+    /// analysis normalized once; a path that cannot be normalized, or no analysis yet, counts as protected.
+    /// </summary>
+    private string? BlockText(string path, bool folder, bool system)
+    {
+        RecycleBlock? block;
+        if (_rules is not { } rules) block = RecycleBlock.Protected;
+        else
+        {
+            try
+            {
+                block = RecycleRules.CheckNormalized(path, folder, system, rules.ProtectedNormalized, rules.KeptNormalized, appData);
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                block = RecycleBlock.Protected;
+            }
+        }
+        return block switch
+        {
+            null => null,
+            RecycleBlock.ContainsProtected => Loc.Instance["Storage_BlockContainsProtected"],
+            RecycleBlock.KeptFolder => Loc.Instance["Storage_BlockKept"],
+            RecycleBlock.SystemFile => Loc.Instance["Storage_BlockSystem"],
+            _ => Loc.Instance["Storage_BlockProtected"],
+        };
     }
 
     /// <summary>Drops the File types rows; with <paramref name="keep"/> the open groups and the selected extension are remembered for the next fill.</summary>
@@ -398,6 +477,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
 
     partial void OnSelectedEntryChanged(int value)
     {
+        UpdateSelection();
         if (SelectedRow?.Entry == value) return;
         SelectedRow = value >= 0 ? Folders.Reveal(value) : null;
     }
@@ -430,8 +510,8 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     [RelayCommand(CanExecute = nameof(CanFindDuplicates))]
     private async Task FindDuplicatesAsync()
     {
-        if (!CanFindDuplicates || Tree is not { } tree) return;
-        var protectedRoots = _protected;
+        if (!CanFindDuplicates || Tree is not { } tree || _rules is not { } rules) return;
+        var protectedRoots = rules.Protected;
         using var stop = new CancellationTokenSource();
         IsFindingDuplicates = true;
         try
@@ -457,61 +537,177 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         }
     }
 
-    /// <summary>The grouped list: the first copy of each group without a tick, the others offered.</summary>
+    /// <summary>The grouped list: every copy can be selected, and the selection may not hold every copy of a group.</summary>
     private void ShowDuplicates()
     {
         Duplicates.Clear();
         foreach (var g in _duplicateGroups)
             foreach (var (p, i) in g.Paths.Select((p, i) => (p, i)))
-                Duplicates.Add(new StorageFileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "", i > 0,
-                    _duplicateEntries.GetValueOrDefault(p, -1), UpdateSelection));
+            {
+                var entry = _duplicateEntries.GetValueOrDefault(p, -1);
+                var system = entry >= 0 && Tree is { } tree && (tree.Flags(entry) & EntryFlags.System) != 0;
+                Duplicates.Add(new StorageFileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "",
+                    BlockText(p, folder: false, system), entry, UpdateSelection));
+            }
         DuplicatesText = _duplicateGroups.Count == 0 ? null
             : Loc.Instance.Format("Storage_DuplicatesFound", CleanupViewModel.Size(_duplicateGroups.Sum(d => d.Reclaimable)));
         OnPropertyChanged(nameof(NoDuplicates));
         UpdateSelection();
     }
 
-    private void UpdateSelection() => HasSelection = LargestFiles.Concat(Duplicates).Concat(TypeFiles).Any(f => f.Selected && f.CanRecycle);
+    /// <summary>
+    /// The open tab's selection for the command bar: the entry selected in the folder list or on the treemap, or the
+    /// ticked rows of a file list. Recycle is off when one of them may not go, or when every copy of a duplicate group is
+    /// in it (one copy always stays).
+    /// </summary>
+    private void UpdateSelection()
+    {
+        _picks = Picks();
+        SelectedEntries = _picks.Select(p => p.Entry).ToList();
+        SelectionBlock = _picks.FirstOrDefault(p => p.Block is not null)?.Block
+            ?? (StorageAnalyzer.WholeGroupsSelected(_picks.Select(p => p.Path).ToList(), _duplicateGroups) is [var whole, ..]
+                ? Loc.Instance.Format("Storage_KeepOneCopy", whole.Paths[0]) : null);
+        SelectionCount = _picks.Count;
+        // The count is the same after a language switch: the text is not.
+        OnPropertyChanged(nameof(RecycleText));
+    }
+
+    private List<Pick> Picks()
+    {
+        if (Tree is not { } tree) return [];
+        if (Tab == TabFolders)
+        {
+            // The analyzed root has no row and is never offered: it is what the page shows.
+            var i = SelectedEntry;
+            if (i <= tree.Root || i >= tree.Count || tree.IsRemoved(i)) return [];
+            var path = tree.FullPath(i);
+            var folder = tree.IsFolder(i);
+            var flags = tree.Flags(i);
+            var system = !folder && (flags & EntryFlags.System) != 0;
+            // The move refuses a link and a folder it cannot look into (it must hold no link): the bar says so first.
+            var block = BlockText(path, folder, system)
+                ?? ((flags & EntryFlags.ReparsePoint) != 0 ? Loc.Instance["Storage_BlockLink"]
+                    : (flags & EntryFlags.Unreadable) != 0 ? Loc.Instance["Storage_BlockUnreadable"] : null);
+            return [new Pick(i, path, folder, tree.Size(i), block)];
+        }
+        var rows = Tab switch
+        {
+            TabTypes => TypeFiles,
+            TabLargest => LargestFiles,
+            TabDuplicates => Duplicates,
+            _ => [],
+        };
+        return rows.Where(r => r.Selected).DistinctBy(r => r.Path, StringComparer.OrdinalIgnoreCase)
+            .Select(r => new Pick(r.Entry, r.Path, false, r.Bytes, r.BlockText)).ToList();
+    }
 
     /// <summary>
-    /// Moves the ticked files to the Recycle Bin after a confirmation that lists them. Every file is checked again by
-    /// <see cref="StorageAnalyzer.Recycle"/>; the ones moved leave the tree and the lists.
+    /// Selects the item in File Explorer, started as the signed-in user, never elevated (<see cref="DeElevatedLauncher"/>).
+    /// Only a full path from the tree that still exists is handed over, quoted.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanOpenInExplorer))]
+    private void OpenInExplorer()
+    {
+        if (_picks is not [var pick]) return;
+        if (!Path.IsPathFullyQualified(pick.Path) || !(pick.Folder ? Directory.Exists(pick.Path) : File.Exists(pick.Path)))
+        {
+            Owner.ShowResult(Loc.Instance.Format("Storage_Missing", pick.Path), InfoBarSeverity.Warning);
+            return;
+        }
+        var explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (DeElevatedLauncher.Open(explorer, $"/select,\"{pick.Path}\"", Elevation) == DeElevatedLauncher.Path.Failed)
+            Owner.ShowResult(Loc.Instance.Format("Storage_OpenFailed", pick.Path), InfoBarSeverity.Warning);
+    }
+
+    /// <summary>The selected paths, one per line.</summary>
+    [RelayCommand(CanExecute = nameof(CanCopyPath))]
+    private void CopyPath()
+    {
+        if (_picks.Count == 0) return;
+        try
+        {
+            System.Windows.Clipboard.SetText(string.Join(Environment.NewLine, _picks.Select(p => p.Path)));
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            // The clipboard is held by another program; nothing to do.
+        }
+    }
+
+    /// <summary>
+    /// Moves the selected files and folders to the Recycle Bin after a confirmation that lists them (the first ten) with
+    /// their total size. The selection was checked when it changed (<see cref="SelectionBlock"/>), and the default
+    /// <c>recycle</c> checks every item again at the moment of the move. The ones moved leave the tree, and every tab
+    /// builds its rows again; the ones not moved stay and are named in the result bar.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanRecycle))]
-    private async Task RecycleSelectedAsync()
+    private async Task RecycleAsync()
     {
-        if (!CanRecycle || Tree is not { } tree) return;
-        var rows = LargestFiles.Concat(Duplicates).Concat(TypeFiles).Where(f => f.Selected && f.CanRecycle).DistinctBy(f => f.Path, StringComparer.OrdinalIgnoreCase).ToList();
-        var selected = rows.Select(f => f.Path).ToList();
-        if (selected.Count == 0) return;
-        // The first copy of a duplicate group can also be picked under the largest files: one copy always stays.
-        if (StorageAnalyzer.WholeGroupsSelected(selected, _duplicateGroups) is [var whole, ..])
+        if (!CanRecycle || Tree is not { } tree || _rules is not { } rules) return;
+        var picks = _picks;
+        if (picks.Count == 0 || picks.Any(p => p.Block is not null)) return;
+        var paths = picks.Select(p => p.Path).ToList();
+        // Checked again here: the duplicate groups can change while the bar shows the selection.
+        if (StorageAnalyzer.WholeGroupsSelected(paths, _duplicateGroups) is [var whole, ..])
         {
             Owner.ShowResult(Loc.Instance.Format("Storage_KeepOneCopy", whole.Paths[0]), InfoBarSeverity.Warning);
             return;
         }
-        var text = Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10)));
+        var text = Loc.Instance.Format("Storage_RecycleText", picks.Count, CleanupViewModel.Size(picks.Sum(p => p.Bytes)), string.Join("\n", paths.Take(10)));
+        if (picks.Count > 10) text += "\n" + Loc.Instance.Format("Storage_RecycleMore", picks.Count - 10);
         // The Recycle Bin belongs to the account this process runs as. With a separate admin account (or Administrator
         // protection) that is not the signed-in user's bin: say so before deleting.
-        if (services.Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
+        if (Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
         if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], text, Loc.Instance["Storage_Recycle"])) return;
-        var protectedRoots = _protected;
-        IReadOnlyList<string> failed = selected;
-        await RunWorkAsync("recycle files", Loc.Instance["Work_Recycle"], async work =>
+
+        var move = recycle ?? (items => StorageAnalyzer.RecycleItems(items, rules.Protected, rules.Kept));
+        IReadOnlyList<string> failed = paths;
+        var ran = await RunWorkAsync("recycle", Loc.Instance["Work_Recycle"], async work =>
         {
-            var steps = new Progress<int>(done => work.Step(done, selected.Count, selected[done]));
-            failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, protectedRoots, progress: steps));
-            Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count),
-                failed.Count == 0 ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
+            var steps = new Progress<int>(done => work.Step(done, picks.Count, paths[done]));
+            failed = await Task.Run(() => RecycleEach(picks, move, steps));
         });
-        if (!ReferenceEquals(tree, Tree)) return;
-        var gone = rows.Where(r => !failed.Contains(r.Path, StringComparer.OrdinalIgnoreCase)).ToList();
-        if (gone.Count == 0) return;
-        foreach (var r in gone.Where(r => r.Entry >= 0)) tree.Remove(r.Entry);
-        var goneSet = gone.Select(r => r.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        _duplicateGroups = _duplicateGroups.Select(g => g with { Paths = g.Paths.Where(p => !goneSet.Contains(p)).ToList() }).Where(g => g.Paths.Count > 1).ToList();
-        ResultText = Summary(tree);
-        if (DuplicatesSearched) ShowDuplicates();
-        RefreshFromTree();
+        // Not run (another change was running): nothing was moved.
+        if (!ran) return;
+        var failedSet = failed.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var gone = picks.Where(p => !failedSet.Contains(p.Path)).ToList();
+        Log.Info("storage", "recycle done", new { moved = gone.Count, failed = failed.Count, folders = gone.Count(p => p.Folder) });
+        // A new analysis cannot start meanwhile (IsWorking), but the tree is checked anyway before entries leave it.
+        if (gone.Count > 0 && ReferenceEquals(tree, Tree))
+        {
+            foreach (var p in gone.Where(p => p.Entry >= 0)) tree.Remove(p.Entry);
+            var goneSet = gone.Select(p => p.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // A copy leaves its duplicate group when it was moved itself or with a folder above it.
+            bool Gone(string path) => goneSet.Contains(path) || (_duplicateEntries.TryGetValue(path, out var entry) && entry >= 0 && tree.IsRemoved(entry));
+            _duplicateGroups = _duplicateGroups.Select(g => g with { Paths = g.Paths.Where(p => !Gone(p)).ToList() }).Where(g => g.Paths.Count > 1).ToList();
+            ResultText = Summary(tree);
+            if (DuplicatesSearched) ShowDuplicates();
+            RefreshFromTree();
+        }
+        var result = Loc.Instance.Format("Storage_Recycled", gone.Count, failed.Count);
+        if (failed.Count > 0)
+            result += "\n" + Loc.Instance.Format("Storage_RecycleFailed", string.Join("\n", failed.Take(10)))
+                + (failed.Count > 10 ? "\n" + Loc.Instance.Format("Storage_RecycleMore", failed.Count - 10) : "");
+        Owner.ShowResult(result, failed.Count == 0 ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
+    }
+
+    /// <summary>One item at a time, so the banner counts them; an item that throws counts as not moved and the rest go on.</summary>
+    private static List<string> RecycleEach(IReadOnlyList<Pick> picks, Func<IReadOnlyList<(string Path, bool Folder)>, IReadOnlyList<string>> move, IProgress<int> progress)
+    {
+        var failed = new List<string>();
+        for (var k = 0; k < picks.Count; k++)
+        {
+            progress.Report(k);
+            try
+            {
+                failed.AddRange(move([(picks[k].Path, picks[k].Folder)]));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                Log.Error("storage", "an item was not moved to the Recycle Bin", ex);
+                failed.Add(picks[k].Path);
+            }
+        }
+        return failed;
     }
 }

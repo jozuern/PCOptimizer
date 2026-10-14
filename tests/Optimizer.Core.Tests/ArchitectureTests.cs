@@ -14,6 +14,7 @@ public partial class ArchitectureTests
         ["BenchmarkHealthTests.cs"] = "cmd.exe starting ping to 127.0.0.1 (the output pipe test)",
         ["SelfUninstallTests.cs"] = "powershell.exe running the uninstall cleanup on temp folders only",
         ["TestFolders.cs"] = "cmd.exe mklink /J creating a junction inside a temp folder",
+        ["StorageViewModelTests.cs"] = "cmd.exe mklink /J creating a junction inside the test's temp folder (removed again without touching its target)",
     };
 
     [Fact]

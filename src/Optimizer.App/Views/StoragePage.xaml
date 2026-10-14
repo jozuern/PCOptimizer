@@ -47,17 +47,39 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- A file in Largest files or Duplicates: path and last change or group note, size on the right, a tick where it may be recycled -->
+        <!-- A file in File types, Largest files or Duplicates: path and last change or group note, size on the right. Every
+             row can be selected for the command bar; a lock marks the ones that may not be recycled, with the reason. -->
         <DataTemplate x:Key="FileRow">
             <DockPanel Margin="0,4">
                 <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanRecycle}" AutomationProperties.Name="{Binding Path}">
+                <ui:SymbolIcon DockPanel.Dock="Right" Symbol="LockClosed16" FontSize="16" Margin="16,2,0,0" VerticalAlignment="Top"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" ToolTip="{Binding BlockText}"
+                               Visibility="{Binding BlockText, Converter={StaticResource NullToVisibility}}" />
+                <CheckBox IsChecked="{Binding Selected}" AutomationProperties.Name="{Binding Path}" AutomationProperties.HelpText="{Binding BlockText}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
                     </StackPanel>
                 </CheckBox>
             </DockPanel>
+        </DataTemplate>
+        <!-- The command bar above each list (content: the Storage view model). It acts on the open tab's selection and says
+             why Move to Recycle Bin is off for it, or what selecting does while nothing is selected. -->
+        <DataTemplate x:Key="CommandBar">
+            <StackPanel Margin="0,0,0,8">
+                <WrapPanel>
+                    <ui:Button Appearance="Transparent" BorderThickness="0" Content="{l:Tr Storage_OpenInExplorer}" Icon="{ui:SymbolIcon FolderOpen20}" Command="{Binding OpenInExplorerCommand}" Margin="0,0,4,0" />
+                    <ui:Button Appearance="Transparent" BorderThickness="0" Content="{l:Tr Storage_CopyPath}" Icon="{ui:SymbolIcon Copy20}" Command="{Binding CopyPathCommand}" Margin="0,0,4,0" />
+                    <ui:Button Appearance="Transparent" BorderThickness="0" Content="{Binding RecycleText}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding RecycleCommand}" />
+                </WrapPanel>
+                <DockPanel Margin="12,4,0,0" Visibility="{Binding SelectionBlock, Converter={StaticResource NullToVisibility}}">
+                    <ui:SymbolIcon DockPanel.Dock="Left" Symbol="LockClosed16" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Top"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <ui:TextBlock FontTypography="Body" Text="{Binding SelectionBlock}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_SelectHint}" Margin="12,4,0,0"
+                              Visibility="{Binding HasSelection, Converter={StaticResource InverseBoolToVisibility}}" />
+            </StackPanel>
         </DataTemplate>
     </UserControl.Resources>
     <!-- Drive picker and the result stay in place; each tab scrolls below them. Nothing is read before Analyze. -->
@@ -116,7 +138,11 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel>
+                            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
+                            <ContentControl Content="{Binding Storage}" ContentTemplate="{StaticResource CommandBar}" Focusable="False"
+                                            Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
                         <Grid x:Name="FoldersGrid" Grid.Row="1" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition x:Name="ListColumn" Width="*" />
@@ -362,13 +388,10 @@
                                     </v:ItemList>
                                 </StackPanel>
                             </ui:Card>
-                            <!-- The largest files of the selected extension, ticks as under Largest files -->
+                            <!-- The largest files of the selected extension, rows as under Largest files -->
                             <StackPanel Visibility="{Binding Storage.TypeFiles.Count, Converter={StaticResource CountToVisibility}}">
-                                <DockPanel Margin="0,0,0,8">
-                                    <ui:Button DockPanel.Dock="Right" Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
-                                               Margin="16,0,0,0" />
-                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Storage.TypeFilesTitle}" VerticalAlignment="Center" />
-                                </DockPanel>
+                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Storage.TypeFilesTitle}" Margin="0,0,0,8" />
+                                <ContentControl Content="{Binding Storage}" ContentTemplate="{StaticResource CommandBar}" Focusable="False" />
                                 <ui:Card Padding="{StaticResource CardPadding}">
                                     <v:ItemList ItemsSource="{Binding Storage.TypeFiles}" ItemTemplate="{StaticResource FileRow}" />
                                 </ui:Card>
@@ -382,8 +405,7 @@
                     <StackPanel Style="{StaticResource EdgeContent}">
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
                         <StackPanel Visibility="{Binding Storage.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
-                            <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
-                                       Margin="0,0,0,8" />
+                            <ContentControl Content="{Binding Storage}" ContentTemplate="{StaticResource CommandBar}" Focusable="False" />
                             <ui:Card Padding="{StaticResource CardPadding}">
                                 <v:ItemList ItemsSource="{Binding Storage.LargestFiles}" ItemTemplate="{StaticResource FileRow}" />
                             </ui:Card>
@@ -410,8 +432,7 @@
                             </DockPanel>
                         </ui:Card>
                         <StackPanel Visibility="{Binding Storage.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
-                            <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
-                                       Margin="0,0,0,8" />
+                            <ContentControl Content="{Binding Storage}" ContentTemplate="{StaticResource CommandBar}" Focusable="False" />
                             <ui:Card Padding="{StaticResource CardPadding}">
                                 <v:ItemList ItemsSource="{Binding Storage.Duplicates}" ItemTemplate="{StaticResource FileRow}" />
                             </ui:Card>

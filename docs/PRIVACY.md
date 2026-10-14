@@ -24,6 +24,8 @@ The app contacts the internet only for the features below, and only when you sta
 
 The frame time benchmark uses PresentMon, which is built into the exe and runs locally. Sensor readings stay local.
 
+The storage analysis (Storage page) runs on your PC and sends nothing. Analyze reads the names, sizes and dates of the files on the drive or folder you chose; Find duplicates reads the content of files of the same size to compare them (files that are only in OneDrive's cloud are left out, because reading them would download them). The result stays in memory until you close it or the app. The log records counts and times, not file names; only what you move to the Recycle Bin is logged with its path. Open in Explorer starts File Explorer on your PC, and Copy path puts the paths on your clipboard.
+
 The Wi-Fi check reads the band of the connected Wi-Fi network through the Windows Wi-Fi API. Windows gives desktop apps this information only when location access is allowed for them, and may ask you the first time ([Microsoft](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)). Without that permission the check shows "unknown". The information stays on your PC.
 
 ---
@@ -51,5 +53,7 @@ Die App geht nur für die folgenden Funktionen ins Internet, und nur wenn du sie
 | Fehlerbericht (nach einem unerwarteten Fehler) | Nur wenn du in der Frage, die die App nach dem Fehler oder beim nächsten Start zeigt, auf "Bericht öffnen" klickst | Öffnet das Fehlerformular auf GitHub in deinem Browser, ausgefüllt mit App-Version, Windows-Build und den Fehlerdetails (Fehlerart, Meldung und die Programmzeilen, in denen er auftrat). Profilpfade, dein Windows-Benutzername und der Computername werden vorher entfernt. Der Text steht im Link, GitHub erhält ihn also beim Öffnen der Seite; gesendet wird der Bericht erst, wenn du ihn dort abschickst. Bis dahin liegt der Fehler nur im Datenordner. |
 
 Der Frametime-Benchmark nutzt PresentMon, das in der exe enthalten ist und lokal läuft. Sensorwerte bleiben lokal.
+
+Die Speicheranalyse (Seite Speicher) läuft auf deinem PC und sendet nichts. Analysieren liest Namen, Größen und Datumsangaben der Dateien auf dem gewählten Laufwerk oder Ordner; Duplikate suchen liest den Inhalt gleich großer Dateien, um sie zu vergleichen (Dateien, die nur in der OneDrive-Cloud liegen, bleiben außen vor, weil das Lesen sie herunterladen würde). Das Ergebnis bleibt im Arbeitsspeicher, bis du es oder die App schließt. Das Protokoll hält Anzahlen und Zeiten fest, keine Dateinamen; nur was du in den Papierkorb verschiebst, wird mit seinem Pfad protokolliert. Im Explorer öffnen startet den Explorer auf deinem PC, und Pfad kopieren legt die Pfade in deine Zwischenablage.
 
 Die WLAN-Prüfung liest das Frequenzband des verbundenen WLANs über die Windows-WLAN-Schnittstelle. Windows gibt Desktop-Apps diese Information nur, wenn der Standortzugriff für sie erlaubt ist, und fragt beim ersten Mal eventuell nach ([Microsoft](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)). Ohne diese Erlaubnis zeigt die Prüfung „unbekannt“. Die Information bleibt auf deinem PC.

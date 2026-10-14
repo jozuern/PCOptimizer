@@ -269,6 +269,17 @@ public partial class App : Application
                 typeGroup.IsExpanded = true;
                 vm.Storage.SelectedType = typeGroup.Extensions.FirstOrDefault(t => t.Extension == storageType.TrimStart('.').ToLowerInvariant());
             }
+            // --storage-select a.bin,docs: selects entries by name on the open tab for the command bar (Folders: the
+            // first match; the file lists: every match). Only selects; nothing is opened, copied or moved.
+            if (args.Value("--storage-select") is { } storageSelect && vm.Storage.Tree is { } storageTree)
+            {
+                var names = storageSelect.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                if (vm.Storage.Tab == StorageViewModel.TabFolders)
+                    vm.Storage.SelectedEntry = Enumerable.Range(1, storageTree.Count - 1).FirstOrDefault(i => !storageTree.IsRemoved(i) && names.Contains(storageTree.Name(i)), -1);
+                else
+                    foreach (var row in vm.Storage.TypeFiles.Concat(vm.Storage.LargestFiles).Concat(vm.Storage.Duplicates).Where(r => names.Contains(System.IO.Path.GetFileName(r.Path))))
+                        row.Selected = true;
+            }
         }
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
         if (args.Value("--preview-uninstall") is "on")

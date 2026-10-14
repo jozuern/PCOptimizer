@@ -19,8 +19,11 @@ public sealed record DriveRow(string Root, long Total, long Free)
     public override string ToString() => $"{Root}, {SpaceText}";
 }
 
-/// <summary>A file in the Largest files or Duplicates list; <see cref="Entry"/> is its index in the scanned tree.</summary>
-public sealed partial class StorageFileRow(string path, long bytes, string meta, bool canRecycle, int entry, Action? selectionChanged = null) : ObservableObject
+/// <summary>
+/// A file in the Largest files, File types or Duplicates list; <see cref="Entry"/> is its index in the scanned tree.
+/// Every row can be selected (Open in Explorer, Copy path); <see cref="BlockText"/> says why Recycle is not offered.
+/// </summary>
+public sealed partial class StorageFileRow(string path, long bytes, string meta, string? blockText, int entry, Action? selectionChanged = null) : ObservableObject
 {
     partial void OnSelectedChanged(bool value) => selectionChanged?.Invoke();
 
@@ -31,7 +34,8 @@ public sealed partial class StorageFileRow(string path, long bytes, string meta,
     public long Bytes { get; } = bytes;
     public string SizeText { get; } = CleanupViewModel.Size(bytes);
     public string Meta { get; } = meta;
-    public bool CanRecycle { get; } = canRecycle;
+    /// <summary>Why the file may not go to the Recycle Bin ("Protected: ..."); null when it may.</summary>
+    public string? BlockText { get; } = blockText;
     public int Entry { get; } = entry;
 
     [ObservableProperty] private bool _selected;

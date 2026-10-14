@@ -548,20 +548,20 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>Wait until the PC scan has finished: it finds the game folders that the analysis never offers for deletion.</value>
   </data>
   <data name="Storage_DuplicateOf" xml:space="preserve">
-    <value>{0} identical copies; the first one is kept</value>
+    <value>{0} identical copies; keep at least one</value>
   </data>
   <data name="Storage_Recycle" xml:space="preserve">
-    <value>Move selected to Recycle Bin</value>
+    <value>Move to Recycle Bin</value>
   </data>
   <data name="Storage_RecycleTitle" xml:space="preserve">
     <value>Move to the Recycle Bin?</value>
   </data>
   <data name="Storage_RecycleText" xml:space="preserve">
-    <value>Files: {0}
-{1}</value>
+    <value>Items: {0} ({1} in total)
+{2}</value>
   </data>
   <data name="Storage_KeepOneCopy" xml:space="preserve">
-    <value>Every copy of {0} is selected. Keep at least one: clear the check box of one copy, then try again.</value>
+    <value>Every copy of {0} is selected. Keep at least one: clear the check box of one copy.</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
     <value>Moved to the Recycle Bin: {0}. Failed: {1}.</value>
@@ -609,6 +609,21 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_GroupDocuments" xml:space="preserve"><value>Documents</value></data>
   <data name="Storage_GroupSystem" xml:space="preserve"><value>System</value></data>
   <data name="Storage_GroupOther" xml:space="preserve"><value>Other</value></data>
+  <data name="Storage_OpenInExplorer" xml:space="preserve"><value>Open in Explorer</value></data>
+  <data name="Storage_CopyPath" xml:space="preserve"><value>Copy path</value></data>
+  <data name="Storage_RecycleCount" xml:space="preserve"><value>Move to Recycle Bin ({0})</value></data>
+  <data name="Storage_RecycleMore" xml:space="preserve"><value>And {0} more.</value></data>
+  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Not moved (in use, changed since the analysis, holding a link, or you answered No):
+{0}</value></data>
+  <data name="Storage_SelectHint" xml:space="preserve"><value>Select an entry to open it in Explorer, copy its path or move it to the Recycle Bin.</value></data>
+  <data name="Storage_BlockProtected" xml:space="preserve"><value>Protected: a Windows, program, game or AppData location stays where it is.</value></data>
+  <data name="Storage_BlockContainsProtected" xml:space="preserve"><value>Protected: this folder holds a Windows, program, game or user folder (such as AppData or Documents).</value></data>
+  <data name="Storage_BlockKept" xml:space="preserve"><value>Kept: drive roots, user profiles and folders such as Desktop or Downloads stay. What is inside them can go.</value></data>
+  <data name="Storage_BlockSystem" xml:space="preserve"><value>Protected: Windows marks this as a system file.</value></data>
+  <data name="Storage_BlockLink" xml:space="preserve"><value>A link to another folder: links are not moved to the Recycle Bin.</value></data>
+  <data name="Storage_BlockUnreadable" xml:space="preserve"><value>This folder could not be read, so it cannot be checked before a move.</value></data>
+  <data name="Storage_Missing" xml:space="preserve"><value>{0} no longer exists. Analyze again to update the result.</value></data>
+  <data name="Storage_OpenFailed" xml:space="preserve"><value>File Explorer did not start. Copy path gives you the path: {0}</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Looking for duplicate files</value></data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows features</value>
@@ -884,7 +899,7 @@ The files are deleted permanently. Files in use are skipped.</value>
     <value>No restore point could be created, so nothing was changed. Try again in a moment, or choose "Continue without" (the backup of the original values is made either way).</value>
   </data>
   <data name="Storage_RecycleOtherAccount" xml:space="preserve">
-    <value>This app runs as a different account ({0}). The files go to that account's Recycle Bin, which you may not be able to open from your own account. Treat this as a permanent delete.</value>
+    <value>This app runs as a different account ({0}). Files and folders go to that account's Recycle Bin, which you may not be able to open from your own account. Treat this as a permanent delete.</value>
   </data>
   <data name="Profile_Label" xml:space="preserve">
     <value>Profile</value>
@@ -1448,7 +1463,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Work_UndoOne" xml:space="preserve"><value>Undoing a change</value></data>
   <data name="Work_UndoAll" xml:space="preserve"><value>Undoing all changes</value></data>
   <data name="Work_Cleanup" xml:space="preserve"><value>Cleaning up</value></data>
-  <data name="Work_Recycle" xml:space="preserve"><value>Moving files to the Recycle Bin</value></data>
+  <data name="Work_Recycle" xml:space="preserve"><value>Moving to the Recycle Bin</value></data>
   <data name="Work_Uninstall" xml:space="preserve"><value>Uninstalling programs</value></data>
   <data name="Work_UpdateApps" xml:space="preserve"><value>Updating apps</value></data>
   <data name="Work_StorageScan" xml:space="preserve"><value>Analyzing storage</value></data>

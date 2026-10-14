@@ -548,20 +548,20 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Warte, bis der Scan fertig ist: Er findet die Spieleordner, die die Analyse nie zum Löschen anbietet.</value>
   </data>
   <data name="Storage_DuplicateOf" xml:space="preserve">
-    <value>{0} identische Kopien; die erste bleibt</value>
+    <value>{0} identische Kopien; behalte mindestens eine</value>
   </data>
   <data name="Storage_Recycle" xml:space="preserve">
-    <value>Auswahl in den Papierkorb</value>
+    <value>In den Papierkorb</value>
   </data>
   <data name="Storage_RecycleTitle" xml:space="preserve">
     <value>In den Papierkorb verschieben?</value>
   </data>
   <data name="Storage_RecycleText" xml:space="preserve">
-    <value>Dateien: {0}
-{1}</value>
+    <value>Elemente: {0} ({1} insgesamt)
+{2}</value>
   </data>
   <data name="Storage_KeepOneCopy" xml:space="preserve">
-    <value>Alle Kopien von {0} sind ausgewählt. Behalte mindestens eine: Entferne bei einer Kopie das Häkchen und versuche es erneut.</value>
+    <value>Alle Kopien von {0} sind ausgewählt. Behalte mindestens eine: Entferne bei einer Kopie das Häkchen.</value>
   </data>
   <data name="Storage_Recycled" xml:space="preserve">
     <value>In den Papierkorb verschoben: {0}. Fehlgeschlagen: {1}.</value>
@@ -609,6 +609,21 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_GroupDocuments" xml:space="preserve"><value>Dokumente</value></data>
   <data name="Storage_GroupSystem" xml:space="preserve"><value>System</value></data>
   <data name="Storage_GroupOther" xml:space="preserve"><value>Sonstige</value></data>
+  <data name="Storage_OpenInExplorer" xml:space="preserve"><value>Im Explorer öffnen</value></data>
+  <data name="Storage_CopyPath" xml:space="preserve"><value>Pfad kopieren</value></data>
+  <data name="Storage_RecycleCount" xml:space="preserve"><value>In den Papierkorb ({0})</value></data>
+  <data name="Storage_RecycleMore" xml:space="preserve"><value>Und {0} weitere.</value></data>
+  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Nicht verschoben (in Benutzung, seit der Analyse geändert, mit einem Link darin, oder du hast Nein gewählt):
+{0}</value></data>
+  <data name="Storage_SelectHint" xml:space="preserve"><value>Wähle einen Eintrag aus, um ihn im Explorer zu öffnen, seinen Pfad zu kopieren oder ihn in den Papierkorb zu verschieben.</value></data>
+  <data name="Storage_BlockProtected" xml:space="preserve"><value>Geschützt: Windows-, Programm-, Spiel- und AppData-Orte bleiben, wo sie sind.</value></data>
+  <data name="Storage_BlockContainsProtected" xml:space="preserve"><value>Geschützt: Dieser Ordner enthält einen Windows-, Programm-, Spiel- oder Benutzerordner (etwa AppData oder Dokumente).</value></data>
+  <data name="Storage_BlockKept" xml:space="preserve"><value>Bleibt: Laufwerke, Benutzerprofile und Ordner wie Desktop oder Downloads bleiben erhalten. Ihr Inhalt darf weg.</value></data>
+  <data name="Storage_BlockSystem" xml:space="preserve"><value>Geschützt: Windows kennzeichnet dies als Systemdatei.</value></data>
+  <data name="Storage_BlockLink" xml:space="preserve"><value>Ein Link auf einen anderen Ordner: Links werden nicht in den Papierkorb verschoben.</value></data>
+  <data name="Storage_BlockUnreadable" xml:space="preserve"><value>Dieser Ordner konnte nicht gelesen werden, daher lässt er sich vor dem Verschieben nicht prüfen.</value></data>
+  <data name="Storage_Missing" xml:space="preserve"><value>{0} existiert nicht mehr. Analysiere erneut, um das Ergebnis zu aktualisieren.</value></data>
+  <data name="Storage_OpenFailed" xml:space="preserve"><value>Der Explorer wurde nicht gestartet. Mit Pfad kopieren bekommst du den Pfad: {0}</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Doppelte Dateien werden gesucht</value></data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows-Features</value>
@@ -884,7 +899,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Es konnte kein Wiederherstellungspunkt erstellt werden, daher wurde nichts geändert. Versuche es gleich noch einmal oder wähle „Ohne fortfahren“ (die Sicherung der Originalwerte wird in jedem Fall angelegt).</value>
   </data>
   <data name="Storage_RecycleOtherAccount" xml:space="preserve">
-    <value>Diese App läuft unter einem anderen Konto ({0}). Die Dateien landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Geh davon aus, dass die Dateien endgültig gelöscht sind.</value>
+    <value>Diese App läuft unter einem anderen Konto ({0}). Dateien und Ordner landen im Papierkorb dieses Kontos, den du von deinem eigenen Konto aus eventuell nicht öffnen kannst. Geh davon aus, dass sie endgültig gelöscht sind.</value>
   </data>
   <data name="Profile_Label" xml:space="preserve">
     <value>Profil</value>
@@ -1448,7 +1463,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Work_UndoOne" xml:space="preserve"><value>Änderung wird rückgängig gemacht</value></data>
   <data name="Work_UndoAll" xml:space="preserve"><value>Alle Änderungen werden rückgängig gemacht</value></data>
   <data name="Work_Cleanup" xml:space="preserve"><value>Wird bereinigt</value></data>
-  <data name="Work_Recycle" xml:space="preserve"><value>Dateien werden in den Papierkorb verschoben</value></data>
+  <data name="Work_Recycle" xml:space="preserve"><value>Wird in den Papierkorb verschoben</value></data>
   <data name="Work_Uninstall" xml:space="preserve"><value>Programme werden deinstalliert</value></data>
   <data name="Work_UpdateApps" xml:space="preserve"><value>Apps werden aktualisiert</value></data>
   <data name="Work_StorageScan" xml:space="preserve"><value>Speicher wird analysiert</value></data>

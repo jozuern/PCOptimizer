@@ -77,11 +77,11 @@ public static class RecycleRules
         CheckNormalized(path, folder, systemFile, NormalizeAll(protectedRoots), NormalizeAll(keptFolders), appData);
 
     /// <summary>The lists in the form <see cref="CheckNormalized"/> expects: normalized, trailing backslash. Done once per batch.</summary>
-    internal static string[] NormalizeAll(IEnumerable<string> folders) =>
+    public static string[] NormalizeAll(IEnumerable<string> folders) =>
         folders.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => Normalize(f).TrimEnd('\\') + "\\").Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
     /// <summary><see cref="Check"/> for lists that <see cref="NormalizeAll"/> already normalized.</summary>
-    internal static RecycleBlock? CheckNormalized(string path, bool folder, bool systemFile, IReadOnlyList<string> protectedRoots,
+    public static RecycleBlock? CheckNormalized(string path, bool folder, bool systemFile, IReadOnlyList<string> protectedRoots,
         IReadOnlyCollection<string> keptFolders, bool appData)
     {
         if (systemFile) return RecycleBlock.SystemFile;

@@ -12,12 +12,21 @@ namespace Optimizer.App.Tests;
 
 /// <summary>
 /// The Storage page without the window: opening it reads only the drive list, an analysis fills the open tab, and a
-/// stopped analysis keeps the result before it. Only a temp folder is read; nothing is moved or deleted.
+/// stopped analysis keeps the result before it. Only a temp folder is read; nothing is moved or deleted: every view
+/// model gets a recorder as its Recycle Bin (<see cref="_recycled"/>), never the real one.
 /// </summary>
+[Collection(nameof(ChangeGateCollection))]
 public sealed class StorageViewModelTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "tunero-storage-vm-" + Guid.NewGuid().ToString("N"));
     private readonly FakePageHost _host = new();
+    private readonly FakeDialogs _dialogs = new();
+
+    /// <summary>What the view model handed to its Recycle Bin, one call per item; nothing is moved.</summary>
+    private readonly List<(string Path, bool Folder)> _recycled = [];
+
+    /// <summary>Paths the recorder reports as not moved.</summary>
+    private readonly HashSet<string> _failing = new(StringComparer.OrdinalIgnoreCase);
 
     public StorageViewModelTests() => Directory.CreateDirectory(_root);
 
@@ -30,8 +39,20 @@ public sealed class StorageViewModelTests : IDisposable
         return path;
     }
 
+    /// <summary>
+    /// The page with the recorder as its Recycle Bin. AppData is not refused in the selection check (the temp folder lies
+    /// there); the real move would refuse it anyway.
+    /// </summary>
     private StorageViewModel Storage(Func<string, IProgress<ScanProgress>?, CancellationToken, Task<DiskTree>>? scanner = null) =>
-        new(_host, null!, new FakeDialogs(), scanner ?? ((root, progress, ct) => new EnumerationScanner().ScanAsync(root, progress, ct)));
+        new(_host, null!, _dialogs, scanner ?? ((root, progress, ct) => new EnumerationScanner().ScanAsync(root, progress, ct)), Record, appData: false);
+
+    private IReadOnlyList<string> Record(IReadOnlyList<(string Path, bool Folder)> items)
+    {
+        lock (_recycled) _recycled.AddRange(items);
+        return items.Select(i => i.Path).Where(_failing.Contains).ToList();
+    }
+
+    private static int Entry(DiskTree tree, string name) => Enumerable.Range(0, tree.Count).Single(i => !tree.IsRemoved(i) && tree.Name(i) == name);
 
     [Fact]
     public async Task OpeningThePageReadsOnlyDrives()
@@ -193,7 +214,7 @@ public sealed class StorageViewModelTests : IDisposable
         storage.IsWorking = true;
         Assert.False(storage.FindDuplicatesCommand.CanExecute(null));
         Assert.False(storage.AnalyzeCommand.CanExecute(null));
-        Assert.False(storage.RecycleSelectedCommand.CanExecute(null));
+        Assert.False(storage.RecycleCommand.CanExecute(null));
         Assert.True(raised > 0);
         // Called anyway (a key binding, a test): it does nothing.
         await storage.FindDuplicatesCommand.ExecuteAsync(null);
@@ -301,6 +322,163 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Empty(storage.Duplicates);
         Assert.True(storage.DuplicatesSearched);
         Assert.False(_host.Runner.Work.IsActive);
+    }
+
+    /// <summary>
+    /// A game library inside the analyzed folder is protected: the library, a file in it and the folder that holds it are
+    /// refused with their reason, and Recycle stays off; a plain file is offered. Nothing reaches the recorder.
+    /// </summary>
+    [Fact]
+    public async Task SelectionOfAProtectedFolderShowsTheReason()
+    {
+        var library = Path.Combine(_root, "games", "library");
+        Directory.CreateDirectory(library);
+        File(Path.Combine("games", "library", "game.bin"), 500);
+        File("plain.bin", 100);
+        _host.Profile = _host.Profile! with { Software = new SoftwareInfo([], [], [library]) };
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+        Assert.Null(storage.SelectionBlock);
+        Assert.False(storage.RecycleCommand.CanExecute(null));
+
+        storage.SelectedEntry = Entry(tree, "games");
+        Assert.Equal([Entry(tree, "games")], storage.SelectedEntries);
+        Assert.Equal(Loc.Instance["Storage_BlockContainsProtected"], storage.SelectionBlock);
+        Assert.False(storage.RecycleCommand.CanExecute(null));
+        Assert.True(storage.OpenInExplorerCommand.CanExecute(null));
+        Assert.True(storage.CopyPathCommand.CanExecute(null));
+
+        storage.SelectedEntry = Entry(tree, "library");
+        Assert.Equal(Loc.Instance["Storage_BlockProtected"], storage.SelectionBlock);
+        storage.SelectedEntry = Entry(tree, "plain.bin");
+        Assert.Null(storage.SelectionBlock);
+        Assert.True(storage.RecycleCommand.CanExecute(null));
+
+        // A list that mixes an offered file with a protected one: the reason of the protected one, and Recycle is off.
+        storage.Tab = StorageViewModel.TabLargest;
+        Assert.Empty(storage.SelectedEntries);
+        storage.LargestFiles.Single(f => f.Path.EndsWith("plain.bin", StringComparison.Ordinal)).Selected = true;
+        Assert.True(storage.RecycleCommand.CanExecute(null));
+        storage.LargestFiles.Single(f => f.Path.EndsWith("game.bin", StringComparison.Ordinal)).Selected = true;
+        Assert.Equal(2, storage.SelectedEntries.Count);
+        Assert.Equal(Loc.Instance["Storage_BlockProtected"], storage.SelectionBlock);
+        Assert.False(storage.RecycleCommand.CanExecute(null));
+        await storage.RecycleCommand.ExecuteAsync(null);
+        Assert.Empty(_recycled);
+        Assert.Empty(_dialogs.Asked);
+    }
+
+    /// <summary>
+    /// A folder picked in the tree goes to the recorder (which reports success and moves nothing) after the confirmation;
+    /// it leaves the tree, the root shrinks by its size, and the list no longer shows it.
+    /// </summary>
+    [Fact]
+    public async Task RecycleRemovesTheEntryFromTheTree()
+    {
+        var old = Path.Combine(_root, "old");
+        Directory.CreateDirectory(old);
+        File(Path.Combine("old", "a.bin"), 500);
+        File(Path.Combine("old", "b.bin"), 300);
+        File("keep.bin", 100);
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+        var before = tree.Size(tree.Root);
+        var entry = Entry(tree, "old");
+        var changes = 0;
+        storage.TreeChanged += (_, _) => changes++;
+
+        storage.SelectedEntry = entry;
+        await storage.RecycleCommand.ExecuteAsync(null);
+
+        Assert.Equal([(old, true)], _recycled);
+        Assert.Single(_dialogs.Asked);
+        Assert.True(tree.IsRemoved(entry));
+        Assert.Equal(before - 800, tree.Size(tree.Root));
+        Assert.DoesNotContain(storage.Folders.Rows, r => r.Name == "old");
+        Assert.Equal(-1, storage.SelectedEntry);
+        Assert.Empty(storage.SelectedEntries);
+        Assert.True(changes > 0);
+        Assert.Equal((Loc.Instance.Format("Storage_Recycled", 1, 0), InfoBarSeverity.Success), _host.Results[^1]);
+        Assert.False(_host.Runner.Work.IsActive);
+        // The folder is still there: the recorder moved nothing.
+        Assert.True(Directory.Exists(old));
+    }
+
+    /// <summary>A file the Recycle Bin did not take stays in the tree and the list, and the result bar names it.</summary>
+    [Fact]
+    public async Task FailedRecycleKeepsTheEntry()
+    {
+        var a = File("a.bin", 500);
+        File("b.bin", 300);
+        _failing.Add(a);
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+        var before = tree.Size(tree.Root);
+        storage.Tab = StorageViewModel.TabLargest;
+        storage.LargestFiles.Single(f => f.Path == a).Selected = true;
+
+        await storage.RecycleCommand.ExecuteAsync(null);
+
+        Assert.Equal([(a, false)], _recycled);
+        Assert.False(tree.IsRemoved(Entry(tree, "a.bin")));
+        Assert.Equal(before, tree.Size(tree.Root));
+        Assert.Contains(storage.LargestFiles, f => f.Path == a);
+        var (text, severity) = _host.Results[^1];
+        Assert.StartsWith(Loc.Instance.Format("Storage_Recycled", 0, 1), text);
+        Assert.Contains(a, text);
+        Assert.Equal(InfoBarSeverity.Warning, severity);
+    }
+
+    /// <summary>
+    /// A junction in the tree is not offered: the move would refuse it (it holds no folder of its own), so the bar says
+    /// so first. Only the link is created and removed; its target stays.
+    /// </summary>
+    [Fact]
+    public async Task ALinkIsNotOffered()
+    {
+        var target = Path.Combine(_root, "target");
+        var link = Path.Combine(_root, "link");
+        Directory.CreateDirectory(target);
+        File(Path.Combine("target", "t.bin"), 100);
+        using (var mk = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{target}\"")
+               { CreateNoWindow = true, UseShellExecute = false })!)
+            mk.WaitForExit();
+        try
+        {
+            Assert.True(Directory.Exists(link));
+            var storage = Storage();
+            await storage.AnalyzeFolderAsync(_root);
+            var tree = Assert.IsType<DiskTree>(storage.Tree);
+            storage.SelectedEntry = Entry(tree, "link");
+            Assert.Equal(Loc.Instance["Storage_BlockLink"], storage.SelectionBlock);
+            Assert.False(storage.RecycleCommand.CanExecute(null));
+            storage.SelectedEntry = Entry(tree, "target");
+            Assert.Null(storage.SelectionBlock);
+        }
+        finally
+        {
+            // The link alone, not what it points to.
+            if (Directory.Exists(link)) Directory.Delete(link);
+        }
+    }
+
+    /// <summary>"No" in the confirmation: nothing reaches the recorder and the tree stays as it was.</summary>
+    [Fact]
+    public async Task RecycleAsksFirst()
+    {
+        File("a.bin", 500);
+        _dialogs.Answer = false;
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+        storage.SelectedEntry = Entry(tree, "a.bin");
+        await storage.RecycleCommand.ExecuteAsync(null);
+        Assert.Single(_dialogs.Asked);
+        Assert.Empty(_recycled);
+        Assert.False(tree.IsRemoved(Entry(tree, "a.bin")));
     }
 }
 
