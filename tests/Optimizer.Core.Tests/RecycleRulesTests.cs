@@ -71,22 +71,64 @@ public sealed class RecycleRulesTests : IDisposable
     }
 
     [Fact]
-    public void RecycleItemsRefusesAFolderWithAJunctionAndAKeptFolder()
+    public void PathWithDotDotIsCheckedWhereItLeads()
+    {
+        // Pure Check test: the roots are fake and nothing is touched. Both spellings lead into games\.
+        var games = Path.Combine(_root, "games") + "\\";
+        var sneaky = Path.Combine(_root, "x", "..", "games", "g.pak");
+        Assert.Equal(RecycleBlock.Protected, RecycleRules.Check(sneaky, folder: false, systemFile: false, [games], [], appData: false));
+        Assert.Equal(RecycleBlock.Protected, RecycleRules.Check(Path.Combine(_root, "x", "..", "games"), folder: true, systemFile: false, [games], [], appData: false));
+        Assert.EndsWith(@"\games\g.pak", RecycleRules.Normalize(sneaky));
+    }
+
+    [Fact]
+    public void ShortNameOfAKeptFolderIsStillKept()
+    {
+        // The long name of the temp folder differs from its 8.3 form on most machines; where it does not, the test still holds.
+        var kept = Path.Combine(_root, "Long Folder Name For Kept");
+        Directory.CreateDirectory(kept);
+        var set = new[] { RecycleRules.Normalize(kept) + "\\" };
+        Assert.Equal(RecycleBlock.KeptFolder, RecycleRules.Check(kept, folder: true, systemFile: false, [], set, appData: false));
+        Assert.Equal(RecycleRules.Normalize(kept), RecycleRules.Normalize(kept + @"\sub\.."));
+    }
+
+    [Fact]
+    public void HoldsFolderLinkFindsAJunctionAtAnyDepth()
     {
         var target = Path.Combine(_root, "target");
         Directory.CreateDirectory(target);
-        File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
-        var b = Path.Combine(_root, "b");
-        Directory.CreateDirectory(b);
-        TestFolders.Junction(Path.Combine(b, "link"), target);
+        var plain = Path.Combine(_root, "plain", "inner");
+        Directory.CreateDirectory(plain);
+        var direct = Path.Combine(_root, "direct");
+        Directory.CreateDirectory(direct);
+        TestFolders.Junction(Path.Combine(direct, "link"), target);
+        var deep = Path.Combine(_root, "deep", "a", "b");
+        Directory.CreateDirectory(deep);
+        TestFolders.Junction(Path.Combine(deep, "link"), target);
+
+        Assert.False(StorageAnalyzer.HoldsFolderLink(Path.Combine(_root, "plain")));
+        Assert.True(StorageAnalyzer.HoldsFolderLink(direct));
+        Assert.True(StorageAnalyzer.HoldsFolderLink(Path.Combine(_root, "deep")));
+        Assert.True(Directory.Exists(target));
+    }
+
+    [Fact]
+    public void RecycleItemsRefusesKeptProtectedAndDotDotPathsBeforeAnyMove()
+    {
+        // Every item is refused by Check before MoveToRecycleBin can be reached: nothing here may reach the Recycle Bin.
         var kept = Path.Combine(_root, "kept");
+        var games = Path.Combine(_root, "games");
         Directory.CreateDirectory(kept);
+        Directory.CreateDirectory(games);
+        var gameFile = Path.Combine(games, "g.pak");
+        File.WriteAllText(gameFile, "x");
+        var sneaky = Path.Combine(_root, "kept", "..", "games", "g.pak");
+        var roots = new[] { games + "\\" };
 
-        var failed = StorageAnalyzer.RecycleItems([(b, true), (kept, true)], [], [kept + "\\"], appData: false);
+        var failed = StorageAnalyzer.RecycleItems([(kept, true), (gameFile, false), (sneaky, false), (games, true)], roots, [kept + "\\"], appData: false);
 
-        Assert.Equal([b, kept], failed);
-        Assert.True(Directory.Exists(b));
+        Assert.Equal([kept, gameFile, sneaky, games], failed);
         Assert.True(Directory.Exists(kept));
-        Assert.True(File.Exists(Path.Combine(target, "keep.txt")));
+        Assert.True(File.Exists(gameFile));
     }
 }

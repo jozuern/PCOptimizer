@@ -33,7 +33,7 @@ public static class RecycleRules
             if (string.IsNullOrWhiteSpace(path)) return;
             try
             {
-                set.Add(Path.GetFullPath(path).TrimEnd('\\') + "\\");
+                set.Add(Normalize(path).TrimEnd('\\') + "\\");
             }
             catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
             {
@@ -72,15 +72,26 @@ public static class RecycleRules
         IReadOnlyCollection<string> keptFolders, bool appData = true)
     {
         if (systemFile) return RecycleBlock.SystemFile;
-        var full = Path.GetFullPath(path).TrimEnd('\\') + "\\";
+        var full = Normalize(path).TrimEnd('\\') + "\\";
         if (folder && keptFolders.Contains(full, StringComparer.OrdinalIgnoreCase)) return RecycleBlock.KeptFolder;
-        if (StorageAnalyzer.IsProtected(path, protectedRoots, appData)) return RecycleBlock.Protected;
+        if (StorageAnalyzer.IsProtected(full, protectedRoots, appData)) return RecycleBlock.Protected;
         if (!folder) return null;
 
         bool Under(string other) => other.Length > full.Length && other.StartsWith(full, StringComparison.OrdinalIgnoreCase);
         if (protectedRoots.Any(Under) || keptFolders.Any(Under)) return RecycleBlock.ContainsProtected;
         if (appData && Directory.Exists(Path.Combine(full, "AppData"))) return RecycleBlock.ContainsProtected;
         return null;
+    }
+
+    /// <summary>
+    /// The full path without a trailing backslash, with <c>..</c> resolved and 8.3 short names expanded: the form that
+    /// is checked and that is moved, so a spelling cannot slip past the roots and kept folders.
+    /// </summary>
+    public static string Normalize(string path)
+    {
+        var full = SafeDelete.LongPath(Path.GetFullPath(path));
+        // A drive root keeps its backslash: "C:" alone means the current folder of that drive.
+        return full.Length <= 3 ? full : full.TrimEnd('\\');
     }
 
     private static string? KnownFolder(Guid id)

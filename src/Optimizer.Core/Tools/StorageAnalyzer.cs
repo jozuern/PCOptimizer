@@ -254,13 +254,24 @@ public static class StorageAnalyzer
     {
         var failed = new List<string>();
         var done = 0;
-        foreach (var (path, folder) in items)
+        foreach (var (raw, folder) in items)
         {
             progress?.Report(done++);
+            string path;
+            try
+            {
+                path = RecycleRules.Normalize(raw);
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                failed.Add(raw);
+                continue;
+            }
+            // The normalized path is what is checked and what is moved.
             var exists = folder ? Directory.Exists(path) : File.Exists(path);
             var system = !folder && exists && (File.GetAttributes(path) & FileAttributes.System) != 0;
             if (!exists || RecycleRules.Check(path, folder, system, protectedRoots, keptFolders, appData) is not null || (folder && HoldsFolderLink(path)) || !MoveToRecycleBin(path, folder))
-                failed.Add(path);
+                failed.Add(raw);
         }
         return failed;
     }
@@ -269,7 +280,7 @@ public static class StorageAnalyzer
     /// True when a folder below <paramref name="folder"/> is a junction, symbolic link or mount point (or the walk fails):
     /// such a folder is not recycled as a whole, because what it points to may not be what the user saw. Links are not entered.
     /// </summary>
-    private static bool HoldsFolderLink(string folder)
+    internal static bool HoldsFolderLink(string folder)
     {
         var options = new EnumerationOptions { IgnoreInaccessible = false, AttributesToSkip = 0 };
         var stack = new Stack<string>([folder]);
