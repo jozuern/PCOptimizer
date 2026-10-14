@@ -418,13 +418,19 @@ public sealed class SystemTaskScheduler : ITaskScheduler
         return folder.GetTask(path[(i + 1)..]);
     }
 
+    /// <summary>
+    /// The task's XML; null only when the task or its folder is not there (0x80070002 and 0x80070003, which .NET turns
+    /// into FileNotFoundException and DirectoryNotFoundException). Any other error (access denied, the service not
+    /// answering) is thrown: read as "missing", it would let a delete or an undo think the task is gone.
+    /// </summary>
     public string? ExportXml(string path)
     {
         try
         {
             return GetTask(path).Xml;
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException
+                                   || ex is COMException { HResult: unchecked((int)0x80070002) or unchecked((int)0x80070003) })
         {
             return null;
         }
@@ -497,6 +503,9 @@ public sealed class SystemProcessRunner : IProcessRunner
 
     public (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null) =>
         ProcessLauncher.Run(ProcessLauncher.Info(file, arguments, capture: ToolEncoding), timeout ?? TimeSpan.FromSeconds(60));
+
+    public (int ExitCode, string Output) RunUtf8(string file, string arguments, TimeSpan? timeout = null) =>
+        ProcessLauncher.Run(ProcessLauncher.Info(file, arguments, capture: Encoding.UTF8), timeout ?? TimeSpan.FromSeconds(60));
 }
 
 /// <summary>

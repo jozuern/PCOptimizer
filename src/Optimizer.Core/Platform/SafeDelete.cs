@@ -151,6 +151,25 @@ public static class SafeDelete
         }
     }
 
+    /// <summary>
+    /// The bytes of a real file at this very path, read through the one handle whose path was checked, so a link swapped
+    /// in after a check cannot make the elevated app read another file. Null when the path or a folder above it is a
+    /// link, the handle leads elsewhere, or the file is larger than <paramref name="maxBytes"/>.
+    /// </summary>
+    public static byte[]? ReadFile(string path, long maxBytes)
+    {
+        if (!HasNoLinks(path)) return null;
+        var expected = LongPath(Path.GetFullPath(path)).TrimEnd('\\');
+        using var handle = CreateFileW(@"\\?\" + expected, GenericRead | FileReadAttributes, FileShareRead, IntPtr.Zero, OpenExisting, FileFlagOpenReparsePoint, IntPtr.Zero);
+        if (handle.IsInvalid) throw new IOException($"cannot open {expected}", new Win32Exception(Marshal.GetLastWin32Error()));
+        if (!string.Equals(FinalPath(handle), expected, StringComparison.OrdinalIgnoreCase)) return null;
+        using var stream = new FileStream(handle, FileAccess.Read);
+        if (stream.Length > maxBytes) return null;
+        var bytes = new byte[stream.Length];
+        stream.ReadExactly(bytes);
+        return bytes;
+    }
+
     /// <summary>Deletes the file (read-only included). Throws IOException when the path does not resolve to itself.</summary>
     public static void DeleteFile(string path) => Delete(path, directory: false);
 
@@ -206,7 +225,7 @@ public static class SafeDelete
         return s.StartsWith(@"\\?\", StringComparison.Ordinal) ? s[4..] : s;
     }
 
-    private const uint Delete_ = 0x00010000, FileReadAttributes = 0x80, FileListDirectory = 0x1, GenericWrite = 0x40000000;
+    private const uint Delete_ = 0x00010000, FileReadAttributes = 0x80, FileListDirectory = 0x1, GenericWrite = 0x40000000, GenericRead = 0x80000000;
     private const uint FileShareRead = 1, FileShareWrite = 2, FileShareDelete = 4, OpenExisting = 3, CreateNew_ = 1;
     private const uint FileFlagOpenReparsePoint = 0x00200000, FileFlagBackupSemantics = 0x02000000;
     private const int FileDispositionInfoExClass = 21, FileAttributeTagInfoClass = 9;

@@ -27,6 +27,19 @@ public class WingetSearchTests
         Assert.Equal("26.08r6282", found[4].Version);
     }
 
+    /// <summary>winget pads by display width: a name in Chinese takes two cells per character, the columns after it stay in place.</summary>
+    [Fact]
+    public void WideCharactersCountTwoCells()
+    {
+        const string table = "Name         Id                 Version\n" +
+                             "---------------------------------------\n" +
+                             "微信         Tencent.WeChat     4.0.6\n" +
+                             "7-Zip        7zip.7zip          26.04\n";
+        var found = Winget.ParseSearch(table);
+        Assert.Equal(new WingetSearchResult("微信", "Tencent.WeChat", "4.0.6"), found[0]);
+        Assert.Equal(new WingetSearchResult("7-Zip", "7zip.7zip", "26.04"), found[1]);
+    }
+
     [Fact]
     public void TranslatedHeadersSpinnersShortenedIdsAndNotesAreHandled()
     {

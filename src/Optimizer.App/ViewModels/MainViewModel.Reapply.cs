@@ -16,11 +16,11 @@ public sealed partial class MainViewModel
     public bool ReapplyAvailable => Install.IsPublishedExe && Install.Elevated && !_services.Elevation.UserMismatch &&
         _services.Elevation.SessionUserSid is not null && ReapplyTask.CanRegister(Install.ExePath, TrustedPath.IsAdminOnlyBelowSharedFolders);
 
-    /// <summary>What the switch does, or why it is off here.</summary>
+    /// <summary>What the switch does, or why it is off here (an unknown signed-in account counts as another one: the task needs it).</summary>
     public string ReapplyHint => Loc.Instance[
         ReapplyAvailable ? "Reapply_Hint"
         : !Install.IsPublishedExe || !Install.Elevated ? "Reapply_NotHere"
-        : _services.Elevation.UserMismatch ? "Reapply_OtherAccount"
+        : _services.Elevation.UserMismatch || _services.Elevation.SessionUserSid is null ? "Reapply_OtherAccount"
         : "Reapply_UserFolder"];
 
     /// <summary>The task is set up (its backup is on the Changes page). Switching runs the change through the runner, with its confirmation.</summary>
@@ -48,6 +48,9 @@ public sealed partial class MainViewModel
 
     private async Task SetReapplyAsync(bool on)
     {
+        // Out of the binding's setter first: the confirmation is a modal dialog, and a setter that waits on it blocks
+        // whoever set the value (UI Automation's Toggle waits until the dialog closes).
+        await Task.Yield();
         if (on && Install.ExePath is { } exe && _services.Elevation.SessionUserSid is { } sid) await Runner.ApplyAsync(ReapplyTask.Definition(exe, sid));
         else if (!on && _services.Engine.Resolve(ReapplyTask.TweakId) is { } t) await Runner.UndoAsync(t);
         RefreshReapply();

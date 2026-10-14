@@ -115,6 +115,15 @@ public sealed partial class MainViewModel
                 SelectedItem = Tweaks.FirstOrDefault(t => t.Tweak.Id == r.ItemId);
                 return;
             case SearchKind.Finding:
+                // An ignored result is listed under "Ignored results" on the Overview, not among the passed checks.
+                if (r.ItemId is { } ignoredId && Findings.Concat(AdvisorItems).All(f => f.Finding.Id != ignoredId)
+                    && IgnoredItems.FirstOrDefault(f => f.Finding.Id == ignoredId) is { } ignored)
+                {
+                    CurrentPage = Page.Overview;
+                    ShowIgnored = true;
+                    SelectedItem = ignored;
+                    return;
+                }
                 CurrentPage = page;
                 if (r.ItemId is { } id && Findings.Concat(AdvisorItems).All(f => f.Finding.Id != id)) ShowPassed = true;
                 SelectedItem = Findings.Concat(AdvisorItems).Append(GameAccess).FirstOrDefault(f => f?.Finding.Id == r.ItemId);

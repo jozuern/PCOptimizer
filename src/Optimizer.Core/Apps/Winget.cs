@@ -198,17 +198,23 @@ public static class Winget
         var lines = output.Split('\n').Select(l => l.TrimEnd('\r')).Select(l => l[(l.LastIndexOf('\r') + 1)..]).ToList();
         var dashes = lines.FindIndex(l => l.Trim() is { Length: >= 10 } t && t.All(c => c == '-'));
         if (dashes < 1) return [];
+        // winget pads its columns by display width: a Chinese or Japanese character takes two cells, so the columns are
+        // measured in cells, not characters (a name in CJK would shift every column after it).
         var header = lines[dashes - 1];
-        var starts = Enumerable.Range(0, header.Length).Where(i => header[i] != ' ' && (i == 0 || header[i - 1] == ' ')).ToList();
+        var starts = Enumerable.Range(0, header.Length).Where(i => header[i] != ' ' && (i == 0 || header[i - 1] == ' ')).Select(i => Cells(header, i)).ToList();
         if (starts.Count < 3) return [];
         var list = new List<WingetSearchResult>();
         foreach (var line in lines.Skip(dashes + 1))
         {
             if (string.IsNullOrWhiteSpace(line)) break;
-            string Cut(int from, int to) => from >= line.Length ? "" : line[from..Math.Min(to, line.Length)].Trim();
+            string Cut(int from, int to)
+            {
+                var (a, b) = (IndexAtCell(line, from), IndexAtCell(line, to));
+                return a >= line.Length ? "" : line[a..b].Trim();
+            }
             var name = Cut(0, starts[1]);
             var id = Cut(starts[1], starts[2]);
-            var version = Cut(starts[2], starts.Count > 3 ? starts[3] : line.Length);
+            var version = Cut(starts[2], starts.Count > 3 ? starts[3] : int.MaxValue);
             // Ids in the winget repository are Publisher.Package: a line without a dot is a note below the table.
             if (id.Contains('\u2026') || !IsSafeId(id) || !id.Contains('.') || name.Length == 0) continue;
             list.Add(new WingetSearchResult(name, id, version));
@@ -216,12 +222,50 @@ public static class Winget
         return list;
     }
 
-    /// <summary>Runs the search with the trusted winget; the packages it found (empty when none).</summary>
+    /// <summary>The display cells of <paramref name="text"/> before <paramref name="index"/>.</summary>
+    private static int Cells(string text, int index)
+    {
+        var cells = 0;
+        for (var i = 0; i < index && i < text.Length; i++) cells += CellWidth(text[i]);
+        return cells;
+    }
+
+    /// <summary>The character index where cell <paramref name="cell"/> starts (the length when the line is shorter).</summary>
+    private static int IndexAtCell(string text, int cell)
+    {
+        var cells = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (cells >= cell) return i;
+            cells += CellWidth(text[i]);
+        }
+        return text.Length;
+    }
+
+    /// <summary>East Asian wide and full-width characters take two cells, the second half of a surrogate pair none.</summary>
+    private static int CellWidth(char c) => c switch
+    {
+        >= 'ᄀ' and <= 'ᅟ' or >= '⺀' and <= '꓏' or >= '가' and <= '힣' or >= '豈' and <= '﫿'
+            or >= '︰' and <= '﹏' or >= '＀' and <= '｠' or >= '￠' and <= '￦' => 2,
+        _ when char.IsHighSurrogate(c) => 2,
+        _ when char.IsLowSurrogate(c) => 0,
+        _ => 1,
+    };
+
+    /// <summary>
+    /// Runs the search with the trusted winget; the packages it found (empty when none). A failed search (the source
+    /// could not be opened) throws with winget's own last line, instead of reading as "nothing found".
+    /// </summary>
     public static async Task<IReadOnlyList<WingetSearchResult>> SearchAsync(string winget, string query, CancellationToken ct)
     {
         var output = new System.Text.StringBuilder();
-        await StreamingProcess.RunAsync(winget, SearchArguments(query), new SynchronousProgress(l => { lock (output) output.AppendLine(l); }), ct);
-        lock (output) return ParseSearch(output.ToString());
+        var code = await StreamingProcess.RunAsync(winget, SearchArguments(query), new SynchronousProgress(l => { lock (output) output.AppendLine(l); }), ct);
+        string text;
+        lock (output) text = output.ToString();
+        var found = ParseSearch(text);
+        if (found.Count == 0 && code is not (0 or NoPackagesFound))
+            throw new InvalidOperationException(text.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0) ?? $"winget 0x{code:X8}");
+        return found;
     }
 
     /// <summary>Reports on the reading thread: the parse after the run must see every line.</summary>

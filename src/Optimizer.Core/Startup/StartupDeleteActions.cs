@@ -123,12 +123,10 @@ public sealed class StartupFileDeleteAction : TweakAction
     public override StoredValue? Read(ActionContext c)
     {
         if (!IsStartupFile(Path)) return null;
-        var file = new FileInfo(Path);
-        if (!file.Exists) return StoredValue.Missing;
-        // Read only a real file at this very path: through a link the elevated app would copy some other file into the
-        // backup, and undo would then write it into the user's folder.
-        if (file.Length > MaxBytes || !SafeDelete.ResolvesToItself(Path)) return null;
-        return new StoredValue(true, "file", Convert.ToBase64String(File.ReadAllBytes(Path)));
+        if (!File.Exists(Path)) return StoredValue.Missing;
+        // Read only a real file at this very path, through the handle that was checked: through a link the elevated app
+        // would copy some other file into the backup, and undo would then write it into the user's folder.
+        return SafeDelete.ReadFile(Path, MaxBytes) is { } bytes ? new StoredValue(true, "file", Convert.ToBase64String(bytes)) : null;
     }
 
     public override void Apply(ActionContext c)

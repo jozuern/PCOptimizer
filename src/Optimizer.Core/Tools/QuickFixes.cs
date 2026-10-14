@@ -93,7 +93,8 @@ public static class QuickFixes
             }
             try
             {
-                var (code, text) = runner.Run(file, step.Arguments, step.Timeout);
+                // winget writes UTF-8 (as Install & update reads its search); Windows' console tools the OEM code page.
+                var (code, text) = step.File == WingetTool ? runner.RunUtf8(file, step.Arguments, step.Timeout) : runner.Run(file, step.Arguments, step.Timeout);
                 if (text.Trim() is { Length: > 0 } t) output.Add(t);
                 if (!(step.OkCodes ?? [0]).Contains(code)) ok = false;
             }

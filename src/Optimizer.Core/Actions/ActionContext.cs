@@ -127,6 +127,9 @@ public interface ISystemParameters
 public interface IProcessRunner
 {
     (int ExitCode, string Output) Run(string file, string arguments, TimeSpan? timeout = null);
+
+    /// <summary>For a tool that writes UTF-8 (winget), not the OEM code page of Windows' console tools.</summary>
+    (int ExitCode, string Output) RunUtf8(string file, string arguments, TimeSpan? timeout = null) => Run(file, arguments, timeout);
 }
 
 /// <summary>Everything an action needs to read and write the system. Swappable for tests.</summary>

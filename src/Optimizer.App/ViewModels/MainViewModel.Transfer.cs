@@ -106,9 +106,16 @@ public sealed partial class MainViewModel
             // Each one with its own confirmation (preview, Expert and anti-cheat warnings); cancelling skips it.
             foreach (var t in plan.OneByOne) await Runner.ApplyAsync(t);
         }
-        if (plan.Apps.Count > 0) await RemoveImportedAppsAsync(plan.Apps);
-        if (plan.AlreadyOn + plan.NotForThisPc + plan.Unknown > 0) ShowResult(skipped);
+        // One result line at the end: the app removal's and the skipped counts together, so neither hides the other.
+        var removal = plan.Apps.Count > 0 ? await RemoveImportedAppsAsync(plan.Apps) : null;
+        if (removal is { Stopped: true }) return; // the change gate's own message (busy, error) stays
+        var hasSkipped = plan.AlreadyOn + plan.NotForThisPc + plan.Unknown > 0;
+        if (removal is { Text: { } text, Severity: var severity }) ShowResult(hasSkipped ? text + " " + skipped : text, severity);
+        else if (hasSkipped) ShowResult(skipped);
     }
+
+    /// <summary>The removal's result line; <see cref="Stopped"/> when it did not run (the change gate showed why).</summary>
+    private sealed record AppRemoval(string? Text, InfoBarSeverity Severity, bool Stopped = false);
 
     /// <summary>
     /// "Copy to new accounts": the per-user tweaks that are on, written to the Default profile as one change with its own
@@ -133,14 +140,15 @@ public sealed partial class MainViewModel
     /// The file's removed apps that this PC has: removing cannot be undone (the Store link stays for apps the Store
     /// offers), so they are asked for on their own, after the changes, with every name listed.
     /// </summary>
-    private async Task RemoveImportedAppsAsync(IReadOnlyList<Optimizer.Core.Debloat.DebloatItem> apps)
+    private async Task<AppRemoval> RemoveImportedAppsAsync(IReadOnlyList<Optimizer.Core.Debloat.DebloatItem> apps)
     {
         var lang = Loc.Instance.Language;
         var names = string.Join(", ", apps.Select(a => a.Entry.Label(lang)));
-        if (!_dialogs.Ask(Loc.Instance["Transfer_AppsTitle"], Loc.Instance.Format("Transfer_AppsText", apps.Count, names), Loc.Instance["Debloat_Remove"])) return;
+        if (!_dialogs.Ask(Loc.Instance["Transfer_AppsTitle"], Loc.Instance.Format("Transfer_AppsText", apps.Count, names), Loc.Instance["Debloat_Remove"]))
+            return new AppRemoval(null, InfoBarSeverity.Informational);
         var removed = 0;
         var errors = new List<string>();
-        await Runner.RunExclusiveAsync("import remove apps", async () =>
+        var ran = await Runner.RunExclusiveAsync("import remove apps", async () =>
         {
             var service = new Optimizer.Core.Debloat.DebloatService(_services.Context.Processes, AppServices.DataFolder);
             foreach (var app in apps)
@@ -150,8 +158,9 @@ public sealed partial class MainViewModel
                 else errors.Add($"{app.Entry.Label(lang)}: {error}");
             }
         });
-        ShowResult(Loc.Instance.Format("Transfer_AppsRemoved", removed) + (errors.Count > 0 ? " " + string.Join("; ", errors) : ""),
-            errors.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+        if (!ran) return new AppRemoval(null, InfoBarSeverity.Informational, Stopped: true);
         await Debloat.ReloadAsync();
+        return new AppRemoval(Loc.Instance.Format("Transfer_AppsRemoved", removed) + (errors.Count > 0 ? " " + string.Join("; ", errors) : ""),
+            errors.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
     }
 }
