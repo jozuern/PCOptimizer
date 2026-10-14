@@ -468,6 +468,7 @@ public sealed partial class AppsViewModel(IPageHost owner, AppServices services,
             var found = await Task.Run(() =>
             {
                 var inUse = new List<string>();
+                inUse.AddRange(ProgramOrphans.PinnedTargets(services.ProfilePath));
                 // Every autostart location of the Startup page (services, drivers, tasks, extensions among them).
                 foreach (var e in new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath).ScanAll(includeServicesAndDrivers: true, includeWmi: false))
                     if (e.ImagePath is { Length: > 0 } image) inUse.Add(image);

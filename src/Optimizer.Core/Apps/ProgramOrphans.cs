@@ -32,34 +32,27 @@ public static class ProgramOrphans
         var productCodes = new List<string>();
         foreach (var (hive, path) in new[] { (Hive.Machine, Uninstall), (Hive.Machine, Uninstall32), (Hive.User, Uninstall) })
         {
-            ReadKey(registry, hive, path, key =>
+            ReadEach(registry, hive, path, (key, sub) =>
             {
-                foreach (var sub in key.GetSubKeyNames())
-                {
-                    if (Guid.TryParse(sub, out _)) productCodes.Add(sub);
-                    using var app = key.OpenSubKey(sub);
-                    foreach (var value in new[] { "DisplayName", "Publisher" })
-                        if (app?.GetValue(value) is string s && s.Trim().Length > 0) names.Add(s);
-                }
+                if (Guid.TryParse(sub, out _)) productCodes.Add(sub);
+                using var app = key.OpenSubKey(sub);
+                foreach (var value in new[] { "DisplayName", "Publisher" })
+                    if (app?.GetValue(value) is string s && s.Trim().Length > 0) names.Add(s);
             });
         }
         // MSI packages often record no install location (7-Zip's): the files they registered say where they live.
         paths.AddRange(ProgramLeftovers.MsiFolders(registry, productCodes).Values);
         // Programs started by name (App Paths) and COM servers other programs load.
-        ReadKey(registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths", key =>
+        ReadEach(registry, Hive.Machine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths", (key, sub) =>
         {
-            foreach (var sub in key.GetSubKeyNames())
-            {
-                using var app = key.OpenSubKey(sub);
-                AddPath(paths, app?.GetValue(null) as string);
-                AddPath(paths, app?.GetValue("Path") as string);
-            }
+            using var app = key.OpenSubKey(sub);
+            AddPath(paths, app?.GetValue(null) as string);
+            AddPath(paths, app?.GetValue("Path") as string);
         });
         foreach (var clsid in new[] { @"SOFTWARE\Classes\CLSID", @"SOFTWARE\WOW6432Node\Classes\CLSID" })
         {
-            ReadKey(registry, Hive.Machine, clsid, key =>
+            ReadEach(registry, Hive.Machine, clsid, (key, sub) =>
             {
-                foreach (var sub in key.GetSubKeyNames())
                 foreach (var server in new[] { "InprocServer32", "LocalServer32" })
                 {
                     using var s = key.OpenSubKey($@"{sub}\{server}");
@@ -71,21 +64,56 @@ public static class ProgramOrphans
         return new OrphanEvidence(paths, names);
     }
 
-    private static void AddPath(List<string> paths, string? value)
+    /// <summary>
+    /// What the user's taskbar pins start: a pin counts as use, like Start menu and desktop shortcuts (which <see
+    /// cref="Find"/> reads itself).
+    /// </summary>
+    public static IReadOnlyList<string> PinnedTargets(string? profile)
     {
-        if (ProgramLeftovers.CleanPath(value, _ => false) is { } p) paths.Add(p);
+        if (profile is not { Length: > 0 }) return [];
+        var pins = Path.Combine(profile, "AppData", "Roaming", "Microsoft", "Internet Explorer", "Quick Launch", "User Pinned");
+        return Directory.Exists(pins) ? ProgramLeftovers.Shortcuts(pins).Select(ProgramLeftovers.ShortcutTarget).OfType<string>().ToList() : [];
     }
 
-    private static void ReadKey(IRegistryRoots registry, Hive hive, string path, Action<Microsoft.Win32.RegistryKey> read)
+    /// <summary>A path that points into a folder; an 8.3 short name ("C:\PROGRA~2\Vendor") as its long form, so it matches the folder.</summary>
+    private static void AddPath(List<string> paths, string? value)
     {
+        if (ProgramLeftovers.CleanPath(value, _ => false) is not { } p) return;
+        paths.Add(p.Contains('~') ? Platform.SafeDelete.LongPath(p) : p);
+    }
+
+    /// <summary>
+    /// Reads every subkey on its own: one that cannot be read (only the system may) leaves out that entry, not the rest
+    /// of the key, which would lose evidence and offer a folder still in use.
+    /// </summary>
+    private static void ReadEach(IRegistryRoots registry, Hive hive, string path, Action<Microsoft.Win32.RegistryKey, string> read)
+    {
+        Microsoft.Win32.RegistryKey? key;
+        string[] subs;
         try
         {
-            using var key = registry.Open(hive, path, writable: false);
-            if (key is not null) read(key);
+            key = registry.Open(hive, path, writable: false);
+            if (key is null) return;
+            subs = key.GetSubKeyNames();
         }
         catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or System.Security.SecurityException or IOException)
         {
             // no user hive, or a key only the system can read
+            return;
+        }
+        using (key)
+        {
+            foreach (var sub in subs)
+            {
+                try
+                {
+                    read(key, sub);
+                }
+                catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+                {
+                    // this entry only the system can read
+                }
+            }
         }
     }
 

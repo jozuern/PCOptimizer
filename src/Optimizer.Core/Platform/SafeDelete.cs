@@ -177,7 +177,7 @@ public static class SafeDelete
 
     // Both APIs return the needed size (with the terminating null) when the buffer is too small; paths can be up to
     // 32767 characters with the \\?\ prefix.
-    private static string LongPath(string path)
+    internal static string LongPath(string path)
     {
         var buffer = new char[1024];
         var length = GetLongPathNameW(@"\\?\" + path, buffer, (uint)buffer.Length);

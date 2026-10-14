@@ -34,6 +34,7 @@ public class ProgramOrphansTests : IDisposable
         File.WriteAllText(Path.Combine(startMenu, "Linked.lnk"), "");
         var old = Folder(pf, "Old Tool", 400);
         Folder(pf, "Common Files", 400);           // shared by many programs
+        Folder(pf, "NuGet", 400);                  // NuGet's machine-wide config (Visual Studio's fallback source): nothing points into it
         Folder(pf, "Contoso Studio", 400);         // named after an installed program
         var used = Folder(pf, "Used", 400);        // a service runs a file in it
         Folder(pf, "Fresh", 3);                    // changed recently: maybe just installed or a portable app in use

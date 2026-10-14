@@ -66,6 +66,9 @@ public static class ProgramLeftovers
         "Programs", "Packages", "Temp", "Application Data", "Start Menu", "Desktop", "Documents", "regid.1991-06.com.microsoft",
         "USOShared", "USOPrivate", "ssh", "Comms", "SoftwareDistribution", "NVIDIA Corporation", "NVIDIA", "Intel", "AMD",
         "ATI Technologies", "Realtek",
+        // Developer and server infrastructure that no single program records as its own (NuGet's machine-wide config
+        // folder holds Visual Studio's fallback package source, nothing points into it, and it rarely changes).
+        "NuGet", "Windows Kits", "Microsoft SDKs", "IIS", "IIS Express", "Microsoft Visual Studio", "Microsoft Help Viewer",
     };
 
     /// <summary>Shared folders deeper down (relative to a program folder): never offered themselves, only what is inside them.</summary>
