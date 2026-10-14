@@ -200,6 +200,9 @@ public sealed partial class StartupScanner(IRegistryRoots registry, ITaskSchedul
     public IEnumerable<StartupEntry> ScheduledTasks() => TaskEntries(t => t.AtLogon || t.AtBoot || !IsWindowsTask(t.Path));
 
     /// <summary>Windows' own tasks (\Microsoft\Windows\...): listed, but switched only on Services &amp; tasks, where a catalog explains them.</summary>
+    /// <summary>Tunero's own task (the re-apply task): turned on and off in Settings, so the Startup page does not switch or delete it.</summary>
+    public static bool IsOwnTask(string? path) => path?.StartsWith(Actions.OwnTaskAction.Folder, StringComparison.OrdinalIgnoreCase) == true;
+
     public static bool IsWindowsTask(string? path) => path?.StartsWith(@"\Microsoft\Windows\", StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
@@ -502,7 +505,7 @@ public static class StartupTweaks
             },
             // Windows' own tasks are switched on Services & tasks, where the catalog says which are safe to turn off (turning
             // off TextServicesFramework\MsCtfMonitor, for example, stops typing in Start search).
-            StartupKind.LogonTask when StartupScanner.IsWindowsTask(e.Target) => null,
+            StartupKind.LogonTask when StartupScanner.IsWindowsTask(e.Target) || StartupScanner.IsOwnTask(e.Target) => null,
             StartupKind.LogonTask => new ScheduledTaskAction { Path = e.Target!, Enabled = enabled },
             // Blocked shell extensions are listed by CLSID under Shell Extensions\Blocked (read by Explorer at start): the
             // machine's list, or the user's own when only that one blocks the extension (the entry's hive says which).
@@ -559,7 +562,7 @@ public static class StartupTweaks
                 // Target is "<StartupApproved key>|<file name>", Location the folder.
                 StartupKind.StartupFolder when e.Target?.Split('|') is [_, var file] && StartupFileDeleteAction.IsStartupFile(System.IO.Path.Combine(e.Location, file))
                     => new StartupFileDeleteAction { Path = System.IO.Path.Combine(e.Location, file) },
-                StartupKind.LogonTask when e.Target is { Length: > 0 } task && !StartupScanner.IsWindowsTask(task) => new ScheduledTaskDeleteAction { Path = task },
+                StartupKind.LogonTask when e.Target is { Length: > 0 } task && !StartupScanner.IsWindowsTask(task) && !StartupScanner.IsOwnTask(task) => new ScheduledTaskDeleteAction { Path = task },
                 _ => null,
             };
         if (action is null) return null;
@@ -576,6 +579,13 @@ public static class StartupTweaks
             Sources = ["https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns"],
         };
     }
+
+    /// <summary>
+    /// A deletion from the Startup page. When the entry is there again, its program put it back (often changed: a new
+    /// path after an update): that is not Windows resetting a change, so it is not re-applied on its own, and deleting it
+    /// again keeps the new content for undo (<see cref="TweakEngine"/>).
+    /// </summary>
+    public static bool IsDelete(TweakDefinition t) => t.Docs == "startup.delete";
 
     /// <summary>"HKLM\SOFTWARE\..." or "HKCU\Software\..." without the root; null for anything else.</summary>
     private static string? KeyPath(string location) =>

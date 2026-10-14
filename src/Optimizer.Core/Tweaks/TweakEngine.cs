@@ -423,6 +423,14 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
                     backup.Entries.Add(entry = new BackupEntry { TargetKey = a.TargetKey, Description = Docs.Labels.Current.Render("en", label), Label = label, Original = current });
                     added.Add(a.TargetKey);
                 }
+                // A startup entry its program put back is deleted again: undo restores this content (the program's
+                // current command), not the first one, which may point to a file the program has removed since.
+                else if (Startup.StartupTweaks.IsDelete(t) && current.Existed && !current.SameAs(entry.Original))
+                {
+                    var renewed = new BackupEntry { TargetKey = entry.TargetKey, Description = entry.Description, Label = entry.Label, Original = current, Action = entry.Action };
+                    backup.Entries[backup.Entries.IndexOf(entry)] = renewed;
+                    entry = renewed;
+                }
                 // The action that wrote the change first restores it (Revert): a later catalog version can write less under
                 // the same target (one side of a power setting), and its action would leave the rest changed for good.
                 entry.Action ??= JsonSerializer.Serialize(a, TweakCatalog.JsonOptions);
@@ -749,6 +757,8 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         foreach (var backup in store.All())
         {
             if (Resolve(backup.TweakId) is not { } t) continue;
+            // A deleted startup entry that is back was put back by its program, not reset by Windows (StartupTweaks.IsDelete).
+            if (Startup.StartupTweaks.IsDelete(t)) continue;
             var state = known is not null && known.TryGetValue(t.Id, out var read) ? read : DetectState(t, facts);
             if (state != TweakState.RevertedByWindows) continue;
             // Older backups only know the build number of their first apply (compared by build only).

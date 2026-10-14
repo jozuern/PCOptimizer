@@ -109,7 +109,12 @@ public sealed class StartupFileDeleteAction : TweakAction
 
     public string Path { get; init; } = "";
 
-    public override string TargetKey => $"startupfile:{Path}".ToLowerInvariant();
+    /// <summary>A file in a user's Startup folder is that account's (its backup too); one in the machine's folder is the PC's.</summary>
+    public override string TargetKey => (IsMachineStartupFile(Path) ? $"startupfile:{Path}" : $"startupfile:user:{Path}").ToLowerInvariant();
+
+    private static bool IsMachineStartupFile(string path) =>
+        System.IO.Path.GetDirectoryName(path) is { } folder && Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) is { Length: > 0 } common
+        && string.Equals(System.IO.Path.TrimEndingDirectorySeparator(folder), System.IO.Path.TrimEndingDirectorySeparator(common), StringComparison.OrdinalIgnoreCase);
     public override TargetText TargetLabel(ActionContext c) => TargetText.Verbatim(Path);
 
     public override StoredValue Desired(ActionContext c) => StoredValue.Missing;

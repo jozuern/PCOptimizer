@@ -280,6 +280,10 @@ public sealed partial class Labels
         // A whole registry key (RegistryKeyAction): its size instead of the saved JSON
         _ when value.StartsWith("@regkey:", StringComparison.Ordinal) && value.Split(':') is [_, var values, var keys] =>
             string.Format(System.Globalization.CultureInfo.InvariantCulture, Get(lang, "value.regkey"), values, keys),
+        // A deleted startup file (StartupFileDeleteAction) and a deleted task without a program (a COM handler)
+        _ when value.StartsWith("@file:", StringComparison.Ordinal) && long.TryParse(value.AsSpan(6), out var bytes) =>
+            string.Format(System.Globalization.CultureInfo.GetCultureInfo(lang), Get(lang, "value.file"), bytes),
+        "@task" => Get(lang, "value.task"),
         // The states actions store ("Disabled", a service's "Manual"), as Windows names them in that language
         _ when Has(lang, "state." + value) => Get(lang, "state." + value),
         _ => value,

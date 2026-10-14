@@ -63,6 +63,41 @@ public class StartupDeleteTests
         Assert.True(fx.Tasks.Xml.ContainsKey(path));
     }
 
+    /// <summary>
+    /// A deleted task its program registered again (a new version, a new path) is not "reset by Windows": nothing deletes
+    /// it on its own, and deleting it again keeps the new XML, so undo brings back the program's current task.
+    /// </summary>
+    [Fact]
+    public async Task ATaskPutBackByItsProgramIsNotDriftAndItsNewXmlIsKept()
+    {
+        using var fx = new EngineFixture();
+        const string path = @"\Vendor\Updater";
+        fx.Tasks.Xml[path] = TaskXml("<UserId>S-1-5-18</UserId>");
+        var entry = new StartupEntry(StartupKind.LogonTask, @"Vendor\Updater", null, null, @"Task Scheduler\Vendor", Hive.Machine, true, "task:vendor") { Target = path };
+        var delete = StartupTweaks.Delete(entry)!;
+        await fx.Engine.ApplyAsync(delete, Facts, new HashSet<string>(), Options);
+
+        var v2 = TaskXml("<UserId>S-1-5-18</UserId>", @"C:\Vendor\v2\updater.exe");
+        fx.Tasks.Xml[path] = v2;
+        Assert.Empty(fx.Engine.CheckDrift(Facts));
+
+        Assert.Equal(ApplyOutcome.Applied, (await fx.Engine.ApplyAsync(delete, Facts, new HashSet<string>(), Options)).Outcome);
+        Assert.True(fx.Engine.Revert(delete).Success);
+        Assert.Equal(v2, fx.Tasks.Xml[path]);
+    }
+
+    /// <summary>The undo confirmation and the change log name the file's size and the task's program, never the stored bytes or XML.</summary>
+    [Fact]
+    public void StoredFilesAndTasksDisplayShort()
+    {
+        Assert.Equal("@file:8", new StoredValue(true, "file", Convert.ToBase64String(new byte[8])).Display);
+        Assert.Equal("@file:7", new StoredValue(true, "file", Convert.ToBase64String(new byte[7])).Display);
+        Assert.Equal("file of 1,400 bytes", Docs.Labels.Current.Display("en", "@file:1400"));
+        Assert.Equal("Datei mit 1.400 Byte", Docs.Labels.Current.Display("de", "@file:1400"));
+        Assert.Equal("\"C:\\Vendor\\updater.exe\" /silent", new StoredValue(true, "taskXml", TaskXml("<UserId>S-1-5-18</UserId>")).Display);
+        Assert.Equal("@task", new StoredValue(true, "taskXml", "not xml").Display);
+    }
+
     [Fact]
     public async Task DeletedStartupFileIsWrittenBackOnUndo()
     {

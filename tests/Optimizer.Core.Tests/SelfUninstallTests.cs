@@ -32,6 +32,25 @@ public class SelfUninstallTests
     }
 
     /// <summary>
+    /// The app's own tasks go with it, once the app is gone and before its files: a re-apply task left behind would start
+    /// a missing exe (or a file put at its path later) with administrator rights at every sign-in.
+    /// </summary>
+    [Fact]
+    public void TheOwnTasksAreRemoved()
+    {
+        foreach (var script in new[]
+                 {
+                     SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Program Files\Tunero\Tunero.exe"),
+                     SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Program Files\WinGet\Tunero.exe", removedByPackageManager: true),
+                 })
+        {
+            var tasks = script.IndexOf("$ts.GetFolder('\\Tunero')", StringComparison.Ordinal);
+            Assert.True(tasks > script.LastIndexOf("exit 1", tasks, StringComparison.Ordinal) && tasks < script.IndexOf("rd /s /q", StringComparison.Ordinal), script);
+            Assert.Contains("DeleteFolder('Tunero', 0)", script);
+        }
+    }
+
+    /// <summary>
     /// A package manager removes the exe; the data folder (with the backups) goes only after it did. When the package
     /// manager fails, the app stays installed and keeps its backups.
     /// </summary>

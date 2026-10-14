@@ -82,15 +82,25 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
     }
 
     /// <summary>
-    /// The re-apply task's run (<see cref="ReapplyTask"/>): the changes the Overview lists as reset, the ones "Apply
-    /// again" offers (no Expert, boot-critical or anti-cheat sensitive change), applied again in one go. A restore point
-    /// is made when Windows can; without one the run goes on, since the user chose these changes before and nobody is
-    /// there to ask. <see cref="BatchOutcome.Cancelled"/> when nothing was reset.
+    /// The re-apply task's run (<see cref="ReapplyTask"/>): the changes the Overview lists as reset by a Windows update
+    /// that "Apply again" offers (no Expert, boot-critical or anti-cheat sensitive change), applied again in one go. A
+    /// change reset without an update (the user turned it back in Windows) stays as it is, and so does one whose target
+    /// another change of this app also writes (a catalog tweak and the Services page on one service): each would undo the
+    /// other at every sign-in. A restore point is made when Windows can; without one the run goes on, since the user
+    /// chose these changes before and nobody is there to ask. <see cref="BatchOutcome.Cancelled"/> when nothing was reset.
     /// </summary>
     public async Task<BatchOutcome> ReapplyResetAsync(PcSnapshot pc)
     {
         var known = pc.States.ToDictionary(s => s.Tweak.Id, s => s.State, StringComparer.Ordinal);
-        var reset = await Task.Run(() => engine.CheckDrift(pc.Facts, known).Select(d => d.Tweak).Where(t => t.IsBatchSafe).ToList());
+        var reset = await Task.Run(() =>
+        {
+            var shared = engine.Store.All().SelectMany(b => b.Entries.Select(e => (b.TweakId, e.TargetKey)))
+                .GroupBy(x => x.TargetKey, StringComparer.OrdinalIgnoreCase).Where(g => g.Select(x => x.TweakId).Distinct(StringComparer.Ordinal).Skip(1).Any())
+                .Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return engine.CheckDrift(pc.Facts, known)
+                .Where(d => d.WindowsUpdatedSince && d.Tweak.IsBatchSafe && !d.Backup.Entries.Any(e => shared.Contains(e.TargetKey)))
+                .Select(d => d.Tweak).ToList();
+        });
         if (reset.Count == 0) return BatchOutcome.Cancelled;
         return await ApplyBatchAsync(reset, pc.Facts, pc.Applied, new ApplyOptions { ContinueWithoutRestorePoint = true }, () => RestorePointChoice.Continue);
     }

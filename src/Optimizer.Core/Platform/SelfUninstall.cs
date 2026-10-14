@@ -45,7 +45,12 @@ public static class SelfUninstall
                 .AppendLine("if (Test-Path -LiteralPath $exe) { exit 1 }");
             if (waitForProcessId is { } id) script.AppendLine($"Wait-Process -Id {id} -Timeout 900");
         }
+        // The app's own tasks (the re-apply task) go with it: left behind, a task would start a missing exe with
+        // administrator rights at every sign-in, and a file put at that path later would run elevated.
         return script
+            .AppendLine($"try {{ $ts = New-Object -ComObject Schedule.Service; $ts.Connect(); $folder = $ts.GetFolder({WingetPackage.Quote(OwnTasksFolder)})")
+            .AppendLine("    foreach ($t in @($folder.GetTasks(1))) { $folder.DeleteTask($t.Name, 0) }")
+            .AppendLine($"    $ts.GetFolder('\\').DeleteFolder({WingetPackage.Quote(OwnTasksFolder.Trim('\\'))}, 0) }} catch {{ }}")
             .AppendLine($"$files = {files}")
             .AppendLine("for ($i = 0; $i -lt 30; $i++) {")
             .AppendLine("    if (Get-Process -Name $name) { exit 1 }")
@@ -56,6 +61,9 @@ public static class SelfUninstall
             .AppendLine("}")
             .ToString();
     }
+
+    /// <summary>Task Scheduler's folder of the app's own tasks, without the trailing backslash.</summary>
+    private static string OwnTasksFolder => Actions.OwnTaskAction.Folder.TrimEnd('\\');
 
     /// <summary>Arguments for powershell.exe that run <paramref name="script"/> without quoting problems.</summary>
     public static string PowerShellArguments(string script) => PowerShellScript.Encoded(script);

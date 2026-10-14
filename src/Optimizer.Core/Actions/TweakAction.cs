@@ -9,7 +9,20 @@ public sealed record StoredValue(bool Existed, string? Kind = null, string? Data
 {
     public static readonly StoredValue Missing = new(false);
 
-    public string Display => !Existed ? "(not set)" : Kind == "regkey" ? RegistryKeyAction.Summary(Data) : Data ?? "";
+    /// <summary>
+    /// The value for people: a whole registry key by its size, a deleted startup file (its bytes stay in the backup) by its
+    /// size and a deleted task (its XML) by the program it ran, never the raw content (megabytes of Base64 in a dialog).
+    /// </summary>
+    public string Display => !Existed ? "(not set)" : Kind switch
+    {
+        "regkey" => RegistryKeyAction.Summary(Data),
+        "file" => FormattableString.Invariant($"@file:{Base64Bytes(Data)}"),
+        "taskXml" => Startup.ScheduledTaskXml.Command(Data ?? "") ?? "@task",
+        _ => Data ?? "",
+    };
+
+    private static long Base64Bytes(string? data) =>
+        data is null ? 0 : data.Length / 4L * 3 - (data.EndsWith("==", StringComparison.Ordinal) ? 2 : data.EndsWith('=') ? 1 : 0);
 
     /// <summary>Same presence and data, and the same registry type when both are registry values (a REG_SZ "1" is not a DWORD 1).</summary>
     public bool SameAs(StoredValue other) =>

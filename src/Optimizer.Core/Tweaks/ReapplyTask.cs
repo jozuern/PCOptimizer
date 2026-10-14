@@ -4,7 +4,7 @@ using Optimizer.Core.Actions;
 namespace Optimizer.Core.Tweaks;
 
 /// <summary>
-/// The opt-in task that applies the user's changes again after Windows reset them (a feature update, a repair): two
+/// The opt-in task that applies the user's changes again after a Windows update reset them: two
 /// minutes after the user signs in, Task Scheduler starts this exe with <see cref="Argument"/> as that user with
 /// administrator rights, and it applies only the reset changes the Overview's "Apply again" offers. No service and no
 /// process stays running: the run ends when it is done. It is a change like any other (<see cref="OwnTaskAction"/>),
@@ -13,7 +13,8 @@ namespace Optimizer.Core.Tweaks;
 public static class ReapplyTask
 {
     public const string TweakId = "app.reapplyTask";
-    public const string TaskPath = @"\Tunero\Apply changes again";
+    /// <summary>One task per account, named after its SID as Windows names per-user tasks: each administrator turns their own on and off.</summary>
+    public static string TaskPath(string userSid) => $@"\Tunero\Apply changes again {userSid}";
     public const string Argument = "--reapply";
 
     /// <summary>
@@ -28,8 +29,8 @@ public static class ReapplyTask
         <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
           <RegistrationInfo>
             <Author>Tunero</Author>
-            <Description>Applies your Tunero changes again that Windows has reset, two minutes after you sign in. Turn it off in Tunero's Settings or undo it on the Changes page.</Description>
-            <URI>{SecurityElement.Escape(TaskPath)}</URI>
+            <Description>Applies your Tunero changes again that a Windows update has reset, two minutes after you sign in. Turn it off in Tunero's Settings or undo it on the Changes page.</Description>
+            <URI>{SecurityElement.Escape(TaskPath(userSid))}</URI>
           </RegistrationInfo>
           <Triggers>
             <LogonTrigger>
@@ -73,7 +74,7 @@ public static class ReapplyTask
         Impact = new ImpactInfo { Gaming = 0, Basis = "situational", Effect = ["none"] },
         Risk = Risk.Safe,
         Hidden = true,
-        Actions = [new OwnTaskAction { Path = TaskPath, Xml = Xml(exe, userSid) }],
+        Actions = [new OwnTaskAction { Path = TaskPath(userSid), Xml = Xml(exe, userSid) }],
         Sources = ["https://learn.microsoft.com/en-us/windows/win32/taskschd/logon-trigger-example--xml-"],
     };
 }

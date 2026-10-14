@@ -101,7 +101,7 @@ public class BackupFormatTests
         new("scheduledTaskDelete", fx => fx.Tasks.Xml[@"\Fixture\Updater"] = FixtureTaskXml,
             new Startup.ScheduledTaskDeleteAction { Path = @"\Fixture\Updater" }),
         new("ownTask", _ => { },
-            new OwnTaskAction { Path = Tweaks.ReapplyTask.TaskPath, Xml = Tweaks.ReapplyTask.Xml(@"C:\Program Files\Tunero\Tunero.exe", "S-1-5-21-1-2-3-1001") }),
+            new OwnTaskAction { Path = Tweaks.ReapplyTask.TaskPath("S-1-5-21-1-2-3-1001"), Xml = Tweaks.ReapplyTask.Xml(@"C:\Program Files\Tunero\Tunero.exe", "S-1-5-21-1-2-3-1001") }),
     ];
 
     /// <summary>
