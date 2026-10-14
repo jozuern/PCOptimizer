@@ -4,7 +4,7 @@ namespace Optimizer.Core.Storage.Mft;
 
 /// <summary>What FSCTL_GET_NTFS_VOLUME_DATA reports about a volume (NTFS_VOLUME_DATA_BUFFER).</summary>
 internal readonly record struct NtfsVolumeData(int BytesPerSector, int BytesPerCluster, int BytesPerFileRecord, long MftStartLcn,
-    long MftValidDataLength, long TotalClusters);
+    long MftValidDataLength, long TotalClusters, long FreeClusters);
 
 /// <summary>
 /// A volume opened for raw reading without the cache: <see cref="Read"/> takes an offset and a length that are multiples
@@ -187,7 +187,13 @@ internal sealed unsafe class VolumeMftSource : IMftSource
     /// </summary>
     private static bool Plausible(byte[] bitmap) => bitmap.Length >= 2 && bitmap[0] == 0xFF && (bitmap[1] & 0x0F) == 0x0F;
 
-    public bool? MarkedInUse(long record) => _bitmap is null ? null : MayBeInUse(record);
+    /// <summary>Null past the bitmap's end: those records are read, but nothing is known about them.</summary>
+    public bool? MarkedInUse(long record) => _bitmap is null || record >= (long)_bitmap.Length * 8 ? null : MayBeInUse(record);
+
+    public bool HasBitmap => _bitmap is not null;
+
+    public long? UsedBytes => _volume.FreeClusters is var free && free >= 0 && free <= _volume.TotalClusters
+        ? (_volume.TotalClusters - free) * _volume.BytesPerCluster : null;
 
     /// <summary>
     /// The runs of the segments in VCN order as volume extents. A gap, an overlap, a sparse run or a run past the end of

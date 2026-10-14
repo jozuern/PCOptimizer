@@ -46,7 +46,8 @@ internal sealed unsafe partial class WindowsVolume : IVolumeDevice
                 BytesPerFileRecord: BinaryPrimitives.ReadInt32LittleEndian(b[48..]),
                 MftStartLcn: BinaryPrimitives.ReadInt64LittleEndian(b[64..]),
                 MftValidDataLength: BinaryPrimitives.ReadInt64LittleEndian(b[56..]),
-                TotalClusters: BinaryPrimitives.ReadInt64LittleEndian(b[16..]));
+                TotalClusters: BinaryPrimitives.ReadInt64LittleEndian(b[16..]),
+                FreeClusters: BinaryPrimitives.ReadInt64LittleEndian(b[24..]));
             return new WindowsVolume(handle, data);
         }
         catch
