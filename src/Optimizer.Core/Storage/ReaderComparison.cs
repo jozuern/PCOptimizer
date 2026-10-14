@@ -7,40 +7,64 @@ namespace Optimizer.Core.Storage;
 
 /// <summary>
 /// Developer aid (--storage-compare): reads a drive with both readers, one after the other, and lists their totals and
-/// times (with the process's peak memory after each), then the top-level folders whose totals differ. Read only, like
-/// both readers.
+/// times, then the top-level folders whose totals differ. With one reader only, it also gives that reader's memory: the
+/// process's working set before the scan and its peak (the peak only grows, so each reader needs a process of its own).
+/// Read only, like both readers.
 /// </summary>
 public static class ReaderComparison
 {
-    public static async Task<string> CompareAsync(string root, bool elevated, CancellationToken ct)
+    /// <param name="only">One reader, with its memory; null for both readers and their differences.</param>
+    public static async Task<string> CompareAsync(string root, bool elevated, ScanReader? only, CancellationToken ct)
     {
         TimedSource? source = null;
-        var text = await CompareAsync(root, VolumeScanners.UsesFileTable(root, elevated),
-            new MftScanner(r => source = new TimedSource(VolumeMftSource.Open(r))), new EnumerationScanner(), ct).ConfigureAwait(false);
+        var fileTable = only is null or ScanReader.FileTable ? new MftScanner(r => source = new TimedSource(VolumeMftSource.Open(r))) : null;
+        var folders = only is null or ScanReader.Folders ? new EnumerationScanner() : null;
+        var text = await CompareAsync(root, VolumeScanners.UsesFileTable(root, elevated), fileTable, folders, only is not null, ct)
+            .ConfigureAwait(false);
         return source is null ? text : text + string.Create(CultureInfo.InvariantCulture,
             $"File table reads from the volume: {source.Reading.TotalSeconds:0.00} s for {source.Bytes >> 20} MB{Environment.NewLine}");
     }
 
-    internal static async Task<string> CompareAsync(string root, bool chosen, IVolumeScanner fileTable, IVolumeScanner folders, CancellationToken ct)
+    internal static async Task<string> CompareAsync(string root, bool chosen, IVolumeScanner? fileTable, IVolumeScanner? folders,
+        bool memory, CancellationToken ct)
     {
         var text = new StringBuilder();
         text.AppendLine(CultureInfo.InvariantCulture, $"Drive {root}, {DateTime.Now:yyyy-MM-dd HH:mm}");
         text.AppendLine($"Analyze reads it {(chosen ? "from the file table" : "folder by folder")}");
-        DiskTree? table = null;
+        long? before = null;
+        HeapPeak? heap = null;
+        if (memory)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            using var process = Process.GetCurrentProcess();
+            before = process.WorkingSet64;
+            heap = new HeapPeak();
+        }
+
+        DiskTree? table = null, walk = null;
         var watch = Stopwatch.StartNew();
-        try
+        if (fileTable is not null)
         {
-            table = await fileTable.ScanAsync(root, null, ct).ConfigureAwait(false);
-            text.AppendLine(Line("File table", table, watch.Elapsed));
+            try
+            {
+                table = await fileTable.ScanAsync(root, null, ct).ConfigureAwait(false);
+                text.AppendLine(Line("File table", table, watch.Elapsed, before, heap));
+            }
+            catch (MftUnavailableException ex)
+            {
+                text.AppendLine($"File table: not read ({ex.Message})");
+            }
         }
-        catch (MftUnavailableException ex)
+        if (folders is not null)
         {
-            text.AppendLine($"File table: not read ({ex.Message})");
+            watch.Restart();
+            walk = await folders.ScanAsync(root, null, ct).ConfigureAwait(false);
+            text.AppendLine(Line("Folder by folder", walk, watch.Elapsed, before, heap));
         }
-        watch.Restart();
-        var walk = await folders.ScanAsync(root, null, ct).ConfigureAwait(false);
-        text.AppendLine(Line("Folder by folder", walk, watch.Elapsed));
-        if (table is null) return text.ToString();
+        heap?.Dispose();
+        if (table is null || walk is null) return text.ToString();
 
         text.AppendLine(CultureInfo.InvariantCulture, $"Difference: {table.Size(table.Root) - walk.Size(walk.Root)} bytes, {table.Files(table.Root) - walk.Files(walk.Root)} files");
         var other = TopLevel(walk);
@@ -55,14 +79,51 @@ public static class ReaderComparison
         return text.ToString();
     }
 
-    private static string Line(string reader, DiskTree t, TimeSpan wall)
+    private static string Line(string reader, DiskTree t, TimeSpan wall, long? before, HeapPeak? heap)
     {
         var folders = 0;
         for (var i = 1; i < t.Count; i++)
             if (t.IsFolder(i)) folders++;
+        var line = string.Create(CultureInfo.InvariantCulture,
+            $"{reader}: {t.Size(t.Root)} bytes, {t.Files(t.Root)} files, {folders} folders, {t.Lost} lost, {wall.TotalSeconds:0.00} s (reported {t.Elapsed.TotalSeconds:0.00} s)");
+        if (before is not { } start) return line;
         using var process = Process.GetCurrentProcess();
-        return string.Create(CultureInfo.InvariantCulture,
-            $"{reader}: {t.Size(t.Root)} bytes, {t.Files(t.Root)} files, {folders} folders, {t.Lost} lost, {wall.TotalSeconds:0.0} s (tree {t.Elapsed.TotalSeconds:0.0} s), peak memory {process.PeakWorkingSet64 >> 20} MB");
+        return line + string.Create(CultureInfo.InvariantCulture,
+            $", working set {start >> 20} MB before, peak {process.PeakWorkingSet64 >> 20} MB, peak minus before {(process.PeakWorkingSet64 - start) >> 20} MB, managed heap peak {heap?.Peak >> 20} MB above the start");
+    }
+
+    /// <summary>
+    /// The managed heap's highest size above its size at the start, sampled every few milliseconds on a thread of its own:
+    /// what a reader holds at its worst, which the process's working set (memory the GC keeps committed) does not show.
+    /// </summary>
+    private sealed class HeapPeak : IDisposable
+    {
+        private readonly long _start = GC.GetTotalMemory(true);
+        private long _peak;
+        private volatile bool _stop;
+        private readonly Thread _thread;
+
+        public HeapPeak()
+        {
+            _thread = new Thread(() =>
+            {
+                while (!_stop)
+                {
+                    var now = GC.GetTotalMemory(false) - _start;
+                    if (now > Interlocked.Read(ref _peak)) Interlocked.Exchange(ref _peak, now);
+                    Thread.Sleep(2);
+                }
+            }) { IsBackground = true };
+            _thread.Start();
+        }
+
+        public long Peak => Interlocked.Read(ref _peak);
+
+        public void Dispose()
+        {
+            _stop = true;
+            _thread.Join();
+        }
     }
 
     private static Dictionary<string, (long Bytes, int Files)> TopLevel(DiskTree t)
@@ -85,6 +146,8 @@ public static class ReaderComparison
         public int BytesPerRecord => inner.BytesPerRecord;
         public int BytesPerSector => inner.BytesPerSector;
         public long RecordCount => inner.RecordCount;
+        public (long First, int Count) NextRun(long from, int max) => inner.NextRun(from, max);
+        public long? InUseRecords => inner.InUseRecords;
 
         public int Read(long firstRecord, Span<byte> buffer)
         {

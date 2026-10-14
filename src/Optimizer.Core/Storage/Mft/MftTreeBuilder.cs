@@ -1,14 +1,17 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace Optimizer.Core.Storage.Mft;
 
 /// <summary>
-/// Builds the storage tree from the parsed records of a volume's $MFT (record 5 is the root). Extension records are
-/// folded into their base record by its record number, not only through the attribute list: a non-resident
-/// $ATTRIBUTE_LIST (a file with many hard links has one) names no extension record, yet the file's names and data sit in
-/// them. A file is one entry under one name (a Win32 name before a POSIX link before a DOS short name), so a file with
-/// several hard links counts once. A parent or base reference counts only when its sequence number matches the record's
-/// own: the volume can change while it is read, and a reused record must not collect another file's children or parts.
-/// NTFS's own files (records 0 to 23 and everything below $Extend) are left out; records whose parent chain does not
-/// reach the root count as lost.
+/// Builds the storage tree from the records of a volume's $MFT (record 5 is the root), kept in an <see cref="MftTable"/>.
+/// Extension records are folded into their base record by its record number, not only through the attribute list: a
+/// non-resident $ATTRIBUTE_LIST (a file with many hard links has one) names no extension record, yet the file's names and
+/// data sit in them. A file is one entry under one name (a Win32 name before a POSIX link before a DOS short name), so a
+/// file with several hard links counts once. A parent or base reference counts only when its sequence number matches the
+/// record's own: the volume can change while it is read, and a reused record must not collect another file's children or
+/// parts. NTFS's own files (records 0 to 23 and everything below $Extend) are left out; records whose parent chain does
+/// not reach the root count as lost.
 /// </summary>
 public static class MftTreeBuilder
 {
@@ -17,137 +20,115 @@ public static class MftTreeBuilder
     private const int RootRecord = 5;
     /// <summary>Records 0 to 15 are NTFS metadata files and 16 to 23 are reserved; user files start at 24.</summary>
     private const int FirstUserRecord = 24;
-    private const byte PosixNamespace = 0, DosNamespace = 2;
     private const uint AttrSystem = 0x4, AttrReparse = 0x400, AttrOffline = 0x1000, AttrRecallOnOpen = 0x40000,
         AttrRecallOnDataAccess = 0x400000;
-    /// <summary>Reparse tag bit of links (junction, mount point, symlink), as <see cref="EnumerationScanner"/> tests it.</summary>
-    private const uint NameSurrogate = 0x2000_0000;
 
-    /// <summary>What a base record's extension records add to it.</summary>
-    private sealed class Extension
+    /// <summary>The tree of records parsed one by one (the tests and the fixture).</summary>
+    public static DiskTree Build(IReadOnlyList<MftRecord> records, string rootPath, TimeSpan elapsed) =>
+        Build(MftTable.From(records), rootPath, null, elapsed);
+
+    /// <summary>
+    /// The tree of <paramref name="table"/>, whose flags it changes (one build per table). With <paramref name="watch"/>
+    /// the tree's time is read when it is done, so it includes the build; otherwise it is <paramref name="elapsed"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    internal static DiskTree Build(MftTable table, string rootPath, Stopwatch? watch, TimeSpan elapsed = default)
     {
-        public readonly List<MftName> Names = [];
-        public long? DataSize, DataAllocated;
-        public uint ReparseTag;
-    }
+        var t = table;
+        FoldExtensions(t);
+        var count = t.Count;
+        var flags = t.Flags;
+        var number = t.Number;
 
-    public static DiskTree Build(IReadOnlyList<MftRecord> records, string rootPath, TimeSpan elapsed)
-    {
-        var count = 0;
-        foreach (var r in records)
-            if (r.Number < int.MaxValue) count = Math.Max(count, (int)r.Number + 1);
-
-        var bases = new MftRecord?[count];
-        foreach (var r in records)
-            if (r.BaseReference == 0 && r.Number < count) bases[r.Number] = r;
-
-        // In record order, so the names of extension records follow the base's own names in a fixed order.
-        var extensions = new Dictionary<int, Extension>();
-        foreach (var r in records.Where(r => r.BaseReference != 0).OrderBy(r => r.Number))
-        {
-            var b = r.BaseReference & RecordNumberMask;
-            // Its base is not in use, or the record was reused since: nothing to add to.
-            if (b >= (ulong)count || bases[b] is not { } owner || !Current(r.BaseReference, owner)) continue;
-            if (!extensions.TryGetValue((int)b, out var e)) extensions.Add((int)b, e = new Extension());
-            e.Names.AddRange(r.Names);
-            if (e.DataSize is null && r.DataSize is not null) (e.DataSize, e.DataAllocated) = (r.DataSize, r.DataAllocated);
-            if (e.ReparseTag == 0) e.ReparseTag = r.ReparseTag;
-        }
-
-        // Children as linked lists in record order (filled backwards), each record under the parent of its chosen name.
-        var name = new string?[count];
+        // Children as linked lists in record order (entries are in record order, filled backwards), each entry under the
+        // parent of its chosen name.
         var firstChild = new int[count];
         var nextSibling = new int[count];
         Array.Fill(firstChild, -1);
-        for (var n = count - 1; n >= 0; n--)
+        var expected = 1;
+        for (var i = count - 1; i >= 0; i--)
         {
-            if (n == RootRecord || bases[n] is not { } r) continue;
-            if (Primary(r, extensions.GetValueOrDefault(n)) is not { } chosen) continue;
-            var parent = chosen.ParentReference & RecordNumberMask;
-            if (parent >= (ulong)count || bases[parent] is not { IsFolder: true } folder || !Current(chosen.ParentReference, folder))
-                continue;
-            name[n] = chosen.Name;
-            nextSibling[n] = firstChild[parent];
-            firstChild[parent] = n;
+            if (number[i] == RootRecord || t.Name[i] is null) continue;
+            var reference = t.Parent[i];
+            var p = t.IndexOf(reference & RecordNumberMask);
+            if (p < 0 || (flags[p] & MftTable.Folder) == 0 || (ushort)(reference >> SequenceShift) != t.Sequence[p]) continue;
+            nextSibling[i] = firstChild[p];
+            firstChild[p] = i;
+            if (number[i] >= FirstUserRecord) expected++;
         }
 
-        // Depth first from the root. A record is reached at most once, so damaged parent references cannot loop; below
-        // a metadata record (builder index -1) records are only marked as reached.
-        var builder = new DiskTree.Builder(rootPath);
-        var reached = new bool[count];
-        var stack = new Stack<(int Record, int Index)>();
-        if (count > RootRecord && bases[RootRecord] is { IsFolder: true })
+        // Depth first from the root. An entry is reached at most once, so damaged parent references cannot loop; below
+        // a metadata record (builder index -1) entries are only marked as reached.
+        var builder = new DiskTree.Builder(rootPath, expected);
+        var stack = new Stack<(int Entry, int Index)>();
+        if (t.IndexOf(RootRecord) is var root and >= 0 && (flags[root] & MftTable.Folder) != 0)
         {
-            reached[RootRecord] = true;
-            stack.Push((RootRecord, builder.Root));
+            flags[root] |= MftTable.Reached;
+            stack.Push((root, builder.Root));
         }
         while (stack.Count > 0)
         {
             var (folder, at) = stack.Pop();
             for (var c = firstChild[folder]; c >= 0; c = nextSibling[c])
             {
-                if (reached[c]) continue;
-                reached[c] = true;
-                var r = bases[c]!;
-                if (at < 0 || c < FirstUserRecord)
+                if ((flags[c] & MftTable.Reached) != 0) continue;
+                flags[c] |= MftTable.Reached;
+                var isFolder = (flags[c] & MftTable.Folder) != 0;
+                if (at < 0 || number[c] < FirstUserRecord)
                 {
-                    if (r.IsFolder) stack.Push((c, -1));
+                    if (isFolder) stack.Push((c, -1));
                     continue;
                 }
 
-                var e = extensions.GetValueOrDefault(c);
-                var a = r.FileAttributes;
-                var flags = EntryFlags.None;
-                if ((a & AttrSystem) != 0) flags |= EntryFlags.System;
-                if ((a & (AttrOffline | AttrRecallOnOpen | AttrRecallOnDataAccess)) != 0) flags |= EntryFlags.CloudOnly;
-                if (r.IsFolder)
+                var a = t.Attributes[c];
+                var entry = EntryFlags.None;
+                if ((a & AttrSystem) != 0) entry |= EntryFlags.System;
+                if ((a & (AttrOffline | AttrRecallOnOpen | AttrRecallOnDataAccess)) != 0) entry |= EntryFlags.CloudOnly;
+                var lastWrite = MftTable.Time(t.LastWrite[c]);
+                if (isFolder)
                 {
                     // A link's target is elsewhere or already counted. Other reparse folders, like OneDrive's cloud
                     // folders, hold real children. Without a readable tag the folder is entered, as EnumerationScanner
                     // does, so both readers agree.
-                    var tag = r.ReparseTag != 0 ? r.ReparseTag : e?.ReparseTag ?? 0;
-                    var link = (a & AttrReparse) != 0 && (tag & NameSurrogate) != 0;
-                    var i = builder.AddFolder(at, name[c]!, r.LastWriteUtc, flags | (link ? EntryFlags.ReparsePoint : 0));
+                    var link = (a & AttrReparse) != 0 && (flags[c] & MftTable.LinkTag) != 0;
+                    var i = builder.AddFolder(at, t.Name[c]!, lastWrite, entry | (link ? EntryFlags.ReparsePoint : 0));
                     if (!link) stack.Push((c, i));
                 }
                 else
                 {
-                    var (size, allocated) = r.DataSize is not null ? (r.DataSize, r.DataAllocated) : (e?.DataSize, e?.DataAllocated);
                     // No unnamed $DATA found: nothing to count, and one odd record must not make every total unknown.
-                    builder.AddFile(at, name[c]!, size ?? 0, size is null ? 0 : allocated ?? -1, r.LastWriteUtc, flags);
+                    builder.AddFile(at, t.Name[c]!, t.Size[c], t.Allocated[c], lastWrite, entry);
                 }
             }
         }
 
         var lost = 0;
-        for (var n = FirstUserRecord; n < count; n++)
-            if (bases[n] is not null && !reached[n]) lost++;
-        return builder.Build(ScanReader.FileTable, elapsed, lost);
+        for (var i = 0; i < count; i++)
+            if (number[i] >= FirstUserRecord && (flags[i] & MftTable.Reached) == 0) lost++;
+        return watch is null ? builder.Build(ScanReader.FileTable, elapsed, lost) : builder.Build(ScanReader.FileTable, watch, lost);
     }
-
-    private static bool Current(ulong reference, MftRecord record) => (ushort)(reference >> SequenceShift) == record.Sequence;
 
     /// <summary>
-    /// The first Win32 (or Win32 and DOS) name in record order, base record first; else the first POSIX name (Windows
-    /// stores extra hard links as POSIX names); a DOS short name only when there is no other.
+    /// Folds each extension record, in record order, into its base: names that rank higher than the base's best, and the
+    /// data size and reparse tag when the base has none. Its base must be in use with the sequence number it names.
     /// </summary>
-    private static MftName? Primary(MftRecord r, Extension? e)
+    private static void FoldExtensions(MftTable t)
     {
-        MftName? posix = null, dos = null;
-        foreach (var n in r.Names)
-            if (Win32(n, ref posix, ref dos)) return n;
-        if (e is not null)
-            foreach (var n in e.Names)
-                if (Win32(n, ref posix, ref dos)) return n;
-        return posix ?? dos;
-    }
-
-    /// <summary>True for a Win32 name; otherwise keeps the first POSIX and the first DOS name.</summary>
-    private static bool Win32(MftName n, ref MftName? posix, ref MftName? dos)
-    {
-        if (n.Namespace == PosixNamespace) posix ??= n;
-        else if (n.Namespace == DosNamespace) dos ??= n;
-        else return true;
-        return false;
+        var list = t.Extensions;
+        list.Sort((x, y) => x.Number.CompareTo(y.Number));
+        foreach (var r in list)
+        {
+            var b = t.IndexOf(r.BaseReference & RecordNumberMask);
+            // Its base is not in use, or the record was reused since: nothing to add to.
+            if (b < 0 || (ushort)(r.BaseReference >> SequenceShift) != t.Sequence[b]) continue;
+            foreach (var name in r.Names) t.OfferName(b, name);
+            if ((t.Flags[b] & MftTable.HasData) == 0 && r.DataSize is { } size)
+            {
+                t.Size[b] = size;
+                t.Allocated[b] = r.DataAllocated ?? -1;
+                t.Flags[b] |= MftTable.HasData;
+            }
+            if ((t.Flags[b] & MftTable.HasTag) == 0) t.Flags[b] |= MftTable.TagFlags(r.ReparseTag);
+        }
     }
 }

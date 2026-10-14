@@ -46,10 +46,15 @@ public class VolumeScannersTests
 
     private const string Root = @"T:\";
 
-    /// <summary>Serves the fixture bytes as a volume's file table would; can cancel or fail on a read.</summary>
+    /// <summary>
+    /// Serves the fixture bytes as a volume's file table would; can cancel or fail on a read. The scanner reads the next
+    /// block on another thread while it parses: a read must never overlap another or come after the source is closed.
+    /// </summary>
     private sealed class FixtureSource(byte[] mft, int recordSize, int sectorSize, Action<long>? onRead = null) : IMftSource
     {
+        private int _active;
         public bool Disposed { get; private set; }
+        public bool Misused { get; private set; }
         public List<long> Reads { get; } = [];
         public int BytesPerRecord => recordSize;
         public int BytesPerSector => sectorSize;
@@ -57,14 +62,25 @@ public class VolumeScannersTests
 
         public int Read(long firstRecord, Span<byte> buffer)
         {
-            Reads.Add(firstRecord);
-            onRead?.Invoke(firstRecord);
-            var n = (int)Math.Min(buffer.Length / recordSize, RecordCount - firstRecord);
-            mft.AsSpan((int)(firstRecord * recordSize), n * recordSize).CopyTo(buffer);
-            return n;
+            if (Interlocked.Increment(ref _active) != 1 || Disposed) Misused = true;
+            try
+            {
+                Reads.Add(firstRecord);
+                // Slow enough that the scanner parses the block before meanwhile.
+                Thread.Sleep(5);
+                onRead?.Invoke(firstRecord);
+                var n = (int)Math.Min(buffer.Length / recordSize, RecordCount - firstRecord);
+                mft.AsSpan((int)(firstRecord * recordSize), n * recordSize).CopyTo(buffer);
+                return n;
+            }
+            finally { Interlocked.Decrement(ref _active); }
         }
 
-        public void Dispose() => Disposed = true;
+        public void Dispose()
+        {
+            if (Volatile.Read(ref _active) != 0) Misused = true;
+            Disposed = true;
+        }
     }
 
     /// <summary>Collects every report on the reporting thread (Progress&lt;T&gt; would post them later).</summary>
@@ -121,6 +137,7 @@ public class VolumeScannersTests
         AssertSameTree(f.Expected, tree);
         Assert.Equal(Enumerable.Range(0, (int)f.Records / 16).Select(k => k * 16L), source.Reads);
         Assert.True(source.Disposed);
+        Assert.False(source.Misused);
         var all = reports.All;
         Assert.All(all, p => Assert.Equal(ScanReader.FileTable, p.Reader));
         Assert.Equal(100, all[^1].Percent);
@@ -190,7 +207,52 @@ public class VolumeScannersTests
         // Stopped at the next block, the file table is closed and nothing else is read.
         Assert.Equal(new[] { 0L, 16, 32 }, source.Reads);
         Assert.True(source.Disposed);
+        Assert.False(source.Misused);
         Assert.Equal(0, folders.Runs);
+    }
+
+    [Fact]
+    public async Task AFailedReadAheadEndsTheScanAndClosesTheTable()
+    {
+        var f = Data.Value;
+        var source = new FixtureSource(f.Mft, f.RecordSize, f.SectorSize,
+            first => { if (first == 48) throw new MftUnavailableException("reading the volume failed (error 23)"); });
+
+        // The read of block 48 runs while block 32 is parsed; its failure ends the scan before anything else is read.
+        await Assert.ThrowsAsync<MftUnavailableException>(() =>
+            Scanner(source, blockBytes: 16 * f.RecordSize).ScanAsync(Root, null, CancellationToken.None));
+        Assert.Equal(new[] { 0L, 16, 32, 48 }, source.Reads);
+        Assert.True(source.Disposed);
+        Assert.False(source.Misused);
+    }
+
+    [Fact]
+    public void TheTableKeepsWhatTheParserReads()
+    {
+        // The scan fills the table record by record without making an MftRecord for a base record; the builder's path
+        // for records parsed one by one must give the same entries, best names and sizes.
+        var f = Data.Value;
+        var scanned = MftScanner.ReadTable(new FixtureSource((byte[])f.Mft.Clone(), f.RecordSize, f.SectorSize), 4 << 20, null,
+            CancellationToken.None);
+        var parsed = MftTable.From(f.Parsed);
+
+        Assert.Equal(parsed.Count, scanned.Count);
+        Assert.Equal(parsed.Extensions.Select(r => r.Number), scanned.Extensions.Select(r => r.Number));
+        for (var i = 0; i < parsed.Count; i++)
+        {
+            Assert.Equal(parsed.Number[i], scanned.Number[i]);
+            Assert.Equal(parsed.Name[i], scanned.Name[i]);
+            Assert.Equal(parsed.Parent[i], scanned.Parent[i]);
+            Assert.Equal(parsed.Sequence[i], scanned.Sequence[i]);
+            Assert.Equal(parsed.Size[i], scanned.Size[i]);
+            Assert.Equal(parsed.Allocated[i], scanned.Allocated[i]);
+            Assert.Equal(parsed.LastWrite[i], scanned.LastWrite[i]);
+            Assert.Equal(parsed.Attributes[i], scanned.Attributes[i]);
+            Assert.Equal(parsed.Flags[i], scanned.Flags[i]);
+        }
+        // Free records cost only their slot.
+        Assert.True(scanned.Count < f.Records);
+        Assert.Equal(-1, scanned.IndexOf(16));
     }
 
     [Fact]
@@ -227,10 +289,12 @@ public class VolumeScannersTests
     private sealed class MemoryVolume(byte[] bytes, NtfsVolumeData data) : IVolumeDevice
     {
         public bool Disposed { get; private set; }
+        public long BytesRead { get; private set; }
         public NtfsVolumeData VolumeData => data;
 
         public void Read(long offset, Span<byte> buffer)
         {
+            BytesRead += buffer.Length;
             Assert.True(offset % data.BytesPerSector == 0 && buffer.Length % data.BytesPerSector == 0, $"unaligned read {offset} + {buffer.Length}");
             if (offset < 0 || offset + buffer.Length > bytes.Length) throw new MftUnavailableException("read past the end of the volume");
             bytes.AsSpan((int)offset, buffer.Length).CopyTo(buffer);
@@ -239,7 +303,9 @@ public class VolumeScannersTests
         public void Dispose() => Disposed = true;
     }
 
-    public enum Layout { Fragmented, ExtensionMissing, ExtensionReused, RunsTooShort }
+    public enum Layout { Fragmented, ExtensionMissing, ExtensionReused, RunsTooShort, WithBitmap }
+
+    private const int BitmapLcn = 90;
 
     private static MemoryVolume FragmentedVolume(int sectorSize, Layout layout)
     {
@@ -261,7 +327,11 @@ public class VolumeScannersTests
         if (layout != Layout.RunsTooShort) list.AddRange(ListEntry(0x80, 1, ExtensionRecord, FirstClusters));
         list.AddRange(ListEntry(0xB0, sequence0, 0, 0));
         var firstData = DataSegment(0, FirstClusters - 1, FirstClusters, FirstLcn, allocated: mft.Length);
-        var rebuilt = new List<byte[]> { attributes[0x10], Resident(0x20, [.. list]), attributes[0x30], firstData, attributes[0xB0] };
+        // The fixture's $BITMAP lies outside this small volume, so the source reads every record; WithBitmap puts one on it.
+        var bitmap = layout == Layout.WithBitmap
+            ? NonResident(0xB0, 0, 0, clusters: 1, BitmapLcn, allocated: cluster, size: f.Records / 8)
+            : attributes[0xB0];
+        var rebuilt = new List<byte[]> { attributes[0x10], Resident(0x20, [.. list]), attributes[0x30], firstData, bitmap };
         WriteAttributes(record0, rebuilt);
         Protect(record0);
 
@@ -284,6 +354,13 @@ public class VolumeScannersTests
         }
 
         var volume = new byte[128 * cluster];
+        if (layout == Layout.WithBitmap)
+            for (var n = 0; n < f.Records; n++)
+            {
+                var r = mft.AsSpan(n * size, size);
+                if (r[..4].SequenceEqual("FILE"u8) && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & 1) != 0)
+                    volume[BitmapLcn * cluster + n / 8] |= (byte)(1 << (n % 8));
+            }
         mft.AsSpan(0, FirstClusters * cluster).CopyTo(volume.AsSpan(FirstLcn * cluster));
         mft.AsSpan(FirstClusters * cluster).CopyTo(volume.AsSpan(SecondLcn * cluster));
         return new MemoryVolume(volume, new NtfsVolumeData(sectorSize, cluster, size, FirstLcn, mft.Length, 128));
@@ -304,6 +381,23 @@ public class VolumeScannersTests
         Assert.True(volume.Disposed);
     }
 
+    [Fact]
+    public async Task VolumeSourceSkipsTheRecordsTheBitmapMarksFree()
+    {
+        var f = Data.Value;
+        var everything = FragmentedVolume(512, Layout.Fragmented);
+        await new MftScanner(_ => new VolumeMftSource(everything), 4 * f.RecordSize).ScanAsync(Root, null, CancellationToken.None);
+        var volume = FragmentedVolume(512, Layout.WithBitmap);
+
+        var tree = await new MftScanner(_ => new VolumeMftSource(volume), 4 * f.RecordSize).ScanAsync(Root, null, CancellationToken.None);
+
+        AssertSameTree(f.Expected, tree);
+        // The fixture's free records (16 to 23 and many at the end) are not read; the bitmap's own cluster is.
+        var inUse = Enumerable.Range(0, (int)f.Records).Count(f.InUse) + 1; // and the extension record made here
+        Assert.True(volume.BytesRead < everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
+        Assert.True(volume.BytesRead <= (inUse + 16) * f.RecordSize + 2 * f.ClusterSize, $"{volume.BytesRead} bytes for {inUse} records in use");
+    }
+
     [Theory]
     [InlineData(Layout.ExtensionMissing)]
     [InlineData(Layout.ExtensionReused)]
@@ -320,16 +414,24 @@ public class VolumeScannersTests
     public async Task ReaderComparisonListsBothReaders()
     {
         var text = await ReaderComparison.CompareAsync(Root, true, new FakeScanner(ScanReader.FileTable), new FakeScanner(ScanReader.Folders),
-            CancellationToken.None);
+            memory: false, CancellationToken.None);
         Assert.Contains("File table: 10 bytes, 1 files, 0 folders, 0 lost", text);
         Assert.Contains("Folder by folder: 10 bytes, 1 files, 0 folders, 0 lost", text);
 
         Assert.Contains("Analyze reads it from the file table", text);
 
         var unavailable = await ReaderComparison.CompareAsync(Root, false, new FakeScanner(ScanReader.FileTable, new MftUnavailableException("not elevated")),
-            new FakeScanner(ScanReader.Folders), CancellationToken.None);
+            new FakeScanner(ScanReader.Folders), memory: false, CancellationToken.None);
         Assert.Contains("File table: not read (not elevated)", unavailable);
         Assert.Contains("Analyze reads it folder by folder", unavailable);
+        Assert.DoesNotContain("peak", text);
+
+        // One reader per process: its memory, and no differences.
+        var one = await ReaderComparison.CompareAsync(Root, true, new FakeScanner(ScanReader.FileTable), null, memory: true, CancellationToken.None);
+        Assert.Contains("File table: 10 bytes", one);
+        Assert.Contains("MB before, peak ", one);
+        Assert.DoesNotContain("Folder by folder", one);
+        Assert.DoesNotContain("Difference", one);
     }
 
     // Record surgery for the in-memory volume.
@@ -388,10 +490,14 @@ public class VolumeScannersTests
     }
 
     /// <summary>A non-resident unnamed $DATA segment of one run; only the segment at VCN 0 carries the sizes.</summary>
-    private static byte[] DataSegment(long lowestVcn, long highestVcn, int clusters, int lcn, long allocated)
+    private static byte[] DataSegment(long lowestVcn, long highestVcn, int clusters, int lcn, long allocated) =>
+        NonResident(0x80, lowestVcn, highestVcn, clusters, lcn, allocated, allocated);
+
+    /// <summary>A non-resident unnamed attribute segment of one run.</summary>
+    private static byte[] NonResident(uint type, long lowestVcn, long highestVcn, int clusters, int lcn, long allocated, long size)
     {
         var a = new byte[0x48];
-        BinaryPrimitives.WriteUInt32LittleEndian(a, 0x80);
+        BinaryPrimitives.WriteUInt32LittleEndian(a, type);
         BinaryPrimitives.WriteUInt32LittleEndian(a.AsSpan(4), (uint)a.Length);
         a[8] = 1;
         BinaryPrimitives.WriteUInt16LittleEndian(a.AsSpan(10), 0x40);
@@ -399,8 +505,8 @@ public class VolumeScannersTests
         BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x18), highestVcn);
         BinaryPrimitives.WriteUInt16LittleEndian(a.AsSpan(0x20), 0x40);
         BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x28), allocated);
-        BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x30), allocated);
-        BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x38), allocated);
+        BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x30), size);
+        BinaryPrimitives.WriteInt64LittleEndian(a.AsSpan(0x38), size);
         // One run: one byte of cluster count, one byte of LCN (both under 128 here), then the end of the list.
         a[0x40] = 0x11;
         a[0x41] = (byte)clusters;

@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Optimizer.Core.Storage.Mft;
@@ -30,10 +31,17 @@ internal sealed record MftDataSegment(long LowestVcn, long HighestVcn, IReadOnly
 /// What locating $MFT on the volume needs from one of its records: its sequence and base reference, the $DATA segments
 /// it holds, and <paramref name="Listed"/>, the lowest VCN and record of every unnamed $DATA segment its resident
 /// $ATTRIBUTE_LIST names (empty without one). <paramref name="ListNonResident"/>: the record has an attribute list that
-/// was not read because it is not resident.
+/// was not read because it is not resident. <paramref name="Bitmap"/>: its unnamed $BITMAP (in record 0, which records
+/// of $MFT are in use), null when the record has none.
 /// </summary>
 internal sealed record MftDataSegments(ushort Sequence, ulong BaseReference, IReadOnlyList<MftDataSegment> Segments,
-    IReadOnlyList<(long LowestVcn, ulong Reference)> Listed, bool ListNonResident);
+    IReadOnlyList<(long LowestVcn, ulong Reference)> Listed, bool ListNonResident, MftBitmap? Bitmap);
+
+/// <summary>
+/// A $BITMAP attribute: its value when resident, else its size in bytes and the runs of its segment at VCN 0
+/// (<paramref name="Runs"/> empty when that segment is not in this record).
+/// </summary>
+internal sealed record MftBitmap(byte[]? Value, long Size, IReadOnlyList<(long Lcn, long Clusters)> Runs);
 
 /// <summary>
 /// Parses one raw NTFS 3.x file record segment (FILE_RECORD_SEGMENT_HEADER and its attributes). The bytes come from a
@@ -46,7 +54,7 @@ public static class MftRecordParser
     /// <summary>NTFS protects multisector structures in strides of 512 bytes whatever the sector size (MULTI_SECTOR_HEADER).</summary>
     private const int Stride = 512;
     private const ulong RecordNumberMask = 0x0000_FFFF_FFFF_FFFF;
-    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, ReparsePoint = 0xC0,
+    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, Bitmap = 0xB0, ReparsePoint = 0xC0,
         End = 0xFFFF_FFFF;
     private const ushort InUse = 0x0001, Directory = 0x0002;
     private const ushort CompressionMask = 0x00FF, Sparse = 0x8000;
@@ -60,101 +68,167 @@ public static class MftRecordParser
     /// </summary>
     public static MftRecord? Parse(Span<byte> record, int bytesPerSector, uint number)
     {
+        var f = new Fields { Collect = true };
+        if (!Walk(record, bytesPerSector, number, ref f)) return null;
+        return new MftRecord(number, f.Sequence, f.BaseReference, f.IsFolder, (IReadOnlyList<MftName>?)f.Names ?? [],
+            f.HasData ? f.DataSize : null, f.HasData ? f.DataAllocated : null, MftTable.Time(f.LastWriteTicks), f.Attributes,
+            (IReadOnlyList<ulong>?)f.Extensions ?? [], f.ReparseTag);
+    }
+
+    /// <summary>
+    /// What a drive scan does with every record: as <see cref="Parse"/>, but a base record goes straight into its slot of
+    /// <paramref name="table"/> with only its best name decoded, so no object is made per record. An extension record
+    /// (rare: files with many names or fragments) is kept whole in <see cref="MftTable.Extensions"/>. False where
+    /// <see cref="Parse"/> returns null.
+    /// </summary>
+    internal static bool ParseInto(Span<byte> record, int bytesPerSector, uint number, MftTable table)
+    {
+        // The base reference lies outside the stride ends, so it reads the same before the fixups.
+        if (record.Length >= 0x28 && U64(record, 0x20) != 0)
+        {
+            if (Parse(record, bytesPerSector, number) is not { } extension) return false;
+            table.Extensions.Add(extension);
+            return true;
+        }
+        var f = new Fields();
+        if (!Walk(record, bytesPerSector, number, ref f)) return false;
+        var name = f.NameRank == 0 ? null : Encoding.Unicode.GetString(record.Slice(f.NameAt, f.NameChars * 2));
+        table.Add(number, f.Sequence, f.IsFolder, name, f.NameParent, f.NameRank, f.HasData, f.DataSize, f.DataAllocated,
+            f.LastWriteTicks, f.Attributes, f.ReparseTag);
+        return true;
+    }
+
+    /// <summary>
+    /// The rank of a name namespace when a file is listed under one name: Win32 (or Win32 and DOS) first, then POSIX (how
+    /// Windows stores extra hard links), then a DOS short name.
+    /// </summary>
+    internal static byte NameRank(byte nameSpace) => nameSpace switch { PosixNamespace => 2, DosNamespace => 1, _ => 3 };
+
+    private const byte PosixNamespace = 0, DosNamespace = 2;
+
+    /// <summary>One record's fields as the attribute walk finds them. The names and extension references are collected only for <see cref="Parse"/>.</summary>
+    private struct Fields
+    {
+        public bool Collect;
+        public ushort Sequence;
+        public ulong BaseReference;
+        public bool IsFolder, HasData;
+        public long DataSize, DataAllocated, LastWriteTicks;
+        public uint Attributes, ReparseTag;
+        public List<MftName>? Names;
+        public List<ulong>? Extensions;
+        /// <summary>The best name so far (first of the highest rank): where its characters start in the record.</summary>
+        public int NameAt, NameChars;
+        public byte NameRank;
+        public ulong NameParent;
+    }
+
+    // Optimized from the first call: a drive is read once per process, so these loops would otherwise run as tier-0
+    // code for the whole first scan (in the test VM 1.75 s instead of 0.6 s).
+    /// <summary>The checks and the attribute walk <see cref="Parse"/> and <see cref="ParseInto"/> share; false when the record is not usable.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static bool Walk(Span<byte> record, int bytesPerSector, uint number, ref Fields f)
+    {
         // Header fields up to the base reference (0x20) and the next attribute id (0x28).
-        if (record.Length < 0x2A) return null;
-        if (record[0] != (byte)'F' || record[1] != (byte)'I' || record[2] != (byte)'L' || record[3] != (byte)'E') return null;
+        if (record.Length < 0x2A) return false;
+        if (record[0] != (byte)'F' || record[1] != (byte)'I' || record[2] != (byte)'L' || record[3] != (byte)'E') return false;
         var flags = U16(record, 0x16);
-        if ((flags & InUse) == 0) return null;
-        if (!ApplyFixups(record, bytesPerSector)) return null;
+        if ((flags & InUse) == 0) return false;
+        if (!ApplyFixups(record, bytesPerSector)) return false;
 
         // FILE_RECORD_SEGMENT_HEADER: sequence number at 0x10, base file record segment at 0x20.
-        var sequence = U16(record, 0x10);
-        var baseReference = U64(record, 0x20);
-        var isFolder = (flags & Directory) != 0;
-        List<MftName>? names = null;
-        List<ulong>? extensions = null;
-        long? dataSize = null, dataAllocated = null;
-        DateTime lastWrite = default;
-        uint attributes = 0, reparseTag = 0;
+        f.Sequence = U16(record, 0x10);
+        f.BaseReference = U64(record, 0x20);
+        f.IsFolder = (flags & Directory) != 0;
 
         var pos = (int)U16(record, 0x14);
-        if (pos < 0x2A) return null; // inside the header
+        if (pos < 0x2A) return false; // inside the header
         while (true)
         {
-            if (pos > record.Length - 4) return null; // no room left for the end marker
+            if (pos > record.Length - 4) return false; // no room left for the end marker
             var type = U32(record, pos);
             if (type == End) break;
-            if (pos > record.Length - 16) return null;
+            if (pos > record.Length - 16) return false;
             var length = U32(record, pos + 4);
             // A length of 0 would never move on; past the end would read outside the record.
-            if (length < 16 || length > (uint)(record.Length - pos)) return null;
+            if (length < 16 || length > (uint)(record.Length - pos)) return false;
             var a = record.Slice(pos, (int)length);
             var nonResident = a[8] != 0;
             var nameLength = a[9];
 
             if (!nonResident)
             {
-                if (a.Length < 24) return null;
+                if (a.Length < 24) return false;
                 var valueLength = U32(a, 16);
                 var valueOffset = U16(a, 20);
-                if (valueOffset > a.Length || valueLength > (uint)(a.Length - valueOffset)) return null;
+                if (valueOffset > a.Length || valueLength > (uint)(a.Length - valueOffset)) return false;
                 var value = a.Slice(valueOffset, (int)valueLength);
                 switch (type)
                 {
                     case StandardInformation:
                         // Last write at 0x08, file attributes at 0x20 (ATTR_STD_INFO).
-                        if (value.Length < 0x24) return null;
-                        lastWrite = FromFileTime(I64(value, 0x08));
-                        attributes = U32(value, 0x20);
+                        if (value.Length < 0x24) return false;
+                        f.LastWriteTicks = FileTimeTicks(I64(value, 0x08));
+                        f.Attributes = U32(value, 0x20);
                         break;
                     case AttributeList:
-                        if (!ReadAttributeList(value, number, ref extensions)) return null;
+                        if (!ReadAttributeList(value, number, f.Collect, ref f.Extensions)) return false;
                         break;
                     case FileName:
                         // FILE_NAME: parent at 0x00, name length (characters) at 0x40, namespace at 0x41, name at 0x42.
-                        if (value.Length < 0x42) return null;
+                        if (value.Length < 0x42) return false;
                         var chars = value[0x40];
-                        if (0x42 + chars * 2 > value.Length) return null;
-                        (names ??= new List<MftName>(2)).Add(new MftName(U64(value, 0),
-                            Encoding.Unicode.GetString(value.Slice(0x42, chars * 2)), value[0x41]));
+                        if (0x42 + chars * 2 > value.Length) return false;
+                        var nameSpace = value[0x41];
+                        if (f.Collect)
+                            (f.Names ??= new List<MftName>(2)).Add(new MftName(U64(value, 0),
+                                Encoding.Unicode.GetString(value.Slice(0x42, chars * 2)), nameSpace));
+                        var rank = NameRank(nameSpace);
+                        if (rank > f.NameRank)
+                        {
+                            f.NameRank = rank;
+                            f.NameAt = pos + valueOffset + 0x42;
+                            f.NameChars = chars;
+                            f.NameParent = U64(value, 0);
+                        }
                         break;
                     case ReparsePoint:
                         // REPARSE_DATA_BUFFER: the tag, the data length and a reserved word come first.
-                        if (value.Length < 8) return null;
-                        reparseTag = U32(value, 0);
+                        if (value.Length < 8) return false;
+                        f.ReparseTag = U32(value, 0);
                         break;
-                    case Data when nameLength == 0 && dataSize is null:
-                        dataSize = valueLength;
-                        dataAllocated = 0;
+                    case Data when nameLength == 0 && !f.HasData:
+                        f.HasData = true;
+                        f.DataSize = valueLength;
+                        f.DataAllocated = 0;
                         break;
                 }
             }
             else
             {
-                if (a.Length < 0x40) return null;
+                if (a.Length < 0x40) return false;
                 // Sizes are valid only in the segment that starts at VCN 0; named $DATA is an alternate stream.
-                if (type == Data && nameLength == 0 && dataSize is null && I64(a, 0x10) == 0)
+                if (type == Data && nameLength == 0 && !f.HasData && I64(a, 0x10) == 0)
                 {
                     var allocated = I64(a, 0x28);
                     var size = I64(a, 0x30);
-                    if (size < 0 || allocated < 0) return null;
+                    if (size < 0 || allocated < 0) return false;
                     // Compressed or sparse: the clusters really in use, when the header carries the field before the runs.
                     var attributeFlags = U16(a, 0x0C);
                     if ((attributeFlags & (CompressionMask | Sparse)) != 0 && a.Length >= 0x48 && U16(a, 0x20) >= 0x48)
                     {
                         var total = I64(a, 0x40);
-                        if (total < 0) return null;
+                        if (total < 0) return false;
                         allocated = total;
                     }
-                    dataSize = size;
-                    dataAllocated = allocated;
+                    f.HasData = true;
+                    f.DataSize = size;
+                    f.DataAllocated = allocated;
                 }
             }
             pos += (int)length;
         }
-
-        return new MftRecord(number, sequence, baseReference, isFolder, (IReadOnlyList<MftName>?)names ?? [], dataSize, dataAllocated,
-            lastWrite, attributes, (IReadOnlyList<ulong>?)extensions ?? [], reparseTag);
+        return true;
     }
 
     /// <summary>
@@ -172,6 +246,7 @@ public static class MftRecordParser
         var segments = new List<MftDataSegment>(1);
         var listed = new List<(long, ulong)>();
         var listNonResident = false;
+        MftBitmap? bitmap = null;
         var pos = (int)U16(record, 0x14);
         if (pos < 0x2A) return null;
         while (true)
@@ -201,6 +276,26 @@ public static class MftRecordParser
                 if (runs.Count == 0 || clusters != highest - lowest + 1) return null;
                 segments.Add(new MftDataSegment(lowest, highest, runs));
             }
+            else if (type == Bitmap && a[9] == 0 && bitmap is null)
+            {
+                if (!nonResident)
+                {
+                    if (a.Length < 24) return null;
+                    var valueLength = U32(a, 16);
+                    var valueOffset = U16(a, 20);
+                    if (valueOffset > a.Length || valueLength > (uint)(a.Length - valueOffset)) return null;
+                    bitmap = new MftBitmap(a.Slice(valueOffset, (int)valueLength).ToArray(), valueLength, []);
+                }
+                else
+                {
+                    if (a.Length < 0x40) return null;
+                    var runsOffset = U16(a, 0x20);
+                    var size = I64(a, 0x30);
+                    if (runsOffset < 0x40 || runsOffset >= a.Length || size < 0) return null;
+                    // Only the segment at VCN 0 carries the size; a later segment alone is of no use here.
+                    bitmap = I64(a, 0x10) == 0 ? new MftBitmap(null, size, RunList.Parse(a[runsOffset..])) : null;
+                }
+            }
             else if (type == AttributeList && nonResident) listNonResident = true;
             else if (type == AttributeList)
             {
@@ -221,13 +316,14 @@ public static class MftRecordParser
             }
             pos += (int)length;
         }
-        return new MftDataSegments(U16(record, 0x10), U64(record, 0x20), segments, listed, listNonResident);
+        return new MftDataSegments(U16(record, 0x10), U64(record, 0x20), segments, listed, listNonResident, bitmap);
     }
 
     /// <summary>
     /// Checks that every stride ends with the update sequence number, then puts the saved words back. All are checked
     /// before any is replaced, so a torn record is left as read.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static bool ApplyFixups(Span<byte> record, int bytesPerSector)
     {
         int usaOffset = U16(record, 0x04), usaCount = U16(record, 0x06);
@@ -251,7 +347,8 @@ public static class MftRecordParser
     /// ATTRIBUTE_LIST_ENTRY records: type at 0x00, length at 0x04, name length at 0x06, segment reference at 0x10. Keeps
     /// the distinct other records that hold a $FILE_NAME or the unnamed $DATA.
     /// </summary>
-    private static bool ReadAttributeList(ReadOnlySpan<byte> list, uint number, ref List<ulong>? extensions)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static bool ReadAttributeList(ReadOnlySpan<byte> list, uint number, bool collect, ref List<ulong>? extensions)
     {
         var pos = 0;
         while (pos < list.Length)
@@ -261,7 +358,7 @@ public static class MftRecordParser
             if (length < 0x1A || length > list.Length - pos) return false;
             var type = U32(list, pos);
             var reference = U64(list, pos + 0x10);
-            if ((type == FileName || (type == Data && list[pos + 6] == 0)) && (reference & RecordNumberMask) != number)
+            if (collect && (type == FileName || (type == Data && list[pos + 6] == 0)) && (reference & RecordNumberMask) != number)
             {
                 extensions ??= new List<ulong>(2);
                 if (!extensions.Contains(reference)) extensions.Add(reference);
@@ -271,8 +368,9 @@ public static class MftRecordParser
         return true;
     }
 
-    private static DateTime FromFileTime(long fileTime) =>
-        fileTime > 0 && fileTime <= MaxFileTime ? DateTime.FromFileTimeUtc(fileTime) : default;
+    /// <summary>DateTime ticks (UTC) of a FILETIME, 0 when it is not a valid time.</summary>
+    private static long FileTimeTicks(long fileTime) =>
+        fileTime > 0 && fileTime <= MaxFileTime ? DateTime.FromFileTimeUtc(fileTime).Ticks : 0;
 
     private static ushort U16(ReadOnlySpan<byte> s, int at) => BinaryPrimitives.ReadUInt16LittleEndian(s.Slice(at, 2));
     private static uint U32(ReadOnlySpan<byte> s, int at) => BinaryPrimitives.ReadUInt32LittleEndian(s.Slice(at, 4));

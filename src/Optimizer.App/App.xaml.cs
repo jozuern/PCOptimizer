@@ -141,15 +141,18 @@ public partial class App : Application
             return;
         }
 
-        // Developer aid (--storage-compare C: --storage-out file.txt): reads the drive from the file table and folder by
-        // folder, read only, writes both totals and times and exits. Needs nothing else of the app.
+        // Developer aid (--storage-compare C: --storage-out file.txt [--storage-reader FileTable|Folders]): reads the drive
+        // from the file table and folder by folder, read only, writes the totals and times and exits. Needs nothing else
+        // of the app.
         if (args.Value("--storage-compare") is { } compareDrive)
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             try
             {
                 var root = compareDrive.TrimEnd('\\') + "\\";
-                var text = await Optimizer.Core.Storage.ReaderComparison.CompareAsync(root, DataPaths.ProcessIsElevated, CancellationToken.None);
+                // --storage-reader FileTable or Folders: that reader only, with its memory (one reader per process).
+                Optimizer.Core.Storage.ScanReader? only = Enum.TryParse<Optimizer.Core.Storage.ScanReader>(args.Value("--storage-reader"), true, out var reader) ? reader : null;
+                var text = await Optimizer.Core.Storage.ReaderComparison.CompareAsync(root, DataPaths.ProcessIsElevated, only, CancellationToken.None);
                 using (var file = OutputFile(args.Value("--storage-out") ?? "storage-compare.txt"))
                 using (var writer = new StreamWriter(file, new UTF8Encoding(false)))
                     writer.Write($"Elevated: {DataPaths.ProcessIsElevated}\n{text}");

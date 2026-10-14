@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Optimizer.Core.Storage;
 
 [Flags]
@@ -135,17 +137,25 @@ public sealed class DiskTree
     public sealed class Builder
     {
         private readonly string _rootPath;
-        private string[] _name = new string[1024];
-        private int[] _parent = new int[1024];
-        private long[] _size = new long[1024];
-        private long[] _allocated = new long[1024];
-        private DateTime[] _lastWrite = new DateTime[1024];
-        private EntryFlags[] _flags = new EntryFlags[1024];
+        private string[] _name;
+        private int[] _parent;
+        private long[] _size;
+        private long[] _allocated;
+        private DateTime[] _lastWrite;
+        private EntryFlags[] _flags;
         private int _count;
 
-        public Builder(string rootPath)
+        /// <param name="capacity">Entries expected, the root included (the file table reader knows them in advance).</param>
+        public Builder(string rootPath, int capacity = 1024)
         {
             _rootPath = rootPath;
+            capacity = Math.Max(capacity, 1);
+            _name = new string[capacity];
+            _parent = new int[capacity];
+            _size = new long[capacity];
+            _allocated = new long[capacity];
+            _lastWrite = new DateTime[capacity];
+            _flags = new EntryFlags[capacity];
             Append(-1, rootPath, 0, 0, default, EntryFlags.Folder);
         }
 
@@ -158,17 +168,25 @@ public sealed class DiskTree
         public int AddFile(int parent, string name, long size, long allocated, DateTime lastWriteUtc, EntryFlags flags) =>
             Append(parent, name, size, allocated, lastWriteUtc, flags & ~EntryFlags.Folder);
 
-        /// <summary>Sums sizes, allocated space and file counts bottom-up and orders children by size, largest first.</summary>
-        public DiskTree Build(ScanReader reader, TimeSpan elapsed, int lost = 0)
+        /// <summary>Sums sizes, allocated space and file counts bottom-up and orders children by size, largest first. Once only.</summary>
+        public DiskTree Build(ScanReader reader, TimeSpan elapsed, int lost = 0) => Build(reader, () => elapsed, lost);
+
+        /// <summary>As <see cref="Build(ScanReader, TimeSpan, int)"/>, with the time read when the tree is done, so it includes the summing and sorting.</summary>
+        public DiskTree Build(ScanReader reader, Stopwatch watch, int lost = 0) => Build(reader, () => watch.Elapsed, lost);
+
+        private DiskTree Build(ScanReader reader, Func<TimeSpan> elapsed, int lost)
         {
             var n = _count;
-            var size = _size[..n];
-            var allocated = _allocated[..n];
+            var size = Fit(_size, n);
+            var allocated = Fit(_allocated, n);
             var files = new int[n];
             var children = new List<int>?[n];
+            // Each folder's list made once at its final size: millions of entries leave no grown-out lists behind.
+            var childCount = new int[n];
+            for (var i = 1; i < n; i++) childCount[_parent[i]]++;
             for (var i = 0; i < n; i++)
             {
-                if ((_flags[i] & EntryFlags.Folder) != 0) { children[i] = new List<int>(); size[i] = 0; allocated[i] = 0; }
+                if ((_flags[i] & EntryFlags.Folder) != 0) { children[i] = new List<int>(childCount[i]); size[i] = 0; allocated[i] = 0; }
                 else files[i] = 1;
             }
             // Parents precede children, so one reverse pass finishes every folder before it is added to its own parent.
@@ -180,11 +198,19 @@ public sealed class DiskTree
                 files[p] += files[i];
                 allocated[p] = allocated[p] < 0 || allocated[i] < 0 ? -1 : allocated[p] + allocated[i];
             }
-            for (var i = 0; i < n; i++)
-                if (children[i] is { } list) children[i] = list.OrderByDescending(c => size[c]).ThenBy(c => c).ToList();
-            return new DiskTree(_rootPath, n, _name[..n], _parent[..n], size, allocated, files, _lastWrite[..n],
-                _flags[..n], children, reader, elapsed, lost);
+            // Largest first, then in the order added; sorted in place.
+            Comparison<int> bySize = (a, b) => size[a] != size[b] ? size[b].CompareTo(size[a]) : a.CompareTo(b);
+            foreach (var list in children)
+                if (list is { Count: > 1 }) list.Sort(bySize);
+            return new DiskTree(_rootPath, n, Fit(_name, n), Fit(_parent, n), size, allocated, files, Fit(_lastWrite, n),
+                Fit(_flags, n), children, reader, elapsed(), lost);
         }
+
+        /// <summary>
+        /// The array itself when it is no more than an eighth too long (presized from a count known in advance), else a
+        /// copy of the used part: no copy of millions of entries just to drop a few unused slots.
+        /// </summary>
+        private static T[] Fit<T>(T[] array, int n) => array.Length - n <= n / 8 ? array : array[..n];
 
         private int Append(int parent, string name, long size, long allocated, DateTime lastWrite, EntryFlags flags)
         {

@@ -28,6 +28,46 @@ public class DiskTreeTests
         Assert.Equal(new long[] { 30, 10 }, t.Children(a).Select(t.Size).ToArray());
     }
 
+    [Theory]
+    [InlineData(1)]    // grows from one slot
+    [InlineData(5)]    // exactly the five entries: the builder's arrays become the tree's
+    [InlineData(6)]    // one slot spare, within an eighth: kept as they are
+    [InlineData(4096)] // far too large: the used part is copied
+    public void APresizedBuilderGivesTheSameTree(int capacity)
+    {
+        var bl = new DiskTree.Builder(@"C:\", capacity);
+        var a = bl.AddFolder(bl.Root, "a", T, EntryFlags.Folder);
+        bl.AddFile(a, "small.bin", 10, 4096, T, EntryFlags.None);
+        bl.AddFile(a, "big.bin", 30, 4096, T, EntryFlags.None);
+        bl.AddFile(bl.Root, "b.bin", 25, 4096, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.Folders, TimeSpan.Zero);
+        var expected = Sample(out _, out _, out _, out _);
+
+        Assert.Equal(expected.Count, t.Count);
+        for (var i = 0; i < t.Count; i++)
+        {
+            Assert.Equal(expected.FullPath(i), t.FullPath(i));
+            Assert.Equal(expected.Size(i), t.Size(i));
+            Assert.Equal(expected.Allocated(i), t.Allocated(i));
+            Assert.Equal(expected.Files(i), t.Files(i));
+            Assert.Equal(expected.Children(i), t.Children(i));
+        }
+        Assert.Equal(new[] { "a", "b.bin" }, t.Children(t.Root).Select(t.Name).ToArray());
+    }
+
+    [Fact]
+    public void AStopwatchIsReadWhenTheTreeIsDone()
+    {
+        // The reader's time includes summing and sorting: it is read after them, not before.
+        var bl = new DiskTree.Builder(@"C:\");
+        for (var i = 0; i < 20_000; i++) bl.AddFile(bl.Root, $"f{i}.bin", i, -1, T, EntryFlags.None);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var started = watch.Elapsed;
+        var t = bl.Build(ScanReader.Folders, watch);
+        Assert.True(t.Elapsed > started);
+        Assert.True(t.Elapsed <= watch.Elapsed);
+    }
+
     [Fact]
     public void AllocatedIsUnknownWhenAnyChildIsUnknown()
     {

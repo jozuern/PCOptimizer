@@ -111,7 +111,7 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
         ct.ThrowIfCancellationRequested();
         if (failure is not null) throw failure;
         Report();
-        return builder.Build(ScanReader.Folders, watch.Elapsed, lost);
+        return builder.Build(ScanReader.Folders, watch, lost);
     }
 
     /// <summary>Lists one folder; false when it cannot be opened.</summary>
