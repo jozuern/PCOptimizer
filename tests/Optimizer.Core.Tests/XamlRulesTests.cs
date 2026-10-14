@@ -30,6 +30,22 @@ public partial class XamlRulesTests
         Assert.Empty(offenders);
     }
 
+    /// <summary>
+    /// The navigation rail uses NavItem and NavHeader (Views/NavItem.cs): WPF-UI's own item gives screen readers no way to
+    /// open a page, and its heading is not read at all. Both need the switch that removes the ItemsControl's item wrapper.
+    /// </summary>
+    [Fact]
+    public void TheNavigationRailIsReachableForScreenReaders()
+    {
+        var window = File.ReadAllText(Path.Combine(RepoPaths.App, "Views", "MainWindow.xaml"));
+        Assert.DoesNotContain("<ui:NavigationViewItem ", window);
+        Assert.DoesNotContain("<ui:NavigationViewItemHeader ", window);
+        Assert.Contains("<v:NavItem ", window);
+        Assert.Contains("<v:NavHeader ", window);
+        var project = File.ReadAllText(Path.Combine(RepoPaths.App, "Optimizer.App.csproj"));
+        Assert.Contains("\"Switch.System.Windows.Controls.ItemsControlDoesNotSupportAutomation\" Value=\"true\"", project);
+    }
+
     [GeneratedRegex(@"^(\{x:Type\s+)?TabItem\}?$")]
     private static partial Regex TabItemType();
 }

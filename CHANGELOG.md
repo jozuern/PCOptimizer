@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Screen readers and voice control, navigation:** the pages in the navigation rail could not be opened through UI Automation, and Narrator did not say which page is open. They are now list items that open their page (Invoke, Select) and report the open one as selected; the group headings (Optimize, Clean up, Maintain and check) are read as headings.
+
 ## 1.1.0
 
 Tunero now covers more of what the tools it replaces do. Your tweaks can go to accounts created later and are applied again when Windows resets them (both off until you turn them on). The changes file can also carry removed apps, service start types and startup entries. Install & update searches all of winget, the program list finds folders of programs uninstalled long ago, the Startup page can delete files and tasks with a backup, and Tools has four more quick fixes. A scan result you keep on purpose can be ignored. Eleven new tweaks, a check that every release came from GitHub's release workflow, and the October .NET security update. Tested in Hyper-V on Windows 11 Pro and Home 26H2.

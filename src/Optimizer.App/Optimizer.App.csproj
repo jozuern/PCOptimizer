@@ -12,7 +12,7 @@
     <StartupObject>Optimizer.App.Program</StartupObject>
     <!-- DOTNET_STARTUP_HOOKS from the user's environment would run code in the elevated app before Main. -->
     <StartupHookSupport>false</StartupHookSupport>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Product>Tunero</Product>
     <Authors>Joshua Zürn</Authors>
     <Company>Joshua Zürn</Company>
@@ -42,6 +42,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Optimizer.Core\Optimizer.Core.csproj" />
+  </ItemGroup>
+
+  <!-- UI Automation: a plain ItemsControl (WPF-UI's navigation rail) wraps each item in a generic data item that hides
+       the item's own patterns, so screen readers could not open a page. Without that wrapper, items report themselves
+       (Views/NavItem.cs), as ItemList already does for the app's lists. -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.System.Windows.Controls.ItemsControlDoesNotSupportAutomation" Value="true" />
   </ItemGroup>
 
   <ItemGroup>
