@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
+
+Storage is now a page of its own under Clean up. Run as administrator, it reads an NTFS drive straight from its file table, about twice as fast as folder by folder in the test VM, and shows it as a tree beside a treemap, by file type, as its largest files and as duplicates. Files and folders can go to the Recycle Bin, each checked again when it is moved, and the page says why an item may not. A progress card with Stop now shows over every page while changes, cleanups, uninstalls, updates and the analysis run. Screen readers can open every page from the navigation.
 
 ### Changed
 
