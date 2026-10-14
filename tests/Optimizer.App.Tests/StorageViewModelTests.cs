@@ -89,17 +89,47 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Equal(400 / 600.0, storage.TypeGroups[0].Share, 6);
         // Extension rows exist only for an expanded group.
         Assert.All(storage.TypeGroups, g => Assert.Empty(g.Extensions));
-        storage.ToggleTypeGroupCommand.Execute(storage.TypeGroups[0]);
+        storage.TypeGroups[0].IsExpanded = true;
         Assert.Equal([".mp4"], storage.TypeGroups[0].Extensions.Select(e => e.Name));
         Assert.Empty(storage.TypeGroups[1].Extensions);
         Assert.Empty(storage.TypeFiles);
+        // The group's selection list drives the selection, and only the group that owns it shows it.
+        storage.TypeGroups[0].Selected = storage.TypeGroups[0].Extensions[0];
+        Assert.Same(storage.TypeGroups[0].Extensions[0], storage.SelectedType);
+        Assert.True(storage.SelectedType!.IsSelected);
+        Assert.Equal([a, b], storage.TypeFiles.Select(f => f.Path));
+        // Closing the group drops the pick and its files.
+        storage.TypeGroups[0].IsExpanded = false;
+        Assert.Null(storage.SelectedType);
+        Assert.Empty(storage.TypeFiles);
+        storage.TypeGroups[0].IsExpanded = true;
         storage.SelectedType = storage.TypeGroups[0].Extensions[0];
+        Assert.Same(storage.SelectedType, storage.TypeGroups[0].Selected);
         Assert.Equal([a, b], storage.TypeFiles.Select(f => f.Path));
         // Closing the result drops the lists.
         storage.CloseResultCommand.Execute(null);
         Assert.Empty(storage.TypeGroups);
         Assert.Empty(storage.TypeFiles);
         Assert.Null(storage.SelectedType);
+    }
+
+    [Fact]
+    public async Task AGroupShowsAtMost200ExtensionsAndCountsTheRest()
+    {
+        for (var i = 0; i < 250; i++) File($"f.e{i:D3}", 10 + i);
+        var storage = Storage();
+        await storage.EnsureLoadedAsync();
+        await storage.AnalyzeFolderAsync(_root);
+        storage.Tab = StorageViewModel.TabTypes;
+        var group = Assert.Single(storage.TypeGroups);
+        Assert.Null(group.MoreText);
+        group.IsExpanded = true;
+        Assert.Equal(200, group.Extensions.Count);
+        Assert.Equal(".e249", group.Extensions[0].Name);
+        Assert.Equal(Loc.Instance.Format("Storage_MoreTypes", 50), group.MoreText);
+        group.IsExpanded = false;
+        Assert.Empty(group.Extensions);
+        Assert.Null(group.MoreText);
     }
 
     [Fact]

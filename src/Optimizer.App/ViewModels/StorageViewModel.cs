@@ -348,7 +348,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         var totals = tree.TypeTotals();
         var all = (double)totals.Sum(t => t.Bytes);
         foreach (var g in totals.GroupBy(t => t.Group).Select(g => (Group: g.Key, Rows: g.ToList(), Bytes: g.Sum(t => t.Bytes))).OrderByDescending(g => g.Bytes))
-            TypeGroups.Add(new TypeGroupRow(g.Group, g.Bytes, g.Rows.Sum(t => t.Count), all > 0 ? g.Bytes / all : 0, g.Rows, all));
+            TypeGroups.Add(new TypeGroupRow(g.Group, g.Bytes, g.Rows.Sum(t => t.Count), all > 0 ? g.Bytes / all : 0, g.Rows, all, row => SelectedType = row));
         foreach (var row in TypeGroups.Where(r => _openGroups.Contains(r.Group))) row.IsExpanded = true;
         if (_openType is { } ext)
             SelectedType = TypeGroups.SelectMany(g => g.Extensions).FirstOrDefault(t => t.Extension == ext);
@@ -356,23 +356,13 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         _openType = null;
     }
 
-    [RelayCommand]
-    private void ToggleTypeGroup(TypeGroupRow? group)
-    {
-        if (group is null) return;
-        // Closing the group of the selected extension leaves nothing selected: its file list would hang in the air.
-        if (group.IsExpanded && SelectedType is { } t && group.Extensions.Contains(t)) SelectedType = null;
-        group.IsExpanded = !group.IsExpanded;
-    }
-
-    [RelayCommand]
-    private void SelectType(TypeRow? row) => SelectedType = row;
-
     /// <summary>The largest 100 files of the chosen extension, built for this one only.</summary>
     partial void OnSelectedTypeChanged(TypeRow? oldValue, TypeRow? newValue)
     {
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
+        // Each group's selection list shows only its own pick.
+        foreach (var g in TypeGroups) g.Selected = newValue is not null && g.Extensions.Contains(newValue) ? newValue : null;
         TypeFiles.Clear();
         if (newValue is not null && Tree is { } tree)
             foreach (var i in tree.LargestFilesOfType(newValue.Extension, 100)) TypeFiles.Add(FileRow(tree, i));

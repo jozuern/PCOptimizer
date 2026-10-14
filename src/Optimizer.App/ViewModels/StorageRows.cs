@@ -83,8 +83,12 @@ public sealed partial class TypeRow(TypeTotal total, double share) : ObservableO
 /// One file group of the File types tab with its totals. <see cref="Extensions"/> stays empty until the group is opened:
 /// a drive can hold thousands of extensions, and only the ones the user looks at become rows.
 /// </summary>
-public sealed partial class TypeGroupRow(FileGroup group, long bytes, int count, double share, IReadOnlyList<TypeTotal> totals, double all) : ObservableObject
+public sealed partial class TypeGroupRow(FileGroup group, long bytes, int count, double share, IReadOnlyList<TypeTotal> totals, double all,
+    Action<TypeRow?>? picked = null) : ObservableObject
 {
+    /// <summary>Most extension rows one group shows (the rest is a count): a group can hold thousands.</summary>
+    public const int MaxExtensions = 200;
+
     public FileGroup Group { get; } = group;
     public string Name { get; } = FileGroupNames.Name(group);
     public long Bytes { get; } = bytes;
@@ -101,11 +105,26 @@ public sealed partial class TypeGroupRow(FileGroup group, long bytes, int count,
 
     [ObservableProperty] private bool _isExpanded;
 
+    /// <summary>The extension picked in this group's list (the page's selection list binds to it); the view model clears it when another group's is picked.</summary>
+    [ObservableProperty] private TypeRow? _selected;
+
+    /// <summary>"12 more types" under the list when the group has more extensions than it shows; null otherwise.</summary>
+    [ObservableProperty] private string? _moreText;
+
+    partial void OnSelectedChanged(TypeRow? value)
+    {
+        if (value is not null) picked?.Invoke(value);
+    }
+
     partial void OnIsExpandedChanged(bool value)
     {
+        // Closing the group of the picked extension leaves nothing picked: its file list would hang in the air.
+        if (!value && Selected is not null) picked?.Invoke(null);
         Extensions.Clear();
+        MoreText = null;
         if (!value) return;
-        foreach (var t in totals) Extensions.Add(new TypeRow(t, all > 0 ? t.Bytes / all : 0));
+        foreach (var t in totals.Take(MaxExtensions)) Extensions.Add(new TypeRow(t, all > 0 ? t.Bytes / all : 0));
+        if (totals.Count > MaxExtensions) MoreText = Loc.Instance.Format("Storage_MoreTypes", totals.Count - MaxExtensions);
     }
 
     // What screen readers announce for this item in a list.
