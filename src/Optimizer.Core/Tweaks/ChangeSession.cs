@@ -100,14 +100,16 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
     public async Task<UndoAllOutcome> UndoAllAsync() => new(await Task.Run(engine.RevertAll));
 
     /// <summary>The scan the window runs, without the window: findings, facts and the state of every visible tweak.</summary>
+    /// <param name="ignored">The results the user ignores (<see cref="IgnoredResults.Key"/>): left out of the findings and the facts, as in the window.</param>
     public static async Task<PcSnapshot> ScanAsync(CatalogData catalog, TweakCatalog tweaks, TweakEngine engine, Actions.IRegistryRoots registry,
-        Func<IReadOnlyDictionary<string, string>?> bcd)
+        Func<IReadOnlyDictionary<string, string>?> bcd, IReadOnlyCollection<string>? ignored = null)
     {
         var visible = tweaks.Visible.ToList();
         var scan = await new ScanService(catalog, registry, bcd, engine, visible).RunAsync();
-        var facts = FactsBuilder.Build(scan.Profile, scan.Findings, catalog, registry);
+        var findings = IgnoredResults.Without(scan.Findings, ignored ?? []);
+        var facts = FactsBuilder.Build(scan.Profile, findings, catalog, registry);
         var states = await Task.Run(() => engine.DetectAll(visible, facts));
         var applied = states.Where(s => s.State is TweakState.Applied or TweakState.PendingRestart).Select(s => s.Tweak.Id).ToHashSet(StringComparer.Ordinal);
-        return new PcSnapshot(facts, states, applied, scan.Findings) { Profile = scan.Profile };
+        return new PcSnapshot(facts, states, applied, findings) { Profile = scan.Profile };
     }
 }

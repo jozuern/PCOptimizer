@@ -37,10 +37,44 @@ public class ChangeTransferSectionTests
     }
 
     [Theory]
-    [InlineData("""{"kind":"pcoptimizer-changes","format":1,"appVersion":"x","windowsBuild":"x","created":"2026-10-13T00:00:00+00:00","tweaks":[],"priorities":[],"services":[{"name":"bad name;","start":"Disabled"}]}""")]
+    [InlineData("""{"kind":"pcoptimizer-changes","format":1,"appVersion":"x","windowsBuild":"x","created":"2026-10-13T00:00:00+00:00","tweaks":[],"priorities":[],"services":[{"name":"bad\\name","start":"Disabled"}]}""")]
+    [InlineData("""{"kind":"pcoptimizer-changes","format":1,"appVersion":"x","windowsBuild":"x","created":"2026-10-13T00:00:00+00:00","tweaks":[],"priorities":[],"services":[{"name":"","start":"Disabled"}]}""")]
     [InlineData("""{"kind":"pcoptimizer-changes","format":1,"appVersion":"x","windowsBuild":"x","created":"2026-10-13T00:00:00+00:00","tweaks":[],"priorities":[],"startup":[{"kind":"RunKey","name":""}]}""")]
     [InlineData("""{"kind":"pcoptimizer-changes","format":1,"appVersion":"x","windowsBuild":"x","created":"2026-10-13T00:00:00+00:00","tweaks":[],"priorities":[],"apps":["../evil"]}""")]
     public void InvalidSectionsAreRejected(string text) => Assert.Null(ChangeTransfer.Parse(text));
+
+    /// <summary>A third-party service key with a space exports and imports again (the whole file was rejected before).</summary>
+    [Fact]
+    public void ServiceNamesWithSpacesRoundTrip()
+    {
+        var service = ServiceManager.Change(Row("Rockstar Service", ServiceStart.Automatic, null, @"C:\Program Files\Rockstar\svc.exe"), ServiceStart.Manual)!;
+        var file = ChangeTransfer.Create([], new HashSet<string>(), Catalog, [], "1.0.25", "26300.1",
+            new ExportSections(null, ChangeTransfer.ServiceSection([service]), null)).File;
+        var back = ChangeTransfer.Parse(ChangeTransfer.Serialize(file));
+        Assert.Equal([new TransferService("Rockstar Service", ServiceStart.Manual)], back?.Services);
+    }
+
+    /// <summary>A startup entry of a protected Windows service is not turned off by an import, as on the Startup page.</summary>
+    [Fact]
+    public void AStartupServiceFollowsTheServiceRules()
+    {
+        var file = ChangeTransfer.Create([], new HashSet<string>(), Catalog, [], "1.0.25", "26300.1",
+            new ExportSections(null, null, [new TransferStartup(StartupKind.Service, "DHCP Client"), new TransferStartup(StartupKind.Service, "Vendor Updater")])).File;
+        static StartupEntry Entry(string name, string service) =>
+            new(StartupKind.Service, name, null, null, $@"HKLM\SYSTEM\CurrentControlSet\Services\{service}", Hive.Machine, true, "service:" + service) { Target = service };
+        var targets = new TransferTargets(
+            Services:
+            [
+                Row("Dhcp", ServiceStart.Automatic, "protected", @"C:\Windows\System32\dhcpcore.dll"),
+                Row("VendorUpdater", ServiceStart.Automatic, null, @"C:\Program Files\Vendor\updater.exe"),
+            ],
+            Startup: [Entry("DHCP Client", "Dhcp"), Entry("Vendor Updater", "VendorUpdater")],
+            Apps: []);
+        var plan = ChangeTransfer.Plan(file, Catalog, Pro, new HashSet<string>(), targets);
+        var changed = plan.Together.Concat(plan.OneByOne).SelectMany(t => t.Actions.OfType<ServiceAction>()).Select(a => a.Name).ToList();
+        Assert.Equal(["VendorUpdater"], changed);
+        Assert.Equal(1, plan.NotForThisPc);
+    }
 
     private static ServiceRow Row(string name, ServiceStart start, string? mode, string file) =>
         new(name, name, null, start, false, file, file, mode is null ? null : new ServiceNote { Mode = mode });

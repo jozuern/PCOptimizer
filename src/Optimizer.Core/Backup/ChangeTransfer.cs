@@ -98,8 +98,13 @@ public static partial class ChangeTransfer
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._\-]{0,119}$")]
     private static partial Regex IdRegex();
 
-    [GeneratedRegex(@"^[A-Za-z0-9_.\-$]{1,120}$")]
-    private static partial Regex ServiceNameRegex();
+    /// <summary>
+    /// A service key name as Windows allows it (CreateService: at most 256 characters, no slash or backslash), so a
+    /// third-party name with a space ("Rockstar Service") exports and imports. The name is only compared with the
+    /// services this PC has; it never becomes a path.
+    /// </summary>
+    public static bool IsServiceName(string? name) =>
+        name is { Length: > 0 and <= 256 } && !name.Any(c => c is '/' or '\\' || char.IsControl(c));
 
     /// <summary>
     /// The file for the catalog tweaks this app changed and that are on now (<paramref name="backedUp"/> and
@@ -137,7 +142,7 @@ public static partial class ChangeTransfer
     /// <summary>The services section: the start types this app set and that are in place now (<paramref name="applied"/>).</summary>
     public static IReadOnlyList<TransferService> ServiceSection(IEnumerable<TweakDefinition> applied) =>
         applied.Where(t => t.Id.StartsWith("service.start.", StringComparison.Ordinal))
-            .SelectMany(t => t.Actions.OfType<ServiceAction>()).Select(a => new TransferService(a.Name, a.StartType)).ToList();
+            .SelectMany(t => t.Actions.OfType<ServiceAction>()).Where(a => IsServiceName(a.Name)).Select(a => new TransferService(a.Name, a.StartType)).ToList();
 
     /// <summary>The startup section: the entries this app turned off and that are still off (<paramref name="applied"/>).</summary>
     public static IReadOnlyList<TransferStartup> StartupSection(IEnumerable<TweakDefinition> applied) =>
@@ -164,7 +169,7 @@ public static partial class ChangeTransfer
         if (file.Tweaks is null || file.Priorities is null || file.Count > MaxEntries) return null;
         if (file.Tweaks.Any(id => id is null || !IdRegex().IsMatch(id))) return null;
         if (file.Apps?.Any(a => a is null || !IdRegex().IsMatch(a)) == true) return null;
-        if (file.Services?.Any(s => s is null || s.Name is null || !ServiceNameRegex().IsMatch(s.Name) || !Enum.IsDefined(s.Start)) == true) return null;
+        if (file.Services?.Any(s => s is null || !IsServiceName(s.Name) || !Enum.IsDefined(s.Start)) == true) return null;
         if (file.Startup?.Any(s => s is null || !Enum.IsDefined(s.Kind) || s.Name is not { Length: > 0 and <= 260 } || s.Name.Any(char.IsControl)) == true) return null;
         if (file.Priorities.Any(p => p is null || p.Exe is null || !ProgramPriority.IsValidExe(p.Exe) || !Enum.IsDefined(p.Cpu))) return null;
         return file;
@@ -204,11 +209,14 @@ public static partial class ChangeTransfer
             else if (ServiceManager.Change(row, s.Start) is { } t) (t.IsBatchSafe ? together : oneByOne).Add(t);
             else notHere++;
         }
-        // Startup entries: turned off where this PC has the same entry; never deleted.
+        // Startup entries: turned off where this PC has the same entry; never deleted. A service follows the Startup
+        // page's rule: not one of Windows' own that the service catalog keeps read-only (Dhcp, the firewall).
         foreach (var s in file.Startup ?? [])
         {
             var entry = targets?.Startup?.FirstOrDefault(e => e.Kind == s.Kind && string.Equals(e.Name, s.Name, StringComparison.OrdinalIgnoreCase));
             if (entry is null) notHere++;
+            else if (entry.Kind == StartupKind.Service
+                     && targets?.Services?.FirstOrDefault(r => string.Equals(r.Name, entry.Target, StringComparison.OrdinalIgnoreCase)) is not { Edit: not ServiceEdit.ReadOnly }) notHere++;
             else if (entry.Enabled == false) on++;
             else if (StartupTweaks.Set(entry, enabled: false) is { } t) (t.IsBatchSafe ? together : oneByOne).Add(t);
             else notHere++;

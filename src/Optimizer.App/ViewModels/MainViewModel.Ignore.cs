@@ -7,10 +7,9 @@ using Optimizer.Core.Findings;
 namespace Optimizer.App.ViewModels;
 
 /// <summary>
-/// Results the user ignores: a game library on a hard disk kept there on purpose (a backup, copying being faster than
-/// downloading), a check that does not apply to how this PC is used. An ignored result leaves the lists, the score and
-/// the problem counts; it stays one click away under "Ignored" and comes back with Stop ignoring. One result is
-/// ignored, not the whole check: another library on a hard disk still shows.
+/// Results the user ignores (<see cref="IgnoredResults"/>): an ignored result leaves the lists, the score, the problem
+/// counts and the facts the recommendations read; it stays one click away under "Ignored" and comes back with Stop
+/// ignoring.
 /// </summary>
 public sealed partial class MainViewModel
 {
@@ -21,15 +20,14 @@ public sealed partial class MainViewModel
     [ObservableProperty] private string? _ignoredText;
     [ObservableProperty] private bool _showIgnored;
 
-    /// <summary>The check and the one result it means: the instance, or the subject where a check has no instance key (a library path).</summary>
-    public static string IgnoreKey(Finding f) => f.InstanceKey is null && f.Subject is { Length: > 0 } subject ? $"{f.Key}|{subject}" : f.Key;
-
-    private bool IsIgnored(Finding f) => _settings.IgnoredFindings.Contains(IgnoreKey(f), StringComparer.Ordinal);
+    /// <summary>The ignored results' keys, as a copy a background read can use while the list changes.</summary>
+    private IReadOnlySet<string> IgnoredKeys() => _settings.IgnoredFindings.ToHashSet(StringComparer.Ordinal);
 
     /// <summary>Splits the profiled results into the shown ones and the ignored ones.</summary>
     private IReadOnlyList<Finding> WithoutIgnored(IReadOnlyList<Finding> profiled)
     {
-        _ignoredFindings = profiled.Where(f => f.Kind != FindingKind.GameAccess && IsIgnored(f)).ToList();
+        var keys = IgnoredKeys();
+        _ignoredFindings = profiled.Where(f => IgnoredResults.IsIgnored(f, keys)).ToList();
         return _ignoredFindings.Count == 0 ? profiled : profiled.Where(f => !_ignoredFindings.Contains(f)).ToList();
     }
 
@@ -44,30 +42,33 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void ToggleIgnored() => ShowIgnored = !ShowIgnored;
 
+    // Take any inspector row, as RunAction does: the buttons' parameter is the selected item, which is a tweak as often
+    // as a result, and a typed command would throw when it asks whether it can run.
     [RelayCommand]
-    private void IgnoreFinding(FindingItemViewModel? item)
+    private async Task IgnoreFindingAsync(InspectorItem? row)
     {
-        if (item is null || !item.CanIgnore) return;
-        var key = IgnoreKey(item.Finding);
+        if (row is not FindingItemViewModel item || !item.CanIgnore) return;
+        var key = IgnoredResults.Key(item.Finding);
         if (!_settings.IgnoredFindings.Contains(key, StringComparer.Ordinal)) _settings.IgnoredFindings.Add(key);
         _settings.Save();
-        AfterIgnoreChanged();
+        await AfterIgnoreChangedAsync();
         ShowResult(Loc.Instance.Format("Findings_IgnoredResult", item.Title));
     }
 
     [RelayCommand]
-    private void StopIgnoring(FindingItemViewModel? item)
+    private async Task StopIgnoringAsync(InspectorItem? row)
     {
-        if (item is null) return;
-        _settings.IgnoredFindings.RemoveAll(k => k == IgnoreKey(item.Finding));
+        if (row is not FindingItemViewModel item) return;
+        _settings.IgnoredFindings.RemoveAll(k => k == IgnoredResults.Key(item.Finding));
         _settings.Save();
-        AfterIgnoreChanged();
+        await AfterIgnoreChangedAsync();
         ShowResult(Loc.Instance.Format("Findings_UnignoredResult", item.Title));
     }
 
-    private void AfterIgnoreChanged()
+    /// <summary>The facts change with the ignored results (what is recommended for them): read them again, then every list.</summary>
+    private async Task AfterIgnoreChangedAsync()
     {
-        ApplyProfile();
-        RebuildFindings();
+        await RefreshTweaksAsync();
+        Rebuild();
     }
 }

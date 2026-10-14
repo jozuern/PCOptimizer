@@ -36,7 +36,7 @@ public sealed class AppSettings
     /// <summary>The overview's note on how the app works (reads only, asks first, can undo) was dismissed.</summary>
     public bool IntroSeen { get; set; }
 
-    /// <summary>Scan results the user ignores (<see cref="ViewModels.MainViewModel.IgnoreKey"/>): left out of the lists and the score.</summary>
+    /// <summary>Scan results the user ignores (<see cref="Optimizer.Core.Findings.IgnoredResults.Key"/>): left out of the lists, the score and the facts.</summary>
     public List<string> IgnoredFindings { get; set; } = [];
 
     /// <summary>The opt-in sections of an export on the Changes page (removed apps, service start types, startup entries turned off).</summary>

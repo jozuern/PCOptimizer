@@ -60,8 +60,15 @@ public static class Program
         // code from their TEMP).
         if (DataPaths.ProcessIsElevated) ProcessHardening.UseTempFolder(DataPaths.Temp, empty: !OtherCopyRuns());
 
+        // The handoff from the first process is read once and then cleared: every program this process starts inherits
+        // its environment, and a new Tunero (the one an update starts) would take itself for the restarted one and refuse.
+        var restarted = Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1";
+        LaunchedAt = long.TryParse(Environment.GetEnvironmentVariable(SingleFileRuntime.LaunchedVariable), System.Globalization.NumberStyles.None,
+            System.Globalization.CultureInfo.InvariantCulture, out var ticks) && ticks > 0 ? new DateTime(ticks, DateTimeKind.Utc) : null;
+        Environment.SetEnvironmentVariable(SingleFileRuntime.RestartedVariable, null);
+        Environment.SetEnvironmentVariable(SingleFileRuntime.LaunchedVariable, null);
         var start = SingleFileRuntime.Decide(bundle, Environment.GetEnvironmentVariable(SingleFileRuntime.ExtractVariable), runtimeBase,
-            Environment.GetEnvironmentVariable(SingleFileRuntime.RestartedVariable) == "1", DataPaths.ProcessIsElevated);
+            restarted, DataPaths.ProcessIsElevated);
         if (start == RuntimeStart.Restart)
         {
             if (RunWithProtectedRuntime(args, runtimeBase) is { } exitCode) return exitCode;
@@ -81,6 +88,9 @@ public static class Program
         app.InitializeComponent();
         return app.Run();
     }
+
+    /// <summary>The first process's start (UTC) when this one is its restart for the protected runtime folder; for --perf.</summary>
+    public static DateTime? LaunchedAt { get; private set; }
 
     private static void Preload()
     {

@@ -83,7 +83,7 @@ public sealed partial class MainViewModel
         var access = _profiledFindings.FirstOrDefault(f => f.Kind == FindingKind.GameAccess);
         GameAccess = access is null ? null : new FindingItemViewModel(access, lang);
         BuildIgnored(lang);
-        var hidden = ProfileView.HiddenProblems(_usage, _findings);
+        var hidden = ProfileView.HiddenProblems(_usage, IgnoredResults.Without(_findings, IgnoredKeys()));
         HiddenFindingsText = hidden > 0 ? Loc.Instance.Format("Findings_HiddenByProfile", hidden) : null;
         var passed = ShowPassed ? 0 : _profiledFindings.Count(f => f.Kind == FindingKind.Advisor && f.Status is FindingStatus.Ok or FindingStatus.Unsupported);
         AdvisorPassedText = passed > 0 ? Loc.Instance.Format("Advisor_PassedHidden", passed) : null;

@@ -327,9 +327,10 @@ public class SecurityTests
     [InlineData(true, ProtectedRuntime, false, true, RuntimeStart.Continue)]
     [InlineData(true, ProtectedRuntime + @"\", true, true, RuntimeStart.Continue)]
     [InlineData(false, null, false, true, RuntimeStart.Continue)]
-    // The restart marker alone never skips the check: set from outside (or after a restart that did not take), an
-    // elevated process refuses to start; an unelevated one gains nothing from the folder and continues.
-    [InlineData(true, null, true, true, RuntimeStart.Refuse)]
+    // The restart marker without a folder was inherited (1.0.0 passed it on to the version its update started): restart.
+    [InlineData(true, null, true, true, RuntimeStart.Restart)]
+    // The restart marker never skips the check: with another folder (set from outside, or a restart that did not take),
+    // an elevated process refuses to start; an unelevated one gains nothing from the folder and continues.
     [InlineData(true, @"C:\Users\me\Planted", true, true, RuntimeStart.Refuse)]
     [InlineData(true, @"C:\Users\me\Planted", true, false, RuntimeStart.Continue)]
     public void SingleFileExeRestartsOnceWithTheProtectedExtractionFolder(bool bundle, string? current, bool restarted, bool elevated, RuntimeStart expected) =>

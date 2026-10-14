@@ -162,7 +162,7 @@ public partial class App : Application
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var log = args.Value("--log");
             Shutdown(args.Value("--apply") is { } changes ? await CommandLineApply.ApplyAsync(changes, services, log, args.Has("--no-restore-point"))
-                : args.Has("--apply-recommended") ? await CommandLineApply.ApplyRecommendedAsync(services, args.Value("--profile"), _settings.Profile, log, args.Has("--no-restore-point"))
+                : args.Has("--apply-recommended") ? await CommandLineApply.ApplyRecommendedAsync(services, args.Value("--profile"), _settings.Profile, _settings.IgnoredFindings, log, args.Has("--no-restore-point"))
                 : args.Value("--export") is { } exportPath ? await CommandLineApply.ExportAsync(exportPath, services, log, args.Value("--include"))
                 : args.Has(Optimizer.Core.Tweaks.ReapplyTask.Argument) ? await CommandLineApply.ReapplyAsync(services, log)
                 : await CommandLineApply.UndoAllAsync(services, log));
@@ -551,8 +551,7 @@ public partial class App : Application
         // runtime folder, and the first process hands its start time to the second.
         DateTime processStart;
         using (var self = System.Diagnostics.Process.GetCurrentProcess()) processStart = self.StartTime;
-        var launch = long.TryParse(Environment.GetEnvironmentVariable(SingleFileRuntime.LaunchedVariable), System.Globalization.NumberStyles.None,
-            CultureInfo.InvariantCulture, out var ticks) && ticks > 0 ? new DateTime(ticks, DateTimeKind.Utc).ToLocalTime() : processStart;
+        var launch = Program.LaunchedAt?.ToLocalTime() ?? processStart;
         lines.Add(launch == processStart ? "start (ms after the process started)" : $"start (ms after the launch; this process started {(processStart - launch).TotalMilliseconds:0} ms after it)");
         foreach (var (name, at) in _startMarks) lines.Add($"{at:HH:mm:ss.fff} {(at - launch).TotalMilliseconds,6:0} ms  {name}");
         // What the scan spent its time on: the probe times and every tool it started, from the session log.

@@ -55,10 +55,12 @@ public static class CommandLineApply
 
     /// <param name="profileId">The profile named with --profile; it must exist and fit this PC.</param>
     /// <param name="savedProfileId">The profile saved in the app, used without --profile; when this PC no longer offers it (or none was saved), the one that fits this PC best.</param>
-    public static async Task<int> ApplyRecommendedAsync(AppServices services, string? profileId, string? savedProfileId, string? logPath, bool withoutRestorePoint)
+    /// <param name="ignored">The results ignored in the app: nothing is applied for them, as on the Overview.</param>
+    public static async Task<int> ApplyRecommendedAsync(AppServices services, string? profileId, string? savedProfileId, IReadOnlyCollection<string> ignored,
+        string? logPath, bool withoutRestorePoint)
     {
         var lines = new List<string>();
-        var code = await Locked(lines, () => ApplyRecommendedCoreAsync(services, profileId, savedProfileId, withoutRestorePoint, lines));
+        var code = await Locked(lines, () => ApplyRecommendedCoreAsync(services, profileId, savedProfileId, ignored, withoutRestorePoint, lines));
         Finish("apply recommended", lines, code, logPath);
         return code;
     }
@@ -179,14 +181,15 @@ public static class CommandLineApply
     /// first, then what the profile recommends for this PC), the same rule for what applies together, and the rest
     /// listed for the app.
     /// </summary>
-    private static async Task<int> ApplyRecommendedCoreAsync(AppServices services, string? profileId, string? savedProfileId, bool withoutRestorePoint, List<string> lines)
+    private static async Task<int> ApplyRecommendedCoreAsync(AppServices services, string? profileId, string? savedProfileId, IReadOnlyCollection<string> ignored,
+        bool withoutRestorePoint, List<string> lines)
     {
         if (!services.Elevation.IsElevated)
         {
             lines.Add(Loc.Instance["Cli_NotElevated"]);
             return NotElevated;
         }
-        var pc = await ScanAsync(services);
+        var pc = await ScanAsync(services, ignored);
         var profiles = CatalogData.Current.Profiles;
         var profile = profileId is not null
             ? profiles.Profiles.FirstOrDefault(p => p.Id == profileId && p.IsAvailable(pc.Facts))
@@ -236,8 +239,8 @@ public static class CommandLineApply
     }
 
     /// <summary>The scan the window runs: the facts decide what applies to this PC and what is on already.</summary>
-    private static Task<PcSnapshot> ScanAsync(AppServices services) =>
-        ChangeSession.ScanAsync(CatalogData.Current, services.Catalog, services.Engine, services.Context.Registry, services.BcdValues);
+    private static Task<PcSnapshot> ScanAsync(AppServices services, IReadOnlyCollection<string>? ignored = null) =>
+        ChangeSession.ScanAsync(CatalogData.Current, services.Catalog, services.Engine, services.Context.Registry, services.BcdValues, ignored);
 
     /// <summary>
     /// Applies the batch-safe changes in one go (one restore point) and lists the rest for the app. Without a restore

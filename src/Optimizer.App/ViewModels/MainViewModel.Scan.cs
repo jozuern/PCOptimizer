@@ -60,6 +60,7 @@ public sealed partial class MainViewModel
             _reuseSlowParts = false;
             var service = ScanService;
             var lastSample = _lastBackgroundSample;
+            var ignored = IgnoredKeys();
             // Scan, findings and every tweak's state in one trip to the background: at the start the UI thread is busy
             // drawing the window, and a return to it in between waited for that (the states were read only after the
             // window was drawn). The page is ready without the 3 second background CPU sample; that one check follows
@@ -67,7 +68,7 @@ public sealed partial class MainViewModel
             var (profile, findings, sampleTask, tweaks) = await Task.Run(async () =>
             {
                 var (p, f, sample) = await service.RunAsync(progress, previous, lastSample, waitForBackgroundSample: false);
-                return (p, f, sample, ReadTweakStates(p, f));
+                return (p, f, sample, ReadTweakStates(p, f, ignored));
             });
             pendingSample = sampleTask;
             _findings = findings;
@@ -123,8 +124,9 @@ public sealed partial class MainViewModel
         if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
         var registry = _services.Context.Registry;
         var service = ScanService;
+        var ignored = IgnoredKeys();
         var (completed, findings) = await Task.Run(() => service.WithSample(scanned, sample));
-        var facts = await Task.Run(() => FactsBuilder.Build(completed, findings, _catalog, registry));
+        var facts = await Task.Run(() => FactsBuilder.Build(completed, IgnoredResults.Without(findings, ignored), _catalog, registry));
         if (!ReferenceEquals(Profile, scanned) || IsScanning) return;
         _findings = findings;
         Profile = completed;
@@ -174,20 +176,21 @@ public sealed partial class MainViewModel
         if (Profile is null) return;
         var profile = Profile;
         var findings = _findings;
+        var ignored = IgnoredKeys();
         // One trip to the background and back (each return to the UI thread waits for what it is drawing).
-        ShowTweakStates(await Task.Run(() => ReadTweakStates(profile, findings)));
+        ShowTweakStates(await Task.Run(() => ReadTweakStates(profile, findings, ignored)));
     }
 
     /// <summary>Every tweak's state, the facts it was read with, the changes Windows reset, and the number of backups.</summary>
     private sealed record TweakRead(Facts Facts, IReadOnlyList<TweakStatus> Catalog, IReadOnlyList<TweakStatus> Device,
         IReadOnlyList<DriftItem> Drift, int Backups);
 
-    /// <summary>Reads the system: runs off the UI thread.</summary>
-    private TweakRead ReadTweakStates(HardwareProfile profile, IReadOnlyList<Finding> findings)
+    /// <summary>Reads the system: runs off the UI thread. Ignored results are not in the facts, so nothing is recommended for them.</summary>
+    private TweakRead ReadTweakStates(HardwareProfile profile, IReadOnlyList<Finding> findings, IReadOnlySet<string> ignored)
     {
         var engine = _services.Engine;
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        var facts = FactsBuilder.Build(profile, findings, _catalog, _services.Context.Registry);
+        var facts = FactsBuilder.Build(profile, IgnoredResults.Without(findings, ignored), _catalog, _services.Context.Registry);
         var catalog = engine.DetectAll(_services.Catalog.Visible, facts);
         var device = engine.DetectAll(DeviceTweaks.Build(profile), facts);
         Log.Info("scan", "tweak states read", new { ms = watch.ElapsedMilliseconds });

@@ -2,6 +2,7 @@ using Optimizer.Core.Backup;
 using Optimizer.Core.Catalog;
 using Optimizer.Core.Debloat;
 using Optimizer.Core.Hardware;
+using Optimizer.Core.Logging;
 using Optimizer.Core.Services;
 using Optimizer.Core.Startup;
 using Optimizer.Core.Tweaks;
@@ -28,18 +29,35 @@ public static class TransferData
             startup ? ChangeTransfer.StartupSection(applied) : null);
     }
 
-    /// <summary>What this PC has for the file's sections; null when the file has none.</summary>
+    /// <summary>
+    /// What this PC has for the file's sections; null when the file has none. A part that cannot be read (Get-AppxPackage
+    /// failed) stays null, so its entries count as not for this PC and the rest of the file still applies.
+    /// </summary>
     public static TransferTargets? Targets(AppServices services, TransferFile file, HardwareProfile? profile)
     {
         if (file.Apps is null && file.Services is null && file.Startup is null) return null;
-        var rows = file.Services is { Count: > 0 } ? ServiceManager.List(services.Context.Services, CatalogData.Current.Services) : null;
-        var entries = file.Startup is { Count: > 0 } ? new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath).ScanAll() : null;
-        IReadOnlyList<DebloatItem>? apps = null;
-        if (file.Apps is { Count: > 0 } && profile is not null)
-        {
-            var installed = new DebloatService(services.Context.Processes, AppServices.DataFolder).ListInstalled(allUsers: services.Elevation.IsElevated);
-            apps = DebloatService.Offer(CatalogData.Current.Appx, installed, profile, CatalogData.Current);
-        }
+        // The services also for a startup entry of a service: the import keeps to the Services page's rules for it.
+        var rows = file.Services is { Count: > 0 } || file.Startup?.Any(s => s.Kind == StartupKind.Service) == true
+            ? Read("services", () => ServiceManager.List(services.Context.Services, CatalogData.Current.Services)) : null;
+        var entries = file.Startup is { Count: > 0 }
+            ? Read("startup", () => new StartupScanner(services.Context.Registry, services.Context.Tasks, services.ProfilePath).ScanAll()) : null;
+        var apps = file.Apps is { Count: > 0 } && profile is not null
+            ? Read("apps", () => DebloatService.Offer(CatalogData.Current.Appx,
+                new DebloatService(services.Context.Processes, AppServices.DataFolder).ListInstalled(allUsers: services.Elevation.IsElevated), profile, CatalogData.Current))
+            : null;
         return new TransferTargets(rows, entries, apps);
+    }
+
+    private static IReadOnlyList<T>? Read<T>(string part, Func<IReadOnlyList<T>> read)
+    {
+        try
+        {
+            return read();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            Log.Warn("transfer", $"{part} not read for the import: {ex.Message}");
+            return null;
+        }
     }
 }

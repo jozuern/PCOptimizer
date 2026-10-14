@@ -29,11 +29,13 @@ public static class SingleFileRuntime
     /// Continue when this is no single-file exe or it already extracts into <paramref name="wantedBase"/>. Otherwise
     /// restart once; when the folder still differs after that restart (or the variable was set from outside), an
     /// elevated process refuses to start instead of loading native libraries from a folder the user can write to.
+    /// The restart always sets the folder, so the marker without a folder was inherited, not set by the restart (a new
+    /// version that Update now in 1.0.0 started with its own environment): that start restarts like a first one.
     /// </summary>
     public static RuntimeStart Decide(bool isBundle, string? currentExtractBase, string wantedBase, bool restarted, bool elevated)
     {
         if (!isBundle || SameFolder(currentExtractBase, wantedBase)) return RuntimeStart.Continue;
-        if (!restarted) return RuntimeStart.Restart;
+        if (!restarted || string.IsNullOrWhiteSpace(currentExtractBase)) return RuntimeStart.Restart;
         return elevated ? RuntimeStart.Refuse : RuntimeStart.Continue;
     }
 

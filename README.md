@@ -92,7 +92,7 @@ Start-Process Tunero.exe -ArgumentList '--apply-recommended', '--profile', 'gami
 | Switch | Effect |
 |---|---|
 | `--apply <file>` | Applies an exported changes file with the rules of Import: Preview, Expert and anti-cheat sensitive changes are listed in the log, not applied. |
-| `--apply-recommended` | Applies the Overview's recommended list (fixes of problems found, then what the profile recommends for this PC) with the same rules: what needs its own confirmation is listed in the log, not applied. |
+| `--apply-recommended` | Applies the Overview's recommended list (fixes of problems found, then what the profile recommends for this PC) with the same rules: what needs its own confirmation is listed in the log, not applied, and nothing is applied for a result ignored in the app. |
 | `--profile <id>` | The profile for `--apply-recommended`: gaming, laptopGaming, battery, office, quiet or lowEnd. Without it, the profile saved in the app (or the one that fits this PC best). |
 | `--export <file>` | Writes the changes file the Changes page exports, to a new file. |
 | `--include <parts>` | Adds opt-in parts to `--export`, separated by commas: `apps` (removed apps), `services` (service start types), `startup` (startup entries turned off). `--apply` changes services and startup entries only where the PC has them and its rules allow it, and lists removed apps without removing them: Import in the app asks for them. |
