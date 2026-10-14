@@ -1,0 +1,110 @@
+using Optimizer.Core.Storage;
+
+namespace Optimizer.Core.Tests;
+
+/// <summary>The storage analyzer result model: bottom-up totals, ordering, removal and file type groups.</summary>
+public class DiskTreeTests
+{
+    private static readonly DateTime T = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    private static DiskTree Sample(out int a, out int small, out int big, out int b)
+    {
+        var bl = new DiskTree.Builder(@"C:\");
+        a = bl.AddFolder(bl.Root, "a", T, EntryFlags.Folder);
+        small = bl.AddFile(a, "small.bin", 10, 4096, T, EntryFlags.None);
+        big = bl.AddFile(a, "big.bin", 30, 4096, T, EntryFlags.None);
+        b = bl.AddFile(bl.Root, "b.bin", 25, 4096, T, EntryFlags.None);
+        return bl.Build(ScanReader.Folders, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void TotalsAreSummedBottomUpAndChildrenSortBySize()
+    {
+        var t = Sample(out var a, out _, out _, out _);
+
+        Assert.Equal(65, t.Size(t.Root));
+        Assert.Equal(3, t.Files(t.Root));
+        Assert.Equal(new[] { "a", "b.bin" }, t.Children(t.Root).Select(t.Name).ToArray());
+        Assert.Equal(new long[] { 30, 10 }, t.Children(a).Select(t.Size).ToArray());
+    }
+
+    [Fact]
+    public void AllocatedIsUnknownWhenAnyChildIsUnknown()
+    {
+        var bl = new DiskTree.Builder(@"C:\");
+        var f = bl.AddFolder(bl.Root, "f", T, EntryFlags.Folder);
+        bl.AddFile(f, "x", 1, 4096, T, EntryFlags.None);
+        bl.AddFile(f, "y", 1, -1, T, EntryFlags.None);
+        var g = bl.AddFolder(bl.Root, "g", T, EntryFlags.Folder);
+        bl.AddFile(g, "x", 1, 4096, T, EntryFlags.None);
+        bl.AddFile(g, "y", 1, 8192, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.FileTable, TimeSpan.Zero);
+
+        Assert.Equal(-1, t.Allocated(f));
+        Assert.Equal(12288, t.Allocated(g));
+        Assert.Equal(-1, t.Allocated(t.Root));
+    }
+
+    [Fact]
+    public void RemoveSubtractsFromEveryAncestor()
+    {
+        var t = Sample(out var a, out _, out var big, out _);
+
+        t.Remove(big);
+
+        Assert.Equal(10, t.Size(a));
+        Assert.Equal(35, t.Size(t.Root));
+        Assert.Equal(2, t.Files(t.Root));
+        Assert.Equal(4096, t.Allocated(a));
+        Assert.DoesNotContain(big, t.Children(a));
+        Assert.DoesNotContain(big, t.LargestFiles(10));
+        Assert.DoesNotContain(t.TypeTotals(), x => x.Bytes == 30);
+    }
+
+    [Fact]
+    public void FullPathJoinsNames()
+    {
+        var bl = new DiskTree.Builder(@"C:\");
+        var users = bl.AddFolder(bl.Root, "Users", T, EntryFlags.Folder);
+        var x = bl.AddFile(users, "x.txt", 1, 1, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.Folders, TimeSpan.Zero);
+
+        Assert.Equal(@"C:\Users\x.txt", t.FullPath(x));
+        Assert.Equal(@"C:\", t.FullPath(t.Root));
+        Assert.Equal(-1, t.Parent(t.Root));
+        Assert.Equal(users, t.Parent(x));
+    }
+
+    [Fact]
+    public void TypeTotalsGroupByExtension()
+    {
+        var bl = new DiskTree.Builder(@"C:\");
+        var a = bl.AddFile(bl.Root, "a.MP4", 100, -1, T, EntryFlags.None);
+        bl.AddFile(bl.Root, "b.mp4", 50, -1, T, EntryFlags.None);
+        bl.AddFile(bl.Root, "c.zip", 70, -1, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.Folders, TimeSpan.Zero);
+
+        Assert.Equal(
+            new[] { new TypeTotal("mp4", FileGroup.Video, 150, 2), new TypeTotal("zip", FileGroup.Archives, 70, 1) },
+            t.TypeTotals().ToArray());
+        Assert.Equal(new[] { a }, t.LargestFilesOfType("mp4", 1).ToArray());
+        Assert.Equal(new[] { a }, t.LargestFilesOfType(".MP4", 1).ToArray());
+    }
+
+    [Theory]
+    [InlineData("mp4", FileGroup.Video)]
+    [InlineData(".mkv", FileGroup.Video)]
+    [InlineData("FLAC", FileGroup.Audio)]
+    [InlineData("heic", FileGroup.Images)]
+    [InlineData("iso", FileGroup.Archives)]
+    [InlineData("vhdx", FileGroup.Archives)]
+    [InlineData("msi", FileGroup.Programs)]
+    [InlineData("dll", FileGroup.Programs)]
+    [InlineData("pdf", FileGroup.Documents)]
+    [InlineData("sys", FileGroup.System)]
+    [InlineData("etl", FileGroup.System)]
+    [InlineData("xyz", FileGroup.Other)]
+    [InlineData("", FileGroup.Other)]
+    public void GroupOfKnownExtensions(string extension, FileGroup expected) =>
+        Assert.Equal(expected, FileTypes.GroupOf(extension));
+}
