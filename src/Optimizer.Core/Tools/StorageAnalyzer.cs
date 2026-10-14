@@ -254,6 +254,8 @@ public static class StorageAnalyzer
     {
         var failed = new List<string>();
         var done = 0;
+        var roots = RecycleRules.NormalizeAll(protectedRoots);
+        var kept = RecycleRules.NormalizeAll(keptFolders);
         foreach (var (raw, folder) in items)
         {
             progress?.Report(done++);
@@ -270,7 +272,7 @@ public static class StorageAnalyzer
             // The normalized path is what is checked and what is moved.
             var exists = folder ? Directory.Exists(path) : File.Exists(path);
             var system = !folder && exists && (File.GetAttributes(path) & FileAttributes.System) != 0;
-            if (!exists || RecycleRules.Check(path, folder, system, protectedRoots, keptFolders, appData) is not null || (folder && HoldsFolderLink(path)) || !MoveToRecycleBin(path, folder))
+            if (!exists || RecycleRules.CheckNormalized(path, folder, system, roots, kept, appData) is not null || (folder && HoldsFolderLink(path)) || !MoveToRecycleBin(path, folder))
                 failed.Add(raw);
         }
         return failed;

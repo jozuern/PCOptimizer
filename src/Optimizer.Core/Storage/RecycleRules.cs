@@ -66,10 +66,23 @@ public static class RecycleRules
         return set;
     }
 
-    /// <summary>The first reason a path is not offered, or null. Order: system file, kept folder, protected, folder holds something protected.</summary>
+    /// <summary>
+    /// The first reason a path is not offered, or null. Order: system file, kept folder, protected, folder holds something
+    /// protected. The roots and kept folders are normalized like the path, so a different spelling of the same folder
+    /// (8.3 name, <c>..</c>, case) still matches.
+    /// </summary>
     /// <param name="appData">Also refuse every AppData folder, and a folder that has one directly inside; off only in tests, whose temp folder lies there.</param>
     public static RecycleBlock? Check(string path, bool folder, bool systemFile, IReadOnlyList<string> protectedRoots,
-        IReadOnlyCollection<string> keptFolders, bool appData = true)
+        IReadOnlyCollection<string> keptFolders, bool appData = true) =>
+        CheckNormalized(path, folder, systemFile, NormalizeAll(protectedRoots), NormalizeAll(keptFolders), appData);
+
+    /// <summary>The lists in the form <see cref="CheckNormalized"/> expects: normalized, trailing backslash. Done once per batch.</summary>
+    internal static string[] NormalizeAll(IEnumerable<string> folders) =>
+        folders.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => Normalize(f).TrimEnd('\\') + "\\").Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    /// <summary><see cref="Check"/> for lists that <see cref="NormalizeAll"/> already normalized.</summary>
+    internal static RecycleBlock? CheckNormalized(string path, bool folder, bool systemFile, IReadOnlyList<string> protectedRoots,
+        IReadOnlyCollection<string> keptFolders, bool appData)
     {
         if (systemFile) return RecycleBlock.SystemFile;
         var full = Normalize(path).TrimEnd('\\') + "\\";

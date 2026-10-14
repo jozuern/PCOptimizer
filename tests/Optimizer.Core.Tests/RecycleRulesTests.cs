@@ -82,6 +82,17 @@ public sealed class RecycleRulesTests : IDisposable
     }
 
     [Fact]
+    public void RootsAndKeptFoldersInAnotherSpellingStillMatch()
+    {
+        // The same folders spelled with a ".." segment and other case (an 8.3 name cannot be forced here).
+        var games = Path.Combine(_root, "x", "..", "GAMES") + "\\";
+        var kept = Path.Combine(_root, "y", "..", "KEPT") + "\\";
+        Assert.Equal(RecycleBlock.Protected, RecycleRules.Check(Path.Combine(_root, "games", "g.pak"), folder: false, systemFile: false, [games], [], appData: false));
+        Assert.Equal(RecycleBlock.KeptFolder, RecycleRules.Check(Path.Combine(_root, "kept"), folder: true, systemFile: false, [], [kept], appData: false));
+        Assert.Equal(RecycleBlock.ContainsProtected, RecycleRules.Check(_root, folder: true, systemFile: false, [games], [], appData: false));
+    }
+
+    [Fact]
     public void ShortNameOfAKeptFolderIsStillKept()
     {
         // The long name of the temp folder differs from its 8.3 form on most machines; where it does not, the test still holds.
