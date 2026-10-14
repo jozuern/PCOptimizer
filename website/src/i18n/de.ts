@@ -194,6 +194,11 @@ const de: Copy = {
         a: 'Die exe ist noch nicht signiert, deshalb kennt SmartScreen sie nicht. Klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Die SignPath Foundation, die Open-Source-Projekte kostenlos signiert, signiert nur Projekte, die schon bekannt sind; Tunero bewirbt sich wieder, sobald es so weit ist. Bis dahin vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite.',
       },
       {
+        id: 'smartappcontrol',
+        q: 'Was, wenn Smart App Control sie blockiert?',
+        a: 'Smart App Control ist strenger als SmartScreen: Es blockiert unsignierte Apps, die Microsoft noch nicht kennt, und seine Meldung hat keinen Knopf „Trotzdem ausführen“. Um Tunero zu starten, schalte es unter Windows-Sicherheit > App- & Browsersteuerung > Einstellungen für Smart App Control aus. Über die Windows-Einstellungen lässt es sich danach nicht wieder einschalten, entscheide das also bewusst. Eine signierte exe würde nicht blockiert; die Frage oben sagt, warum Tunero noch nicht signiert ist.',
+      },
+      {
         id: 'admin',
         q: 'Warum braucht es Administratorrechte?',
         a: 'Die meisten Einstellungen, die es ändert, gelten für den ganzen PC. Sein Datenordner ist für Administratoren gesperrt.',
