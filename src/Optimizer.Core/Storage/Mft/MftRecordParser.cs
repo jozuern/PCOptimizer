@@ -15,10 +15,11 @@ public sealed record MftName(ulong ParentReference, string Name, byte Namespace)
 /// $DATA with sizes (a folder, or the stream lives in an extension record); resident data occupies no clusters, so its
 /// allocated size is 0. <paramref name="LastWriteUtc"/> is default when the record has no valid
 /// $STANDARD_INFORMATION time. <paramref name="ExtensionReferences"/> are the other records a resident
-/// $ATTRIBUTE_LIST names for $FILE_NAME or unnamed $DATA.
+/// $ATTRIBUTE_LIST names for $FILE_NAME or unnamed $DATA. <paramref name="ReparseTag"/> is the tag of a resident
+/// $REPARSE_POINT in this record, 0 when there is none or it is non-resident.
 /// </summary>
 public sealed record MftRecord(uint Number, ulong BaseReference, bool IsFolder, IReadOnlyList<MftName> Names, long? DataSize,
-    long? DataAllocated, DateTime LastWriteUtc, uint FileAttributes, IReadOnlyList<ulong> ExtensionReferences);
+    long? DataAllocated, DateTime LastWriteUtc, uint FileAttributes, IReadOnlyList<ulong> ExtensionReferences, uint ReparseTag);
 
 /// <summary>
 /// Parses one raw NTFS 3.x file record segment (FILE_RECORD_SEGMENT_HEADER and its attributes). The bytes come from a
@@ -31,7 +32,8 @@ public static class MftRecordParser
     /// <summary>NTFS protects multisector structures in strides of 512 bytes whatever the sector size (MULTI_SECTOR_HEADER).</summary>
     private const int Stride = 512;
     private const ulong RecordNumberMask = 0x0000_FFFF_FFFF_FFFF;
-    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, End = 0xFFFF_FFFF;
+    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, ReparsePoint = 0xC0,
+        End = 0xFFFF_FFFF;
     private const ushort InUse = 0x0001, Directory = 0x0002;
     private const ushort CompressionMask = 0x00FF, Sparse = 0x8000;
     private static readonly long MaxFileTime = DateTime.MaxValue.ToFileTimeUtc();
@@ -57,7 +59,7 @@ public static class MftRecordParser
         List<ulong>? extensions = null;
         long? dataSize = null, dataAllocated = null;
         DateTime lastWrite = default;
-        uint attributes = 0;
+        uint attributes = 0, reparseTag = 0;
 
         var pos = (int)U16(record, 0x14);
         if (pos < 0x2A) return null; // inside the header
@@ -100,6 +102,11 @@ public static class MftRecordParser
                         (names ??= new List<MftName>(2)).Add(new MftName(U64(value, 0),
                             Encoding.Unicode.GetString(value.Slice(0x42, chars * 2)), value[0x41]));
                         break;
+                    case ReparsePoint:
+                        // REPARSE_DATA_BUFFER: the tag, the data length and a reserved word come first.
+                        if (value.Length < 8) return null;
+                        reparseTag = U32(value, 0);
+                        break;
                     case Data when nameLength == 0 && dataSize is null:
                         dataSize = valueLength;
                         dataAllocated = 0;
@@ -131,7 +138,7 @@ public static class MftRecordParser
         }
 
         return new MftRecord(number, baseReference, isFolder, (IReadOnlyList<MftName>?)names ?? [], dataSize, dataAllocated,
-            lastWrite, attributes, (IReadOnlyList<ulong>?)extensions ?? []);
+            lastWrite, attributes, (IReadOnlyList<ulong>?)extensions ?? [], reparseTag);
     }
 
     /// <summary>

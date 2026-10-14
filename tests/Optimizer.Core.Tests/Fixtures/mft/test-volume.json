@@ -1,0 +1,1313 @@
+﻿{
+    "made":  {
+                 "by":  "tests/Optimizer.Core.Tests/Fixtures/mft/make-fixture.ps1 in the Hyper-V VM PCO-Test",
+                 "date":  "2026-10-14",
+                 "windows":  "26H2 build 26300.9550",
+                 "volume":  "64 MB dynamic VHDX, MBR, NTFS, 8.3 names on",
+                 "bytesPerSector":  512,
+                 "bytesPerCluster":  4096,
+                 "bytesPerFileRecord":  1024,
+                 "mftValidDataLength":  262144,
+                 "mftStartLcn":  5370,
+                 "totalClusters":  16111,
+                 "volumeLockedWhileRead":  true
+             },
+    "unreadable":  [
+                       "System Volume Information"
+                   ],
+    "deleted":  [
+                    "deleted\\removed-before-the-copy.txt"
+                ],
+    "entries":  [
+                    {
+                        "path":  "compressed",
+                        "folder":  true,
+                        "attributes":  2064
+                    },
+                    {
+                        "path":  "deleted",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "empty.txt",
+                        "folder":  false,
+                        "size":  0,
+                        "onDisk":  0,
+                        "fileId":  "0x000100000000007B",
+                        "links":  1,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "junction-target",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "junction-to-target",
+                        "folder":  true,
+                        "attributes":  1040
+                    },
+                    {
+                        "path":  "level-01-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "links",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "many",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "sparse",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "streams",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "System Volume Information",
+                        "folder":  true,
+                        "attributes":  22
+                    },
+                    {
+                        "path":  "streams\\with-alternate-stream.txt",
+                        "folder":  false,
+                        "size":  300,
+                        "onDisk":  300,
+                        "fileId":  "0x000100000000003A",
+                        "links":  1,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "sparse\\sparse-ten-megabytes.bin",
+                        "folder":  false,
+                        "size":  10485760,
+                        "onDisk":  65536,
+                        "fileId":  "0x000100000000003C",
+                        "links":  1,
+                        "attributes":  544
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-001.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-002.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-003.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-004.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-005.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-006.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-007.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-008.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-009.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-010.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-011.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-012.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-013.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-014.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-015.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-016.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-017.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-018.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-019.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-020.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-021.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-022.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-023.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-024.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-025.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-026.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-027.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-028.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-029.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-030.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-031.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-032.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-033.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-034.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-035.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-036.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-037.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-038.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-039.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-040.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-041.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-042.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-043.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-044.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-045.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-046.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-047.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-048.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-049.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-050.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-051.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-052.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-053.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-054.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-055.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-056.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-057.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-058.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-059.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-060.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-061.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-062.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-063.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-064.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-065.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-066.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-067.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-068.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-069.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-070.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-071.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-072.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-073.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-074.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-075.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-076.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-077.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-078.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-079.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-080.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-081.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-082.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-083.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-084.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-085.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-086.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-087.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-088.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-089.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-090.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-091.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-092.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-093.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-094.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-095.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-096.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-097.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-098.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-099.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-100.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-101.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-102.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-103.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-104.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-105.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-106.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-107.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-108.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-109.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-110.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-111.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-112.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-113.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-114.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-115.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-116.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-117.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-118.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\another-name-for-the-same-file-119.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "many\\one-file-with-many-names.bin",
+                        "folder":  false,
+                        "size":  50000,
+                        "onDisk":  50000,
+                        "fileId":  "0x0001000000000041",
+                        "links":  120,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "links\\first",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "links\\second",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "links\\third",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "links\\third\\SHARED.DAT",
+                        "folder":  false,
+                        "size":  20000,
+                        "onDisk":  20000,
+                        "fileId":  "0x0001000000000038",
+                        "links":  3,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "links\\second\\shared-link-two.dat",
+                        "folder":  false,
+                        "size":  20000,
+                        "onDisk":  20000,
+                        "fileId":  "0x0001000000000038",
+                        "links":  3,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "links\\first\\shared-original.dat",
+                        "folder":  false,
+                        "size":  20000,
+                        "onDisk":  20000,
+                        "fileId":  "0x0001000000000038",
+                        "links":  3,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\note.txt",
+                        "folder":  false,
+                        "size":  28,
+                        "onDisk":  28,
+                        "fileId":  "0x0001000000000033",
+                        "links":  1,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder\\level-09-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder\\level-09-folder\\level-10-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder\\level-09-folder\\level-10-folder\\level-11-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder\\level-09-folder\\level-10-folder\\level-11-folder\\level-12-folder",
+                        "folder":  true,
+                        "attributes":  16
+                    },
+                    {
+                        "path":  "level-01-folder\\level-02-folder\\level-03-folder\\level-04-folder\\level-05-folder\\level-06-folder\\level-07-folder\\level-08-folder\\level-09-folder\\level-10-folder\\level-11-folder\\level-12-folder\\bottom-of-the-tree.txt",
+                        "folder":  false,
+                        "size":  1500,
+                        "onDisk":  1500,
+                        "fileId":  "0x0001000000000032",
+                        "links":  1,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "junction-target\\reached-through-the-junction.txt",
+                        "folder":  false,
+                        "size":  700,
+                        "onDisk":  700,
+                        "fileId":  "0x0001000000000079",
+                        "links":  1,
+                        "attributes":  32
+                    },
+                    {
+                        "path":  "compressed\\compressible-one-megabyte.txt",
+                        "folder":  false,
+                        "size":  1048576,
+                        "onDisk":  131072,
+                        "fileId":  "0x000100000000003F",
+                        "links":  1,
+                        "attributes":  2080
+                    }
+                ]
+}

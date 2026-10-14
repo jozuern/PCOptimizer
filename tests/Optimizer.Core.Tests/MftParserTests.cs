@@ -121,6 +121,25 @@ public class MftParserTests
     }
 
     [Fact]
+    public void ReadsTheReparseTag()
+    {
+        // REPARSE_DATA_BUFFER: tag, data length, reserved, then the tag's data (here an empty mount point).
+        var value = new byte[16];
+        BinaryPrimitives.WriteUInt32LittleEndian(value, 0xA000_0003);
+        var r = Parse(new RecordBuilder { Flags = 0x03 }
+            .StandardInformation(T, 0x410)
+            .FileName(RootRef, "junction", 1)
+            .Resident(0xC0, value)
+            .Build());
+
+        Assert.NotNull(r);
+        Assert.Equal(0xA000_0003u, r.ReparseTag);
+        Assert.Equal(0u, Parse(Sample())!.ReparseTag);
+        Assert.Null(Parse(new RecordBuilder().StandardInformation(T, 0x400).FileName(RootRef, "short", 1)
+            .Resident(0xC0, new byte[3]).Build()));
+    }
+
+    [Fact]
     public void RejectsBrokenFixups()
     {
         var bytes = Sample();
