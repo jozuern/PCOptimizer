@@ -136,13 +136,14 @@ const de: Copy = {
         items: [
           ['Apps entfernen', `${c.apps} geprüfte vorinstallierte Apps und Hersteller-Apps, dazu Programme mit eigenem Deinstallationsprogramm.`],
           ['Bereinigen', `${c.cleanup} Kategorien temporärer Dateien, Caches und Reste, ohne Verknüpfungen zu folgen.`],
+          ['Speicher', 'Ein Laufwerk als Ordnerbaum neben einer Treemap, der Platz nach Dateityp, die größten Dateien und doppelte Dateien, gelesen nur, wenn du es willst. Was du löschst, kommt in den Papierkorb.'],
         ],
       },
       {
         name: 'Pflegen und prüfen',
         items: [
           ['Installieren & aktualisieren', 'Apps mit winget installieren und aktualisieren, und sehen, wie alt die Treiber sind.'],
-          ['Tools', 'Speicheranalyse, Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
+          ['Tools', 'Windows-Features, Netzwerkreparaturen, Windows-Update-Reparatur, SFC und DISM.'],
           ['Zustand', 'Ein Frametime-Benchmark mit PresentMon, eine Drosselungsprüfung und der Zustand der Laufwerke.'],
         ],
       },

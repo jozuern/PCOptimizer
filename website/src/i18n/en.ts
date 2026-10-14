@@ -136,13 +136,14 @@ const en: Copy = {
         items: [
           ['Remove apps', `${c.apps} reviewed inbox and manufacturer apps, and programs with their own uninstaller.`],
           ['Cleanup', `${c.cleanup} categories of temporary files, caches and leftovers, without following links.`],
+          ['Storage', 'A drive as a folder tree beside a treemap, the space by file type, its largest files and duplicate files, read only when you ask. What you delete goes to the Recycle Bin.'],
         ],
       },
       {
         name: 'Maintain and check',
         items: [
           ['Install & update', 'Install and update apps with winget, and see how old the drivers are.'],
-          ['Tools', 'Storage analyzer, Windows features, network fixes, Windows Update repair, SFC and DISM.'],
+          ['Tools', 'Windows features, network fixes, Windows Update repair, SFC and DISM.'],
           ['Health', 'A frame time benchmark with PresentMon, a throttle check and drive health.'],
         ],
       },
