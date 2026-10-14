@@ -328,8 +328,18 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         TreeChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static string Summary(DiskTree tree) => Loc.Instance.Format("Storage_Result", CleanupViewModel.Size(tree.Size(tree.Root)), tree.Files(tree.Root),
-        Loc.Instance[tree.Reader == ScanReader.FileTable ? "Storage_ReaderFileTable" : "Storage_ReaderFolders"], tree.Elapsed.TotalSeconds);
+    /// <summary>The result line; entries the reader could not see (<see cref="DiskTree.Lost"/>) are counted in it.</summary>
+    private static string Summary(DiskTree tree)
+    {
+        var text = Loc.Instance.Format("Storage_Result", CleanupViewModel.Size(tree.Size(tree.Root)), tree.Files(tree.Root),
+            Loc.Instance[tree.Reader == ScanReader.FileTable ? "Storage_ReaderFileTable" : "Storage_ReaderFolders"], tree.Elapsed.TotalSeconds);
+        return tree.Lost switch
+        {
+            0 => text,
+            1 => Loc.Instance.Format("Storage_ResultLostOne", text),
+            var lost => Loc.Instance.Format("Storage_ResultLost", text, lost),
+        };
+    }
 
     private void FillTab()
     {
@@ -368,14 +378,16 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         var system = (tree.Flags(i) & EntryFlags.System) != 0;
         return new StorageFileRow(path, tree.Size(i),
             tree.LastWriteUtc(i).ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture),
-            BlockText(path, folder: false, system), i, UpdateSelection);
+            BlockText(path, folder: false, system, tree, i), i, UpdateSelection);
     }
 
     /// <summary>
     /// Why a file or folder is not offered for the Recycle Bin, in the app language; null when it is. Uses the lists the
-    /// analysis normalized once; a path that cannot be normalized, or no analysis yet, counts as protected.
+    /// analysis normalized once; a path that cannot be normalized, or no analysis yet, counts as protected. With its tree
+    /// entry, also what the tree knows (<see cref="RecycleRules.CheckEntry"/>): a link, or an item that is or lies in a
+    /// cloud folder or another reparse point, which the move would refuse.
     /// </summary>
-    private string? BlockText(string path, bool folder, bool system)
+    private string? BlockText(string path, bool folder, bool system, DiskTree? tree = null, int entry = -1)
     {
         RecycleBlock? block;
         if (_rules is not { } rules) block = RecycleBlock.Protected;
@@ -390,6 +402,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
                 block = RecycleBlock.Protected;
             }
         }
+        if (block is null && tree is not null && entry >= 0 && entry < tree.Count) block = RecycleRules.CheckEntry(tree, entry);
         return block switch
         {
             null => null,
@@ -399,6 +412,9 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             RecycleBlock.SystemFolder => Loc.Instance["Storage_BlockSystemFolder"],
             RecycleBlock.WindowsSetup => Loc.Instance["Storage_BlockWindowsSetup"],
             RecycleBlock.NameMismatch => Loc.Instance["Storage_BlockName"],
+            RecycleBlock.Link => Loc.Instance["Storage_BlockLink"],
+            RecycleBlock.CloudFolder => Loc.Instance["Storage_BlockCloud"],
+            RecycleBlock.OtherReparse => Loc.Instance["Storage_BlockReparse"],
             _ => Loc.Instance["Storage_BlockProtected"],
         };
     }
@@ -548,9 +564,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             foreach (var (p, i) in g.Paths.Select((p, i) => (p, i)))
             {
                 var entry = _duplicateEntries.GetValueOrDefault(p, -1);
-                var system = entry >= 0 && Tree is { } tree && (tree.Flags(entry) & EntryFlags.System) != 0;
+                var tree = entry >= 0 ? Tree : null;
+                var system = tree is not null && (tree.Flags(entry) & EntryFlags.System) != 0;
                 Duplicates.Add(new StorageFileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "",
-                    BlockText(p, folder: false, system), entry, UpdateSelection));
+                    BlockText(p, folder: false, system, tree, entry), entry, UpdateSelection));
             }
         DuplicatesText = _duplicateGroups.Count == 0 ? null
             : Loc.Instance.Format("Storage_DuplicatesFound", CleanupViewModel.Size(_duplicateGroups.Sum(d => d.Reclaimable)));
@@ -587,10 +604,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             var folder = tree.IsFolder(i);
             var flags = tree.Flags(i);
             var system = !folder && (flags & EntryFlags.System) != 0;
-            // The move refuses a link and a folder it cannot look into (it must hold no link): the bar says so first.
-            var block = BlockText(path, folder, system)
-                ?? ((flags & EntryFlags.ReparsePoint) != 0 ? Loc.Instance["Storage_BlockLink"]
-                    : (flags & EntryFlags.Unreadable) != 0 ? Loc.Instance["Storage_BlockUnreadable"] : null);
+            // The move refuses a link, anything in a cloud folder or another reparse point, and a folder it cannot look
+            // into (it must hold no link): the bar says so first.
+            var block = BlockText(path, folder, system, tree, i)
+                ?? ((flags & EntryFlags.Unreadable) != 0 ? Loc.Instance["Storage_BlockUnreadable"] : null);
             return [new Pick(i, path, folder, tree.Size(i), block)];
         }
         var rows = Tab switch

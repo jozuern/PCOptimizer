@@ -14,8 +14,22 @@ internal static class TestSetup
     {
         Optimizer.Core.Platform.DataPaths.UseRoot(Path.Combine(Path.GetTempPath(), "tunero-tests-" + Environment.ProcessId));
         Log.DisableFile();
+        // The Recycle Bin is the real user's: a test that reaches the shell call has lost a refusal it relied on. It fails
+        // here, before anything is moved; every check before the call stays real.
+        Optimizer.Core.Tools.StorageAnalyzer.ShellRecycle = path =>
+        {
+            lock (RecycleBinCalls) RecycleBinCalls.Add(path);
+            throw new RecycleBinReachedException(path);
+        };
     }
+
+    /// <summary>Paths a test handed to the Recycle Bin's shell call (each one also failed that test).</summary>
+    internal static readonly List<string> RecycleBinCalls = [];
 }
+
+/// <summary>Thrown instead of moving anything when a test reaches the Recycle Bin.</summary>
+internal sealed class RecycleBinReachedException(string path)
+    : Exception($"a test reached the Recycle Bin with {path}: nothing was moved, but a refusal the test relies on is gone");
 
 /// <summary>
 /// Test classes that change a process-wide setting for a moment (ProcessHardening.TempFolder, StreamingProcess.OutputGrace)

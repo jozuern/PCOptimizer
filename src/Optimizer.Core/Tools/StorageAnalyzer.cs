@@ -99,7 +99,9 @@ public static class StorageAnalyzer
 
     /// <summary>
     /// Candidates of equal size are compared by the hash of the first 64 KB, then by the full SHA-256. Hard links to one
-    /// file count once: recycling one of the paths would free nothing.
+    /// file count once: recycling one of the paths would free nothing. A file whose live attributes say its data is not
+    /// on this PC (<see cref="NotLocal"/>) is left out before it is opened: the tree's cloud flag comes from the scan, and
+    /// opening such a file would download it.
     /// </summary>
     public static IReadOnlyList<DuplicateGroup> FindDuplicates(IEnumerable<List<string>> sameSize, CancellationToken ct)
     {
@@ -107,7 +109,7 @@ public static class StorageAnalyzer
         foreach (var candidates in sameSize)
         {
             ct.ThrowIfCancellationRequested();
-            var group = candidates.GroupBy(p => Startup.SignatureVerifier.FileId(p) ?? p, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+            var group = candidates.Where(p => !NotLocal(p)).GroupBy(p => Startup.SignatureVerifier.FileId(p) ?? p, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
             if (group.Count < 2) continue;
             foreach (var quick in group.GroupBy(p => Hash(p, 64 * 1024, ct)).Where(g => g.Key is not null && g.Count() > 1))
             {
@@ -134,9 +136,32 @@ public static class StorageAnalyzer
         }
     }
 
-    /// <summary>SHA-256 of the first <paramref name="maxBytes"/> bytes, read in 1 MB parts so Stop ends hashing a large file.</summary>
+    private const FileAttributes Offline = (FileAttributes)0x1000, RecallOnOpen = (FileAttributes)0x40000, RecallOnDataAccess = (FileAttributes)0x400000;
+
+    /// <summary>
+    /// True when the file's attributes, read now, say its data is elsewhere (online only in OneDrive, or moved off by a
+    /// storage manager): opening or reading it would bring it back. Reading the attributes does not. True as well when
+    /// they cannot be read.
+    /// </summary>
+    internal static bool NotLocal(string path)
+    {
+        try
+        {
+            return (File.GetAttributes(path) & (Offline | RecallOnOpen | RecallOnDataAccess)) != 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// SHA-256 of the first <paramref name="maxBytes"/> bytes, read in 1 MB parts so Stop ends hashing a large file. Null
+    /// for a file that is not on this PC (checked again right before the open: it may have been freed up since).
+    /// </summary>
     private static string? Hash(string path, long maxBytes, CancellationToken ct)
     {
+        if (NotLocal(path)) return null;
         try
         {
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -160,40 +185,18 @@ public static class StorageAnalyzer
     }
 
     /// <summary>
-    /// Moves files to the Recycle Bin (SHFileOperation with undo). Refuses protected paths, system files and paths that
-    /// do not resolve to themselves: a parent folder swapped for a junction between scan and confirmation would otherwise
-    /// send a system file to the Recycle Bin with administrator rights. The folders of the path stay held while the shell
-    /// moves the file (<see cref="Platform.SafeDelete.Pin"/>), so none of them can be swapped in between; a folder emptied
-    /// and turned into a mount point in that moment is reported afterwards (the file is then in the Recycle Bin and can be
-    /// restored from there). A file that does not fit in the Recycle Bin (larger than its limit, or the bin is set to
-    /// delete at once) would be deleted for good without a question: Windows asks first (FOF_WANTNUKEWARNING), and a "No"
-    /// counts as a failure. Returns the failures.
-    /// </summary>
-    /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
-    /// <param name="progress">The number of files done before each file.</param>
-    public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots, bool appData = true, IProgress<int>? progress = null)
-    {
-        var failed = new List<string>();
-        var done = 0;
-        foreach (var p in paths)
-        {
-            progress?.Report(done++);
-            if (IsProtected(p, protectedRoots, appData) || !File.Exists(p) || (File.GetAttributes(p) & FileAttributes.System) != 0)
-            {
-                failed.Add(p);
-                continue;
-            }
-            if (!MoveToRecycleBin(p, folder: false)) failed.Add(p);
-        }
-        return failed;
-    }
-
-    /// <summary>
     /// Moves files and folders to the Recycle Bin. A path that does not name itself as written is refused first
     /// (<see cref="RecycleRules.ResolvesAsWritten"/>); then each item is checked again with <see cref="RecycleRules.Check"/>
     /// (protected, kept, system, Windows setup and hidden system locations are refused, a folder also when it holds a
     /// protected or kept one); a folder is moved by renaming
-    /// it into the Recycle Bin after its folders are pinned and it is known to hold no link. Returns the failures.
+    /// it into the Recycle Bin after its folders are pinned and it held no link when checked. An item whose path holds a
+    /// reparse point (the item itself or a folder above it: a link, a OneDrive or other cloud item, a compressed file) is
+    /// refused from its live attributes by <see cref="Platform.SafeDelete"/>; the page names that reason beforehand
+    /// (<see cref="RecycleRules.CheckEntry"/>). The folders of the path stay held while the shell moves the item
+    /// (<see cref="Platform.SafeDelete.Pin"/>), so none of them can be swapped for a junction in between; a folder emptied
+    /// and turned into a mount point in that moment is reported afterwards. An item that does not fit in the Recycle Bin
+    /// would be deleted for good without a question: Windows asks first (FOF_WANTNUKEWARNING), and a "No" counts as a
+    /// failure. Returns the failures.
     /// </summary>
     /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
     /// <param name="progress">The number of items done before each item.</param>
@@ -260,7 +263,7 @@ public static class StorageAnalyzer
 
     /// <summary>
     /// Moves a leftover of an uninstalled program (a folder as a whole, or a shortcut) to the Recycle Bin, with the
-    /// same link checks as <see cref="Recycle"/>. Which paths may be offered is decided by
+    /// same link checks and held folders as <see cref="RecycleItems"/>. Which paths may be offered is decided by
     /// <see cref="Apps.ProgramLeftovers.MayOffer"/>, so the protected roots are not checked here. A folder is moved by
     /// renaming it into the Recycle Bin, which takes a link inside it along as a link and never follows it.
     /// </summary>
@@ -275,22 +278,33 @@ public static class StorageAnalyzer
     {
         using var pin = Platform.SafeDelete.Pin(Path.GetDirectoryName(Path.GetFullPath(p))!);
         if (pin is null || !(folder ? Platform.SafeDelete.HasNoLinks(p) : Platform.SafeDelete.ResolvesToItself(p))) return false;
-        var op = new SHFILEOPSTRUCT
-        {
-            wFunc = FoDelete,
-            pFrom = p + "\0\0",
-            fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
-        };
-        var result = OnStaThread(() => SHFileOperation(ref op));
+        var (result, aborted) = ShellRecycle(p);
         if (!pin.StillReal())
         {
             Log.Error("storage", $"a folder of {p} became a link while it was moved to the Recycle Bin: check the Recycle Bin");
             return false;
         }
-        if (result != 0 || op.fAnyOperationsAborted || Path.Exists(p)) return false;
+        if (result != 0 || aborted || Path.Exists(p)) return false;
         Log.Info("storage", $"recycled {p}");
         return true;
     }
+
+    /// <summary>
+    /// The shell call that moves one checked item to the Recycle Bin (SHFileOperation with undo, on an STA thread): its
+    /// result and whether the operation was aborted. The tests replace it in a module initializer with one that fails the
+    /// test, so no test reaches the real Recycle Bin even when a refusal it relies on breaks; every check before it stays real.
+    /// </summary>
+    internal static Func<string, (int Result, bool Aborted)> ShellRecycle = path =>
+    {
+        var op = new SHFILEOPSTRUCT
+        {
+            wFunc = FoDelete,
+            pFrom = path + "\0\0",
+            fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
+        };
+        var result = OnStaThread(() => SHFileOperation(ref op));
+        return (result, op.fAnyOperationsAborted);
+    };
 
     /// <summary>
     /// Duplicate groups of which every copy is in <paramref name="selected"/> (the first copy can also be picked in the

@@ -574,6 +574,8 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_Result" xml:space="preserve"><value>{0} in {1:N0} Dateien, in {3:0.0} s {2} gelesen</value></data>
   <data name="Storage_ReaderFileTable" xml:space="preserve"><value>aus der Dateitabelle</value></data>
   <data name="Storage_ReaderFolders" xml:space="preserve"><value>Ordner für Ordner</value></data>
+  <data name="Storage_ResultLost" xml:space="preserve"><value>{0}. {1:N0} Ordner oder Einträge konnten nicht gelesen werden</value></data>
+  <data name="Storage_ResultLostOne" xml:space="preserve"><value>{0}. 1 Ordner oder Eintrag konnte nicht gelesen werden</value></data>
   <data name="Storage_TabFolders" xml:space="preserve"><value>Ordner</value></data>
   <data name="Storage_TabTypes" xml:space="preserve"><value>Dateitypen</value></data>
   <data name="Storage_TabLargest" xml:space="preserve"><value>Größte Dateien</value></data>
@@ -600,6 +602,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_TreemapHint" xml:space="preserve"><value>Wähle eine Kachel, um sie in der Liste zu finden. Ein Doppelklick zeigt den Ordner, in dem sie liegt.</value></data>
   <data name="Storage_TreemapTipFile" xml:space="preserve"><value>{0}, {1}</value></data>
   <data name="Storage_TreemapTipFolder" xml:space="preserve"><value>{0} in {1:N0} Dateien</value></data>
+  <data name="Storage_TreemapTipFolderOne" xml:space="preserve"><value>{0} in 1 Datei</value></data>
   <data name="Storage_Legend" xml:space="preserve"><value>Dateitypen</value></data>
   <data name="Storage_GroupVideo" xml:space="preserve"><value>Video</value></data>
   <data name="Storage_GroupAudio" xml:space="preserve"><value>Audio</value></data>
@@ -613,7 +616,7 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_CopyPath" xml:space="preserve"><value>Pfad kopieren</value></data>
   <data name="Storage_RecycleCount" xml:space="preserve"><value>In den Papierkorb ({0})</value></data>
   <data name="Storage_RecycleMore" xml:space="preserve"><value>Und {0} weitere.</value></data>
-  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Nicht verschoben (in Benutzung, seit der Analyse geändert, mit einem Link darin, oder du hast Nein gewählt):
+  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Nicht verschoben (in Benutzung, seit der Analyse geändert, ein Link oder mit einem Link darin, in einem Cloud-Ordner, oder du hast Nein gewählt):
 {0}</value></data>
   <data name="Storage_SelectHint" xml:space="preserve"><value>Wähle einen Eintrag aus, um ihn im Explorer zu öffnen, seinen Pfad zu kopieren oder ihn in den Papierkorb zu verschieben.</value></data>
   <data name="Storage_BlockProtected" xml:space="preserve"><value>Geschützt: Windows-, Programm-, Spiel- und AppData-Orte bleiben, wo sie sind.</value></data>
@@ -623,8 +626,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_BlockSystemFolder" xml:space="preserve"><value>Geschützt: Windows kennzeichnet diesen Ordner oder einen darüber als versteckten Systemordner.</value></data>
   <data name="Storage_BlockWindowsSetup" xml:space="preserve"><value>Geschützt: Setup-Dateien von Windows, etwa die vorherige Installation in Windows.old. Entferne sie unter Einstellungen &gt; System &gt; Speicher &gt; Temporäre Dateien.</value></data>
   <data name="Storage_BlockName" xml:space="preserve"><value>Sein Name oder der eines Ordners darüber endet mit einem Punkt oder Leerzeichen. Windows würde einen anderen Namen lesen, daher wird es nicht verschoben.</value></data>
-  <data name="Storage_BlockLink" xml:space="preserve"><value>Ein Link auf einen anderen Ordner: Links werden nicht in den Papierkorb verschoben.</value></data>
+  <data name="Storage_BlockLink" xml:space="preserve"><value>Ein Link auf eine andere Datei oder einen anderen Ordner: Entferne ihn im Explorer.</value></data>
   <data name="Storage_BlockUnreadable" xml:space="preserve"><value>Dieser Ordner konnte nicht gelesen werden, daher lässt er sich vor dem Verschieben nicht prüfen.</value></data>
+  <data name="Storage_BlockCloud" xml:space="preserve"><value>In OneDrive oder einem anderen Cloud-Ordner: Entferne es im Explorer.</value></data>
+  <data name="Storage_BlockReparse" xml:space="preserve"><value>Dieses Element oder ein Ordner darüber ist ein besonderes Windows-Element (ein Analysepunkt, etwa eine komprimierte Datei): Entferne es im Explorer.</value></data>
   <data name="Storage_Missing" xml:space="preserve"><value>{0} existiert nicht mehr. Analysiere erneut, um das Ergebnis zu aktualisieren.</value></data>
   <data name="Storage_OpenFailed" xml:space="preserve"><value>Der Explorer wurde nicht gestartet. Mit Pfad kopieren bekommst du den Pfad: {0}</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Doppelte Dateien werden gesucht</value></data>

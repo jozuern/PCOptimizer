@@ -2,8 +2,41 @@ using System.Diagnostics;
 
 namespace Optimizer.Core.Storage;
 
+/// <summary>What a scan learned about an entry.</summary>
+/// <remarks>
+/// <see cref="ReparsePoint"/>: a link (junction, symbolic link, mount point: a reparse point whose tag is a name
+/// surrogate), file or folder; a folder that is one is not entered. <see cref="NonLinkReparse"/>: any other reparse point,
+/// or one whose tag could not be read: a OneDrive placeholder, a file Windows compressed (WOF) or deduplicated; a folder
+/// that is one is entered. <see cref="CloudSync"/>: with <see cref="NonLinkReparse"/>, the tag is a cloud files tag
+/// (OneDrive and other sync apps). The Recycle Bin move refuses every reparse point, so the page refuses them first
+/// (<see cref="RecycleRules.CheckEntry"/>).
+/// </remarks>
 [Flags]
-public enum EntryFlags : byte { None = 0, Folder = 1, System = 2, CloudOnly = 4, ReparsePoint = 8, Unreadable = 16 }
+public enum EntryFlags : byte
+{
+    None = 0, Folder = 1, System = 2, CloudOnly = 4, ReparsePoint = 8, Unreadable = 16, NonLinkReparse = 32, CloudSync = 64,
+}
+
+/// <summary>Reparse tags as both readers classify them.</summary>
+public static class ReparseTags
+{
+    private const uint AttrReparse = 0x400;
+    /// <summary>Tag bit of links (junction, mount point, symlink).</summary>
+    public const uint NameSurrogate = 0x2000_0000;
+
+    /// <summary>IO_REPARSE_TAG_CLOUD and CLOUD_1 to CLOUD_F (0x9000x01A): the cloud files filter, OneDrive's placeholders among them.</summary>
+    public static bool IsCloud(uint tag) => (tag & 0xFFFF_0FFF) == 0x9000_001A;
+
+    /// <summary>
+    /// The reparse flags of an entry with these attributes and tag: <see cref="EntryFlags.ReparsePoint"/> for a link,
+    /// <see cref="EntryFlags.NonLinkReparse"/> (and <see cref="EntryFlags.CloudSync"/> for a cloud tag) for any other
+    /// reparse point, also one whose tag is not known (0).
+    /// </summary>
+    public static EntryFlags Flags(uint attributes, uint tag) =>
+        (attributes & AttrReparse) == 0 ? EntryFlags.None
+        : (tag & NameSurrogate) != 0 ? EntryFlags.ReparsePoint
+        : EntryFlags.NonLinkReparse | (IsCloud(tag) ? EntryFlags.CloudSync : EntryFlags.None);
+}
 
 /// <summary>Which reader produced a tree: the file table (fast, needs admin) or a plain folder walk.</summary>
 public enum ScanReader { FileTable, Folders }

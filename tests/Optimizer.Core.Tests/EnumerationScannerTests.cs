@@ -41,7 +41,8 @@ public class EnumerationScannerTests
             TestFolders.Junction(Path.Combine(root, "j"), other);
             var tree = await Scan(root);
             var j = Find(tree, tree.Root, "j");
-            Assert.True(tree.Flags(j).HasFlag(EntryFlags.ReparsePoint));
+            Assert.Equal(EntryFlags.Folder | EntryFlags.ReparsePoint, tree.Flags(j));
+            Assert.Equal(RecycleBlock.Link, RecycleRules.CheckEntry(tree, j));
             Assert.Empty(tree.Children(j));
             Assert.Equal(0, tree.Size(tree.Root));
         }

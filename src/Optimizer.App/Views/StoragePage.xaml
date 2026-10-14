@@ -240,7 +240,7 @@
                                     </ui:BreadcrumbBar>
                                     <ui:TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Caption}" Text="{l:Tr Storage_TreemapHint}" Margin="0,4,0,0" />
                                     <!-- The legend: every group color with its name (the colors are the data, never decoration) -->
-                                    <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                                    <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0" AutomationProperties.Name="{l:Tr Storage_Legend}">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
                                             <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapVideoBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                             <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupVideo}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />

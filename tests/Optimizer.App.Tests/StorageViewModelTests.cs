@@ -433,6 +433,72 @@ public sealed class StorageViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Whatever is, or lies in, a cloud folder or another reparse point is refused with its reason, in the folder tab and in
+    /// the file lists: the move would refuse it (any reparse point on the path). The tree comes from the scanner seam; none
+    /// of its paths exist, and nothing reaches the recorder.
+    /// </summary>
+    [Fact]
+    public async Task WhatLiesInACloudFolderShowsTheReason()
+    {
+        var b = new DiskTree.Builder(_root);
+        var oneDrive = b.AddFolder(b.Root, "OneDrive", default, EntryFlags.NonLinkReparse | EntryFlags.CloudSync);
+        var docs = b.AddFolder(oneDrive, "Docs", default, EntryFlags.None);
+        b.AddFile(docs, "report.docx", 900, -1, default, EntryFlags.None);
+        b.AddFile(b.Root, "compact.bin", 800, -1, default, EntryFlags.NonLinkReparse);
+        b.AddFile(b.Root, "file link.txt", 700, -1, default, EntryFlags.ReparsePoint);
+        b.AddFile(b.Root, "plain.bin", 100, -1, default, EntryFlags.None);
+        var built = b.Build(ScanReader.Folders, TimeSpan.Zero);
+        var storage = Storage((_, _, _) => Task.FromResult(built));
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+
+        storage.SelectedEntry = Entry(tree, "report.docx");
+        Assert.Equal(Loc.Instance["Storage_BlockCloud"], storage.SelectionBlock);
+        Assert.False(storage.RecycleCommand.CanExecute(null));
+        storage.SelectedEntry = Entry(tree, "Docs");
+        Assert.Equal(Loc.Instance["Storage_BlockCloud"], storage.SelectionBlock);
+        storage.SelectedEntry = Entry(tree, "compact.bin");
+        Assert.Equal(Loc.Instance["Storage_BlockReparse"], storage.SelectionBlock);
+        storage.SelectedEntry = Entry(tree, "file link.txt");
+        Assert.Equal(Loc.Instance["Storage_BlockLink"], storage.SelectionBlock);
+        storage.SelectedEntry = Entry(tree, "plain.bin");
+        Assert.Null(storage.SelectionBlock);
+
+        storage.Tab = StorageViewModel.TabLargest;
+        Assert.Equal(Loc.Instance["Storage_BlockCloud"], storage.LargestFiles.Single(f => f.Path.EndsWith("report.docx", StringComparison.Ordinal)).BlockText);
+        Assert.Null(storage.LargestFiles.Single(f => f.Path.EndsWith("plain.bin", StringComparison.Ordinal)).BlockText);
+        storage.LargestFiles.Single(f => f.Path.EndsWith("report.docx", StringComparison.Ordinal)).Selected = true;
+        Assert.Equal(Loc.Instance["Storage_BlockCloud"], storage.SelectionBlock);
+        await storage.RecycleCommand.ExecuteAsync(null);
+        Assert.Empty(_recycled);
+        Assert.Empty(_dialogs.Asked);
+    }
+
+    /// <summary>Entries the reader could not see are counted in the result line, one in the singular.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(3)]
+    public async Task LostEntriesAreCountedInTheResultLine(int lost)
+    {
+        var b = new DiskTree.Builder(_root);
+        b.AddFile(b.Root, "a.bin", 100, -1, default, EntryFlags.None);
+        var built = b.Build(ScanReader.FileTable, TimeSpan.FromSeconds(1), lost);
+        var storage = Storage((_, _, _) => Task.FromResult(built));
+        await storage.AnalyzeFolderAsync(_root);
+
+        var text = Assert.IsType<string>(storage.ResultText);
+        var plain = Loc.Instance.Format("Storage_Result", CleanupViewModel.Size(100), 1, Loc.Instance["Storage_ReaderFileTable"], 1.0);
+        Assert.Equal(lost switch
+        {
+            0 => plain,
+            1 => Loc.Instance.Format("Storage_ResultLostOne", plain),
+            _ => Loc.Instance.Format("Storage_ResultLost", plain, lost),
+        }, text);
+        if (lost > 0) Assert.NotEqual(plain, text);
+    }
+
+    /// <summary>
     /// A junction in the tree is not offered: the move would refuse it (it holds no folder of its own), so the bar says
     /// so first. Only the link is created and removed; its target stays.
     /// </summary>

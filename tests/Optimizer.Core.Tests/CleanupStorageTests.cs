@@ -131,8 +131,10 @@ public class CleanupStorageTests : IDisposable
         Assert.False(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(Path.Combine(sub, "old.tmp")));
         Assert.True(Optimizer.Core.Platform.SafeDelete.ResolvesToItself(victim));
         // The storage analyzer refuses to recycle it as well: AppData (where %TEMP% lies) is not protected here, so the
-        // link is the only reason left, and nothing reaches the Recycle Bin.
-        Assert.Equal([Path.Combine(sub, "old.tmp")], StorageAnalyzer.Recycle([Path.Combine(sub, "old.tmp")], [], appData: false));
+        // link is the only reason left (ResolvesToItself fails before the shell call), and nothing reaches the Recycle
+        // Bin; the junction itself, as a folder, fails HasNoLinks there the same way.
+        Assert.Equal([Path.Combine(sub, "old.tmp"), sub],
+            StorageAnalyzer.RecycleItems([(Path.Combine(sub, "old.tmp"), false), (sub, true)], [], [], appData: false));
         Assert.True(System.IO.File.Exists(victim));
         Assert.Null(Optimizer.Core.Platform.SafeDelete.Pin(sub));
 
@@ -256,6 +258,33 @@ public class CleanupStorageTests : IDisposable
         var dup = Assert.Single(StorageAnalyzer.FindDuplicates([[a, link, copy]], CancellationToken.None));
         Assert.Equal(2, dup.Paths.Count);
         Assert.Contains(copy, dup.Paths);
+    }
+
+    /// <summary>
+    /// A file whose attributes say its data is not on this PC is never opened for a hash: opening an online-only file
+    /// would download it. Offline is the one of these attributes a program may set; the data here is local, so a hash
+    /// would group the two copies, and only the live check keeps them out.
+    /// </summary>
+    [Fact]
+    public void FilesMarkedNotLocalAreNotHashed()
+    {
+        var a = File(@"cloud\a.bin", 2 << 20);
+        var b = File(@"cloud\b.bin", 2 << 20);
+        Assert.Single(StorageAnalyzer.FindDuplicates([[a, b]], CancellationToken.None));
+        try
+        {
+            System.IO.File.SetAttributes(b, FileAttributes.Offline);
+            Assert.True(StorageAnalyzer.NotLocal(b));
+            Assert.False(StorageAnalyzer.NotLocal(a));
+            Assert.Empty(StorageAnalyzer.FindDuplicates([[a, b]], CancellationToken.None));
+            System.IO.File.SetAttributes(a, FileAttributes.Offline);
+            Assert.Empty(StorageAnalyzer.FindDuplicates([[a, b]], CancellationToken.None));
+        }
+        finally
+        {
+            System.IO.File.SetAttributes(a, FileAttributes.Normal);
+            System.IO.File.SetAttributes(b, FileAttributes.Normal);
+        }
     }
 
     [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]

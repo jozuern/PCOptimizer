@@ -10,8 +10,12 @@ namespace Optimizer.Core.Storage;
 /// <see cref="SystemFolder"/>: the folder, or one above it, is both hidden and system (Config.Msi, $SysReset).
 /// <see cref="NameMismatch"/>: a name in the path ends in a dot or space, or the path does not name itself (see
 /// <see cref="RecycleRules.ResolvesAsWritten"/>), so Windows would act on another item.
+/// <see cref="Link"/>: the file or folder is a link (junction, symbolic link, mount point). <see cref="CloudFolder"/>: it
+/// is, or lies in, a OneDrive or other cloud files item. <see cref="OtherReparse"/>: it is, or lies in, another reparse
+/// point (compressed by WOF, deduplicated, or a tag the reader could not see). The move refuses every reparse point on
+/// the item or a folder above it (<see cref="SafeDelete"/>), so these say why before it fails.
 /// </remarks>
-public enum RecycleBlock { Protected, ContainsProtected, KeptFolder, SystemFile, WindowsSetup, SystemFolder, NameMismatch }
+public enum RecycleBlock { Protected, ContainsProtected, KeptFolder, SystemFile, WindowsSetup, SystemFolder, NameMismatch, Link, CloudFolder, OtherReparse }
 
 /// <summary>
 /// What the storage page may move to the Recycle Bin. The app runs elevated, so a folder is refused when it is, or holds,
@@ -110,6 +114,24 @@ public static class RecycleRules
             if (appData && Directory.Exists(Path.Combine(full, "AppData"))) return RecycleBlock.ContainsProtected;
         }
         return ResolvesAsWritten(path, normalized) ? null : RecycleBlock.NameMismatch;
+    }
+
+    /// <summary>
+    /// What the tree says against moving <paramref name="entry"/>: a link itself, or a reparse point that is not a link on
+    /// it or a folder above it (a cloud one first), up to the analyzed root. Null when neither; the path rules
+    /// (<see cref="Check"/>) still apply.
+    /// </summary>
+    public static RecycleBlock? CheckEntry(DiskTree tree, int entry)
+    {
+        if ((tree.Flags(entry) & EntryFlags.ReparsePoint) != 0) return RecycleBlock.Link;
+        RecycleBlock? found = null;
+        for (var e = entry; e >= 0 && e != tree.Root; e = tree.Parent(e))
+        {
+            var flags = tree.Flags(e);
+            if ((flags & EntryFlags.CloudSync) != 0) return RecycleBlock.CloudFolder;
+            if ((flags & EntryFlags.NonLinkReparse) != 0) found ??= RecycleBlock.OtherReparse;
+        }
+        return found;
     }
 
     /// <summary>Folders Windows setup keeps in a drive root: the previous installation and the upgrade's working folders.</summary>

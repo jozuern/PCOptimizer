@@ -345,7 +345,7 @@ public sealed class TreemapView : FrameworkElement
     {
         var size = CleanupViewModel.Size(tree.Size(entry));
         var detail = tree.IsFolder(entry)
-            ? Loc.Instance.Format("Storage_TreemapTipFolder", size, tree.Files(entry))
+            ? tree.Files(entry) == 1 ? Loc.Instance.Format("Storage_TreemapTipFolderOne", size) : Loc.Instance.Format("Storage_TreemapTipFolder", size, tree.Files(entry))
             : Loc.Instance.Format("Storage_TreemapTipFile", size, FileGroupNames.Name(tree.Group(entry)));
         return tree.FullPath(entry) + "\n" + detail;
     }

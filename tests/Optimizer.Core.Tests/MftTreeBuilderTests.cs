@@ -373,26 +373,36 @@ public class MftTreeBuilderTests
         Assert.Equal(4096, t.Allocated(t.Root));
     }
 
+    /// <summary>
+    /// Cloud folders are entered and flagged as cloud reparse points (the page refuses what lies in them); links are
+    /// listed, flagged and not entered, files as well as folders; other reparse points are flagged but not as cloud.
+    /// </summary>
     [Fact]
     public void CloudFoldersKeepTheirChildrenAndLinksDoNot()
     {
-        const uint reparse = 0x400, cloud = 0x9000_601A, mountPoint = 0xA000_0003, symlink = 0xA000_000C;
+        const uint reparse = 0x400, cloud = 0x9000_601A, mountPoint = 0xA000_0003, symlink = 0xA000_000C, wof = 0x8000_0017;
         var t = MftTreeBuilder.Build([
             Root(),
             Rec(40, 5, "OneDrive", folder: true, attributes: reparse, reparseTag: cloud),
-            Rec(41, 40, "online only.docx", size: 5000, allocated: 0, attributes: 0x20 | 0x400000),
+            Rec(41, 40, "online only.docx", size: 5000, allocated: 0, attributes: 0x20 | reparse | 0x400000, reparseTag: cloud),
             Rec(42, 5, "junction", folder: true, attributes: reparse, reparseTag: mountPoint),
             Rec(43, 5, "dir link", folder: true, attributes: reparse, reparseTag: symlink),
+            Rec(44, 5, "file link.txt", attributes: 0x20 | reparse, reparseTag: symlink),
             Rec(45, 42, "impossible child.txt", size: 1),
             Rec(46, 5, "pagefile.sys", size: 64, attributes: 0x26),
+            Rec(47, 5, "compact.bin", size: 8000, allocated: 4096, attributes: 0x20 | reparse, reparseTag: wof),
         ], @"X:\", TimeSpan.Zero);
 
         int Named(string n) => t.Children(t.Root).Single(c => t.Name(c) == n);
         var oneDrive = Named("OneDrive");
-        Assert.Equal(EntryFlags.Folder, t.Flags(oneDrive));
+        Assert.Equal(EntryFlags.Folder | EntryFlags.NonLinkReparse | EntryFlags.CloudSync, t.Flags(oneDrive));
         var online = Assert.Single(t.Children(oneDrive));
-        Assert.Equal(EntryFlags.CloudOnly, t.Flags(online));
+        Assert.Equal(EntryFlags.CloudOnly | EntryFlags.NonLinkReparse | EntryFlags.CloudSync, t.Flags(online));
         Assert.Equal(5000, t.Size(oneDrive));
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckEntry(t, online));
+        Assert.Equal(EntryFlags.ReparsePoint, t.Flags(Named("file link.txt")));
+        Assert.Equal(RecycleBlock.Link, RecycleRules.CheckEntry(t, Named("file link.txt")));
+        Assert.Equal(EntryFlags.NonLinkReparse, t.Flags(Named("compact.bin")));
 
         foreach (var link in new[] { "junction", "dir link" })
         {
@@ -414,8 +424,10 @@ public class MftTreeBuilderTests
         ], @"X:\", TimeSpan.Zero);
 
         var folder = Assert.Single(t.Children(t.Root));
-        Assert.Equal(EntryFlags.Folder, t.Flags(folder));
+        Assert.Equal(EntryFlags.Folder | EntryFlags.NonLinkReparse, t.Flags(folder));
         Assert.Equal(new[] { "inside.txt" }, t.Children(folder).Select(t.Name).ToArray());
+        // Which reparse point it is cannot be told: the page refuses what lies in it with the general reason.
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckEntry(t, t.Children(folder).Single()));
         Assert.Equal(0, t.Lost);
     }
 }

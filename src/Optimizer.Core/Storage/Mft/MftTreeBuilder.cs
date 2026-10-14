@@ -84,14 +84,19 @@ public static class MftTreeBuilder
                 var entry = EntryFlags.None;
                 if ((a & AttrSystem) != 0) entry |= EntryFlags.System;
                 if ((a & (AttrOffline | AttrRecallOnOpen | AttrRecallOnDataAccess)) != 0) entry |= EntryFlags.CloudOnly;
+                // As ReparseTags.Flags from the tag bits the table kept: a link, or another reparse point (a cloud one,
+                // or one whose tag was not read).
+                if ((a & AttrReparse) != 0)
+                    entry |= (flags[c] & MftTable.LinkTag) != 0 ? EntryFlags.ReparsePoint
+                        : EntryFlags.NonLinkReparse | ((flags[c] & MftTable.CloudTag) != 0 ? EntryFlags.CloudSync : EntryFlags.None);
                 var lastWrite = MftTable.Time(t.LastWrite[c]);
                 if (isFolder)
                 {
                     // A link's target is elsewhere or already counted. Other reparse folders, like OneDrive's cloud
                     // folders, hold real children. Without a readable tag the folder is entered, as EnumerationScanner
                     // does, so both readers agree.
-                    var link = (a & AttrReparse) != 0 && (flags[c] & MftTable.LinkTag) != 0;
-                    var i = builder.AddFolder(at, t.Name[c]!, lastWrite, entry | (link ? EntryFlags.ReparsePoint : 0));
+                    var link = (entry & EntryFlags.ReparsePoint) != 0;
+                    var i = builder.AddFolder(at, t.Name[c]!, lastWrite, entry);
                     if (!link) stack.Push((c, i));
                 }
                 else

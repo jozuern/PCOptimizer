@@ -17,10 +17,13 @@ namespace Optimizer.Core.Storage.Mft;
 /// </summary>
 internal sealed class MftTable
 {
-    public const byte InUse = 0x01, Folder = 0x02, HasData = 0x04, HasTag = 0x08, LinkTag = 0x10, Reached = 0x20;
+    /// <summary>
+    /// <see cref="HasTag"/>: a reparse tag was read; <see cref="LinkTag"/>: it is a link's (a name surrogate, as
+    /// <see cref="EnumerationScanner.IsLink"/> tests it); <see cref="CloudTag"/>: a cloud files tag
+    /// (<see cref="ReparseTags.IsCloud"/>). The rank of the kept name takes the top two bits.
+    /// </summary>
+    public const byte CloudTag = 0x01, Folder = 0x02, HasData = 0x04, HasTag = 0x08, LinkTag = 0x10, Reached = 0x20;
     private const int RankShift = 6;
-    /// <summary>Reparse tag bit of links (junction, mount point, symlink), as <see cref="EnumerationScanner.IsLink"/> tests it.</summary>
-    private const uint NameSurrogate = 0x2000_0000;
 
     /// <summary>Entry index + 1 per record number, 0 for a record that is not a base record in use.</summary>
     private readonly int[] _slot;
@@ -116,7 +119,7 @@ internal sealed class MftTable
         Attributes[i] = attributes;
         Size[i] = hasData ? size : 0;
         Allocated[i] = hasData ? allocated : 0;
-        Flags[i] = (byte)(InUse | (folder ? Folder : 0) | (hasData ? HasData : 0) | TagFlags(reparseTag) | rank << RankShift);
+        Flags[i] = (byte)((folder ? Folder : 0) | (hasData ? HasData : 0) | TagFlags(reparseTag) | rank << RankShift);
     }
 
     /// <summary>Takes a name of an extension record of entry <paramref name="i"/> when it ranks higher than the one kept.</summary>
@@ -130,7 +133,8 @@ internal sealed class MftTable
     }
 
     public static byte TagFlags(uint reparseTag) =>
-        reparseTag == 0 ? (byte)0 : (byte)(HasTag | ((reparseTag & NameSurrogate) != 0 ? LinkTag : 0));
+        reparseTag == 0 ? (byte)0
+        : (byte)(HasTag | ((reparseTag & ReparseTags.NameSurrogate) != 0 ? LinkTag : 0) | (ReparseTags.IsCloud(reparseTag) ? CloudTag : 0));
 
     public static DateTime Time(long ticks) => ticks == 0 ? default : new DateTime(ticks, DateTimeKind.Utc);
 

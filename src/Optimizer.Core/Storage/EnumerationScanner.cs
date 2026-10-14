@@ -130,6 +130,8 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
                 var flags = EntryFlags.None;
                 if ((a & AttrSystem) != 0) flags |= EntryFlags.System;
                 if ((a & (AttrRecallOnDataAccess | AttrRecallOnOpen | AttrOffline)) != 0) flags |= EntryFlags.CloudOnly;
+                // With the reparse point attribute, dwReserved0 holds the tag.
+                flags |= ReparseTags.Flags(a, data.dwReserved0);
                 var size = ((long)data.nFileSizeHigh << 32) | data.nFileSizeLow;
                 into.Add(new Found(name, (a & AttrDirectory) != 0, IsLink(a, data.dwReserved0), size, ToUtc(data.ftLastWriteTime), flags));
                 if (into.Count % 256 == 0) ct.ThrowIfCancellationRequested();
@@ -144,7 +146,7 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
     /// reparse points, like the OneDrive cloud placeholders, hold real children and are entered.
     /// </summary>
     internal static bool IsLink(uint attributes, uint reparseTag) =>
-        (attributes & AttrReparse) != 0 && (reparseTag & 0x20000000) != 0;
+        (attributes & AttrReparse) != 0 && (reparseTag & ReparseTags.NameSurrogate) != 0;
 
     private static DateTime ToUtc(long fileTime)
     {

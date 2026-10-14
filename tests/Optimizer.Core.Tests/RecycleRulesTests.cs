@@ -16,7 +16,9 @@ public sealed class RecycleRulesTests : IDisposable
         Assert.Equal(RecycleBlock.SystemFile, RecycleRules.Check(@"C:\pagefile.sys", folder: false, systemFile: true, [], [], appData: false));
     }
 
+    /// <summary>Reads this PC's profile list and drives (read only).</summary>
     [Fact]
+    [Trait("Category", "Hardware")]
     public void DriveRootIsKept()
     {
         var kept = RecycleRules.KeptFolders();
@@ -24,7 +26,9 @@ public sealed class RecycleRulesTests : IDisposable
         Assert.Equal(RecycleBlock.KeptFolder, RecycleRules.Check(system, folder: true, systemFile: false, [], kept, appData: false));
     }
 
+    /// <summary>Reads this PC's profile list and drives (read only).</summary>
     [Fact]
+    [Trait("Category", "Hardware")]
     public void ProfileRootIsKeptButItsFilesAreNot()
     {
         var kept = RecycleRules.KeptFolders();
@@ -231,4 +235,58 @@ public sealed class RecycleRulesTests : IDisposable
         Assert.True(Directory.Exists(kept));
         Assert.True(File.Exists(gameFile));
     }
+
+    /// <summary>
+    /// What the tree says: a link itself, and anything that is or lies in a cloud folder or another reparse point, which
+    /// the move would refuse. A tree in memory; nothing on disk.
+    /// </summary>
+    [Fact]
+    public void CheckEntryRefusesLinksAndWhatLiesInCloudOrOtherReparseFolders()
+    {
+        var b = new DiskTree.Builder(@"X:");
+        var oneDrive = b.AddFolder(b.Root, "OneDrive", default, EntryFlags.NonLinkReparse | EntryFlags.CloudSync);
+        var photos = b.AddFolder(oneDrive, "Photos", default, EntryFlags.None);
+        var photo = b.AddFile(photos, "a.jpg", 10, -1, default, EntryFlags.None);
+        var projected = b.AddFolder(b.Root, "projected", default, EntryFlags.NonLinkReparse);
+        var inside = b.AddFile(projected, "b.bin", 10, -1, default, EntryFlags.None);
+        var compressed = b.AddFile(b.Root, "c.bin", 10, -1, default, EntryFlags.NonLinkReparse);
+        var linkFile = b.AddFile(b.Root, "link.txt", 0, -1, default, EntryFlags.ReparsePoint);
+        var linkFolder = b.AddFolder(b.Root, "junction", default, EntryFlags.ReparsePoint);
+        var plain = b.AddFile(b.Root, "plain.bin", 10, -1, default, EntryFlags.None);
+        var t = b.Build(ScanReader.Folders, TimeSpan.Zero);
+
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckEntry(t, oneDrive));
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckEntry(t, photos));
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckEntry(t, photo));
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckEntry(t, projected));
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckEntry(t, inside));
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckEntry(t, compressed));
+        Assert.Equal(RecycleBlock.Link, RecycleRules.CheckEntry(t, linkFile));
+        Assert.Equal(RecycleBlock.Link, RecycleRules.CheckEntry(t, linkFolder));
+        Assert.Null(RecycleRules.CheckEntry(t, plain));
+        Assert.Null(RecycleRules.CheckEntry(t, t.Root));
+    }
+
+    /// <summary>
+    /// The shell call is the test module's stand-in (TestSetup): a test that loses a refusal fails instead of moving
+    /// anything. Called with a path that does not exist, so even the real call could move nothing.
+    /// </summary>
+    [Fact]
+    public void TheRecycleBinIsOutOfReachInTests()
+    {
+        var missing = Path.Combine(_root, "never-created-" + Guid.NewGuid().ToString("N"));
+        Assert.Throws<RecycleBinReachedException>(() => StorageAnalyzer.ShellRecycle(missing));
+    }
+
+    /// <summary>Both readers classify a reparse point by its tag the same way (ReparseTags.Flags).</summary>
+    [Theory]
+    [InlineData(0x20u, 0u, EntryFlags.None)]
+    [InlineData(0x400u, 0xA000_0003u, EntryFlags.ReparsePoint)]          // junction, mount point
+    [InlineData(0x400u, 0xA000_000Cu, EntryFlags.ReparsePoint)]          // symbolic link
+    [InlineData(0x400u, 0x9000_001Au, EntryFlags.NonLinkReparse | EntryFlags.CloudSync)]
+    [InlineData(0x400u, 0x9000_601Au, EntryFlags.NonLinkReparse | EntryFlags.CloudSync)]  // OneDrive's CLOUD_6
+    [InlineData(0x400u, 0x8000_0017u, EntryFlags.NonLinkReparse)]        // WOF compression
+    [InlineData(0x400u, 0u, EntryFlags.NonLinkReparse)]                  // tag not read
+    public void ReparseTagsClassifyLinksCloudAndOthers(uint attributes, uint tag, EntryFlags expected) =>
+        Assert.Equal(expected, ReparseTags.Flags(attributes, tag));
 }

@@ -574,6 +574,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_Result" xml:space="preserve"><value>{0} in {1:N0} files, read {2} in {3:0.0} s</value></data>
   <data name="Storage_ReaderFileTable" xml:space="preserve"><value>from the file table</value></data>
   <data name="Storage_ReaderFolders" xml:space="preserve"><value>folder by folder</value></data>
+  <data name="Storage_ResultLost" xml:space="preserve"><value>{0}. {1:N0} folders or entries could not be read</value></data>
+  <data name="Storage_ResultLostOne" xml:space="preserve"><value>{0}. 1 folder or entry could not be read</value></data>
   <data name="Storage_TabFolders" xml:space="preserve"><value>Folders</value></data>
   <data name="Storage_TabTypes" xml:space="preserve"><value>File types</value></data>
   <data name="Storage_TabLargest" xml:space="preserve"><value>Largest files</value></data>
@@ -600,6 +602,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_TreemapHint" xml:space="preserve"><value>Select a tile to find it in the list. Double-click to show the folder it is in.</value></data>
   <data name="Storage_TreemapTipFile" xml:space="preserve"><value>{0}, {1}</value></data>
   <data name="Storage_TreemapTipFolder" xml:space="preserve"><value>{0} in {1:N0} files</value></data>
+  <data name="Storage_TreemapTipFolderOne" xml:space="preserve"><value>{0} in 1 file</value></data>
   <data name="Storage_Legend" xml:space="preserve"><value>File types</value></data>
   <data name="Storage_GroupVideo" xml:space="preserve"><value>Video</value></data>
   <data name="Storage_GroupAudio" xml:space="preserve"><value>Audio</value></data>
@@ -613,7 +616,7 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_CopyPath" xml:space="preserve"><value>Copy path</value></data>
   <data name="Storage_RecycleCount" xml:space="preserve"><value>Move to Recycle Bin ({0})</value></data>
   <data name="Storage_RecycleMore" xml:space="preserve"><value>And {0} more.</value></data>
-  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Not moved (in use, changed since the analysis, holding a link, or you answered No):
+  <data name="Storage_RecycleFailed" xml:space="preserve"><value>Not moved (in use, changed since the analysis, a link or holding one, in a cloud folder, or you answered No):
 {0}</value></data>
   <data name="Storage_SelectHint" xml:space="preserve"><value>Select an entry to open it in Explorer, copy its path or move it to the Recycle Bin.</value></data>
   <data name="Storage_BlockProtected" xml:space="preserve"><value>Protected: a Windows, program, game or AppData location stays where it is.</value></data>
@@ -623,8 +626,10 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_BlockSystemFolder" xml:space="preserve"><value>Protected: Windows marks this folder, or one above it, as a hidden system folder.</value></data>
   <data name="Storage_BlockWindowsSetup" xml:space="preserve"><value>Protected: Windows setup files, such as the previous installation in Windows.old. Remove them in Settings &gt; System &gt; Storage &gt; Temporary files.</value></data>
   <data name="Storage_BlockName" xml:space="preserve"><value>Its name, or the name of a folder above it, ends in a dot or space. Windows would read it as another name, so it is not moved.</value></data>
-  <data name="Storage_BlockLink" xml:space="preserve"><value>A link to another folder: links are not moved to the Recycle Bin.</value></data>
+  <data name="Storage_BlockLink" xml:space="preserve"><value>A link to another file or folder: remove it in File Explorer.</value></data>
   <data name="Storage_BlockUnreadable" xml:space="preserve"><value>This folder could not be read, so it cannot be checked before a move.</value></data>
+  <data name="Storage_BlockCloud" xml:space="preserve"><value>In OneDrive or another cloud folder: remove it in File Explorer.</value></data>
+  <data name="Storage_BlockReparse" xml:space="preserve"><value>This item, or a folder above it, is a special Windows item (a reparse point, such as a compressed file): remove it in File Explorer.</value></data>
   <data name="Storage_Missing" xml:space="preserve"><value>{0} no longer exists. Analyze again to update the result.</value></data>
   <data name="Storage_OpenFailed" xml:space="preserve"><value>File Explorer did not start. Copy path gives you the path: {0}</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Looking for duplicate files</value></data>
