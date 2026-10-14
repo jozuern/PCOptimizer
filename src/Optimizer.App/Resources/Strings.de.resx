@@ -581,7 +581,10 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_FindDuplicates" xml:space="preserve"><value>Duplikate suchen</value></data>
   <data name="Storage_DriveSpace" xml:space="preserve"><value>{0} frei von {1}</value></data>
   <data name="Storage_NoResult" xml:space="preserve"><value>Wähle ein Laufwerk und dann Analysieren.</value></data>
-  <data name="Storage_TabNotReady" xml:space="preserve"><value>Diese Ansicht gibt es noch nicht.</value></data>
+  <data name="Storage_NoExtension" xml:space="preserve"><value>Ohne Endung</value></data>
+  <data name="Storage_TypesHint" xml:space="preserve"><value>Öffne eine Gruppe und wähle einen Dateityp, um seine größten Dateien zu sehen.</value></data>
+  <data name="Storage_TypeFiles" xml:space="preserve"><value>Größte Dateien: {0}</value></data>
+  <data name="Storage_TypeGroupList" xml:space="preserve"><value>Dateitypen</value></data>
   <data name="Storage_DuplicatesHint" xml:space="preserve"><value>Vergleicht Dateien gleicher Größe (ab 1 MB) nach ihrem Inhalt. Windows-, Programm-, Spiele- und AppData-Ordner bleiben außen vor.</value></data>
   <data name="Storage_DuplicatesFound" xml:space="preserve"><value>Duplikate: {0} lassen sich freigeben.</value></data>
   <data name="Storage_NoDuplicates" xml:space="preserve"><value>Keine doppelten Dateien ab 1 MB gefunden.</value></data>

@@ -31,6 +31,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     public ObservableCollection<StorageFileRow> LargestFiles { get; } = [];
     public ObservableCollection<StorageFileRow> Duplicates { get; } = [];
 
+    /// <summary>The File types tab: groups by size, and the largest 100 files of the selected extension.</summary>
+    public ObservableCollection<TypeGroupRow> TypeGroups { get; } = [];
+    public ObservableCollection<StorageFileRow> TypeFiles { get; } = [];
+
     /// <summary>The Folders tab: the tree as rows (only expanded folders), the folder the treemap shows and its path.</summary>
     public StorageTreeRows Folders { get; } = new();
     public ObservableCollection<FolderCrumb> Crumbs { get; } = [];
@@ -44,6 +48,14 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     [ObservableProperty] private TreeRow? _selectedRow;
 
     [ObservableProperty] private DriveRow? _selectedDrive;
+
+    /// <summary>The extension whose files <see cref="TypeFiles"/> lists.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TypeFilesTitle))]
+    private TypeRow? _selectedType;
+
+    /// <summary>"Largest files: .mp4" above the list of the selected extension; null without one.</summary>
+    public string? TypeFilesTitle => SelectedType is { } t ? Loc.Instance.Format("Storage_TypeFiles", t.Name) : null;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasResult), nameof(NoResult), nameof(CanFindDuplicates))]
@@ -109,6 +121,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     private CancellationTokenSource? _cancel;
     private bool _largestFilled;
     private bool _foldersFilled;
+    private bool _typesFilled;
+    // Kept over a rebuild of the same tree (a removal, a language switch): what was open stays open.
+    private readonly HashSet<FileGroup> _openGroups = [];
+    private string? _openType;
     private IReadOnlyList<DuplicateGroup> _duplicateGroups = [];
     private Dictionary<string, int> _duplicateEntries = new(StringComparer.OrdinalIgnoreCase);
 
@@ -149,6 +165,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         LargestFiles.Clear();
         _largestFilled = false;
         _foldersFilled = false;
+        ResetTypes(keep: true);
         UpdateSelection();
         FillTab();
         TreeChanged?.Invoke(this, EventArgs.Empty);
@@ -240,15 +257,16 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         Duplicates.Clear();
         DuplicatesSearched = false;
         DuplicatesText = null;
-        RefreshFromTree();
+        RefreshFromTree(keepTypes: false);
     }
 
     /// <summary>The tree changed (new, closed, entries removed): lists are built again when their tab is open.</summary>
-    private void RefreshFromTree()
+    private void RefreshFromTree(bool keepTypes = true)
     {
         LargestFiles.Clear();
         _largestFilled = false;
         _foldersFilled = false;
+        ResetTypes(keepTypes);
         if (Tree is null)
         {
             Folders.Clear();
@@ -285,18 +303,80 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             }
             UpdateCrumbs();
         }
+        if (Tab == TabTypes && !_typesFilled && Tree is { } typed) FillTypes(typed);
         if (Tab == TabLargest && !_largestFilled && Tree is { } tree)
         {
             _largestFilled = true;
-            foreach (var i in tree.LargestFiles(100))
-            {
-                var path = tree.FullPath(i);
-                var system = (tree.Flags(i) & EntryFlags.System) != 0;
-                LargestFiles.Add(new StorageFileRow(path, tree.Size(i),
-                    tree.LastWriteUtc(i).ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture),
-                    !system && !StorageAnalyzer.IsProtected(path, _protected), i, UpdateSelection));
-            }
+            foreach (var i in tree.LargestFiles(100)) LargestFiles.Add(FileRow(tree, i));
         }
+    }
+
+    /// <summary>A file of the tree as a list row: its last change, and a tick where Recycle is allowed.</summary>
+    private StorageFileRow FileRow(DiskTree tree, int i)
+    {
+        var path = tree.FullPath(i);
+        var system = (tree.Flags(i) & EntryFlags.System) != 0;
+        return new StorageFileRow(path, tree.Size(i),
+            tree.LastWriteUtc(i).ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture),
+            !system && !StorageAnalyzer.IsProtected(path, _protected), i, UpdateSelection);
+    }
+
+    /// <summary>Drops the File types rows; with <paramref name="keep"/> the open groups and the selected extension are remembered for the next fill.</summary>
+    private void ResetTypes(bool keep)
+    {
+        if (!keep)
+        {
+            _openGroups.Clear();
+            _openType = null;
+        }
+        else if (_typesFilled)
+        {
+            _openGroups.Clear();
+            foreach (var g in TypeGroups.Where(g => g.IsExpanded)) _openGroups.Add(g.Group);
+            _openType = SelectedType?.Extension;
+        }
+        _typesFilled = false;
+        SelectedType = null;
+        TypeGroups.Clear();
+        TypeFiles.Clear();
+    }
+
+    /// <summary>The groups with their totals (one pass over the tree); extension rows are built when a group opens.</summary>
+    private void FillTypes(DiskTree tree)
+    {
+        _typesFilled = true;
+        var totals = tree.TypeTotals();
+        var all = (double)totals.Sum(t => t.Bytes);
+        foreach (var g in totals.GroupBy(t => t.Group).Select(g => (Group: g.Key, Rows: g.ToList(), Bytes: g.Sum(t => t.Bytes))).OrderByDescending(g => g.Bytes))
+            TypeGroups.Add(new TypeGroupRow(g.Group, g.Bytes, g.Rows.Sum(t => t.Count), all > 0 ? g.Bytes / all : 0, g.Rows, all));
+        foreach (var row in TypeGroups.Where(r => _openGroups.Contains(r.Group))) row.IsExpanded = true;
+        if (_openType is { } ext)
+            SelectedType = TypeGroups.SelectMany(g => g.Extensions).FirstOrDefault(t => t.Extension == ext);
+        _openGroups.Clear();
+        _openType = null;
+    }
+
+    [RelayCommand]
+    private void ToggleTypeGroup(TypeGroupRow? group)
+    {
+        if (group is null) return;
+        // Closing the group of the selected extension leaves nothing selected: its file list would hang in the air.
+        if (group.IsExpanded && SelectedType is { } t && group.Extensions.Contains(t)) SelectedType = null;
+        group.IsExpanded = !group.IsExpanded;
+    }
+
+    [RelayCommand]
+    private void SelectType(TypeRow? row) => SelectedType = row;
+
+    /// <summary>The largest 100 files of the chosen extension, built for this one only.</summary>
+    partial void OnSelectedTypeChanged(TypeRow? oldValue, TypeRow? newValue)
+    {
+        if (oldValue is not null) oldValue.IsSelected = false;
+        if (newValue is not null) newValue.IsSelected = true;
+        TypeFiles.Clear();
+        if (newValue is not null && Tree is { } tree)
+            foreach (var i in tree.LargestFilesOfType(newValue.Extension, 100)) TypeFiles.Add(FileRow(tree, i));
+        UpdateSelection();
     }
 
     /// <summary>Shows a folder on the treemap; a file shows the folder it is in.</summary>
@@ -401,7 +481,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         UpdateSelection();
     }
 
-    private void UpdateSelection() => HasSelection = LargestFiles.Concat(Duplicates).Any(f => f.Selected && f.CanRecycle);
+    private void UpdateSelection() => HasSelection = LargestFiles.Concat(Duplicates).Concat(TypeFiles).Any(f => f.Selected && f.CanRecycle);
 
     /// <summary>
     /// Moves the ticked files to the Recycle Bin after a confirmation that lists them. Every file is checked again by
@@ -411,7 +491,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     private async Task RecycleSelectedAsync()
     {
         if (!CanRecycle || Tree is not { } tree) return;
-        var rows = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanRecycle).DistinctBy(f => f.Path, StringComparer.OrdinalIgnoreCase).ToList();
+        var rows = LargestFiles.Concat(Duplicates).Concat(TypeFiles).Where(f => f.Selected && f.CanRecycle).DistinctBy(f => f.Path, StringComparer.OrdinalIgnoreCase).ToList();
         var selected = rows.Select(f => f.Path).ToList();
         if (selected.Count == 0) return;
         // The first copy of a duplicate group can also be picked under the largest files: one copy always stays.

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Optimizer.App.Services;
 using Optimizer.Core.Storage;
@@ -55,4 +57,57 @@ public static class FileGroupNames
         FileGroup.System => "Storage_GroupSystem",
         _ => "Storage_GroupOther",
     }];
+}
+
+/// <summary>One extension of the File types tab (".mp4"); an empty <see cref="Extension"/> is the files without one.</summary>
+public sealed partial class TypeRow(TypeTotal total, double share) : ObservableObject
+{
+    /// <summary>Lower case, no dot; the key <see cref="DiskTree.LargestFilesOfType"/> takes.</summary>
+    public string Extension { get; } = total.Extension;
+    public string Name { get; } = total.Extension.Length == 0 ? Loc.Instance["Storage_NoExtension"] : "." + total.Extension;
+    public long Bytes { get; } = total.Bytes;
+    public int Count { get; } = total.Count;
+    public string SizeText { get; } = CleanupViewModel.Size(total.Bytes);
+    public string CountText { get; } = total.Count.ToString("N0", CultureInfo.CurrentCulture);
+    /// <summary>Share of everything the analysis read, 0 to 1, for the bar in the row.</summary>
+    public double Share { get; } = share;
+
+    /// <summary>The extension whose largest files are listed.</summary>
+    [ObservableProperty] private bool _isSelected;
+
+    // What screen readers announce for this item in a list.
+    public override string ToString() => $"{Name}, {SizeText}";
+}
+
+/// <summary>
+/// One file group of the File types tab with its totals. <see cref="Extensions"/> stays empty until the group is opened:
+/// a drive can hold thousands of extensions, and only the ones the user looks at become rows.
+/// </summary>
+public sealed partial class TypeGroupRow(FileGroup group, long bytes, int count, double share, IReadOnlyList<TypeTotal> totals, double all) : ObservableObject
+{
+    public FileGroup Group { get; } = group;
+    public string Name { get; } = FileGroupNames.Name(group);
+    public long Bytes { get; } = bytes;
+    public int Count { get; } = count;
+    public string SizeText { get; } = CleanupViewModel.Size(bytes);
+    public string CountText { get; } = count.ToString("N0", CultureInfo.CurrentCulture);
+    /// <summary>Share of everything the analysis read, 0 to 1, for the bar in the row.</summary>
+    public double Share { get; } = share;
+
+    /// <summary>The resource key of the group's treemap color, so the tab and the map legend agree.</summary>
+    public string BrushKey => $"Treemap{Group}Brush";
+
+    public ObservableCollection<TypeRow> Extensions { get; } = [];
+
+    [ObservableProperty] private bool _isExpanded;
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        Extensions.Clear();
+        if (!value) return;
+        foreach (var t in totals) Extensions.Add(new TypeRow(t, all > 0 ? t.Bytes / all : 0));
+    }
+
+    // What screen readers announce for this item in a list.
+    public override string ToString() => $"{Name}, {SizeText}";
 }

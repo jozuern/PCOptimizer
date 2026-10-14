@@ -236,7 +236,129 @@
                 <ScrollViewer Style="{StaticResource EdgeTabScroll}">
                     <StackPanel Style="{StaticResource EdgeContent}">
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_TabNotReady}" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}">
+                            <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_TypesHint}" Margin="0,0,0,8" />
+                            <!-- Groups by size; a group opens into its extensions (rows exist only for opened groups) -->
+                            <ui:Card Padding="0,8" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <Grid Margin="16,0,16,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="64" />
+                                            <ColumnDefinition Width="72" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_ColName}" Margin="41,0,0,0" />
+                                        <ui:TextBlock Grid.Column="1" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColSize}" TextAlignment="Right" />
+                                        <ui:TextBlock Grid.Column="2" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColShare}" Margin="12,0,0,0" />
+                                        <ui:TextBlock Grid.Column="3" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColFiles}" TextAlignment="Right" />
+                                    </Grid>
+                                    <v:ItemList ItemsSource="{Binding Storage.TypeGroups}" AutomationProperties.Name="{l:Tr Storage_TypeGroupList}" Margin="8,0">
+                                        <v:ItemList.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <ui:Button Appearance="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="8,4" BorderThickness="0"
+                                                               Command="{Binding DataContext.Storage.ToggleTypeGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}" AutomationProperties.Name="{Binding}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="80" />
+                                                                <ColumnDefinition Width="64" />
+                                                                <ColumnDefinition Width="72" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <DockPanel>
+                                                                <ui:SymbolIcon x:Name="ChevronIcon" DockPanel.Dock="Left" Symbol="ChevronRight16" FontSize="12" Margin="0,0,8,0" />
+                                                                <!-- The group's treemap color; the outline keeps the light yellow visible on white -->
+                                                                <Border x:Name="Swatch" DockPanel.Dock="Left" Width="12" Height="12" CornerRadius="2" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" />
+                                                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                                              Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                            </DockPanel>
+                                                            <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding SizeText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                          Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                            <Border Grid.Column="2" Height="4" CornerRadius="2" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                                    Background="{DynamicResource ControlStrongFillColorDisabledBrush}">
+                                                                <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="2" RenderTransformOrigin="0,0.5">
+                                                                    <Border.RenderTransform>
+                                                                        <ScaleTransform ScaleX="{Binding Share}" />
+                                                                    </Border.RenderTransform>
+                                                                </Border>
+                                                            </Border>
+                                                            <ui:TextBlock Grid.Column="3" FontTypography="Body" Text="{Binding CountText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                        </Grid>
+                                                    </ui:Button>
+                                                    <v:ItemList ItemsSource="{Binding Extensions}" Margin="28,0,0,0">
+                                                        <v:ItemList.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <ui:Button Appearance="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" BorderThickness="0"
+                                                                           Command="{Binding DataContext.Storage.SelectTypeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           CommandParameter="{Binding}" AutomationProperties.Name="{Binding}">
+                                                                    <Border x:Name="Back" CornerRadius="4" Padding="8,4" Background="Transparent">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="80" />
+                                                                                <ColumnDefinition Width="64" />
+                                                                                <ColumnDefinition Width="72" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <ui:TextBlock FontTypography="Body" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                                                          Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="20,0,0,0" />
+                                                                            <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding SizeText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                                          Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                                            <Border Grid.Column="2" Height="4" CornerRadius="2" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                                                    Background="{DynamicResource ControlStrongFillColorDisabledBrush}">
+                                                                                <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="2" RenderTransformOrigin="0,0.5">
+                                                                                    <Border.RenderTransform>
+                                                                                        <ScaleTransform ScaleX="{Binding Share}" />
+                                                                                    </Border.RenderTransform>
+                                                                                </Border>
+                                                                            </Border>
+                                                                            <ui:TextBlock Grid.Column="3" FontTypography="Body" Text="{Binding CountText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </ui:Button>
+                                                                <DataTemplate.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                        <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                                                    </DataTrigger>
+                                                                </DataTemplate.Triggers>
+                                                            </DataTemplate>
+                                                        </v:ItemList.ItemTemplate>
+                                                    </v:ItemList>
+                                                </StackPanel>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                        <Setter TargetName="ChevronIcon" Property="Symbol" Value="ChevronDown16" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Video"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapVideoBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Audio"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapAudioBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Images"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapImagesBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Archives"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapArchivesBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Programs"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapProgramsBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Documents"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapDocumentsBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="System"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapSystemBrush}" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Group}" Value="Other"><Setter TargetName="Swatch" Property="Background" Value="{DynamicResource TreemapOtherBrush}" /></DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </v:ItemList.ItemTemplate>
+                                    </v:ItemList>
+                                </StackPanel>
+                            </ui:Card>
+                            <!-- The largest files of the selected extension, ticks as under Largest files -->
+                            <StackPanel Visibility="{Binding Storage.TypeFiles.Count, Converter={StaticResource CountToVisibility}}">
+                                <DockPanel Margin="0,0,0,8">
+                                    <ui:Button DockPanel.Dock="Right" Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
+                                               Margin="16,0,0,0" />
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Storage.TypeFilesTitle}" VerticalAlignment="Center" />
+                                </DockPanel>
+                                <ui:Card Padding="{StaticResource CardPadding}">
+                                    <v:ItemList ItemsSource="{Binding Storage.TypeFiles}" ItemTemplate="{StaticResource FileRow}" />
+                                </ui:Card>
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

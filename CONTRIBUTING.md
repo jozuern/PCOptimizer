@@ -39,7 +39,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--tab-order <file.txt>` | with `--screenshot`: writes every Tab stop of the page in order with the name and type a screen reader announces (`NO NAME` marks a stop without one); with `--confirm` also the confirmation's to `<file>-confirm.txt` |
 | `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
 | `--licenses-shot <file.png>` | with `--screenshot`: renders the Licenses window |
-| `--storage-scan <folder>` | with `--screenshot`: opens Storage and analyzes that folder (read only) before the screenshot; `--storage-tab 0` to `3` opens Folders, File types, Largest files or Duplicate files |
+| `--storage-scan <folder>` | with `--screenshot`: opens Storage and analyzes that folder (read only) before the screenshot; `--storage-tab 0` to `3` opens Folders, File types, Largest files or Duplicate files; `--storage-type mp4` opens that extension's group on File types and selects it |
 | `--work-demo` | with `--screenshot`: shows the progress banner as Apply recommended does (3 of 12, with Stop); nothing runs |
 | `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors, and switches that keep the old accent) |
 | `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |

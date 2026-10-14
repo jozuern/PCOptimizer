@@ -263,6 +263,12 @@ public partial class App : Application
             await vm.Storage.EnsureLoadedAsync();
             await vm.Storage.AnalyzeFolderAsync(storageFolder);
             if (int.TryParse(args.Value("--storage-tab"), CultureInfo.InvariantCulture, out var storageTab)) vm.Storage.Tab = Math.Clamp(storageTab, 0, 3);
+            // --storage-type mp4: opens that extension's group on the File types tab and selects it.
+            if (args.Value("--storage-type") is { } storageType && vm.Storage.TypeGroups.FirstOrDefault(g => Optimizer.Core.Storage.FileTypes.GroupOf(storageType) == g.Group) is { } typeGroup)
+            {
+                typeGroup.IsExpanded = true;
+                vm.Storage.SelectedType = typeGroup.Extensions.FirstOrDefault(t => t.Extension == storageType.TrimStart('.').ToLowerInvariant());
+            }
         }
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
         if (args.Value("--preview-uninstall") is "on")

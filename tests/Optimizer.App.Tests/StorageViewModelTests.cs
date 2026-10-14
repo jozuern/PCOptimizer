@@ -72,6 +72,37 @@ public sealed class StorageViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task TypesListGroupsAndFiles()
+    {
+        var a = File("a.mp4", 300);
+        var b = File("b.mp4", 100);
+        File("c.zip", 200);
+        var storage = Storage();
+        await storage.EnsureLoadedAsync();
+        await storage.AnalyzeFolderAsync(_root);
+        // Only the open tab builds its rows.
+        Assert.Empty(storage.TypeGroups);
+        storage.Tab = StorageViewModel.TabTypes;
+        Assert.Equal([FileGroup.Video, FileGroup.Archives], storage.TypeGroups.Select(g => g.Group));
+        Assert.Equal([400L, 200L], storage.TypeGroups.Select(g => g.Bytes));
+        Assert.Equal([2, 1], storage.TypeGroups.Select(g => g.Count));
+        Assert.Equal(400 / 600.0, storage.TypeGroups[0].Share, 6);
+        // Extension rows exist only for an expanded group.
+        Assert.All(storage.TypeGroups, g => Assert.Empty(g.Extensions));
+        storage.ToggleTypeGroupCommand.Execute(storage.TypeGroups[0]);
+        Assert.Equal([".mp4"], storage.TypeGroups[0].Extensions.Select(e => e.Name));
+        Assert.Empty(storage.TypeGroups[1].Extensions);
+        Assert.Empty(storage.TypeFiles);
+        storage.SelectedType = storage.TypeGroups[0].Extensions[0];
+        Assert.Equal([a, b], storage.TypeFiles.Select(f => f.Path));
+        // Closing the result drops the lists.
+        storage.CloseResultCommand.Execute(null);
+        Assert.Empty(storage.TypeGroups);
+        Assert.Empty(storage.TypeFiles);
+        Assert.Null(storage.SelectedType);
+    }
+
+    [Fact]
     public async Task CancelledAnalyzeKeepsThePreviousResult()
     {
         File("a.bin", 1000);
