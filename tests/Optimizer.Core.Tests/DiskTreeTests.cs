@@ -102,6 +102,29 @@ public class DiskTreeTests
     }
 
     [Fact]
+    public void RemoveKeepsEveryListLargestFirst()
+    {
+        // The treemap stops at the first child too small to draw: a folder that shrank must not stay in front.
+        var bl = new DiskTree.Builder(@"C:\");
+        var a = bl.AddFolder(bl.Root, "a", T, EntryFlags.Folder);
+        var deep = bl.AddFolder(a, "deep", T, EntryFlags.Folder);
+        var huge = bl.AddFile(deep, "huge.bin", 100, -1, T, EntryFlags.None);
+        var other = bl.AddFile(a, "other.bin", 20, -1, T, EntryFlags.None);
+        var b = bl.AddFolder(bl.Root, "b", T, EntryFlags.Folder);
+        bl.AddFile(b, "x.bin", 50, -1, T, EntryFlags.None);
+        var c = bl.AddFile(bl.Root, "c.bin", 50, -1, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.Folders, TimeSpan.Zero);
+        Assert.Equal(new[] { a, b, c }, t.Children(t.Root));
+        Assert.Equal(new[] { deep, other }, t.Children(a));
+
+        t.Remove(huge);
+
+        // b and c are as large as each other and keep the order they were added in.
+        Assert.Equal(new[] { b, c, a }, t.Children(t.Root));
+        Assert.Equal(new[] { other, deep }, t.Children(a));
+    }
+
+    [Fact]
     public void ChildAccessorsMatchChildrenAndFollowRemove()
     {
         var t = Sample(out var a, out var small, out var big, out _);
@@ -164,6 +187,7 @@ public class DiskTreeTests
             t.TypeTotals().ToArray());
         Assert.Equal(new[] { a }, t.LargestFilesOfType("mp4", 1).ToArray());
         Assert.Equal(new[] { a }, t.LargestFilesOfType(".MP4", 1).ToArray());
+        Assert.Empty(t.LargestFilesOfType("mp", 1));
     }
 
     [Theory]

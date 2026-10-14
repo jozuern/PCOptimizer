@@ -134,6 +134,31 @@ public static class RecycleRules
         return found;
     }
 
+    /// <summary>
+    /// What <see cref="CheckEntry"/> cannot see for a tree of a folder rather than a drive: the analyzed folder itself and
+    /// every folder above it, below the drive root, read from the disk. A cloud folder or another reparse point (a link
+    /// too) there holds every entry of the tree, and the move refuses them all, so the page says so for each. Null for a drive
+    /// root and when none is one; a folder that cannot be read is skipped (the move still checks it).
+    /// </summary>
+    /// <param name="read">Attributes and reparse tag of a folder; tests pass their own. Default: <see cref="SafeDelete.AttributesAndTag"/>.</param>
+    public static RecycleBlock? CheckAbove(string root, Func<string, (uint Attributes, uint Tag)?>? read = null)
+    {
+        read ??= SafeDelete.AttributesAndTag;
+        var full = Normalize(root);
+        var drive = (Path.GetPathRoot(full) ?? "").TrimEnd('\\');
+        RecycleBlock? found = null;
+        for (var p = full; p is not null && p.TrimEnd('\\').Length > drive.Length; p = Path.GetDirectoryName(p))
+        {
+            if (read(p) is not { } item) continue;
+            // A link above the entries (the folder was analyzed through a junction) is not the entry itself: it counts as
+            // a reparse point above it, which is what the page then says.
+            var flags = ReparseTags.Flags(item.Attributes, item.Tag);
+            if ((flags & EntryFlags.CloudSync) != 0) return RecycleBlock.CloudFolder;
+            if ((flags & (EntryFlags.ReparsePoint | EntryFlags.NonLinkReparse)) != 0) found ??= RecycleBlock.OtherReparse;
+        }
+        return found;
+    }
+
     /// <summary>Folders Windows setup keeps in a drive root: the previous installation and the upgrade's working folders.</summary>
     private static readonly string[] WindowsSetupFolders = ["Windows.old", "$Windows.~BT", "$Windows.~WS"];
 

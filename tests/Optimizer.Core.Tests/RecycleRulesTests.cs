@@ -278,6 +278,31 @@ public sealed class RecycleRulesTests : IDisposable
         Assert.Throws<RecycleBinReachedException>(() => StorageAnalyzer.ShellRecycle(missing));
     }
 
+    /// <summary>An analyzed folder in OneDrive or below another reparse point: the tree's own entries cannot say so.</summary>
+    [Fact]
+    public void CheckAboveReadsTheAnalyzedFolderAndEveryFolderAboveIt()
+    {
+        const uint dir = 0x10, reparse = 0x400;
+        var root = @"C:\Users\x\OneDrive\Projects";
+        var asked = new List<string>();
+        (uint, uint)? Read(string p, string at, uint tag)
+        {
+            asked.Add(p);
+            return string.Equals(p, at, StringComparison.OrdinalIgnoreCase) ? (dir | reparse, tag) : (dir, 0u);
+        }
+
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckAbove(root, p => Read(p, @"C:\Users\x\OneDrive", 0x9000_601A)));
+        Assert.Equal(RecycleBlock.CloudFolder, RecycleRules.CheckAbove(root, p => Read(p, root, 0x9000_601A)));
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckAbove(root, p => Read(p, @"C:\Users", 0xA000_0003)));
+        Assert.Equal(RecycleBlock.OtherReparse, RecycleRules.CheckAbove(root, p => Read(p, @"C:\Users\x", 0x8000_0017)));
+        asked.Clear();
+        Assert.Null(RecycleRules.CheckAbove(root, p => Read(p, "none", 0)));
+        // The drive root is never read: it is not a folder above the entries that the move checks.
+        Assert.Equal([root, @"C:\Users\x\OneDrive", @"C:\Users\x", @"C:\Users"], asked);
+        Assert.Null(RecycleRules.CheckAbove(@"C:\", _ => throw new InvalidOperationException("a drive root reads nothing")));
+        Assert.Null(RecycleRules.CheckAbove(root, _ => null));
+    }
+
     /// <summary>Both readers classify a reparse point by its tag the same way (ReparseTags.Flags).</summary>
     [Theory]
     [InlineData(0x20u, 0u, EntryFlags.None)]

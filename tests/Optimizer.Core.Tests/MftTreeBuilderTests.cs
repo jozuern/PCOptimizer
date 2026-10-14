@@ -409,7 +409,9 @@ public class MftTreeBuilderTests
             Assert.Equal(EntryFlags.Folder | EntryFlags.ReparsePoint, t.Flags(Named(link)));
             Assert.Equal(0, t.ChildCount(Named(link)));
         }
-        Assert.Equal(1, t.Lost); // the child under the junction is not placed
+        // The child under the junction is not placed, and not lost either: skipped on purpose, as the folder walk does.
+        Assert.Equal(0, t.Lost);
+        Assert.DoesNotContain(Enumerable.Range(0, t.Count), i => t.Name(i) == "impossible child.txt");
         Assert.Equal(EntryFlags.System, t.Flags(Named("pagefile.sys")));
     }
 

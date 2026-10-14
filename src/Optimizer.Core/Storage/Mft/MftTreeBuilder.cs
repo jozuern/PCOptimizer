@@ -94,10 +94,11 @@ public static class MftTreeBuilder
                 {
                     // A link's target is elsewhere or already counted. Other reparse folders, like OneDrive's cloud
                     // folders, hold real children. Without a readable tag the folder is entered, as EnumerationScanner
-                    // does, so both readers agree.
+                    // does, so both readers agree. Records under a link (left by a damaged junction) are skipped on
+                    // purpose, as the folder walk skips them, and so not counted as lost.
                     var link = (entry & EntryFlags.ReparsePoint) != 0;
                     var i = builder.AddFolder(at, t.Name[c]!, lastWrite, entry);
-                    if (!link) stack.Push((c, i));
+                    stack.Push((c, link ? -1 : i));
                 }
                 else
                 {

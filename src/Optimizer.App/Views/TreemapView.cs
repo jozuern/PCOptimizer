@@ -49,8 +49,11 @@ public sealed class TreemapView : FrameworkElement
 
     private static readonly int GroupCount = GroupBrushProperties.Length;
 
-    /// <summary>Every rectangle laid out (folders and files), folders before what is in them: the last hit is the deepest.</summary>
-    private readonly List<(LayoutRect Rect, int Entry)> _cells = [];
+    /// <summary>
+    /// Every rectangle laid out (folders and files), each folder before what is in it; <c>End</c> is the index after the
+    /// last cell inside it (for a file its own index plus one), so a hit test skips every folder the point is not in.
+    /// </summary>
+    private readonly List<(LayoutRect Rect, int Entry, int End)> _cells = [];
     private readonly StreamGeometry?[] _groups = new StreamGeometry?[GroupCount];
     private readonly DrawingVisual _selection = new();
     private readonly ToolTip _tip = new() { Placement = PlacementMode.Mouse };
@@ -227,8 +230,10 @@ public sealed class TreemapView : FrameworkElement
                 var c = tree.Child(parent, k);
                 if (tree.IsFolder(c))
                 {
-                    _cells.Add((r, c));
+                    var at = _cells.Count;
+                    _cells.Add((r, c, 0));
                     LayOut(c, r);
+                    _cells[at] = (r, c, _cells.Count);
                 }
                 else Add(c, r);
             }
@@ -236,7 +241,7 @@ public sealed class TreemapView : FrameworkElement
 
         void Add(int file, LayoutRect r)
         {
-            _cells.Add((r, file));
+            _cells.Add((r, file, _cells.Count + 1));
             var g = (int)tree.Group(file);
             if (contexts[g] is null)
             {
@@ -273,7 +278,7 @@ public sealed class TreemapView : FrameworkElement
         using var dc = _selection.RenderOpen();
         var selected = SelectedEntry;
         if (selected < 0 || !_layoutValid) return;
-        foreach (var (rect, entry) in _cells)
+        foreach (var (rect, entry, _) in _cells)
         {
             if (entry != selected) continue;
             // The 2 px line runs inside the rectangle; around it when the rectangle is too small to hold it.
@@ -287,18 +292,27 @@ public sealed class TreemapView : FrameworkElement
         }
     }
 
-    /// <summary>The deepest entry under a point; -1 outside every rectangle.</summary>
+    /// <summary>The deepest entry under a point; -1 outside every rectangle. Goes down only into the folder that holds the point.</summary>
     private int HitEntry(Point p)
     {
         // Mid-resize the map shows the last layout stretched: back into its coordinates.
         if (_layoutSize != RenderSize && RenderSize.Width > 0 && RenderSize.Height > 0)
             p = new Point(p.X * _layoutSize.Width / RenderSize.Width, p.Y * _layoutSize.Height / RenderSize.Height);
-        for (var i = _cells.Count - 1; i >= 0; i--)
+        var hit = -1;
+        var limit = _cells.Count;
+        for (var i = 0; i < limit;)
         {
-            var r = _cells[i].Rect;
-            if (p.X >= r.X && p.X < r.X + r.Width && p.Y >= r.Y && p.Y < r.Y + r.Height) return _cells[i].Entry;
+            var (r, entry, end) = _cells[i];
+            if (p.X >= r.X && p.X < r.X + r.Width && p.Y >= r.Y && p.Y < r.Y + r.Height)
+            {
+                // Siblings do not overlap: only the cells inside this one are left to look at.
+                hit = entry;
+                limit = end;
+                i++;
+            }
+            else i = end;
         }
-        return -1;
+        return hit;
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

@@ -36,9 +36,17 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// <summary>
     /// What the last analysis may not offer: protected roots (Windows, programs, game libraries of that PC scan) and kept
     /// folders (drive roots, profiles, Desktop and the like), read once per analysis and normalized once for the
-    /// per-row check (<see cref="RecycleRules.CheckNormalized"/>).
+    /// per-row check (<see cref="RecycleRules.CheckNormalized"/>). <see cref="Above"/>: a cloud folder or another reparse
+    /// point at or above an analyzed folder, which holds every entry (<see cref="RecycleRules.CheckAbove"/>).
     /// </summary>
-    private sealed record RecycleScope(IReadOnlyList<string> Protected, IReadOnlyCollection<string> Kept, string[] ProtectedNormalized, string[] KeptNormalized);
+    private sealed record RecycleScope(IReadOnlyList<string> Protected, IReadOnlyCollection<string> Kept, string[] ProtectedNormalized,
+        string[] KeptNormalized, RecycleBlock? Above);
+
+    /// <summary>
+    /// The path checks of the current tree, by path and kind: they read the disk (long names, folder attributes), and the
+    /// lists are built again after every removal and language switch. The move checks every item again anyway.
+    /// </summary>
+    private readonly Dictionary<(string Path, bool Folder), RecycleBlock?> _blocks = new();
 
     /// <summary>Null before the first analysis: then nothing is offered.</summary>
     private RecycleScope? _rules;
@@ -241,12 +249,13 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     }
 
     [RelayCommand(CanExecute = nameof(CanAnalyze))]
-    private Task AnalyzeAsync() => SelectedDrive is { } drive ? AnalyzeRootAsync(drive.Root) : Task.CompletedTask;
+    private Task AnalyzeAsync() => SelectedDrive is { } drive ? AnalyzeRootAsync(drive.Root, isDrive: true) : Task.CompletedTask;
 
     /// <summary>Analyzes a folder instead of a drive (the --storage-scan developer switch and tests).</summary>
-    public Task AnalyzeFolderAsync(string folder) => AnalyzeRootAsync(folder);
+    public Task AnalyzeFolderAsync(string folder) => AnalyzeRootAsync(folder, isDrive: false);
 
-    private async Task AnalyzeRootAsync(string root)
+    /// <param name="isDrive">The drive of the picker: a result that comes when the picker shows another one (the drive list was read again meanwhile) is dropped.</param>
+    private async Task AnalyzeRootAsync(string root, bool isDrive)
     {
         // One analysis at a time; not while duplicates are hashed from the tree it would replace or files are recycled.
         if (!CanAnalyze) return;
@@ -265,13 +274,19 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             {
                 var protectedRoots = StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders));
                 var kept = RecycleRules.KeptFolders();
-                return new RecycleScope(protectedRoots, kept, RecycleRules.NormalizeAll(protectedRoots), RecycleRules.NormalizeAll(kept));
+                return new RecycleScope(protectedRoots, kept, RecycleRules.NormalizeAll(protectedRoots), RecycleRules.NormalizeAll(kept),
+                    RecycleRules.CheckAbove(root));
             });
             // Only reads: no change gate, but the banner (with Stop) like every long run. The tree before stays until the
             // new one is complete, so a stopped analysis leaves the page as it was.
             using var work = Owner.Runner.Work.Begin(Loc.Instance["Work_StorageScan"], _cancel);
             var progress = new Progress<ScanProgress>(p => work.Report(p.Percent, Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes))));
             var tree = await _scan(root, progress, _cancel.Token);
+            if (isDrive && !string.Equals(SelectedDrive?.Root, root, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Info("storage", "analysis dropped, another drive is selected");
+                return;
+            }
             _rules = rules;
             Log.Info("storage", "analysis done", new { reader = tree.Reader.ToString(), files = tree.Files(tree.Root), lost = tree.Lost, ms = (long)tree.Elapsed.TotalMilliseconds });
             SetTree(tree);
@@ -300,6 +315,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// <summary>A new tree (or none): every list drawn from the old one goes, and the open tab builds its rows again.</summary>
     private void SetTree(DiskTree? tree)
     {
+        _blocks.Clear();
         Tree = tree;
         ResultText = tree is null ? null : Summary(tree);
         _duplicateGroups = [];
@@ -393,14 +409,20 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         if (_rules is not { } rules) block = RecycleBlock.Protected;
         else
         {
-            try
+            if (system) block = RecycleBlock.SystemFile;
+            else if (!_blocks.TryGetValue((path, folder), out block))
             {
-                block = RecycleRules.CheckNormalized(path, folder, system, rules.ProtectedNormalized, rules.KeptNormalized, appData);
+                try
+                {
+                    block = RecycleRules.CheckNormalized(path, folder, systemFile: false, rules.ProtectedNormalized, rules.KeptNormalized, appData);
+                }
+                catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+                {
+                    block = RecycleBlock.Protected;
+                }
+                _blocks[(path, folder)] = block;
             }
-            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-            {
-                block = RecycleBlock.Protected;
-            }
+            block ??= rules.Above;
         }
         if (block is null && tree is not null && entry >= 0 && entry < tree.Count) block = RecycleRules.CheckEntry(tree, entry);
         return block switch
@@ -449,7 +471,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             TypeGroups.Add(new TypeGroupRow(g.Group, g.Bytes, g.Rows.Sum(t => t.Count), all > 0 ? g.Bytes / all : 0, g.Rows, all, row => SelectedType = row));
         foreach (var row in TypeGroups.Where(r => _openGroups.Contains(r.Group))) row.IsExpanded = true;
         if (_openType is { } ext)
-            SelectedType = TypeGroups.SelectMany(g => g.Extensions).FirstOrDefault(t => t.Extension == ext);
+            SelectedType = TypeGroups.Where(g => g.IsExpanded).Select(g => g.Show(ext)).FirstOrDefault(t => t is not null);
         _openGroups.Clear();
         _openType = null;
     }
@@ -549,6 +571,12 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         catch (OperationCanceledException)
         {
             Owner.ShowResult(Loc.Instance["Storage_Stopped"]);
+        }
+        catch (Exception ex)
+        {
+            // As for the analysis: the page stays usable with the tree, without a duplicate list.
+            Log.Error("storage", "finding duplicates failed", ex);
+            Owner.ShowResult(Loc.Instance.Format("Result_Error", ex.Message), InfoBarSeverity.Error);
         }
         finally
         {

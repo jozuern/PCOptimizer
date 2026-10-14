@@ -116,6 +116,25 @@ public static class SafeDelete
         }
     }
 
+    /// <summary>
+    /// The attributes and reparse tag (0 without the reparse point attribute) of the file or folder itself, a final link
+    /// not followed; reading them recalls nothing from the cloud. Null when it cannot be opened.
+    /// </summary>
+    public static (uint Attributes, uint Tag)? AttributesAndTag(string path)
+    {
+        try
+        {
+            using var handle = CreateFileW(@"\\?\" + LongPath(Path.GetFullPath(path)).TrimEnd('\\'), FileReadAttributes,
+                FileShareRead | FileShareWrite | FileShareDelete, IntPtr.Zero, OpenExisting, FileFlagOpenReparsePoint | FileFlagBackupSemantics, IntPtr.Zero);
+            if (handle.IsInvalid || !GetFileInformationByHandleEx(handle, FileAttributeTagInfoClass, out var info, Marshal.SizeOf<FileAttributeTagInfo>())) return null;
+            return (info.FileAttributes, (info.FileAttributes & (uint)FileAttributes.ReparsePoint) != 0 ? info.ReparseTag : 0);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
     private static bool IsRealFolder(SafeFileHandle handle) =>
         GetFileInformationByHandleEx(handle, FileAttributeTagInfoClass, out var info, Marshal.SizeOf<FileAttributeTagInfo>())
         && (info.FileAttributes & (uint)FileAttributes.Directory) != 0

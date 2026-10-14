@@ -120,6 +120,21 @@ public sealed partial class TypeGroupRow(FileGroup group, long bytes, int count,
         if (value is not null) picked?.Invoke(value);
     }
 
+    /// <summary>
+    /// The row of an extension of this open group, added below the others when it ranks past <see cref="MaxExtensions"/>
+    /// (the one picked before a rebuild, which a removal can move down); null when the group does not have it.
+    /// </summary>
+    public TypeRow? Show(string extension)
+    {
+        if (Extensions.FirstOrDefault(t => t.Extension == extension) is { } shown) return shown;
+        if (!IsExpanded || totals.FirstOrDefault(t => t.Extension == extension) is not { } total) return null;
+        var row = new TypeRow(total, all > 0 ? total.Bytes / all : 0);
+        Extensions.Add(row);
+        var hidden = totals.Count - Extensions.Count;
+        MoreText = hidden > 0 ? Loc.Instance.Format("Storage_MoreTypes", hidden) : null;
+        return row;
+    }
+
     partial void OnIsExpandedChanged(bool value)
     {
         // Closing the group of the picked extension leaves nothing picked: its file list would hang in the air.

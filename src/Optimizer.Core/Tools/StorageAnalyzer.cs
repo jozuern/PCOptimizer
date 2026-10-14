@@ -73,8 +73,10 @@ public static class StorageAnalyzer
         while (stack.Count > 0)
         {
             ct.ThrowIfCancellationRequested();
-            foreach (var c in tree.Children(stack.Pop()))
+            var folder = stack.Pop();
+            for (var k = 0; k < tree.ChildCount(folder); k++)
             {
+                var c = tree.Child(folder, k);
                 if (tree.IsFolder(c))
                 {
                     stack.Push(c);

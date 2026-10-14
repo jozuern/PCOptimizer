@@ -112,7 +112,10 @@ public sealed class DiskTree
         return Path.Combine(RootPath, string.Join('\\', parts));
     }
 
-    /// <summary>Unlinks an entry (and everything below it) and subtracts it from every ancestor.</summary>
+    /// <summary>
+    /// Unlinks an entry (and everything below it) and subtracts it from every ancestor. Each ancestor then moves back
+    /// among its siblings, so every child list stays largest first (the treemap and the folder list rely on it).
+    /// </summary>
     public void Remove(int i)
     {
         if (i == Root || _removed[i]) return;
@@ -128,22 +131,49 @@ public sealed class DiskTree
         }
         _children[_parent[i]]!.Remove(i);
         MarkRemoved(i);
+        for (var c = _parent[i]; c != Root; c = _parent[c]) Sink(c);
+    }
+
+    /// <summary>Moves a folder that shrank past the siblings that are now larger (or as large and added earlier).</summary>
+    private void Sink(int c)
+    {
+        var list = _children[_parent[c]]!;
+        var k = list.IndexOf(c);
+        while (k + 1 < list.Count && (_size[list[k + 1]] > _size[c] || (_size[list[k + 1]] == _size[c] && list[k + 1] < c)))
+        {
+            list[k] = list[k + 1];
+            k++;
+        }
+        list[k] = c;
     }
 
     public IReadOnlyList<int> LargestFiles(int count) =>
         Files().OrderByDescending(i => _size[i]).Take(Math.Max(0, count)).ToArray();
 
-    public IReadOnlyList<TypeTotal> TypeTotals() =>
-        Files().GroupBy(ExtensionOf)
-            .Select(g => new TypeTotal(g.Key, FileTypes.GroupOf(g.Key), g.Sum(i => _size[i]), g.Count()))
+    /// <summary>One pass over the files; an extension becomes a string once, not once per file.</summary>
+    public IReadOnlyList<TypeTotal> TypeTotals()
+    {
+        var totals = new Dictionary<string, (long Bytes, int Count)>(StringComparer.Ordinal);
+        var lookup = totals.GetAlternateLookup<ReadOnlySpan<char>>();
+        Span<char> buffer = stackalloc char[MaxName];
+        foreach (var i in Files())
+        {
+            var ext = LowerExtension(i, buffer);
+            lookup[ext] = lookup.TryGetValue(ext, out var t) ? (t.Bytes + _size[i], t.Count + 1) : (_size[i], 1);
+        }
+        return totals.Select(t => new TypeTotal(t.Key, FileTypes.GroupOf(t.Key), t.Value.Bytes, t.Value.Count))
             .OrderByDescending(t => t.Bytes)
             .ToArray();
+    }
 
     public IReadOnlyList<int> LargestFilesOfType(string extension, int count)
     {
         var key = (extension ?? "").TrimStart('.').ToLowerInvariant();
-        return Files().Where(i => ExtensionOf(i) == key).OrderByDescending(i => _size[i])
-            .Take(Math.Max(0, count)).ToArray();
+        var matches = new List<int>();
+        Span<char> buffer = stackalloc char[MaxName];
+        foreach (var i in Files())
+            if (LowerExtension(i, buffer).SequenceEqual(key)) matches.Add(i);
+        return matches.OrderByDescending(i => _size[i]).Take(Math.Max(0, count)).ToArray();
     }
 
     private IEnumerable<int> Files()
@@ -152,7 +182,16 @@ public sealed class DiskTree
             if (!_removed[i] && !IsFolder(i)) yield return i;
     }
 
-    private string ExtensionOf(int i) => Path.GetExtension(_name[i]).TrimStart('.').ToLowerInvariant();
+    /// <summary>Longest name NTFS and FAT allow: every extension fits the buffer of <see cref="LowerExtension"/>.</summary>
+    private const int MaxName = 256;
+
+    /// <summary>The extension of a file, lower case without the dot, written to <paramref name="buffer"/> (a longer one is copied).</summary>
+    private ReadOnlySpan<char> LowerExtension(int i, Span<char> buffer)
+    {
+        var ext = Path.GetExtension(_name[i].AsSpan()).TrimStart('.');
+        var n = ext.ToLowerInvariant(buffer);
+        return n >= 0 ? buffer[..n] : ext.ToString().ToLowerInvariant();
+    }
 
     private void MarkRemoved(int i)
     {
