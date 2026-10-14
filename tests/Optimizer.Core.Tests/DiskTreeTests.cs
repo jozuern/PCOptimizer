@@ -62,6 +62,41 @@ public class DiskTreeTests
     }
 
     [Fact]
+    public void ChildAccessorsMatchChildrenAndFollowRemove()
+    {
+        var t = Sample(out var a, out var small, out var big, out _);
+
+        Assert.Equal(t.Children(t.Root).ToArray(), Enumerable.Range(0, t.ChildCount(t.Root)).Select(k => t.Child(t.Root, k)).ToArray());
+        Assert.Equal(new[] { big, small }, Enumerable.Range(0, t.ChildCount(a)).Select(k => t.Child(a, k)).ToArray());
+        Assert.Equal(0, t.ChildCount(big));
+        Assert.False(t.IsRemoved(big));
+        t.Remove(big);
+        Assert.True(t.IsRemoved(big));
+        Assert.False(t.IsRemoved(small));
+        Assert.Equal(1, t.ChildCount(a));
+        Assert.Equal(small, t.Child(a, 0));
+    }
+
+    [Fact]
+    public void GroupDoesNotAllocate()
+    {
+        // The treemap asks for the group of every file it draws, each time its layout is built.
+        var bl = new DiskTree.Builder(@"C:\");
+        var mp4 = bl.AddFile(bl.Root, "Clip.MP4", 1, -1, T, EntryFlags.None);
+        var none = bl.AddFile(bl.Root, "README", 1, -1, T, EntryFlags.None);
+        var odd = bl.AddFile(bl.Root, "x.unknownext", 1, -1, T, EntryFlags.None);
+        var t = bl.Build(ScanReader.Folders, TimeSpan.Zero);
+        Assert.Equal(FileGroup.Video, t.Group(mp4));
+        Assert.Equal(FileGroup.Other, t.Group(none));
+        Assert.Equal(FileGroup.Other, t.Group(odd));
+        Assert.Equal(FileGroup.Other, t.Group(t.Root));
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var k = 0; k < 1000; k++) { t.Group(mp4); t.Group(none); t.Group(odd); }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
+    [Fact]
     public void FullPathJoinsNames()
     {
         var bl = new DiskTree.Builder(@"C:\");

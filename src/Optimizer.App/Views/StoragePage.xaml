@@ -67,11 +67,152 @@
         </StackPanel>
         <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource SelectorTab}" SelectedIndex="{Binding Storage.Tab}">
             <TabItem Header="{l:Tr Storage_TabFolders}">
-                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
-                    <StackPanel Style="{StaticResource EdgeContent}">
+                <!-- Wide: list and map side by side, as tall as the tab (the scroll viewer gives its height). Narrow: the map
+                     under the list, and the tab scrolls. Switched in code-behind (Layout). -->
+                <ScrollViewer x:Name="FoldersScroll" Style="{StaticResource EdgeTabScroll}">
+                    <Grid x:Name="FoldersContent" HorizontalAlignment="Left">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_TabNotReady}" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}" />
-                    </StackPanel>
+                        <Grid x:Name="FoldersGrid" Grid.Row="1" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="ListColumn" Width="*" />
+                                <ColumnDefinition x:Name="GapColumn" Width="0" />
+                                <ColumnDefinition x:Name="MapColumn" Width="0" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition x:Name="ListRow" Height="Auto" />
+                                <RowDefinition x:Name="GapRow" Height="16" />
+                                <RowDefinition x:Name="MapRow" Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <!-- The folder tree as a flat list: only expanded folders become rows (a drive has millions of entries) -->
+                            <ui:Card x:Name="ListCard" Padding="0,8" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" Margin="16,0,28,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="64" />
+                                            <ColumnDefinition Width="72" />
+                                            <ColumnDefinition Width="88" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_ColName}" Margin="52,0,0,0" />
+                                        <ui:TextBlock Grid.Column="1" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColSize}" TextAlignment="Right" />
+                                        <ui:TextBlock Grid.Column="2" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColShare}" Margin="12,0,0,0" />
+                                        <ui:TextBlock Grid.Column="3" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColFiles}" TextAlignment="Right" />
+                                        <ui:TextBlock Grid.Column="4" Style="{StaticResource Caption}" Text="{l:Tr Storage_ColChanged}" TextAlignment="Right" />
+                                    </Grid>
+                                    <ui:ListView x:Name="FolderList" Margin="11,0" ItemsSource="{Binding Storage.Folders.Rows}" SelectedItem="{Binding Storage.SelectedRow}" SelectionMode="Single"
+                                                 AutomationProperties.Name="{l:Tr Storage_FolderList}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel"
+                                                 PreviewKeyDown="FolderList_PreviewKeyDown" MouseDoubleClick="FolderList_MouseDoubleClick" SelectionChanged="FolderList_SelectionChanged">
+                                        <ui:ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,2,12,2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="80" />
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="72" />
+                                                        <ColumnDefinition Width="88" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <DockPanel>
+                                                        <Border DockPanel.Dock="Left" Width="{Binding Indent}" />
+                                                        <!-- The chevron opens and closes the folder (Left and Right do the same from the keyboard) -->
+                                                        <ui:Button x:Name="Chevron" DockPanel.Dock="Left" Appearance="Transparent" Width="24" Height="24" Padding="0" BorderThickness="0"
+                                                                   Focusable="False" Command="{Binding DataContext.Storage.ToggleRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                   CommandParameter="{Binding}" Visibility="{Binding CanExpand, Converter={StaticResource BoolToHidden}}">
+                                                            <ui:SymbolIcon x:Name="ChevronIcon" Symbol="ChevronRight16" FontSize="12" />
+                                                        </ui:Button>
+                                                        <ui:SymbolIcon x:Name="KindIcon" DockPanel.Dock="Left" Symbol="Document20" FontSize="16" Margin="4,0,8,0"
+                                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                                        <ui:TextBlock FontTypography="Body" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                                      Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    </DockPanel>
+                                                    <ui:TextBlock Grid.Column="1" FontTypography="Body" Text="{Binding SizeText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                  Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    <!-- Share of the parent folder: two borders, as on the Hardware page -->
+                                                    <Border Grid.Column="2" Height="4" CornerRadius="2" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                            Background="{DynamicResource ControlStrongFillColorDisabledBrush}">
+                                                        <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="2" RenderTransformOrigin="0,0.5">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleX="{Binding Share}" />
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                    </Border>
+                                                    <ui:TextBlock Grid.Column="3" FontTypography="Body" Text="{Binding FilesText}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                    <ui:TextBlock Grid.Column="4" FontTypography="Body" Text="{Binding LastChange}" TextAlignment="Right" VerticalAlignment="Center"
+                                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                </Grid>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                        <Setter TargetName="ChevronIcon" Property="Symbol" Value="ChevronDown16" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                                                        <Setter TargetName="KindIcon" Property="Symbol" Value="Folder20" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ui:ListView.ItemTemplate>
+                                    </ui:ListView>
+                                </DockPanel>
+                            </ui:Card>
+                            <!-- The shown folder's path (back up), the treemap and what its colors mean -->
+                            <ui:Card x:Name="MapCard" Grid.Row="2" Padding="{StaticResource CardPadding}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                <DockPanel>
+                                    <ui:BreadcrumbBar x:Name="Crumbs" DockPanel.Dock="Top" ItemsSource="{Binding Storage.Crumbs}" ItemClicked="Crumbs_ItemClicked"
+                                                      AutomationProperties.Name="{l:Tr Storage_ShownFolder}" Margin="0,0,0,8">
+                                        <ui:BreadcrumbBar.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" FontSize="14" />
+                                            </DataTemplate>
+                                        </ui:BreadcrumbBar.ItemTemplate>
+                                    </ui:BreadcrumbBar>
+                                    <ui:TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Caption}" Text="{l:Tr Storage_TreemapHint}" Margin="0,4,0,0" />
+                                    <!-- The legend: every group color with its name (the colors are the data, never decoration) -->
+                                    <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapVideoBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupVideo}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapAudioBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupAudio}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapImagesBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupImages}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapArchivesBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupArchives}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapProgramsBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupPrograms}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapDocumentsBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupDocuments}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapSystemBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupSystem}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                                            <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource TreemapOtherBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ui:TextBlock FontTypography="Caption" Text="{l:Tr Storage_GroupOther}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </WrapPanel>
+                                    <v:TreemapView x:Name="Map" Tree="{Binding Storage.Tree}" Folder="{Binding Storage.Folder}" SelectedEntry="{Binding Storage.SelectedEntry}"
+                                                   EntryActivated="Map_EntryActivated" MinHeight="160" />
+                                </DockPanel>
+                            </ui:Card>
+                        </Grid>
+                    </Grid>
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="{l:Tr Storage_TabTypes}">

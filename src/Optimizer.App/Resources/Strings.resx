@@ -585,6 +585,26 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_DuplicatesHint" xml:space="preserve"><value>Compares files of the same size (1 MB or more) by their content. Windows, program, game and AppData folders are left out.</value></data>
   <data name="Storage_DuplicatesFound" xml:space="preserve"><value>Duplicates: {0} can be freed.</value></data>
   <data name="Storage_NoDuplicates" xml:space="preserve"><value>No duplicate files of 1 MB or more found.</value></data>
+  <data name="Storage_ColName" xml:space="preserve"><value>Name</value></data>
+  <data name="Storage_ColSize" xml:space="preserve"><value>Size</value></data>
+  <data name="Storage_ColShare" xml:space="preserve"><value>Share</value></data>
+  <data name="Storage_ColFiles" xml:space="preserve"><value>Files</value></data>
+  <data name="Storage_ColChanged" xml:space="preserve"><value>Last change</value></data>
+  <data name="Storage_FolderList" xml:space="preserve"><value>Folders and files</value></data>
+  <data name="Storage_ShownFolder" xml:space="preserve"><value>Shown folder</value></data>
+  <data name="Storage_TreemapName" xml:space="preserve"><value>Treemap of {0}, {1}</value></data>
+  <data name="Storage_TreemapHint" xml:space="preserve"><value>Select a tile to find it in the list. Double-click to show the folder it is in.</value></data>
+  <data name="Storage_TreemapTipFile" xml:space="preserve"><value>{0}, {1}</value></data>
+  <data name="Storage_TreemapTipFolder" xml:space="preserve"><value>{0} in {1:N0} files</value></data>
+  <data name="Storage_Legend" xml:space="preserve"><value>File types</value></data>
+  <data name="Storage_GroupVideo" xml:space="preserve"><value>Video</value></data>
+  <data name="Storage_GroupAudio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Storage_GroupImages" xml:space="preserve"><value>Images</value></data>
+  <data name="Storage_GroupArchives" xml:space="preserve"><value>Archives</value></data>
+  <data name="Storage_GroupPrograms" xml:space="preserve"><value>Programs</value></data>
+  <data name="Storage_GroupDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="Storage_GroupSystem" xml:space="preserve"><value>System</value></data>
+  <data name="Storage_GroupOther" xml:space="preserve"><value>Other</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Looking for duplicate files</value></data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows features</value>

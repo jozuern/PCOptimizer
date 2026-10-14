@@ -81,6 +81,34 @@
                 <Setter Property="HorizontalAlignment" Value="Left" />
             </Style>
 
+            <!-- Storage treemap: one color per file group, stepped for each mode (a categorical set checked for color vision
+                 deficiencies; the legend and the tooltip name the group too). App.ApplyTheme sets the Treemap*Brush
+                 resources from these for the theme in use, so the map follows a theme switch. -->
+            <Color x:Key="TreemapVideoLight">#2A78D6</Color>
+            <Color x:Key="TreemapAudioLight">#EB6834</Color>
+            <Color x:Key="TreemapImagesLight">#1BAF7A</Color>
+            <Color x:Key="TreemapArchivesLight">#EDA100</Color>
+            <Color x:Key="TreemapProgramsLight">#E87BA4</Color>
+            <Color x:Key="TreemapDocumentsLight">#008300</Color>
+            <Color x:Key="TreemapSystemLight">#6250D6</Color>
+            <Color x:Key="TreemapOtherLight">#8E8D89</Color>
+            <Color x:Key="TreemapVideoDark">#3987E5</Color>
+            <Color x:Key="TreemapAudioDark">#D95926</Color>
+            <Color x:Key="TreemapImagesDark">#199E70</Color>
+            <Color x:Key="TreemapArchivesDark">#C98500</Color>
+            <Color x:Key="TreemapProgramsDark">#D55181</Color>
+            <Color x:Key="TreemapDocumentsDark">#008300</Color>
+            <Color x:Key="TreemapSystemDark">#9085E9</Color>
+            <Color x:Key="TreemapOtherDark">#76756F</Color>
+            <SolidColorBrush x:Key="TreemapVideoBrush" Color="{StaticResource TreemapVideoDark}" />
+            <SolidColorBrush x:Key="TreemapAudioBrush" Color="{StaticResource TreemapAudioDark}" />
+            <SolidColorBrush x:Key="TreemapImagesBrush" Color="{StaticResource TreemapImagesDark}" />
+            <SolidColorBrush x:Key="TreemapArchivesBrush" Color="{StaticResource TreemapArchivesDark}" />
+            <SolidColorBrush x:Key="TreemapProgramsBrush" Color="{StaticResource TreemapProgramsDark}" />
+            <SolidColorBrush x:Key="TreemapDocumentsBrush" Color="{StaticResource TreemapDocumentsDark}" />
+            <SolidColorBrush x:Key="TreemapSystemBrush" Color="{StaticResource TreemapSystemDark}" />
+            <SolidColorBrush x:Key="TreemapOtherBrush" Color="{StaticResource TreemapOtherDark}" />
+
             <!-- The right-hand column of rows with a switch: wide enough for the longest label ("Nicht angewendet") -->
             <sys:Double x:Key="SwitchColumnWidth">168</sys:Double>
 

@@ -404,6 +404,7 @@ public partial class App : Application
         ApplicationAccentColorManager.Apply(accent, appTheme);
         ApplicationThemeManager.Apply(appTheme, WindowBackdropType.Mica, false);
         ApplicationAccentColorManager.Apply(accent, appTheme);
+        ApplyTreemapColors(dark);
         _appliedTheme = (dark, accent);
         // "System" follows Windows through our own hook, not WPF-UI's watcher: the watcher loads the theme with the
         // Windows accent, and it reads this process's HKCU, which is the admin's with a separate admin account.
@@ -432,6 +433,9 @@ public partial class App : Application
             // "Recommended" lines were dark blue on black (VM, Night sky). They take Windows' link color, as text in the
             // accent color does in Windows' own apps; leaving the contrast theme sets the accent again (ApplyTheme).
             foreach (var key in ContrastBrushKeys) Resources[key] = SystemColors.HotTrackBrush;
+            // Contrast themes have no colors for categories: the set stepped for a dark or light surface, by the theme's window color.
+            var window = SystemColors.WindowColor;
+            ApplyTreemapColors(window.R + window.G + window.B < 384);
             _appliedTheme = null;
             return true;
         }
@@ -439,6 +443,21 @@ public partial class App : Application
         {
             Log.Error("app", "high contrast theme not applied", ex);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// The treemap's group colors (App.xaml) for a dark or light surface. Replacing the resources updates every
+    /// reference to them, so the map and its legend follow a theme switch without being built again.
+    /// </summary>
+    private void ApplyTreemapColors(bool dark)
+    {
+        foreach (var group in Enum.GetNames<Optimizer.Core.Storage.FileGroup>())
+        {
+            if (Resources[$"Treemap{group}{(dark ? "Dark" : "Light")}"] is not Color color) continue;
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            Resources[$"Treemap{group}Brush"] = brush;
         }
     }
 

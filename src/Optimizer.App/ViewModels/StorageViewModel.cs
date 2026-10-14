@@ -31,6 +31,18 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     public ObservableCollection<StorageFileRow> LargestFiles { get; } = [];
     public ObservableCollection<StorageFileRow> Duplicates { get; } = [];
 
+    /// <summary>The Folders tab: the tree as rows (only expanded folders), the folder the treemap shows and its path.</summary>
+    public StorageTreeRows Folders { get; } = new();
+    public ObservableCollection<FolderCrumb> Crumbs { get; } = [];
+
+    /// <summary>The folder (entry of <see cref="Tree"/>) the treemap shows.</summary>
+    [ObservableProperty] private int _folder;
+
+    /// <summary>The entry selected in the folder list or on the treemap; -1 for none. Both follow each other.</summary>
+    [ObservableProperty] private int _selectedEntry = -1;
+
+    [ObservableProperty] private TreeRow? _selectedRow;
+
     [ObservableProperty] private DriveRow? _selectedDrive;
 
     [ObservableProperty]
@@ -91,11 +103,12 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     }
     public bool NoDuplicates => DuplicatesSearched && Duplicates.Count == 0;
 
-    /// <summary>After a scan, Close result and a removal: views drawn from the tree (folders, types) build again.</summary>
+    /// <summary>After a scan, Close result, a removal and a language switch: views drawn from the tree (the treemap) build again.</summary>
     public event EventHandler? TreeChanged;
 
     private CancellationTokenSource? _cancel;
     private bool _largestFilled;
+    private bool _foldersFilled;
     private IReadOnlyList<DuplicateGroup> _duplicateGroups = [];
     private Dictionary<string, int> _duplicateEntries = new(StringComparer.OrdinalIgnoreCase);
 
@@ -135,8 +148,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
         if (DuplicatesSearched) ShowDuplicates();
         LargestFiles.Clear();
         _largestFilled = false;
+        _foldersFilled = false;
         UpdateSelection();
         FillTab();
+        TreeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static List<DriveRow> ReadDrives()
@@ -233,6 +248,13 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     {
         LargestFiles.Clear();
         _largestFilled = false;
+        _foldersFilled = false;
+        if (Tree is null)
+        {
+            Folders.Clear();
+            Crumbs.Clear();
+            SelectedEntry = -1;
+        }
         UpdateSelection();
         FillTab();
         TreeChanged?.Invoke(this, EventArgs.Empty);
@@ -243,6 +265,26 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
 
     private void FillTab()
     {
+        if (Tab == TabFolders && !_foldersFilled && Tree is { } shown)
+        {
+            _foldersFilled = true;
+            // The same tree after a removal or a language switch keeps its expanded folders; a new one starts at the root.
+            if (ReferenceEquals(Folders.Tree, shown))
+            {
+                Folders.Refresh();
+                if (shown.IsRemoved(Folder)) Folder = shown.Root;
+                if (SelectedEntry >= 0 && shown.IsRemoved(SelectedEntry)) SelectedEntry = -1;
+                SelectedRow = SelectedEntry >= 0 ? Folders.Reveal(SelectedEntry) : null;
+            }
+            else
+            {
+                Folders.Reset(shown);
+                SelectedEntry = -1;
+                SelectedRow = null;
+                Folder = shown.Root;
+            }
+            UpdateCrumbs();
+        }
         if (Tab == TabLargest && !_largestFilled && Tree is { } tree)
         {
             _largestFilled = true;
@@ -255,6 +297,60 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
                     !system && !StorageAnalyzer.IsProtected(path, _protected), i, UpdateSelection));
             }
         }
+    }
+
+    /// <summary>Shows a folder on the treemap; a file shows the folder it is in.</summary>
+    public void OpenFolder(int entry)
+    {
+        if (Tree is not { } tree || entry < 0 || entry >= tree.Count || tree.IsRemoved(entry)) return;
+        Folder = tree.IsFolder(entry) ? entry : tree.Parent(entry);
+    }
+
+    partial void OnFolderChanged(int value) => UpdateCrumbs();
+
+    /// <summary>The path from the analyzed root to the shown folder, for the breadcrumb above the treemap.</summary>
+    private void UpdateCrumbs()
+    {
+        Crumbs.Clear();
+        if (Tree is not { } tree || Folder < 0 || Folder >= tree.Count) return;
+        var chain = new List<int>();
+        for (var e = Folder; e >= 0; e = tree.Parent(e)) chain.Add(e);
+        for (var k = chain.Count - 1; k >= 0; k--)
+            Crumbs.Add(new FolderCrumb(chain[k], chain[k] == tree.Root ? tree.RootPath : tree.Name(chain[k])));
+    }
+
+    // The list and the map select the same entry: a row selects its entry, and an entry picked on the map expands the
+    // folders above it and selects its row.
+    partial void OnSelectedRowChanged(TreeRow? value)
+    {
+        if (value is not null && value.Entry != SelectedEntry) SelectedEntry = value.Entry;
+    }
+
+    partial void OnSelectedEntryChanged(int value)
+    {
+        if (SelectedRow?.Entry == value) return;
+        SelectedRow = value >= 0 ? Folders.Reveal(value) : null;
+    }
+
+    [RelayCommand]
+    private void ToggleRow(TreeRow? row)
+    {
+        if (row is not null) Folders.Toggle(row);
+    }
+
+    /// <summary>Left in the list: an open folder closes, anything else selects the folder it is in.</summary>
+    public void CollapseOrSelectParent(TreeRow row)
+    {
+        if (row.IsExpanded) Folders.Collapse(row);
+        else if (Folders.ParentOf(row) is { } parent) SelectedRow = parent;
+    }
+
+    /// <summary>Right in the list: a closed folder opens, an open one selects its first entry.</summary>
+    public void ExpandOrSelectChild(TreeRow row)
+    {
+        if (!row.CanExpand) return;
+        if (!row.IsExpanded) Folders.Expand(row);
+        else if (Folders.Rows.IndexOf(row) is var at and >= 0 && at + 1 < Folders.Rows.Count) SelectedRow = Folders.Rows[at + 1];
     }
 
     /// <summary>

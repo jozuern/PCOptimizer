@@ -171,6 +171,59 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Equal(1, changes);
     }
 
+    /// <summary>
+    /// The Folders tab is the default: an analysis lists the root's children, a folder shown on the map gets its path
+    /// as the breadcrumb, an entry picked on the map expands its folder in the list, and Close result empties it all.
+    /// </summary>
+    [Fact]
+    public async Task FoldersTabFollowsTheMapAndTheList()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "docs", "deep"));
+        File(Path.Combine("docs", "deep", "x.txt"), 500);
+        File(Path.Combine("docs", "y.txt"), 100);
+        File("top.bin", 2000);
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        var tree = Assert.IsType<DiskTree>(storage.Tree);
+        Assert.Equal(StorageViewModel.TabFolders, storage.Tab);
+        Assert.Equal(["top.bin", "docs"], storage.Folders.Rows.Select(r => r.Name));
+        Assert.Equal(tree.Root, storage.Folder);
+        Assert.Equal([_root], storage.Crumbs.Select(c => c.Name));
+
+        // Enter (or a double-click) on a folder shows it on the map; on a file, the folder it is in.
+        var docs = storage.Folders.Rows[1].Entry;
+        var deep = tree.Children(docs).Single(tree.IsFolder);
+        var x = tree.Children(deep).Single();
+        storage.OpenFolder(x);
+        Assert.Equal(deep, storage.Folder);
+        Assert.Equal([_root, "docs", "deep"], storage.Crumbs.Select(c => c.Name));
+        storage.OpenFolder(docs);
+        Assert.Equal(docs, storage.Folder);
+
+        // A click on the map selects the row, with its folders expanded; the row selects the entry back.
+        storage.SelectedEntry = x;
+        Assert.Equal(x, storage.SelectedRow?.Entry);
+        Assert.Equal(["top.bin", "docs", "deep", "x.txt", "y.txt"], storage.Folders.Rows.Select(r => r.Name));
+        storage.SelectedRow = storage.Folders.Rows[0];
+        Assert.Equal(storage.Folders.Rows[0].Entry, storage.SelectedEntry);
+
+        // Left on a closed entry selects its folder, Left again closes it; Right opens it and then moves into it.
+        var deepRow = storage.Folders.Rows[2];
+        storage.CollapseOrSelectParent(storage.Folders.Rows[3]);
+        Assert.Same(deepRow, storage.SelectedRow);
+        storage.CollapseOrSelectParent(deepRow);
+        Assert.False(deepRow.IsExpanded);
+        storage.ExpandOrSelectChild(deepRow);
+        Assert.True(deepRow.IsExpanded);
+        storage.ExpandOrSelectChild(deepRow);
+        Assert.Equal(x, storage.SelectedEntry);
+
+        storage.CloseResultCommand.Execute(null);
+        Assert.Empty(storage.Folders.Rows);
+        Assert.Empty(storage.Crumbs);
+        Assert.Equal(-1, storage.SelectedEntry);
+    }
+
     [Fact]
     public async Task FindDuplicatesKeepsTheFirstCopyWithoutATick()
     {

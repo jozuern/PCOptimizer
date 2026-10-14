@@ -57,9 +57,17 @@ public sealed class DiskTree
     public DateTime LastWriteUtc(int i) => _lastWrite[i];
     public EntryFlags Flags(int i) => _flags[i];
     public bool IsFolder(int i) => (_flags[i] & EntryFlags.Folder) != 0;
-    public FileGroup Group(int i) => IsFolder(i) ? FileGroup.Other : FileTypes.GroupOf(ExtensionOf(i));
+    /// <summary>Removed by <see cref="Remove"/> (itself or a folder above it): the page drops what it showed of it.</summary>
+    public bool IsRemoved(int i) => _removed[i];
+    public FileGroup Group(int i) => IsFolder(i) ? FileGroup.Other : FileTypes.GroupOf(Path.GetExtension(_name[i].AsSpan()));
 
     public IEnumerable<int> Children(int i) => _children[i] is { } list ? list.ToArray() : [];
+
+    /// <summary>Number of children, without the copy <see cref="Children"/> makes (the treemap reads them on every layout).</summary>
+    public int ChildCount(int i) => _children[i]?.Count ?? 0;
+
+    /// <summary>The k-th child, largest first; k below <see cref="ChildCount"/>.</summary>
+    public int Child(int i, int k) => _children[i]![k];
 
     public string FullPath(int i)
     {

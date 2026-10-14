@@ -585,6 +585,26 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_DuplicatesHint" xml:space="preserve"><value>Vergleicht Dateien gleicher Größe (ab 1 MB) nach ihrem Inhalt. Windows-, Programm-, Spiele- und AppData-Ordner bleiben außen vor.</value></data>
   <data name="Storage_DuplicatesFound" xml:space="preserve"><value>Duplikate: {0} lassen sich freigeben.</value></data>
   <data name="Storage_NoDuplicates" xml:space="preserve"><value>Keine doppelten Dateien ab 1 MB gefunden.</value></data>
+  <data name="Storage_ColName" xml:space="preserve"><value>Name</value></data>
+  <data name="Storage_ColSize" xml:space="preserve"><value>Größe</value></data>
+  <data name="Storage_ColShare" xml:space="preserve"><value>Anteil</value></data>
+  <data name="Storage_ColFiles" xml:space="preserve"><value>Dateien</value></data>
+  <data name="Storage_ColChanged" xml:space="preserve"><value>Geändert</value></data>
+  <data name="Storage_FolderList" xml:space="preserve"><value>Ordner und Dateien</value></data>
+  <data name="Storage_ShownFolder" xml:space="preserve"><value>Angezeigter Ordner</value></data>
+  <data name="Storage_TreemapName" xml:space="preserve"><value>Treemap von {0}, {1}</value></data>
+  <data name="Storage_TreemapHint" xml:space="preserve"><value>Wähle eine Kachel, um sie in der Liste zu finden. Ein Doppelklick zeigt den Ordner, in dem sie liegt.</value></data>
+  <data name="Storage_TreemapTipFile" xml:space="preserve"><value>{0}, {1}</value></data>
+  <data name="Storage_TreemapTipFolder" xml:space="preserve"><value>{0} in {1:N0} Dateien</value></data>
+  <data name="Storage_Legend" xml:space="preserve"><value>Dateitypen</value></data>
+  <data name="Storage_GroupVideo" xml:space="preserve"><value>Video</value></data>
+  <data name="Storage_GroupAudio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Storage_GroupImages" xml:space="preserve"><value>Bilder</value></data>
+  <data name="Storage_GroupArchives" xml:space="preserve"><value>Archive</value></data>
+  <data name="Storage_GroupPrograms" xml:space="preserve"><value>Programme</value></data>
+  <data name="Storage_GroupDocuments" xml:space="preserve"><value>Dokumente</value></data>
+  <data name="Storage_GroupSystem" xml:space="preserve"><value>System</value></data>
+  <data name="Storage_GroupOther" xml:space="preserve"><value>Sonstige</value></data>
   <data name="Work_FindDuplicates" xml:space="preserve"><value>Doppelte Dateien werden gesucht</value></data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows-Features</value>

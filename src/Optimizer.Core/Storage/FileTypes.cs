@@ -7,6 +7,7 @@ public enum FileGroup { Video, Audio, Images, Archives, Programs, Documents, Sys
 public static class FileTypes
 {
     private static readonly Dictionary<string, FileGroup> Map = Build();
+    private static readonly Dictionary<string, FileGroup>.AlternateLookup<ReadOnlySpan<char>> SpanMap = Map.GetAlternateLookup<ReadOnlySpan<char>>();
 
     private static Dictionary<string, FileGroup> Build()
     {
@@ -31,5 +32,13 @@ public static class FileTypes
         if (string.IsNullOrEmpty(extension)) return FileGroup.Other;
         var key = extension[0] == '.' ? extension[1..] : extension;
         return Map.TryGetValue(key, out var group) ? group : FileGroup.Other;
+    }
+
+    /// <summary>The same without a string: the treemap asks for every file it draws.</summary>
+    public static FileGroup GroupOf(ReadOnlySpan<char> extension)
+    {
+        if (extension.IsEmpty) return FileGroup.Other;
+        if (extension[0] == '.') extension = extension[1..];
+        return SpanMap.TryGetValue(extension, out var group) ? group : FileGroup.Other;
     }
 }
