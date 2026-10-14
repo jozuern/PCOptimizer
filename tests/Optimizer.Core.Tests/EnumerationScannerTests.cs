@@ -108,3 +108,20 @@ public class EnumerationScannerTests
         finally { TestFolders.Delete(root); }
     }
 }
+
+public class EnumerationLinkTests
+{
+    private const uint Reparse = 0x400, Directory = 0x10;
+
+    [Theory]
+    [InlineData(0xA0000003u, true)]   // IO_REPARSE_TAG_MOUNT_POINT (junction, mount point)
+    [InlineData(0xA000000Cu, true)]   // IO_REPARSE_TAG_SYMLINK
+    [InlineData(0x9000001Au, false)]  // IO_REPARSE_TAG_CLOUD (OneDrive placeholder)
+    [InlineData(0x9000301Au, false)]  // IO_REPARSE_TAG_CLOUD_3
+    public void OnlyNameSurrogatesAreLinks(uint tag, bool link) =>
+        Assert.Equal(link, EnumerationScanner.IsLink(Directory | Reparse, tag));
+
+    [Fact]
+    public void WithoutReparseAttributeNothingIsALink() =>
+        Assert.False(EnumerationScanner.IsLink(Directory, 0xA0000003u));
+}

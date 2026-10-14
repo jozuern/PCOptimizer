@@ -5,7 +5,8 @@ namespace Optimizer.Core.Storage;
 
 /// <summary>
 /// Folder walk on several threads with FindFirstFileEx (basic info, large fetch): reads names, sizes and attributes
-/// only and never opens a file. Reparse points are listed but not entered, so junctions cannot loop or double count.
+/// only and never opens a file. Links (junctions, symlinks, mount points) are listed but not entered, so they cannot loop
+/// or double count; cloud placeholder folders (OneDrive Files On-Demand) are entered like normal folders.
 /// </summary>
 public sealed unsafe partial class EnumerationScanner(int threads = 4, long? usedBytes = null) : IVolumeScanner
 {
@@ -15,7 +16,7 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
 
     private sealed record Work(int Parent, string Name, string Path, DateTime LastWrite, EntryFlags Flags);
 
-    private readonly record struct Found(string Name, bool Folder, bool Reparse, long Size, DateTime Write, EntryFlags Flags);
+    private readonly record struct Found(string Name, bool Folder, bool Link, long Size, DateTime Write, EntryFlags Flags);
 
     public Task<DiskTree> ScanAsync(string root, IProgress<ScanProgress>? progress, CancellationToken ct) =>
         Task.Run(() => Scan(root, progress, ct), ct);
@@ -87,7 +88,7 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
                 {
                     if (e.Folder)
                     {
-                        if (e.Reparse) builder.AddFolder(self, e.Name, e.Write, e.Flags | EntryFlags.ReparsePoint);
+                        if (e.Link) builder.AddFolder(self, e.Name, e.Write, e.Flags | EntryFlags.ReparsePoint);
                         else queue.Enqueue(new Work(self, e.Name, item.Path.TrimEnd('\\') + "\\" + e.Name, e.Write, e.Flags));
                     }
                     else
@@ -130,13 +131,20 @@ public sealed unsafe partial class EnumerationScanner(int threads = 4, long? use
                 if ((a & AttrSystem) != 0) flags |= EntryFlags.System;
                 if ((a & (AttrRecallOnDataAccess | AttrRecallOnOpen | AttrOffline)) != 0) flags |= EntryFlags.CloudOnly;
                 var size = ((long)data.nFileSizeHigh << 32) | data.nFileSizeLow;
-                into.Add(new Found(name, (a & AttrDirectory) != 0, (a & AttrReparse) != 0, size, ToUtc(data.ftLastWriteTime), flags));
+                into.Add(new Found(name, (a & AttrDirectory) != 0, IsLink(a, data.dwReserved0), size, ToUtc(data.ftLastWriteTime), flags));
                 if (into.Count % 256 == 0) ct.ThrowIfCancellationRequested();
             } while (FindNextFileW(handle, &data));
         }
         finally { FindClose(handle); }
         return true;
     }
+
+    /// <summary>
+    /// A link is a reparse point whose tag is a name surrogate (bit 0x20000000: junction, symlink, mount point). Other
+    /// reparse points, like the OneDrive cloud placeholders, hold real children and are entered.
+    /// </summary>
+    internal static bool IsLink(uint attributes, uint reparseTag) =>
+        (attributes & AttrReparse) != 0 && (reparseTag & 0x20000000) != 0;
 
     private static DateTime ToUtc(long fileTime)
     {
