@@ -4,7 +4,7 @@ namespace Optimizer.Core.Storage.Mft;
 
 /// <summary>What FSCTL_GET_NTFS_VOLUME_DATA reports about a volume (NTFS_VOLUME_DATA_BUFFER).</summary>
 internal readonly record struct NtfsVolumeData(int BytesPerSector, int BytesPerCluster, int BytesPerFileRecord, long MftStartLcn,
-    long MftValidDataLength, long TotalClusters, long FreeClusters);
+    long MftValidDataLength, long TotalClusters);
 
 /// <summary>
 /// A volume opened for raw reading without the cache: <see cref="Read"/> takes an offset and a length that are multiples
@@ -20,19 +20,19 @@ internal interface IVolumeDevice : IDisposable
 /// The file table of a volume as an <see cref="IMftSource"/>. Finds where $MFT lies from its own record 0: the runs of
 /// its unnamed $DATA, which on a grown $MFT continue in extension records that record 0's attribute list names (those
 /// are read through the runs known so far, in VCN order). The runs must cover the valid data length without a gap, or
-/// the table counts as unreadable: a partly read file table is never passed off as the whole drive. Record 0's $BITMAP
-/// says which records are in use, so stretches of free records are not read (in the test VM half of the 550 MB); without
-/// a readable bitmap every record is read. Reads go through one sector-aligned native buffer, at most 4 MB at a time.
+/// the table counts as unreadable: a partly read file table is never passed off as the whole drive. Every record of the
+/// valid data is read. A read into memory aligned for reads without the cache (the scanner's blocks) goes straight
+/// there; anything else (record 0, a short last block) goes through a small aligned buffer of its own and is copied.
 /// </summary>
 internal sealed unsafe class VolumeMftSource : IMftSource
 {
+    /// <summary>The largest sector and record size taken as plausible.</summary>
     private const int BlockBytes = 4 << 20;
+    private const int BounceBytes = 64 << 10;
     private const ulong RecordNumberMask = 0x0000_FFFF_FFFF_FFFF;
     private readonly IVolumeDevice _device;
     private readonly NtfsVolumeData _volume;
     private readonly (long Offset, long Length)[] _extents;
-    /// <summary>$MFT's own $BITMAP (bit n set: record n in use), null when it could not be read; then every record is read.</summary>
-    private readonly byte[]? _bitmap;
     private byte* _block;
     private readonly int _blockSize;
 
@@ -50,9 +50,9 @@ internal sealed unsafe class VolumeMftSource : IMftSource
                 || v.MftStartLcn <= 0 || v.MftStartLcn >= v.TotalClusters
                 || v.MftValidDataLength < v.BytesPerFileRecord || v.MftValidDataLength % v.BytesPerFileRecord != 0)
                 throw new MftUnavailableException("unexpected volume data");
-            _blockSize = BlockBytes;
-            _block = (byte*)NativeMemory.AlignedAlloc(BlockBytes, (nuint)Math.Max(v.BytesPerSector, 4096));
-            (_extents, _bitmap) = FindExtents();
+            _blockSize = Math.Max(BounceBytes, v.BytesPerSector);
+            _block = (byte*)NativeMemory.AlignedAlloc((nuint)_blockSize, (nuint)Alignment);
+            _extents = FindExtents();
         }
         catch
         {
@@ -74,38 +74,6 @@ internal sealed unsafe class VolumeMftSource : IMftSource
         return count;
     }
 
-    /// <summary>
-    /// The next records to read: from the first one at or after <paramref name="from"/> that the bitmap marks in use to
-    /// the last one so marked within <paramref name="max"/> records. Free records between are read too; whole free
-    /// stretches (an $MFT keeps many, often more than half its records) are not. A record put in use after the bitmap
-    /// was read is missed, like any file made while the drive is read.
-    /// </summary>
-    public (long First, int Count) NextRun(long from, int max)
-    {
-        var count = RecordCount;
-        if (_bitmap is null) return from >= count ? (count, 0) : (from, (int)Math.Min(max, count - from));
-        var first = from;
-        while (first < count && !MayBeInUse(first)) first++;
-        if (first >= count) return (count, 0);
-        var last = Math.Min(count, first + max) - 1;
-        while (last > first && !MayBeInUse(last)) last--;
-        return (first, (int)(last - first + 1));
-    }
-
-    public long? InUseRecords
-    {
-        get
-        {
-            if (_bitmap is null) return null;
-            long used = 0;
-            foreach (var b in _bitmap) used += System.Numerics.BitOperations.PopCount(b);
-            return Math.Min(RecordCount, used + Math.Max(0, RecordCount - (long)_bitmap.Length * 8));
-        }
-    }
-
-    /// <summary>Records past the end of the bitmap count as in use.</summary>
-    private bool MayBeInUse(long n) => n >= (long)_bitmap!.Length * 8 || (_bitmap[n >> 3] & (1 << (int)(n & 7))) != 0;
-
     public void Dispose()
     {
         if (_block is not null)
@@ -116,8 +84,8 @@ internal sealed unsafe class VolumeMftSource : IMftSource
         _device.Dispose();
     }
 
-    /// <summary>The extents of $MFT on the volume (byte offset and length) in VCN order, and its bitmap when readable.</summary>
-    private ((long, long)[], byte[]?) FindExtents()
+    /// <summary>The extents of $MFT on the volume (byte offset and length) in VCN order.</summary>
+    private (long, long)[] FindExtents()
     {
         var v = _volume;
         var size = v.BytesPerFileRecord;
@@ -146,54 +114,8 @@ internal sealed unsafe class VolumeMftSource : IMftSource
         var extents = Extents(segments, partial: false);
         var covered = extents.Sum(e => e.Item2);
         if (covered < v.MftValidDataLength) throw new MftUnavailableException($"the file table's runs cover {covered} of {v.MftValidDataLength} bytes");
-        return (extents, ReadBitmap(own.Bitmap));
+        return extents;
     }
-
-    /// <summary>
-    /// $MFT's $BITMAP from record 0: resident, or non-resident with runs in record 0 that lie on the volume and cover it.
-    /// Anything else gives null and every record is read: the bitmap only saves reading free records.
-    /// </summary>
-    private byte[]? ReadBitmap(MftBitmap? bitmap)
-    {
-        var v = _volume;
-        // One bit per record; more than that (allocated ahead) is not needed.
-        var needed = (RecordCount + 7) / 8;
-        if (bitmap is null) return null;
-        if (bitmap.Value is { } value) return Plausible(value) ? value : null;
-        var size = Math.Min(bitmap.Size, needed);
-        long covered = 0;
-        foreach (var (lcn, clusters) in bitmap.Runs)
-        {
-            if (lcn < 0 || clusters > v.TotalClusters - lcn) return null;
-            covered += clusters * v.BytesPerCluster;
-        }
-        if (covered < size || size <= 0) return null;
-
-        var bytes = new byte[size];
-        var into = bytes.AsSpan();
-        foreach (var (lcn, clusters) in bitmap.Runs)
-        {
-            if (into.IsEmpty) break;
-            var take = (int)Math.Min(into.Length, clusters * v.BytesPerCluster);
-            ReadVolume(lcn * v.BytesPerCluster, into[..take]);
-            into = into[take..];
-        }
-        return Plausible(bytes) ? bytes : null;
-    }
-
-    /// <summary>
-    /// Records 0 to 11 are NTFS's own files ($MFT to $UpCase, with the root as record 5) and always in use: a bitmap that
-    /// does not mark them is wrong (read from the wrong clusters, damaged) and must not decide which records are read.
-    /// </summary>
-    private static bool Plausible(byte[] bitmap) => bitmap.Length >= 2 && bitmap[0] == 0xFF && (bitmap[1] & 0x0F) == 0x0F;
-
-    /// <summary>Null past the bitmap's end: those records are read, but nothing is known about them.</summary>
-    public bool? MarkedInUse(long record) => _bitmap is null || record >= (long)_bitmap.Length * 8 ? null : MayBeInUse(record);
-
-    public bool HasBitmap => _bitmap is not null;
-
-    public long? UsedBytes => _volume.FreeClusters is var free && free >= 0 && free <= _volume.TotalClusters
-        ? (_volume.TotalClusters - free) * _volume.BytesPerCluster : null;
 
     /// <summary>
     /// The runs of the segments in VCN order as volume extents. A gap, an overlap, a sparse run or a run past the end of
@@ -241,12 +163,18 @@ internal sealed unsafe class VolumeMftSource : IMftSource
     }
 
     /// <summary>
-    /// Reads any range of the volume through the aligned buffer: whole sectors around it, at most 4 MB per read. The
-    /// rounding stays inside the cluster, and so inside the extent, that holds the range.
+    /// Reads any range of the volume: whole sectors straight into memory aligned for it, anything else through the aligned
+    /// buffer, whole sectors around it, at most its size per read. The rounding stays inside the cluster, and so inside
+    /// the extent, that holds the range.
     /// </summary>
     private void ReadVolume(long offset, Span<byte> into)
     {
         var sector = _volume.BytesPerSector;
+        if (offset % sector == 0 && into.Length % sector == 0 && IsAligned(into))
+        {
+            _device.Read(offset, into);
+            return;
+        }
         while (!into.IsEmpty)
         {
             var start = offset - offset % sector;
@@ -258,6 +186,14 @@ internal sealed unsafe class VolumeMftSource : IMftSource
             into = into[take..];
             offset += take;
         }
+    }
+
+    /// <summary>What a read without the cache needs of the memory it reads into: the sector size, and at least a page.</summary>
+    private int Alignment => Math.Max(_volume.BytesPerSector, 4096);
+
+    private bool IsAligned(Span<byte> memory)
+    {
+        fixed (byte* p = memory) return ((nuint)p & (nuint)(Alignment - 1)) == 0;
     }
 
     private static bool IsPowerOfTwo(int n) => (n & (n - 1)) == 0;

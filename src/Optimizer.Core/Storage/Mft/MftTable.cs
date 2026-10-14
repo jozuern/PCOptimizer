@@ -5,11 +5,15 @@ namespace Optimizer.Core.Storage.Mft;
 /// <summary>
 /// The base records in use of a volume's $MFT as parallel arrays instead of an object graph per record (a drive can hold
 /// millions): 4 bytes per record of the table for the slot index, plus about 51 bytes per record in use and the one name
-/// the tree shows (an $MFT keeps many free records, often more than half). Entries are added in record order. Per entry:
+/// the tree shows (an $MFT keeps many free records, often more than half). Entries are added in record order, in pages
+/// of <see cref="Paged{T}.Length"/> made as they fill: how many records are in use is not known before the whole table
+/// is read, and pages never copy what they hold or keep more than one page of room. Per entry:
 /// the record number, the parent reference of its best name (see <see cref="MftRecordParser.NameRank"/>), sequence
 /// number, unnamed $DATA size and allocated size, last write (UTC ticks, 0 unknown), file attributes and
 /// <see cref="Flags"/>. Extension records stay whole in <see cref="Extensions"/>; <see cref="MftTreeBuilder"/> folds them
-/// in.
+/// in. A scan reserves the entries of a block of records in record order on one thread (<see cref="Reserve"/>), then
+/// parses the block on several (<see cref="Set"/>, <see cref="Release"/> and <see cref="AddExtension"/>, each record
+/// touching only its own entry and slot).
 /// </summary>
 internal sealed class MftTable
 {
@@ -21,33 +25,31 @@ internal sealed class MftTable
     /// <summary>Entry index + 1 per record number, 0 for a record that is not a base record in use.</summary>
     private readonly int[] _slot;
 
-    /// <summary>Entries (base records in use).</summary>
+    /// <summary>Entries (base records in use, and any released because their record could not be parsed).</summary>
     public int Count { get; private set; }
-    public uint[] Number;
-    public ulong[] Parent;
-    public ushort[] Sequence;
-    public long[] Size, Allocated, LastWrite;
-    public uint[] Attributes;
-    public byte[] Flags;
-    public string?[] Name;
+    public readonly Paged<uint> Number;
+    public readonly Paged<ulong> Parent;
+    public readonly Paged<ushort> Sequence;
+    public readonly Paged<long> Size, Allocated, LastWrite;
+    public readonly Paged<uint> Attributes;
+    public readonly Paged<byte> Flags;
+    public readonly Paged<string?> Name;
     public readonly List<MftRecord> Extensions = [];
+    private readonly Lock _extensions = new();
 
-    /// <param name="records">Records in the file table.</param>
-    /// <param name="inUse">Records in use when known (the $MFT bitmap): the entries get room for them at once. Otherwise
-    /// they start with room for a quarter of all records and grow.</param>
-    public MftTable(int records, long? inUse = null)
+    /// <param name="records">Records in the file table, the most entries it can have.</param>
+    public MftTable(int records)
     {
         _slot = new int[records];
-        var capacity = (int)Math.Min(records, inUse is { } known ? known + known / 64 + 64 : Math.Max(1024, records / 4));
-        Number = new uint[capacity];
-        Parent = new ulong[capacity];
-        Sequence = new ushort[capacity];
-        Size = new long[capacity];
-        Allocated = new long[capacity];
-        LastWrite = new long[capacity];
-        Attributes = new uint[capacity];
-        Flags = new byte[capacity];
-        Name = new string?[capacity];
+        Number = new(records);
+        Parent = new(records);
+        Sequence = new(records);
+        Size = new(records);
+        Allocated = new(records);
+        LastWrite = new(records);
+        Attributes = new(records);
+        Flags = new(records);
+        Name = new(records);
     }
 
     /// <summary>The entry of record <paramref name="record"/> (a record number, without sequence), -1 when there is none.</summary>
@@ -56,18 +58,56 @@ internal sealed class MftTable
     /// <summary>The rank of the name kept for entry <paramref name="i"/>, 0 when it has none.</summary>
     public byte Rank(int i) => (byte)(Flags[i] >> RankShift);
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    /// <summary>
+    /// The entry of base record <paramref name="number"/>, made at the end when it has none yet; -1 past the table. Not
+    /// thread safe, and it may add pages: only while no record is being parsed.
+    /// </summary>
+    public int Reserve(uint number)
+    {
+        if (number >= (uint)_slot.Length) return -1;
+        var i = _slot[number] - 1;
+        if (i >= 0) return i;
+        i = Count++;
+        if (Paged<byte>.StartsPage(i))
+        {
+            Number.AddPage(i);
+            Parent.AddPage(i);
+            Sequence.AddPage(i);
+            Size.AddPage(i);
+            Allocated.AddPage(i);
+            LastWrite.AddPage(i);
+            Attributes.AddPage(i);
+            Flags.AddPage(i);
+            Name.AddPage(i);
+        }
+        _slot[number] = i + 1;
+        return i;
+    }
+
+    /// <summary>
+    /// A reserved entry whose record turned out unusable: no record number leads to it any more. Its fields stay empty
+    /// (record 0, no name, no flags), so the builder passes over it.
+    /// </summary>
+    public void Release(uint number) => _slot[number] = 0;
+
+    /// <summary>An extension record, from any thread.</summary>
+    public void AddExtension(MftRecord record)
+    {
+        lock (_extensions) Extensions.Add(record);
+    }
+
     public void Add(uint number, ushort sequence, bool folder, string? name, ulong parent, byte rank, bool hasData, long size,
         long allocated, long lastWriteTicks, uint attributes, uint reparseTag)
     {
-        if (number >= (uint)_slot.Length) return;
-        var i = _slot[number] - 1;
-        if (i < 0)
-        {
-            if (Count == Number.Length) Grow(number);
-            i = Count++;
-            _slot[number] = i + 1;
-        }
+        if (Reserve(number) is var i and >= 0)
+            Set(i, number, sequence, folder, name, parent, rank, hasData, size, allocated, lastWriteTicks, attributes, reparseTag);
+    }
+
+    /// <summary>Fills entry <paramref name="i"/>; writes nothing else, so different entries can be filled at the same time.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Set(int i, uint number, ushort sequence, bool folder, string? name, ulong parent, byte rank, bool hasData, long size,
+        long allocated, long lastWriteTicks, uint attributes, uint reparseTag)
+    {
         Number[i] = number;
         Sequence[i] = sequence;
         Name[i] = name;
@@ -93,25 +133,6 @@ internal sealed class MftTable
         reparseTag == 0 ? (byte)0 : (byte)(HasTag | ((reparseTag & NameSurrogate) != 0 ? LinkTag : 0));
 
     public static DateTime Time(long ticks) => ticks == 0 ? default : new DateTime(ticks, DateTimeKind.Utc);
-
-    /// <summary>
-    /// Room for the entries still to come, estimated from the share in use so far (records arrive in order) with a
-    /// tenth to spare, at least a quarter more: no doubling that leaves half the arrays empty.
-    /// </summary>
-    private void Grow(uint number)
-    {
-        var estimate = (long)((double)Count * _slot.Length / (number + 1) * 1.1);
-        var capacity = (int)Math.Min(_slot.Length, Math.Max(estimate, Count + Count / 4 + 1));
-        Array.Resize(ref Number, capacity);
-        Array.Resize(ref Parent, capacity);
-        Array.Resize(ref Sequence, capacity);
-        Array.Resize(ref Size, capacity);
-        Array.Resize(ref Allocated, capacity);
-        Array.Resize(ref LastWrite, capacity);
-        Array.Resize(ref Attributes, capacity);
-        Array.Resize(ref Flags, capacity);
-        Array.Resize(ref Name, capacity);
-    }
 
     /// <summary>The table of records parsed one by one (the tests and the fixture): sized by the highest record number.</summary>
     public static MftTable From(IReadOnlyList<MftRecord> records)
@@ -143,4 +164,28 @@ internal sealed class MftTable
         }
         return table;
     }
+}
+
+/// <summary>
+/// An array in pages of <see cref="Length"/> elements (64 KB for 8-byte ones, under the large object heap's threshold),
+/// each made by <see cref="AddPage"/> when the first element on it is reserved. Elements are reached by reference, as in
+/// an array.
+/// </summary>
+internal readonly struct Paged<T>
+{
+    private const int Shift = 13;
+    public const int Length = 1 << Shift;
+    private const int Mask = Length - 1;
+    private readonly T[]?[] _pages;
+
+    /// <param name="capacity">The most elements it can hold; no page is made yet.</param>
+    public Paged(int capacity) => _pages = new T[]?[(capacity + Mask) >> Shift];
+
+    public ref T this[int i] => ref _pages[i >> Shift]![i & Mask];
+
+    /// <summary>Whether element <paramref name="i"/> is the first on its page.</summary>
+    public static bool StartsPage(int i) => (i & Mask) == 0;
+
+    /// <summary>Makes the page that holds element <paramref name="i"/>.</summary>
+    public void AddPage(int i) => _pages[i >> Shift] ??= new T[Length];
 }

@@ -146,11 +146,6 @@ public static class ReaderComparison
         public int BytesPerRecord => inner.BytesPerRecord;
         public int BytesPerSector => inner.BytesPerSector;
         public long RecordCount => inner.RecordCount;
-        public (long First, int Count) NextRun(long from, int max) => inner.NextRun(from, max);
-        public long? InUseRecords => inner.InUseRecords;
-        public bool? MarkedInUse(long record) => inner.MarkedInUse(record);
-        public bool HasBitmap => inner.HasBitmap;
-        public long? UsedBytes => inner.UsedBytes;
 
         public int Read(long firstRecord, Span<byte> buffer)
         {

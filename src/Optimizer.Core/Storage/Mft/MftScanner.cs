@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Optimizer.Core.Logging;
+using System.Runtime.InteropServices;
 
 namespace Optimizer.Core.Storage.Mft;
 
@@ -16,48 +16,33 @@ internal interface IMftSource : IDisposable
     int BytesPerSector { get; }
     long RecordCount { get; }
     int Read(long firstRecord, Span<byte> buffer);
-
-    /// <summary>
-    /// The next records worth reading at or after <paramref name="from"/>, at most <paramref name="max"/>; a count of 0
-    /// when none is left. A source that knows which records are free (the volume's $MFT bitmap) skips them.
-    /// </summary>
-    (long First, int Count) NextRun(long from, int max) =>
-        from >= RecordCount ? (RecordCount, 0) : (from, (int)Math.Min(max, RecordCount - from));
-
-    /// <summary>How many records are in use, when the source knows (the volume's $MFT bitmap); null otherwise.</summary>
-    long? InUseRecords => null;
-
-    /// <summary>
-    /// Whether the source's bitmap marks <paramref name="record"/> in use; null when the source has no bitmap or the
-    /// record lies past its end.
-    /// </summary>
-    bool? MarkedInUse(long record) => null;
-
-    /// <summary>Whether <see cref="NextRun"/> skips records its bitmap marks free.</summary>
-    bool HasBitmap => false;
-
-    /// <summary>Bytes in use on the volume (clusters not free), when known.</summary>
-    long? UsedBytes => null;
 }
 
 /// <summary>
-/// Reads a whole NTFS volume from its file table: the records of $MFT that its bitmap marks in use, in blocks of up to
-/// 2 MB (in the test VM within 0.03 s of 4 MB blocks, with 4 MB less memory), read only, the next block read
-/// while the last one is parsed, straight into an <see cref="MftTable"/>, then the tree from
-/// <see cref="MftTreeBuilder"/>. The time the tree reports includes building it. Needs administrator rights. Any doubt
-/// that the table was read whole (it cannot be opened
-/// or followed, a read fails, more than 1 % of the records in use are damaged) throws
-/// <see cref="MftUnavailableException"/>, and <see cref="VolumeScanners"/> reads folder by folder instead: a tree is
-/// either the whole file table or not made.
+/// Reads a whole NTFS volume from its file table: every record of $MFT's valid data, read only, in blocks of up to 8 MB
+/// (in the test VM its 550 MB took 0.35 s so, 0.39 s in blocks of 4 MB) into memory aligned for reads without the cache,
+/// so they need no copy. The next block is read while the last one is parsed on all processors straight into an
+/// <see cref="MftTable"/>, then the tree comes from <see cref="MftTreeBuilder"/>. The time the tree reports includes
+/// building it. Needs administrator rights. No record is skipped, not even one $MFT's own bitmap marks free: a wrong
+/// bitmap could hide files no check would notice. Any doubt that the table was read whole (it cannot be opened or
+/// followed, a read fails, more than 1 % of the records in use are damaged, the root's record is not in use) throws
+/// <see cref="MftUnavailableException"/>, and <see cref="VolumeScanners"/> reads folder by folder instead: a tree is either
+/// the whole file table or not made.
 /// </summary>
 public sealed class MftScanner : IVolumeScanner
 {
-    private const int BlockBytes = 2 << 20;
+    private const int BlockBytes = 8 << 20;
+    /// <summary>
+    /// Block memory starts on a page, which reads without the cache accept on sectors of up to 4 KB; on larger ones
+    /// <see cref="VolumeMftSource"/> reads through its own buffer.
+    /// </summary>
+    private const int Alignment = 4096;
     private const ushort InUse = 0x0001;
-    private const int RootRecord = 5, MismatchesTolerated = 16;
-    private const ulong RecordNumberMask = 0x0000_FFFF_FFFF_FFFF;
+    private const int RootRecord = 5;
     /// <summary>"FILE" and "BAAD" (a record NTFS found damaged), little endian.</summary>
     private const uint File = 0x454C4946, Baad = 0x44414142;
+    /// <summary>What a record of a block is, before it is parsed: an entry index, or one of these.</summary>
+    private const int Skip = -1, Extension = -2;
     private readonly Func<string, IMftSource> _open;
     private readonly int _blockBytes;
 
@@ -79,28 +64,13 @@ public sealed class MftScanner : IVolumeScanner
     }
 
     /// <summary>
-    /// Every record of <paramref name="source"/> in a table. With a bitmap, only the records it marks in use are read, and
-    /// the result is checked against the data: records read whose header disagrees with their bit, a record whose
-    /// folder the bitmap marks free, files that add up to less than half the volume's used space, damage, or no root
-    /// mean the bitmap is not trusted, and the whole table is read again without it (logged). Only that full read, or a
-    /// source without a bitmap, throws <see cref="MftUnavailableException"/> for damage or a missing root.
+    /// Every record of <paramref name="source"/> in a table. Each block is first sorted on this thread (record headers
+    /// only: unused, damaged, extension, or a base record given its entry in record order), then parsed by up to
+    /// <paramref name="workers"/> threads (0: one per processor; 1: in order on this thread), each record into its own
+    /// entry. Throws <see cref="MftUnavailableException"/> for damage over 1 % or a missing root.
     /// </summary>
-    internal static MftTable ReadTable(IMftSource source, int blockBytes, IProgress<ScanProgress>? progress, CancellationToken ct)
-    {
-        if (source.HasBitmap)
-        {
-            var (table, doubt) = Read(source, blockBytes, progress, useBitmap: true, ct);
-            if (doubt is null) return table;
-            Log.Warn("storage", "file table bitmap not trusted, reading every record", new { reason = doubt });
-        }
-        var (full, _) = Read(source, blockBytes, progress, useBitmap: false, ct);
-        return full;
-    }
-
-    /// <summary>One pass over the table; with <paramref name="useBitmap"/> a failed check is returned as the doubt instead of thrown.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static (MftTable Table, string? Doubt) Read(IMftSource source, int blockBytes, IProgress<ScanProgress>? progress,
-        bool useBitmap, CancellationToken ct)
+    internal static MftTable ReadTable(IMftSource source, int blockBytes, IProgress<ScanProgress>? progress, CancellationToken ct,
+        int workers = 0)
     {
         int size = source.BytesPerRecord, sector = source.BytesPerSector;
         var count = source.RecordCount;
@@ -108,17 +78,19 @@ public sealed class MftScanner : IVolumeScanner
         if (size < 512 || count <= 0 || count >= int.MaxValue) throw new MftUnavailableException($"unexpected file table: {count} records of {size} bytes");
 
         var perBlock = Math.Max(1, blockBytes / size);
-        var current = new byte[perBlock * size];
-        var next = new byte[perBlock * size];
-        var table = new MftTable((int)count, useBitmap ? source.InUseRecords : null);
-        long inUse = 0, damaged = 0, bytes = 0, readRecords = 0, mismatched = 0, parentsMarkedFree = 0;
-        var files = 0;
-        (long First, int Count) Next(long from) =>
-            useBitmap ? source.NextRun(from, perBlock) : from >= count ? (count, 0) : (from, (int)Math.Min(perBlock, count - from));
+        // Freed when this method ends, after the finally below has waited for a read still running into one of them.
+        using var one = new AlignedBlock(perBlock * size);
+        using var other = new AlignedBlock(perBlock * size);
+        var (current, next) = (one, other);
+        var entries = new int[perBlock];
+        var table = new MftTable((int)count);
+        var parse = new BlockParse(table, entries, size, sector, workers > 0 ? workers : Environment.ProcessorCount);
+        long inUse = 0, damaged = 0;
+        (long First, int Count) Next(long from) => from >= count ? (count, 0) : (from, (int)Math.Min(perBlock, count - from));
 
-        // One read ahead: the next run is read while this one is parsed.
+        // One read ahead: the next block is read while this one is parsed.
         var (first, want) = Next(0);
-        var pending = want > 0 ? ReadAhead(source, first, current, want) : null;
+        var pending = ReadAhead(source, first, current, want);
         try
         {
             while (pending is not null)
@@ -131,35 +103,12 @@ public sealed class MftScanner : IVolumeScanner
                 (first, want) = Next(start + read);
                 if (want > 0) pending = ReadAhead(source, first, next, want);
 
-                readRecords += read;
-                for (var k = 0; k < read; k++)
-                {
-                    var r = current.AsSpan(k * size, size);
-                    var number = start + k;
-                    // The signature and the in-use flag lie before the first stride's end, so they are readable before the
-                    // fixups: a record in use that then fails to parse is damaged, an unused one is simply skipped.
-                    var signature = BinaryPrimitives.ReadUInt32LittleEndian(r);
-                    var headerInUse = signature == Baad
-                        || (signature == File && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) != 0);
-                    // A bitmap that disagrees with the records read may also have hidden records in the stretches skipped.
-                    if (useBitmap && source.MarkedInUse(number) is { } marked && marked != headerInUse) mismatched++;
-                    if (!headerInUse) continue;
-                    inUse++;
-                    if (signature == Baad) { damaged++; continue; }
-                    // The fixups are applied in place: each record is parsed once, from this fresh read.
-                    if (!MftRecordParser.ParseInto(r, sector, (uint)number, table)) { damaged++; continue; }
-                    if (table.IndexOf((ulong)number) is not (var i and >= 0)) continue;
-                    // A folder the bitmap marks free was not read: the bitmap hides at least that record.
-                    if (useBitmap && table.Name[i] is not null && source.MarkedInUse((long)(table.Parent[i] & RecordNumberMask)) == false)
-                        parentsMarkedFree++;
-                    if ((table.Flags[i] & MftTable.Folder) == 0)
-                    {
-                        files++;
-                        bytes += table.Size[i];
-                    }
-                }
+                var (used, bad) = Sort(current, read, size, start, table, entries);
+                inUse += used;
+                damaged += bad;
+                damaged += parse.Run(current, read, start);
                 (current, next) = (next, current);
-                progress?.Report(new ScanProgress(pending is null ? 100 : (start + read) * 100.0 / count, files, bytes, ScanReader.FileTable));
+                progress?.Report(new ScanProgress(pending is null ? 100 : (start + read) * 100.0 / count, (int)parse.Files, parse.Bytes, ScanReader.FileTable));
             }
         }
         finally
@@ -171,39 +120,131 @@ public sealed class MftScanner : IVolumeScanner
                 catch (Exception) { }
         }
 
-        string? doubt = null;
-        if (useBitmap)
-        {
-            // A few disagreements are files made or removed while the table is read; more mean a bitmap not to be trusted.
-            if (mismatched > Math.Max(MismatchesTolerated, readRecords / 100))
-                doubt = $"the bitmap disagrees with {mismatched} of {readRecords} records read";
-            else if (parentsMarkedFree > 0)
-                doubt = $"{parentsMarkedFree} records read lie in folders the bitmap marks free";
-            else if (source.UsedBytes is { } used && Allocated(table) * 2 < used)
-                doubt = $"the records read hold {Allocated(table)} of {used} bytes in use on the volume";
-        }
-        if (doubt is null && damaged * 100 > inUse) doubt = $"{damaged} of {inUse} file records in use are damaged";
+        if (damaged * 100 > inUse) throw new MftUnavailableException($"{damaged} of {inUse} file records in use are damaged");
         // Without the root (record 5) nothing could be placed: a table read wrong, never an empty drive.
-        if (doubt is null && table.IndexOf(RootRecord) is var root && (root < 0 || (table.Flags[root] & MftTable.Folder) == 0))
-            doubt = "the root folder's record is not in use";
-        if (doubt is not null && !useBitmap) throw new MftUnavailableException(doubt);
-        return (table, doubt);
+        if (table.IndexOf(RootRecord) is var root && (root < 0 || (table.Flags[root] & MftTable.Folder) == 0))
+            throw new MftUnavailableException("the root folder's record is not in use");
+        // Parsed in parallel, extension records arrive in any order.
+        table.Extensions.Sort((x, y) => x.Number.CompareTo(y.Number));
+        return table;
     }
 
-    /// <summary>The space the files found take: unnamed $DATA of every record, NTFS's own files included.</summary>
-    private static long Allocated(MftTable table)
+    /// <summary>
+    /// What each record of a block is, from its header alone (the signature, the in-use flag and the base reference lie
+    /// before the first stride's end, so they read the same before the fixups): records not in use are skipped silently,
+    /// "BAAD" counts as damaged, and every base record in use gets its entry here, in record order. Returns the records
+    /// in use and the damaged ones.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static (long InUse, long Damaged) Sort(AlignedBlock block, int read, int size, long start, MftTable table, int[] entries)
     {
-        long total = 0;
-        for (var i = 0; i < table.Count; i++)
-            if ((table.Flags[i] & MftTable.HasData) != 0 && table.Allocated[i] > 0) total += table.Allocated[i];
-        foreach (var r in table.Extensions)
-            if (r.DataSize is not null && r.DataAllocated is > 0) total += r.DataAllocated.Value;
-        return total;
+        long inUse = 0, damaged = 0;
+        var records = block.Span;
+        for (var k = 0; k < read; k++)
+        {
+            var r = records.Slice(k * size, size);
+            var signature = BinaryPrimitives.ReadUInt32LittleEndian(r);
+            entries[k] = Skip;
+            if (signature == Baad)
+            {
+                inUse++;
+                damaged++;
+            }
+            else if (signature == File && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) != 0)
+            {
+                inUse++;
+                entries[k] = MftRecordParser.IsExtension(r) ? Extension : table.Reserve((uint)(start + k));
+            }
+        }
+        return (inUse, damaged);
     }
 
-    private static Task<int> ReadAhead(IMftSource source, long first, byte[] buffer, int count)
+    /// <summary>
+    /// Parses the records of one block <see cref="Sort"/> has sorted, in slices on up to <c>workers</c> threads: each
+    /// record writes only its own entry, extension records go into the table's locked list. Counts the files and their
+    /// bytes so far for the progress.
+    /// </summary>
+    private sealed class BlockParse(MftTable table, int[] entries, int size, int sector, int workers)
+    {
+        private readonly ParallelOptions _options = new() { MaxDegreeOfParallelism = workers };
+        private AlignedBlock? _block;
+        private long _start, _damaged;
+        public long Files, Bytes;
+
+        /// <summary>The damaged records found in the block.</summary>
+        public long Run(AlignedBlock block, int read, long start)
+        {
+            _damaged = 0;
+            if (workers == 1)
+            {
+                Slice(block, 0, read, start);
+                return _damaged;
+            }
+            (_block, _start) = (block, start);
+            // About four slices per thread, so a thread that meets long records does not hold up the block.
+            var slice = Math.Max(16, (read + workers * 4 - 1) / (workers * 4));
+            var slices = (read + slice - 1) / slice;
+            Parallel.For(0, slices, _options, s => Slice(_block!, s * slice, Math.Min(read, (s + 1) * slice), _start));
+            return _damaged;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private void Slice(AlignedBlock block, int from, int to, long start)
+        {
+            long files = 0, bytes = 0, damaged = 0;
+            var records = block.Span;
+            for (var k = from; k < to; k++)
+            {
+                var entry = entries[k];
+                if (entry == Skip) continue;
+                var r = records.Slice(k * size, size);
+                var number = (uint)(start + k);
+                if (entry == Extension)
+                {
+                    // The fixups are applied in place: each record is parsed once, from this fresh read.
+                    if (MftRecordParser.Parse(r, sector, number) is { } extension) table.AddExtension(extension);
+                    else damaged++;
+                    continue;
+                }
+                // In use by its header, then failing to parse: damaged.
+                if (!MftRecordParser.ParseInto(r, sector, number, table, entry))
+                {
+                    table.Release(number);
+                    damaged++;
+                    continue;
+                }
+                if ((table.Flags[entry] & MftTable.Folder) == 0)
+                {
+                    files++;
+                    bytes += table.Size[entry];
+                }
+            }
+            Interlocked.Add(ref _damaged, damaged);
+            Interlocked.Add(ref Files, files);
+            Interlocked.Add(ref Bytes, bytes);
+        }
+    }
+
+    private static Task<int> ReadAhead(IMftSource source, long first, AlignedBlock buffer, int count)
     {
         var size = source.BytesPerRecord;
-        return Task.Run(() => source.Read(first, buffer.AsSpan(0, count * size)));
+        return Task.Run(() => source.Read(first, buffer.Span[..(count * size)]));
+    }
+
+    /// <summary>
+    /// Native memory for one block, aligned so the volume can be read into it without the cache and without a copy (see
+    /// <see cref="VolumeMftSource"/>), and freed at once instead of left to the garbage collector.
+    /// </summary>
+    private sealed unsafe class AlignedBlock(int length) : IDisposable
+    {
+        private byte* _memory = (byte*)NativeMemory.AlignedAlloc((nuint)length, Alignment);
+
+        public Span<byte> Span => new(_memory, length);
+
+        public void Dispose()
+        {
+            NativeMemory.AlignedFree(_memory);
+            _memory = null;
+        }
     }
 }

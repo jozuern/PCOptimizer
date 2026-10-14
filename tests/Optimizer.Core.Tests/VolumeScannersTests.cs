@@ -256,6 +256,44 @@ public class VolumeScannersTests
         Assert.Equal(-1, scanned.IndexOf(16));
     }
 
+    [Theory]
+    [InlineData(2)]
+    [InlineData(8)]
+    public void ParsingInParallelGivesTheSameTableAsInOrder(int workers)
+    {
+        // In order on one thread in blocks of 16 records, against one block of every record parsed in slices on several
+        // threads (the fixture's extension records and one more made in record 16 go through the locked list): the same
+        // entries in the same order, a damaged one released in both.
+        var f = Data.Value;
+        var mft = new byte[f.Mft.Length];
+        using (var source = new VolumeMftSource(FragmentedVolume(512, Layout.Fragmented))) source.Read(0, mft);
+        var torn = f.Parsed.Where(r => r.Number >= 24 && r.BaseReference == 0 && !r.IsFolder).Select(r => (int)r.Number).First();
+        mft[torn * f.RecordSize + 510] ^= 0xFF;
+
+        var inOrder = MftScanner.ReadTable(new FixtureSource((byte[])mft.Clone(), f.RecordSize, f.SectorSize), 16 * f.RecordSize, null,
+            CancellationToken.None, workers: 1);
+        var parallel = MftScanner.ReadTable(new FixtureSource((byte[])mft.Clone(), f.RecordSize, f.SectorSize), 4 << 20, null,
+            CancellationToken.None, workers);
+
+        Assert.Equal(inOrder.Count, parallel.Count);
+        Assert.Equal(-1, parallel.IndexOf((ulong)torn));
+        Assert.Contains(inOrder.Extensions, r => r.Number == ExtensionRecord);
+        Assert.Equal(inOrder.Extensions.Select(r => r.Number), parallel.Extensions.Select(r => r.Number));
+        for (var n = 0UL; n < (ulong)f.Records; n++) Assert.Equal(inOrder.IndexOf(n), parallel.IndexOf(n));
+        for (var i = 0; i < inOrder.Count; i++)
+        {
+            Assert.Equal(inOrder.Number[i], parallel.Number[i]);
+            Assert.Equal(inOrder.Name[i], parallel.Name[i]);
+            Assert.Equal(inOrder.Parent[i], parallel.Parent[i]);
+            Assert.Equal(inOrder.Sequence[i], parallel.Sequence[i]);
+            Assert.Equal(inOrder.Size[i], parallel.Size[i]);
+            Assert.Equal(inOrder.Allocated[i], parallel.Allocated[i]);
+            Assert.Equal(inOrder.LastWrite[i], parallel.LastWrite[i]);
+            Assert.Equal(inOrder.Attributes[i], parallel.Attributes[i]);
+            Assert.Equal(inOrder.Flags[i], parallel.Flags[i]);
+        }
+    }
+
     [Fact]
     public async Task TheFileTableIsReadOnlyWhenChosen()
     {
@@ -315,7 +353,7 @@ public class VolumeScannersTests
     private const int BitmapLcn = 90;
 
     /// <param name="changeBitmap">With <see cref="Layout.WithBitmap"/>: changes the bitmap (one bit per record) on the volume.</param>
-    private static MemoryVolume FragmentedVolume(int sectorSize, Layout layout, Action<Span<byte>>? changeBitmap = null, bool shortBitmap = false)
+    private static MemoryVolume FragmentedVolume(int sectorSize, Layout layout, Action<Span<byte>>? changeBitmap = null)
     {
         var f = Data.Value;
         var size = f.RecordSize;
@@ -335,9 +373,10 @@ public class VolumeScannersTests
         if (layout != Layout.RunsTooShort) list.AddRange(ListEntry(0x80, 1, ExtensionRecord, FirstClusters));
         list.AddRange(ListEntry(0xB0, sequence0, 0, 0));
         var firstData = DataSegment(0, FirstClusters - 1, FirstClusters, FirstLcn, allocated: mft.Length);
-        // The fixture's $BITMAP lies outside this small volume, so the source reads every record; WithBitmap puts one on it.
+        // The fixture's $BITMAP lies outside the part of the volume stored here; WithBitmap puts one on it, which the source
+        // must not use to skip records.
         var bitmap = layout == Layout.WithBitmap
-            ? NonResident(0xB0, 0, 0, clusters: 1, BitmapLcn, allocated: cluster, size: f.Records / (shortBitmap ? 16 : 8))
+            ? NonResident(0xB0, 0, 0, clusters: 1, BitmapLcn, allocated: cluster, size: f.Records / 8)
             : attributes[0xB0];
         var rebuilt = new List<byte[]> { attributes[0x10], Resident(0x20, [.. list]), attributes[0x30], firstData, bitmap };
         WriteAttributes(record0, rebuilt);
@@ -372,10 +411,9 @@ public class VolumeScannersTests
         changeBitmap?.Invoke(volume.AsSpan(BitmapLcn * cluster, (int)f.Records / 8));
         mft.AsSpan(0, FirstClusters * cluster).CopyTo(volume.AsSpan(FirstLcn * cluster));
         mft.AsSpan(FirstClusters * cluster).CopyTo(volume.AsSpan(SecondLcn * cluster));
-        // The fixture volume's size; its used space is what all its records hold (NTFS's own files included).
+        // The fixture volume's size.
         var total = f.Made.GetProperty("totalClusters").GetInt64();
-        var used = f.Parsed.Where(r => r.DataSize is not null).Sum(r => Math.Max(0, r.DataAllocated ?? 0));
-        return new MemoryVolume(volume, new NtfsVolumeData(sectorSize, cluster, size, FirstLcn, mft.Length, total, total - used / cluster));
+        return new MemoryVolume(volume, new NtfsVolumeData(sectorSize, cluster, size, FirstLcn, mft.Length, total));
     }
 
     [Theory]
@@ -394,157 +432,21 @@ public class VolumeScannersTests
     }
 
     [Fact]
-    public async Task VolumeSourceSkipsTheRecordsTheBitmapMarksFree()
+    public async Task EveryRecordIsReadWhateverTheBitmapSays()
     {
-        var f = Data.Value;
-        var everything = FragmentedVolume(512, Layout.Fragmented);
-        await new MftScanner(_ => new VolumeMftSource(everything), 4 * f.RecordSize).ScanAsync(Root, null, CancellationToken.None);
-        var volume = FragmentedVolume(512, Layout.WithBitmap);
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume), 4 * f.RecordSize).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-        // The fixture's free records (16 to 23 and many at the end) are not read; the bitmap's own cluster is.
-        var inUse = Enumerable.Range(0, (int)f.Records).Count(f.InUse) + 1; // and the extension record made here
-        Assert.True(volume.BytesRead < everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
-        Assert.True(volume.BytesRead <= (inUse + 16) * f.RecordSize + 2 * f.ClusterSize, $"{volume.BytesRead} bytes for {inUse} records in use");
-    }
-
-    private static void Flip(Span<byte> bitmap, int record) => bitmap[record / 8] ^= (byte)(1 << (record % 8));
-
-    /// <summary>User records in use whose neighbours are in use too: inside a run the scanner reads, whatever their own bit.</summary>
-    private static List<int> InnerUserRecords() =>
-        Enumerable.Range(25, (int)Data.Value.Records - 26).Where(n => Data.Value.InUse(n - 1) && Data.Value.InUse(n) && Data.Value.InUse(n + 1)).ToList();
-
-    [Theory]
-    [InlineData("all zero")]
-    [InlineData("metadata bits clear")]
-    public async Task ABitmapThatMissesNtfsOwnFilesIsNotUsed(string damage)
-    {
-        // Read from the wrong clusters, for example: a bitmap without records 0 to 11 decides nothing, every record is read.
+        // Record 0's $BITMAP marks the root's last child and everything after it free: small files and leaf folders that no
+        // check could miss. The table is read whole all the same, so nothing is missing and no byte less is read.
         var f = Data.Value;
         var everything = FragmentedVolume(512, Layout.Fragmented);
         await new MftScanner(_ => new VolumeMftSource(everything)).ScanAsync(Root, null, CancellationToken.None);
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap =>
-        {
-            if (damage == "all zero") bitmap.Clear();
-            else foreach (var n in new[] { 0, 5, 11 }) Flip(bitmap, n);
-        });
+        var last = f.Parsed.Where(r => r.Number >= 24 && r.BaseReference == 0 && r.Names.Any(n => (n.ParentReference & 0xFFFF_FFFF_FFFF) == 5))
+            .Max(r => (int)r.Number);
+        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap => bitmap[(last / 8)..].Clear());
 
         var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
 
         AssertSameTree(f.Expected, tree);
         Assert.True(volume.BytesRead >= everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
-    }
-
-    [Fact]
-    public async Task ABitmapThatDisagreesWithTheRecordsIsDroppedAndEverythingRead()
-    {
-        // NTFS's own files are marked, but user records in use are marked free and free ones in use: records in the
-        // stretches skipped could be missing, so the whole table is read again without the bitmap.
-        var f = Data.Value;
-        var everything = FragmentedVolume(512, Layout.Fragmented);
-        await new MftScanner(_ => new VolumeMftSource(everything)).ScanAsync(Root, null, CancellationToken.None);
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap =>
-        {
-            foreach (var n in InnerUserRecords().Where((_, k) => k % 3 == 0)) Flip(bitmap, n);
-            for (var n = 17; n < 24; n++) Flip(bitmap, n);
-        });
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-        Assert.True(volume.BytesRead > everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
-        Assert.True(volume.Disposed);
-    }
-
-    [Fact]
-    public async Task ABitmapOfOnlyNtfsOwnFilesIsCaughtByTheSpaceInUse()
-    {
-        // Records 0 to 11 marked and nothing else: those twelve agree with their bits and hold the root, but they take far
-        // less than half the volume's used space, so everything is read again.
-        var f = Data.Value;
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap =>
-        {
-            bitmap.Clear();
-            bitmap[0] = 0xFF;
-            bitmap[1] = 0x0F;
-        });
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-    }
-
-    [Fact]
-    public async Task ABitmapWhoseLaterPartIsZeroIsCaughtWhenItHidesMostOfTheData()
-    {
-        // As if its later part were read from the wrong place: zero from a byte on after which the records hold more than
-        // half the space in use, root children among them. (When the records hidden hold little data and none is a folder
-        // of a record read, no check sees them: see the task 11 report, fix round 3.)
-        var f = Data.Value;
-        long Held(int from) => f.Parsed.Where(r => r.Number >= from && r.DataSize is not null).Sum(r => Math.Max(0, r.DataAllocated ?? 0));
-        var used = Held(0);
-        var cut = Enumerable.Range(3, (int)f.Records / 8 - 3).Select(b => b * 8).Where(k => Held(k) * 2 > used).Max();
-        Assert.Contains(f.Parsed, r => r.Number >= cut && r.BaseReference == 0 && r.Names.Any(n => (n.ParentReference & 0xFFFF_FFFF_FFFF) == 5));
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap => bitmap[(cut / 8)..].Clear());
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-    }
-
-    [Fact]
-    public async Task AFileInAFolderTheBitmapMarksFreeIsCaught()
-    {
-        // One folder's bit cleared: read one record at a time, the folder is skipped while its files are read, and their
-        // parent proves the bitmap wrong. Its size (a folder has none) and the agreement of every record read do not.
-        var f = Data.Value;
-        var t = f.Expected;
-        var folder = f.Parsed.First(r => r.IsFolder && r.Number >= 24 && r.BaseReference == 0
-            && f.Parsed.Any(c => !c.IsFolder && c.Names.Any(n => (n.ParentReference & 0xFFFF_FFFF_FFFF) == r.Number))).Number;
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap => Flip(bitmap, (int)folder));
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume), f.RecordSize).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(t, tree);
-    }
-
-    [Fact]
-    public async Task RecordsPastAShortBitmapAreReadWithoutDoubt()
-    {
-        // A bitmap for the first half only: the rest is read, and its free records are no disagreement with the bitmap.
-        var f = Data.Value;
-        var everything = FragmentedVolume(512, Layout.Fragmented);
-        await new MftScanner(_ => new VolumeMftSource(everything)).ScanAsync(Root, null, CancellationToken.None);
-        var free = Enumerable.Range((int)f.Records / 2, (int)f.Records / 2).Count(n => !f.InUse(n));
-        Assert.True(free > 16, $"{free} free records in the second half");
-        var volume = FragmentedVolume(512, Layout.WithBitmap, shortBitmap: true);
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-        // One read, no second one without the bitmap.
-        Assert.True(volume.BytesRead < everything.BytesRead + 2 * f.ClusterSize, $"{volume.BytesRead} of {everything.BytesRead} bytes");
-    }
-
-    [Fact]
-    public async Task AFewDisagreementsAreTolerated()
-    {
-        // As many as a read of a live volume meets (files made or removed meanwhile); these records are read anyway, and
-        // the bitmap stays in use: no second read without it.
-        var f = Data.Value;
-        var everything = FragmentedVolume(512, Layout.Fragmented);
-        await new MftScanner(_ => new VolumeMftSource(everything)).ScanAsync(Root, null, CancellationToken.None);
-        var files = f.Parsed.Where(r => !r.IsFolder).Select(r => (int)r.Number).ToHashSet();
-        var flipped = InnerUserRecords().Where(files.Contains).Take(3).ToList();
-        Assert.Equal(3, flipped.Count);
-        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap => { foreach (var n in flipped) Flip(bitmap, n); });
-
-        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
-
-        AssertSameTree(f.Expected, tree);
-        Assert.True(volume.BytesRead < everything.BytesRead + 2 * f.ClusterSize, $"{volume.BytesRead} of {everything.BytesRead} bytes");
     }
 
     [Fact]

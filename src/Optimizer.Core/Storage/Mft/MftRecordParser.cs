@@ -31,17 +31,10 @@ internal sealed record MftDataSegment(long LowestVcn, long HighestVcn, IReadOnly
 /// What locating $MFT on the volume needs from one of its records: its sequence and base reference, the $DATA segments
 /// it holds, and <paramref name="Listed"/>, the lowest VCN and record of every unnamed $DATA segment its resident
 /// $ATTRIBUTE_LIST names (empty without one). <paramref name="ListNonResident"/>: the record has an attribute list that
-/// was not read because it is not resident. <paramref name="Bitmap"/>: its unnamed $BITMAP (in record 0, which records
-/// of $MFT are in use), null when the record has none.
+/// was not read because it is not resident.
 /// </summary>
 internal sealed record MftDataSegments(ushort Sequence, ulong BaseReference, IReadOnlyList<MftDataSegment> Segments,
-    IReadOnlyList<(long LowestVcn, ulong Reference)> Listed, bool ListNonResident, MftBitmap? Bitmap);
-
-/// <summary>
-/// A $BITMAP attribute: its value when resident, else its size in bytes and the runs of its segment at VCN 0
-/// (<paramref name="Runs"/> empty when that segment is not in this record).
-/// </summary>
-internal sealed record MftBitmap(byte[]? Value, long Size, IReadOnlyList<(long Lcn, long Clusters)> Runs);
+    IReadOnlyList<(long LowestVcn, ulong Reference)> Listed, bool ListNonResident);
 
 /// <summary>
 /// Parses one raw NTFS 3.x file record segment (FILE_RECORD_SEGMENT_HEADER and its attributes). The bytes come from a
@@ -54,7 +47,7 @@ public static class MftRecordParser
     /// <summary>NTFS protects multisector structures in strides of 512 bytes whatever the sector size (MULTI_SECTOR_HEADER).</summary>
     private const int Stride = 512;
     private const ulong RecordNumberMask = 0x0000_FFFF_FFFF_FFFF;
-    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, Bitmap = 0xB0, ReparsePoint = 0xC0,
+    private const uint StandardInformation = 0x10, AttributeList = 0x20, FileName = 0x30, Data = 0x80, ReparsePoint = 0xC0,
         End = 0xFFFF_FFFF;
     private const ushort InUse = 0x0001, Directory = 0x0002;
     private const ushort CompressionMask = 0x00FF, Sparse = 0x8000;
@@ -76,24 +69,24 @@ public static class MftRecordParser
     }
 
     /// <summary>
-    /// What a drive scan does with every record: as <see cref="Parse"/>, but a base record goes straight into its slot of
-    /// <paramref name="table"/> with only its best name decoded, so no object is made per record. An extension record
-    /// (rare: files with many names or fragments) is kept whole in <see cref="MftTable.Extensions"/>. False where
-    /// <see cref="Parse"/> returns null.
+    /// Whether <paramref name="record"/> is an extension record (it names a base record). The base reference lies outside
+    /// the stride ends, so it reads the same before the fixups.
     /// </summary>
-    internal static bool ParseInto(Span<byte> record, int bytesPerSector, uint number, MftTable table)
+    internal static bool IsExtension(ReadOnlySpan<byte> record) => record.Length >= 0x28 && U64(record, 0x20) != 0;
+
+    /// <summary>
+    /// What a drive scan does with every base record: as <see cref="Parse"/>, but straight into entry
+    /// <paramref name="entry"/> of <paramref name="table"/> (reserved for it with <see cref="MftTable.Reserve"/>) with only
+    /// its best name decoded, so no object is made per record. Writes nothing else, so records of different entries can be
+    /// parsed at the same time. An extension record (rare: files with many names or fragments) goes through
+    /// <see cref="Parse"/> instead. False where <see cref="Parse"/> returns null; the entry is then left untouched.
+    /// </summary>
+    internal static bool ParseInto(Span<byte> record, int bytesPerSector, uint number, MftTable table, int entry)
     {
-        // The base reference lies outside the stride ends, so it reads the same before the fixups.
-        if (record.Length >= 0x28 && U64(record, 0x20) != 0)
-        {
-            if (Parse(record, bytesPerSector, number) is not { } extension) return false;
-            table.Extensions.Add(extension);
-            return true;
-        }
         var f = new Fields();
         if (!Walk(record, bytesPerSector, number, ref f)) return false;
         var name = f.NameRank == 0 ? null : Encoding.Unicode.GetString(record.Slice(f.NameAt, f.NameChars * 2));
-        table.Add(number, f.Sequence, f.IsFolder, name, f.NameParent, f.NameRank, f.HasData, f.DataSize, f.DataAllocated,
+        table.Set(entry, number, f.Sequence, f.IsFolder, name, f.NameParent, f.NameRank, f.HasData, f.DataSize, f.DataAllocated,
             f.LastWriteTicks, f.Attributes, f.ReparseTag);
         return true;
     }
@@ -246,7 +239,6 @@ public static class MftRecordParser
         var segments = new List<MftDataSegment>(1);
         var listed = new List<(long, ulong)>();
         var listNonResident = false;
-        MftBitmap? bitmap = null;
         var pos = (int)U16(record, 0x14);
         if (pos < 0x2A) return null;
         while (true)
@@ -276,26 +268,6 @@ public static class MftRecordParser
                 if (runs.Count == 0 || clusters != highest - lowest + 1) return null;
                 segments.Add(new MftDataSegment(lowest, highest, runs));
             }
-            else if (type == Bitmap && a[9] == 0 && bitmap is null)
-            {
-                if (!nonResident)
-                {
-                    if (a.Length < 24) return null;
-                    var valueLength = U32(a, 16);
-                    var valueOffset = U16(a, 20);
-                    if (valueOffset > a.Length || valueLength > (uint)(a.Length - valueOffset)) return null;
-                    bitmap = new MftBitmap(a.Slice(valueOffset, (int)valueLength).ToArray(), valueLength, []);
-                }
-                else
-                {
-                    if (a.Length < 0x40) return null;
-                    var runsOffset = U16(a, 0x20);
-                    var size = I64(a, 0x30);
-                    if (runsOffset < 0x40 || runsOffset >= a.Length || size < 0) return null;
-                    // Only the segment at VCN 0 carries the size; a later segment alone is of no use here.
-                    bitmap = I64(a, 0x10) == 0 ? new MftBitmap(null, size, RunList.Parse(a[runsOffset..])) : null;
-                }
-            }
             else if (type == AttributeList && nonResident) listNonResident = true;
             else if (type == AttributeList)
             {
@@ -316,7 +288,7 @@ public static class MftRecordParser
             }
             pos += (int)length;
         }
-        return new MftDataSegments(U16(record, 0x10), U64(record, 0x20), segments, listed, listNonResident, bitmap);
+        return new MftDataSegments(U16(record, 0x10), U64(record, 0x20), segments, listed, listNonResident);
     }
 
     /// <summary>
