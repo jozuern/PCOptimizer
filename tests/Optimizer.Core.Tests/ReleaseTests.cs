@@ -188,6 +188,36 @@ public class ReleaseTests
         Assert.DoesNotContain(scoop, l => l.Contains("checkver", StringComparison.Ordinal) || l.Contains("autoupdate", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// A signed release passes two hands: the maintainer's PC (sign-release.ps1) and the second run of release.yml. Both
+    /// sign or accept only this tag's attested build, from GitHub's runners, signed by the configured publisher, with
+    /// nothing changed but the signature; a check that drifted in one of them would let the other's guard stand alone.
+    /// </summary>
+    [Fact]
+    public void BothSidesOfASignedReleaseCheckTheSame()
+    {
+        var workflow = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "release.yml"));
+        var script = File.ReadAllText(Path.Combine(RepoPaths.Root, "scripts", "sign-release.ps1"));
+        foreach (var text in new[] { workflow, script })
+        {
+            Assert.Contains("Tunero-unsigned.exe", text);
+            Assert.Contains("CODE_SIGNING_SUBJECT", text);
+            Assert.Contains("check-signed-build.ps1", text);
+            Assert.Contains("gh attestation verify", text);
+            Assert.Contains("/.github/workflows/release.yml\" --source-ref \"refs/tags/", text);
+            Assert.Contains("--deny-self-hosted-runners", text);
+            Assert.Contains("TimeStamperCertificate", text);
+        }
+        Assert.Contains("--signer-workflow \"$env:GH_REPO/.github/workflows/release.yml\"", workflow);
+        Assert.Contains("--signer-workflow \"$Repository/.github/workflows/release.yml\"", script);
+        // SHA-256 for the file digest and the timestamp (Certum's timestamp server), as Certum documents for signtool.
+        Assert.Contains("/fd sha256 /tr $TimestampUrl /td sha256", script);
+        Assert.Contains("\"http://time.certum.pl\"", script);
+        // The second run builds nothing: it may start only from a tag, and only after the attested build exists.
+        Assert.Contains("workflow_dispatch", workflow);
+        Assert.Contains("if: github.event_name == 'push'", workflow);
+    }
+
     [Fact]
     public void AReleaseWithoutSignatureOffersNoSelfUpdate() =>
         Assert.Null(ReleaseCheck.Evaluate(Current, ReleaseJson(Download + "Tunero.exe", Download + "Tunero.exe.sha256", sigUrl: null)).Assets);

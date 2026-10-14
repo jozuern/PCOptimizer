@@ -1,10 +1,19 @@
-# Release: on a version tag (v1.2.3) of a commit on main, build and test like CI, publish the single exe, have SignPath
-# sign it (once the repository variable SIGNPATH_ORGANIZATION_ID is set), sign its SHA-256 for the in-app update,
-# attest its build provenance and create a DRAFT GitHub release. Check the draft, then publish it by hand. The app's
-# opt-in update check only sees published releases. The tag must match <Version> in src/Optimizer.App/Optimizer.App.csproj.
+# Release: on a version tag (v1.2.3) of a commit on main, build and test like CI, publish the single exe, attest its
+# build provenance, sign its SHA-256 for the in-app update and create a DRAFT GitHub release. Check the draft, then
+# publish it by hand. The app's opt-in update check only sees published releases. The tag must match <Version> in
+# src/Optimizer.App/Optimizer.App.csproj.
+#
+# Code signing (CONTRIBUTING.md, Code signing): once the repository variable CODE_SIGNING_SUBJECT holds the subject of
+# the maintainer's Certum certificate, the tag run stops after the attestation with a draft that holds only
+# Tunero-unsigned.exe. The maintainer signs it on their PC (scripts/sign-release.ps1, which uploads Tunero.exe and runs
+# this workflow again on the tag). That second run builds nothing: it checks that Tunero-unsigned.exe is this tag's
+# attested build and that Tunero.exe carries a valid, timestamped signature by that subject and differs from the build
+# only by the signature (scripts/check-signed-build.ps1). Then it attests the signed exe, adds .sha256 and .sig and
+# removes Tunero-unsigned.exe.
 #
 # Two jobs on purpose: the build job runs third-party package code (restore, build, tests) with a read-only token and
-# without the signing key; only the release job, which runs no project code, gets write access and the key.
+# without the signing key; only the release job, which builds nothing and runs no package code (its only script from the
+# repository is scripts/check-signed-build.ps1), gets write access and the key.
 # Actions are pinned to commit SHAs; to update one, look up the new tag's commit (gh api repos/<action>/commits/<tag> --jq .sha).
 
 name: Release
@@ -12,6 +21,8 @@ name: Release
 on:
   push:
     tags: [ "v*.*.*" ]
+  # The second run of a signed release: from the tag (gh workflow run release.yml --ref v1.2.3), never from a branch.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,10 +33,9 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: windows-2025
     timeout-minutes: 30
-    outputs:
-      artifact-id: ${{ steps.upload.outputs.artifact-id }}
 
     env:
       DOTNET_NOLOGO: true
@@ -73,9 +83,7 @@ jobs:
     - name: Publish single exe
       run: dotnet publish src/Optimizer.App -p:PublishProfile=SingleFile
 
-    # SignPath signs this artifact in the release job and checks that it came from this run on GitHub's runners.
     - name: Upload exe
-      id: upload
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: release-exe
@@ -85,85 +93,95 @@ jobs:
 
   release:
     needs: build
+    # The tag run after a successful build, or the second run of a signed release (no build).
+    if: ${{ !cancelled() && (needs.build.result == 'success' || (github.event_name == 'workflow_dispatch' && needs.build.result == 'skipped')) }}
     runs-on: windows-2025
-    # The SignPath request below may wait up to 4 hours for the owner's approval.
-    timeout-minutes: 270
+    timeout-minutes: 30
     # The signing key is a secret of this environment, not of the repository: only jobs that name the environment
     # get it, and the environment allows only v*.*.* tags and waits for the owner's approval. A workflow on another
     # branch or tag cannot read it.
     environment: release
     permissions:
       contents: write
-      # SignPath reads the build job's details and downloads the unsigned artifact with this job's token.
-      actions: read
       # Build provenance: a Sigstore certificate for this workflow run (id-token) and the attestation stored on GitHub.
       id-token: write
       attestations: write
 
     env:
       TAG: ${{ github.ref_name }}
+      # Signing is on once this variable holds the certificate's subject, exactly as Get-AuthenticodeSignature shows it.
+      CODE_SIGNING_SUBJECT: ${{ vars.CODE_SIGNING_SUBJECT }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
 
     steps:
+    # unsigned: no certificate yet, a release as before. await-signature: the tag run of a signed release, which ends
+    # with a draft holding Tunero-unsigned.exe. signed: the second run, which finishes that draft.
+    - name: Mode
+      id: mode
+      shell: pwsh
+      run: |
+        if ($env:GITHUB_REF -notmatch '^refs/tags/v\d+\.\d+\.\d+$') { Write-Error "Run this workflow from a version tag, not from $env:GITHUB_REF"; exit 1 }
+        $signing = [bool]$env:CODE_SIGNING_SUBJECT
+        $mode = if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') { 'signed' } elseif ($signing) { 'await-signature' } else { 'unsigned' }
+        if ($mode -eq 'signed' -and -not $signing) { Write-Error "CODE_SIGNING_SUBJECT is not set: the second run is only for signed releases"; exit 1 }
+        "mode=$mode" | Out-File -Encoding utf8 -Append $env:GITHUB_OUTPUT
+        "Mode: $mode" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+
     - name: Download exe
+      if: steps.mode.outputs.mode != 'signed'
       uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
       with:
         name: release-exe
         path: release
 
-    # Code signing by SignPath Foundation (CONTRIBUTING.md, Releases). Off until the repository variable
-    # SIGNPATH_ORGANIZATION_ID is set; the API token is a secret of the release environment. The request waits for the
-    # owner's approval in SignPath, so the timeout is generous. The parameter "version" is the version in the exe's
-    # version resource ("1.2.3"), which .signpath/artifact-configuration.xml checks.
-    - name: Version for SignPath
-      if: vars.SIGNPATH_ORGANIZATION_ID != ''
-      shell: pwsh
-      run: |
-        "VERSION=$($env:TAG.TrimStart('v'))" | Out-File -Encoding utf8 -Append $env:GITHUB_ENV
-
-    - name: Sign exe (SignPath)
-      id: sign
-      if: vars.SIGNPATH_ORGANIZATION_ID != ''
-      uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
-      with:
-        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-        organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-        project-slug: Tunero
-        signing-policy-slug: release-signing
-        github-artifact-id: ${{ needs.build.outputs.artifact-id }}
-        wait-for-completion: true
-        wait-for-completion-timeout-in-seconds: 14400
-        output-artifact-directory: signed
-        parameters: |
-          version: "${{ env.VERSION }}"
-
-    - name: Use the signed exe
-      if: steps.sign.outcome == 'success'
-      shell: pwsh
-      run: |
-        $signature = Get-AuthenticodeSignature signed/Tunero.exe
-        if ($signature.Status -ne 'Valid') { Write-Error "SignPath returned an exe without a valid signature: $($signature.Status)"; exit 1 }
-        Move-Item signed/Tunero.exe release/Tunero.exe -Force
-        "Signed by: $($signature.SignerCertificate.Subject)" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
-
-    # Build provenance (SLSA) of the exe that is released, signed or not: names this repository, workflow, tag and commit.
-    # Anyone can check a download with  gh attestation verify Tunero.exe --repo jozuern/Tunero
-    - name: Attest build provenance
-      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-      with:
-        subject-path: release/Tunero.exe
-
-    # Only the public keys the app checks updates with and the changelog for the notes (no project code runs in this job).
-    - name: Get the app's update keys and the changelog
+    # Only the public keys the app checks updates with, the changelog for the notes and the check of a signed exe (no
+    # build and no package code runs in this job).
+    - name: Get the app's update keys, the changelog and the signature check
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         sparse-checkout: |
           src/Optimizer.Core/Updates/update-key*.pem
           CHANGELOG.md
+          scripts/check-signed-build.ps1
         sparse-checkout-cone-mode: false
         path: key
         persist-credentials: false
 
+    # The second run: the draft's Tunero-unsigned.exe must be this tag's attested build, and Tunero.exe exactly that
+    # build with a valid, timestamped signature by the expected publisher.
+    - name: Check the signed exe
+      if: steps.mode.outputs.mode == 'signed'
+      shell: pwsh
+      run: |
+        $release = gh release view $env:TAG --json isDraft,assets | ConvertFrom-Json
+        if (-not $release.isDraft) { Write-Error "$env:TAG is not a draft"; exit 1 }
+        foreach ($name in 'Tunero-unsigned.exe', 'Tunero.exe') {
+          if (@($release.assets.name) -notcontains $name) { Write-Error "The draft $env:TAG has no $name (scripts/sign-release.ps1 uploads Tunero.exe)"; exit 1 }
+        }
+        gh release download $env:TAG --pattern 'Tunero-unsigned.exe' --pattern 'Tunero.exe' --dir release
+        if ($LASTEXITCODE -ne 0) { Write-Error "release assets not downloaded"; exit 1 }
+        gh attestation verify release/Tunero-unsigned.exe --repo $env:GH_REPO --signer-workflow "$env:GH_REPO/.github/workflows/release.yml" --source-ref "refs/tags/$env:TAG" --deny-self-hosted-runners
+        if ($LASTEXITCODE -ne 0) { Write-Error "Tunero-unsigned.exe is not the build the release workflow attested for $env:TAG"; exit 1 }
+        $signature = Get-AuthenticodeSignature release/Tunero.exe
+        if ($signature.Status -ne 'Valid') { Write-Error "Tunero.exe has no valid signature: $($signature.Status) $($signature.StatusMessage)"; exit 1 }
+        if ($signature.SignerCertificate.Subject -ne $env:CODE_SIGNING_SUBJECT) { Write-Error "Tunero.exe is signed by '$($signature.SignerCertificate.Subject)', expected '$env:CODE_SIGNING_SUBJECT'"; exit 1 }
+        if (-not $signature.TimeStamperCertificate) { Write-Error "The signature has no timestamp"; exit 1 }
+        ./key/scripts/check-signed-build.ps1 -Unsigned release/Tunero-unsigned.exe -Signed release/Tunero.exe
+        Remove-Item release/Tunero-unsigned.exe
+        "Signed by: $($signature.SignerCertificate.Subject), certificate valid until $($signature.SignerCertificate.NotAfter.ToString('yyyy-MM-dd'))" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+
+    # Build provenance (SLSA): names this repository, workflow, tag and commit. Anyone can check a download with
+    #   gh attestation verify Tunero.exe --repo jozuern/Tunero
+    # A signed release gets two: the tag run attests the build (Tunero-unsigned.exe, which the signing script and the
+    # second run check), the second run the signed exe it released.
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: release/Tunero.exe
+
     - name: Checksum and update signature
+      if: steps.mode.outputs.mode != 'await-signature'
       shell: pwsh
       env:
         UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
@@ -194,10 +212,10 @@ jobs:
         "SHA-256: $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
     - name: Draft release
+      if: steps.mode.outputs.mode != 'signed'
       shell: pwsh
       env:
-        GH_TOKEN: ${{ github.token }}
-        GH_REPO: ${{ github.repository }}
+        MODE: ${{ steps.mode.outputs.mode }}
       # The notes are the version's section of CHANGELOG.md ("## 1.0.0" up to the next "## "): a release without one stops
       # here, so "Unreleased" is renamed before the tag, not forgotten.
       run: |
@@ -208,4 +226,24 @@ jobs:
         $end = [Array]::FindIndex($lines, $start + 1, [Predicate[string]]{ param($l) $l -match '^## ' })
         if ($end -lt 0) { $end = $lines.Count }
         ($lines[($start + 1)..($end - 1)] -join "`n").Trim() | Set-Content -Encoding utf8 notes.md
-        gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --notes-file notes.md
+        if ($env:MODE -eq 'await-signature') {
+          Move-Item release/Tunero.exe release/Tunero-unsigned.exe
+          gh release create $env:TAG release/Tunero-unsigned.exe --draft --verify-tag --title "Tunero $env:TAG" --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { Write-Error "draft not created"; exit 1 }
+          "Draft with Tunero-unsigned.exe. Next: connect SimplySign Desktop and run  pwsh scripts/sign-release.ps1 -Version $version" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
+        } else {
+          gh release create $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --draft --verify-tag --title "Tunero $env:TAG" --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { Write-Error "draft not created"; exit 1 }
+        }
+
+    # The second run: the checked exe replaces the uploaded one (the same file), its checksum and update signature join
+    # it, and the unsigned build leaves the draft.
+    - name: Finish the signed draft
+      if: steps.mode.outputs.mode == 'signed'
+      shell: pwsh
+      run: |
+        gh release upload $env:TAG release/Tunero.exe release/Tunero.exe.sha256 release/Tunero.exe.sig --clobber
+        if ($LASTEXITCODE -ne 0) { Write-Error "upload failed"; exit 1 }
+        gh release delete-asset $env:TAG Tunero-unsigned.exe --yes
+        if ($LASTEXITCODE -ne 0) { Write-Error "Tunero-unsigned.exe not removed"; exit 1 }
+        "Draft $env:TAG holds the signed Tunero.exe, .sha256 and .sig: check it, then publish it." | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY

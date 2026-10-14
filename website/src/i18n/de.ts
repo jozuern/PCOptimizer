@@ -191,12 +191,12 @@ const de: Copy = {
       {
         id: 'smartscreen',
         q: 'Warum warnt Windows beim Start?',
-        a: 'Die exe ist noch nicht signiert, deshalb kennt SmartScreen sie nicht. Klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Die SignPath Foundation, die Open-Source-Projekte kostenlos signiert, signiert nur Projekte, die schon bekannt sind; Tunero bewirbt sich wieder, sobald es so weit ist. Bis dahin vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite.',
+        a: 'Die exe ist noch nicht signiert, deshalb kennt SmartScreen sie nicht. Klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“ und vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite. Tunero hat ein Zertifikat zum Signieren für Open-Source-Entwickler, das gerade aktiviert wird; die Releases danach sind signiert. Auch bei einem signierten Release kann SmartScreen warnen, bis genug Leute es gestartet haben, die zwei Klicks können also eine Weile noch nötig sein.',
       },
       {
         id: 'smartappcontrol',
         q: 'Was, wenn Smart App Control sie blockiert?',
-        a: 'Smart App Control ist strenger als SmartScreen: Es blockiert unsignierte Apps, die Microsoft noch nicht kennt, und seine Meldung hat keinen Knopf „Trotzdem ausführen“. Um Tunero zu starten, schalte es unter Windows-Sicherheit > App- & Browsersteuerung > Einstellungen für Smart App Control aus. Über die Windows-Einstellungen lässt es sich danach nicht wieder einschalten, entscheide das also bewusst. Eine signierte exe würde nicht blockiert; die Frage oben sagt, warum Tunero noch nicht signiert ist.',
+        a: 'Smart App Control ist strenger als SmartScreen: Es blockiert unsignierte Apps, die Microsoft noch nicht kennt, und seine Meldung hat keinen Knopf „Trotzdem ausführen“. Um Tunero zu starten, schalte es unter Windows-Sicherheit > App- & Browsersteuerung > Einstellungen für Smart App Control aus. Über die Windows-Einstellungen lässt es sich danach nicht wieder einschalten, entscheide das also bewusst. Signierte Apps einer vertrauenswürdigen Zertifizierungsstelle lässt Smart App Control starten, außer Microsoft stuft sie als unsicher ein; das ändert sich also, sobald die Releases signiert sind (siehe die Frage oben).',
       },
       {
         id: 'admin',

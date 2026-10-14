@@ -12,13 +12,13 @@
     <StartupObject>Optimizer.App.Program</StartupObject>
     <!-- DOTNET_STARTUP_HOOKS from the user's environment would run code in the elevated app before Main. -->
     <StartupHookSupport>false</StartupHookSupport>
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
     <Product>Tunero</Product>
     <Authors>Joshua Zürn</Authors>
     <Company>Joshua Zürn</Company>
     <Copyright>Copyright (c) 2026 Joshua Zürn</Copyright>
-    <!-- Product version "0.7.1" instead of "0.7.1+<commit>": the code signing policy checks it against the release version
-         (.signpath/artifact-configuration.xml). -->
+    <!-- Product version "0.7.1" instead of "0.7.1+<commit>": the version Windows shows in the file's properties is the
+         release version. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>

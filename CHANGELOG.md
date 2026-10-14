@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Code signing:** Tunero has a Certum code signing certificate for open source developers, which is being activated; releases after that are signed, so Windows names the publisher and Smart App Control lets the exe run. The README and the website say so. SmartScreen may still warn at first.
+
 ## 1.2.0
 
 A new Storage page shows what fills your drives, and a progress card with Stop now shows over every page.

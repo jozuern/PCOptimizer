@@ -10,7 +10,7 @@ Tunero finds what really costs your games frame rate, fixes what it can and tell
 
 ## Download
 
-Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash Tunero.exe`). The in-app update also checks the release signature (`Tunero.exe.sig`) and installs nothing without a valid one. Releases after 1.0.0 also carry a build provenance attestation: `gh attestation verify Tunero.exe --repo jozuern/Tunero` shows that GitHub's release workflow built the exe from the tagged commit of this repository. A published release cannot be changed afterwards (GitHub's immutable releases). The exe asks for administrator rights because it changes system settings. It is not code signed yet, so Windows SmartScreen may warn on first start: "More info", then "Run anyway" ([Code signing](#code-signing)). Smart App Control, where it is on, blocks the unsigned exe without that choice: it starts only with Smart App Control turned off (Windows Security > App & browser control), which Windows Settings cannot undo. The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
+Get `Tunero.exe` from the [Releases](https://github.com/jozuern/Tunero/releases) page and compare its SHA-256 with the `.sha256` file next to it (`Get-FileHash Tunero.exe`). The in-app update also checks the release signature (`Tunero.exe.sig`) and installs nothing without a valid one. Releases after 1.0.0 also carry a build provenance attestation: `gh attestation verify Tunero.exe --repo jozuern/Tunero` shows that GitHub's release workflow built the exe from the tagged commit of this repository. A published release cannot be changed afterwards (GitHub's immutable releases). The exe asks for administrator rights because it changes system settings. It is not code signed yet (a certificate is being set up: [Code signing](#code-signing)), so Windows SmartScreen may warn on first start: "More info", then "Run anyway". Smart App Control, where it is on, blocks the unsigned exe without that choice: it starts only with Smart App Control turned off (Windows Security > App & browser control), which Windows Settings cannot undo. The exe needs no installation; on the first start it offers an entry in the Start menu, so Windows Search finds it.
 
 Or with a package manager:
 
@@ -140,16 +140,18 @@ The exe contains third-party components under their own licenses (MIT, BSD-2-Cla
 
 ## Code signing
 
-Releases are not code signed yet. [SignPath Foundation](https://signpath.org/), which signs open source projects for free, turned down the first application in October 2026: it signs projects that are already widely known (stars, forks, articles, discussions), and Tunero is new. The project will apply again once it is better known. Until then, the SHA-256 file and the release signature (`Tunero.exe.sig`, checked by the in-app update) are how to check a download.
+Releases up to 1.2.0 are not code signed. The project has bought a [Certum](https://www.certum.eu/) code signing certificate for open source developers, in the name of Joshua Zürn; it is being activated (Certum checks the identity first). Releases after that are signed; Windows then shows the publisher as Certum writes it into the certificate, "Open Source Developer" followed by his name. Until then, the SHA-256 file and the release signature (`Tunero.exe.sig`, checked by the in-app update) are how to check a download.
 
-The policy that will apply once releases are signed:
+A signature tells you who published the exe and that it was not changed since. It does not make every warning go away: SmartScreen also waits until enough people have run a file from a publisher, so a signed release can still show "Windows protected your PC" at first ("More info", then "Run anyway"). Smart App Control, which blocks the unsigned exe, lets signed apps from trusted certificate authorities run unless Microsoft rates them unsafe.
 
-- **Who is involved:** the project has one member, [Joshua Zürn](https://github.com/jozuern), who is committer, reviewer and approver. Changes from anyone else (pull requests) are reviewed by him before they are merged. Signing requests are approved by him, one release at a time.
-- **What gets signed:** only `Tunero.exe` as built by the [release workflow](.github/workflows/release.yml) on GitHub's runners from a version tag on `main`. SignPath checks that the file comes from that build and that its product name and version match the release ([artifact configuration](.signpath/artifact-configuration.xml)). Nothing built elsewhere and no third-party program is signed.
-- **Accounts:** GitHub and SignPath accounts of the team use multi-factor authentication.
+The policy for signed releases:
+
+- **Who is involved:** the project has one member, [Joshua Zürn](https://github.com/jozuern), who is committer, reviewer and approver. Changes from anyone else (pull requests) are reviewed by him before they are merged. He signs each release himself.
+- **What gets signed:** only `Tunero.exe` as built by the [release workflow](.github/workflows/release.yml) on GitHub's runners from a version tag on `main`. The key stays in Certum's cloud (SimplySign) and signs only after a login with a one-time code from his phone. The signing script ([scripts/sign-release.ps1](scripts/sign-release.ps1)) checks the build's provenance attestation before it signs, and the release workflow publishes the signed exe only when it differs from that build by nothing but the signature ([scripts/check-signed-build.ps1](scripts/check-signed-build.ps1)). Nothing built elsewhere and no third-party program is signed.
+- **Accounts:** the GitHub account uses multi-factor authentication, and every SimplySign login needs a one-time code from the phone.
 - **Privacy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The features that go online when you start or turn them on are listed in [docs/PRIVACY.md](docs/PRIVACY.md).
 
-Once releases are signed, Windows shows "SignPath Foundation" as their publisher. To check a download: right-click the exe, Properties > Digital Signatures, or `Get-AuthenticodeSignature Tunero.exe` in PowerShell; and compare its SHA-256 with the `.sha256` file of the release.
+To check a signed download: right-click the exe, Properties > Digital Signatures, or `Get-AuthenticodeSignature Tunero.exe` in PowerShell; compare its SHA-256 with the `.sha256` file of the release, and `gh attestation verify Tunero.exe --repo jozuern/Tunero` shows that the release workflow released it.
 
 ## Support
 

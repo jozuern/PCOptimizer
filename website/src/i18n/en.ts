@@ -191,12 +191,12 @@ const en: Copy = {
       {
         id: 'smartscreen',
         q: 'Why does Windows warn when I start it?',
-        a: 'The exe is not code signed yet, so SmartScreen does not know it. Click More info, then Run anyway. SignPath Foundation, which signs open source projects for free, signs only projects that are already widely known; Tunero will apply again once it is. Until then, compare the SHA-256 of the download with the .sha256 file on the release page.',
+        a: 'The exe is not code signed yet, so SmartScreen does not know it. Click More info, then Run anyway, and compare the SHA-256 of the download with the .sha256 file on the release page. Tunero has a code signing certificate for open source developers, which is being activated; releases after that are signed. SmartScreen can still warn about a signed release until enough people have run it, so the same two clicks may still be needed for a while.',
       },
       {
         id: 'smartappcontrol',
         q: 'What if Smart App Control blocks it?',
-        a: 'Smart App Control is stricter than SmartScreen: it blocks unsigned apps that Microsoft does not know yet, and its message has no Run anyway button. To start Tunero, turn it off in Windows Security > App & browser control > Smart App Control settings. Windows Settings cannot turn it back on afterwards, so decide that knowingly. A signed exe would not be blocked; the question above says why Tunero is not signed yet.',
+        a: 'Smart App Control is stricter than SmartScreen: it blocks unsigned apps that Microsoft does not know yet, and its message has no Run anyway button. To start Tunero, turn it off in Windows Security > App & browser control > Smart App Control settings. Windows Settings cannot turn it back on afterwards, so decide that knowingly. Smart App Control lets signed apps from a trusted certificate authority run unless Microsoft rates them unsafe, so this changes once releases are signed (see the question above).',
       },
       {
         id: 'admin',

@@ -5,7 +5,7 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 ## Left from the 1.0 list
 
 - **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): a failed start after a self-update (needs a signed release newer than the installed one: the update to 1.0.1).
-- **Code signing:** apply to the SignPath Foundation again once the project is better known (declined 2026-10-13 for too little public visibility); Azure Trusted Signing takes only companies, not individuals. Until then the exe stays unsigned. The first winget and Chocolatey versions are in review.
+- **Code signing:** the Certum open source certificate (SimplySign cloud) is bought and waits for activation: identity check, activation, SimplySign on the PC, the repository variable `CODE_SIGNING_SUBJECT`, a test signature of a local build (CONTRIBUTING, Code signing). After the first signed release: README, website and the code signing rows of the VM test plan. The first winget and Chocolatey versions are in review.
 
 ## Checks in the VM (from earlier runs)
 
