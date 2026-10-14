@@ -182,7 +182,8 @@ public partial class DocLintTests(ITestOutputHelper output)
             var relative = Path.GetRelativePath(RepoPaths.Root, f).Replace('\\', '/');
             return !IsBuildOutput("/" + relative) && !relative.StartsWith(".git/", StringComparison.Ordinal) && !relative.StartsWith(".audit/", StringComparison.Ordinal)
                    && !("/" + relative).Contains("/node_modules/", StringComparison.OrdinalIgnoreCase)
-                   && !relative.StartsWith(".claude/", StringComparison.Ordinal) && !relative.StartsWith("artifacts/", StringComparison.Ordinal)
+                   && !relative.StartsWith(".claude/", StringComparison.Ordinal) && !relative.StartsWith(".superpowers/", StringComparison.Ordinal)
+                   && !relative.StartsWith("artifacts/", StringComparison.Ordinal)
                    && !relative.Equals("CLAUDE.md", StringComparison.Ordinal);
         });
 
