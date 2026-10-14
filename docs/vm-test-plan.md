@@ -43,14 +43,14 @@ Add-LocalGroupMember -SID 'S-1-5-32-578' -Member ([Security.Principal.WindowsIde
 
 | Step | Expected | Result |
 |---|---|---|
-| First start | UAC prompt, scan finishes, a profile is suggested, no error banner | |
-| Settings > About > Licenses | Window opens, every component shows its text | |
-| Apply recommended | One confirmation listing each item with its reason; no Expert, boot-critical or anti-cheat sensitive item in it | |
-| Restore point | Created once before the first change of the session (System Protection on), or the app asks to turn it on | |
-| After apply | Every item verified as On, all listed on the Changes page | |
-| Restart | States still On; items marked "after restart" now active | |
-| Undo all | Every original value back (spot check 5 in regedit), Changes page empty | |
-| Restart again | Windows starts normally, scan shows the same state as before the apply | |
+| First start | UAC prompt, scan finishes, a profile is suggested, no error banner | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): window after 5 to 30 s, scan shown 3 to 5 s later, Older PC suggested, the Start menu question added the entry, no error banner. On the first run after setup (Windows still servicing) the tweak states took 36 s, DISM alone 66 s |
+| Settings > About > Licenses | Window opens, every component shows its text | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): runtime 10.0.13 listed |
+| Apply recommended | One confirmation listing each item with its reason; no Expert, boot-critical or anti-cheat sensitive item in it | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): 4 safe items with every value. "Widgets off" failed: Windows denies the policy value while the User Choice Protection Driver runs (with its service disabled the write worked); the tweak is now offered only without that driver |
+| Restore point | Created once before the first change of the session (System Protection on), or the app asks to turn it on | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): System Protection is off on Home, the app asked (Continue without, Turn on and continue) |
+| After apply | Every item verified as On, all listed on the Changes page | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): the 3 that applied are On and listed, the failed one is not |
+| Restart | States still On; items marked "after restart" now active | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home) |
+| Undo all | Every original value back (spot check 5 in regedit), Changes page empty | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): the change log lists each value back to its original, Changes page and backups empty |
+| Restart again | Windows starts normally, scan shows the same state as before the apply | OK Home 2026-10-14 (26H2 Core 26300.9711, 8 GB, German Windows, PCO-Home): the same 4 recommendations as before the apply |
 | Reset detection | Apply "Show file extensions", turn it off by hand in Explorer options, scan again: banner says the change was reset, "Apply again" works | |
 | Windows update between apply and undo | Checkpoint, apply recommended, install a cumulative update, scan: reset changes are listed with the update as likely cause; Undo still restores the originals | |
 | Language and theme | Switch to Deutsch and Dark in Settings, restart the app: both kept | |

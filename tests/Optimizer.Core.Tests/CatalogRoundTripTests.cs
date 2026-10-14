@@ -21,7 +21,7 @@ public class CatalogRoundTripTests(ITestOutputHelper output)
     private static Facts FactsFor(TweakDefinition t) => new Facts()
         .Set("os.build", 26300).Set("elevated", true).Set("os.edition", "Enterprise").Set("os.insider", false)
         .Set("system.laptop", t.AppliesTo.FormFactor == "laptop")
-        .Set("browser.chrome", true).Set("browser.brave", true)
+        .Set("browser.chrome", true).Set("browser.brave", true).Set("ucpd.running", false)
         .Set("anticheat.strict", false).Set("anticheat.any", false).Set("device.managed", false);
 
     private static readonly HashSet<string> BlockedOnPurpose = ["gpu.hags"];
@@ -120,5 +120,23 @@ public class CatalogRoundTripTests(ITestOutputHelper output)
         var both = FactsBuilder.Build(profile, [], Catalog.CatalogData.Current, fx.Registry);
         Assert.Equal(true, both.Get("browser.chrome"));
         Assert.Equal(true, both.Get("browser.brave"));
+    }
+
+    [Fact]
+    public void WidgetsPolicyOnlyWithoutTheUserChoiceProtectionDriver()
+    {
+        using var fx = new EngineFixture();
+        var profile = new HardwareProfile { Os = new BuildInfo(26300, 0, "26H2", "Core", "Windows 11 Home", CpuArchitecture.X64, false, null) };
+        var widgets = TweakCatalog.Current.Tweaks.Single(x => x.Id == "background.widgetsOff");
+        Assert.Equal(false, FactsBuilder.Build(profile, [], Catalog.CatalogData.Current, fx.Registry).Get("ucpd.running"));
+
+        const string service = @"SYSTEM\CurrentControlSet\Services\UCPD";
+        using (var k = fx.Registry.Open(Hive.Machine, service, writable: true, create: true)!) k.SetValue("Start", 1, Microsoft.Win32.RegistryValueKind.DWord);
+        var running = FactsBuilder.Build(profile, [], Catalog.CatalogData.Current, fx.Registry);
+        Assert.Equal(true, running.Get("ucpd.running"));
+        Assert.Equal(TweakState.NotApplicable, fx.Engine.DetectState(widgets, running));
+
+        using (var k = fx.Registry.Open(Hive.Machine, service, writable: true)!) k.SetValue("Start", 4, Microsoft.Win32.RegistryValueKind.DWord);
+        Assert.Equal(false, FactsBuilder.Build(profile, [], Catalog.CatalogData.Current, fx.Registry).Get("ucpd.running"));
     }
 }

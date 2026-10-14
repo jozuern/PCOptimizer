@@ -4,14 +4,14 @@ What is still open after the audit of 2026-10-13 ([audit-2026-10-13.md](audit-20
 
 ## Left from the 1.0 list
 
-- **VM run on a Home edition:** the core plan on Windows 11 Home (26H2, from the official ISO). 25H2 and 24H2 are not run: Microsoft offers only the current release, and the owner decided against building older images from update files (2026-10-13).
 - **New VM plan rows** (section 1 and 6 of [vm-test-plan.md](vm-test-plan.md)): a failed start after a self-update (needs a signed release newer than the installed one: the update to 1.0.1).
 - **Code signing:** apply to the SignPath Foundation again once the project is better known (declined 2026-10-13 for too little public visibility); Azure Trusted Signing takes only companies, not individuals. Until then the exe stays unsigned. The first winget and Chocolatey versions are in review.
 
 ## Checks in the VM (from earlier runs)
 
-- **`privacy.locationOff` on Home editions:** the tweak uses the documented policy "Turn off location" (`DisableLocation`), proven on Pro, and is left out on Home. Check on a Home VM whether Windows honors the policy there; if it does, drop the edition condition.
-- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it.
+- **`privacy.locationOff` on Home editions:** the tweak uses the documented policy "Turn off location" (`DisableLocation`), proven on Pro, and is left out on Home. A run on PCO-Home (2026-10-14) was not conclusive: location was already off there, and the location API answers Denied from the test task with and without the policy. Turn location on by hand at the console, set the policy and look at Settings; if Windows honors it, drop the edition condition.
+- **`focus.lockScreenTipsOff` turns off Windows spotlight:** check whether writing only `SubscribedContent-338387Enabled` avoids it. Needs an activated Windows (Spotlight settings are locked without it); the test script mode `spot` is ready.
+- **Scroll bar arrows in dialogs:** UI Automation names them "CaretUp24" and "CaretDown24" (WPF-UI's icon names), so a screen reader reads those. Give them real names or hide them from UI Automation.
 - **Need real hardware or traffic capture:** `gpu.windowedOptimizations` (discrete GPU), `display.autoHdrOn` and `display.vrrOn` (HDR or VRR display), `network.dohAutoUpgrade`, the NVIDIA settings, MSI mode and interrupt affinity, the network adapter properties (section 5 of the VM plan).
 - **V-Cache driver:** the service name `amd3dvcacheSvc` needs a check on an X3D PC.
 

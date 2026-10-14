@@ -25,7 +25,7 @@ public class CatalogSystemRoundTripTests(ITestOutputHelper output)
         .Set("os.build", 26300).Set("elevated", true).Set("os.edition", "Enterprise").Set("os.insider", false)
         .Set("system.laptop", t.AppliesTo.FormFactor == "laptop").Set("power.modernStandby", false).Set("power.personality", "balanced")
         .Set("cpu.x3dMultiCcd", false).Set("gpu.hasDiscrete", true).Set("gpu.hasNvidia", true).Set("memory.totalGb", 32).Set("storage.ssdOnly", true)
-        .Set("browser.chrome", true).Set("browser.brave", true)
+        .Set("browser.chrome", true).Set("browser.brave", true).Set("ucpd.running", false)
         .Set("anticheat.strict", false).Set("anticheat.any", false).Set("device.managed", false);
 
     public static TheoryData<string> SystemTweaks()

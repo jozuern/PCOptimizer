@@ -261,6 +261,12 @@
         ]
       },
       "risk": "safe",
+      "appliesTo": {
+        "when": {
+          "fact": "ucpd.running",
+          "eq": false
+        }
+      },
       "actions": [
         {
           "type": "registry",

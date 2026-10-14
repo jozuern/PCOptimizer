@@ -107,6 +107,11 @@ public static class FactsBuilder
         f.Set("pagefile.disabled", disabled);
         f.Set("pagefile.maxMb", maxMb);
 
+        // The User Choice Protection Driver loads at boot unless its service is disabled (Start 4). While it runs, Windows
+        // denies writing values it protects, such as the Widgets policy, also to administrators (VM test on 26H2 Home).
+        var ucpd = RegistryValue.Read(r, Hive.Machine, @"SYSTEM\CurrentControlSet\Services\UCPD", "Start");
+        f.Set("ucpd.running", ucpd.Existed && ucpd.Data != "4");
+
         // Browsers whose policies the catalog offers: installed for all users or for the session user (App Paths).
         f.Set("browser.chrome", BrowserInstalled(r, "chrome.exe"));
         f.Set("browser.brave", BrowserInstalled(r, "brave.exe"));
