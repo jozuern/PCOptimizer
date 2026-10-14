@@ -67,6 +67,7 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
         Network = new NetworkViewModel(this, services);
         Debloat = new DebloatViewModel(this, services, dialogs);
         Cleanup = new CleanupViewModel(this, services, dialogs);
+        Storage = new StorageViewModel(this, services, dialogs);
         Startup = new StartupViewModel(this, services, Runner);
         ServicesPage = new ServicesViewModel(this, services, Runner);
         Apps = new AppsViewModel(this, services, dialogs);
@@ -78,19 +79,20 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
             Rebuild();
             Network.Rebuild();
             OnPropertyChanged(nameof(ReapplyHint));
-            foreach (var page in new PageViewModel[] { Debloat, Cleanup, Startup, ServicesPage, Apps, Tools, Health }) page.OnLanguageChanged();
+            foreach (var page in new PageViewModel[] { Debloat, Cleanup, Storage, Startup, ServicesPage, Apps, Tools, Health }) page.OnLanguageChanged();
         };
     }
 
     /// <summary>Every page that loads its own data.</summary>
-    public IReadOnlyList<PageViewModel> Pages => [Network, Debloat, Cleanup, Startup, ServicesPage, Apps, Tools, Health];
+    public IReadOnlyList<PageViewModel> Pages => [Network, Debloat, Cleanup, Storage, Startup, ServicesPage, Apps, Tools, Health];
 
     /// <summary>
     /// After the first scan, the pages that read slow data of their own (startup entries, services, programs and
     /// drivers, AppX packages, folder sizes) load it in the background, one after another and only while the window is
     /// idle, so they open with their rows instead of a loading state. Everything here only reads; a page the user opens
     /// meanwhile starts its own load at once. Tools is not among them: its two DISM lists take about 12 seconds of
-    /// processor time when elevated, too much to spend on every start for a page that is opened rarely.
+    /// processor time when elevated, too much to spend on every start for a page that is opened rarely. Storage is not
+    /// among them either: it reads nothing but the drive list until Analyze is pressed.
     /// </summary>
     public async Task PreloadPagesAsync()
     {
@@ -106,6 +108,7 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
     public NetworkViewModel Network { get; }
     public DebloatViewModel Debloat { get; }
     public CleanupViewModel Cleanup { get; }
+    public StorageViewModel Storage { get; }
     public StartupViewModel Startup { get; }
     public ServicesViewModel ServicesPage { get; }
     public AppsViewModel Apps { get; }

@@ -214,19 +214,26 @@ public class CleanupStorageTests : IDisposable
     }
 
     [Fact]
-    public async Task StorageAnalyzerFindsLargestAndDuplicates()
+    public async Task StorageAnalyzerFindsDuplicatesInTheTree()
     {
         var a = File(@"docs\a.bin", 2 << 20);
         var b = File(@"backup\a-copy.bin", 2 << 20);
-        System.IO.File.WriteAllBytes(Path.Combine(_root, @"docs\different.bin"), [.. new byte[(2 << 20) - 1], 1]);
+        var different = Path.Combine(_root, @"docs\different.bin");
+        System.IO.File.WriteAllBytes(different, [.. new byte[(2 << 20) - 1], 1]);
         File(@"docs\small.txt", 100);
-        // The test folder lies in %TEMP% under AppData, which the analyzer protects; that rule is checked below.
-        var report = await StorageAnalyzer.ScanAsync(_root, StorageAnalyzer.ProtectedRoots(null), protectAppData: false);
-        Assert.Equal(4, report.ScannedFiles);
-        var dup = Assert.Single(report.Duplicates);
+        File(@"small-copy\small.txt", 100);
+        File(@"games\a.bin", 2 << 20);
+        var tree = await new Optimizer.Core.Storage.EnumerationScanner().ScanAsync(_root, null, CancellationToken.None);
+        Assert.Equal(6, tree.Files(tree.Root));
+        // The test folder lies in %TEMP% under AppData, which the analyzer protects; that rule is checked below. The
+        // game library is protected, and files under 1 MB are no candidates.
+        var candidates = StorageAnalyzer.DuplicateCandidates(tree, StorageAnalyzer.ProtectedRoots([Path.Combine(_root, "games")]), appData: false);
+        var same = Assert.Single(candidates);
+        Assert.Equal(new[] { a, b, different }.Order(StringComparer.OrdinalIgnoreCase), same.Order(StringComparer.OrdinalIgnoreCase));
+        Assert.Empty(StorageAnalyzer.DuplicateCandidates(tree, StorageAnalyzer.ProtectedRoots(null)));
+        var dup = Assert.Single(StorageAnalyzer.FindDuplicates(candidates, CancellationToken.None));
         Assert.Equal(new[] { b, a }.Order(StringComparer.OrdinalIgnoreCase), dup.Paths);
         Assert.Equal(2L << 20, dup.Reclaimable);
-        Assert.Contains(report.LargestFolders, f => f.Path.EndsWith("docs", StringComparison.OrdinalIgnoreCase));
         Assert.True(StorageAnalyzer.IsProtected(@"C:\Windows\System32\x.dll", StorageAnalyzer.ProtectedRoots(null)));
         Assert.True(StorageAnalyzer.IsProtected(@"C:\Users\x\AppData\Local\y.db", StorageAnalyzer.ProtectedRoots(null)));
         Assert.True(StorageAnalyzer.IsProtected(a, StorageAnalyzer.ProtectedRoots(null)));

@@ -51,7 +51,7 @@ public sealed class SearchIndex(TweakCatalog tweaks, CatalogData catalog) : ISea
     {
         (SearchKind Kind, string Page, string TitleKey, string? HintKey, string[] Keywords)[] items =
         [
-            (SearchKind.Tool, "Tools", "Storage_Title", "Storage_Hint", ["disk space", "large files", "duplicates", "speicherplatz", "grosse dateien", "duplikate"]),
+            (SearchKind.Tool, "Storage", "Storage_PageTitle", "Storage_PageHint", ["disk space", "large files", "duplicates", "treemap", "windirstat", "wiztree", "speicherplatz", "grosse dateien", "duplikate"]),
             (SearchKind.Tool, "Tools", "Feat_Title", "Feat_Hint", ["optional features", "hyper-v", "wsl", "sandbox", ".net 3.5", "optionale features"]),
             (SearchKind.Tool, "Tools", "Prio_Title", "Prio_Hint", ["priority", "cpu priority", "process priority", "prioritaet", "process lasso"]),
             (SearchKind.Tool, "Tools", "Quick_Dns", "Quick_DnsHint", ["ipconfig flushdns", "dns cache"]),

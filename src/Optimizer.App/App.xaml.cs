@@ -256,6 +256,14 @@ public partial class App : Application
         // Developer aid: the progress banner as a batch shows it (third of twelve changes, with Stop); nothing runs.
         if (args.Has("--work-demo") && vm.Tweaks.FirstOrDefault() is { } demo)
             vm.Runner.Work.Begin(Loc.Instance["Work_Apply"], new CancellationTokenSource()).Step(2, 12, vm.Runner.Title(demo.Tweak));
+        // Developer aid: the Storage page with a folder analyzed (read only), on the tab --storage-tab names (0 to 3).
+        if (args.Value("--storage-scan") is { } storageFolder)
+        {
+            vm.CurrentPage = Page.Storage;
+            await vm.Storage.EnsureLoadedAsync();
+            await vm.Storage.AnalyzeFolderAsync(storageFolder);
+            if (int.TryParse(args.Value("--storage-tab"), CultureInfo.InvariantCulture, out var storageTab)) vm.Storage.Tab = Math.Clamp(storageTab, 0, 3);
+        }
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
         if (args.Value("--preview-uninstall") is "on")
         {

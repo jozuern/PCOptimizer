@@ -240,7 +240,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     }
 
     /// <summary>Below this height the open pane cannot show the group headings and every page; it drops the headings.</summary>
-    private const double HeadingsHeight = 900;
+    private const double HeadingsHeight = 940;
 
     /// <summary>Below this height even the pane without headings would cut off pages: it folds to the rail, as in WinUI.</summary>
     private const double RailHeight = 790;
@@ -276,7 +276,7 @@ public partial class MainWindow : FluentWindow, IServiceProvider
     }
 
     /// <summary>Window height below which the pages in the rail get the compact item height.</summary>
-    private const double CompactHeight = 700;
+    private const double CompactHeight = 740;
 
     private bool _compactNav;
 

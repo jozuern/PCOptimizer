@@ -367,7 +367,7 @@ These tweaks use values Microsoft does not document and stay previews until a te
 | Remove apps | Remove two inbox apps, check they are gone for a new user too, reinstall from the Store link | |
 | OneDrive | With Known Folder Move on: uninstall is blocked; without: uninstall works | |
 | Cleanup | Each of the 12 categories: shown size matches, files are gone afterwards, files in use are skipped, only the signed-in user's Recycle Bin is emptied | |
-| Storage analyzer | Delete one duplicate: it goes to the Recycle Bin; Windows and program folders cannot be selected | |
+| Storage page | Opening the page reads nothing but the drive list (no banner). Analyze C: with Stop in the banner: Stop keeps the result before; a full run shows the result line, Largest files fills when its tab opens; Find duplicates, then delete one duplicate: it goes to the Recycle Bin and leaves the lists; Windows and program folders cannot be selected | |
 | Apps | Install one per-user app (runs as the signed-in user) and one machine-wide app with winget | |
 | DNS presets | Choose Cloudflare in the DNS servers list, check `Get-DnsClientServerAddress`; choose Google: Cloudflare is undone first (its own confirmation), then Google is applied; choose Automatic: DHCP or the old servers are back; cancel a dialog: the list shows the servers in use again | OK on 26H2 Pro, 2026-10-13, through `--apply` and `--undo-all` (Cloudflare set, then DHCP again; the change through WMI with time limits) |
 | DNS benchmark | Runs, shows results, changes nothing | |

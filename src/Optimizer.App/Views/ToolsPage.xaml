@@ -29,7 +29,7 @@
             </ui:CardControl>
         </DataTemplate>
     </UserControl.Resources>
-    <!-- Four separate tools, one tab each, instead of one long page -->
+    <!-- Three separate tools, one tab each, instead of one long page (the storage analysis has its own page) -->
     <Grid Style="{StaticResource PageRoot}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -131,76 +131,6 @@
                             </v:ItemList.ItemTemplate>
                         </v:ItemList>
                         <v:ItemList ItemsSource="{Binding Tools.QuickRepairRows}" ItemTemplate="{StaticResource QuickFixRow}" />
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="{l:Tr Storage_Title}">
-                <ScrollViewer Style="{StaticResource EdgeTabScroll}">
-                    <StackPanel Style="{StaticResource EdgeContent}">
-                        <!-- Storage analyzer -->
-                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_Hint}" Margin="0,0,0,8" />
-                        <ui:Card Padding="16,12">
-                            <StackPanel>
-                                <WrapPanel>
-                                    <ComboBox ItemsSource="{Binding Tools.Drives}" SelectedItem="{Binding Tools.SelectedDrive}" MinWidth="120" Margin="0,0,8,0" AutomationProperties.Name="{l:Tr Storage_Drive}" />
-                                    <ui:Button Appearance="Primary" Content="{l:Tr Storage_Scan}" Icon="{ui:SymbolIcon Search20}" Command="{Binding Tools.ScanStorageCommand}"
-                                               IsEnabled="{Binding Tools.IsScanningStorage, Converter={StaticResource InverseBool}}" Margin="0,0,8,0" />
-                                    <ui:Button Content="{l:Tr Common_Stop}" Command="{Binding Tools.StopStorageCommand}" Visibility="{Binding Tools.IsScanningStorage, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
-                                    <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Tools.RecycleSelectedCommand}"
-                                               IsEnabled="{Binding Tools.HasStorageSelection}" />
-                                </WrapPanel>
-                                <ui:TextBlock Style="{StaticResource Caption}" Text="{Binding Tools.StorageStatus}" Margin="0,8,0,0" Visibility="{Binding Tools.StorageStatus, Converter={StaticResource NullToVisibility}}" />
-                            </StackPanel>
-                        </ui:Card>
-                        <ui:CardExpander Header="{l:Tr Storage_Largest}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
-                            <v:ItemList ItemsSource="{Binding Tools.LargestFiles}">
-                                <v:ItemList.ItemTemplate>
-                                    <DataTemplate>
-                                        <DockPanel Margin="0,4">
-                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                            <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
-                                                <StackPanel>
-                                                    <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
-                                                </StackPanel>
-                                            </CheckBox>
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </v:ItemList.ItemTemplate>
-                            </v:ItemList>
-                        </ui:CardExpander>
-                        <ui:CardExpander Header="{l:Tr Storage_Folders}" Margin="0,4,0,0" Visibility="{Binding Tools.LargestFolders.Count, Converter={StaticResource CountToVisibility}}">
-                            <v:ItemList ItemsSource="{Binding Tools.LargestFolders}">
-                                <v:ItemList.ItemTemplate>
-                                    <DataTemplate>
-                                        <DockPanel Margin="0,4">
-                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                            <StackPanel>
-                                                <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                                <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Files}" />
-                                            </StackPanel>
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </v:ItemList.ItemTemplate>
-                            </v:ItemList>
-                        </ui:CardExpander>
-                        <ui:CardExpander Header="{l:Tr Storage_Duplicates}" Margin="0,4,0,0" Visibility="{Binding Tools.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
-                            <v:ItemList ItemsSource="{Binding Tools.Duplicates}">
-                                <v:ItemList.ItemTemplate>
-                                    <DataTemplate>
-                                        <DockPanel Margin="0,4">
-                                            <ui:TextBlock DockPanel.Dock="Right" FontTypography="Body" Text="{Binding SizeText}" Margin="16,0,0,0" />
-                                            <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanDelete}">
-                                                <StackPanel>
-                                                    <TextBlock Style="{StaticResource Mono}" Text="{Binding Path}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Meta}" />
-                                                </StackPanel>
-                                            </CheckBox>
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </v:ItemList.ItemTemplate>
-                            </v:ItemList>
-                        </ui:CardExpander>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

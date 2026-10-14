@@ -22,6 +22,8 @@ public static class PageRegistry
         new(Page.Debloat, typeof(DebloatPage), vm => Task.WhenAll(vm.Debloat.EnsureLoadedAsync(), vm.Apps.EnsureLoadedAsync()),
             vm => vm.DebloatTab == 1 ? vm.Apps.LoadProgramsCommand : vm.Debloat.ReloadCommand),
         new(Page.Cleanup, typeof(CleanupPage), vm => vm.Cleanup.EnsureLoadedAsync(), vm => vm.Cleanup.ReloadCommand),
+        // Opening reads only the drive list; F5 reads it again (an analysis runs only on Analyze).
+        new(Page.Storage, typeof(StoragePage), vm => vm.Storage.EnsureLoadedAsync(), vm => vm.Storage.ReloadCommand),
         new(Page.Startup, typeof(StartupPage), vm => vm.Startup.EnsureLoadedAsync(), vm => vm.Startup.ReloadCommand),
         new(Page.Services, typeof(ServicesPage), vm => vm.ServicesPage.EnsureLoadedAsync(), vm => vm.ServicesPage.ReloadCommand),
         new(Page.Apps, typeof(AppsPage), vm => vm.Apps.EnsureLoadedAsync(), vm => vm.Apps.ReloadCommand),

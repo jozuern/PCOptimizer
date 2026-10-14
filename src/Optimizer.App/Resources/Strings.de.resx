@@ -536,43 +536,16 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
     <value>Tools</value>
   </data>
   <data name="Tools_Hint" xml:space="preserve">
-    <value>Speicheranalyse, Windows-Features, Programmprioritäten, Netzwerkhilfen und Windows-Reparatur.</value>
-  </data>
-  <data name="Storage_Title" xml:space="preserve">
-    <value>Speicheranalyse</value>
-  </data>
-  <data name="Storage_Hint" xml:space="preserve">
-    <value>Findet die größten Dateien und Ordner sowie doppelte Dateien. Windows-, Programm- und Spieleordner werden nie zum Löschen angeboten. Gelöschte Dateien kommen in den Papierkorb.</value>
-  </data>
-  <data name="Storage_Scan" xml:space="preserve">
-    <value>Analysieren</value>
+    <value>Windows-Features, Programmprioritäten, Netzwerkhilfen und Windows-Reparatur.</value>
   </data>
   <data name="Storage_Progress" xml:space="preserve">
     <value>Dateien: {0}, {1}</value>
-  </data>
-  <data name="Storage_Done" xml:space="preserve">
-    <value>Analysierte Dateien: {0}, {1}. Duplikate: {2} lassen sich freigeben.</value>
-  </data>
-  <data name="Storage_Truncated" xml:space="preserve">
-    <value>Nach 3 Millionen Dateien angehalten.</value>
   </data>
   <data name="Storage_Stopped" xml:space="preserve">
     <value>Analyse angehalten.</value>
   </data>
   <data name="Storage_WaitForScan" xml:space="preserve">
     <value>Warte, bis der Scan fertig ist: Er findet die Spieleordner, die die Analyse nie zum Löschen anbietet.</value>
-  </data>
-  <data name="Storage_Largest" xml:space="preserve">
-    <value>Größte Dateien</value>
-  </data>
-  <data name="Storage_Folders" xml:space="preserve">
-    <value>Größte Ordner</value>
-  </data>
-  <data name="Storage_Duplicates" xml:space="preserve">
-    <value>Doppelte Dateien</value>
-  </data>
-  <data name="Storage_Files" xml:space="preserve">
-    <value>Dateien: {0}</value>
   </data>
   <data name="Storage_DuplicateOf" xml:space="preserve">
     <value>{0} identische Kopien; die erste bleibt</value>
@@ -593,6 +566,26 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Storage_Recycled" xml:space="preserve">
     <value>In den Papierkorb verschoben: {0}. Fehlgeschlagen: {1}.</value>
   </data>
+  <data name="Nav_Storage" xml:space="preserve"><value>Speicher</value></data>
+  <data name="Storage_PageTitle" xml:space="preserve"><value>Speicher</value></data>
+  <data name="Storage_PageHint" xml:space="preserve"><value>Zeigt, was auf einem Laufwerk Platz belegt: Ordner, Dateitypen, die größten Dateien und doppelte Dateien. Vom Laufwerk wird erst gelesen, wenn du Analysieren wählst. Windows-, Programm- und Spieleordner werden nie zum Löschen angeboten, und gelöschte Dateien kommen in den Papierkorb.</value></data>
+  <data name="Storage_Analyze" xml:space="preserve"><value>Analysieren</value></data>
+  <data name="Storage_CloseResult" xml:space="preserve"><value>Ergebnis schließen</value></data>
+  <data name="Storage_Result" xml:space="preserve"><value>{0} in {1:N0} Dateien, in {3:0.0} s {2} gelesen</value></data>
+  <data name="Storage_ReaderFileTable" xml:space="preserve"><value>aus der Dateitabelle</value></data>
+  <data name="Storage_ReaderFolders" xml:space="preserve"><value>Ordner für Ordner</value></data>
+  <data name="Storage_TabFolders" xml:space="preserve"><value>Ordner</value></data>
+  <data name="Storage_TabTypes" xml:space="preserve"><value>Dateitypen</value></data>
+  <data name="Storage_TabLargest" xml:space="preserve"><value>Größte Dateien</value></data>
+  <data name="Storage_TabDuplicates" xml:space="preserve"><value>Doppelte Dateien</value></data>
+  <data name="Storage_FindDuplicates" xml:space="preserve"><value>Duplikate suchen</value></data>
+  <data name="Storage_DriveSpace" xml:space="preserve"><value>{0} frei von {1}</value></data>
+  <data name="Storage_NoResult" xml:space="preserve"><value>Wähle ein Laufwerk und dann Analysieren.</value></data>
+  <data name="Storage_TabNotReady" xml:space="preserve"><value>Diese Ansicht gibt es noch nicht.</value></data>
+  <data name="Storage_DuplicatesHint" xml:space="preserve"><value>Vergleicht Dateien gleicher Größe (ab 1 MB) nach ihrem Inhalt. Windows-, Programm-, Spiele- und AppData-Ordner bleiben außen vor.</value></data>
+  <data name="Storage_DuplicatesFound" xml:space="preserve"><value>Duplikate: {0} lassen sich freigeben.</value></data>
+  <data name="Storage_NoDuplicates" xml:space="preserve"><value>Keine doppelten Dateien ab 1 MB gefunden.</value></data>
+  <data name="Work_FindDuplicates" xml:space="preserve"><value>Doppelte Dateien werden gesucht</value></data>
   <data name="Feat_Title" xml:space="preserve">
     <value>Windows-Features</value>
   </data>

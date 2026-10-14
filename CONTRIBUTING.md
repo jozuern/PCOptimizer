@@ -24,11 +24,11 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 |---|---|
 | `--report <file.md>` | headless scan, writes all findings with explanations and the system info as Markdown |
 | `--screenshot <file.png>` | opens the UI, scans, renders the window to PNG and exits |
-| `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor (Manual checks), Network, Debloat (Remove apps), Cleanup, Startup, Services, Apps, Tools, Health, Changes, Hardware (System info), Settings |
+| `--page <name>` | page for `--screenshot`: Overview, Tweaks, Advisor (Manual checks), Network, Debloat (Remove apps), Cleanup, Storage, Startup, Services, Apps, Tools, Health, Changes, Hardware (System info), Settings |
 | `--shot-scanning <file.png>` | renders the window while the first scan still runs (the Overview says the scan is reading the PC) |
 | `--pane closed` | collapses the navigation rail before the screenshot |
 | `--width <pixels>` | window width for the screenshot (for example 1040, the minimum, with `--select`) |
-| `--height <pixels>` | window height for the screenshot (below 900 the pane drops its group headings, below 790 it folds to the rail; the window is at least 720 high) |
+| `--height <pixels>` | window height for the screenshot (below 940 the pane drops its group headings, below 790 it folds to the rail, below 740 the pages in the rail get the compact height; the window is at least 720 high) |
 | `--search <text>` | types into the search box (Ctrl+F) before the screenshot; the results popup is saved to `<file>-search.png` |
 | `--scroll end` or `--scroll <pixels>` | scrolls the page to the end, or down by that many pixels, before the screenshot (for example Settings > About) |
 | `--select <id>` | opens a finding or tweak in the details pane (e.g. `A.rebar`) |
@@ -39,6 +39,7 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 | `--tab-order <file.txt>` | with `--screenshot`: writes every Tab stop of the page in order with the name and type a screen reader announces (`NO NAME` marks a stop without one); with `--confirm` also the confirmation's to `<file>-confirm.txt` |
 | `--message-shot <file.png>` | with `--screenshot`: renders the question dialog with two buttons (update) to the file and with three (restore point) to `<file>-3.png` |
 | `--licenses-shot <file.png>` | with `--screenshot`: renders the Licenses window |
+| `--storage-scan <folder>` | with `--screenshot`: opens Storage and analyzes that folder (read only) before the screenshot; `--storage-tab 0` to `3` opens Folders, File types, Largest files or Duplicate files |
 | `--work-demo` | with `--screenshot`: shows the progress banner as Apply recommended does (3 of 12, with Stop); nothing runs |
 | `--switch-theme Light\|Dark` | switches the theme while the page is open, before the screenshot (finds text that keeps the old colors, and switches that keep the old accent) |
 | `--perf <file.txt>` | times the start (steps after the process start, scan steps, the tools it ran), page switches, filters, profile, Expert mode, language and theme switches and a full rebuild until the UI is idle; saves nothing, writes the result and exits |
@@ -51,11 +52,11 @@ is ignored: whoever starts the exe names the paths, and the app writes with admi
 
 ```
 src/Optimizer.Core/   scanner, findings, engine, actions, catalog data (Catalog/Data/*.json), explanation pages (Catalog/Docs/{en,de}/*.md),
-                      debloat, cleanup, startup, services, apps, tools (storage, features, update repair, PresentMon, sensors), release check
+                      debloat, cleanup, startup, services, apps, storage (disk tree, readers, treemap layout), tools (storage analyzer actions, features, update repair, PresentMon, sensors), release check
 src/Optimizer.App/    WPF UI (WPF-UI 4.3, CommunityToolkit.Mvvm, Markdig): one page per area, shared change runner;
                       Licenses/ holds every license text that ships in the exe (licenses.json lists them)
 tests/                xUnit: rule tests with mocked hardware, engine tests in a registry sandbox, docs lint, read-only hardware checks (Category=Hardware)
-                      Optimizer.App.Tests: the app's services (update, uninstall) with a fake window, dialogs and launches
+                      Optimizer.App.Tests: the app's services (update, uninstall) and the Storage page's view model with a fake window, dialogs and launches
 docs/                 privacy, third-party notices, VM test plan, open items (TODO), the latest audit, explanation style guide, tweaks left out,
                       gaming impact research, notes from real hardware, brand (icon, logo, colors)
 website/              tunero.dev (Astro, static): reads the counts, catalog and explanation pages at build time; rules in website/DESIGN.md

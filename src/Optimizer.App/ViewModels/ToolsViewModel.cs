@@ -15,27 +15,6 @@ using Optimizer.Core.Tools;
 
 namespace Optimizer.App.ViewModels;
 
-public sealed partial class FileRow(string path, long bytes, string meta, bool canDelete, Action? selectionChanged = null) : ObservableObject
-{
-    partial void OnSelectedChanged(bool value) => selectionChanged?.Invoke();
-
-    // What screen readers announce for this item in a list or combo box.
-    public override string ToString() => Path;
-
-    public string Path { get; } = path;
-    public string SizeText { get; } = CleanupViewModel.Size(bytes);
-    public string Meta { get; } = meta;
-    public bool CanDelete { get; } = canDelete;
-
-    [ObservableProperty] private bool _selected;
-}
-
-public sealed record FolderRow(string Path, string SizeText, string Files)
-{
-    // What screen readers announce for this item in a list or combo box.
-    public override string ToString() => Path;
-}
-
 public sealed partial class FeatureRow : SwitchRow
 {
     // What screen readers announce for this item in a list or combo box.
@@ -71,21 +50,9 @@ public sealed record StepRow(string Text, bool Ok, string? Detail)
 
 public sealed partial class ToolsViewModel(IPageHost owner, AppServices services, ChangeRunner runner, IDialogs dialogs) : PageViewModel(owner)
 {
-    /// <summary>The game lists come from the scan result.</summary>
-    protected override bool UsesProfile => true;
-    private CancellationTokenSource? _scanCancel;
-    private IReadOnlyList<string> _protected = [];
-
-    public ObservableCollection<string> Drives { get; } = [];
-    public ObservableCollection<FileRow> LargestFiles { get; } = [];
-    public ObservableCollection<FolderRow> LargestFolders { get; } = [];
-    public ObservableCollection<FileRow> Duplicates { get; } = [];
     public ObservableCollection<FeatureRow> Features { get; } = [];
     public ObservableCollection<StepRow> RepairSteps { get; } = [];
 
-    [ObservableProperty] private string? _selectedDrive;
-    [ObservableProperty] private string _storageStatus = "";
-    [ObservableProperty] private bool _isScanningStorage;
     [ObservableProperty] private string? _featuresNote;
 
     public ObservableCollection<PriorityRow> PriorityRules { get; } = [];
@@ -180,12 +147,6 @@ public sealed partial class ToolsViewModel(IPageHost owner, AppServices services
 
     protected override async Task LoadAsync()
     {
-        // Asking a drive whether it is ready can take seconds (a sleeping disk): off the UI thread.
-        var drives = await Task.Run(() => DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).Select(d => d.RootDirectory.FullName).ToList());
-        Drives.Clear();
-        foreach (var d in drives) Drives.Add(d);
-        SelectedDrive ??= Drives.FirstOrDefault();
-
         RebuildTexts();
         await LoadPriorityRulesAsync();
         _featureStates = await Task.Run(() => OptionalFeatureAction.ReadAll(services.Context.Processes)
@@ -216,111 +177,6 @@ public sealed partial class ToolsViewModel(IPageHost owner, AppServices services
             if (states.TryGetValue(f.Name, out var s)) Features.Add(new FeatureRow(f, s == "Enabled", lang, services, runner));
         // DISM needs administrator rights to list features.
         FeaturesNote = Features.Count > 0 ? null : services.Elevation.IsElevated ? Loc.Instance["Feat_None"] : Loc.Instance["Feat_NeedsAdmin"];
-    }
-
-    [RelayCommand]
-    private async Task ScanStorageAsync()
-    {
-        // One scan at a time: a second one (Scan pressed again, or the rescan after recycling) would mix its rows in.
-        if (SelectedDrive is null || IsScanningStorage) return;
-        // Game folders come from the PC scan; without it they could be offered for deletion.
-        if (Owner.Profile?.Software is not { } software)
-        {
-            StorageStatus = Loc.Instance["Storage_WaitForScan"];
-            return;
-        }
-        _scanCancel = new CancellationTokenSource();
-        IsScanningStorage = true;
-        LargestFiles.Clear();
-        LargestFolders.Clear();
-        Duplicates.Clear();
-        UpdateStorageSelection();
-        try
-        {
-            // Read for every analysis: a scan since the page opened may have found a new library.
-            _protected = await Task.Run(() => StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders)));
-            // Only reads: no change gate, but the banner (with Stop) like every long run. How far it is: the bytes read so
-            // far of the space used on the drive (files it cannot read or skips keep it a little short of the end).
-            using var work = Owner.Runner.Work.Begin(Loc.Instance["Work_StorageScan"], _scanCancel);
-            var drive = SelectedDrive;
-            var used = await Task.Run(() =>
-            {
-                try
-                {
-                    var d = new DriveInfo(drive);
-                    return d.TotalSize - d.TotalFreeSpace;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-                {
-                    return 0L;
-                }
-            });
-            var progress = new Progress<(int Files, long Bytes)>(p =>
-            {
-                StorageStatus = Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes));
-                work.Report(used > 0 ? 100.0 * p.Bytes / used : null, StorageStatus);
-            });
-            var report = await StorageAnalyzer.ScanAsync(drive, _protected, progress: progress, ct: _scanCancel.Token);
-            foreach (var f in report.LargestFiles)
-                LargestFiles.Add(new FileRow(f.Path, f.Bytes, f.LastWriteUtc.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture), f.CanDelete, UpdateStorageSelection));
-            foreach (var f in report.LargestFolders.Take(20))
-                LargestFolders.Add(new FolderRow(f.Path, CleanupViewModel.Size(f.Bytes), Loc.Instance.Format("Storage_Files", f.Files)));
-            _duplicateGroups = report.Duplicates.Take(50).ToList();
-            foreach (var g in report.Duplicates.Take(50))
-                foreach (var (p, i) in g.Paths.Select((p, i) => (p, i)))
-                    Duplicates.Add(new FileRow(p, g.BytesEach, i == 0 ? Loc.Instance.Format("Storage_DuplicateOf", g.Paths.Count) : "", i > 0, UpdateStorageSelection));
-            StorageStatus = Loc.Instance.Format("Storage_Done", report.ScannedFiles, CleanupViewModel.Size(report.ScannedBytes),
-                CleanupViewModel.Size(report.Duplicates.Sum(d => d.Reclaimable)));
-            if (report.Truncated) StorageStatus += " " + Loc.Instance["Storage_Truncated"];
-        }
-        catch (OperationCanceledException)
-        {
-            StorageStatus = Loc.Instance["Storage_Stopped"];
-        }
-        finally
-        {
-            IsScanningStorage = false;
-            _scanCancel.Dispose();
-            _scanCancel = null;
-        }
-    }
-
-    private IReadOnlyList<DuplicateGroup> _duplicateGroups = [];
-
-    /// <summary>Something is ticked: "Move selected to Recycle Bin" has work to do.</summary>
-    [ObservableProperty] private bool _hasStorageSelection;
-
-    private void UpdateStorageSelection() => HasStorageSelection = LargestFiles.Concat(Duplicates).Any(f => f.Selected && f.CanDelete);
-
-    [RelayCommand]
-    private void StopStorage() => _scanCancel?.Cancel();
-
-    [RelayCommand]
-    private async Task RecycleSelectedAsync()
-    {
-        if (IsScanningStorage) return; // the lists are being refilled
-        var selected = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanDelete).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (selected.Count == 0) return;
-        // The first copy of a duplicate group can also be picked under the largest files: one copy always stays.
-        if (StorageAnalyzer.WholeGroupsSelected(selected, _duplicateGroups) is [var whole, ..])
-        {
-            Owner.ShowResult(Loc.Instance.Format("Storage_KeepOneCopy", whole.Paths[0]), Wpf.Ui.Controls.InfoBarSeverity.Warning);
-            return;
-        }
-        var text = Loc.Instance.Format("Storage_RecycleText", selected.Count, string.Join("\n", selected.Take(10)));
-        // The Recycle Bin belongs to the account this process runs as. With a separate admin account (or Administrator
-        // protection) that is not the signed-in user's bin: say so before deleting.
-        if (services.Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
-        if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], text, Loc.Instance["Storage_Recycle"])) return;
-        if (!await RunWorkAsync("recycle files", Loc.Instance["Work_Recycle"], async work =>
-            {
-                var steps = new Progress<int>(done => work.Step(done, selected.Count, selected[done]));
-                var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected, progress: steps));
-                Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count),
-                    failed.Count == 0 ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
-            }))
-            return;
-        await ScanStorageAsync();
     }
 
     [RelayCommand]

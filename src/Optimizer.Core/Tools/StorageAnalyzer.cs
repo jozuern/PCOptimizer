@@ -5,23 +5,16 @@ using Optimizer.Core.Storage;
 
 namespace Optimizer.Core.Tools;
 
-public sealed record LargeFile(string Path, long Bytes, DateTime LastWriteUtc, bool CanDelete);
-
-public sealed record FolderSize(string Path, long Bytes, int Files);
-
 public sealed record DuplicateGroup(long BytesEach, IReadOnlyList<string> Paths)
 {
     /// <summary>Space freed by keeping one copy.</summary>
     public long Reclaimable => BytesEach * (Paths.Count - 1);
 }
 
-public sealed record StorageReport(string Root, long ScannedBytes, int ScannedFiles, IReadOnlyList<LargeFile> LargestFiles, IReadOnlyList<FolderSize> LargestFolders,
-    IReadOnlyList<DuplicateGroup> Duplicates, bool Truncated);
-
 /// <summary>
-/// Storage analyzer (PC Manager-style): largest files and folders and duplicate files on a drive or folder. Never follows
-/// reparse points. Windows, program and game folders are scanned for sizes but are never offered for deletion, and
-/// duplicates there are ignored (games ship identical files on purpose). Deleting goes to the Recycle Bin.
+/// What the Storage page does with a scanned tree (<see cref="DiskTree"/>): duplicate files, protection, the Recycle Bin.
+/// Windows, program and game folders are scanned for sizes but are never offered for deletion, and duplicates there are
+/// ignored (games ship identical files on purpose). Deleting goes to the Recycle Bin.
 /// </summary>
 public static class StorageAnalyzer
 {
@@ -65,87 +58,43 @@ public static class StorageAnalyzer
         return protectedRoots.Any(r => p.StartsWith(r, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static async Task<StorageReport> ScanAsync(string root, IReadOnlyList<string> protectedRoots, int topFiles = 100, int maxFiles = 3_000_000,
-        IProgress<(int Files, long Bytes)>? progress = null, CancellationToken ct = default, bool protectAppData = true)
+    /// <summary>
+    /// Files of the tree that may be duplicates, grouped by size: at least <see cref="DuplicateMinBytes"/>, not system,
+    /// not cloud-only (reading one for the hash would download it) and not protected (games ship identical files on
+    /// purpose). Only groups with two or more files; their paths are built only for those.
+    /// </summary>
+    /// <param name="appData">Also leave out every AppData folder; off only in tests, whose temp folder lies there.</param>
+    /// <param name="entries">Filled with the tree index of every candidate path, so a list row knows its entry.</param>
+    public static IReadOnlyList<List<string>> DuplicateCandidates(DiskTree tree, IReadOnlyList<string> protectedRoots, bool appData = true,
+        IDictionary<string, int>? entries = null, CancellationToken ct = default)
     {
-        return await Task.Run(() =>
+        var bySize = new Dictionary<long, List<int>>();
+        var stack = new Stack<int>([tree.Root]);
+        while (stack.Count > 0)
         {
-            var largest = new PriorityQueue<FileInfo, long>();
-            var folderBytes = new Dictionary<string, (long Bytes, int Files)>(StringComparer.OrdinalIgnoreCase);
-            var bySize = new Dictionary<long, List<string>>();
-            long total = 0;
-            var count = 0;
-            var truncated = false;
-            var rootFull = Path.GetFullPath(root).TrimEnd('\\') + "\\";
-            var stack = new Stack<DirectoryInfo>([new DirectoryInfo(rootFull)]);
-            var options = new EnumerationOptions { IgnoreInaccessible = true, AttributesToSkip = 0 };
-            while (stack.Count > 0)
+            ct.ThrowIfCancellationRequested();
+            foreach (var c in tree.Children(stack.Pop()))
             {
-                ct.ThrowIfCancellationRequested();
-                var dir = stack.Pop();
-                IEnumerable<FileSystemInfo> entries;
-                try
+                if (tree.IsFolder(c))
                 {
-                    entries = dir.EnumerateFileSystemInfos("*", options).ToList();
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
+                    stack.Push(c);
                     continue;
                 }
-                foreach (var e in entries)
-                {
-                    if ((e.Attributes & FileAttributes.ReparsePoint) != 0) continue;
-                    // Cloud files (OneDrive online-only): reading one for the duplicate hash would download it.
-                    if (e is FileInfo && ((uint)e.Attributes & CloudOnly) != 0) continue;
-                    if (e is DirectoryInfo sub)
-                    {
-                        stack.Push(sub);
-                        continue;
-                    }
-                    if (e is not FileInfo f) continue;
-                    long length;
-                    try
-                    {
-                        length = f.Length;
-                    }
-                    catch (IOException)
-                    {
-                        continue;
-                    }
-                    total += length;
-                    count++;
-                    if (count >= maxFiles) { truncated = true; stack.Clear(); break; }
-                    if (count % 5000 == 0) progress?.Report((count, total));
-
-                    largest.Enqueue(f, length);
-                    if (largest.Count > topFiles) largest.Dequeue();
-
-                    // Size per first and second level folder below the root.
-                    var relative = f.DirectoryName is { } d && d.Length >= rootFull.Length - 1 ? d[Math.Min(d.Length, rootFull.Length)..] : "";
-                    var parts = relative.Split('\\', StringSplitOptions.RemoveEmptyEntries);
-                    for (var level = 1; level <= Math.Min(2, parts.Length); level++)
-                    {
-                        var key = rootFull + string.Join('\\', parts.Take(level));
-                        var (b, n) = folderBytes.GetValueOrDefault(key);
-                        folderBytes[key] = (b + length, n + 1);
-                    }
-
-                    if (length >= DuplicateMinBytes && !IsSystemFile(f) && !IsProtected(f.FullName, protectedRoots, protectAppData))
-                    {
-                        if (!bySize.TryGetValue(length, out var same)) bySize[length] = same = [];
-                        same.Add(f.FullName);
-                    }
-                }
+                if (tree.Size(c) < DuplicateMinBytes || (tree.Flags(c) & (EntryFlags.System | EntryFlags.CloudOnly)) != 0) continue;
+                if (!bySize.TryGetValue(tree.Size(c), out var same)) bySize[tree.Size(c)] = same = [];
+                same.Add(c);
             }
-
-            var files = new List<LargeFile>();
-            while (largest.TryDequeue(out var f, out var len))
-                files.Add(new LargeFile(f.FullName, len, f.LastWriteTimeUtc, !IsSystemFile(f) && !IsProtected(f.FullName, protectedRoots, protectAppData)));
-            files.Reverse();
-            var folders = folderBytes.Select(kv => new FolderSize(kv.Key, kv.Value.Bytes, kv.Value.Files)).OrderByDescending(x => x.Bytes).Take(50).ToList();
-            var duplicates = FindDuplicates(bySize.Values.Where(v => v.Count > 1), ct);
-            return new StorageReport(rootFull, total, count, files, folders, duplicates, truncated);
-        }, ct);
+        }
+        var result = new List<List<string>>();
+        foreach (var same in bySize.Values.Where(v => v.Count > 1))
+        {
+            ct.ThrowIfCancellationRequested();
+            var paths = same.Select(i => (Entry: i, Path: tree.FullPath(i))).Where(e => !IsProtected(e.Path, protectedRoots, appData)).ToList();
+            if (paths.Count < 2) continue;
+            if (entries is not null) foreach (var (entry, path) in paths) entries[path] = entry;
+            result.Add(paths.Select(e => e.Path).ToList());
+        }
+        return result;
     }
 
     /// <summary>
@@ -184,9 +133,6 @@ public static class StorageAnalyzer
             return null;
         }
     }
-
-    /// <summary>Files Windows marks as system files (pagefile.sys, hiberfil.sys, swapfile.sys in the drive root) are never offered.</summary>
-    private static bool IsSystemFile(FileInfo f) => (f.Attributes & FileAttributes.System) != 0;
 
     /// <summary>SHA-256 of the first <paramref name="maxBytes"/> bytes, read in 1 MB parts so Stop ends hashing a large file.</summary>
     private static string? Hash(string path, long maxBytes, CancellationToken ct)
@@ -347,9 +293,6 @@ public static class StorageAnalyzer
         var set = new HashSet<string>(selected, StringComparer.OrdinalIgnoreCase);
         return groups.Where(g => g.Paths.Count > 0 && g.Paths.All(set.Contains)).ToList();
     }
-
-    /// <summary>RECALL_ON_DATA_ACCESS, RECALL_ON_OPEN and OFFLINE: the content is not on the disk.</summary>
-    private const uint CloudOnly = 0x00400000 | 0x00040000 | 0x00001000;
 
     /// <summary>
     /// The shell's file operations expect a single-threaded apartment: its question before deleting a file for good (one

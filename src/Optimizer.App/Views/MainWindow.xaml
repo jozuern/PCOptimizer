@@ -6,7 +6,7 @@
                  xmlns:v="clr-namespace:Optimizer.App.Views"
                  Title="Tunero"
                  Icon="pack://application:,,,/Assets/app.ico"
-                 Width="1440" Height="920" MinWidth="1040" MinHeight="720"
+                 Width="1440" Height="960" MinWidth="1040" MinHeight="720"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica"
@@ -68,6 +68,7 @@
                     <v:NavHeader x:Name="HeaderCleanUp" Text="{l:Tr Nav_GroupCleanUp}" Style="{StaticResource NavGroupHeader}" />
                     <v:NavItem Content="{l:Tr Nav_Debloat}" TargetPageType="{x:Type v:DebloatPage}" Icon="{ui:SymbolIcon Delete24}" />
                     <v:NavItem Content="{l:Tr Nav_Cleanup}" TargetPageType="{x:Type v:CleanupPage}" Icon="{ui:SymbolIcon Broom24}" />
+                    <v:NavItem Content="{l:Tr Nav_Storage}" TargetPageType="{x:Type v:StoragePage}" Icon="{ui:SymbolIcon Storage24}" />
                     <v:NavHeader x:Name="HeaderMaintain" Text="{l:Tr Nav_GroupMaintain}" Style="{StaticResource NavGroupHeader}" />
                     <v:NavItem Content="{l:Tr Nav_Apps}" TargetPageType="{x:Type v:AppsPage}" Icon="{ui:SymbolIcon Apps24}" />
                     <v:NavItem Content="{l:Tr Nav_Tools}" TargetPageType="{x:Type v:ToolsPage}" Icon="{ui:SymbolIcon Toolbox24}" />

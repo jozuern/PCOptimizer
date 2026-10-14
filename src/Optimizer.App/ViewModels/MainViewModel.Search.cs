@@ -166,9 +166,8 @@ public sealed partial class MainViewModel
         switch (page)
         {
             case Page.Tools:
-                ToolsTab = key.StartsWith("Storage_", StringComparison.Ordinal) ? 1
-                    : key.StartsWith("Feat_", StringComparison.Ordinal) ? 2
-                    : key.StartsWith("Prio_", StringComparison.Ordinal) ? 3
+                ToolsTab = key.StartsWith("Feat_", StringComparison.Ordinal) ? 1
+                    : key.StartsWith("Prio_", StringComparison.Ordinal) ? 2
                     : 0;
                 break;
             case Page.Apps:
