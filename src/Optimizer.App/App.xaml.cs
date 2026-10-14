@@ -141,6 +141,28 @@ public partial class App : Application
             return;
         }
 
+        // Developer aid (--storage-compare C: --storage-out file.txt): reads the drive from the file table and folder by
+        // folder, read only, writes both totals and times and exits. Needs nothing else of the app.
+        if (args.Value("--storage-compare") is { } compareDrive)
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            try
+            {
+                var root = compareDrive.TrimEnd('\\') + "\\";
+                var text = await Optimizer.Core.Storage.ReaderComparison.CompareAsync(root, DataPaths.ProcessIsElevated, CancellationToken.None);
+                using (var file = OutputFile(args.Value("--storage-out") ?? "storage-compare.txt"))
+                using (var writer = new StreamWriter(file, new UTF8Encoding(false)))
+                    writer.Write($"Elevated: {DataPaths.ProcessIsElevated}\n{text}");
+                Shutdown(0);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("app", "storage comparison failed", ex);
+                Shutdown(1);
+            }
+            return;
+        }
+
         // After a self-update: remove the previous exe and the downloaded file.
         if (DataPaths.ProcessIsElevated && Environment.ProcessPath is { } runningExe) Updater.CleanUp(runningExe, DataPaths.Updates);
 

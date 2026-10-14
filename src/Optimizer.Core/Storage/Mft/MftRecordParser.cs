@@ -23,6 +23,18 @@ public sealed record MftName(ulong ParentReference, string Name, byte Namespace)
 public sealed record MftRecord(uint Number, ushort Sequence, ulong BaseReference, bool IsFolder, IReadOnlyList<MftName> Names, long? DataSize,
     long? DataAllocated, DateTime LastWriteUtc, uint FileAttributes, IReadOnlyList<ulong> ExtensionReferences, uint ReparseTag);
 
+/// <summary>One segment of a non-resident unnamed $DATA: the VCNs it maps and their runs on the volume.</summary>
+internal sealed record MftDataSegment(long LowestVcn, long HighestVcn, IReadOnlyList<(long Lcn, long Clusters)> Runs);
+
+/// <summary>
+/// What locating $MFT on the volume needs from one of its records: its sequence and base reference, the $DATA segments
+/// it holds, and <paramref name="Listed"/>, the lowest VCN and record of every unnamed $DATA segment its resident
+/// $ATTRIBUTE_LIST names (empty without one). <paramref name="ListNonResident"/>: the record has an attribute list that
+/// was not read because it is not resident.
+/// </summary>
+internal sealed record MftDataSegments(ushort Sequence, ulong BaseReference, IReadOnlyList<MftDataSegment> Segments,
+    IReadOnlyList<(long LowestVcn, ulong Reference)> Listed, bool ListNonResident);
+
 /// <summary>
 /// Parses one raw NTFS 3.x file record segment (FILE_RECORD_SEGMENT_HEADER and its attributes). The bytes come from a
 /// volume that may be damaged, so every offset and length is checked against the record before use and anything
@@ -143,6 +155,73 @@ public static class MftRecordParser
 
         return new MftRecord(number, sequence, baseReference, isFolder, (IReadOnlyList<MftName>?)names ?? [], dataSize, dataAllocated,
             lastWrite, attributes, (IReadOnlyList<ulong>?)extensions ?? [], reparseTag);
+    }
+
+    /// <summary>
+    /// For $MFT itself (record 0 and its extension records): the unnamed $DATA segments this record holds, and the unnamed
+    /// $DATA entries of its resident $ATTRIBUTE_LIST (where each segment lives). Applies the fixups in place; null when
+    /// the record is not in use, fails the fixups or is malformed, including a segment whose runs do not fill its VCNs.
+    /// </summary>
+    internal static MftDataSegments? ReadDataSegments(Span<byte> record, int bytesPerSector)
+    {
+        if (record.Length < 0x2A) return null;
+        if (record[0] != (byte)'F' || record[1] != (byte)'I' || record[2] != (byte)'L' || record[3] != (byte)'E') return null;
+        if ((U16(record, 0x16) & InUse) == 0) return null;
+        if (!ApplyFixups(record, bytesPerSector)) return null;
+
+        var segments = new List<MftDataSegment>(1);
+        var listed = new List<(long, ulong)>();
+        var listNonResident = false;
+        var pos = (int)U16(record, 0x14);
+        if (pos < 0x2A) return null;
+        while (true)
+        {
+            if (pos > record.Length - 4) return null;
+            var type = U32(record, pos);
+            if (type == End) break;
+            if (pos > record.Length - 16) return null;
+            var length = U32(record, pos + 4);
+            if (length < 16 || length > (uint)(record.Length - pos)) return null;
+            var a = record.Slice(pos, (int)length);
+            var nonResident = a[8] != 0;
+
+            if (type == Data && a[9] == 0 && nonResident)
+            {
+                if (a.Length < 0x40) return null;
+                long lowest = I64(a, 0x10), highest = I64(a, 0x18);
+                var runsOffset = U16(a, 0x20);
+                if (lowest < 0 || highest < lowest || runsOffset < 0x40 || runsOffset >= a.Length) return null;
+                var runs = RunList.Parse(a[runsOffset..]);
+                long clusters = 0;
+                foreach (var (_, c) in runs)
+                {
+                    if (c > long.MaxValue - clusters) return null;
+                    clusters += c;
+                }
+                if (runs.Count == 0 || clusters != highest - lowest + 1) return null;
+                segments.Add(new MftDataSegment(lowest, highest, runs));
+            }
+            else if (type == AttributeList && nonResident) listNonResident = true;
+            else if (type == AttributeList)
+            {
+                if (a.Length < 24) return null;
+                var valueLength = U32(a, 16);
+                var valueOffset = U16(a, 20);
+                if (valueOffset > a.Length || valueLength > (uint)(a.Length - valueOffset)) return null;
+                var list = a.Slice(valueOffset, (int)valueLength);
+                for (var at = 0; at < list.Length;)
+                {
+                    if (list.Length - at < 0x1A) return null;
+                    int entryLength = U16(list, at + 4);
+                    if (entryLength < 0x1A || entryLength > list.Length - at) return null;
+                    // ATTRIBUTE_LIST_ENTRY: lowest VCN at 0x08, segment reference at 0x10.
+                    if (U32(list, at) == Data && list[at + 6] == 0) listed.Add((I64(list, at + 8), U64(list, at + 0x10)));
+                    at += entryLength;
+                }
+            }
+            pos += (int)length;
+        }
+        return new MftDataSegments(U16(record, 0x10), U64(record, 0x20), segments, listed, listNonResident);
     }
 
     /// <summary>
