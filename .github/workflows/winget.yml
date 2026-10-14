@@ -27,6 +27,7 @@ concurrency:
 jobs:
   submit:
     runs-on: windows-2025
+    timeout-minutes: 20
     environment: winget
 
     env:

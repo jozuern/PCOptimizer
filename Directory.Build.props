@@ -13,5 +13,8 @@
     <!-- Every restore in CI uses the lock files, also the one dotnet publish runs by itself (the publish profile turns
          off the single-file analyzer, which would add an SDK-versioned package the lock file does not hold). -->
     <RestoreLockedMode Condition="'$(GITHUB_ACTIONS)' == 'true'">true</RestoreLockedMode>
+    <!-- GitHub's automatic dependency submission restores on Linux, which refuses a Windows target without this. The app
+         is only built on Windows. -->
+    <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
   </PropertyGroup>
 </Project>

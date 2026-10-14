@@ -20,6 +20,9 @@
 
 ### Fixed
 
+- **.NET runtime 10.0.13:** the exe carries the .NET and Windows Desktop runtime of October 2026, Microsoft's security release ([release notes](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.13/10.0.13.md)), instead of 10.0.12.
+- **Navigation badges:** the count next to Overview, Manual checks and Settings is now a round 16 px badge as in Windows 11; it was an upright oval.
+- **Health, sensors:** fan headers and temperature inputs with nothing on them (0 RPM or 0 °C, and never more since the sensors were turned on) are no longer listed. A fan that stopped after it turned (zero fan mode at idle) still shows.
 - **Update now:** the new version could refuse to start right after the update ("the native runtime folder is not the protected one"), because the old version passed its own restart marker on to it. It now starts, also when 1.0.0 runs the update.
 - **Tools, quick fixes:** the confirmation of a fix now names its own action on the button ("Restart" for Restart to Advanced startup, not "Run"), and each fix's button carries the fix's name for screen readers instead of only "Run" or "Restart".
 - **Startup page, undo of a deleted task:** when the task's folder in Task Scheduler had gone too (an uninstaller removed it), putting the task back failed with "file not found"; the folder is now created again.

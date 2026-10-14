@@ -23,6 +23,7 @@ concurrency:
 jobs:
   build:
     runs-on: windows-2025
+    timeout-minutes: 30
     outputs:
       artifact-id: ${{ steps.upload.outputs.artifact-id }}
 
@@ -49,6 +50,11 @@ jobs:
       run: |
         $version = ([xml](Get-Content src/Optimizer.App/Optimizer.App.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
         if ("v$version" -ne $env:TAG) { Write-Error "Tag $env:TAG does not match <Version>$version</Version> in Optimizer.App.csproj"; exit 1 }
+
+    # global.json pins the SDK exactly: a release must not ship a runtime that misses Microsoft's latest fixes.
+    - name: SDK is the newest patch
+      shell: pwsh
+      run: ./scripts/check-sdk-current.ps1
 
     - name: Install .NET (version from global.json)
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
@@ -80,6 +86,8 @@ jobs:
   release:
     needs: build
     runs-on: windows-2025
+    # The SignPath request below may wait up to 4 hours for the owner's approval.
+    timeout-minutes: 270
     # The signing key is a secret of this environment, not of the repository: only jobs that name the environment
     # get it, and the environment allows only v*.*.* tags and waits for the owner's approval. A workflow on another
     # branch or tag cannot read it.

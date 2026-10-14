@@ -25,6 +25,7 @@ concurrency:
 jobs:
   push:
     runs-on: windows-2025
+    timeout-minutes: 20
     environment: chocolatey
 
     env:
@@ -76,22 +77,7 @@ jobs:
         "SHA256=$hash" >> $env:GITHUB_ENV
         "Verified Tunero.exe SHA-256 $hash" | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
 
-    # The package downloads from github.com/jozuern/Tunero (and its icon comes from there through jsDelivr). Before the
-    # repository was renamed from PCOptimizer, that address does not exist yet, Chocolatey's verifier would fail, and a
-    # pushed version number cannot be used again: nothing is pushed then. Run the workflow again after the rename.
-    - name: Release reachable under the package's address
-      shell: pwsh
-      run: |
-        try {
-          Invoke-WebRequest "https://github.com/jozuern/Tunero/releases/download/$env:TAG/Tunero.exe.sha256" -Method Head -UseBasicParsing | Out-Null
-          "REACHABLE=true" >> $env:GITHUB_ENV
-        } catch {
-          "github.com/jozuern/Tunero/releases/download/$env:TAG is not reachable yet (repository not renamed?): nothing pushed. Run this workflow again from the tag after the rename." | Out-File -Encoding utf8 -Append $env:GITHUB_STEP_SUMMARY
-          "REACHABLE=false" >> $env:GITHUB_ENV
-        }
-
     - name: Build the package
-      if: env.REACHABLE == 'true'
       shell: pwsh
       run: |
         ./repo/scripts/chocolatey-package.ps1 -Version $env:TAG.Substring(1) -OutDir out -Sha256 $env:SHA256
@@ -100,7 +86,6 @@ jobs:
         "PACKAGE=$($package.FullName)" >> $env:GITHUB_ENV
 
     - name: Push to the community repository
-      if: env.REACHABLE == 'true'
       shell: pwsh
       run: |
         $out = choco push $env:PACKAGE --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY 2>&1

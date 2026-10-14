@@ -344,15 +344,17 @@ public class ReleaseTests
     }
 
     /// <summary>
-    /// The runtime the published exe carries: the one bundled with the SDK that global.json selects (the newest
-    /// installed patch of its feature band, as "latestPatch" picks it). The runtime this test runs on can be newer: a
-    /// Windows or Visual Studio update installs patches without changing what the build ships.
+    /// The runtime the published exe carries: the one bundled with the SDK that global.json selects ("patch": the
+    /// pinned SDK when it is installed, otherwise the newest installed patch of its feature band; "latestPatch", the
+    /// default: always the newest). The runtime this test runs on can be newer: a Windows or Visual Studio update
+    /// installs patches without changing what the build ships.
     /// </summary>
     private static string ShippedRuntime()
     {
         var fallback = $"{Environment.Version.Major}.{Environment.Version.Minor}.{Environment.Version.Build}";
-        var pinned = Version.Parse(JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoPaths.Root, "global.json")))
-            .RootElement.GetProperty("sdk").GetProperty("version").GetString()!);
+        var sdkJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoPaths.Root, "global.json"))).RootElement.GetProperty("sdk");
+        var pinned = Version.Parse(sdkJson.GetProperty("version").GetString()!);
+        var exactFirst = sdkJson.TryGetProperty("rollForward", out var roll) && roll.GetString() is "patch" or "disable";
         // ...\dotnet\shared\Microsoft.NETCore.App\<version>\ -> ...\dotnet
         var dotnet = Path.GetFullPath(Path.Combine(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", ".."));
         var sdks = Path.Combine(dotnet, "sdk");
@@ -360,7 +362,7 @@ public class ReleaseTests
         var sdk = Directory.EnumerateDirectories(sdks)
             .Select(d => Version.TryParse(Path.GetFileName(d), out var v) ? (Folder: d, Version: v) : default)
             .Where(x => x.Version is { } v && v.Major == pinned.Major && v.Minor == pinned.Minor && v.Build / 100 == pinned.Build / 100 && v >= pinned)
-            .OrderByDescending(x => x.Version).FirstOrDefault().Folder;
+            .OrderByDescending(x => exactFirst && x.Version == pinned).ThenByDescending(x => x.Version).FirstOrDefault().Folder;
         var props = sdk is null ? null : Path.Combine(sdk, "Microsoft.NETCoreSdk.BundledVersions.props");
         if (props is null || !File.Exists(props)) return fallback;
         var match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(props), @"<BundledNETCoreAppPackageVersion>([0-9]+\.[0-9]+\.[0-9]+)<");

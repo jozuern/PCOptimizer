@@ -26,6 +26,7 @@ concurrency:
 jobs:
   build:
     runs-on: windows-2025
+    timeout-minutes: 30
 
     env:
       DOTNET_NOLOGO: true
@@ -60,6 +61,12 @@ jobs:
             if ($before -and [version]$now -le [version]$before) { Write-Error "<Version> ${now} of $commit is not above ${before} (parent $parent): enable the hooks (git config core.hooksPath .githooks)"; exit 1 }
           }
         }
+
+    # A warning only: the release workflow stops on it. Not reachable metadata is no reason to fail a build.
+    - name: SDK is the newest patch
+      continue-on-error: true
+      shell: pwsh
+      run: ./scripts/check-sdk-current.ps1 -WarnOnly
 
     - name: Install .NET (version from global.json)
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
