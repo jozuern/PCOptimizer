@@ -159,7 +159,7 @@ internal sealed unsafe class VolumeMftSource : IMftSource
         // One bit per record; more than that (allocated ahead) is not needed.
         var needed = (RecordCount + 7) / 8;
         if (bitmap is null) return null;
-        if (bitmap.Value is { } value) return value;
+        if (bitmap.Value is { } value) return Plausible(value) ? value : null;
         var size = Math.Min(bitmap.Size, needed);
         long covered = 0;
         foreach (var (lcn, clusters) in bitmap.Runs)
@@ -178,8 +178,16 @@ internal sealed unsafe class VolumeMftSource : IMftSource
             ReadVolume(lcn * v.BytesPerCluster, into[..take]);
             into = into[take..];
         }
-        return bytes;
+        return Plausible(bytes) ? bytes : null;
     }
+
+    /// <summary>
+    /// Records 0 to 11 are NTFS's own files ($MFT to $UpCase, with the root as record 5) and always in use: a bitmap that
+    /// does not mark them is wrong (read from the wrong clusters, damaged) and must not decide which records are read.
+    /// </summary>
+    private static bool Plausible(byte[] bitmap) => bitmap.Length >= 2 && bitmap[0] == 0xFF && (bitmap[1] & 0x0F) == 0x0F;
+
+    public bool? MarkedInUse(long record) => _bitmap is null ? null : MayBeInUse(record);
 
     /// <summary>
     /// The runs of the segments in VCN order as volume extents. A gap, an overlap, a sparse run or a run past the end of

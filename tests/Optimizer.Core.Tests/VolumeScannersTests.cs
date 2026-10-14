@@ -307,7 +307,8 @@ public class VolumeScannersTests
 
     private const int BitmapLcn = 90;
 
-    private static MemoryVolume FragmentedVolume(int sectorSize, Layout layout)
+    /// <param name="changeBitmap">With <see cref="Layout.WithBitmap"/>: changes the bitmap (one bit per record) on the volume.</param>
+    private static MemoryVolume FragmentedVolume(int sectorSize, Layout layout, Action<Span<byte>>? changeBitmap = null)
     {
         var f = Data.Value;
         var size = f.RecordSize;
@@ -361,6 +362,7 @@ public class VolumeScannersTests
                 if (r[..4].SequenceEqual("FILE"u8) && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & 1) != 0)
                     volume[BitmapLcn * cluster + n / 8] |= (byte)(1 << (n % 8));
             }
+        changeBitmap?.Invoke(volume.AsSpan(BitmapLcn * cluster, (int)f.Records / 8));
         mft.AsSpan(0, FirstClusters * cluster).CopyTo(volume.AsSpan(FirstLcn * cluster));
         mft.AsSpan(FirstClusters * cluster).CopyTo(volume.AsSpan(SecondLcn * cluster));
         return new MemoryVolume(volume, new NtfsVolumeData(sectorSize, cluster, size, FirstLcn, mft.Length, 128));
@@ -396,6 +398,87 @@ public class VolumeScannersTests
         var inUse = Enumerable.Range(0, (int)f.Records).Count(f.InUse) + 1; // and the extension record made here
         Assert.True(volume.BytesRead < everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
         Assert.True(volume.BytesRead <= (inUse + 16) * f.RecordSize + 2 * f.ClusterSize, $"{volume.BytesRead} bytes for {inUse} records in use");
+    }
+
+    private static void Flip(Span<byte> bitmap, int record) => bitmap[record / 8] ^= (byte)(1 << (record % 8));
+
+    /// <summary>User records in use whose neighbours are in use too: inside a run the scanner reads, whatever their own bit.</summary>
+    private static List<int> InnerUserRecords() =>
+        Enumerable.Range(25, (int)Data.Value.Records - 26).Where(n => Data.Value.InUse(n - 1) && Data.Value.InUse(n) && Data.Value.InUse(n + 1)).ToList();
+
+    [Theory]
+    [InlineData("all zero")]
+    [InlineData("metadata bits clear")]
+    public async Task ABitmapThatMissesNtfsOwnFilesIsNotUsed(string damage)
+    {
+        // Read from the wrong clusters, for example: a bitmap without records 0 to 11 decides nothing, every record is read.
+        var f = Data.Value;
+        var everything = FragmentedVolume(512, Layout.Fragmented);
+        await new MftScanner(_ => new VolumeMftSource(everything)).ScanAsync(Root, null, CancellationToken.None);
+        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap =>
+        {
+            if (damage == "all zero") bitmap.Clear();
+            else foreach (var n in new[] { 0, 5, 11 }) Flip(bitmap, n);
+        });
+
+        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
+
+        AssertSameTree(f.Expected, tree);
+        Assert.True(volume.BytesRead >= everything.BytesRead, $"{volume.BytesRead} of {everything.BytesRead} bytes");
+    }
+
+    [Fact]
+    public async Task ABitmapThatDisagreesWithTheRecordsFallsBackToEnumeration()
+    {
+        // NTFS's own files are marked, but user records in use are marked free and free ones in use: records in the
+        // stretches skipped could be missing, so the file table is not used.
+        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap =>
+        {
+            foreach (var n in InnerUserRecords().Where((_, k) => k % 3 == 0)) Flip(bitmap, n);
+            for (var n = 17; n < 24; n++) Flip(bitmap, n);
+        });
+        var folders = new FakeScanner(ScanReader.Folders);
+
+        var tree = await VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None,
+            new MftScanner(_ => new VolumeMftSource(volume)), folders);
+
+        Assert.Equal(ScanReader.Folders, tree.Reader);
+        Assert.Equal(1, folders.Runs);
+        Assert.True(volume.Disposed);
+    }
+
+    [Fact]
+    public async Task AFewDisagreementsAreTolerated()
+    {
+        // As many as a read of a live volume meets (files made or removed meanwhile); these records are read anyway.
+        var f = Data.Value;
+        var flipped = InnerUserRecords().Take(3).ToList();
+        Assert.Equal(3, flipped.Count);
+        var volume = FragmentedVolume(512, Layout.WithBitmap, bitmap => { foreach (var n in flipped) Flip(bitmap, n); });
+
+        var tree = await new MftScanner(_ => new VolumeMftSource(volume)).ScanAsync(Root, null, CancellationToken.None);
+
+        AssertSameTree(f.Expected, tree);
+    }
+
+    [Fact]
+    public async Task AFileTableWithoutItsRootFallsBackToEnumeration()
+    {
+        // Record 5 not in use (a stretch of zeros or a table read wrong): never presented as an empty drive.
+        var f = Data.Value;
+        var mft = (byte[])f.Mft.Clone();
+        mft[5 * f.RecordSize + 0x16] &= 0xFE;
+        var folders = new FakeScanner(ScanReader.Folders);
+
+        await Assert.ThrowsAsync<MftUnavailableException>(() =>
+            Scanner(new FixtureSource((byte[])mft.Clone(), f.RecordSize, f.SectorSize)).ScanAsync(Root, null, CancellationToken.None));
+        var tree = await VolumeScanners.ScanAsync(Root, fileTable: true, null, CancellationToken.None,
+            Scanner(new FixtureSource(mft, f.RecordSize, f.SectorSize)), folders);
+        Assert.Equal(ScanReader.Folders, tree.Reader);
+
+        // All zeros: nothing in use, nothing damaged, and still no tree from the file table.
+        await Assert.ThrowsAsync<MftUnavailableException>(() =>
+            Scanner(new FixtureSource(new byte[f.Mft.Length], f.RecordSize, f.SectorSize)).ScanAsync(Root, null, CancellationToken.None));
     }
 
     [Theory]

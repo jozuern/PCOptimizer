@@ -25,6 +25,9 @@ internal interface IMftSource : IDisposable
 
     /// <summary>How many records are in use, when the source knows (the volume's $MFT bitmap); null otherwise.</summary>
     long? InUseRecords => null;
+
+    /// <summary>Whether the source's bitmap marks <paramref name="record"/> in use; null when the source has no bitmap.</summary>
+    bool? MarkedInUse(long record) => null;
 }
 
 /// <summary>
@@ -41,6 +44,7 @@ public sealed class MftScanner : IVolumeScanner
 {
     private const int BlockBytes = 2 << 20;
     private const ushort InUse = 0x0001;
+    private const int RootRecord = 5, MismatchesTolerated = 16;
     /// <summary>"FILE" and "BAAD" (a record NTFS found damaged), little endian.</summary>
     private const uint File = 0x454C4946, Baad = 0x44414142;
     private readonly Func<string, IMftSource> _open;
@@ -76,7 +80,7 @@ public sealed class MftScanner : IVolumeScanner
         var current = new byte[perBlock * size];
         var next = new byte[perBlock * size];
         var table = new MftTable((int)count, source.InUseRecords);
-        long inUse = 0, damaged = 0, bytes = 0;
+        long inUse = 0, damaged = 0, bytes = 0, readRecords = 0, mismatched = 0;
         var files = 0;
         // One read ahead: the next run is read while this one is parsed.
         var (first, want) = source.NextRun(0, perBlock);
@@ -93,17 +97,22 @@ public sealed class MftScanner : IVolumeScanner
                 (first, want) = source.NextRun(start + read, perBlock);
                 if (want > 0) pending = ReadAhead(source, first, next, want);
 
+                readRecords += read;
                 for (var k = 0; k < read; k++)
                 {
                     var r = current.AsSpan(k * size, size);
+                    var number = start + k;
                     // The signature and the in-use flag lie before the first stride's end, so they are readable before the
                     // fixups: a record in use that then fails to parse is damaged, an unused one is simply skipped.
                     var signature = BinaryPrimitives.ReadUInt32LittleEndian(r);
-                    if (signature == Baad) { inUse++; damaged++; continue; }
-                    if (signature != File || (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) == 0) continue;
+                    var headerInUse = signature == Baad
+                        || (signature == File && (BinaryPrimitives.ReadUInt16LittleEndian(r[0x16..]) & InUse) != 0);
+                    // A bitmap that disagrees with the records read may also have hidden records in the stretches skipped.
+                    if (source.MarkedInUse(number) is { } marked && marked != headerInUse) mismatched++;
+                    if (!headerInUse) continue;
                     inUse++;
+                    if (signature == Baad) { damaged++; continue; }
                     // The fixups are applied in place: each record is parsed once, from this fresh read.
-                    var number = start + k;
                     if (!MftRecordParser.ParseInto(r, sector, (uint)number, table)) { damaged++; continue; }
                     if (table.IndexOf((ulong)number) is var i and >= 0 && (table.Flags[i] & MftTable.Folder) == 0)
                     {
@@ -124,7 +133,13 @@ public sealed class MftScanner : IVolumeScanner
                 catch (Exception) { }
         }
 
+        // A few disagreements are files made or removed while the table is read; more mean a bitmap not to be trusted.
+        if (mismatched > Math.Max(MismatchesTolerated, readRecords / 100))
+            throw new MftUnavailableException($"the file table's bitmap disagrees with {mismatched} of {readRecords} records read");
         if (damaged * 100 > inUse) throw new MftUnavailableException($"{damaged} of {inUse} file records in use are damaged");
+        // Without the root (record 5) nothing could be placed: a table read wrong, never an empty drive.
+        if (table.IndexOf(RootRecord) is var root && (root < 0 || (table.Flags[root] & MftTable.Folder) == 0))
+            throw new MftUnavailableException("the root folder's record is not in use");
         return table;
     }
 

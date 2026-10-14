@@ -148,6 +148,7 @@ public static class ReaderComparison
         public long RecordCount => inner.RecordCount;
         public (long First, int Count) NextRun(long from, int max) => inner.NextRun(from, max);
         public long? InUseRecords => inner.InUseRecords;
+        public bool? MarkedInUse(long record) => inner.MarkedInUse(record);
 
         public int Read(long firstRecord, Span<byte> buffer)
         {
