@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- **Progress over every page:** while changes are applied or undone, a cleanup, an uninstall or app update runs, or SFC, DISM or the storage analysis works, a card at the top of every page says what runs, how far it is ("3 of 12" and the item) and fills its bar. Without a count it shows a moving bar, and it names the restore point while Windows makes it. Stop ends Apply recommended, Apply again, Import and Cleanup after the step that runs, so no change is left half done; the result says how many were not started. Undo all and Update all apps have no Stop (the uninstall depends on a complete undo, and ending winget can leave a program half updated). It replaces the "Working" ring at the bottom of the navigation rail.
+
 ### Fixed
+
+- **Result bar readable over the page:** the message at the bottom of the window let the page's text show through its see-through fill. It now has a solid background.
 
 - **Screen readers and voice control, navigation:** the pages in the navigation rail could not be opened through UI Automation, and Narrator did not say which page is open. They are now list items that open their page (Invoke, Select) and report the open one as selected; the group headings (Optimize, Clean up, Maintain and check) are read as headings.
 

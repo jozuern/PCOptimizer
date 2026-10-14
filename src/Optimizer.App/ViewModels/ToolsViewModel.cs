@@ -239,8 +239,28 @@ public sealed partial class ToolsViewModel(IPageHost owner, AppServices services
         {
             // Read for every analysis: a scan since the page opened may have found a new library.
             _protected = await Task.Run(() => StorageAnalyzer.ProtectedRoots(software.GameLibraryPaths.Concat(software.OtherGameFolders)));
-            var progress = new Progress<(int Files, long Bytes)>(p => StorageStatus = Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes)));
-            var report = await StorageAnalyzer.ScanAsync(SelectedDrive, _protected, progress: progress, ct: _scanCancel.Token);
+            // Only reads: no change gate, but the banner (with Stop) like every long run. How far it is: the bytes read so
+            // far of the space used on the drive (files it cannot read or skips keep it a little short of the end).
+            using var work = Owner.Runner.Work.Begin(Loc.Instance["Work_StorageScan"], _scanCancel);
+            var drive = SelectedDrive;
+            var used = await Task.Run(() =>
+            {
+                try
+                {
+                    var d = new DriveInfo(drive);
+                    return d.TotalSize - d.TotalFreeSpace;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    return 0L;
+                }
+            });
+            var progress = new Progress<(int Files, long Bytes)>(p =>
+            {
+                StorageStatus = Loc.Instance.Format("Storage_Progress", p.Files, CleanupViewModel.Size(p.Bytes));
+                work.Report(used > 0 ? 100.0 * p.Bytes / used : null, StorageStatus);
+            });
+            var report = await StorageAnalyzer.ScanAsync(drive, _protected, progress: progress, ct: _scanCancel.Token);
             foreach (var f in report.LargestFiles)
                 LargestFiles.Add(new FileRow(f.Path, f.Bytes, f.LastWriteUtc.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture), f.CanDelete, UpdateStorageSelection));
             foreach (var f in report.LargestFolders.Take(20))
@@ -292,9 +312,10 @@ public sealed partial class ToolsViewModel(IPageHost owner, AppServices services
         // protection) that is not the signed-in user's bin: say so before deleting.
         if (services.Elevation is { UserMismatch: true } e) text += "\n\n" + Loc.Instance.Format("Storage_RecycleOtherAccount", e.ProcessUser);
         if (!dialogs.Ask(Loc.Instance["Storage_RecycleTitle"], text, Loc.Instance["Storage_Recycle"])) return;
-        if (!await RunWorkAsync("recycle files", async () =>
+        if (!await RunWorkAsync("recycle files", Loc.Instance["Work_Recycle"], async work =>
             {
-                var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected));
+                var steps = new Progress<int>(done => work.Step(done, selected.Count, selected[done]));
+                var failed = await Task.Run(() => StorageAnalyzer.Recycle(selected, _protected, progress: steps));
                 Owner.ShowResult(Loc.Instance.Format("Storage_Recycled", selected.Count - failed.Count, failed.Count),
                     failed.Count == 0 ? Wpf.Ui.Controls.InfoBarSeverity.Success : Wpf.Ui.Controls.InfoBarSeverity.Warning);
             }))

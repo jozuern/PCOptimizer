@@ -50,7 +50,6 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
         Uninstalls = new UninstallService(Install, dialogs, this, Updates, () => services.Store.All().Count,
             note => Runner.UndoAllAsync(confirm: false, incompleteNote: note), () => StartMenuFolder, DataPaths.Root);
         Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
-        Runner.BusyChanged += (_, busy) => IsBusy = busy;
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
         Runner.Changed += (_, _) => RefreshReapply();
         ChangeGate.Instance.PropertyChanged += (_, e) =>
@@ -118,7 +117,6 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
 
     /// <summary>The last scan stopped with an error: the verdict says so instead of "the scan is reading this PC".</summary>
     [ObservableProperty] private bool _scanFailed;
-    [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _scanStatus = "";
     [ObservableProperty] private HardwareProfile? _profile;
     [ObservableProperty] private int _score;

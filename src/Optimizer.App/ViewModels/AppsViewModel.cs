@@ -307,17 +307,20 @@ public sealed partial class AppsViewModel(IPageHost owner, AppServices services,
         IsQueueRunning = true;
         using var stop = new CancellationTokenSource();
         _queueStop = stop;
+        // Stop here or in the banner: no wait for the running uninstaller either.
+        using var stopWaiting = stop.Token.Register(() => _skipWait?.TrySetResult());
         var removed = new List<DesktopProgram>();
         var started = 0;
         try
         {
-            await RunWorkAsync("uninstall selected programs", async () =>
+            await RunWorkAsync("uninstall selected programs", Loc.Instance["Work_Uninstall"], async work =>
             {
                 if (!await EnsureRestorePointAsync()) return;
                 var msi = await MsiFoldersAsync(queue.Select(q => q.Row.Program));
                 foreach (var (row, command, _) in queue)
                 {
                     if (stop.IsCancellationRequested) break;
+                    work.Step(started, queue.Count, row.Name);
                     started++;
                     QueueText = Loc.Instance.Format("Programs_QueueProgress", started, queue.Count, row.Name);
                     row.IsRemoving = true;
@@ -346,7 +349,7 @@ public sealed partial class AppsViewModel(IPageHost owner, AppServices services,
                         row.IsRemoving = false;
                     }
                 }
-            });
+            }, stop);
         }
         finally
         {
@@ -530,17 +533,22 @@ public sealed partial class AppsViewModel(IPageHost owner, AppServices services,
         if (!dialogs.Ask(Loc.Instance["Apps_UpdateAllTitle"], Loc.Instance["Apps_UpdateAllText"], Loc.Instance["Apps_UpdateAll"])) return;
         IsUpdatingAll = true;
         var lines = new List<string>();
+        WorkProgress.Scope? banner = null;
         var progress = new Progress<string>(l =>
         {
             lines.Add(l);
             if (lines.Count > 40) lines.RemoveAt(0);
             Output = string.Join("\n", lines);
+            // "(2/5) Found ..." as winget starts each package; without it the bar keeps moving.
+            if (ToolProgress.WingetPackage(l) is var (done, total)) banner?.Step(done, total, l[(l.IndexOf(')') + 1)..].Trim());
         });
         try
         {
             var winget = _winget;
-            await RunWorkAsync("winget upgrade all", async () =>
+            // No Stop: ending winget in the middle of an installer can leave a program half updated.
+            await RunWorkAsync("winget upgrade all", Loc.Instance["Work_UpdateApps"], async work =>
             {
+                banner = work;
                 var code = await StreamingProcess.RunAsync(winget, Winget.UpgradeAllArguments("machine"), progress);
                 lines.Add(Winget.IsSuccess(code) ? Loc.Instance["Apps_UpdateAllDone"] : Loc.Instance.Format("Apps_UpdateFailed", $"0x{code:X8}"));
                 // Per-user programs update as the signed-in user, in a window of their own.

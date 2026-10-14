@@ -253,6 +253,9 @@ public partial class App : Application
         if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
         if (Version.TryParse(args.Value("--update-shot"), out var newer)) vm.PreviewUpdateFound(newer);
         if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
+        // Developer aid: the progress banner as a batch shows it (third of twelve changes, with Stop); nothing runs.
+        if (args.Has("--work-demo") && vm.Tweaks.FirstOrDefault() is { } demo)
+            vm.Runner.Work.Begin(Loc.Instance["Work_Apply"], new CancellationTokenSource()).Step(2, 12, vm.Runner.Title(demo.Tweak));
         await Task.Delay(1500); // pages that load their own data (startup, services, apps)
         if (args.Value("--preview-uninstall") is "on")
         {

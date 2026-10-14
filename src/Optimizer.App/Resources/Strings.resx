@@ -1423,4 +1423,20 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Dash_AdvisorLink" xml:space="preserve"><value>To change by hand in the BIOS or on the hardware: {0}</value></data>
   <data name="Dash_VerdictNoneOneChange" xml:space="preserve"><value>No problems found. One recommended change can still help.</value></data>
   <data name="Dash_VerdictNoneChanges" xml:space="preserve"><value>No problems found. {0} recommended changes can still help.</value></data>
+  <data name="Work_Count" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="Work_Stopping" xml:space="preserve"><value>Stopping after the current step</value></data>
+  <data name="Work_RestorePoint" xml:space="preserve"><value>Creating a restore point</value></data>
+  <data name="Work_Apply" xml:space="preserve"><value>Applying changes</value></data>
+  <data name="Work_ApplyOne" xml:space="preserve"><value>Applying a change</value></data>
+  <data name="Work_UndoOne" xml:space="preserve"><value>Undoing a change</value></data>
+  <data name="Work_UndoAll" xml:space="preserve"><value>Undoing all changes</value></data>
+  <data name="Work_Cleanup" xml:space="preserve"><value>Cleaning up</value></data>
+  <data name="Work_Recycle" xml:space="preserve"><value>Moving files to the Recycle Bin</value></data>
+  <data name="Work_Uninstall" xml:space="preserve"><value>Uninstalling programs</value></data>
+  <data name="Work_UpdateApps" xml:space="preserve"><value>Updating apps</value></data>
+  <data name="Work_StorageScan" xml:space="preserve"><value>Analyzing storage</value></data>
+  <data name="Work_Sfc" xml:space="preserve"><value>Checking system files (SFC)</value></data>
+  <data name="Work_DismScan" xml:space="preserve"><value>Checking the Windows image (DISM)</value></data>
+  <data name="Work_DismRestore" xml:space="preserve"><value>Repairing the Windows image (DISM)</value></data>
+  <data name="Result_BatchStopped" xml:space="preserve"><value>Stopped. {0} applied, {1} failed, {2} skipped, {3} not started.</value></data>
 </root>

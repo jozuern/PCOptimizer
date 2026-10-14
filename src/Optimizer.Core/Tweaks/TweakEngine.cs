@@ -38,7 +38,7 @@ public sealed record TweakStatus(
     public bool IsOn => State is TweakState.Applied or TweakState.PendingRestart or TweakState.AppliedIneffective or TweakState.Partial;
 }
 
-public sealed class ApplyOptions
+public sealed record ApplyOptions
 {
     /// <summary>Expert mode is on (required for Expert and boot-critical tweaks).</summary>
     public bool ExpertMode { get; init; }
@@ -48,6 +48,9 @@ public sealed class ApplyOptions
 
     /// <summary>The user chose to continue although no restore point could be created.</summary>
     public bool ContinueWithoutRestorePoint { get; init; }
+
+    /// <summary>Called right before the restore point is made, which can take a minute (the progress banner says so).</summary>
+    public Action? RestorePointStarting { get; init; }
 }
 
 public enum ApplyOutcome { Applied, AppliedIneffective, Blocked, NeedsRestorePointDecision, Failed, NothingToDo }
@@ -61,6 +64,12 @@ public sealed record ApplyResult(ApplyOutcome Outcome, IReadOnlyList<ChangeLine>
     bool BackupNotUpdated = false);
 
 public sealed record BatchItemResult(TweakDefinition Tweak, ApplyResult Result);
+
+/// <summary>
+/// Where a batch or undo all is: <paramref name="Tweak"/> starts after <paramref name="Done"/> of <paramref name="Total"/>,
+/// or makes the restore point first (<paramref name="RestorePoint"/>).
+/// </summary>
+public sealed record BatchStep(int Done, int Total, TweakDefinition? Tweak, bool RestorePoint = false);
 
 public sealed record RevertResult(bool Success, IReadOnlyList<string> AlreadyRevertedByWindows, IReadOnlyList<string> Errors);
 
@@ -298,22 +307,27 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
 
     /// <summary>
     /// "Apply recommended": applies each batch-safe tweak in order with the normal pipeline (one restore point for the
-    /// whole batch, per-tweak rollback). Stops early only when the restore point decision is needed.
+    /// whole batch, per-tweak rollback). Stops early when the restore point decision is needed, and before the next
+    /// change when <paramref name="stop"/> is set (a change is never left half done).
     /// </summary>
     public async Task<IReadOnlyList<BatchItemResult>> ApplyBatchAsync(IEnumerable<TweakDefinition> tweaks, Facts facts, IReadOnlySet<string> applied,
-        ApplyOptions options, IProgress<TweakDefinition>? progress = null)
+        ApplyOptions options, IProgress<BatchStep>? progress = null, CancellationToken stop = default)
     {
         var results = new List<BatchItemResult>();
         var nowApplied = new HashSet<string>(applied);
-        foreach (var t in tweaks)
+        var list = tweaks.ToList();
+        foreach (var t in list)
         {
+            if (stop.IsCancellationRequested) break;
             if (!t.IsBatchSafe)
             {
                 results.Add(new BatchItemResult(t, new ApplyResult(ApplyOutcome.Blocked, [], Blocks: [new Block("block.notBatchSafe")])));
                 continue;
             }
-            progress?.Report(t);
-            var r = await ApplyAsync(t, facts, nowApplied, options);
+            var done = results.Count;
+            progress?.Report(new BatchStep(done, list.Count, t));
+            var r = await ApplyAsync(t, facts, nowApplied,
+                progress is null ? options : options with { RestorePointStarting = () => progress.Report(new BatchStep(done, list.Count, t, RestorePoint: true)) });
             results.Add(new BatchItemResult(t, r));
             if (r.Outcome == ApplyOutcome.NeedsRestorePointDecision) break;
             if (r.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective) nowApplied.Add(t.Id);
@@ -342,6 +356,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         // Safety net: one restore point per session before the first change (secondary to the JSON backup).
         if (!_restorePointDone && t.Id != RestorePointFrequencyTweak)
         {
+            options.RestorePointStarting?.Invoke();
             var ok = await EnsureRestorePointAsync(facts);
             if (!ok && !options.ContinueWithoutRestorePoint) return new ApplyResult(ApplyOutcome.NeedsRestorePointDecision, changes);
             _restorePointDone = true;
@@ -724,13 +739,16 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     /// own Undo. A backup nothing describes any more is reported as failed with the reason, so "Undo all" never claims more
     /// than it did.
     /// </summary>
-    public IReadOnlyList<(TweakDefinition Tweak, RevertResult Result)> RevertAll()
+    public IReadOnlyList<(TweakDefinition Tweak, RevertResult Result)> RevertAll(IProgress<BatchStep>? progress = null)
     {
         var results = new List<(TweakDefinition, RevertResult)>();
         var read = store.ReadAll();
+        var total = read.Own.Count + read.Unreadable.Count;
         foreach (var b in read.Own)
         {
-            if (Resolve(b) is not { } t)
+            var t = Resolve(b);
+            progress?.Report(new BatchStep(results.Count, total, t ?? Placeholder(b.TweakId)));
+            if (t is null)
                 results.Add((Placeholder(b.TweakId), new RevertResult(false, [], ["This change is not described by this version of the app; undo it on its explanation page or by hand."])));
             else
                 results.Add((t, Revert(t)));

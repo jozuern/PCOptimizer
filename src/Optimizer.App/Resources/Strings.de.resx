@@ -1423,4 +1423,20 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Dash_AdvisorLink" xml:space="preserve"><value>Von Hand im BIOS oder an der Hardware zu ändern: {0}</value></data>
   <data name="Dash_VerdictNoneOneChange" xml:space="preserve"><value>Keine Probleme gefunden. Eine empfohlene Änderung kann noch helfen.</value></data>
   <data name="Dash_VerdictNoneChanges" xml:space="preserve"><value>Keine Probleme gefunden. {0} empfohlene Änderungen können noch helfen.</value></data>
+  <data name="Work_Count" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="Work_Stopping" xml:space="preserve"><value>Stoppt nach dem laufenden Schritt</value></data>
+  <data name="Work_RestorePoint" xml:space="preserve"><value>Wiederherstellungspunkt wird erstellt</value></data>
+  <data name="Work_Apply" xml:space="preserve"><value>Änderungen werden angewendet</value></data>
+  <data name="Work_ApplyOne" xml:space="preserve"><value>Änderung wird angewendet</value></data>
+  <data name="Work_UndoOne" xml:space="preserve"><value>Änderung wird rückgängig gemacht</value></data>
+  <data name="Work_UndoAll" xml:space="preserve"><value>Alle Änderungen werden rückgängig gemacht</value></data>
+  <data name="Work_Cleanup" xml:space="preserve"><value>Wird bereinigt</value></data>
+  <data name="Work_Recycle" xml:space="preserve"><value>Dateien werden in den Papierkorb verschoben</value></data>
+  <data name="Work_Uninstall" xml:space="preserve"><value>Programme werden deinstalliert</value></data>
+  <data name="Work_UpdateApps" xml:space="preserve"><value>Apps werden aktualisiert</value></data>
+  <data name="Work_StorageScan" xml:space="preserve"><value>Speicher wird analysiert</value></data>
+  <data name="Work_Sfc" xml:space="preserve"><value>Systemdateien werden geprüft (SFC)</value></data>
+  <data name="Work_DismScan" xml:space="preserve"><value>Windows-Abbild wird geprüft (DISM)</value></data>
+  <data name="Work_DismRestore" xml:space="preserve"><value>Windows-Abbild wird repariert (DISM)</value></data>
+  <data name="Result_BatchStopped" xml:space="preserve"><value>Angehalten. {0} angewendet, {1} fehlgeschlagen, {2} übersprungen, {3} nicht begonnen.</value></data>
 </root>

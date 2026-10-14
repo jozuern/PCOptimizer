@@ -98,7 +98,8 @@ public sealed partial class MainViewModel
             var summary = Loc.Instance["Transfer_Intro"];
             if (plan.OneByOne.Count > 0) summary += " " + Loc.Instance.Format("Transfer_LaterOneByOne", plan.OneByOne.Count);
             var results = await Runner.ApplyBatchAsync(plan.Together, Loc.Instance["Transfer_Title"], summary);
-            if (results.Count == 0) return; // cancelled
+            // Cancelled, or stopped in the banner (fewer results than changes): the rest of the import does not follow.
+            if (results.Count < plan.Together.Count) return;
         }
         if (plan.OneByOne.Count > 0 &&
             _dialogs.Ask(Loc.Instance["Transfer_OneByOneTitle"], Loc.Instance.Format("Transfer_OneByOneText", plan.OneByOne.Count), Loc.Instance["Transfer_OneByOneGo"]))

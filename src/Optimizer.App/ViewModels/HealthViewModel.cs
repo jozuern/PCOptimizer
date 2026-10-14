@@ -185,22 +185,26 @@ public sealed partial class HealthViewModel(IPageHost owner, IDialogs dialogs) :
 
     // SFC / DISM
 
-    private async Task RunToolAsync(Func<IProgress<string>, CancellationToken, Task<int>> run)
+    private async Task RunToolAsync(Func<IProgress<string>, CancellationToken, Task<int>> run, string title)
     {
         _toolCancel = new CancellationTokenSource();
         var token = _toolCancel.Token;
         IsToolRunning = true;
         var lines = new List<string>();
+        Services.WorkProgress.Scope? banner = null;
         var progress = new Progress<string>(l =>
         {
+            // sfc and dism print how far they are; other lines (the phase) keep the last percentage.
+            if (ToolProgress.Percent(l) is { } percent) banner?.Report(percent, l);
             OutputLines.Add(lines, l);
             ToolOutput = string.Join("\n", lines);
         });
         try
         {
             // SFC and DISM repair system files: no tweak, scan or update at the same time.
-            await RunWorkAsync("system file repair", async () =>
+            await RunWorkAsync("system file repair", title, async work =>
             {
+                banner = work;
                 try
                 {
                     var code = await run(progress, token);
@@ -211,7 +215,7 @@ public sealed partial class HealthViewModel(IPageHost owner, IDialogs dialogs) :
                 {
                     ToolOutput += "\n" + Loc.Instance["Health_Stopped"];
                 }
-            });
+            }, _toolCancel);
         }
         finally
         {
@@ -221,9 +225,9 @@ public sealed partial class HealthViewModel(IPageHost owner, IDialogs dialogs) :
         }
     }
 
-    [RelayCommand] private Task SfcAsync() => RunToolAsync(SystemRepair.ScanNowAsync);
-    [RelayCommand] private Task DismScanAsync() => RunToolAsync(SystemRepair.ScanHealthAsync);
-    [RelayCommand] private Task DismRestoreAsync() => RunToolAsync(SystemRepair.RestoreHealthAsync);
+    [RelayCommand] private Task SfcAsync() => RunToolAsync(SystemRepair.ScanNowAsync, Loc.Instance["Work_Sfc"]);
+    [RelayCommand] private Task DismScanAsync() => RunToolAsync(SystemRepair.ScanHealthAsync, Loc.Instance["Work_DismScan"]);
+    [RelayCommand] private Task DismRestoreAsync() => RunToolAsync(SystemRepair.RestoreHealthAsync, Loc.Instance["Work_DismRestore"]);
     [RelayCommand] private void StopTool() => _toolCancel?.Cancel();
 
     // Throttle check

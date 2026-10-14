@@ -61,12 +61,15 @@ public abstract partial class PageViewModel : ObservableObject
     /// Runs a page operation that changes the system (see <see cref="Services.ChangeRunner.RunExclusiveAsync"/>): the page
     /// shows it as working, no tweak, scan or update runs at the same time, and an error is logged and shown.
     /// </summary>
-    protected async Task<bool> RunWorkAsync(string what, Func<Task> work)
+    protected Task<bool> RunWorkAsync(string what, Func<Task> work) => RunWorkAsync(what, Loc.Instance["Busy"], _ => work());
+
+    /// <summary>The same with the progress banner titled <paramref name="title"/>, and Stop when <paramref name="stop"/> is given.</summary>
+    protected async Task<bool> RunWorkAsync(string what, string title, Func<Services.WorkProgress.Scope, Task> work, CancellationTokenSource? stop = null)
     {
         IsWorking = true;
         try
         {
-            return await Owner.Runner.RunExclusiveAsync(what, work);
+            return await Owner.Runner.RunExclusiveAsync(what, title, work, stop);
         }
         finally
         {
@@ -864,16 +867,20 @@ public sealed partial class CleanupViewModel(IPageHost owner, AppServices servic
         if (!dialogs.Ask(Loc.Instance["Cleanup_ConfirmTitle"], Loc.Instance.Format("Cleanup_ConfirmText", list), Loc.Instance["Cleanup_Clean"])) return;
         long freed = 0;
         var skipped = 0;
-        await RunWorkAsync("cleanup", async () =>
+        // Stop ends it after the category that runs.
+        using var stop = new CancellationTokenSource();
+        await RunWorkAsync("cleanup", Loc.Instance["Work_Cleanup"], async work =>
         {
-            foreach (var r in selected)
+            foreach (var (r, i) in selected.Select((r, i) => (r, i)))
             {
+                if (stop.IsCancellationRequested) break;
+                work.Step(i, selected.Count, r.Title);
                 var result = await Task.Run(() => Optimizer.Core.Cleanup.CleanupEngine.Clean(r.Category));
                 freed += result.FreedBytes;
                 skipped += result.Skipped;
             }
             Owner.ShowResult(Loc.Instance.Format("Cleanup_Done", Size(freed), skipped), Wpf.Ui.Controls.InfoBarSeverity.Success);
-        });
+        }, stop);
         await ReloadAsync();
     }
 

@@ -90,16 +90,40 @@
                         </v:NavItem.InfoBadge>
                     </v:NavItem>
                 </ui:NavigationView.FooterMenuItems>
+                <!-- While a change, a cleanup or a long tool runs: what runs, how far it is and Stop where that is safe, above
+                     every page (nothing else can change the PC meanwhile). The header pushes the page down instead of covering
+                     its title; its width follows the page content (at most 1000 px, page padding 24 left and 40 right). -->
+                <ui:NavigationView.Header>
+                    <Grid Margin="24,16,40,0" Visibility="{Binding Runner.Work.IsShown, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MaxWidth="1000" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:Card Padding="16,12" DataContext="{Binding Runner.Work}">
+                            <DockPanel>
+                                <ui:Button DockPanel.Dock="Right" Content="{l:Tr Common_Stop}" Icon="{ui:SymbolIcon Stop20}" Command="{Binding StopCommand}" VerticalAlignment="Center" Margin="16,0,0,0"
+                                           Visibility="{Binding CanStop, Converter={StaticResource BoolToVisibility}}" />
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Title}" AutomationProperties.LiveSetting="Polite" />
+                                        <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Count}" Margin="12,0,0,0"
+                                                      Visibility="{Binding Count, Converter={StaticResource NullToVisibility}}" />
+                                    </StackPanel>
+                                    <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0"
+                                                  Visibility="{Binding Detail, Converter={StaticResource NullToVisibility}}" />
+                                    <ProgressBar Margin="0,12,0,0" Minimum="0" Maximum="100" Value="{Binding Value, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}"
+                                                 AutomationProperties.Name="{Binding Title}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </ui:Card>
+                    </Grid>
+                </ui:NavigationView.Header>
                 <ui:NavigationView.PaneFooter>
                     <!-- Collapsed rail: the text is hidden (it would be cut off), only the progress rings stay. -->
                     <StackPanel Margin="16,8,16,12">
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
                             <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
                             <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ScanStatus}" TextWrapping="Wrap" MaxWidth="180" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,4">
-                            <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0" />
-                            <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:Tr Busy}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding LastScanText}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
                         <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Version, StringFormat='Tunero {0}'}" Visibility="{Binding IsPaneOpen, ElementName=Nav, Converter={StaticResource BoolToVisibility}}" />
@@ -149,6 +173,9 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="48" />
                 </Grid.ColumnDefinitions>
+                <!-- The InfoBar's fill is see-through and the bar lies over the page: a solid layer under it keeps the page's text
+                     from showing through the message. -->
+                <Border Grid.ColumnSpan="3" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" CornerRadius="{DynamicResource ControlCornerRadius}" />
                 <ui:InfoBar Grid.ColumnSpan="3" Title="" Message="" IsOpen="{Binding ResultOpen, Mode=TwoWay}" IsClosable="True" Severity="{Binding ResultSeverity}" />
                 <TextBlock x:Name="ResultMessage" Text="{Binding ResultText}" TextWrapping="Wrap" FontSize="14" VerticalAlignment="Center" Margin="46,12,16,12"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" AutomationProperties.LiveSetting="Assertive" />

@@ -30,7 +30,9 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     public Func<Task> ScanInProgress { get; init; } = () => Task.CompletedTask;
 
     public event EventHandler<ResultMessage>? Status;
-    public event EventHandler<bool>? BusyChanged;
+
+    /// <summary>The banner over every page while a change runs (after its confirmation).</summary>
+    public WorkProgress Work { get; } = new();
 
     /// <summary>Raised after any change was written or undone (also when it failed half-way), so pages refresh their state.</summary>
     public event EventHandler<TweakDefinition?>? Changed;
@@ -137,11 +139,26 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
     /// fix): runs as the only change, like an apply, and an unexpected error is logged and shown. False when it did not
     /// run or failed.
     /// </summary>
-    public Task<bool> RunExclusiveAsync(string what, Func<Task> work) => ExclusiveAsync(what, async () =>
+    public Task<bool> RunExclusiveAsync(string what, Func<Task> work) => RunExclusiveAsync(what, Loc.Instance["Busy"], _ => work());
+
+    /// <summary>
+    /// The same with the banner titled <paramref name="title"/>; <paramref name="work"/> reports its steps to the scope.
+    /// <paramref name="stop"/> adds Stop to the banner (only for work that can end between two safe points).
+    /// </summary>
+    public Task<bool> RunExclusiveAsync(string what, string title, Func<WorkProgress.Scope, Task> work, CancellationTokenSource? stop = null) =>
+        ExclusiveAsync(what, async () =>
+        {
+            using var scope = Work.Begin(title, stop);
+            await work(scope);
+            return true;
+        }, false);
+
+    /// <summary>The restore point can take a minute: the banner says so (the engine calls this on its own thread).</summary>
+    private static Action RestorePointNote(WorkProgress.Scope scope)
     {
-        await work();
-        return true;
-    }, false);
+        IProgress<string> onUi = new Progress<string>(scope.Indeterminate);
+        return () => onUi.Report(Loc.Instance["Work_RestorePoint"]);
+    }
 
     /// <summary>Confirms and applies one tweak. Returns true when something was written.</summary>
     public Task<bool> ApplyAsync(TweakDefinition t) => ExclusiveAsync($"apply {t.Id}", async () =>
@@ -154,7 +171,9 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var confirm = dialogs.ConfirmApply(request);
         if (confirm is null) return false;
 
-        var options = new ApplyOptions { ExpertMode = expertMode(), AcknowledgeAntiCheat = confirm.AcknowledgedAntiCheat };
+        using var work = Work.Begin(Loc.Instance["Work_ApplyOne"]);
+        work.Indeterminate(request.Title);
+        var options = new ApplyOptions { ExpertMode = expertMode(), AcknowledgeAntiCheat = confirm.AcknowledgedAntiCheat, RestorePointStarting = RestorePointNote(work) };
         if (await services.Session.ApplyAsync(t, currentFacts, applied, options, dialogs.AskRestorePoint) is not { } result) return false;
         Report(ResultText(t, request.Title, result), SeverityOf(result));
         var written = result.Outcome is ApplyOutcome.Applied or ApplyOutcome.AppliedIneffective;
@@ -209,6 +228,8 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         var warnings = t.IsBootCritical ? new List<string> { Labels.Current.Get(lang, "undo.bootCritical") } : [];
         var title = Title(t);
         if (dialogs.ConfirmApply(new ConfirmRequest(title, Labels.Current.Get(lang, "undo.reversible"), lines, [], warnings, null, true)) is null) return false;
+        using var work = Work.Begin(Loc.Instance["Work_UndoOne"]);
+        work.Indeterminate(title);
         try
         {
             var result = await services.Session.UndoAsync(t);
@@ -240,9 +261,11 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
             return backups.Count;
         });
         if (count == 0 || (confirm && !dialogs.ConfirmUndoAll(count))) return false;
+        // No Stop: the uninstall undoes everything before it removes the app, and must not end up with half of it.
+        using var work = Work.Begin(Loc.Instance["Work_UndoAll"]);
         try
         {
-            var outcome = await services.Session.UndoAllAsync();
+            var outcome = await services.Session.UndoAllAsync(new Progress<BatchStep>(s => work.Step(s.Done, s.Total, s.Tweak is { } t ? Title(t) : null)));
             if (outcome.Failed == 0) Report(Loc.Instance.Format("Result_UndoAll", outcome.Results.Count), InfoBarSeverity.Success);
             else Report((Loc.Instance.Format("Result_UndoAllIncomplete", outcome.Undone, outcome.Failed) + " " + incompleteNote).TrimEnd(), InfoBarSeverity.Error);
             return outcome.Failed == 0;
@@ -264,18 +287,29 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         if (tweaks.Any(t => t.Restart)) badges.Add(Labels.Current.Get(lang, "badge.restart"));
         if (dialogs.ConfirmApply(new ConfirmRequest(title, summary, preview, badges, [], null, false)) is null) return [];
 
-        var outcome = await services.Session.ApplyBatchAsync(tweaks, facts(), appliedIds(), new ApplyOptions { ExpertMode = expertMode() }, dialogs.AskRestorePoint);
+        // Stop ends the batch after the change that runs: every change is applied whole or not at all.
+        using var stop = new CancellationTokenSource();
+        using var work = Work.Begin(Loc.Instance["Work_Apply"], stop);
+        var steps = new Progress<BatchStep>(s =>
+        {
+            if (s.RestorePoint) work.Indeterminate(Loc.Instance["Work_RestorePoint"]);
+            else work.Step(s.Done, s.Total, s.Tweak is { } t ? Title(t) : null);
+        });
+        var outcome = await services.Session.ApplyBatchAsync(tweaks, facts(), appliedIds(), new ApplyOptions { ExpertMode = expertMode() }, dialogs.AskRestorePoint,
+            steps, stop.Token);
         // Cancelled at the restore point question: nothing was changed, like a cancelled confirmation (Import then stops too).
-        if (outcome.Results.Count == 0) return [];
+        if (outcome.Results.Count == 0 && !outcome.Stopped) return [];
         if (outcome.StoppedForRestorePoint)
         {
             // Enabling System Protection did not lead to a restore point: the batch stopped before changing anything.
             Report(Loc.Instance["Result_NoRestorePoint"], InfoBarSeverity.Warning);
             return [];
         }
-        var text = Loc.Instance.Format("Result_Batch", outcome.Applied, outcome.Failed, outcome.Skipped);
+        var text = outcome.Stopped
+            ? Loc.Instance.Format("Result_BatchStopped", outcome.Applied, outcome.Failed, outcome.Skipped, tweaks.Count - outcome.Results.Count)
+            : Loc.Instance.Format("Result_Batch", outcome.Applied, outcome.Failed, outcome.Skipped);
         Report(outcome.BackupsNotUpdated ? $"{text} {Loc.Instance["Result_BackupsNotUpdated"]}" : text,
-            outcome.Failed > 0 || outcome.BackupsNotUpdated ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+            outcome.Failed > 0 || outcome.BackupsNotUpdated || outcome.Stopped ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
         // Several changes at once: null makes the app read everything again (a single page-level item would not).
         if (outcome.Applied > 0 || outcome.Failed > 0) Changed?.Invoke(this, tweaks.Count == 1 ? tweaks[0] : null);
         return outcome.Results;
@@ -315,9 +349,5 @@ public sealed class ChangeRunner(AppServices services, IDialogs dialogs, Func<Fa
         _ => InfoBarSeverity.Informational,
     };
 
-    private void Busy(bool busy)
-    {
-        ChangeGate.Instance.Busy = busy;
-        BusyChanged?.Invoke(this, busy);
-    }
+    private static void Busy(bool busy) => ChangeGate.Instance.Busy = busy;
 }

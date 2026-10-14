@@ -223,11 +223,14 @@ public static class StorageAnalyzer
     /// counts as a failure. Returns the failures.
     /// </summary>
     /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
-    public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots, bool appData = true)
+    /// <param name="progress">The number of files done before each file.</param>
+    public static IReadOnlyList<string> Recycle(IEnumerable<string> paths, IReadOnlyList<string> protectedRoots, bool appData = true, IProgress<int>? progress = null)
     {
         var failed = new List<string>();
+        var done = 0;
         foreach (var p in paths)
         {
+            progress?.Report(done++);
             if (IsProtected(p, protectedRoots, appData) || !File.Exists(p) || (File.GetAttributes(p) & FileAttributes.System) != 0)
             {
                 failed.Add(p);

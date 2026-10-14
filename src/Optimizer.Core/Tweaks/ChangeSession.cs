@@ -18,6 +18,9 @@ public sealed record BatchOutcome(IReadOnlyList<BatchItemResult> Results)
     public int Skipped => Results.Count - Applied - Failed;
     public bool BackupsNotUpdated => Results.Any(r => r.Result.BackupNotUpdated);
 
+    /// <summary>Stop was pressed: the changes after the last result were not started.</summary>
+    public bool Stopped { get; init; }
+
     public static readonly BatchOutcome Cancelled = new([]);
 }
 
@@ -55,16 +58,19 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
     /// <summary>
     /// Applies a set with one restore point. <see cref="BatchOutcome.Cancelled"/> when <paramref name="decide"/> cancelled;
     /// <see cref="BatchOutcome.StoppedForRestorePoint"/> when even after the decision no restore point came of it.
+    /// <paramref name="stop"/> ends it before the next change (<see cref="BatchOutcome.Stopped"/>).
     /// </summary>
     public async Task<BatchOutcome> ApplyBatchAsync(IReadOnlyList<TweakDefinition> tweaks, Facts facts, IReadOnlySet<string> applied, ApplyOptions options,
-        Func<RestorePointChoice> decide)
+        Func<RestorePointChoice> decide, IProgress<BatchStep>? progress = null, CancellationToken stop = default)
     {
         if (tweaks.Count == 0) return BatchOutcome.Cancelled;
-        var results = await Task.Run(() => engine.ApplyBatchAsync(tweaks, facts, applied, options));
-        if (!results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision)) return new BatchOutcome(results);
+        var results = await Task.Run(() => engine.ApplyBatchAsync(tweaks, facts, applied, options, progress, stop));
+        if (!results.Any(r => r.Result.Outcome == ApplyOutcome.NeedsRestorePointDecision)) return Outcome(results);
         // Nothing was changed yet: a cancel ends here like a cancelled confirmation.
         if (await AfterDecision(options, decide) is not { } again) return BatchOutcome.Cancelled;
-        return new BatchOutcome(await Task.Run(() => engine.ApplyBatchAsync(tweaks, facts, applied, again)));
+        return Outcome(await Task.Run(() => engine.ApplyBatchAsync(tweaks, facts, applied, again, progress, stop)));
+
+        BatchOutcome Outcome(IReadOnlyList<BatchItemResult> results) => new(results) { Stopped = results.Count < tweaks.Count && stop.IsCancellationRequested };
     }
 
     /// <summary>The options for the second try after the restore point decision; null for Cancel.</summary>
@@ -73,12 +79,7 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
         var choice = decide();
         if (choice == RestorePointChoice.Cancel) return null;
         if (choice == RestorePointChoice.Enable) await Task.Run(() => restorePoints.Enable());
-        return new ApplyOptions
-        {
-            ExpertMode = options.ExpertMode,
-            AcknowledgeAntiCheat = options.AcknowledgeAntiCheat,
-            ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue,
-        };
+        return options with { ContinueWithoutRestorePoint = choice == RestorePointChoice.Continue };
     }
 
     /// <summary>
@@ -107,7 +108,7 @@ public sealed class ChangeSession(TweakEngine engine, IRestorePoints restorePoin
 
     public Task<RevertResult> UndoAsync(TweakDefinition t) => Task.Run(() => engine.Revert(t));
 
-    public async Task<UndoAllOutcome> UndoAllAsync() => new(await Task.Run(engine.RevertAll));
+    public async Task<UndoAllOutcome> UndoAllAsync(IProgress<BatchStep>? progress = null) => new(await Task.Run(() => engine.RevertAll(progress)));
 
     /// <summary>The scan the window runs, without the window: findings, facts and the state of every visible tweak.</summary>
     /// <param name="ignored">The results the user ignores (<see cref="IgnoredResults.Key"/>): left out of the findings and the facts, as in the window.</param>
