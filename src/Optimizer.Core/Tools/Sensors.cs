@@ -5,7 +5,14 @@ using Optimizer.Core.Platform;
 namespace Optimizer.Core.Tools;
 
 /// <summary>One sensor; <paramref name="HardwareId"/> tells two components of the same name apart (two identical drives).</summary>
-public sealed record SensorReading(string HardwareId, string Hardware, string HardwareType, string Sensor, string Type, float? Value, float? Max);
+public sealed record SensorReading(string HardwareId, string Hardware, string HardwareType, string Sensor, string Type, float? Value, float? Max)
+{
+    /// <summary>
+    /// A fan header or temperature input with nothing on it: 0 RPM or 0 °C (or less) now and never more since the
+    /// sensors were opened. A fan that stopped after it turned (zero fan mode at idle) still has a peak and stays.
+    /// </summary>
+    public bool IsEmpty => Type is "Fan" or "Temperature" && Value is not > 0 && Max is not > 0;
+}
 
 /// <summary>
 /// Opt-in sensor readings through LibreHardwareMonitorLib 0.9.6 (MPL-2.0). Graphics cards and drives work without

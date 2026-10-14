@@ -481,7 +481,7 @@ public sealed partial class HealthViewModel(IPageHost owner, IDialogs dialogs) :
     /// </summary>
     private void ShowSensorReadings(IReadOnlyList<SensorReading> readings)
     {
-        var shown = readings.Where(r => r.Value is not null && SensorTypes.Contains(r.Type)).Select(MergeMemory).ToList();
+        var shown = readings.Where(r => r.Value is not null && !r.IsEmpty && SensorTypes.Contains(r.Type)).Select(MergeMemory).ToList();
         var layout = Loc.Instance.Language + "\n" + string.Join("\n", shown.Select(r => $"{r.HardwareId}|{r.Type}|{r.Sensor}"));
         if (layout != _sensorLayout)
         {

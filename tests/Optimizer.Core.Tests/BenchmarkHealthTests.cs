@@ -234,4 +234,17 @@ public class BenchmarkHealthTests
             Optimizer.Core.Platform.StreamingProcess.OutputGrace = before;
         }
     }
+
+    [Theory]
+    [InlineData("Fan", 0f, 0f, true)]            // an empty fan header
+    [InlineData("Fan", 0f, null, true)]
+    [InlineData("Fan", 0f, 1450f, false)]        // stopped at idle after it turned: stays
+    [InlineData("Fan", 900f, 900f, false)]
+    [InlineData("Temperature", 0f, 0f, true)]    // a temperature input with no probe
+    [InlineData("Temperature", -128f, -128f, true)]
+    [InlineData("Temperature", 41f, 55f, false)]
+    [InlineData("Load", 0f, 0f, false)]          // 0 % load is a real reading
+    [InlineData("Power", 0f, 0f, false)]
+    public void EmptySensors(string type, float value, float? max, bool empty) =>
+        Assert.Equal(empty, new SensorReading("id", "Board", "SuperIO", "Fan #1", type, value, max).IsEmpty);
 }

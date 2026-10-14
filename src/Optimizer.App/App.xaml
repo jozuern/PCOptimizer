@@ -28,6 +28,33 @@
             <v:PageWidthConverter x:Key="PageWidth" />
             <v:EdgeMarginConverter x:Key="EdgeMargin" />
             <v:SameItemConverter x:Key="SameItem" />
+
+            <!-- Navigation badges as in Windows 11: a 16 px circle for one digit, a pill for more. WPF-UI's template lets the
+                 line height of the number stretch it to an upright oval. -->
+            <Style TargetType="{x:Type ui:InfoBadge}" BasedOn="{StaticResource {x:Type ui:InfoBadge}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ui:InfoBadge}">
+                            <Border x:Name="ContentBorder" Height="16" MinWidth="16" Padding="4,0" CornerRadius="8" Margin="2"
+                                    Background="{TemplateBinding Background}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="{TemplateBinding Value}" FontSize="11" LineHeight="16" LineStackingStrategy="BlockLineHeight"
+                                           Foreground="{DynamicResource InfoBadgeValueForeground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Severity" Value="Attention">
+                                    <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource InfoBadgeAttentionSeverityBackgroundBrush}" />
+                                </Trigger>
+                                <Trigger Property="Severity" Value="Caution">
+                                    <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource InfoBadgeCautionSeverityBackgroundBrush}" />
+                                </Trigger>
+                                <Trigger Property="Severity" Value="Critical">
+                                    <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource InfoBadgeCriticalSeverityBackgroundBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <v:AtLeastConverter x:Key="AtLeast" />
             <v:WidthBelowConverter x:Key="WidthBelow" />
 
