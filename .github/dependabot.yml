@@ -1,5 +1,7 @@
 # Update pull requests for the .NET SDK in global.json, the pinned workflow actions, the NuGet packages and the website's
-# npm packages, one grouped pull request per ecosystem (security updates come at once and on their own).
+# npm packages, one grouped pull request per ecosystem (security updates come at once and on their own). Versions of
+# actions and packages are proposed only once they are a week old: a hijacked release is usually found and pulled
+# within days. The SDK has no wait, since it comes from Microsoft and carries security fixes.
 # They are notices, not merge buttons: a commit merged on GitHub has no version raise and fails "Version raised" on main.
 # Make the change locally instead (CONTRIBUTING, "Dependency updates"); Dependabot closes its pull request once main has it.
 # A new SDK ships a new runtime and a NuGet package a new version: both fail EveryShippedPackageHasItsLicense until
@@ -15,6 +17,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: [ "*" ]
@@ -22,6 +26,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       nuget:
         patterns: [ "*" ]
@@ -29,6 +35,8 @@ updates:
     directory: /website
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       website:
         patterns: [ "*" ]
