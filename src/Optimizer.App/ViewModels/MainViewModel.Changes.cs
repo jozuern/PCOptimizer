@@ -180,8 +180,9 @@ public sealed partial class MainViewModel
         var states = new Dictionary<string, TweakState>(StringComparer.Ordinal);
         foreach (var b in backups.Where(b => !known.Contains(b.TweakId)))
         {
-            // A retired tweak has no actions: its state cannot be read, only undone.
-            if (tweaks.GetValueOrDefault(b.TweakId) is not { Actions.Count: > 0 } t) continue;
+            // A retired tweak has no actions: its state cannot be read, only undone. The Default profile is loaded only
+            // for a change (TweakEngine.WritesDefaultProfile).
+            if (tweaks.GetValueOrDefault(b.TweakId) is not { Actions.Count: > 0 } t || TweakEngine.WritesDefaultProfile(t)) continue;
             try
             {
                 states[b.TweakId] = engine.DetectState(t, facts);

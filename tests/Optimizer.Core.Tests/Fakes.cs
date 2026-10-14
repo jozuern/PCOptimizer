@@ -24,9 +24,13 @@ internal sealed class SandboxRegistry : IRegistryRoots, IDisposable
 
     public string DisplayRoot(Hive hive) => hive switch { Hive.Machine => "HKLM", Hive.User => "HKU\\TEST", _ => @"Default\NTUSER.DAT" };
 
+    /// <summary>Set to make loading the Default profile fail with this message (regedit has it loaded, the file is missing).</summary>
+    public string? LoadFails { get; set; }
+
     public IDisposable? Hold(Hive hive)
     {
         if (hive != Hive.DefaultUser) return null;
+        if (_holds == 0 && LoadFails is { } error) throw new InvalidOperationException(error);
         if (_holds++ == 0) DefaultProfileLoads++;
         return new Release(this);
     }

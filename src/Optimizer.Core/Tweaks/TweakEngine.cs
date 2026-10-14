@@ -329,8 +329,10 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         var actions = Expand(t);
         IReadOnlyList<ChangeLine> changes;
         PendingUndo? pendingUndo;
-        using (HoldHives(t))
+        using (HoldHives(t, out var holdError))
         {
+            // Without the hive every value reads as unsupported, which is not "already in place".
+            if (holdError is not null) return Fail(t, [], holdError);
             changes = Preview(t);
             // After an undo that waits for a restart the running value still matches, but the setting is already reverted.
             pendingUndo = ActivePendingUndo(t, actions);
@@ -758,7 +760,7 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         {
             if (Resolve(backup.TweakId) is not { } t) continue;
             // A deleted startup entry that is back was put back by its program, not reset by Windows (StartupTweaks.IsDelete).
-            if (Startup.StartupTweaks.IsDelete(t)) continue;
+            if (Startup.StartupTweaks.IsDelete(t) || WritesDefaultProfile(t)) continue;
             var state = known is not null && known.TryGetValue(t.Id, out var read) ? read : DetectState(t, facts);
             if (state != TweakState.RevertedByWindows) continue;
             // Older backups only know the build number of their first apply (compared by build only).
@@ -818,9 +820,13 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
     /// Keeps the Default profile loaded for a whole call on a tweak that writes it: one load instead of one per value
     /// (each action holds it too). A hive that cannot be loaded is left to the actions, which report it per target.
     /// </summary>
-    private IDisposable? HoldHives(TweakDefinition t)
+    private IDisposable? HoldHives(TweakDefinition t) => HoldHives(t, out _);
+
+    /// <param name="error">Why the Default profile could not be loaded; null when it is loaded or not needed.</param>
+    private IDisposable? HoldHives(TweakDefinition t, out string? error)
     {
-        if (!t.Actions.OfType<RegistryAction>().Any(a => a.Hive == Hive.DefaultUser)) return null;
+        error = null;
+        if (!WritesDefaultProfile(t)) return null;
         try
         {
             return ctx.Registry.Hold(Hive.DefaultUser);
@@ -828,9 +834,16 @@ public sealed class TweakEngine(ActionContext ctx, BackupStore store, IRestorePo
         catch (Exception ex)
         {
             Log.Warn("engine", $"{t.Id}: Default profile not loaded: {ex.Message}");
+            error = ex.Message;
             return null;
         }
     }
+
+    /// <summary>
+    /// A change of the Default profile (Copy to new accounts). Its hive is loaded only for the change, so scans neither
+    /// check it for drift nor read its state: the file must be free when Windows creates an account.
+    /// </summary>
+    public static bool WritesDefaultProfile(TweakDefinition t) => t.Actions.OfType<RegistryAction>().Any(a => a.Hive == Hive.DefaultUser);
 
     /// <summary>The tweak's actions for this PC: templates expand to their targets (<see cref="TweakAction.Expand"/>).</summary>
     public IReadOnlyList<TweakAction> Expand(TweakDefinition t)

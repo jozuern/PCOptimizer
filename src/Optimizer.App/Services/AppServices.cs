@@ -22,6 +22,9 @@ public sealed class AppServices
         var sid = Elevation.SessionUserSid ?? Elevation.ProcessUserSid;
         Store = new BackupStore(root, secure: Elevation.IsElevated, userSid: sid);
         Context = SystemNotify.CreateContext(sid, Store.ExportFolder, CurrentInterfaceIds);
+        // A Tunero that ended while it had the Default profile loaded (killed during a change) left it under HKU. Not in
+        // SystemNotify.CreateContext: the read-only Hardware tests create a context too and must not unload anything.
+        if (Elevation.IsElevated) DefaultProfileHive.UnloadLeftovers();
         RestorePoints = new RestorePointService(Context.Processes);
         Engine = new TweakEngine(Context, Store, RestorePoints, Optimizer.Core.Platform.AppInfo.Text, Os.Build, Os.BuildString);
         Session = new ChangeSession(Engine, RestorePoints);

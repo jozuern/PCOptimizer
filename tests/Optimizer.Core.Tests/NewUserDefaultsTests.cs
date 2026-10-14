@@ -78,6 +78,33 @@ public class NewUserDefaultsTests
         }
     }
 
+    /// <summary>Scans neither check the copy for drift nor load the hive for it: the file must be free for Windows.</summary>
+    [Fact]
+    public async Task ScansDoNotLoadTheDefaultProfile()
+    {
+        using var fx = new EngineFixture();
+        var copy = NewUserDefaults.Build([With(T("explorer.a", User("A", 1)))])!;
+        var facts = new Facts().Set("os.build", 26300).Set("elevated", true);
+        await fx.Engine.ApplyAsync(copy, facts, new HashSet<string>(), new ApplyOptions { ContinueWithoutRestorePoint = true });
+        var loads = fx.Registry.DefaultProfileLoads;
+        Assert.Empty(fx.Engine.CheckDrift(facts));
+        Assert.Equal(loads, fx.Registry.DefaultProfileLoads);
+    }
+
+    /// <summary>When the hive cannot be loaded the copy fails with the reason; it never reports "already in place".</summary>
+    [Fact]
+    public async Task AHiveThatCannotLoadFailsTheCopy()
+    {
+        using var fx = new EngineFixture();
+        fx.Registry.LoadFails = "The Default profile could not be loaded: in use";
+        var copy = NewUserDefaults.Build([With(T("explorer.a", User("A", 1)))])!;
+        var result = await fx.Engine.ApplyAsync(copy, new Facts().Set("os.build", 26300).Set("elevated", true), new HashSet<string>(),
+            new ApplyOptions { ContinueWithoutRestorePoint = true });
+        Assert.Equal(ApplyOutcome.Failed, result.Outcome);
+        Assert.Contains("in use", result.Error);
+        Assert.Empty(fx.Store.All());
+    }
+
     /// <summary>The hive is loaded only inside a hold: an open without one is a bug, not a silent load that stays.</summary>
     [Fact]
     public void TheDefaultProfileIsOpenedOnlyInsideAHold()

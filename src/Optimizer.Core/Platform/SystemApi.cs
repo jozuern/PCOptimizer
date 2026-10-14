@@ -611,8 +611,6 @@ public static class SystemNotify
         // DISM and PowerShell reads of a scan or an apply are shared for a few seconds (dropped when the action writes).
         ReadCache.Enable(processes, TimeSpan.FromSeconds(20));
         var registry = new SystemRegistryRoots(userSid);
-        // A Tunero that ended while it had the Default profile loaded (killed during a change) left it under HKU.
-        DefaultProfileHive.UnloadLeftovers();
         return new ActionContext
         {
             Registry = registry,

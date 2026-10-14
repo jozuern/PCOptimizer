@@ -22,16 +22,19 @@ public static class DefaultProfileHive
     private static int _holds;
     private static bool _loaded;
 
-    /// <summary>The hive file from the profile list (HKLM, administrators only); null when it is not there.</summary>
+    /// <summary>
+    /// The hive file from the profile list (HKLM, administrators only; "%SystemDrive%\Users\Default"), expanded with the
+    /// machine's variables, since the signed-in user's own could point it to a folder they can write to. The file is
+    /// loaded with backup and restore rights and written, so it must be one only administrators can change (<see
+    /// cref="TrustedPath.IsAdminOnlyBelowSharedFolders"/>); null when it is not there or not such a file.
+    /// </summary>
     public static string? FilePath()
     {
         try
         {
-            using var list = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
-                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList");
-            if (list?.GetValue("Default") is not string folder || folder.Length == 0) return null;
-            var file = Path.Combine(Environment.ExpandEnvironmentVariables(folder), "NTUSER.DAT");
-            return Path.IsPathFullyQualified(file) && File.Exists(file) ? file : null;
+            if (Reg.HklmUnexpanded(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList", "Default") is not { Length: > 0 } folder) return null;
+            var file = Path.Combine(MachineEnvironment.Expand(folder), "NTUSER.DAT");
+            return Path.IsPathFullyQualified(file) && TrustedPath.IsAdminOnlyBelowSharedFolders(file) ? file : null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or ArgumentException)
         {
@@ -77,18 +80,20 @@ public static class DefaultProfileHive
         }
         foreach (var name in names.Where(n => n.StartsWith(MountPrefix, StringComparison.OrdinalIgnoreCase)))
         {
-            if (int.TryParse(name.AsSpan(MountPrefix.Length), out var pid) && pid != Environment.ProcessId && IsRunning(pid)) continue;
+            if (int.TryParse(name.AsSpan(MountPrefix.Length), out var pid) && pid != Environment.ProcessId && IsTuneroRunning(pid)) continue;
             if (name.Equals(MountName, StringComparison.OrdinalIgnoreCase) && _loaded) continue;
             Unload(name);
         }
     }
 
-    private static bool IsRunning(int pid)
+    /// <summary>A Tunero with this process id runs: the id alone may belong to another program by now (ids are reused).</summary>
+    private static bool IsTuneroRunning(int pid)
     {
         try
         {
             using var p = System.Diagnostics.Process.GetProcessById(pid);
-            return !p.HasExited;
+            using var self = System.Diagnostics.Process.GetCurrentProcess();
+            return !p.HasExited && string.Equals(p.ProcessName, self.ProcessName, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or Win32Exception)
         {
@@ -98,7 +103,7 @@ public static class DefaultProfileHive
 
     private static void Load()
     {
-        var file = FilePath() ?? throw new InvalidOperationException("The Default profile (NTUSER.DAT) was not found.");
+        var file = FilePath() ?? throw new InvalidOperationException("The Default profile (NTUSER.DAT) was not found in a folder only administrators can change.");
         UnloadLeftovers();
         using var restore = FirmwareExtras.EnablePrivilege("SeRestorePrivilege");
         using var backup = FirmwareExtras.EnablePrivilege("SeBackupPrivilege");
@@ -151,12 +156,34 @@ public static class DefaultProfileHive
             {
                 lock (Gate)
                 {
-                    if (_holds > 0 || !_loaded || TryUnload(MountName, i == UnloadTries)) return;
+                    if (_holds > 0 || !_loaded) return;
+                    if (TryUnload(MountName, i == UnloadTries))
+                    {
+                        if (_loaded) UnloadLater();
+                        return;
+                    }
                 }
                 Thread.Sleep(100);
             }
         }
     }
+
+    /// <summary>
+    /// The unload gave up for now (a handle stayed open): try again in the background for a minute, so the file is free
+    /// when Windows creates the next account. A hive still loaded when the app ends is unloaded at its next start.
+    /// </summary>
+    private static void UnloadLater() => Task.Run(async () =>
+    {
+        for (var i = 0; i < 30; i++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            lock (Gate)
+            {
+                if (_holds > 0 || !_loaded || TryUnload(MountName, lastTry: false)) return;
+            }
+        }
+        Log.Warn("registry", "Default profile still loaded; it is unloaded at the next start");
+    });
 
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode)] private static extern int RegLoadKey(IntPtr hKey, string subKey, string file);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode)] private static extern int RegUnLoadKey(IntPtr hKey, string subKey);
