@@ -54,7 +54,7 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <ui:Button Appearance="Primary" Content="{l:Tr Storage_Analyze}" Icon="{ui:SymbolIcon Search20}" Command="{Binding Storage.AnalyzeCommand}"
-                                   IsEnabled="{Binding Storage.IsBusy, Converter={StaticResource InverseBool}}" VerticalAlignment="Center" />
+                                   VerticalAlignment="Center" />
                     </WrapPanel>
                     <!-- After an analysis: what it read, and Close result to drop it -->
                     <DockPanel Margin="0,12,0,0" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}">
@@ -88,7 +88,7 @@
                         <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_NoResult}" Visibility="{Binding Storage.NoResult, Converter={StaticResource BoolToVisibility}}" />
                         <StackPanel Visibility="{Binding Storage.LargestFiles.Count, Converter={StaticResource CountToVisibility}}">
                             <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
-                                       IsEnabled="{Binding Storage.HasSelection}" Margin="0,0,0,8" />
+                                       Margin="0,0,0,8" />
                             <ui:Card Padding="{StaticResource CardPadding}">
                                 <v:ItemList ItemsSource="{Binding Storage.LargestFiles}" ItemTemplate="{StaticResource FileRow}" />
                             </ui:Card>
@@ -104,7 +104,7 @@
                         <ui:Card Padding="{StaticResource CardPadding}" Margin="0,0,0,8" Visibility="{Binding Storage.HasResult, Converter={StaticResource BoolToVisibility}}">
                             <DockPanel>
                                 <ui:Button DockPanel.Dock="Right" Content="{l:Tr Storage_FindDuplicates}" Icon="{ui:SymbolIcon DocumentCopy20}" Command="{Binding Storage.FindDuplicatesCommand}"
-                                           IsEnabled="{Binding Storage.CanFindDuplicates}" Margin="16,0,0,0" VerticalAlignment="Center" />
+                                           Margin="16,0,0,0" VerticalAlignment="Center" />
                                 <StackPanel VerticalAlignment="Center">
                                     <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Storage_DuplicatesHint}" />
                                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Storage.DuplicatesText}" Margin="0,4,0,0"
@@ -116,7 +116,7 @@
                         </ui:Card>
                         <StackPanel Visibility="{Binding Storage.Duplicates.Count, Converter={StaticResource CountToVisibility}}">
                             <ui:Button Content="{l:Tr Storage_Recycle}" Icon="{ui:SymbolIcon Delete20}" Command="{Binding Storage.RecycleSelectedCommand}"
-                                       IsEnabled="{Binding Storage.HasSelection}" Margin="0,0,0,8" />
+                                       Margin="0,0,0,8" />
                             <ui:Card Padding="{StaticResource CardPadding}">
                                 <v:ItemList ItemsSource="{Binding Storage.Duplicates}" ItemTemplate="{StaticResource FileRow}" />
                             </ui:Card>

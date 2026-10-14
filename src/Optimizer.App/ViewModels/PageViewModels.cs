@@ -80,6 +80,13 @@ public abstract partial class PageViewModel : ObservableObject
 
     partial void OnIsLoadingChanged(bool value) => LoadingChanged();
 
+    partial void OnIsWorkingChanged(bool value) => WorkingChanged();
+
+    /// <summary>For commands that must not start while the page's own work (<see cref="RunWorkAsync(string, Func{Task})"/>) runs.</summary>
+    protected virtual void WorkingChanged()
+    {
+    }
+
     /// <summary>For "nothing found" texts that must stay hidden while the page still loads.</summary>
     protected virtual void LoadingChanged()
     {

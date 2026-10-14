@@ -266,17 +266,20 @@ public partial class MainWindow : FluentWindow, IServiceProvider
             _paneCollapsedForHeight = false;
         }
         ShowGroupHeaders();
-        // Below this even the rail cut off its last page under the footer (1920 x 1080 at 150 %, VM): the items take the
-        // compact height of Windows Settings.
+        // Below this even the rail cut off its last page under the footer (1920 x 1080 at 150 %, VM): the items take a
+        // compact height. 34 rather than the 36 of Windows Settings: with twelve pages, 36 left the last one only 43 px
+        // above the footer at 720 px, and a maximized window at 150 % (672 px) moves the footer up 48 px more.
         var compact = ActualHeight < CompactHeight;
         if (compact == _compactNav) return;
         _compactNav = compact;
         foreach (var item in Nav.MenuItems.OfType<NavigationViewItem>().Concat(Nav.FooterMenuItems.OfType<NavigationViewItem>()))
-            item.Height = compact ? 36 : double.NaN;
+            item.Height = compact ? CompactItemHeight : double.NaN;
     }
 
     /// <summary>Window height below which the pages in the rail get the compact item height.</summary>
-    private const double CompactHeight = 740;
+    private const double CompactHeight = 750;
+
+    private const double CompactItemHeight = 34;
 
     private bool _compactNav;
 

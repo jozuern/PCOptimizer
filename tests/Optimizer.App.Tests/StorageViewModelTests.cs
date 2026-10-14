@@ -114,6 +114,37 @@ public sealed class StorageViewModelTests : IDisposable
         Assert.Null(storage.Tree);
     }
 
+    /// <summary>
+    /// While the page's own work runs (a recycle), nothing may read or replace the tree: Find duplicates and Analyze are
+    /// off and say so through CanExecute. IsWorking is set directly; nothing is recycled.
+    /// </summary>
+    [Fact]
+    public async Task NothingStartsWhileThePageIsWorking()
+    {
+        File("a.bin", 1000);
+        var storage = Storage();
+        await storage.AnalyzeFolderAsync(_root);
+        Assert.True(storage.FindDuplicatesCommand.CanExecute(null));
+        Assert.True(storage.AnalyzeCommand.CanExecute(null));
+        var raised = 0;
+        storage.FindDuplicatesCommand.CanExecuteChanged += (_, _) => raised++;
+
+        storage.IsWorking = true;
+        Assert.False(storage.FindDuplicatesCommand.CanExecute(null));
+        Assert.False(storage.AnalyzeCommand.CanExecute(null));
+        Assert.False(storage.RecycleSelectedCommand.CanExecute(null));
+        Assert.True(raised > 0);
+        // Called anyway (a key binding, a test): it does nothing.
+        await storage.FindDuplicatesCommand.ExecuteAsync(null);
+        Assert.False(storage.DuplicatesSearched);
+        var tree = storage.Tree;
+        await storage.AnalyzeFolderAsync(_root);
+        Assert.Same(tree, storage.Tree);
+
+        storage.IsWorking = false;
+        Assert.True(storage.FindDuplicatesCommand.CanExecute(null));
+    }
+
     [Fact]
     public async Task AnalyzeWaitsForThePcScan()
     {

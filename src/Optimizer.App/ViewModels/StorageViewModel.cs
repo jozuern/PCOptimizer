@@ -35,6 +35,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasResult), nameof(NoResult), nameof(CanFindDuplicates))]
+    [NotifyCanExecuteChangedFor(nameof(FindDuplicatesCommand))]
     private DiskTree? _tree;
 
     /// <summary>"120 GB in 84,000 files, read folder by folder in 12.3 s"; null without a result.</summary>
@@ -44,11 +45,11 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     [ObservableProperty] private int _tab;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(CanFindDuplicates))]
+    [NotifyPropertyChangedFor(nameof(IsBusy))]
     private bool _isAnalyzing;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(CanFindDuplicates))]
+    [NotifyPropertyChangedFor(nameof(IsBusy))]
     private bool _isFindingDuplicates;
 
     /// <summary>Find duplicates ran on the current tree (the tab shows its list, or that there are none).</summary>
@@ -60,12 +61,34 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     [ObservableProperty] private string? _duplicatesText;
 
     /// <summary>Something is ticked: "Move selected to Recycle Bin" has work to do.</summary>
-    [ObservableProperty] private bool _hasSelection;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRecycle))]
+    [NotifyCanExecuteChangedFor(nameof(RecycleSelectedCommand))]
+    private bool _hasSelection;
 
     public bool HasResult => Tree is not null;
     public bool NoResult => Tree is null;
     public bool IsBusy => IsAnalyzing || IsFindingDuplicates;
-    public bool CanFindDuplicates => Tree is not null && !IsBusy;
+
+    // Analyze, Find duplicates and Recycle exclude each other: the tree is not thread safe, and a recycle removes entries
+    // from it while Find duplicates would read it on a worker thread.
+    public bool CanAnalyze => !IsBusy && !IsWorking;
+    public bool CanFindDuplicates => Tree is not null && !IsBusy && !IsWorking;
+    public bool CanRecycle => HasSelection && !IsBusy && !IsWorking;
+
+    partial void OnIsAnalyzingChanged(bool value) => BusyChanged();
+    partial void OnIsFindingDuplicatesChanged(bool value) => BusyChanged();
+    protected override void WorkingChanged() => BusyChanged();
+
+    private void BusyChanged()
+    {
+        OnPropertyChanged(nameof(CanAnalyze));
+        OnPropertyChanged(nameof(CanFindDuplicates));
+        OnPropertyChanged(nameof(CanRecycle));
+        AnalyzeCommand.NotifyCanExecuteChanged();
+        FindDuplicatesCommand.NotifyCanExecuteChanged();
+        RecycleSelectedCommand.NotifyCanExecuteChanged();
+    }
     public bool NoDuplicates => DuplicatesSearched && Duplicates.Count == 0;
 
     /// <summary>After a scan, Close result and a removal: views drawn from the tree (folders, types) build again.</summary>
@@ -140,7 +163,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
 
     partial void OnTabChanged(int value) => FillTab();
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAnalyze))]
     private Task AnalyzeAsync() => SelectedDrive is { } drive ? AnalyzeRootAsync(drive.Root) : Task.CompletedTask;
 
     /// <summary>Analyzes a folder instead of a drive (the --storage-scan developer switch and tests).</summary>
@@ -149,7 +172,7 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     private async Task AnalyzeRootAsync(string root)
     {
         // One analysis at a time; not while duplicates are hashed from the tree it would replace or files are recycled.
-        if (IsBusy || IsWorking) return;
+        if (!CanAnalyze) return;
         // Game folders come from the PC scan; without it they could be offered for deletion.
         if (Owner.Profile?.Software is not { } software)
         {
@@ -238,10 +261,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// Hashes files of equal size from the tree (at least 1 MB, not system, not cloud-only, not protected) on a worker
     /// thread under the banner with Stop. Nothing is hashed before this is pressed.
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanFindDuplicates))]
     private async Task FindDuplicatesAsync()
     {
-        if (Tree is not { } tree || IsBusy) return;
+        if (!CanFindDuplicates || Tree is not { } tree) return;
         var protectedRoots = _protected;
         using var stop = new CancellationTokenSource();
         IsFindingDuplicates = true;
@@ -288,10 +311,10 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
     /// Moves the ticked files to the Recycle Bin after a confirmation that lists them. Every file is checked again by
     /// <see cref="StorageAnalyzer.Recycle"/>; the ones moved leave the tree and the lists.
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRecycle))]
     private async Task RecycleSelectedAsync()
     {
-        if (IsBusy || Tree is not { } tree) return;
+        if (!CanRecycle || Tree is not { } tree) return;
         var rows = LargestFiles.Concat(Duplicates).Where(f => f.Selected && f.CanRecycle).DistinctBy(f => f.Path, StringComparer.OrdinalIgnoreCase).ToList();
         var selected = rows.Select(f => f.Path).ToList();
         if (selected.Count == 0) return;
