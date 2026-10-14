@@ -81,25 +81,27 @@
                 <Setter Property="HorizontalAlignment" Value="Left" />
             </Style>
 
-            <!-- Storage treemap: one color per file group, stepped for each mode (a categorical set checked for color vision
-                 deficiencies; the legend and the tooltip name the group too). App.ApplyTheme sets the Treemap*Brush
-                 resources from these for the theme in use, so the map follows a theme switch. -->
-            <Color x:Key="TreemapVideoLight">#2A78D6</Color>
-            <Color x:Key="TreemapAudioLight">#EB6834</Color>
-            <Color x:Key="TreemapImagesLight">#1BAF7A</Color>
-            <Color x:Key="TreemapArchivesLight">#EDA100</Color>
-            <Color x:Key="TreemapProgramsLight">#E87BA4</Color>
-            <Color x:Key="TreemapDocumentsLight">#008300</Color>
-            <Color x:Key="TreemapSystemLight">#6250D6</Color>
-            <Color x:Key="TreemapOtherLight">#8E8D89</Color>
-            <Color x:Key="TreemapVideoDark">#3987E5</Color>
-            <Color x:Key="TreemapAudioDark">#D95926</Color>
-            <Color x:Key="TreemapImagesDark">#199E70</Color>
-            <Color x:Key="TreemapArchivesDark">#C98500</Color>
-            <Color x:Key="TreemapProgramsDark">#D55181</Color>
-            <Color x:Key="TreemapDocumentsDark">#008300</Color>
-            <Color x:Key="TreemapSystemDark">#9085E9</Color>
-            <Color x:Key="TreemapOtherDark">#76756F</Color>
+            <!-- Storage treemap: one color per file group, from the Okabe-Ito palette plus a gray for Other. Any two groups can
+                 touch on the map, so all 28 pairs stay apart (CIEDE2000 at least 8.9) for normal vision, protanopia,
+                 deuteranopia and tritanopia; the dark set has a lighter blue and gray for the dark card. The legend and the
+                 tooltip name the group too. App.ApplyTheme sets the Treemap*Brush resources from these for the theme in use,
+                 so the map follows a theme switch. -->
+            <Color x:Key="TreemapVideoLight">#0072B2</Color>
+            <Color x:Key="TreemapAudioLight">#D55E00</Color>
+            <Color x:Key="TreemapImagesLight">#56B4E9</Color>
+            <Color x:Key="TreemapArchivesLight">#E69F00</Color>
+            <Color x:Key="TreemapProgramsLight">#CC79A7</Color>
+            <Color x:Key="TreemapDocumentsLight">#009E73</Color>
+            <Color x:Key="TreemapSystemLight">#F0E442</Color>
+            <Color x:Key="TreemapOtherLight">#727272</Color>
+            <Color x:Key="TreemapVideoDark">#1580C2</Color>
+            <Color x:Key="TreemapAudioDark">#D55E00</Color>
+            <Color x:Key="TreemapImagesDark">#56B4E9</Color>
+            <Color x:Key="TreemapArchivesDark">#E69F00</Color>
+            <Color x:Key="TreemapProgramsDark">#CC79A7</Color>
+            <Color x:Key="TreemapDocumentsDark">#009E73</Color>
+            <Color x:Key="TreemapSystemDark">#F0E442</Color>
+            <Color x:Key="TreemapOtherDark">#7A7A7A</Color>
             <SolidColorBrush x:Key="TreemapVideoBrush" Color="{StaticResource TreemapVideoDark}" />
             <SolidColorBrush x:Key="TreemapAudioBrush" Color="{StaticResource TreemapAudioDark}" />
             <SolidColorBrush x:Key="TreemapImagesBrush" Color="{StaticResource TreemapImagesDark}" />

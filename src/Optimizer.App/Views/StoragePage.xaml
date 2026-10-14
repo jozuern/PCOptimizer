@@ -6,6 +6,23 @@
              xmlns:v="clr-namespace:Optimizer.App.Views"
              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
     <UserControl.Resources>
+        <!-- This page is up to 1600 px wide, not 1000 like the others: list and treemap side by side need the room. The
+             page's parts use these instead of the App.xaml styles of the same name, so header and tabs keep one width. -->
+        <v:PageWidthConverter x:Key="StorageWidth" Limit="1600" />
+        <v:EdgeMarginConverter x:Key="StorageEdgeMargin" Limit="1600" />
+        <Style x:Key="PageRoot" TargetType="FrameworkElement">
+            <Setter Property="Margin" Value="{StaticResource PagePadding}" />
+            <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StorageWidth}}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style x:Key="EdgeContent" TargetType="StackPanel">
+            <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StorageWidth}}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style x:Key="EdgeTabScroll" TargetType="ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="Margin" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StorageEdgeMargin}, ConverterParameter=8}" />
+        </Style>
         <!-- A file in Largest files or Duplicates: path and last change or group note, size on the right, a tick where it may be recycled -->
         <DataTemplate x:Key="FileRow">
             <DockPanel Margin="0,4">

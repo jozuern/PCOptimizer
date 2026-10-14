@@ -8,8 +8,15 @@ namespace Optimizer.App.Views;
 
 public partial class StoragePage : UserControl
 {
-    /// <summary>Content width from which the treemap stands beside the folder list instead of under it.</summary>
-    private const double SideBySideWidth = 1200;
+    /// <summary>
+    /// Content width from which the treemap stands beside the folder list instead of under it: the list needs about
+    /// 520 px (fixed columns 304, chevron, icon and margins about 90, the name at least 120). Below it is only the
+    /// smallest window.
+    /// </summary>
+    private const double SideBySideWidth = 1000;
+
+    /// <summary>The page's widest content (StorageWidth in the page resources).</summary>
+    private const double ContentMax = 1600;
 
     private StorageViewModel? _storage;
 
@@ -29,15 +36,16 @@ public partial class StoragePage : UserControl
     private void OnTreeChanged(object? sender, EventArgs e) => Map.Rebuild();
 
     /// <summary>
-    /// Wide: list and map side by side over the page's whole width (the map shows more the wider it is), both as tall
-    /// as the tab. Narrow: the map under the list at a fixed height, the tab scrolls, as wide as the other tabs.
+    /// Wide: list and map side by side, both as tall as the tab. Narrow: the map under the list at a fixed height, and
+    /// the tab scrolls. Either way as wide as the header and the other tabs.
     /// </summary>
     private void Layout()
     {
         var available = ActualWidth - PageWidthConverter.Padding;
         if (available <= 0) return;
-        var wide = available >= SideBySideWidth;
-        FoldersContent.Width = wide ? available : Math.Min(PageWidthConverter.Max, available);
+        var width = Math.Min(ContentMax, available);
+        var wide = width >= SideBySideWidth;
+        FoldersContent.Width = width;
         FoldersScroll.VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
         GapColumn.Width = new GridLength(wide ? 16 : 0);
         MapColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);

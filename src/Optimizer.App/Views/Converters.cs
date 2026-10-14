@@ -131,8 +131,11 @@ public sealed class PageWidthConverter : IValueConverter
 {
     public const double Max = 1000, Padding = 48 + 16;
 
+    /// <summary>The widest the content gets; the Storage page allows more (its treemap shows more the wider it is).</summary>
+    public double Limit { get; set; } = Max;
+
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is double w && w > Padding ? Math.Min(Max, w - Padding) : double.NaN;
+        value is double w && w > Padding ? Math.Min(Limit, w - Padding) : double.NaN;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
@@ -147,12 +150,15 @@ public sealed class EdgeMarginConverter : IValueConverter
     /// <summary>The page's left padding (PagePadding in App.xaml).</summary>
     public const double PageLeft = 24;
 
+    /// <summary>The content width the margin is measured beside (<see cref="PageWidthConverter.Limit"/> of the same page).</summary>
+    public double Limit { get; set; } = PageWidthConverter.Max;
+
     /// <param name="parameter">The top margin, as a string ("8" under a tab bar).</param>
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var top = double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out var t) ? t : 0;
         var extra = value is double w && w > PageWidthConverter.Padding
-            ? w - PageLeft - Math.Min(PageWidthConverter.Max, w - PageWidthConverter.Padding)
+            ? w - PageLeft - Math.Min(Limit, w - PageWidthConverter.Padding)
             : 16;
         return new Thickness(0, top, -extra, 0);
     }
