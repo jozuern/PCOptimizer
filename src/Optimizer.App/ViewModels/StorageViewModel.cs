@@ -396,6 +396,9 @@ public sealed partial class StorageViewModel(IPageHost owner, AppServices servic
             RecycleBlock.ContainsProtected => Loc.Instance["Storage_BlockContainsProtected"],
             RecycleBlock.KeptFolder => Loc.Instance["Storage_BlockKept"],
             RecycleBlock.SystemFile => Loc.Instance["Storage_BlockSystem"],
+            RecycleBlock.SystemFolder => Loc.Instance["Storage_BlockSystemFolder"],
+            RecycleBlock.WindowsSetup => Loc.Instance["Storage_BlockWindowsSetup"],
+            RecycleBlock.NameMismatch => Loc.Instance["Storage_BlockName"],
             _ => Loc.Instance["Storage_BlockProtected"],
         };
     }

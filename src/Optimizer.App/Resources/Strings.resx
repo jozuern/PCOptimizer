@@ -620,6 +620,9 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Storage_BlockContainsProtected" xml:space="preserve"><value>Protected: this folder holds a Windows, program, game or user folder (such as AppData or Documents).</value></data>
   <data name="Storage_BlockKept" xml:space="preserve"><value>Kept: drive roots, user profiles and folders such as Desktop or Downloads stay. What is inside them can go.</value></data>
   <data name="Storage_BlockSystem" xml:space="preserve"><value>Protected: Windows marks this as a system file.</value></data>
+  <data name="Storage_BlockSystemFolder" xml:space="preserve"><value>Protected: Windows marks this folder, or one above it, as a hidden system folder.</value></data>
+  <data name="Storage_BlockWindowsSetup" xml:space="preserve"><value>Protected: Windows setup files, such as the previous installation in Windows.old. Remove them in Settings &gt; System &gt; Storage &gt; Temporary files.</value></data>
+  <data name="Storage_BlockName" xml:space="preserve"><value>Its name, or the name of a folder above it, ends in a dot or space. Windows would read it as another name, so it is not moved.</value></data>
   <data name="Storage_BlockLink" xml:space="preserve"><value>A link to another folder: links are not moved to the Recycle Bin.</value></data>
   <data name="Storage_BlockUnreadable" xml:space="preserve"><value>This folder could not be read, so it cannot be checked before a move.</value></data>
   <data name="Storage_Missing" xml:space="preserve"><value>{0} no longer exists. Analyze again to update the result.</value></data>

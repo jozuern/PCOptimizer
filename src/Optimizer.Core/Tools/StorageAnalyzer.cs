@@ -189,8 +189,10 @@ public static class StorageAnalyzer
     }
 
     /// <summary>
-    /// Moves files and folders to the Recycle Bin. Each item is checked again with <see cref="RecycleRules.Check"/>
-    /// (protected, kept and system locations are refused, a folder also when it holds one); a folder is moved by renaming
+    /// Moves files and folders to the Recycle Bin. A path that does not name itself as written is refused first
+    /// (<see cref="RecycleRules.ResolvesAsWritten"/>); then each item is checked again with <see cref="RecycleRules.Check"/>
+    /// (protected, kept, system, Windows setup and hidden system locations are refused, a folder also when it holds a
+    /// protected or kept one); a folder is moved by renaming
     /// it into the Recycle Bin after its folders are pinned and it is known to hold no link. Returns the failures.
     /// </summary>
     /// <param name="appData">Also refuse every AppData folder; off only in tests, whose temp folder lies there.</param>
@@ -215,7 +217,13 @@ public static class StorageAnalyzer
                 failed.Add(raw);
                 continue;
             }
-            // The normalized path is what is checked and what is moved.
+            // The normalized path is what is checked and what is moved, so it must name the item that was confirmed: a
+            // name ending in a dot or space ("data.") normalizes to another item ("data"), and so does a ".." segment.
+            if (!RecycleRules.ResolvesAsWritten(raw, path))
+            {
+                failed.Add(raw);
+                continue;
+            }
             var exists = folder ? Directory.Exists(path) : File.Exists(path);
             var system = !folder && exists && (File.GetAttributes(path) & FileAttributes.System) != 0;
             if (!exists || RecycleRules.CheckNormalized(path, folder, system, roots, kept, appData) is not null || (folder && HoldsFolderLink(path)) || !MoveToRecycleBin(path, folder))

@@ -465,6 +465,49 @@ public sealed class StorageViewModelTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// A name ending in a dot or space (made through \\?\) would be checked and moved as its trimmed twin: the entry, a
+    /// file below it and such a file in a list are refused with that reason, and the twin is offered.
+    /// </summary>
+    [Fact]
+    public async Task ANameEndingInADotOrSpaceIsNotOffered()
+    {
+        var odd = Path.Combine(_root, "odd.");
+        var inside = Path.Combine(odd, "inside.bin");
+        var spaced = Path.Combine(_root, "report ");
+        Directory.CreateDirectory(@"\\?\" + odd);
+        System.IO.File.WriteAllBytes(@"\\?\" + inside, new byte[300]);
+        System.IO.File.WriteAllBytes(@"\\?\" + spaced, new byte[200]);
+        Directory.CreateDirectory(Path.Combine(_root, "odd"));
+        File("report", 100);
+        try
+        {
+            var storage = Storage();
+            await storage.AnalyzeFolderAsync(_root);
+            var tree = Assert.IsType<DiskTree>(storage.Tree);
+            var name = Loc.Instance["Storage_BlockName"];
+            storage.SelectedEntry = Entry(tree, "odd.");
+            Assert.Equal(name, storage.SelectionBlock);
+            Assert.False(storage.RecycleCommand.CanExecute(null));
+            storage.SelectedEntry = Entry(tree, "inside.bin");
+            Assert.Equal(name, storage.SelectionBlock);
+            storage.SelectedEntry = Entry(tree, "odd");
+            Assert.Null(storage.SelectionBlock);
+
+            storage.Tab = StorageViewModel.TabLargest;
+            Assert.Equal(name, storage.LargestFiles.Single(f => f.Path == spaced).BlockText);
+            Assert.Null(storage.LargestFiles.Single(f => f.Path == Path.Combine(_root, "report")).BlockText);
+            await storage.RecycleCommand.ExecuteAsync(null);
+            Assert.Empty(_recycled);
+        }
+        finally
+        {
+            // The trimmed names are reachable only through \\?\.
+            foreach (var f in new[] { inside, spaced }) if (System.IO.File.Exists(@"\\?\" + f)) System.IO.File.Delete(@"\\?\" + f);
+            if (Directory.Exists(@"\\?\" + odd)) Directory.Delete(@"\\?\" + odd);
+        }
+    }
+
     /// <summary>"No" in the confirmation: nothing reaches the recorder and the tree stays as it was.</summary>
     [Fact]
     public async Task RecycleAsksFirst()

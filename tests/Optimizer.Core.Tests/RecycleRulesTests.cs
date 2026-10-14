@@ -124,6 +124,95 @@ public sealed class RecycleRulesTests : IDisposable
     }
 
     [Fact]
+    public void NameEndingInADotOrSpaceIsRefused()
+    {
+        // Pure Check test: "a." and "b " would be checked as "a" and "b"; a folder above with such a name counts too.
+        Assert.Equal(RecycleBlock.NameMismatch, RecycleRules.Check(Path.Combine(_root, "a."), folder: true, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.NameMismatch, RecycleRules.Check(Path.Combine(_root, "b "), folder: false, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.NameMismatch, RecycleRules.Check(Path.Combine(_root, "x.", "file.txt"), folder: false, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.NameMismatch, RecycleRules.Check(Path.Combine(_root, "y ", "z"), folder: true, systemFile: false, [], [], appData: false));
+        Assert.False(RecycleRules.ResolvesAsWritten(Path.Combine(_root, "a."), RecycleRules.Normalize(Path.Combine(_root, "a."))));
+        Assert.False(RecycleRules.ResolvesAsWritten(@"\\?\" + Path.Combine(_root, "a"), Path.Combine(_root, "a")));
+        Assert.False(RecycleRules.ResolvesAsWritten(Path.Combine(_root, "x", "..", "a"), Path.Combine(_root, "a")));
+        Assert.True(RecycleRules.ResolvesAsWritten(Path.Combine(_root, "a"), RecycleRules.Normalize(Path.Combine(_root, "A"))));
+    }
+
+    [Fact]
+    public void WindowsSetupFoldersInADriveRootAreRefused()
+    {
+        // Pure Check test on paths: nothing is read but attributes.
+        Assert.Equal(RecycleBlock.WindowsSetup, RecycleRules.Check(@"C:\Windows.old", folder: true, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.WindowsSetup, RecycleRules.Check(@"C:\Windows.old\Users\x\photo.jpg", folder: false, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.WindowsSetup, RecycleRules.Check(@"D:\$WINDOWS.~BT", folder: true, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.WindowsSetup, RecycleRules.Check(@"D:\$Windows.~WS\Sources\setup.log", folder: false, systemFile: false, [], [], appData: false));
+        // Only in a drive root: a folder of that name elsewhere is the user's.
+        Assert.False(RecycleRules.IsWindowsSetup(@"D:\backup\Windows.old\"));
+    }
+
+    [Fact]
+    public void HiddenSystemFolderIsRefusedButSystemOrReadOnlyAloneIsNot()
+    {
+        var hiddenSystem = Path.Combine(_root, "hs");
+        var systemOnly = Path.Combine(_root, "s");
+        var readOnly = Path.Combine(_root, "r");
+        var hiddenOnly = Path.Combine(_root, "h");
+        foreach (var d in new[] { hiddenSystem, systemOnly, readOnly, hiddenOnly }) Directory.CreateDirectory(d);
+        File.WriteAllText(Path.Combine(hiddenSystem, "rollback.rbf"), "x");
+        File.SetAttributes(hiddenSystem, FileAttributes.Directory | FileAttributes.Hidden | FileAttributes.System);
+        File.SetAttributes(systemOnly, FileAttributes.Directory | FileAttributes.System);
+        File.SetAttributes(readOnly, FileAttributes.Directory | FileAttributes.ReadOnly);
+        File.SetAttributes(hiddenOnly, FileAttributes.Directory | FileAttributes.Hidden);
+
+        Assert.Equal(RecycleBlock.SystemFolder, RecycleRules.Check(hiddenSystem, folder: true, systemFile: false, [], [], appData: false));
+        Assert.Equal(RecycleBlock.SystemFolder, RecycleRules.Check(Path.Combine(hiddenSystem, "rollback.rbf"), folder: false, systemFile: false, [], [], appData: false));
+        Assert.Null(RecycleRules.Check(systemOnly, folder: true, systemFile: false, [], [], appData: false));
+        Assert.Null(RecycleRules.Check(readOnly, folder: true, systemFile: false, [], [], appData: false));
+        Assert.Null(RecycleRules.Check(hiddenOnly, folder: true, systemFile: false, [], [], appData: false));
+    }
+
+    [Fact]
+    public void RecycleItemsRefusesATrailingDotNameAndLeavesItsTwinAlone()
+    {
+        // "a." and "a" side by side (the dotted one only through \\?\). RecycleItems normalizes "a." to "a"; the
+        // ResolvesAsWritten check right after Normalize refuses it before Exists, Check or MoveToRecycleBin run, so nothing
+        // here can reach the Recycle Bin. The same holds for the file pair "b." and "b". The hidden system folder is
+        // refused by CheckNormalized, which is evaluated before HoldsFolderLink and MoveToRecycleBin.
+        var twin = Path.Combine(_root, "a");
+        var dotted = twin + ".";
+        var file = Path.Combine(_root, "b");
+        var dottedFile = file + ".";
+        var hiddenSystem = Path.Combine(_root, "Config.Msi");
+        Directory.CreateDirectory(twin);
+        Directory.CreateDirectory(@"\\?\" + dotted);
+        File.WriteAllText(file, "x");
+        File.WriteAllText(@"\\?\" + dottedFile, "x");
+        Directory.CreateDirectory(hiddenSystem);
+        File.SetAttributes(hiddenSystem, FileAttributes.Directory | FileAttributes.Hidden | FileAttributes.System);
+        try
+        {
+            Assert.True(Directory.Exists(@"\\?\" + dotted));
+            // The rules first: if one of them stopped refusing, the test ends here, before RecycleItems could move anything.
+            Assert.False(RecycleRules.ResolvesAsWritten(dotted, RecycleRules.Normalize(dotted)));
+            Assert.False(RecycleRules.ResolvesAsWritten(dottedFile, RecycleRules.Normalize(dottedFile)));
+            Assert.Equal(RecycleBlock.SystemFolder, RecycleRules.Check(hiddenSystem, folder: true, systemFile: false, [], [], appData: false));
+            var failed = StorageAnalyzer.RecycleItems([(dotted, true), (dottedFile, false), (hiddenSystem, true)], [], [], appData: false);
+
+            Assert.Equal([dotted, dottedFile, hiddenSystem], failed);
+            Assert.True(Directory.Exists(twin));
+            Assert.True(Directory.Exists(@"\\?\" + dotted));
+            Assert.True(File.Exists(file));
+            Assert.True(File.Exists(@"\\?\" + dottedFile));
+            Assert.True(Directory.Exists(hiddenSystem));
+        }
+        finally
+        {
+            // The trimmed names are reachable only through \\?\.
+            if (File.Exists(@"\\?\" + dottedFile)) File.Delete(@"\\?\" + dottedFile);
+            if (Directory.Exists(@"\\?\" + dotted)) Directory.Delete(@"\\?\" + dotted);
+        }
+    }
+
+    [Fact]
     public void RecycleItemsRefusesKeptProtectedAndDotDotPathsBeforeAnyMove()
     {
         // Every item is refused by Check before MoveToRecycleBin can be reached: nothing here may reach the Recycle Bin.
