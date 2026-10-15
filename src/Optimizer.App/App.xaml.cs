@@ -247,7 +247,7 @@ public partial class App : Application
             // Over the first results. Windows Settings' Uninstall button starts --uninstall; the installed copy's first start
             // removes the downloaded exe; a downloaded copy offers the setup (Program Files, Start menu), or the Start menu
             // question as before.
-            if (args.Has("--uninstall")) vm.UninstallCommand.Execute(null);
+            if (args.Has(SingleInstance.Uninstall)) vm.UninstallCommand.Execute(null);
             else if (args.Value(InstallService.InstalledFrom) is { } oldExe) vm.FinishInstallAsync(oldExe).Forget("finish install");
             else vm.OfferSetupAsync(SingleInstance.Applies(e.Args)).Forget("setup");
             OfferErrorReport(lastSession: true);

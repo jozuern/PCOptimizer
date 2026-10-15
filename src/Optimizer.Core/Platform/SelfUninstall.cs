@@ -27,7 +27,10 @@ public static class SelfUninstall
     public static string CleanupScript(string processName, string dataRoot, string exe, bool removedByPackageManager = false, int? waitForProcessId = null,
         int packageManagerSeconds = 900, string? installFolder = null)
     {
-        var files = removedByPackageManager ? "@()" : $"@({WingetPackage.Quote(exe)}, {WingetPackage.Quote(exe + ".old")})";
+        var files = removedByPackageManager ? "@()"
+            : installFolder is null ? $"@({WingetPackage.Quote(exe)}, {WingetPackage.Quote(exe + ".old")})"
+            // The install folder goes only when empty: what an interrupted install left (.new) goes with the exe.
+            : $"@({WingetPackage.Quote(exe)}, {WingetPackage.Quote(exe + ".old")}, {WingetPackage.Quote(exe + ".new")})";
         var cmd = WingetPackage.Quote(Path.Combine(Environment.SystemDirectory, "cmd.exe"));
         var script = new StringBuilder()
             .AppendLine("$ErrorActionPreference = 'SilentlyContinue'")

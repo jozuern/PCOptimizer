@@ -26,7 +26,16 @@ public sealed partial class MainViewModel
     [ObservableProperty] private bool _setupStartMenu = true;
 
     /// <summary>Settings offers the install: this copy could be installed (signed, downloaded, not installed).</summary>
-    [ObservableProperty] private bool _canInstall;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReapplyHint))]
+    private bool _canInstall;
+
+    /// <summary>Install runs (the copy and its checks take a few seconds): the screen's buttons wait.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetupInstallCommand), nameof(SetupRunHereCommand))]
+    private bool _setupBusy;
+
+    private bool SetupIdle => !SetupBusy;
 
     /// <summary>The folder the exe runs from now, for the screen's text.</summary>
     public string SetupFolder => Path.GetDirectoryName(Install.ExePath) ?? "";
@@ -46,7 +55,8 @@ public sealed partial class MainViewModel
     private InstallService Installs => _installs ??= new InstallService(Install.ExePath ?? "", _settings, _settings.Save, this,
         new InstallService.Steps(
             () => AppInstall.Install(new InstallRequest(Install.ExePath!, AppInstall.DefaultFolder, AppInfo.Text, AppInstall.IsTrustedFile,
-                path => System.Diagnostics.FileVersionInfo.GetVersionInfo(path).ProductVersion, TrustedPath.IsAdminOnlyWritableFolder), MachineRegistry),
+                path => System.Diagnostics.FileVersionInfo.GetVersionInfo(path).ProductVersion, TrustedPath.IsAdminOnlyWritableFolder,
+                TrustedPath.IsAdminOnlyBelowSharedFolders), MachineRegistry),
             exe => AppInstall.Undo(exe, MachineRegistry),
             exe => StartMenuShortcut.Create(StartMenuFolder ?? throw new DirectoryNotFoundException("no Start menu folder"), exe, Loc.Instance["StartMenu_Description"])));
 
@@ -73,7 +83,11 @@ public sealed partial class MainViewModel
         {
             var here = TrustedPath.IsAdminOnlyBelowSharedFolders(exe);
             var packaged = Install.Package is not null;
-            return (!here && !packaged && AppInstall.IsTrustedFile(exe), here);
+            // An older download does not replace a newer installed copy.
+            var installed = AppInstall.InstalledExe(MachineRegistry) ?? (File.Exists(InstalledPath) ? InstalledPath : null);
+            var downgrade = installed is not null &&
+                AppInstall.IsDowngrade(System.Diagnostics.FileVersionInfo.GetVersionInfo(installed).ProductVersion, AppInfo.Text);
+            return (!here && !packaged && !downgrade && AppInstall.IsTrustedFile(exe), here);
         });
         CanInstall = installable;
         if (AppInstall.ShouldOffer(true, true, plainStart, false, _settings.SetupDeclined, installedHere, installable)) SetupShown = true;
@@ -82,6 +96,8 @@ public sealed partial class MainViewModel
 
     private static void RefreshEntry(string exe)
     {
+        // The entry's uninstall command runs with administrator rights: only for an exe users cannot replace.
+        if (!TrustedPath.IsAdminOnlyBelowSharedFolders(exe)) return;
         try
         {
             AppInstall.WriteEntry(MachineRegistry, exe, AppInfo.Text, new FileInfo(exe).Length / 1024);
@@ -116,15 +132,23 @@ public sealed partial class MainViewModel
             removed ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
     }
 
-    [RelayCommand]
-    private void SetupInstall()
+    [RelayCommand(CanExecute = nameof(SetupIdle))]
+    private async Task SetupInstallAsync()
     {
-        if (Installs.Install(SetupToProgramFiles, SetupStartMenu)) return;
+        SetupBusy = true;
+        try
+        {
+            if (await Installs.InstallAsync(SetupToProgramFiles, SetupStartMenu)) return;
+        }
+        finally
+        {
+            SetupBusy = false;
+        }
         SetupShown = false;
         OnPropertyChanged(nameof(StartMenuEntry));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(SetupIdle))]
     private void SetupRunHere()
     {
         Installs.RunHere();

@@ -24,6 +24,7 @@ public class SelfUninstallTests
     {
         var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Program Files\Tunero\Tunero.exe", installFolder: @"C:\Program Files\Tunero");
         Assert.Contains(@"$installFolder = 'C:\Program Files\Tunero'", script);
+        Assert.Contains(@"'C:\Program Files\Tunero\Tunero.exe.new'", script);
         Assert.Contains($"& '{Path.Combine(Environment.SystemDirectory, "cmd.exe")}' /d /c rd /q $installFolder", script);
         Assert.DoesNotContain("rd /s /q $installFolder", script);
         Assert.True(script.IndexOf("rd /q $installFolder", StringComparison.Ordinal) > script.IndexOf("Remove-Item -LiteralPath $f", StringComparison.Ordinal));

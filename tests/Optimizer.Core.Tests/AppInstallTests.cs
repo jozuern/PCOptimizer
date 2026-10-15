@@ -103,8 +103,119 @@ public sealed class AppInstallTests : IDisposable
         return exe;
     }
 
-    private InstallRequest Request(string running, Func<string, bool>? verify = null, string version = "1.3.0", Func<string, bool>? adminOnly = null) =>
-        new(running, Folder, "1.3.0", verify ?? (_ => true), _ => version, adminOnly ?? (_ => true));
+    private InstallRequest Request(string running, Func<string, bool>? verify = null, string version = "1.3.0", Func<string, bool>? adminOnly = null,
+        Func<string, bool>? copyAdminOnly = null) =>
+        new(running, Folder, "1.3.0", verify ?? (_ => true), _ => version, adminOnly ?? (_ => true), copyAdminOnly ?? (_ => true));
+
+    // Review fixes (2026-10-15).
+
+    /// <summary>A failure after Install (Start menu, start of the new exe) puts the earlier installed exe back, entry and all.</summary>
+    [Fact]
+    public void AFailedLaterStepPutsTheOlderInstalledExeBack()
+    {
+        Directory.CreateDirectory(Folder);
+        var installed = Path.Combine(Folder, "Tunero.exe");
+        File.WriteAllBytes(installed, [1, 2]);
+        var result = AppInstall.Install(Request(Running()), _registry);
+        Assert.True(File.Exists(installed + ".old"));
+        AppInstall.Undo(result.InstalledExe!, _registry);
+        Assert.Equal([1, 2], File.ReadAllBytes(installed));
+        Assert.False(File.Exists(installed + ".old"));
+        Assert.Equal(installed, AppInstall.InstalledExe(_registry));
+    }
+
+    [Fact]
+    public void AFailedEntryUndoesAFreshInstall()
+    {
+        var result = AppInstall.Install(Request(Running()), new FailingRegistry(_registry));
+        Assert.Equal(InstallStep.Entry, result.FailedAt);
+        Assert.False(Directory.Exists(Folder));
+    }
+
+    /// <summary>The earlier install keeps its exe and its entry when the new entry cannot be written.</summary>
+    [Fact]
+    public void AFailedEntryKeepsTheEarlierInstall()
+    {
+        var first = AppInstall.Install(Request(Running()), _registry).InstalledExe!;
+        var before = File.ReadAllBytes(first);
+        File.WriteAllBytes(Path.Combine(_temp, "Downloads", "Tunero.exe"), [8, 8, 8]);
+        var result = AppInstall.Install(Request(Path.Combine(_temp, "Downloads", "Tunero.exe")), new FailingRegistry(_registry));
+        Assert.Equal(InstallStep.Entry, result.FailedAt);
+        Assert.Equal(before, File.ReadAllBytes(first));
+        Assert.Equal(first, AppInstall.InstalledExe(_registry));
+    }
+
+    /// <summary>A copy that inherited write access for users (an inherit-only entry on the folder) is not trusted.</summary>
+    [Fact]
+    public void InstallStopsWhenTheCopyCanBeChangedByUsers()
+    {
+        var result = AppInstall.Install(Request(Running(), copyAdminOnly: _ => false), _registry);
+        Assert.Equal(InstallStep.Check, result.FailedAt);
+        Assert.False(Directory.Exists(Folder));
+    }
+
+    /// <summary>A leftover Tunero.exe.new (a crash during an earlier install) does not block Install.</summary>
+    [Fact]
+    public void InstallReplacesALeftoverNewFile()
+    {
+        Directory.CreateDirectory(Folder);
+        File.WriteAllBytes(Path.Combine(Folder, "Tunero.exe.new"), [5]);
+        var running = Running();
+        var result = AppInstall.Install(Request(running), _registry);
+        Assert.Null(result.FailedAt);
+        Assert.Equal(File.ReadAllBytes(running), File.ReadAllBytes(result.InstalledExe!));
+    }
+
+    /// <summary>%ProgramW6432% can be set by the user; the install folder comes from the system, not from it.</summary>
+    [Fact]
+    public void DefaultFolderIgnoresTheEnvironment()
+    {
+        var saved = Environment.GetEnvironmentVariable("ProgramW6432");
+        try
+        {
+            Environment.SetEnvironmentVariable("ProgramW6432", _temp);
+            Assert.Equal(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tunero"), AppInstall.DefaultFolder);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ProgramW6432", saved);
+        }
+    }
+
+    [Theory]
+    [InlineData("1.4.0", "1.3.0", true)]
+    [InlineData("1.3.0", "1.3.0", false)]
+    [InlineData("1.2.9", "1.3.0", false)]
+    [InlineData(null, "1.3.0", false)]
+    [InlineData("garbage", "1.3.0", false)]
+    public void AnOlderDownloadDoesNotReplaceANewerInstall(string? installed, string running, bool downgrade) =>
+        Assert.Equal(downgrade, AppInstall.IsDowngrade(installed, running));
+
+    /// <summary>The downloaded copy's own process may still hold its exe for a moment: the delete is tried again.</summary>
+    [Fact]
+    public void TheOldCopyIsDeletedOnceItIsNoLongerInUse()
+    {
+        var running = Running();
+        var installed = AppInstall.Install(Request(running), _registry).InstalledExe!;
+        var held = new FileStream(running, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var release = Task.Run(async () =>
+        {
+            await Task.Delay(600);
+            held.Dispose();
+        });
+        Assert.True(AppInstall.DeleteOldCopy(running, installed));
+        release.Wait();
+        Assert.False(File.Exists(running));
+    }
+
+    /// <summary>Registry roots whose Installed apps key cannot be written (a policy, a full hive).</summary>
+    private sealed class FailingRegistry(IRegistryRoots inner) : IRegistryRoots
+    {
+        public RegistryKey? Open(Hive hive, string path, bool writable, bool create = false) =>
+            create && path == AppInstall.KeyPath ? throw new UnauthorizedAccessException("denied") : inner.Open(hive, path, writable, create);
+
+        public string DisplayRoot(Hive hive) => inner.DisplayRoot(hive);
+    }
 
     [Fact]
     public void InstallCopiesChecksAndRegisters()

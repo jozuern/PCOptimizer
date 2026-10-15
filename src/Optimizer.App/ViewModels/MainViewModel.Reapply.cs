@@ -21,7 +21,7 @@ public sealed partial class MainViewModel
         ReapplyAvailable ? "Reapply_Hint"
         : !Install.IsPublishedExe || !Install.Elevated ? "Reapply_NotHere"
         : _services.Elevation.UserMismatch || _services.Elevation.SessionUserSid is null ? "Reapply_OtherAccount"
-        : "Reapply_UserFolder"];
+        : CanInstall ? "Reapply_UserFolder" : "Reapply_UserFolderManual"];
 
     /// <summary>The task is set up (its backup is on the Changes page). Switching runs the change through the runner, with its confirmation.</summary>
     public bool ReapplyOn

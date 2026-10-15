@@ -51,6 +51,7 @@
             </Grid.ColumnDefinitions>
 
             <ui:NavigationView x:Name="Nav" Grid.Column="0" PaneDisplayMode="Left" OpenPaneLength="248"
+                               IsEnabled="{Binding SetupShown, Converter={StaticResource InverseBool}}"
                                IsBackButtonVisible="Collapsed" IsPaneToggleVisible="True" FrameMargin="0">
                 <!-- Grouped like Windows Settings: what to change, what to remove, what to keep in shape and check. The headings show
                      only in the open pane and when the window is tall enough for them (FitPanes). Navigation goes by page type. -->
@@ -189,6 +190,7 @@
 
             <!-- Details pane: explanation of the selected item. Its left edge can be dragged to make it wider or narrower. -->
             <Border x:Name="DetailsPane" Grid.Column="1" Width="460" Background="{DynamicResource LayerFillColorDefaultBrush}"
+                    IsEnabled="{Binding SetupShown, Converter={StaticResource InverseBool}}"
                     BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="1,0,0,0"
                     Visibility="{Binding SelectedItem, Converter={StaticResource NullToVisibility}}">
                 <DockPanel Margin="24,16,8,0">

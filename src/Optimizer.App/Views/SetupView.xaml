@@ -27,8 +27,11 @@
                 </CheckBox>
             </ui:Card>
             <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
-                <ui:Button Appearance="Primary" Content="{l:Tr Setup_Install}" Command="{Binding SetupInstallCommand}" MinWidth="120" Margin="0,0,8,0" />
+                <ui:Button x:Name="InstallButton" Appearance="Primary" Content="{l:Tr Setup_Install}" Command="{Binding SetupInstallCommand}" MinWidth="120" Margin="0,0,8,0" />
                 <ui:Button Content="{l:Tr Setup_RunHere}" Command="{Binding SetupRunHereCommand}" MinWidth="120" />
+                <!-- Install copies about 70 MB and checks the signature: a few seconds -->
+                <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 Visibility="{Binding SetupBusy, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

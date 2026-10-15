@@ -88,6 +88,8 @@ public static class Program
             instance = SingleInstance.TryAcquire(SingleInstance.WaitsForOther(args) ? SingleInstance.UpdateWait : TimeSpan.Zero, out var heldByOther);
             if (heldByOther)
             {
+                // Windows' Uninstall button while Tunero is open: that window's Settings > Uninstall does it.
+                if (SingleInstance.IsUninstall(args)) MessageBoxW(IntPtr.Zero, Text("Uninstall_CloseFirst"), "Tunero", 0x40 /* MB_ICONINFORMATION */);
                 if (SingleInstance.ShowOther())
                 {
                     Log.Info("app", "already open in this session: showed that window");

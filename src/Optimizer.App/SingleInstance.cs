@@ -25,7 +25,12 @@ public static class SingleInstance
     /// A start takes part when it has no arguments, or only <see cref="AfterUpdate"/>, or only the setup's
     /// <see cref="Services.InstallService.InstalledFrom"/> and its path.
     /// </summary>
-    public static bool Applies(IReadOnlyList<string> args) => args.Count == 0 || WaitsForOther(args);
+    public static bool Applies(IReadOnlyList<string> args) => args.Count == 0 || WaitsForOther(args) || IsUninstall(args);
+
+    /// <summary>Uninstall from Windows' Installed apps: never beside an open window, which would keep running after it.</summary>
+    public static bool IsUninstall(IReadOnlyList<string> args) => args.Count == 1 && args[0].Equals(Uninstall, StringComparison.OrdinalIgnoreCase);
+
+    public const string Uninstall = "--uninstall";
 
     /// <summary>The start comes from a closing copy (an update, the setup): it waits for that copy to let go of the lock.</summary>
     public static bool WaitsForOther(IReadOnlyList<string> args) =>

@@ -26,10 +26,15 @@ public static class AppInstall
         "CN=Open Source Developer Joshua Zürn, O=Open Source Developer, L=Neudenau, S=Baden-Württemberg, C=DE",
     ];
 
-    /// <summary>C:\Program Files\Tunero (the 64-bit Program Files folder).</summary>
-    public static string DefaultFolder => Path.Combine(
-        Environment.GetEnvironmentVariable("ProgramW6432") is { Length: > 0 } programFiles ? programFiles : Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-        "Tunero");
+    /// <summary>
+    /// C:\Program Files\Tunero. From the system's known folder, not from %ProgramW6432%, which the signed-in user can set
+    /// (the app is x64, so this is the 64-bit Program Files).
+    /// </summary>
+    public static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tunero");
+
+    /// <summary>The installed exe is newer than the running one: installing would replace it with an older version.</summary>
+    public static bool IsDowngrade(string? installedVersion, string runningVersion) =>
+        Version.TryParse(installedVersion, out var installed) && Version.TryParse(runningVersion, out var running) && installed > running;
 
     /// <summary>
     /// The setup screen shows for the published exe, run elevated from a plain start, signed by Tunero's publisher, not a
@@ -119,13 +124,16 @@ public static class AppInstall
         var createdFolder = false;
         var step = InstallStep.Folder;
         var replaced = false;
+        var placed = false;
         try
         {
-            // An existing folder may hold only an earlier install: a DLL put next to the exe would be loaded by it.
+            // An existing folder may hold only an earlier install (and what an interrupted install or update left): a DLL put
+            // next to the exe would be loaded by it.
             if (Directory.Exists(folder))
             {
+                string[] own = [ExeName, ExeName + ".old", ExeName + ".new"];
                 var others = Directory.EnumerateFileSystemEntries(folder).Select(Path.GetFileName)
-                    .Where(name => !string.Equals(name, ExeName, StringComparison.OrdinalIgnoreCase) && !string.Equals(name, ExeName + ".old", StringComparison.OrdinalIgnoreCase));
+                    .Where(name => !own.Contains(name, StringComparer.OrdinalIgnoreCase));
                 if (others.Any()) return Fail(InstallStep.Folder, $"{folder} holds other files");
             }
             else
@@ -136,6 +144,7 @@ public static class AppInstall
             if (!request.FolderIsAdminOnly(folder)) return Fail(InstallStep.Folder, $"{folder} can be changed by users");
 
             step = InstallStep.Copy;
+            if (File.Exists(copy)) SafeDelete.DeleteFile(copy);
             using (var source = new FileStream(request.RunningExe, FileMode.Open, FileAccess.Read, FileShare.Read))
             using (var target = SafeDelete.CreateNew(copy))
             {
@@ -143,6 +152,9 @@ public static class AppInstall
             }
 
             step = InstallStep.Check;
+            // The file's own ACL too: an inherit-only entry on the folder (which the folder check skips) can give users
+            // write access to new files in it.
+            if (!request.CopyIsAdminOnly(copy)) return Fail(InstallStep.Check, "users can change the copy");
             if (!request.Verify(copy)) return Fail(InstallStep.Check, "the copy is not signed by Tunero's publisher");
             if (request.FileVersion(copy) != request.Version) return Fail(InstallStep.Check, $"the copy is not version {request.Version}");
 
@@ -153,10 +165,12 @@ public static class AppInstall
                 replaced = true;
             }
             File.Move(copy, exe);
+            placed = true;
 
             step = InstallStep.Entry;
             WriteEntry(registry, exe, request.Version, new FileInfo(exe).Length / 1024);
-            if (replaced) TryDelete(previous);
+            // The earlier exe stays as .old until the installed copy has started (Undo puts it back; the installed copy's
+            // start removes it, as after a self-update).
             return new InstallResult(exe, null, null);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
@@ -167,6 +181,7 @@ public static class AppInstall
         InstallResult Fail(InstallStep failed, string error)
         {
             TryDelete(copy);
+            if (placed && !replaced) TryDelete(exe);
             if (replaced)
             {
                 TryDelete(exe);
@@ -179,7 +194,8 @@ public static class AppInstall
                     Logging.Log.Error("install", $"the earlier installed exe could not be put back, it is {previous}", ex);
                 }
             }
-            if (failed == InstallStep.Entry) TryRemoveEntry(registry);
+            // An earlier install keeps its entry; a fresh one leaves none behind.
+            if (failed == InstallStep.Entry && !replaced) TryRemoveEntry(registry);
             if (createdFolder) TryDeleteFolder(folder);
             return new InstallResult(null, failed, error);
         }
@@ -189,20 +205,29 @@ public static class AppInstall
     /// After the installed copy has started: deletes the downloaded exe it came from, but only when that is still the same
     /// file (same SHA-256 as the installed exe, no link in its path). True when it is gone; false when it stays.
     /// </summary>
+    /// <remarks>The downloaded copy's own process may hold its exe for a moment after it ended: tried for up to five seconds.</remarks>
     public static bool DeleteOldCopy(string oldExe, string installedExe)
     {
-        try
+        if (string.Equals(Path.GetFullPath(oldExe), Path.GetFullPath(installedExe), StringComparison.OrdinalIgnoreCase)) return false;
+        for (var attempt = 1; ; attempt++)
         {
-            if (string.Equals(Path.GetFullPath(oldExe), Path.GetFullPath(installedExe), StringComparison.OrdinalIgnoreCase)) return false;
-            if (!File.Exists(oldExe)) return true;
-            if (!SafeDelete.HasNoLinks(oldExe) || !SameContent(oldExe, installedExe)) return false;
-            SafeDelete.DeleteFile(oldExe);
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Logging.Log.Warn("install", $"the downloaded copy {oldExe} was not removed: {ex.Message}");
-            return false;
+            try
+            {
+                if (!File.Exists(oldExe)) return true;
+                if (!SafeDelete.HasNoLinks(oldExe) || !SameContent(oldExe, installedExe)) return false;
+                SafeDelete.DeleteFile(oldExe);
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (attempt < 20)
+                {
+                    Thread.Sleep(250);
+                    continue;
+                }
+                Logging.Log.Warn("install", $"the downloaded copy {oldExe} was not removed: {ex.Message}");
+                return false;
+            }
         }
     }
 
@@ -215,11 +240,25 @@ public static class AppInstall
     }
 
     /// <summary>
-    /// Undoes an install whose later steps failed in the app (the Start menu entry, starting the installed exe): removes
-    /// the entry, the exe and the folder when it is empty then.
+    /// Undoes an install whose later steps failed in the app (the Start menu entry, starting the installed exe). An earlier
+    /// install (its exe kept as .old) is put back with its entry; otherwise the entry, the exe and the then empty folder go.
     /// </summary>
     public static void Undo(string installedExe, IRegistryRoots registry)
     {
+        var previous = installedExe + ".old";
+        if (File.Exists(previous))
+        {
+            TryDelete(installedExe);
+            try
+            {
+                File.Move(previous, installedExe);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Logging.Log.Error("install", $"the earlier installed exe could not be put back, it is {previous}", ex);
+            }
+        }
         TryRemoveEntry(registry);
         TryDelete(installedExe);
         TryDeleteFolder(Path.GetDirectoryName(installedExe)!);
@@ -266,8 +305,9 @@ public static class AppInstall
 /// <param name="Verify">The copy is signed by Tunero's publisher (<see cref="AppInstall.IsTrustedFile"/>).</param>
 /// <param name="FileVersion">The copy's product version.</param>
 /// <param name="FolderIsAdminOnly">Only administrators can change the folder (<see cref="TrustedPath.IsAdminOnlyWritableFolder"/>).</param>
+/// <param name="CopyIsAdminOnly">Only administrators can change the copied file and its folder (<see cref="TrustedPath.IsAdminOnlyBelowSharedFolders"/>).</param>
 public sealed record InstallRequest(string RunningExe, string Folder, string Version, Func<string, bool> Verify, Func<string, string?> FileVersion,
-    Func<string, bool> FolderIsAdminOnly);
+    Func<string, bool> FolderIsAdminOnly, Func<string, bool> CopyIsAdminOnly);
 
 public enum InstallStep { Folder, Copy, Check, Entry }
 

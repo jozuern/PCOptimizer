@@ -1498,4 +1498,8 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Settings_Install" xml:space="preserve"><value>In Programme installieren</value></data>
   <data name="Settings_InstallHint" xml:space="preserve"><value>Kopiert Tunero in den Ordner Programme und fügt es dem Startmenü und Installierte Apps hinzu. Danach ist die Aufgabe zum erneuten Anwenden verfügbar.</value></data>
   <data name="Settings_InstallButton" xml:space="preserve"><value>Einrichten</value></data>
+  <data name="Setup_Busy" xml:space="preserve"><value>Warte, bis die laufende Änderung, der Scan oder das Update fertig ist, und installiere dann.</value></data>
+  <data name="Setup_StepStartMenu" xml:space="preserve"><value>Eintrag im Startmenü</value></data>
+  <data name="Uninstall_CloseFirst" xml:space="preserve"><value>Tunero ist geöffnet. Deinstalliere es dort: Einstellungen &gt; Deinstallieren.</value></data>
+  <data name="Reapply_UserFolderManual" xml:space="preserve"><value>Verfügbar, wenn Tunero in einem Ordner liegt, den nur Administratoren ändern können (Programme oder winget bzw. Chocolatey für alle Benutzer): Die Aufgabe startet es ohne Nachfrage mit Administratorrechten.</value></data>
 </root>

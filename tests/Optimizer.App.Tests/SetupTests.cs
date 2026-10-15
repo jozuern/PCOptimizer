@@ -9,8 +9,11 @@ namespace Optimizer.App.Tests;
 /// The first start's setup (Install into Program Files, Start menu entry, Run from here) without the window: the install
 /// steps, the Start menu and the launch are recorded, nothing changes on this PC.
 /// </summary>
-public sealed class SetupTests
+[Collection(nameof(ChangeGateCollection))]
+public sealed class SetupTests : IDisposable
 {
+    public void Dispose() => ChangeGate.Instance.Busy = false;
+
     private const string Running = @"C:\Users\Test\Downloads\Tunero.exe";
     private const string Installed = @"C:\Program Files\Tunero\Tunero.exe";
 
@@ -58,9 +61,9 @@ public sealed class SetupTests
     }
 
     [Fact]
-    public void OnlyTheStartMenuAddsTheEntryForThisExe()
+    public async Task OnlyTheStartMenuAddsTheEntryForThisExe()
     {
-        Assert.False(Service().Install(toProgramFiles: false, startMenu: true));
+        Assert.False(await Service().InstallAsync(toProgramFiles: false, startMenu: true));
         Assert.Equal([Running], _startMenu);
         Assert.Equal(0, _installs);
         Assert.Empty(_started);
@@ -68,17 +71,17 @@ public sealed class SetupTests
     }
 
     [Fact]
-    public void NeitherBoxIsRunFromHere()
+    public async Task NeitherBoxIsRunFromHere()
     {
-        Assert.False(Service().Install(toProgramFiles: false, startMenu: false));
+        Assert.False(await Service().InstallAsync(toProgramFiles: false, startMenu: false));
         Assert.Empty(_startMenu);
         Assert.True(_settings.SetupDeclined);
     }
 
     [Fact]
-    public void InstallStartsTheInstalledCopyAndCloses()
+    public async Task InstallStartsTheInstalledCopyAndCloses()
     {
-        Assert.True(Service().Install(toProgramFiles: true, startMenu: true));
+        Assert.True(await Service().InstallAsync(toProgramFiles: true, startMenu: true));
         Assert.Equal([Installed], _startMenu);
         var start = Assert.Single(_started);
         Assert.Equal(Installed, start.FileName);
@@ -88,9 +91,9 @@ public sealed class SetupTests
     }
 
     [Fact]
-    public void AFailedInstallKeepsRunningFromHere()
+    public async Task AFailedInstallKeepsRunningFromHere()
     {
-        Assert.False(Service(new InstallResult(null, InstallStep.Check, "not signed")).Install(toProgramFiles: true, startMenu: true));
+        Assert.False(await Service(new InstallResult(null, InstallStep.Check, "not signed")).InstallAsync(toProgramFiles: true, startMenu: true));
         Assert.Empty(_startMenu);
         Assert.Empty(_started);
         Assert.False(_shell.ShutDown);
@@ -101,19 +104,30 @@ public sealed class SetupTests
     }
 
     [Fact]
-    public void AFailedStartMenuEntryUndoesTheInstall()
+    public async Task AFailedStartMenuEntryUndoesTheInstall()
     {
-        Assert.False(Service(startMenuFails: true).Install(toProgramFiles: true, startMenu: true));
+        Assert.False(await Service(startMenuFails: true).InstallAsync(toProgramFiles: true, startMenu: true));
         Assert.Equal([Installed], _undone);
         Assert.Empty(_started);
         Assert.False(_shell.ShutDown);
-        Assert.Single(_shell.Results);
+        Assert.Contains(Loc.Instance["Setup_StepStartMenu"], Assert.Single(_shell.Results).Text);
+    }
+
+    /// <summary>A change, scan or update that runs would be cut off when the app closes for the installed copy: Install waits.</summary>
+    [Fact]
+    public async Task InstallWaitsForARunningChange()
+    {
+        ChangeGate.Instance.Busy = true;
+        Assert.False(await Service().InstallAsync(toProgramFiles: true, startMenu: true));
+        Assert.Equal(0, _installs);
+        Assert.False(_shell.ShutDown);
+        Assert.Equal(Loc.Instance["Setup_Busy"], Assert.Single(_shell.Results).Text);
     }
 
     [Fact]
-    public void AFailedStartOfTheInstalledCopyUndoesTheInstall()
+    public async Task AFailedStartOfTheInstalledCopyUndoesTheInstall()
     {
-        Assert.False(Service(launchFails: true).Install(toProgramFiles: true, startMenu: false));
+        Assert.False(await Service(launchFails: true).InstallAsync(toProgramFiles: true, startMenu: false));
         Assert.Equal([Installed], _undone);
         Assert.False(_shell.ShutDown);
     }

@@ -20,9 +20,13 @@ public sealed class SingleInstanceTests
         Assert.False(SingleInstance.WaitsForOther([]));
     }
 
-    /// <summary>Uninstall from Windows Settings opens its own window beside an open one: the cleanup waits for both to end.</summary>
+    /// <summary>Uninstall from Windows Settings never runs beside an open window: it would remove the entry while that one keeps running.</summary>
     [Fact]
-    public void UninstallFromWindowsSettingsIsNotAPlainStart() => Assert.False(SingleInstance.Applies(["--uninstall"]));
+    public void UninstallFromWindowsSettingsKeepsToOneWindow()
+    {
+        Assert.True(SingleInstance.Applies(["--uninstall"]));
+        Assert.False(SingleInstance.WaitsForOther(["--uninstall"]));
+    }
 
     /// <summary>Developer switches, command line runs and the reapply task neither block an open window nor wait for it.</summary>
     [Theory]

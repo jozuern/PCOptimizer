@@ -1498,4 +1498,8 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Settings_Install" xml:space="preserve"><value>Install in Program Files</value></data>
   <data name="Settings_InstallHint" xml:space="preserve"><value>Copies Tunero to Program Files and adds it to the Start menu and to Installed apps. Then the reapply task is available.</value></data>
   <data name="Settings_InstallButton" xml:space="preserve"><value>Set up</value></data>
+  <data name="Setup_Busy" xml:space="preserve"><value>Wait until the running change, scan or update has finished, then install.</value></data>
+  <data name="Setup_StepStartMenu" xml:space="preserve"><value>the Start menu entry</value></data>
+  <data name="Uninstall_CloseFirst" xml:space="preserve"><value>Tunero is open. Uninstall it there: Settings &gt; Uninstall.</value></data>
+  <data name="Reapply_UserFolderManual" xml:space="preserve"><value>Available when Tunero is in a folder only administrators can change (Program Files, or winget or Chocolatey for all users): the task starts it with administrator rights without asking.</value></data>
 </root>
