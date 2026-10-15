@@ -97,6 +97,7 @@ const managers = [
           </span>
         )}
       </div>
+      <p class="started" id="started" role="status" hidden>{t.hero.started} <a href={`#${faqSmartScreen}`}>{t.hero.startedLink}</a></p>
       <p class="fine">{t.hero.facts(version)} <a href={`${repo}/blob/main/CHANGELOG.md`}>{t.hero.changes}</a></p>
       <p class="fine">{t.hero.preview} <a href={`#${faqSmartScreen}`}>{t.hero.previewLink}</a></p>
     </div>
@@ -304,7 +305,14 @@ const managers = [
 </div>
 
 <script>
-  // The only script on the site: copy the winget command. The button stays hidden without script or clipboard access.
+  // A click on a download link (the button or the header) shows where to read about the SmartScreen warning, since
+  // nobody scrolls down to the questions on their own.
+  const started = document.getElementById('started')!;
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href$="/Tunero.exe"]')) {
+    link.addEventListener('click', () => (started.hidden = false));
+  }
+
+  // Copy the winget command. The button stays hidden without script or clipboard access.
   for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-copy]')) {
     if (!navigator.clipboard) continue;
     button.hidden = false;

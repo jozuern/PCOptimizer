@@ -1,10 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.2.3
+
+Tunero.exe is now signed.
 
 ### Changed
 
-- **Code signing:** Tunero has a Certum code signing certificate for open source developers, which is being activated; releases after that are signed, so Windows names the publisher and Smart App Control lets the exe run. The README and the website say so. SmartScreen may still warn at first.
+- **Code signing:** Tunero.exe is signed with a Certum code signing certificate for open source developers, so Windows names the publisher, Open Source Developer Joshua Zürn, and Smart App Control lets the exe run. SmartScreen may still warn at first, until enough people have run it.
+- **Website:** the answers on SmartScreen and Smart App Control match the signed releases and current Windows 11, where Smart App Control can be turned on again in Windows Security. The header links to the questions, and a click on Download points to what to do when Windows warns.
 
 ## 1.2.0
 

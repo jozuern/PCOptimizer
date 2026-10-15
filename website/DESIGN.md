@@ -20,7 +20,7 @@ writes, which popular tweaks are left out. One element is loud, the rating board
 - The positioning: built to be the only PC optimizer you need. Say it as the aim ("built to be"), and back it with what
   the app holds.
 - Numbers come from the repository at build time (`src/lib/data.ts`): never type a count by hand.
-- Admit limits on the page (preview status, unsigned exe, what it leaves out).
+- Admit limits on the page (preview status, SmartScreen warnings, what it leaves out).
 - Install commands only for package managers that already offer the app (`packages` in `src/lib/data.ts`).
 
 ## Type

@@ -8,7 +8,7 @@ const de: Copy = {
     description:
       'PC-Optimierer für Windows 11, gebaut, damit du nur noch einen brauchst. Tunero findet, was deine Spiele FPS kostet, erklärt jede Änderung mit Quellen und kann jede Einstellung rückgängig machen, die es ändert. Kostenlos und quelloffen.',
   },
-  nav: { download: 'Download', source: 'Quellcode', support: 'Unterstützen', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
+  nav: { download: 'Download', source: 'Quellcode', support: 'Unterstützen', questions: 'Fragen', other: 'English', otherHref: '/', skip: 'Zum Inhalt' },
   hero: {
     title: 'Gebaut, damit du nur noch einen PC-Optimierer brauchst.',
     lead: 'Tunero sucht auf deinem PC, was deine Spiele FPS kostet, und behebt, was es kann. Es ist gebaut, um die Tweak-Tools, Debloat-Skripte, Autostart-Manager und Aufräumprogramme zu ersetzen, die du sonst zusammensuchst. Jede Änderung wird mit Quellen erklärt, und jede Einstellung, die es ändert, wird vorher gesichert und lässt sich rückgängig machen.',
@@ -18,8 +18,10 @@ const de: Copy = {
     copied: 'Kopiert',
     facts: (v) => `Version ${v} für Windows 11 25H2 oder neuer, x64. Auf Deutsch und Englisch. Freie Software unter der GPL-3.0-only.`,
     changes: 'Was neu ist',
-    preview: 'Die exe ist noch nicht signiert, deshalb kann Windows SmartScreen beim ersten Start warnen.',
+    preview: 'Tunero.exe ist ab Version 1.2.3 signiert. Windows SmartScreen kann beim ersten Start trotzdem warnen.',
     previewLink: 'Warum',
+    started: 'Der Download hat begonnen. Windows warnt beim Start?',
+    startedLink: 'Hier steht, was zu tun ist',
     shotCaption: 'Die Übersicht nach einem Scan, auf einem Test-PC in einer virtuellen Maschine.',
     shotAlt:
       'Die Übersicht von Tunero: das Urteil des Scans, die Eignung in einer Zeile, die Ergebnisse mit ihrer Wirkung und der Anfang der empfohlenen Änderungen.',
@@ -191,12 +193,12 @@ const de: Copy = {
       {
         id: 'smartscreen',
         q: 'Warum warnt Windows beim Start?',
-        a: 'Die exe ist noch nicht signiert, deshalb kennt SmartScreen sie nicht. Klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“ und vergleiche den SHA-256 des Downloads mit der .sha256-Datei auf der Release-Seite. Tunero hat ein Zertifikat zum Signieren für Open-Source-Entwickler, das gerade aktiviert wird; die Releases danach sind signiert. Auch bei einem signierten Release kann SmartScreen warnen, bis genug Leute es gestartet haben, die zwei Klicks können also eine Weile noch nötig sein.',
+        a: 'SmartScreen warnt vor Programmen, die noch nicht genug Leute gestartet haben, ob signiert oder nicht. Ab 1.2.3 ist Tunero.exe signiert: Unter „Weitere Informationen“ steht dann der Herausgeber, Open Source Developer Joshua Zürn, statt „Unbekannter Herausgeber“, und spätere Releases mit demselben Zertifikat können auf dessen Ruf aufbauen. Solange es warnt, klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Um den Download zu prüfen, vergleiche seinen SHA-256 mit der .sha256-Datei auf der Release-Seite oder sieh unter Eigenschaften > Digitale Signaturen nach.',
       },
       {
         id: 'smartappcontrol',
         q: 'Was, wenn Smart App Control sie blockiert?',
-        a: 'Smart App Control ist strenger als SmartScreen: Es blockiert unsignierte Apps, die Microsoft noch nicht kennt, und seine Meldung hat keinen Knopf „Trotzdem ausführen“. Um Tunero zu starten, schalte es unter Windows-Sicherheit > App- & Browsersteuerung > Einstellungen für Smart App Control aus. Über die Windows-Einstellungen lässt es sich danach nicht wieder einschalten, entscheide das also bewusst. Signierte Apps einer vertrauenswürdigen Zertifizierungsstelle lässt Smart App Control starten, außer Microsoft stuft sie als unsicher ein; das ändert sich also, sobald die Releases signiert sind (siehe die Frage oben).',
+        a: 'Smart App Control ist strenger als SmartScreen: Es blockiert unsignierte Apps, die Microsoft noch nicht kennt, und seine Meldung hat keinen Knopf „Trotzdem ausführen“. Apps mit gültiger Signatur lässt es starten, außer Microsoft stuft sie als unsicher ein, Tunero ab 1.2.3 sollte es also nicht aufhalten; hat es eine ältere Version blockiert, lade das aktuelle Release. Du kannst es auch unter Windows-Sicherheit > App- & Browsersteuerung > Einstellungen für Smart App Control ausschalten; mit aktuellen Windows-11-Updates lässt es sich dort auch wieder einschalten.',
       },
       {
         id: 'admin',

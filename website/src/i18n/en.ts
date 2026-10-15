@@ -8,7 +8,7 @@ const en: Copy = {
     description:
       'PC optimizer for Windows 11, built to be the only one you need. Tunero finds what costs your games frame rate, explains every change with sources and can undo every setting it changes. Free and open source.',
   },
-  nav: { download: 'Download', source: 'Source code', support: 'Support', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
+  nav: { download: 'Download', source: 'Source code', support: 'Support', questions: 'Questions', other: 'Deutsch', otherHref: '/de/', skip: 'Skip to content' },
   hero: {
     title: 'Built to be the only PC optimizer you need.',
     lead: 'Tunero scans your PC for what costs your games frame rate and fixes what it can. It is built to replace the tweak tools, debloat scripts, startup managers and cleaners you would otherwise collect. Every change is explained with sources, and every setting it changes is backed up first and can be undone.',
@@ -18,8 +18,10 @@ const en: Copy = {
     copied: 'Copied',
     facts: (v) => `Version ${v} for Windows 11 25H2 or newer, x64. In English and German. Free software under the GPL-3.0-only.`,
     changes: 'What changed',
-    preview: 'The exe is not code signed yet, so Windows SmartScreen may warn on the first start.',
+    preview: 'Tunero.exe is code signed from version 1.2.3 on. Windows SmartScreen may still warn on the first start.',
     previewLink: 'Why',
+    started: 'The download has started. Windows warns when you start it?',
+    startedLink: 'Here is what to do',
     shotCaption: 'The Overview after a scan, on a test PC in a virtual machine.',
     shotAlt:
       'The Overview page of Tunero: the verdict of the scan, the readiness score in one line, the findings with their impact rating, and the start of the recommended changes.',
@@ -191,12 +193,12 @@ const en: Copy = {
       {
         id: 'smartscreen',
         q: 'Why does Windows warn when I start it?',
-        a: 'The exe is not code signed yet, so SmartScreen does not know it. Click More info, then Run anyway, and compare the SHA-256 of the download with the .sha256 file on the release page. Tunero has a code signing certificate for open source developers, which is being activated; releases after that are signed. SmartScreen can still warn about a signed release until enough people have run it, so the same two clicks may still be needed for a while.',
+        a: 'SmartScreen warns about programs that not enough people have run yet, signed or not. From 1.2.3 on Tunero.exe is signed, so More info names the publisher, Open Source Developer Joshua Zürn, instead of Unknown publisher, and later releases signed with the same certificate can build on its reputation. While it warns, click More info, then Run anyway. To check the download, compare its SHA-256 with the .sha256 file on the release page, or look at Properties > Digital Signatures.',
       },
       {
         id: 'smartappcontrol',
         q: 'What if Smart App Control blocks it?',
-        a: 'Smart App Control is stricter than SmartScreen: it blocks unsigned apps that Microsoft does not know yet, and its message has no Run anyway button. To start Tunero, turn it off in Windows Security > App & browser control > Smart App Control settings. Windows Settings cannot turn it back on afterwards, so decide that knowingly. Smart App Control lets signed apps from a trusted certificate authority run unless Microsoft rates them unsafe, so this changes once releases are signed (see the question above).',
+        a: 'Smart App Control is stricter than SmartScreen: it blocks unsigned apps that Microsoft does not know yet, and its message has no Run anyway button. It lets apps with a valid signature run unless Microsoft rates them unsafe, so it should not stop Tunero 1.2.3 or newer; if it blocked an older version, get the current release. You can also turn it off in Windows Security > App & browser control > Smart App Control settings; with current Windows 11 updates you can turn it on again there.',
       },
       {
         id: 'admin',

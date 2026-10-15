@@ -10,7 +10,7 @@ export interface Counts {
 export interface Copy {
   lang: Lang;
   meta: { title: string; description: string };
-  nav: { download: string; source: string; support: string; other: string; otherHref: string; skip: string };
+  nav: { download: string; source: string; support: string; questions: string; other: string; otherHref: string; skip: string };
   hero: {
     title: string;
     lead: string;
@@ -23,6 +23,9 @@ export interface Copy {
     changes: string;
     preview: string;
     previewLink: string;
+    /** Shown under the button once a download link was clicked, with a link to the SmartScreen answer. */
+    started: string;
+    startedLink: string;
     shotCaption: string;
     shotAlt: string;
   };
