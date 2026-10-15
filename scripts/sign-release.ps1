@@ -31,15 +31,23 @@ function Invoke-Native([string]$what) {
     if ($LASTEXITCODE -ne 0) { throw "$what failed (exit code $LASTEXITCODE)." }
 }
 
+# gh writes UTF-8. PowerShell reads a program's output with the console's code page (850 on a German Windows), which
+# turns the "ü" in the certificate's subject into "Ã¼", and then no certificate matches.
+function Read-Gh {
+    $saved = [Console]::OutputEncoding
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    try { gh @args } finally { [Console]::OutputEncoding = $saved }
+}
+
 # The draft: still a draft, with the unsigned build and nothing signed yet.
-$release = gh release view $tag --repo $Repository --json isDraft,assets | ConvertFrom-Json
+$release = Read-Gh release view $tag --repo $Repository --json "isDraft,assets" | ConvertFrom-Json
 Invoke-Native "gh release view $tag"
 if (-not $release.isDraft) { throw "$tag is published already: a published release cannot be changed (immutable releases)." }
 $names = @($release.assets.name)
 if ($names -notcontains "Tunero-unsigned.exe") { throw "The draft $tag has no Tunero-unsigned.exe. Is CODE_SIGNING_SUBJECT set, and did the release workflow finish?" }
 
 # The publisher the release workflow expects: the repository variable that switches signing on.
-$expected = (gh variable get CODE_SIGNING_SUBJECT --repo $Repository)
+$expected = (Read-Gh variable get CODE_SIGNING_SUBJECT --repo $Repository)
 Invoke-Native "gh variable get CODE_SIGNING_SUBJECT"
 $expected = "$expected".Trim()
 if (-not $expected) { throw "The repository variable CODE_SIGNING_SUBJECT is empty." }
