@@ -105,4 +105,142 @@ public static class AppInstall
         using var key = registry.Open(Hive.Machine, KeyPath, writable: false);
         return key?.GetValue("DisplayIcon") is string exe && File.Exists(exe) ? exe : null;
     }
+
+    /// <summary>
+    /// Copies the running exe into <see cref="InstallRequest.Folder"/>, checks the copy there (where it cannot change any
+    /// more) and writes the Installed apps entry. A failed step undoes the earlier ones: an older installed exe stays.
+    /// </summary>
+    public static InstallResult Install(InstallRequest request, IRegistryRoots registry)
+    {
+        var folder = Path.GetFullPath(request.Folder);
+        var exe = Path.Combine(folder, ExeName);
+        var copy = exe + ".new";
+        var previous = exe + ".old";
+        var createdFolder = false;
+        var step = InstallStep.Folder;
+        var replaced = false;
+        try
+        {
+            // An existing folder may hold only an earlier install: a DLL put next to the exe would be loaded by it.
+            if (Directory.Exists(folder))
+            {
+                var others = Directory.EnumerateFileSystemEntries(folder).Select(Path.GetFileName)
+                    .Where(name => !string.Equals(name, ExeName, StringComparison.OrdinalIgnoreCase) && !string.Equals(name, ExeName + ".old", StringComparison.OrdinalIgnoreCase));
+                if (others.Any()) return Fail(InstallStep.Folder, $"{folder} holds other files");
+            }
+            else
+            {
+                Directory.CreateDirectory(folder);
+                createdFolder = true;
+            }
+            if (!request.FolderIsAdminOnly(folder)) return Fail(InstallStep.Folder, $"{folder} can be changed by users");
+
+            step = InstallStep.Copy;
+            using (var source = new FileStream(request.RunningExe, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var target = SafeDelete.CreateNew(copy))
+            {
+                source.CopyTo(target);
+            }
+
+            step = InstallStep.Check;
+            if (!request.Verify(copy)) return Fail(InstallStep.Check, "the copy is not signed by Tunero's publisher");
+            if (request.FileVersion(copy) != request.Version) return Fail(InstallStep.Check, $"the copy is not version {request.Version}");
+
+            if (File.Exists(exe))
+            {
+                if (File.Exists(previous)) SafeDelete.DeleteFile(previous);
+                File.Move(exe, previous);
+                replaced = true;
+            }
+            File.Move(copy, exe);
+
+            step = InstallStep.Entry;
+            WriteEntry(registry, exe, request.Version, new FileInfo(exe).Length / 1024);
+            if (replaced) TryDelete(previous);
+            return new InstallResult(exe, null, null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return Fail(step, ex.Message);
+        }
+
+        InstallResult Fail(InstallStep failed, string error)
+        {
+            TryDelete(copy);
+            if (replaced)
+            {
+                TryDelete(exe);
+                try
+                {
+                    File.Move(previous, exe);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Logging.Log.Error("install", $"the earlier installed exe could not be put back, it is {previous}", ex);
+                }
+            }
+            if (failed == InstallStep.Entry) TryRemoveEntry(registry);
+            if (createdFolder) TryDeleteFolder(folder);
+            return new InstallResult(null, failed, error);
+        }
+    }
+
+    /// <summary>
+    /// Undoes an install whose later steps failed in the app (the Start menu entry, starting the installed exe): removes
+    /// the entry, the exe and the folder when it is empty then.
+    /// </summary>
+    public static void Undo(string installedExe, IRegistryRoots registry)
+    {
+        TryRemoveEntry(registry);
+        TryDelete(installedExe);
+        TryDeleteFolder(Path.GetDirectoryName(installedExe)!);
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) SafeDelete.DeleteFile(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logging.Log.Warn("install", $"{path} not removed: {ex.Message}");
+        }
+    }
+
+    private static void TryDeleteFolder(string folder)
+    {
+        try
+        {
+            if (Directory.Exists(folder) && !Directory.EnumerateFileSystemEntries(folder).Any()) SafeDelete.DeleteEmptyDirectory(folder);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logging.Log.Warn("install", $"{folder} not removed: {ex.Message}");
+        }
+    }
+
+    private static void TryRemoveEntry(IRegistryRoots registry)
+    {
+        try
+        {
+            RemoveEntry(registry);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            Logging.Log.Warn("install", $"Installed apps entry not removed: {ex.Message}");
+        }
+    }
 }
+
+/// <summary>What <see cref="AppInstall.Install"/> copies where, and the checks it runs on the copy (faked in tests).</summary>
+/// <param name="Verify">The copy is signed by Tunero's publisher (<see cref="AppInstall.IsTrustedFile"/>).</param>
+/// <param name="FileVersion">The copy's product version.</param>
+/// <param name="FolderIsAdminOnly">Only administrators can change the folder (<see cref="TrustedPath.IsAdminOnlyWritableFolder"/>).</param>
+public sealed record InstallRequest(string RunningExe, string Folder, string Version, Func<string, bool> Verify, Func<string, string?> FileVersion,
+    Func<string, bool> FolderIsAdminOnly);
+
+public enum InstallStep { Folder, Copy, Check, Entry }
+
+/// <summary>The installed exe, or the step that failed and why.</summary>
+public sealed record InstallResult(string? InstalledExe, InstallStep? FailedAt, string? Error);

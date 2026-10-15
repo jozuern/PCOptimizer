@@ -15,7 +15,11 @@ public sealed class AppInstallTests : IDisposable
 
     private readonly SandboxRegistry _registry = new();
 
-    public void Dispose() => _registry.Dispose();
+    public void Dispose()
+    {
+        _registry.Dispose();
+        Directory.Delete(_temp, recursive: true);
+    }
 
     [Theory]
     [InlineData(true, true, true, false, false, false, true, true)]
@@ -83,6 +87,106 @@ public sealed class AppInstallTests : IDisposable
         {
             File.Delete(exe);
         }
+    }
+
+    // Install steps: a temp folder stands in for Program Files\Tunero, the running exe is a file in another temp folder.
+
+    private readonly string _temp = Directory.CreateTempSubdirectory("tunero-install-").FullName;
+
+    private string Folder => Path.Combine(_temp, "Program Files", "Tunero");
+
+    private string Running()
+    {
+        var downloads = Directory.CreateDirectory(Path.Combine(_temp, "Downloads")).FullName;
+        var exe = Path.Combine(downloads, "Tunero.exe");
+        File.WriteAllBytes(exe, [7, 7, 7, 7]);
+        return exe;
+    }
+
+    private InstallRequest Request(string running, Func<string, bool>? verify = null, string version = "1.3.0", Func<string, bool>? adminOnly = null) =>
+        new(running, Folder, "1.3.0", verify ?? (_ => true), _ => version, adminOnly ?? (_ => true));
+
+    [Fact]
+    public void InstallCopiesChecksAndRegisters()
+    {
+        var running = Running();
+        var result = AppInstall.Install(Request(running), _registry);
+        var installed = Path.Combine(Folder, "Tunero.exe");
+        Assert.Null(result.FailedAt);
+        Assert.Equal(installed, result.InstalledExe);
+        Assert.Equal(File.ReadAllBytes(running), File.ReadAllBytes(installed));
+        Assert.False(File.Exists(installed + ".new"));
+        Assert.Equal(installed, AppInstall.InstalledExe(_registry));
+    }
+
+    [Fact]
+    public void InstallStopsWhenTheCopyIsNotTrusted()
+    {
+        var result = AppInstall.Install(Request(Running(), verify: _ => false), _registry);
+        Assert.Equal(InstallStep.Check, result.FailedAt);
+        Assert.False(Directory.Exists(Folder));
+        Assert.Null(_registry.Open(Hive.Machine, AppInstall.KeyPath, writable: false));
+    }
+
+    [Fact]
+    public void InstallStopsOnAnotherVersion()
+    {
+        var result = AppInstall.Install(Request(Running(), version: "1.2.9"), _registry);
+        Assert.Equal(InstallStep.Check, result.FailedAt);
+        Assert.False(Directory.Exists(Folder));
+    }
+
+    [Fact]
+    public void InstallRefusesAFolderWithOtherFiles()
+    {
+        Directory.CreateDirectory(Folder);
+        var planted = Path.Combine(Folder, "version.dll");
+        File.WriteAllBytes(planted, [1]);
+        var result = AppInstall.Install(Request(Running()), _registry);
+        Assert.Equal(InstallStep.Folder, result.FailedAt);
+        Assert.True(File.Exists(planted));
+        Assert.False(File.Exists(Path.Combine(Folder, "Tunero.exe")));
+    }
+
+    [Fact]
+    public void InstallRefusesAWeakFolder()
+    {
+        var result = AppInstall.Install(Request(Running(), adminOnly: _ => false), _registry);
+        Assert.Equal(InstallStep.Folder, result.FailedAt);
+        Assert.False(Directory.Exists(Folder));
+    }
+
+    [Fact]
+    public void AFailedStepUndoesTheEarlierOnes()
+    {
+        var result = AppInstall.Install(Request(Running()), _registry);
+        AppInstall.Undo(result.InstalledExe!, _registry);
+        Assert.False(Directory.Exists(Folder));
+        Assert.Null(_registry.Open(Hive.Machine, AppInstall.KeyPath, writable: false));
+    }
+
+    [Fact]
+    public void InstallReplacesAnOlderInstalledExe()
+    {
+        Directory.CreateDirectory(Folder);
+        var installed = Path.Combine(Folder, "Tunero.exe");
+        File.WriteAllBytes(installed, [1, 2]);
+        var running = Running();
+        var result = AppInstall.Install(Request(running), _registry);
+        Assert.Null(result.FailedAt);
+        Assert.Equal(File.ReadAllBytes(running), File.ReadAllBytes(installed));
+    }
+
+    [Fact]
+    public void AFailedCheckKeepsTheOlderInstalledExe()
+    {
+        Directory.CreateDirectory(Folder);
+        var installed = Path.Combine(Folder, "Tunero.exe");
+        File.WriteAllBytes(installed, [1, 2]);
+        var result = AppInstall.Install(Request(Running(), verify: _ => false), _registry);
+        Assert.Equal(InstallStep.Check, result.FailedAt);
+        Assert.Equal([1, 2], File.ReadAllBytes(installed));
+        Assert.Equal(["Tunero.exe"], Directory.GetFiles(Folder).Select(Path.GetFileName));
     }
 
     [Fact]
