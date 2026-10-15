@@ -5,6 +5,7 @@
 ### Changed
 
 - **One window:** starting Tunero while it is open brings the open window to the front, restored if minimized, instead of opening a second one. Runs with switches (command line, reapply task) are not affected.
+- **Checking a download:** the README and the website name the code signature first (Properties > Digital Signatures) and the SHA-256 file second. The website's second download button also shows what to do when Windows warns.
 
 ## 1.2.3
 

@@ -176,7 +176,7 @@ const de: Copy = {
     title: 'Hol dir Tunero',
     steps: [
       { name: 'Herunterladen', text: 'Die exe der neuesten Version.' },
-      { name: 'Prüfen', text: 'Vergleiche ihren SHA-256 mit der .sha256-Datei auf der Release-Seite.' },
+      { name: 'Prüfen', text: 'Rechtsklick, Eigenschaften > Digitale Signaturen: Dort steht Open Source Developer Joshua Zürn. Oder vergleiche ihren SHA-256 mit der .sha256-Datei auf der Release-Seite.' },
       { name: 'Starten', text: 'Sie braucht keine Installation. Beim ersten Start bietet sie einen Eintrag im Startmenü an.' },
     ],
     managers: 'Mit einem Paketmanager',
@@ -193,7 +193,7 @@ const de: Copy = {
       {
         id: 'smartscreen',
         q: 'Warum warnt Windows beim Start?',
-        a: 'SmartScreen warnt vor Programmen, die noch nicht genug Leute gestartet haben, ob signiert oder nicht. Ab 1.2.3 ist Tunero.exe signiert: Unter „Weitere Informationen“ steht dann der Herausgeber, Open Source Developer Joshua Zürn, statt „Unbekannter Herausgeber“, und spätere Releases mit demselben Zertifikat können auf dessen Ruf aufbauen. Solange es warnt, klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Um den Download zu prüfen, vergleiche seinen SHA-256 mit der .sha256-Datei auf der Release-Seite oder sieh unter Eigenschaften > Digitale Signaturen nach.',
+        a: 'SmartScreen warnt vor Programmen, die noch nicht genug Leute gestartet haben, ob signiert oder nicht. Ab 1.2.3 ist Tunero.exe signiert: Unter „Weitere Informationen“ steht dann der Herausgeber, Open Source Developer Joshua Zürn, statt „Unbekannter Herausgeber“, und spätere Releases mit demselben Zertifikat können auf dessen Ruf aufbauen. Solange es warnt, klicke auf „Weitere Informationen“ und dann auf „Trotzdem ausführen“. Um den Download zu prüfen, sieh unter Eigenschaften > Digitale Signaturen nach oder vergleiche seinen SHA-256 mit der .sha256-Datei auf der Release-Seite.',
       },
       {
         id: 'smartappcontrol',

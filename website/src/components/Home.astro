@@ -265,6 +265,7 @@ const managers = [
         <li>
           <b>{t.install.steps[0].name}</b><span>{t.install.steps[0].text}</span>
           <a class="button" href={download}>{t.hero.download}{sizeMb && <span class="size">{sizeMb} MB</span>}</a>
+          <p class="started" role="status" hidden>{t.hero.started} <a href={`#${faqSmartScreen}`}>{t.hero.startedLink}</a></p>
         </li>
         <li>
           <b>{t.install.steps[1].name}</b><span>{t.install.steps[1].text}</span>
@@ -305,11 +306,13 @@ const managers = [
 </div>
 
 <script>
-  // A click on a download link (the button or the header) shows where to read about the SmartScreen warning, since
-  // nobody scrolls down to the questions on their own.
+  // A click on a download link shows where to read about the SmartScreen warning, since nobody scrolls down to the
+  // questions on their own: under the button that was clicked, or under the hero's for the header link.
   const started = document.getElementById('started')!;
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href$="/Tunero.exe"]')) {
-    link.addEventListener('click', () => (started.hidden = false));
+    link.addEventListener('click', () => {
+      (link.closest('li, .get')?.querySelector<HTMLElement>('.started') ?? started).hidden = false;
+    });
   }
 
   // Copy the winget command. The button stays hidden without script or clipboard access.

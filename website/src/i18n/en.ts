@@ -176,7 +176,7 @@ const en: Copy = {
     title: 'Get Tunero',
     steps: [
       { name: 'Download', text: 'The exe of the latest release.' },
-      { name: 'Check', text: 'Compare its SHA-256 with the .sha256 file on the release page.' },
+      { name: 'Check', text: 'Right-click it, Properties > Digital Signatures: it names Open Source Developer Joshua Zürn. Or compare its SHA-256 with the .sha256 file on the release page.' },
       { name: 'Start', text: 'It needs no installation. On the first start it offers an entry in the Start menu.' },
     ],
     managers: 'With a package manager',
@@ -193,7 +193,7 @@ const en: Copy = {
       {
         id: 'smartscreen',
         q: 'Why does Windows warn when I start it?',
-        a: 'SmartScreen warns about programs that not enough people have run yet, signed or not. From 1.2.3 on Tunero.exe is signed, so More info names the publisher, Open Source Developer Joshua Zürn, instead of Unknown publisher, and later releases signed with the same certificate can build on its reputation. While it warns, click More info, then Run anyway. To check the download, compare its SHA-256 with the .sha256 file on the release page, or look at Properties > Digital Signatures.',
+        a: 'SmartScreen warns about programs that not enough people have run yet, signed or not. From 1.2.3 on Tunero.exe is signed, so More info names the publisher, Open Source Developer Joshua Zürn, instead of Unknown publisher, and later releases signed with the same certificate can build on its reputation. While it warns, click More info, then Run anyway. To check the download, look at Properties > Digital Signatures, or compare its SHA-256 with the .sha256 file on the release page.',
       },
       {
         id: 'smartappcontrol',
