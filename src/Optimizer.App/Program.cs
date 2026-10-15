@@ -80,13 +80,37 @@ public static class Program
             return Refuse(string.Format(Text("Startup_RuntimeFolderUnsafe"), SingleFileRuntime.ExtractVariable, SingleFileRuntime.RestartedVariable));
         }
 
-        // The embedded catalogs take about 200 ms to read (JSON, and the serializer's first use): read beside WPF's start,
-        // which loads the theme dictionaries meanwhile, instead of after it on the UI thread. A caller that comes first
-        // waits for the same read; an error reaches it as before (the lazy values keep it).
-        Task.Run(Preload);
-        var app = new App();
-        app.InitializeComponent();
-        return app.Run();
+        // One window per session: a second plain start shows the open window and ends. After a self-update the new exe
+        // waits for the old one to close.
+        Mutex? instance = null;
+        if (SingleInstance.Applies(args))
+        {
+            instance = SingleInstance.TryAcquire(args.Length == 1 ? SingleInstance.UpdateWait : TimeSpan.Zero, out var heldByOther);
+            if (heldByOther)
+            {
+                if (SingleInstance.ShowOther())
+                {
+                    Log.Info("app", "already open in this session: showed that window");
+                    return 0;
+                }
+                Log.Info("app", "the single-instance lock is taken but no other copy runs in this session; starting without it");
+            }
+        }
+        try
+        {
+            // The embedded catalogs take about 200 ms to read (JSON, and the serializer's first use): read beside WPF's
+            // start, which loads the theme dictionaries meanwhile, instead of after it on the UI thread. A caller that
+            // comes first waits for the same read; an error reaches it as before (the lazy values keep it).
+            Task.Run(Preload);
+            var app = new App();
+            app.InitializeComponent();
+            return app.Run();
+        }
+        finally
+        {
+            instance?.ReleaseMutex();
+            instance?.Dispose();
+        }
     }
 
     /// <summary>The first process's start (UTC) when this one is its restart for the protected runtime folder; for --perf.</summary>
@@ -129,6 +153,7 @@ public static class Program
             using var child = Process.Start(start);
             if (child is null) return null;
             hold.Dispose();
+            SingleInstance.PassForeground(child.Id);
             child.WaitForExit();
             return child.ExitCode;
         }

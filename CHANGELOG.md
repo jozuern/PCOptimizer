@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **One window:** starting Tunero while it is open brings the open window to the front, restored if minimized, instead of opening a second one. Runs with switches (command line, reapply task) are not affected.
+
 ## 1.2.3
 
 Tunero.exe is now signed.
