@@ -177,7 +177,7 @@ const de: Copy = {
     steps: [
       { name: 'Herunterladen', text: 'Die exe der neuesten Version.' },
       { name: 'Prüfen', text: 'Rechtsklick, Eigenschaften > Digitale Signaturen: Dort steht Open Source Developer Joshua Zürn. Oder vergleiche ihren SHA-256 mit der .sha256-Datei auf der Release-Seite.' },
-      { name: 'Starten', text: 'Sie braucht keine Installation. Beim ersten Start bietet sie einen Eintrag im Startmenü an.' },
+      { name: 'Starten', text: 'Beim ersten Start bietet sie an, sich im Ordner Programme mit einem Eintrag im Startmenü zu installieren, oder von ihrem Ort aus zu laufen.' },
     ],
     managers: 'Mit einem Paketmanager',
     releases: 'Alle Versionen',
@@ -213,7 +213,7 @@ const de: Copy = {
       {
         id: 'entfernen',
         q: 'Kann ich es vollständig entfernen?',
-        a: '„Deinstallieren“ in den Einstellungen bietet an, vorher jede Änderung rückgängig zu machen. Dann entfernt es die exe, seinen Datenordner und seinen Eintrag im Startmenü.',
+        a: '„Deinstallieren“ in den Einstellungen bietet an, vorher jede Änderung rückgängig zu machen. Dann entfernt es die exe, seinen Datenordner und seinen Eintrag im Startmenü, bei einer installierten Kopie auch ihren Ordner unter Programme und ihren Eintrag unter Installierte Apps. „Deinstallieren“ in den Windows-Einstellungen unter Apps macht dasselbe.',
       },
     ],
   },

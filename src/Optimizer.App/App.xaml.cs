@@ -244,8 +244,12 @@ public partial class App : Application
         // Opt-in release check (off by default); screenshots stay offline and reproducible.
         if (args.Value("--screenshot") is null)
         {
-            // Asked once, over the first results: a portable exe has no Start menu entry, so Windows Search misses it.
-            vm.OfferStartMenuEntry();
+            // Over the first results. Windows Settings' Uninstall button starts --uninstall; the installed copy's first start
+            // removes the downloaded exe; a downloaded copy offers the setup (Program Files, Start menu), or the Start menu
+            // question as before.
+            if (args.Has("--uninstall")) vm.UninstallCommand.Execute(null);
+            else if (args.Value(InstallService.InstalledFrom) is { } oldExe) vm.FinishInstallAsync(oldExe).Forget("finish install");
+            else vm.OfferSetupAsync(SingleInstance.Applies(e.Args)).Forget("setup");
             OfferErrorReport(lastSession: true);
             vm.CheckForUpdatesAsync(atStart: true).Forget("update check");
         }
@@ -277,6 +281,12 @@ public partial class App : Application
             vm.SelectedItem = vm.Findings.Concat(vm.AdvisorItems).Append(vm.GameAccess).FirstOrDefault(i => i?.Finding.Id == id);
         if (args.Value("--preview-drift") is "on") vm.PreviewDrift();
         if (Version.TryParse(args.Value("--update-shot"), out var newer)) vm.PreviewUpdateFound(newer);
+        // The setup screen, or (card) Settings' Install entry, which the Debug exe would not offer (not elevated, not signed).
+        if (args.Value("--setup-shot") is { } setupShot)
+        {
+            vm.CanInstall = true;
+            vm.SetupShown = setupShot != "card";
+        }
         if (args.Value("--category") is { } cat) vm.OpenTweakGroup(cat);
         // Developer aid: the progress banner as a batch shows it (third of twelve changes, with Stop); nothing runs.
         if (args.Has("--work-demo") && vm.Tweaks.FirstOrDefault() is { } demo)

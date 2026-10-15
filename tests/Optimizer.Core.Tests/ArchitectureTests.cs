@@ -42,6 +42,7 @@ public partial class ArchitectureTests
         ["ProcessLauncher.cs"] = "the one place that builds hardened start infos",
         ["Program.cs"] = "the bundle starting itself again with the protected runtime folder",
         ["UpdateService.cs"] = "the updated exe started with the start's own environment rules",
+        ["InstallService.cs"] = "the installed exe started like the updated one",
         ["DeElevatedLauncher.cs"] = "the shell opening a file or link as the signed-in user",
     };
 

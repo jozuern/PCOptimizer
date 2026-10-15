@@ -76,6 +76,19 @@
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{l:Tr Settings_Expert}" IsChecked="{Binding ExpertMode}" />
             </ui:CardControl>
+            <!-- A downloaded, signed copy that was not installed: the first start's setup again (MainViewModel.Setup) -->
+            <ui:CardControl Padding="{StaticResource CardPadding}" Margin="0,4,0,0" Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="Folder24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="{l:Tr Settings_Install}" />
+                        <ui:TextBlock Style="{StaticResource Caption}" Text="{l:Tr Settings_InstallHint}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:Button Content="{l:Tr Settings_InstallButton}" Command="{Binding OpenSetupCommand}" />
+            </ui:CardControl>
             <!-- Opt-in: a scheduled task applies the changes Windows reset again after sign-in (ReapplyTask) -->
             <ui:CardControl Padding="{StaticResource CardPadding}" Margin="0,4,0,0">
                 <ui:CardControl.Icon>

@@ -36,7 +36,8 @@
             <ui:TitleBar.CenterContent>
                 <ui:TextBox x:Name="SearchBox" Width="400" Margin="24,6,0,6" SizeChanged="SearchBox_SizeChanged" PlaceholderText="{l:Tr Search_Placeholder}" Icon="{ui:SymbolIcon Search20}" ClearButtonEnabled="True"
                             Text="{Binding GlobalSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}" PreviewKeyDown="SearchBox_PreviewKeyDown"
-                            AutomationProperties.Name="{l:Tr Search_Placeholder}" ToolTip="Ctrl+F" />
+                            AutomationProperties.Name="{l:Tr Search_Placeholder}" ToolTip="Ctrl+F"
+                            IsEnabled="{Binding SetupShown, Converter={StaticResource InverseBool}}" />
             </ui:TitleBar.CenterContent>
             <ui:TitleBar.Icon>
                 <ui:ImageIcon x:Name="TitleIcon" Source="pack://application:,,,/Assets/icon-16.png" Width="16" Height="16" />
@@ -248,6 +249,12 @@
                     </ControlTemplate>
                 </Thumb.Template>
             </Thumb>
+
+            <!-- The first start's setup covers the navigation and the pages until it is answered -->
+            <Border Grid.ColumnSpan="2" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    Visibility="{Binding SetupShown, Converter={StaticResource BoolToVisibility}}">
+                <v:SetupView />
+            </Border>
         </Grid>
     </Grid>
 </ui:FluentWindow>

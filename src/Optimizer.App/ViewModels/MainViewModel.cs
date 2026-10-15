@@ -48,7 +48,8 @@ public sealed partial class MainViewModel : ObservableObject, IPageHost
         Updates = new UpdateService(Install, dialogs, this);
         Updates.StateChanged += (_, _) => OnUpdateStateChanged();
         Uninstalls = new UninstallService(Install, dialogs, this, Updates, () => services.Store.All().Count,
-            note => Runner.UndoAllAsync(confirm: false, incompleteNote: note), () => StartMenuFolder, DataPaths.Root);
+            note => Runner.UndoAllAsync(confirm: false, incompleteNote: note), () => StartMenuFolder, DataPaths.Root,
+            installed: InstalledCopyOf(Install.ExePath));
         Runner.Status += (_, result) => ShowResult(result.Text, result.Severity);
         Runner.Changed += async (_, t) => await OnChangedAsync(t);
         Runner.Changed += (_, _) => RefreshReapply();

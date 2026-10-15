@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Install on the first start:** a signed release offers to put itself in Program Files (only administrators can change it there, so the reapply task can start it), add the Start menu entry and appear under Installed apps; "Run from here" keeps it where it is. Uninstall from Tunero or from Windows Settings removes the folder and the entry too.
 - **One window:** starting Tunero while it is open brings the open window to the front, restored if minimized, instead of opening a second one. Runs with switches (command line, reapply task) are not affected.
 - **Checking a download:** the README and the website name the code signature first (Properties > Digital Signatures) and the SHA-256 file second. The website's second download button also shows what to do when Windows warns.
 
