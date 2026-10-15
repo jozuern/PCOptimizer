@@ -23,8 +23,9 @@ public static class SelfUninstall
     /// <paramref name="waitForProcessId"/> is the elevated Chocolatey window: it inherits the app's TEMP inside the data
     /// folder and writes its download cache there, so the folder is deleted only after it has ended.
     /// </summary>
+    /// <param name="installFolder">An installed copy's folder (<see cref="AppInstall"/>): removed after the exe, only if it is empty then.</param>
     public static string CleanupScript(string processName, string dataRoot, string exe, bool removedByPackageManager = false, int? waitForProcessId = null,
-        int packageManagerSeconds = 900)
+        int packageManagerSeconds = 900, string? installFolder = null)
     {
         var files = removedByPackageManager ? "@()" : $"@({WingetPackage.Quote(exe)}, {WingetPackage.Quote(exe + ".old")})";
         var cmd = WingetPackage.Quote(Path.Combine(Environment.SystemDirectory, "cmd.exe"));
@@ -47,7 +48,7 @@ public static class SelfUninstall
         }
         // The app's own tasks (the re-apply task) go with it: left behind, a task would start a missing exe with
         // administrator rights at every sign-in, and a file put at that path later would run elevated.
-        return script
+        script
             .AppendLine($"try {{ $ts = New-Object -ComObject Schedule.Service; $ts.Connect(); $folder = $ts.GetFolder({WingetPackage.Quote(OwnTasksFolder)})")
             .AppendLine("    foreach ($t in @($folder.GetTasks(1))) { $folder.DeleteTask($t.Name, 0) }")
             .AppendLine($"    $ts.GetFolder('\\').DeleteFolder({WingetPackage.Quote(OwnTasksFolder.Trim('\\'))}, 0) }} catch {{ }}")
@@ -58,8 +59,15 @@ public static class SelfUninstall
             .AppendLine("    foreach ($f in $files) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }")
             .AppendLine("    if (-not (Test-Path -LiteralPath $root) -and -not ($files | Where-Object { Test-Path -LiteralPath $_ })) { break }")
             .AppendLine("    Start-Sleep -Seconds 1")
-            .AppendLine("}")
-            .ToString();
+            .AppendLine("}");
+        // rd without /s removes only an empty folder: anything else in it stays.
+        if (installFolder is not null)
+        {
+            script
+                .AppendLine($"$installFolder = {WingetPackage.Quote(installFolder)}")
+                .AppendLine($"if (Test-Path -LiteralPath $installFolder) {{ & {cmd} /d /c rd /q $installFolder }}");
+        }
+        return script.ToString();
     }
 
     /// <summary>Task Scheduler's folder of the app's own tasks, without the trailing backslash.</summary>

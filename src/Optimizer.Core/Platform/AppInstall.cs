@@ -186,6 +186,34 @@ public static class AppInstall
     }
 
     /// <summary>
+    /// After the installed copy has started: deletes the downloaded exe it came from, but only when that is still the same
+    /// file (same SHA-256 as the installed exe, no link in its path). True when it is gone; false when it stays.
+    /// </summary>
+    public static bool DeleteOldCopy(string oldExe, string installedExe)
+    {
+        try
+        {
+            if (!File.Exists(oldExe)) return true;
+            if (!SafeDelete.HasNoLinks(oldExe) || !SameContent(oldExe, installedExe)) return false;
+            SafeDelete.DeleteFile(oldExe);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logging.Log.Warn("install", $"the downloaded copy {oldExe} was not removed: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static bool SameContent(string a, string b)
+    {
+        using var first = new FileStream(a, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var second = new FileStream(b, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return first.Length == second.Length &&
+            System.Security.Cryptography.SHA256.HashData(first).AsSpan().SequenceEqual(System.Security.Cryptography.SHA256.HashData(second));
+    }
+
+    /// <summary>
     /// Undoes an install whose later steps failed in the app (the Start menu entry, starting the installed exe): removes
     /// the entry, the exe and the folder when it is empty then.
     /// </summary>

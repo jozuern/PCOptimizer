@@ -18,6 +18,18 @@ public class SelfUninstallTests
         Assert.Contains($"& '{Path.Combine(Environment.SystemDirectory, "cmd.exe")}' /d /c rd /s /q $root", script);
     }
 
+    /// <summary>An installed copy's folder in Program Files goes too, once the exe is gone, and only when it is empty then.</summary>
+    [Fact]
+    public void TheCleanupRemovesTheEmptyInstallFolder()
+    {
+        var script = SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Program Files\Tunero\Tunero.exe", installFolder: @"C:\Program Files\Tunero");
+        Assert.Contains(@"$installFolder = 'C:\Program Files\Tunero'", script);
+        Assert.Contains($"& '{Path.Combine(Environment.SystemDirectory, "cmd.exe")}' /d /c rd /q $installFolder", script);
+        Assert.DoesNotContain("rd /s /q $installFolder", script);
+        Assert.True(script.IndexOf("rd /q $installFolder", StringComparison.Ordinal) > script.IndexOf("Remove-Item -LiteralPath $f", StringComparison.Ordinal));
+        Assert.DoesNotContain("$installFolder", SelfUninstall.CleanupScript("Tunero", @"C:\ProgramData\Tunero", @"C:\Users\A\Downloads\Tunero.exe"));
+    }
+
     /// <summary>The backups go only when no copy of the app runs: not when it did not end, not when it was started again.</summary>
     [Fact]
     public void NothingIsDeletedWhileTheAppRuns()

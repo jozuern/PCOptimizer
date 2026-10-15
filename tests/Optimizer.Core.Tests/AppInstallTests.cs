@@ -190,6 +190,35 @@ public sealed class AppInstallTests : IDisposable
     }
 
     [Fact]
+    public void TheOldCopyIsDeletedWhenItIsTheSameFile()
+    {
+        var running = Running();
+        var installed = AppInstall.Install(Request(running), _registry).InstalledExe!;
+        Assert.True(AppInstall.DeleteOldCopy(running, installed));
+        Assert.False(File.Exists(running));
+    }
+
+    /// <summary>Another file put at the old path after the install is not the downloaded copy: it stays.</summary>
+    [Fact]
+    public void TheOldCopyIsKeptWhenItChanged()
+    {
+        var running = Running();
+        var installed = AppInstall.Install(Request(running), _registry).InstalledExe!;
+        File.WriteAllBytes(running, [9, 9]);
+        Assert.False(AppInstall.DeleteOldCopy(running, installed));
+        Assert.True(File.Exists(running));
+    }
+
+    [Fact]
+    public void AMissingOldCopyIsNotAnError()
+    {
+        var running = Running();
+        var installed = AppInstall.Install(Request(running), _registry).InstalledExe!;
+        File.Delete(running);
+        Assert.True(AppInstall.DeleteOldCopy(running, installed));
+    }
+
+    [Fact]
     public void AnEntryWhoseExeIsGoneNamesNoInstalledExe()
     {
         AppInstall.WriteEntry(_registry, @"C:\nowhere\Tunero.exe", "1.3.0", 3);
