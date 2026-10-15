@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
+
+Tunero can now install itself into Program Files on the first start, and it opens only one window.
 
 ### Changed
 
