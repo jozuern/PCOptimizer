@@ -24,6 +24,9 @@ public sealed class AppSettings
     /// <summary>The first start asked whether to add the app to the Start menu (asked once, whatever the answer).</summary>
     public bool StartMenuAsked { get; set; }
 
+    /// <summary>The first start's setup was answered with Run from here: it is not shown again (Settings still offers Install).</summary>
+    public bool SetupDeclined { get; set; }
+
     /// <summary>VirusTotal API key, DPAPI-protected for the current user (never stored in clear text).</summary>
     public string? VirusTotalKey { get; set; }
 

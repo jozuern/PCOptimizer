@@ -9,6 +9,21 @@ public sealed class SingleInstanceTests
     [InlineData("--AFTER-UPDATE")]
     public void APlainStartAndTheUpdatedExeKeepToOneWindow(params string[] args) => Assert.True(SingleInstance.Applies(args));
 
+    /// <summary>The installed copy started by the setup waits for the downloaded one to close, like an updated exe.</summary>
+    [Fact]
+    public void TheInstalledCopyWaitsForTheDownloadedOne()
+    {
+        string[] args = ["--installed-from", @"C:\Users\Test\Downloads\Tunero.exe"];
+        Assert.True(SingleInstance.Applies(args));
+        Assert.True(SingleInstance.WaitsForOther(args));
+        Assert.True(SingleInstance.WaitsForOther(["--after-update"]));
+        Assert.False(SingleInstance.WaitsForOther([]));
+    }
+
+    /// <summary>Uninstall from Windows Settings opens its own window beside an open one: the cleanup waits for both to end.</summary>
+    [Fact]
+    public void UninstallFromWindowsSettingsIsNotAPlainStart() => Assert.False(SingleInstance.Applies(["--uninstall"]));
+
     /// <summary>Developer switches, command line runs and the reapply task neither block an open window nor wait for it.</summary>
     [Theory]
     [InlineData("--screenshot", "shot.png")]

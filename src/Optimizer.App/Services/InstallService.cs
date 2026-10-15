@@ -1,0 +1,95 @@
+using System.IO;
+using Optimizer.Core.Logging;
+using Optimizer.Core.Platform;
+using Wpf.Ui.Controls;
+
+namespace Optimizer.App.Services;
+
+/// <summary>
+/// The first start's setup (<see cref="AppInstall"/>): Install copies the exe into Program Files, adds the Start menu
+/// entry for the copy, starts it with <see cref="InstalledFrom"/> and ends this one; Run from here keeps the exe where it
+/// is. A step that fails undoes the install, and the app keeps running from here.
+/// </summary>
+/// <param name="save">Saves <paramref name="settings"/> (tests pass a counter: nothing is written).</param>
+public sealed class InstallService(string runningExe, AppSettings settings, Action save, IShell shell, InstallService.Steps steps, Launch? launch = null)
+{
+    /// <summary>Passed to the installed copy with the downloaded exe's path: it waits for this one to close, then deletes it.</summary>
+    public const string InstalledFrom = "--installed-from";
+
+    /// <summary>The steps that change the PC; the app passes the real ones, tests record them.</summary>
+    /// <param name="Install">Copies, checks and registers (<see cref="AppInstall.Install"/>).</param>
+    /// <param name="Undo">Removes an install again (<see cref="AppInstall.Undo"/>).</param>
+    /// <param name="AddStartMenu">Writes the Start menu entry for an exe.</param>
+    public sealed record Steps(Func<InstallResult> Install, Action<string> Undo, Action<string> AddStartMenu);
+
+    private readonly Launch _launch = launch ?? new Launch();
+
+    public void RunHere() => Remember(declined: true);
+
+    /// <summary>True when the installed copy was started and this app is closing.</summary>
+    public bool Install(bool toProgramFiles, bool startMenu)
+    {
+        if (!toProgramFiles)
+        {
+            if (startMenu) AddStartMenu(runningExe);
+            Remember(declined: true);
+            return false;
+        }
+        var result = steps.Install();
+        if (result.InstalledExe is not { } installed)
+        {
+            Log.Error("install", $"not installed: {result.FailedAt} {result.Error}");
+            shell.ShowResult(Loc.Instance.Format("Setup_Failed", StepName(result.FailedAt), result.Error ?? ""), InfoBarSeverity.Warning);
+            return false;
+        }
+        try
+        {
+            if (startMenu) steps.AddStartMenu(installed);
+            var start = new System.Diagnostics.ProcessStartInfo(installed) { UseShellExecute = false };
+            start.ArgumentList.Add(InstalledFrom);
+            start.ArgumentList.Add(runningExe);
+            ProcessHardening.RemoveCodeLoadingVariables(start.Environment);
+            _launch.Start(start);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException
+                                   or System.Runtime.InteropServices.COMException)
+        {
+            Log.Error("install", "installed, but the next step failed; undone", ex);
+            steps.Undo(installed);
+            shell.ShowResult(Loc.Instance.Format("Setup_Failed", Loc.Instance["Setup_StepStart"], ex.Message), InfoBarSeverity.Warning);
+            return false;
+        }
+        Log.Info("install", "installed, starting the installed copy", new { installed });
+        Remember(declined: false);
+        shell.Shutdown();
+        return true;
+    }
+
+    private void AddStartMenu(string exe)
+    {
+        try
+        {
+            steps.AddStartMenu(exe);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            Log.Error("startmenu", "entry not added", ex);
+            shell.ShowResult(Loc.Instance.Format("StartMenu_Failed", ex.Message), InfoBarSeverity.Warning);
+        }
+    }
+
+    private void Remember(bool declined)
+    {
+        settings.SetupDeclined = declined;
+        settings.StartMenuAsked = true;
+        save();
+    }
+
+    private static string StepName(InstallStep? step) => Loc.Instance[step switch
+    {
+        InstallStep.Folder => "Setup_StepFolder",
+        InstallStep.Copy => "Setup_StepCopy",
+        InstallStep.Check => "Setup_StepCheck",
+        _ => "Setup_StepEntry",
+    }];
+}

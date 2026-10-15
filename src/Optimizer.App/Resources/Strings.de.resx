@@ -109,7 +109,7 @@
   <data name="Reapply_Hint" xml:space="preserve"><value>Zwei Minuten nach deiner Anmeldung wendet Tunero erneut an, was ein Update zurückgesetzt hat (eine geplante Aufgabe mit Administratorrechten; nichts läuft weiter). Expertenänderungen bleiben dir überlassen.</value></data>
   <data name="Reapply_NotHere" xml:space="preserve"><value>Verfügbar im installierten Tunero, das als Administrator läuft.</value></data>
   <data name="Reapply_OtherAccount" xml:space="preserve"><value>Verfügbar, wenn das angemeldete Konto Tunero selbst als Administrator startet: Die Aufgabe läuft für dieses Konto.</value></data>
-  <data name="Reapply_UserFolder" xml:space="preserve"><value>Verfügbar, wenn Tunero in einem Ordner liegt, den nur Administratoren ändern können (Programme oder winget bzw. Chocolatey für alle Benutzer): Die Aufgabe startet es ohne Nachfrage mit Administratorrechten.</value></data>
+  <data name="Reapply_UserFolder" xml:space="preserve"><value>Verfügbar, wenn Tunero im Ordner Programme installiert ist (In Programme installieren, oben) oder mit winget bzw. Chocolatey für alle Benutzer: Die Aufgabe startet es ohne Nachfrage mit Administratorrechten.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Datenordner</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Expertenmodus einschalten?</value></data>
   <data name="Expert_ConfirmText" xml:space="preserve"><value>Der Expertenmodus zeigt Änderungen, die die Sicherheit von Windows schwächen oder ändern können, wie Windows startet. Jede wird gesichert und erklärt.</value></data>
@@ -1479,4 +1479,23 @@ Die Dateien werden endgültig gelöscht. Dateien in Benutzung werden übersprung
   <data name="Work_DismScan" xml:space="preserve"><value>Windows-Abbild wird geprüft (DISM)</value></data>
   <data name="Work_DismRestore" xml:space="preserve"><value>Windows-Abbild wird repariert (DISM)</value></data>
   <data name="Result_BatchStopped" xml:space="preserve"><value>Angehalten. {0} angewendet, {1} fehlgeschlagen, {2} übersprungen, {3} nicht begonnen.</value></data>
+  <data name="Setup_Title" xml:space="preserve"><value>Tunero einrichten</value></data>
+  <data name="Setup_Location" xml:space="preserve"><value>Tunero läuft gerade aus {0}.</value></data>
+  <data name="Setup_ProgramFiles" xml:space="preserve"><value>Tunero in den Ordner Programme legen</value></data>
+  <data name="Setup_ProgramFilesHint" xml:space="preserve"><value>Dort können nur Administratoren es ändern. So kann die Aufgabe zum erneuten Anwenden es starten, und Windows führt Tunero unter Installierte Apps. Die Kopie in {0} wird entfernt.</value></data>
+  <data name="Setup_StartMenu" xml:space="preserve"><value>Tunero zum Startmenü hinzufügen</value></data>
+  <data name="Setup_StartMenuHint" xml:space="preserve"><value>Dann findet die Windows-Suche Tunero. Den Eintrag kannst du jederzeit in den Einstellungen entfernen.</value></data>
+  <data name="Setup_Install" xml:space="preserve"><value>Installieren</value></data>
+  <data name="Setup_RunHere" xml:space="preserve"><value>Von hier ausführen</value></data>
+  <data name="Setup_Failed" xml:space="preserve"><value>Tunero wurde nicht installiert ({0}). Es läuft weiter von hier. Details: {1}</value></data>
+  <data name="Setup_StepFolder" xml:space="preserve"><value>Ordner unter Programme</value></data>
+  <data name="Setup_StepCopy" xml:space="preserve"><value>Kopieren der exe</value></data>
+  <data name="Setup_StepCheck" xml:space="preserve"><value>Prüfung der Signatur der Kopie</value></data>
+  <data name="Setup_StepEntry" xml:space="preserve"><value>Eintrag unter Installierte Apps</value></data>
+  <data name="Setup_StepStart" xml:space="preserve"><value>Start der installierten Kopie</value></data>
+  <data name="Setup_Installed" xml:space="preserve"><value>Tunero ist in {0} installiert.</value></data>
+  <data name="Setup_OldCopyKept" xml:space="preserve"><value>Tunero ist in {0} installiert. Die heruntergeladene Kopie {1} wurde nicht entfernt: Du kannst sie löschen.</value></data>
+  <data name="Settings_Install" xml:space="preserve"><value>In Programme installieren</value></data>
+  <data name="Settings_InstallHint" xml:space="preserve"><value>Kopiert Tunero in den Ordner Programme und fügt es dem Startmenü und Installierte Apps hinzu. Danach ist die Aufgabe zum erneuten Anwenden verfügbar.</value></data>
+  <data name="Settings_InstallButton" xml:space="preserve"><value>Einrichten</value></data>
 </root>

@@ -13,9 +13,13 @@ namespace Optimizer.App.Services;
 /// <param name="activeChanges">How many changes the Changes page lists (the question offers to undo them).</param>
 /// <param name="undoAll">Undoes every change without a second question; false when not everything could be undone.</param>
 /// <param name="startMenuFolder">The signed-in user's Start menu folder, or null when it is not known.</param>
+/// <param name="installed">This copy is the one the setup installed (<see cref="AppInstall"/>): its entry and folder go with it.</param>
 public sealed class UninstallService(InstallFacts install, IDialogs dialogs, IShell shell, UpdateService update, Func<int> activeChanges,
-    Func<string, Task<bool>> undoAll, Func<string?> startMenuFolder, string dataRoot, Launch? launch = null)
+    Func<string, Task<bool>> undoAll, Func<string?> startMenuFolder, string dataRoot, Launch? launch = null, UninstallService.InstalledCopy? installed = null)
 {
+    /// <summary>The install folder in Program Files and how to remove the Installed apps entry.</summary>
+    public sealed record InstalledCopy(string Folder, Action RemoveEntry);
+
     private readonly Launch _launch = launch ?? new Launch();
 
     /// <summary>Only the published exe removes itself (a build folder is not where the app lives), and only elevated: the data folder is admin-only.</summary>
@@ -60,9 +64,22 @@ public sealed class UninstallService(InstallFacts install, IDialogs dialogs, ISh
         {
             Log.Warn("uninstall", $"Start menu entry not removed: {ex.Message}");
         }
+        // The Installed apps entry goes now: Windows would list an app whose files the cleanup removes.
+        if (installed is not null)
+        {
+            try
+            {
+                installed.RemoveEntry();
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                Log.Warn("uninstall", $"Installed apps entry not removed: {ex.Message}");
+            }
+        }
         try
         {
-            var script = SelfUninstall.CleanupScript(processName, dataRoot, exe, removedByPackageManager: package is not null, packageManagerProcess);
+            var script = SelfUninstall.CleanupScript(processName, dataRoot, exe, removedByPackageManager: package is not null, packageManagerProcess,
+                installFolder: installed?.Folder);
             _launch.Start(ProcessLauncher.Info(PowerShellScript.Exe, SelfUninstall.PowerShellArguments(script)));
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)

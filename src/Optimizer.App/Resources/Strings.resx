@@ -109,7 +109,7 @@
   <data name="Reapply_Hint" xml:space="preserve"><value>Two minutes after you sign in, Tunero applies again what an update reset (a scheduled task with administrator rights; nothing keeps running). Expert changes are left for you.</value></data>
   <data name="Reapply_NotHere" xml:space="preserve"><value>Available in the installed Tunero running as administrator.</value></data>
   <data name="Reapply_OtherAccount" xml:space="preserve"><value>Available when the signed-in account itself runs Tunero as administrator: the task runs for that account.</value></data>
-  <data name="Reapply_UserFolder" xml:space="preserve"><value>Available when Tunero is in a folder only administrators can change (Program Files, or winget or Chocolatey for all users): the task starts it with administrator rights without asking.</value></data>
+  <data name="Reapply_UserFolder" xml:space="preserve"><value>Available when Tunero is installed in Program Files (Install in Program Files, above) or installed with winget or Chocolatey for all users: the task starts it with administrator rights without asking.</value></data>
   <data name="Settings_Data" xml:space="preserve"><value>Data folder</value></data>
   <data name="Expert_ConfirmTitle" xml:space="preserve"><value>Turn on Expert mode?</value></data>
   <data name="Expert_ConfirmText" xml:space="preserve"><value>Expert mode shows changes that can weaken Windows security or change how Windows starts. Each one is backed up and explained.</value></data>
@@ -1479,4 +1479,23 @@ The files are deleted permanently. Files in use are skipped.</value>
   <data name="Work_DismScan" xml:space="preserve"><value>Checking the Windows image (DISM)</value></data>
   <data name="Work_DismRestore" xml:space="preserve"><value>Repairing the Windows image (DISM)</value></data>
   <data name="Result_BatchStopped" xml:space="preserve"><value>Stopped. {0} applied, {1} failed, {2} skipped, {3} not started.</value></data>
+  <data name="Setup_Title" xml:space="preserve"><value>Set up Tunero</value></data>
+  <data name="Setup_Location" xml:space="preserve"><value>Tunero runs from {0} right now.</value></data>
+  <data name="Setup_ProgramFiles" xml:space="preserve"><value>Put Tunero in Program Files</value></data>
+  <data name="Setup_ProgramFilesHint" xml:space="preserve"><value>Only administrators can change it there, so the reapply task can start it, and Windows lists Tunero under Installed apps. The copy in {0} is removed.</value></data>
+  <data name="Setup_StartMenu" xml:space="preserve"><value>Add Tunero to the Start menu</value></data>
+  <data name="Setup_StartMenuHint" xml:space="preserve"><value>Windows Search then finds Tunero. You can remove the entry any time in Settings.</value></data>
+  <data name="Setup_Install" xml:space="preserve"><value>Install</value></data>
+  <data name="Setup_RunHere" xml:space="preserve"><value>Run from here</value></data>
+  <data name="Setup_Failed" xml:space="preserve"><value>Tunero was not installed ({0}). It keeps running from here. Details: {1}</value></data>
+  <data name="Setup_StepFolder" xml:space="preserve"><value>the folder in Program Files</value></data>
+  <data name="Setup_StepCopy" xml:space="preserve"><value>copying the exe</value></data>
+  <data name="Setup_StepCheck" xml:space="preserve"><value>the signature check of the copy</value></data>
+  <data name="Setup_StepEntry" xml:space="preserve"><value>the entry under Installed apps</value></data>
+  <data name="Setup_StepStart" xml:space="preserve"><value>starting the installed copy</value></data>
+  <data name="Setup_Installed" xml:space="preserve"><value>Tunero is installed in {0}.</value></data>
+  <data name="Setup_OldCopyKept" xml:space="preserve"><value>Tunero is installed in {0}. The downloaded copy {1} was not removed: you can delete it.</value></data>
+  <data name="Settings_Install" xml:space="preserve"><value>Install in Program Files</value></data>
+  <data name="Settings_InstallHint" xml:space="preserve"><value>Copies Tunero to Program Files and adds it to the Start menu and to Installed apps. Then the reapply task is available.</value></data>
+  <data name="Settings_InstallButton" xml:space="preserve"><value>Set up</value></data>
 </root>

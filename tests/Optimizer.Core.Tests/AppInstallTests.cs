@@ -209,6 +209,15 @@ public sealed class AppInstallTests : IDisposable
         Assert.True(File.Exists(running));
     }
 
+    /// <summary>A copy started from the install folder itself names that folder as its old place: nothing is deleted.</summary>
+    [Fact]
+    public void TheInstalledExeIsNeverTheOldCopy()
+    {
+        var installed = AppInstall.Install(Request(Running()), _registry).InstalledExe!;
+        Assert.False(AppInstall.DeleteOldCopy(installed.ToUpperInvariant(), installed));
+        Assert.True(File.Exists(installed));
+    }
+
     [Fact]
     public void AMissingOldCopyIsNotAnError()
     {

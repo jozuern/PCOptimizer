@@ -21,9 +21,16 @@ public static class SingleInstance
     // Local\: per session, so another account signed in on the same PC keeps its own window.
     private const string Name = @"Local\Tunero.SingleInstance.6c2f9a41";
 
-    /// <summary>A start takes part when it has no arguments, or only <see cref="AfterUpdate"/>.</summary>
-    public static bool Applies(IReadOnlyList<string> args) =>
-        args.Count == 0 || (args.Count == 1 && args[0].Equals(AfterUpdate, StringComparison.OrdinalIgnoreCase));
+    /// <summary>
+    /// A start takes part when it has no arguments, or only <see cref="AfterUpdate"/>, or only the setup's
+    /// <see cref="Services.InstallService.InstalledFrom"/> and its path.
+    /// </summary>
+    public static bool Applies(IReadOnlyList<string> args) => args.Count == 0 || WaitsForOther(args);
+
+    /// <summary>The start comes from a closing copy (an update, the setup): it waits for that copy to let go of the lock.</summary>
+    public static bool WaitsForOther(IReadOnlyList<string> args) =>
+        (args.Count == 1 && args[0].Equals(AfterUpdate, StringComparison.OrdinalIgnoreCase)) ||
+        (args.Count == 2 && args[0].Equals(Services.InstallService.InstalledFrom, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Takes the lock for this process's lifetime (dispose it when the app ends). Null when an open Tunero holds it. A lock

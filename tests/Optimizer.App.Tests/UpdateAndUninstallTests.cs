@@ -146,6 +146,21 @@ public sealed class UpdateAndUninstallTests : IDisposable
         Assert.True(_shell.ShutDown);
     }
 
+    /// <summary>An installed copy takes its Installed apps entry with it, and the cleanup removes its Program Files folder.</summary>
+    [Fact]
+    public async Task AnInstalledCopyRemovesItsEntryAndFolder()
+    {
+        _dialogs.Uninstall = UninstallChoice.Keep;
+        var removed = 0;
+        var facts = Facts();
+        var service = new UninstallService(facts, _dialogs, _shell, new UpdateService(facts, _dialogs, _shell, Recorded, Newer), () => 3,
+            _ => Task.FromResult(true), () => null, DataRoot, Recorded, new UninstallService.InstalledCopy(@"C:\TuneroTest", () => removed++));
+        await service.UninstallAsync();
+        Assert.Equal(1, removed);
+        var script = System.Text.Encoding.Unicode.GetString(Convert.FromBase64String(Assert.Single(_started).Arguments.Split(' ')[^1]));
+        Assert.Contains(@"$installFolder = 'C:\TuneroTest'", script);
+    }
+
     [Fact]
     public async Task AFailedUndoStopsTheUninstall()
     {

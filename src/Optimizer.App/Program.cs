@@ -85,7 +85,7 @@ public static class Program
         Mutex? instance = null;
         if (SingleInstance.Applies(args))
         {
-            instance = SingleInstance.TryAcquire(args.Length == 1 ? SingleInstance.UpdateWait : TimeSpan.Zero, out var heldByOther);
+            instance = SingleInstance.TryAcquire(SingleInstance.WaitsForOther(args) ? SingleInstance.UpdateWait : TimeSpan.Zero, out var heldByOther);
             if (heldByOther)
             {
                 if (SingleInstance.ShowOther())

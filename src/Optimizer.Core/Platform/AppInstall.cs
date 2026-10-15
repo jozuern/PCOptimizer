@@ -193,6 +193,7 @@ public static class AppInstall
     {
         try
         {
+            if (string.Equals(Path.GetFullPath(oldExe), Path.GetFullPath(installedExe), StringComparison.OrdinalIgnoreCase)) return false;
             if (!File.Exists(oldExe)) return true;
             if (!SafeDelete.HasNoLinks(oldExe) || !SameContent(oldExe, installedExe)) return false;
             SafeDelete.DeleteFile(oldExe);
